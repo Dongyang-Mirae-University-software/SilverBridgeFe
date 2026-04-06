@@ -1,9 +1,9 @@
-import classNames from "classnames/bind";
+import classNames from 'classnames/bind';
 
-import styles from "./Header.module.css";
+import styles from './Header.module.css';
 
 const cx = classNames.bind(styles);
 
 export default function Header() {
-  return <header>Header</header>;
+  return <header className={cx('header')}>Header</header>;
 }
