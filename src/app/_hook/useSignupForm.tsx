@@ -2,11 +2,8 @@
 
 import { useForm } from 'react-hook-form';
 
-import { ISignupReq } from '@/service/interface/contactus';
-
-const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-const passwordPattern = /^(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])\S{8,}$/;
-const phonePattern = /^010\d{8}$/;
+import { ISignupReq } from '@/service/interface/auth';
+import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '../constant/pattern';
 
 type FormData = {
   name: string;
@@ -58,18 +55,18 @@ export default function useContactForm() {
       return true;
     }, message);
 
-  const emailRules = (message: string) => rules(value => (!emailPattern.test(value) ? message : true), message);
+  const emailRules = (message: string) => rules(value => (!EMAIL_PATTRERN.test(value) ? message : true), message);
 
-  const passwordRules = (message: string) => rules(value => (!passwordPattern.test(value) ? message : true), message);
+  const passwordRules = (message: string) => rules(value => (!PASSWORD_PATTRERN.test(value) ? message : true), message);
 
   const passwordCheckRules = (message: string) =>
     rules(value => {
-      if (!passwordPattern.test(value)) return message;
+      if (!PASSWORD_PATTRERN.test(value)) return message;
       if (value !== getValues('password')) return '비밀번호가 일치하지 않습니다';
       return true;
     }, message);
 
-  const phoneRules = (message: string) => rules(value => (!phonePattern.test(value) ? message : true), message);
+  const phoneRules = (message: string) => rules(value => (!PHONE_PATTRERN.test(value) ? message : true), message);
 
   function formDataInit() {
     reset({
