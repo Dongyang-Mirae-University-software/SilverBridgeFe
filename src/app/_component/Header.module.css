@@ -1,0 +1,17 @@
+.header {
+  z-index: 2;
+  /* min-width: 1650px; */
+  height: 60px;
+  background: var(--black-90);
+  color: var(--white);
+  padding: 14px 24px 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--black-80);
+  font-family: Inter;
+  font-weight: 500;
+  line-height: 1.5;
+  font-size: 1.6rem;
+  position: relative;
+}
