@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Footer from './_component/Footer';
 import Header from './_component/Header';
+import ReactQueryProvider from '@/lib/ReactQueryProvider';
 
 export const metadata: Metadata = {
   title: 'silver bridge',
@@ -17,7 +18,7 @@ export default function RootLayout({
     <html>
       <body>
         <Header />
-        {children}
+        <ReactQueryProvider>{children}</ReactQueryProvider>
         <Footer />
       </body>
     </html>
