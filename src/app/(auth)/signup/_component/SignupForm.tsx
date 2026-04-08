@@ -69,7 +69,18 @@ export default function SignupForm() {
         error={Boolean(errors.phone && allValues.phone && allValues.phone.trim() !== '')}
         errorText={errors.phone?.message}
       />
-      <button className={cx('button')} disabled={!isValid} type="submit">
+      <div>
+        <label className={cx('radio')} htmlFor="WARD">
+          <input id="WARD" type="radio" value="WARD" {...register('role')} />
+          <span>노인</span>
+        </label>
+        <label className={cx('radio')} htmlFor="guardian">
+          <input id="guardian" type="radio" value="guardian" {...register('role')} />
+          <span>보호자</span>
+        </label>
+      </div>
+
+      <button className={cx('button')} type="submit">
         전송
       </button>
     </form>

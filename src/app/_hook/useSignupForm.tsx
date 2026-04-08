@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form';
 
 import { ISignupReq } from '@/service/interface/auth';
 import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '../constant/pattern';
+import { useMutation } from '@tanstack/react-query';
+import signup from '@/service/api/auth';
 
 type FormData = {
   name: string;
@@ -11,6 +13,7 @@ type FormData = {
   password: string;
   passwordCheck: string;
   phone: string;
+  role: string;
 };
 
 export default function useContactForm() {
@@ -30,6 +33,7 @@ export default function useContactForm() {
       password: '',
       passwordCheck: '',
       phone: '',
+      role: '',
     },
   });
 
@@ -78,13 +82,26 @@ export default function useContactForm() {
     });
   }
 
+  const { mutate } = useMutation({
+    mutationKey: ['contact-us'],
+    mutationFn: signup,
+  });
+
   function onSubmit(formData: ISignupReq) {
     const form: ISignupReq = {
       name: formData.name,
       email: formData.email,
       password: formData.password,
       phone: formData.phone,
+      role: formData.role,
     };
+
+    mutate(form, {
+      onSuccess: () => {
+        formDataInit();
+      },
+      onError: () => {},
+    });
   }
 
   return {

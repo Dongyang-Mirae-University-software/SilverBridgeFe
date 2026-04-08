@@ -3,5 +3,6 @@ export interface ISignupReq {
   email: string;
   password: string;
   phone: string;
-  role: 'WARD';
+  // TODO: 추후 타입 수정 'WARD' | '';
+  role: string;
 }
