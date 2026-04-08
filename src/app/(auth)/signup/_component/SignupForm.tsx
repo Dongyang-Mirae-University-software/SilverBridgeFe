@@ -8,7 +8,10 @@ import TextInput from '@/app/_component/common/TextInput';
 
 const cx = classNames.bind(styles);
 
-export default function SignupForm() {
+interface IProps {
+  onNext: () => void;
+}
+export default function SignupForm({ onNext }: IProps) {
   const {
     register,
     formState: { errors, isValid },
@@ -23,7 +26,7 @@ export default function SignupForm() {
   } = useContactForm();
 
   return (
-    <form className={cx('container')} onSubmit={onSubmit}>
+    <form className={cx('container')} onSubmit={onSubmit(onNext)}>
       <TextInput
         label={'이메일'}
         placeholder={'이메일을 입력 해주세요'}
@@ -76,7 +79,7 @@ export default function SignupForm() {
       </div>
 
       <button className={cx('button')} disabled={!isValid} type="submit">
-        전송
+        다음
       </button>
     </form>
   );

@@ -107,7 +107,7 @@ export default function useContactForm() {
   return {
     register,
     formState: { errors, isValid },
-    onSubmit: handleSubmit(onSubmit),
+    onSubmit: handleSubmit,
     watch,
     getValues,
     setValue,
