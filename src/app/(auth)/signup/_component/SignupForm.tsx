@@ -1,5 +1,3 @@
-'use client';
-
 import classNames from 'classnames/bind';
 
 import styles from './SignupForm.module.css';
@@ -8,10 +6,12 @@ import TextInput from '@/app/_component/common/TextInput';
 
 const cx = classNames.bind(styles);
 
+type SignupFormHook = ReturnType<typeof useContactForm>;
 interface IProps {
   onNext: () => void;
+  signupForm: SignupFormHook;
 }
-export default function SignupForm({ onNext }: IProps) {
+export default function SignupForm({ onNext, signupForm }: IProps) {
   const {
     register,
     formState: { errors, isValid },
@@ -23,7 +23,7 @@ export default function SignupForm({ onNext }: IProps) {
 
     phoneRules,
     allValues,
-  } = useContactForm();
+  } = signupForm;
 
   return (
     <form className={cx('container')} onSubmit={onSubmit(onNext)}>
