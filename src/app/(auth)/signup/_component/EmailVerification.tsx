@@ -16,7 +16,8 @@ interface IProps {
 export default function EmailVerification({ signupForm }: IProps) {
   const [code, setCode] = useState<string>('');
   const { getValues } = signupForm;
-  const { formattedTime, isExpired, reset } = useTimer(180);
+  // TODO: 테스트를 위한 시간 설정, 추후 수정
+  const { formattedTime, isExpired, reset } = useTimer(10);
 
   // const { openModal, closeModal } = useModalStore();
   const { mutate } = useMutation({
@@ -24,7 +25,7 @@ export default function EmailVerification({ signupForm }: IProps) {
     mutationFn: eamaillSend,
   });
 
-  const { mutate: verifyMutate } = useMutation({
+  const { mutateAsync: verifyMutate } = useMutation({
     mutationKey: ['eamaill-verify'],
     mutationFn: emailVerify,
   });
@@ -43,8 +44,8 @@ export default function EmailVerification({ signupForm }: IProps) {
     });
   };
 
-  const handleResend = () => {
-    mutate(
+  const handleResend = async () => {
+    await mutate(
       { email: getValues('email') },
       {
         onSuccess: () => {},
@@ -53,6 +54,8 @@ export default function EmailVerification({ signupForm }: IProps) {
         },
       },
     );
+
+    reset();
   };
 
   useEffect(() => {
