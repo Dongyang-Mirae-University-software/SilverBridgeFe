@@ -1,7 +1,7 @@
 import classNames from 'classnames/bind';
 
 import styles from './SignupForm.module.css';
-import TextInput from '@/app/_component/common/TextInput';
+import TextInput from '@/app/_components/common/TextInput';
 import useSignupForm from '@/app/_hook/useSignupForm';
 import { emailCheck, smsSend, smsVerify } from '@/service/api/auth';
 import { useRouter } from 'next/navigation';
