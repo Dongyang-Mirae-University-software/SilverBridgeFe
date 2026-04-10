@@ -13,6 +13,8 @@ import { useRouter } from 'next/navigation';
 const cx = classNames.bind(styles);
 
 export default function SignupContent() {
+  const router = useRouter();
+
   return (
     <div className={cx('sign-wrap')}>
       <div>
@@ -21,6 +23,7 @@ export default function SignupContent() {
       <div className={cx('contnet')}>
         <SignupForm />
       </div>
+      <button onClick={() => router.push('/login')}>뒤로 가기</button>
     </div>
   );
 }
