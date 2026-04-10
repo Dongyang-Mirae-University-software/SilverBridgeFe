@@ -13,10 +13,6 @@ import { useRouter } from 'next/navigation';
 const cx = classNames.bind(styles);
 
 export default function SignupContent() {
-  const router = useRouter();
-
-  const onNext = () => () => router.push('/');
-
   return (
     <div className={cx('sign-wrap')}>
       <div>
