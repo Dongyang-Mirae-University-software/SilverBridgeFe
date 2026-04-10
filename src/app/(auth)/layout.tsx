@@ -1,6 +1,6 @@
 import classNames from 'classnames/bind';
 
-import styles from './page.module.css';
+import styles from './layout.module.css';
 
 const cx = classNames.bind(styles);
 
