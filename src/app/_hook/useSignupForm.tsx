@@ -13,7 +13,7 @@ type FormData = {
   password: string;
   passwordCheck: string;
   phone: string;
-  role: string;
+  role: '' | 'WARD';
 };
 
 export default function useSignupForm() {
@@ -107,7 +107,7 @@ export default function useSignupForm() {
   return {
     register,
     formState: { errors, isValid },
-    onSubmit: handleSubmit,
+    onSubmit: handleSubmit(onSubmit),
     watch,
     getValues,
     setValue,
