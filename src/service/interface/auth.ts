@@ -1,9 +1,10 @@
+export type RoleType = 'WARD' | 'GUARDIAN';
 export interface ISignupReq {
   name: string;
   email: string;
   password: string;
   phone: string;
-  role: 'WARD' | '';
+  role: RoleType;
 }
 
 export interface IEmailVerityReq {

@@ -24,3 +24,11 @@ export async function emailVerify(body: IEmailVerityReq) {
 export async function emailCheck(body: { email: string }) {
   return apiClient.post<CommonResponse<null>>(`${AUTH_API_PATH}/email/check`, body);
 }
+
+export async function smsVerify(body: { phone: string; code: string }) {
+  return apiClient.post<CommonResponse<null>>(`${AUTH_API_PATH}/sms/verify`, body);
+}
+
+export async function smsSend(body: { phone: string }) {
+  return apiClient.post<CommonResponse<null>>(`${AUTH_API_PATH}/sms/send`, body);
+}

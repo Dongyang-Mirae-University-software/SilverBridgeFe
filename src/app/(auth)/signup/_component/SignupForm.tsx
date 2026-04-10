@@ -4,10 +4,10 @@ import styles from './SignupForm.module.css';
 import useContactForm from '@/app/_hook/useSignupForm';
 import TextInput from '@/app/_component/common/TextInput';
 import useSignupForm from '@/app/_hook/useSignupForm';
-import { emailCheck } from '@/service/api/auth';
+import { emailCheck, smsSend, smsVerify } from '@/service/api/auth';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
-import { FocusEventHandler } from 'react';
+import { ChangeEvent, FocusEventHandler } from 'react';
 
 import { useState } from 'react';
 
@@ -25,23 +25,64 @@ export default function SignupForm() {
     getValues,
     phoneRules,
     allValues,
+    setValue,
   } = useSignupForm();
 
   const router = useRouter();
-  const [isCheck, serIsCheck] = useState<boolean>(false);
+  const [isEmailCheck, setIsEmailCheck] = useState<boolean>(false);
+
+  const [isCode, setIsCode] = useState<boolean>(false);
+  const [smsCode, setSmsCode] = useState<string>('');
 
   const { mutate } = useMutation({
-    mutationKey: ['eamaill-verify'],
+    mutationKey: ['eamaill-check'],
     mutationFn: emailCheck,
+    onError: () => {
+      setIsEmailCheck(false);
+    },
+    onSuccess: () => {
+      setIsEmailCheck(true);
+    },
+  });
+
+  const { mutate: smsSendMutate } = useMutation({
+    mutationKey: ['sms-send'],
+    mutationFn: smsSend,
     onError: () => {},
     onSuccess: () => {
-      // router.push('/');
-      serIsCheck(true);
+      setIsCode(true);
+    },
+  });
+
+  const { mutate: smsVerifyMutate, isError } = useMutation({
+    mutationKey: ['sms-verify'],
+    mutationFn: smsVerify,
+    onError: () => {},
+    onSuccess: () => {
+      setIsCode(true);
     },
   });
 
   const handleEmailCheck = () => {
     mutate({ email: getValues('email') });
+  };
+
+  const handlePhoneCheck = () => {
+    smsSendMutate({ phone: getValues('phone') });
+  };
+
+  const handleCode = (e: ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    if (smsCode.length <= 6) setSmsCode(value);
+  };
+
+  const handlePhoneReset = () => {
+    setIsCode(false);
+    setValue('phone', '');
+  };
+
+  const handleSmsVerify = () => {
+    smsVerifyMutate({ code: smsCode, phone: getValues('phone') });
   };
 
   return (
@@ -52,7 +93,10 @@ export default function SignupForm() {
         required
         {...register('email', emailRules('에러요'))}
         onBlur={handleEmailCheck}
-        error={Boolean(errors.email && allValues.email && allValues.email.trim() !== '') || !isCheck}
+        error={
+          Boolean(errors.email && allValues.email && allValues.email.trim() !== '') ||
+          (!isEmailCheck && !!getValues('email').length)
+        }
         errorText={errors.email?.message ?? '이메일이 중복 오류'}
       />
       <TextInput
@@ -85,20 +129,42 @@ export default function SignupForm() {
         required
         {...register('phone', phoneRules('에러요'))}
         error={Boolean(errors.phone && allValues.phone && allValues.phone.trim() !== '')}
+        disabled={isCode}
         errorText={errors.phone?.message}
       />
+      <button type="button" onClick={handlePhoneCheck}>
+        전송
+      </button>
+      <button type="button" onClick={handlePhoneReset}>
+        X
+      </button>
+      {isCode && (
+        <>
+          <TextInput
+            error={Boolean(isError)}
+            errorText="틀렸어요"
+            label="code"
+            maxLength={6}
+            value={smsCode}
+            onChange={handleCode}
+            placeholder="코드를 입력하세요."
+          />
+          <button type="button" onClick={handleSmsVerify}>
+            코드 인증
+          </button>
+        </>
+      )}
       <div>
         <label className={cx('radio')} htmlFor="WARD">
           <input id="WARD" type="radio" value="WARD" {...register('role')} defaultChecked />
           <span>노인</span>
         </label>
-        <label className={cx('radio')} htmlFor="guardian">
-          <input id="guardian" type="radio" value="guardian" {...register('role')} />
+        <label className={cx('radio')} htmlFor="GUARDIAN">
+          <input id="GUARDIAN" type="radio" value="GUARDIAN" {...register('role')} />
           <span>보호자</span>
         </label>
       </div>
-
-      <button className={cx('button')} disabled={!isValid && isCheck} type="submit">
+      <button className={cx('button')} disabled={!isValid && isEmailCheck} type="submit">
         회원가입 완료
       </button>
     </form>
