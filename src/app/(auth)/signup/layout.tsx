@@ -1,6 +1,6 @@
-import classNames from "classnames/bind";
+import classNames from 'classnames/bind';
 
-import styles from "./page.module.css";
+import styles from './page.module.css';
 
 const cx = classNames.bind(styles);
 
@@ -10,8 +10,8 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className={cx("layout")}>
-      <div className={cx("content")}>{children}</div>
+    <div className={cx('signup-layout')}>
+      <div className={cx('content')}>{children}</div>
     </div>
   );
 }
