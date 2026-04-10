@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 
-import { ISignupReq } from '@/service/interface/auth';
+import { ISignupReq, RoleType } from '@/service/interface/auth';
 import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '../constant/pattern';
 import { useMutation } from '@tanstack/react-query';
 import { signup } from '@/service/api/auth';
@@ -13,7 +13,7 @@ type FormData = {
   password: string;
   passwordCheck: string;
   phone: string;
-  role: '' | 'WARD';
+  role: RoleType;
 };
 
 export default function useSignupForm() {
@@ -33,7 +33,7 @@ export default function useSignupForm() {
       password: '',
       passwordCheck: '',
       phone: '',
-      role: '',
+      role: 'WARD',
     },
   });
 
