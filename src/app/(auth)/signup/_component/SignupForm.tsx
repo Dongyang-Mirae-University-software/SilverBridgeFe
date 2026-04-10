@@ -3,15 +3,11 @@ import classNames from 'classnames/bind';
 import styles from './SignupForm.module.css';
 import useContactForm from '@/app/_hook/useSignupForm';
 import TextInput from '@/app/_component/common/TextInput';
+import useSignupForm from '@/app/_hook/useSignupForm';
 
 const cx = classNames.bind(styles);
 
-type SignupFormHook = ReturnType<typeof useContactForm>;
-interface IProps {
-  onNext: () => void;
-  signupForm: SignupFormHook;
-}
-export default function SignupForm({ onNext, signupForm }: IProps) {
+export default function SignupForm() {
   const {
     register,
     formState: { errors, isValid },
@@ -23,10 +19,10 @@ export default function SignupForm({ onNext, signupForm }: IProps) {
 
     phoneRules,
     allValues,
-  } = signupForm;
+  } = useSignupForm();
 
   return (
-    <form className={cx('container')} onSubmit={onSubmit(onNext)}>
+    <form className={cx('container')} onSubmit={onSubmit}>
       <TextInput
         label={'이메일'}
         placeholder={'이메일을 입력 해주세요'}
