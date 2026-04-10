@@ -4,6 +4,12 @@ import styles from './SignupForm.module.css';
 import useContactForm from '@/app/_hook/useSignupForm';
 import TextInput from '@/app/_component/common/TextInput';
 import useSignupForm from '@/app/_hook/useSignupForm';
+import { emailCheck } from '@/service/api/auth';
+import { useRouter } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
+import { FocusEventHandler } from 'react';
+
+import { useState } from 'react';
 
 const cx = classNames.bind(styles);
 
@@ -16,10 +22,27 @@ export default function SignupForm() {
     textRules,
     passwordRules,
     passwordCheckRules,
-
+    getValues,
     phoneRules,
     allValues,
   } = useSignupForm();
+
+  const router = useRouter();
+  const [isCheck, serIsCheck] = useState<boolean>(false);
+
+  const { mutate } = useMutation({
+    mutationKey: ['eamaill-verify'],
+    mutationFn: emailCheck,
+    onError: () => {},
+    onSuccess: () => {
+      // router.push('/');
+      serIsCheck(true);
+    },
+  });
+
+  const handleEmailCheck = () => {
+    mutate({ email: getValues('email') });
+  };
 
   return (
     <form className={cx('container')} onSubmit={onSubmit}>
@@ -28,8 +51,9 @@ export default function SignupForm() {
         placeholder={'이메일을 입력 해주세요'}
         required
         {...register('email', emailRules('에러요'))}
-        error={Boolean(errors.email && allValues.email && allValues.email.trim() !== '')}
-        errorText={errors.email?.message}
+        onBlur={handleEmailCheck}
+        error={Boolean(errors.email && allValues.email && allValues.email.trim() !== '') || !isCheck}
+        errorText={errors.email?.message ?? '이메일이 중복 오류'}
       />
       <TextInput
         label={'비밀번호'}
@@ -74,8 +98,8 @@ export default function SignupForm() {
         </label>
       </div>
 
-      <button className={cx('button')} disabled={!isValid} type="submit">
-        다음
+      <button className={cx('button')} disabled={!isValid && isCheck} type="submit">
+        회원가입 완료
       </button>
     </form>
   );
