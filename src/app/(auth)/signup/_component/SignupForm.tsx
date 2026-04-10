@@ -1,13 +1,12 @@
 import classNames from 'classnames/bind';
 
 import styles from './SignupForm.module.css';
-import useContactForm from '@/app/_hook/useSignupForm';
 import TextInput from '@/app/_component/common/TextInput';
 import useSignupForm from '@/app/_hook/useSignupForm';
 import { emailCheck, smsSend, smsVerify } from '@/service/api/auth';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
-import { ChangeEvent, FocusEventHandler } from 'react';
+import { ChangeEvent } from 'react';
 
 import { useState } from 'react';
 
@@ -33,6 +32,7 @@ export default function SignupForm() {
 
   const [isCode, setIsCode] = useState<boolean>(false);
   const [smsCode, setSmsCode] = useState<string>('');
+  const [isSmsCheck, setIsSmsCheck] = useState<boolean>(false);
 
   const { mutate } = useMutation({
     mutationKey: ['eamaill-check'],
@@ -59,7 +59,7 @@ export default function SignupForm() {
     mutationFn: smsVerify,
     onError: () => {},
     onSuccess: () => {
-      setIsCode(true);
+      setIsSmsCheck(true);
     },
   });
 
@@ -164,7 +164,7 @@ export default function SignupForm() {
           <span>보호자</span>
         </label>
       </div>
-      <button className={cx('button')} disabled={!isValid && isEmailCheck} type="submit">
+      <button className={cx('button')} disabled={!isValid || !isEmailCheck || !isSmsCheck} type="submit">
         회원가입 완료
       </button>
     </form>
