@@ -54,6 +54,13 @@
   gap: 18px;
 }
 
+.errorMessage {
+  margin: -8px 0 0;
+  color: #dc2626;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .submitButton {
   margin-top: 8px;
   height: 52px;

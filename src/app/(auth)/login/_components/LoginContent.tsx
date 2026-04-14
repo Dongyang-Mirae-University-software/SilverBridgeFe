@@ -1,10 +1,12 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 
 import TextInput from '@/app/_components/common/TextInput';
+import { login } from '@/service/api/auth';
 import styles from './LoginContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -13,11 +15,32 @@ export default function LoginContent() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const isValid = email.trim().length > 0 && password.trim().length > 0;
 
+  const { mutate, isPending } = useMutation({
+    mutationKey: ['login'],
+    mutationFn: login,
+    onMutate: () => {
+      setErrorMessage('');
+    },
+    onSuccess: () => {
+      router.push('/');
+    },
+    onError: (error: Error) => {
+      setErrorMessage(error.message || '로그인에 실패했습니다.');
+    },
+  });
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!isValid || isPending) return;
+
+    mutate({
+      email: email.trim(),
+      password: password.trim(),
+    });
   };
 
   return (
@@ -32,6 +55,8 @@ export default function LoginContent() {
         <form className={cx('form')} onSubmit={handleSubmit}>
           <TextInput
             autoComplete="email"
+            error={Boolean(errorMessage)}
+            errorText={errorMessage}
             label="이메일"
             name="email"
             placeholder="you@example.com"
@@ -48,9 +73,10 @@ export default function LoginContent() {
             value={password}
             onChange={event => setPassword(event.target.value)}
           />
+          {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
 
-          <button className={cx('submitButton')} disabled={!isValid} type="submit">
-            로그인
+          <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
+            {isPending ? '로그인 중...' : '로그인'}
           </button>
         </form>
 
