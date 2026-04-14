@@ -11,3 +11,8 @@ export interface IEmailVerityReq {
   email: string;
   code: string;
 }
+
+export interface IFindEmailResponse {
+  maskedEmail: string | null;
+  hasKakaoAccount: boolean;
+}
