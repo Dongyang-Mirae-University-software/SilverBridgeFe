@@ -27,7 +27,6 @@ export default function SignupForm() {
     setValue,
   } = useSignupForm();
 
-  const router = useRouter();
   const [isEmailCheck, setIsEmailCheck] = useState<boolean>(false);
 
   const [isCode, setIsCode] = useState<boolean>(false);

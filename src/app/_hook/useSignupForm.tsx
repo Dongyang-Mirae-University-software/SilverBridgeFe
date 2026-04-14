@@ -6,6 +6,7 @@ import { ISignupReq, RoleType } from '@/service/interface/auth';
 import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '../constant/pattern';
 import { useMutation } from '@tanstack/react-query';
 import { signup } from '@/service/api/auth';
+import { useRouter } from 'next/navigation';
 
 type FormData = {
   name: string;
@@ -87,6 +88,8 @@ export default function useSignupForm() {
     mutationFn: signup,
   });
 
+  const router = useRouter();
+
   function onSubmit(formData: ISignupReq) {
     const form: ISignupReq = {
       name: formData.name,
@@ -100,7 +103,9 @@ export default function useSignupForm() {
       onSuccess: () => {
         formDataInit();
       },
-      onError: () => {},
+      onError: () => {
+        router.push('/');
+      },
     });
   }
 
