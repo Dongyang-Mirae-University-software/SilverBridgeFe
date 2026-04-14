@@ -80,6 +80,12 @@ export default function LoginContent() {
           </button>
         </form>
 
+        <div className={cx('subActions')}>
+          <button className={cx('textButton')} type="button" onClick={() => router.push('/find-email')}>
+            이메일 찾기
+          </button>
+        </div>
+
         <div className={cx('footer')}>
           <span className={cx('footerText')}>아직 계정이 없나요?</span>
           <button className={cx('linkButton')} type="button" onClick={() => router.push('/signup')}>
