@@ -38,3 +38,8 @@ export async function smsSend(body: { phone: string }) {
 export async function login(body: { email: string; password: string }) {
   return apiClient.post<CommonResponse<null>>(`${AUTH_API_PATH}/login`, body);
 }
+
+// login
+export async function findEmail(body: { name: string; phone: string }) {
+  return apiClient.post<CommonResponse<{ email?: string } | string | null>>(`${AUTH_API_PATH}/find-email`, body);
+}
