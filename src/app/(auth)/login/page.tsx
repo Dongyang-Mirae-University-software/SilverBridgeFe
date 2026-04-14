@@ -1,5 +1,5 @@
-import SignupContent from './_component/SignupContent';
+import LoginContent from './_components/LoginContent';
 
-export default function Sginup() {
-  return <SignupContent />;
+export default function LoginPage() {
+  return <LoginContent />;
 }
