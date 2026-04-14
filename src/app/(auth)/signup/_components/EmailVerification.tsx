@@ -1,90 +1,107 @@
-import classNames from 'classnames/bind';
-import styles from './EmailVerification.module.css';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { eamaillSend, emailVerify } from '@/service/api/auth';
-import useContactForm from '@/app/_hook/useSignupForm';
+import classNames from 'classnames/bind';
+
+import TextInput from '@/app/_components/common/TextInput';
 import useTimer from '@/app/_hook/useTimer';
 import AuthTimer from '../../_components/AuthTimer';
-import TextInput from '@/app/_components/common/TextInput';
+import styles from './EmailVerification.module.css';
 
 const cx = classNames.bind(styles);
 
-type SignupFormHook = ReturnType<typeof useContactForm>;
-interface IProps {
-  signupForm: SignupFormHook;
-  onNext: () => void;
+interface VerificationPayload {
+  code: string;
 }
-export default function EmailVerification({ signupForm, onNext }: IProps) {
-  const [code, setCode] = useState<string>('');
-  const { getValues } = signupForm;
-  // TODO: 테스트를 위한 시간 설정, 추후 수정
-  const { formattedTime, isExpired, reset } = useTimer(10);
 
-  // const { openModal, closeModal } = useModalStore();
-  const { mutate } = useMutation({
-    mutationKey: ['eamaill-send'],
-    mutationFn: eamaillSend,
+interface EmailVerificationProps {
+  content: string;
+  errorText?: string;
+  label?: string;
+  onNext: () => void;
+  onSend: () => Promise<unknown>;
+  onVerify: (payload: VerificationPayload) => Promise<unknown>;
+}
+
+export default function EmailVerification({
+  content,
+  errorText = '인증번호가 올바르지 않습니다.',
+  label = '인증번호',
+  onNext,
+  onSend,
+  onVerify,
+}: EmailVerificationProps) {
+  const [code, setCode] = useState('');
+  const [localErrorMessage, setLocalErrorMessage] = useState('');
+  const { formattedTime, isExpired, reset } = useTimer(180);
+
+  const { mutate: sendMutate, isPending: isSending } = useMutation({
+    mutationKey: ['verification-send'],
+    mutationFn: onSend,
+    onError: (error: Error) => {
+      setLocalErrorMessage(error.message || '인증번호 전송에 실패했습니다.');
+    },
+    onSuccess: () => {
+      setLocalErrorMessage('');
+      reset();
+    },
   });
 
-  const {
-    mutate: verifyMutate,
-    isError,
-    data,
-  } = useMutation({
-    mutationKey: ['eamaill-verify'],
-    mutationFn: emailVerify,
-    onError: () => {
+  const { mutate: verifyMutate, isError, isPending: isVerifying } = useMutation({
+    mutationKey: ['verification-check'],
+    mutationFn: onVerify,
+    onError: (error: Error) => {
+      setLocalErrorMessage(error.message || errorText);
       setCode('');
     },
     onSuccess: () => {
+      setLocalErrorMessage('');
       onNext();
     },
   });
 
-  const handleVerify = async () => {
-    const body = {
-      email: getValues('email'),
-      code,
-    };
-
-    await verifyMutate(body);
+  const handleVerify = () => {
+    verifyMutate({ code });
   };
 
-  const handleResend = async () => {
-    await mutate({ email: getValues('email') });
-
-    reset();
+  const handleResend = () => {
+    sendMutate();
   };
 
-  const handleCode = (e: ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    if (code.length >= 6) return;
+  const handleCode = (event: ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    if (value.length > 6) return;
+    setLocalErrorMessage('');
     setCode(value);
   };
 
   useEffect(() => {
-    handleResend();
-  }, []);
+    sendMutate();
+  }, [sendMutate]);
 
   return (
     <>
-      <AuthTimer content="Enter the code sent to your email." time={formattedTime} isExpired={isExpired} />
+      <AuthTimer content={content} isExpired={isExpired} time={formattedTime} />
       <TextInput
-        error={Boolean(isError)}
-        errorText="틀렸어요"
-        label="code"
+        error={Boolean(isError || localErrorMessage)}
+        errorText={localErrorMessage || errorText}
+        label={label}
         maxLength={6}
+        placeholder="인증번호 6자리를 입력하세요."
         value={code}
         onChange={handleCode}
-        placeholder="코드를 입력하세요."
       />
-      <div className={cx('btn-wrap')}>
-        <button type="button" className={cx('btn-black')} disabled={code.length !== 6} onClick={handleVerify}>
-          <span>검증</span>
+      {localErrorMessage && <p className={cx('errorMessage')}>{localErrorMessage}</p>}
+      <div className={cx('btnWrap')}>
+        <button
+          className={cx('primaryButton')}
+          disabled={code.length !== 6 || isExpired || isVerifying}
+          type="button"
+          onClick={handleVerify}
+        >
+          {isVerifying ? '확인 중...' : '인증 확인'}
         </button>
-        <button type="button" className={cx('btn-line')} onClick={handleResend}>
-          <span>재전송</span>
+        <button className={cx('secondaryButton')} disabled={isSending} type="button" onClick={handleResend}>
+          {isSending ? '재전송 중...' : '인증번호 재전송'}
         </button>
       </div>
     </>
