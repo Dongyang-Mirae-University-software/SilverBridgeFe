@@ -52,8 +52,7 @@
 }
 
 .form,
-.verificationSection,
-.resultSection {
+.section {
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -74,13 +73,6 @@
 .errorMessage {
   margin: -8px 0 0;
   color: #dc2626;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.infoMessage {
-  margin: -8px 0 0;
-  color: #1d4ed8;
   font-size: 14px;
   line-height: 1.4;
 }
