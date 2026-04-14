@@ -10,14 +10,14 @@ export default function useFindEmailFlow() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<IFindEmailReq>({ name: '', phone: '' });
   const [errorMessage, setErrorMessage] = useState('');
-  const [result, setResult] = useState<IFindEmailResponse | null>(null);
+  const [result, setResult] = useState<IFindEmailResponse>();
 
   const requestMutation = useMutation({
     mutationKey: ['find-email'],
     mutationFn: findEmail,
     onSuccess: () => {
       setErrorMessage('');
-      setResult(null);
+      setResult(undefined);
       setStep(2);
     },
     onError: (error: Error) => setErrorMessage(error.message || '인증번호 요청에 실패했습니다.'),
@@ -28,7 +28,7 @@ export default function useFindEmailFlow() {
     mutationFn: findEmailVerify,
     onSuccess: response => {
       setErrorMessage('');
-      setResult(response.data);
+      setResult(response.data.data);
       setStep(3);
     },
     onError: (error: Error) => setErrorMessage(error.message || '인증번호를 확인해주세요.'),
