@@ -4,10 +4,6 @@ import classNames from 'classnames/bind';
 
 import styles from './SignupContent.module.css';
 import SignupForm from './SignupForm';
-import { useState } from 'react';
-import EmailVerification from './EmailVerification';
-import useSignupForm from '@/app/_hook/useSignupForm';
-import Step from '../../_components/Step';
 import { useRouter } from 'next/navigation';
 
 const cx = classNames.bind(styles);
