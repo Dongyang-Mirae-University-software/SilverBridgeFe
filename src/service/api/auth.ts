@@ -1,11 +1,5 @@
 import axios from 'axios';
-import {
-  IEmailVerityReq,
-  IFindEmailReq,
-  IFindEmailResponse,
-  IFindEmailVerifyReq,
-  ISignupReq,
-} from '../interface/auth';
+import { IEmailVerityReq, IFindEmailReq, IFindEmailResponse, IFindEmailVerifyReq, ISignupReq } from '../interface/auth';
 import { CommonResponse } from '../interface/common';
 import { apiClient } from '@/lib/api/apiClient';
 
@@ -45,7 +39,7 @@ export async function login(body: { email: string; password: string }) {
   return apiClient.post<CommonResponse<null>>(`${AUTH_API_PATH}/login`, body);
 }
 
-// login
+// find-email
 export async function findEmail(body: IFindEmailReq) {
   return apiClient.post<CommonResponse<IFindEmailResponse>>(`${AUTH_API_PATH}/find-email`, body);
 }
