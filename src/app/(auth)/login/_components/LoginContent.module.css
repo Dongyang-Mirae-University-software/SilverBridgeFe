@@ -84,6 +84,21 @@
   cursor: not-allowed;
 }
 
+.subActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.textButton {
+  border: none;
+  background: none;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .footer {
   display: flex;
   align-items: center;
