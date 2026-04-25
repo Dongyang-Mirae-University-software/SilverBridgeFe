@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { IEmailVerityReq, IFindEmailReq, IFindEmailResponse, IFindPasswordEmailSendReq, IFindPasswordEmailVerifyReq, IFindPasswordSmsSendReq, IFindPasswordSmsVerifyReq, IPasswordResetReq, IFindPasswordTokenResponse, ISignupReq } from '../interface/auth';
+import { IEmailVerityReq, IFindEmailReq, IFindEmailResponse, IFindPasswordEmailSendReq, IFindPasswordEmailVerifyReq, IFindPasswordSmsSendReq, IFindPasswordSmsVerifyReq, IPasswordResetReq, IFindPasswordTokenResponse, ISignupReq, IKakaoSigninReq, IKakaoSigninRes, IKakaoSignupReq, IKakaoSignupRes } from '../interface/auth';
 import { CommonResponse } from '../interface/common';
 import { apiClient } from '@/lib/api/apiClient';
 
@@ -73,4 +73,14 @@ export async function findPasswordSmsResend(body: IFindPasswordSmsSendReq) {
 // password reset
 export async function passwordReset(body: IPasswordResetReq) {
   return apiClient.post<CommonResponse<null>>(`${AUTH_API_PATH}/password/reset`, body);
+}
+
+// kakao login
+export async function signinKakao(body: IKakaoSigninReq) {
+  return apiClient.post<CommonResponse<IKakaoSigninRes['data']>>(`${AUTH_API_PATH}/signin/kakao`, body);
+}
+
+// kakao signup
+export async function signupKakao(body: IKakaoSignupReq) {
+  return apiClient.post<CommonResponse<IKakaoSignupRes['data']>>(`${AUTH_API_PATH}/signup/kakao`, body);
 }
