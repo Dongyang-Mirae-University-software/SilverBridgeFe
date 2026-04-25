@@ -5,12 +5,12 @@ import classNames from 'classnames/bind';
 import VerificationCodeForm from '@/app/(auth)/_components/VerificationCodeForm';
 import styles from './FindPasswordContent.module.css';
 
-const cx = classNames(bind);
+const cx = classNames.bind(styles);
 
 interface Props {
   errorMessage: string;
-  onResend: () => void;
-  onSubmit: (code: string) => void;
+  onResend: () => Promise<unknown>;
+  onSubmit: (code: string) => Promise<unknown>;
 }
 
 export default function FindPasswordVerifyStep({ errorMessage, onResend, onSubmit }: Props) {

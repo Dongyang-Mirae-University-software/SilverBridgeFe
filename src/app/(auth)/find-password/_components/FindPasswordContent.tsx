@@ -28,7 +28,7 @@ export default function FindPasswordContent() {
 
   const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await flow.sendEmail(flow.email);
+    await flow.sendEmail({ email: flow.email });
     flow.setStep(3);
   };
 
@@ -69,7 +69,7 @@ export default function FindPasswordContent() {
             isPending={flow.isSending}
             onChange={flow.setEmail}
             onSubmit={handleEmailSubmit}
-            onResend={flow.step > 2 ? () => flow.resendEmail(flow.email) : undefined}
+            onResend={flow.step > 2 ? () => flow.resendEmail({ email: flow.email }) : undefined}
           />
         )}
         {flow.step === 2 && flow.method === 'sms' && (
@@ -86,7 +86,7 @@ export default function FindPasswordContent() {
         {flow.step === 3 && (
           <FindPasswordVerifyStep
             errorMessage={flow.errorMessage}
-            onResend={flow.method === 'email' ? () => flow.resendEmail(flow.email) : () => flow.resendSms({ name: flow.name, phone: flow.phone })}
+            onResend={flow.method === 'email' ? () => flow.resendEmail({ email: flow.email }) : () => flow.resendSms({ name: flow.name, phone: flow.phone })}
             onSubmit={handleVerifySubmit}
           />
         )}
