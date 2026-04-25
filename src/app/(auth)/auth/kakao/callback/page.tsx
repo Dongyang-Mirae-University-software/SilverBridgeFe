@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { signinKakao } from '@/service/api/auth';
 
-export default function KakaoCallbackPage() {
+function KakaoCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
@@ -13,9 +13,9 @@ export default function KakaoCallbackPage() {
   const { mutate } = useMutation({
     mutationKey: ['kakaoSignin'],
     mutationFn: signinKakao,
-    onSuccess: (data) => {
+    onSuccess: (response: any) => {
+      const data = response.data;
       if (data.newUser) {
-        // 신규 회원: 회원가입 페이지로 이동, 데이터 전달
         const params = new URLSearchParams({
           kakaoId: data.kakaoId || '',
           email: data.email || '',
@@ -23,11 +23,14 @@ export default function KakaoCallbackPage() {
           profileImageUrl: data.profileImageUrl || '',
         });
         router.push(`/signup?${params.toString()}`);
-      } else {
-        // 기존 회원: 로그인 처리, 홈으로
-        // 토큰 저장 등 필요
-        router.push('/');
+        return;
       }
+
+      if (data.accessToken && data.refreshToken) {
+        localStorage.setItem('access_token', data.accessToken);
+        localStorage.setItem('refresh_token', data.refreshToken);
+      }
+      router.push('/');
     },
     onError: (error) => {
       console.error('카카오 로그인 실패:', error);
@@ -44,4 +47,12 @@ export default function KakaoCallbackPage() {
   }, [code, mutate, router]);
 
   return <div>카카오 로그인 처리 중...</div>;
+}
+
+export default function KakaoCallbackPage() {
+  return (
+    <Suspense fallback={<div>로딩 중...</div>}>
+      <KakaoCallbackContent />
+    </Suspense>
+  );
 }
