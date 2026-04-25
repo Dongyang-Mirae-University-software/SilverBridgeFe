@@ -3,6 +3,7 @@
 import { FormEvent } from 'react';
 import classNames from 'classnames/bind';
 
+import Step from '@/app/(auth)/_components/Step';
 import useFindEmailFlow from '../_hooks/useFindEmailFlow';
 import FindEmailInfoStep from './FindEmailInfoStep';
 import FindEmailResultStep from './FindEmailResultStep';
