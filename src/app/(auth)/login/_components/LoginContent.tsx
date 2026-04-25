@@ -43,6 +43,13 @@ export default function LoginContent() {
     });
   };
 
+  const handleKakaoLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID;
+    const redirectUri = `${window.location.origin}/auth/kakao/callback`;
+    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
+    window.location.href = kakaoAuthUrl;
+  };
+
   return (
     <section className={cx('container')}>
       <div className={cx('panel')}>
@@ -86,6 +93,12 @@ export default function LoginContent() {
           </button>
           <button className={cx('textButton')} type="button" onClick={() => router.push('/find-password')}>
             비밀번호 찾기
+          </button>
+        </div>
+
+        <div className={cx('socialLogin')}>
+          <button className={cx('kakaoButton')} type="button" onClick={handleKakaoLogin}>
+            카카오로 로그인
           </button>
         </div>
 
