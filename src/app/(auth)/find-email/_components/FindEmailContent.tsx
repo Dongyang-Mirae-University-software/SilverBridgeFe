@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 
 import Step from '@/app/(auth)/_components/Step';
@@ -14,6 +15,7 @@ const STEP_LIST = ['정보 입력', '결과 확인'];
 
 export default function FindEmailContent() {
   const flow = useFindEmailFlow();
+  const router = useRouter();
 
   const handleInfoSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -24,6 +26,9 @@ export default function FindEmailContent() {
     <section className={cx('container')}>
       <div className={cx('panel')}>
         <div className={cx('header')}>
+          <button className={cx('backButton')} type="button" onClick={() => router.back()}>
+            ← 뒤로 가기
+          </button>
           <p className={cx('eyebrow')}>Silver Bridge</p>
           <h1 className={cx('title')}>이메일 찾기</h1>
           <p className={cx('description')}>이름과 휴대폰 번호를 입력하세요.</p>
