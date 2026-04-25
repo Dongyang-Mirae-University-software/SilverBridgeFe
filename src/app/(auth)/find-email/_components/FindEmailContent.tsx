@@ -26,7 +26,7 @@ export default function FindEmailContent() {
     <section className={cx('container')}>
       <div className={cx('panel')}>
         <div className={cx('header')}>
-          <button className={cx('backButton')} type="button" onClick={() => router.back()}>
+          <button className={cx('backButton')} type="button" onClick={() => router.push('/login')}>
             ← 뒤로 가기
           </button>
           <p className={cx('eyebrow')}>Silver Bridge</p>
