@@ -40,7 +40,7 @@ export default function FindEmailInfoStep({ errorMessage, form, isPending, onCha
       />
       {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
       <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
-        인증번호 받기
+        이메일 찾기
       </button>
     </form>
   );
