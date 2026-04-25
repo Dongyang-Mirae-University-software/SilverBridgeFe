@@ -84,6 +84,9 @@ export default function LoginContent() {
           <button className={cx('textButton')} type="button" onClick={() => router.push('/find-email')}>
             이메일 찾기
           </button>
+          <button className={cx('textButton')} type="button" onClick={() => router.push('/find-password')}>
+            비밀번호 찾기
+          </button>
         </div>
 
         <div className={cx('footer')}>
