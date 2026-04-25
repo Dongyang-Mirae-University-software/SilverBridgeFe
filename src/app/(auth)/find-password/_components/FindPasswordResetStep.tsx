@@ -6,7 +6,7 @@ import classNames from 'classnames/bind';
 import TextInput from '@/app/_components/common/TextInput';
 import styles from './FindPasswordContent.module.css';
 
-const cx = classNames(bind);
+const cx = classNames.bind(styles);
 
 interface Props {
   errorMessage: string;

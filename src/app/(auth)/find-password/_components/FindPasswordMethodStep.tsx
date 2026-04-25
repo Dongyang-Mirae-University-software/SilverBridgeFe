@@ -5,7 +5,7 @@ import classNames from 'classnames/bind';
 
 import styles from './FindPasswordContent.module.css';
 
-const cx = classNames(bind);
+const cx = classNames.bind(styles);
 
 type Method = 'email' | 'sms';
 
