@@ -38,7 +38,7 @@ export default function FindEmailContent() {
             onSubmit={handleInfoSubmit}
           />
         )}
-        {flow.step === 2 && flow.result && <FindEmailResultStep result={flow.result} />}
+        {flow.step === 2 && flow.result && <FindEmailResultStep result={flow.result} onBack={() => flow.setStep(1)} />}
       </div>
     </section>
   );
