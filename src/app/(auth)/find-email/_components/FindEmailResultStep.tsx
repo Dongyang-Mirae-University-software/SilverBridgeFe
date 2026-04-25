@@ -11,13 +11,14 @@ const cx = classNames.bind(styles);
 
 interface Props {
   result: IFindEmailResponse;
+  onBack?: () => void;
 }
 
-export default function FindEmailResultStep({ result }: Props) {
+export default function FindEmailResultStep({ result, onBack }: Props) {
   return (
     <div className={cx('section')}>
       <FindEmailResultDisplay result={result} />
-      <FindEmailResultActions />
+      <FindEmailResultActions onBack={onBack} />
     </div>
   );
 }
