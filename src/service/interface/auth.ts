@@ -21,7 +21,3 @@ export interface IFindEmailReq {
   name: string;
   phone: string;
 }
-
-export interface IFindEmailVerifyReq extends IFindEmailReq {
-  code: string;
-}
