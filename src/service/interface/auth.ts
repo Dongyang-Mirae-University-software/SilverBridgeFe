@@ -21,3 +21,30 @@ export interface IFindEmailReq {
   name: string;
   phone: string;
 }
+
+export interface IFindPasswordEmailSendReq {
+  email: string;
+}
+
+export interface IFindPasswordEmailVerifyReq {
+  token: string;
+}
+
+export interface IFindPasswordSmsSendReq {
+  name: string;
+  phone: string;
+}
+
+export interface IFindPasswordSmsVerifyReq {
+  phone: string;
+  code: string;
+}
+
+export interface IPasswordResetReq {
+  token: string;
+  newPassword: string;
+}
+
+export interface IFindPasswordTokenResponse {
+  token: string;
+}
