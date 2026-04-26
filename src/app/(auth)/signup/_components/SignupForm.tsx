@@ -96,8 +96,21 @@ export default function SignupForm({ isKakao = false, kakaoData }: SignupFormPro
 
   const { mutate: signupMutate } = useMutation({
     mutationKey: ['signup'],
-    mutationFn: isKakao ? signupKakao : signup,
+    mutationFn: signup,
     onSuccess: () => {
+      router.push('/');
+    },
+    onError: () => {},
+  });
+
+  const { mutate: signupKakaoMutate } = useMutation({
+    mutationKey: ['signup-kakao'],
+    mutationFn: signupKakao,
+    onSuccess: (response: any) => {
+      if (response.data.accessToken && response.data.refreshToken) {
+        localStorage.setItem('access_token', response.data.accessToken);
+        localStorage.setItem('refresh_token', response.data.refreshToken);
+      }
       router.push('/');
     },
     onError: () => {},
@@ -214,7 +227,7 @@ export default function SignupForm({ isKakao = false, kakaoData }: SignupFormPro
         address: data.address,
         addressDetail: data.addressDetail,
       };
-      signupMutate(kakaoSignupData);
+      signupKakaoMutate(kakaoSignupData);
     } else {
       const signupData = {
         name: data.name,
