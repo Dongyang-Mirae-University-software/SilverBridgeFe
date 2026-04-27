@@ -1,209 +1,65 @@
 import classNames from 'classnames/bind';
-import { useForm } from 'react-hook-form';
 
 import styles from './SignupForm.module.css';
 import TextInput from '@/app/_components/common/TextInput';
-import { emailCheck, smsSend, smsVerify, signup, signupKakao } from '@/service/api/auth';
-import { useRouter } from 'next/navigation';
+import useSignupForm from '@/app/_hook/useSignupForm';
+import { emailCheck, smsSend, smsVerify } from '@/service/api/auth';
 import { useMutation } from '@tanstack/react-query';
-import { ChangeEvent } from 'react';
-import { useState } from 'react';
-import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '@/app/constant/pattern';
-import { RoleType } from '@/service/interface/auth';
+import { ChangeEvent, useState } from 'react';
 
 const cx = classNames.bind(styles);
 
-interface KakaoData {
-  kakaoId: string;
-  email: string;
-  name: string;
-  profileImageUrl?: string;
-}
-
-interface SignupFormProps {
-  isKakao?: boolean;
-  kakaoData?: KakaoData;
-}
-
-interface FormData {
-  name: string;
-  email: string;
-  password: string;
-  passwordCheck: string;
-  phone: string;
-  role: RoleType;
-  address: string;
-  addressDetail: string;
-}
-
-export default function SignupForm({ isKakao = false, kakaoData }: SignupFormProps) {
+export default function SignupForm() {
   const {
     register,
-    handleSubmit,
+    onSubmit,
     formState: { errors, isValid },
-    setValue,
-    watch,
     getValues,
-  } = useForm<FormData>({
-    mode: 'all',
-    defaultValues: {
-      name: kakaoData?.name || '',
-      email: kakaoData?.email || '',
-      password: '',
-      passwordCheck: '',
-      phone: '',
-      role: 'WARD',
-      address: '',
-      addressDetail: '',
-    },
-  });
+    setValue,
+    emailRules,
+    passwordRules,
+    passwordCheckRules,
+    phoneRules,
+    textRules,
+    allValues,
+  } = useSignupForm();
 
-  const allValues = watch();
-
-  const [isEmailCheck, setIsEmailCheck] = useState<boolean>(isKakao);
-  const [isCode, setIsCode] = useState<boolean>(false);
-  const [smsCode, setSmsCode] = useState<string>('');
-  const [isSmsCheck, setIsSmsCheck] = useState<boolean>(false);
+  const [isEmailCheck, setIsEmailCheck] = useState(false);
+  const [isCode, setIsCode] = useState(false);
+  const [smsCode, setSmsCode] = useState('');
+  const [isSmsCheck, setIsSmsCheck] = useState(false);
 
   const { mutate: emailCheckMutate } = useMutation({
     mutationKey: ['email-check'],
     mutationFn: emailCheck,
-    onError: () => {
-      setIsEmailCheck(false);
-    },
-    onSuccess: () => {
-      setIsEmailCheck(true);
-    },
+    onError: () => setIsEmailCheck(false),
+    onSuccess: () => setIsEmailCheck(true),
   });
 
   const { mutate: smsSendMutate } = useMutation({
     mutationKey: ['sms-send'],
     mutationFn: smsSend,
     onError: () => {},
-    onSuccess: () => {
-      setIsCode(true);
-    },
+    onSuccess: () => setIsCode(true),
   });
 
   const { mutate: smsVerifyMutate, isError } = useMutation({
     mutationKey: ['sms-verify'],
     mutationFn: smsVerify,
     onError: () => {},
-    onSuccess: () => {
-      setIsSmsCheck(true);
-    },
-  });
-
-  const { mutate: signupMutate } = useMutation({
-    mutationKey: ['signup'],
-    mutationFn: signup,
-    onSuccess: () => {
-      router.push('/');
-    },
-    onError: () => {},
-  });
-
-  const { mutate: signupKakaoMutate } = useMutation({
-    mutationKey: ['signup-kakao'],
-    mutationFn: signupKakao,
-    onSuccess: (response: any) => {
-      if (response.data.accessToken && response.data.refreshToken) {
-        localStorage.setItem('access_token', response.data.accessToken);
-        localStorage.setItem('refresh_token', response.data.refreshToken);
-      }
-      router.push('/');
-    },
-    onError: () => {},
-  });
-
-  const router = useRouter();
-
-  const isEmpty = (value: string) => !value || value.trim() === '';
-
-  const textRules = (message: string, min = 2) => ({
-    validate: (value: string) => {
-      if (isEmpty(value)) return true;
-      if (value.trim().length < min) return message;
-      return true;
-    },
-    required: {
-      value: true,
-      message,
-    },
-  });
-
-  const emailRules = (message: string) => ({
-    validate: (value: string) => {
-      if (isEmpty(value)) return true;
-      if (!EMAIL_PATTRERN.test(value)) return message;
-      return true;
-    },
-    required: {
-      value: !isKakao,
-      message,
-    },
-  });
-
-  const passwordRules = (message: string) => ({
-    validate: (value: string) => {
-      if (isEmpty(value)) return true;
-      if (!PASSWORD_PATTRERN.test(value)) return message;
-      return true;
-    },
-    required: {
-      value: !isKakao,
-      message,
-    },
-  });
-
-  const passwordCheckRules = (message: string) => ({
-    validate: (value: string) => {
-      if (isEmpty(value)) return true;
-      if (!PASSWORD_PATTRERN.test(value)) return message;
-      if (value !== getValues('password')) return '비밀번호가 일치하지 않습니다';
-      return true;
-    },
-    required: {
-      value: !isKakao,
-      message,
-    },
-  });
-
-  const phoneRules = (message: string) => ({
-    validate: (value: string) => {
-      if (isEmpty(value)) return true;
-      if (!PHONE_PATTRERN.test(value)) return message;
-      return true;
-    },
-    required: {
-      value: true,
-      message,
-    },
-  });
-
-  const addressRules = (message: string) => ({
-    validate: (value: string) => {
-      if (isEmpty(value)) return true;
-      return true;
-    },
-    required: {
-      value: isKakao,
-      message,
-    },
+    onSuccess: () => setIsSmsCheck(true),
   });
 
   const handleEmailCheck = () => {
-    if (!isKakao) {
-      emailCheckMutate({ email: getValues('email') });
-    }
+    emailCheckMutate({ email: getValues('email') });
   };
 
   const handlePhoneCheck = () => {
     smsSendMutate({ phone: getValues('phone') });
   };
 
-  const handleCode = (e: ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
+  const handleCode = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
     if (value.length <= 6) setSmsCode(value);
   };
 
@@ -216,79 +72,47 @@ export default function SignupForm({ isKakao = false, kakaoData }: SignupFormPro
     smsVerifyMutate({ code: smsCode, phone: getValues('phone') });
   };
 
-  const onSubmit = handleSubmit((data) => {
-    if (isKakao) {
-      const kakaoSignupData = {
-        kakaoId: kakaoData!.kakaoId,
-        name: data.name,
-        phone: data.phone,
-        role: data.role,
-        profileImageUrl: kakaoData!.profileImageUrl,
-        address: data.address,
-        addressDetail: data.addressDetail,
-      };
-      signupKakaoMutate(kakaoSignupData);
-    } else {
-      const signupData = {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        phone: data.phone,
-        role: data.role,
-      };
-      signupMutate(signupData);
-    }
-  });
-
-  const submitDisabled = !isValid || (!isKakao && !isEmailCheck) || !isSmsCheck;
-
   return (
     <form className={cx('container')} onSubmit={onSubmit}>
-      {!isKakao && (
-        <TextInput
-          label={'이메일'}
-          placeholder={'이메일을 입력 해주세요'}
-          required
-          {...register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
-          onBlur={handleEmailCheck}
-          error={
-            Boolean(errors.email && allValues.email && allValues.email.trim() !== '') ||
-            (!isEmailCheck && !!getValues('email').length)
-          }
-          errorText={errors.email?.message ?? '이메일이 중복되었습니다.'}
-        />
-      )}
-      {!isKakao && (
-        <TextInput
-          label={'비밀번호'}
-          placeholder={'비밀번호를 입력하세요'}
-          required
-          {...register('password', passwordRules('비밀번호 형식이 올바르지 않습니다.'))}
-          error={Boolean(errors.password && allValues.password && allValues.password.trim() !== '')}
-          errorText={errors.password?.message}
-        />
-      )}
-      {!isKakao && (
-        <TextInput
-          label={'비밀번호 확인'}
-          placeholder={'비밀번호를 다시 입력하세요'}
-          required
-          {...register('passwordCheck', passwordCheckRules('비밀번호가 일치하지 않습니다.'))}
-          error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
-          errorText={errors.passwordCheck?.message}
-        />
-      )}
       <TextInput
-        label={'이름'}
-        placeholder={'이름을 입력하세요'}
+        label="이메일"
+        placeholder="이메일을 입력 해주세요"
+        required
+        {...register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
+        onBlur={handleEmailCheck}
+        error={
+          Boolean(errors.email && allValues.email && allValues.email.trim() !== '') ||
+          (!isEmailCheck && !!getValues('email').length)
+        }
+        errorText={errors.email?.message ?? '이메일이 중복되었습니다.'}
+      />
+      <TextInput
+        label="비밀번호"
+        placeholder="비밀번호를 입력하세요"
+        required
+        {...register('password', passwordRules('비밀번호 형식이 올바르지 않습니다.'))}
+        error={Boolean(errors.password && allValues.password && allValues.password.trim() !== '')}
+        errorText={errors.password?.message}
+      />
+      <TextInput
+        label="비밀번호 확인"
+        placeholder="비밀번호를 다시 입력하세요"
+        required
+        {...register('passwordCheck', passwordCheckRules('비밀번호가 일치하지 않습니다.'))}
+        error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
+        errorText={errors.passwordCheck?.message}
+      />
+      <TextInput
+        label="이름"
+        placeholder="이름을 입력하세요"
         required
         {...register('name', textRules('이름을 입력하세요.', 2))}
         error={Boolean(errors.name && allValues.name && allValues.name.trim() !== '')}
         errorText={errors.name?.message}
       />
       <TextInput
-        label={'전화번호'}
-        placeholder={'전화번호를 입력하세요'}
+        label="전화번호"
+        placeholder="전화번호를 입력하세요"
         required
         {...register('phone', phoneRules('전화번호 형식이 올바르지 않습니다.'))}
         error={Boolean(errors.phone && allValues.phone && allValues.phone.trim() !== '')}
@@ -317,23 +141,6 @@ export default function SignupForm({ isKakao = false, kakaoData }: SignupFormPro
           </button>
         </>
       )}
-      {isKakao && (
-        <TextInput
-          label={'주소'}
-          placeholder={'주소를 입력하세요'}
-          required
-          {...register('address', addressRules('주소를 입력하세요.'))}
-          error={Boolean(errors.address && allValues.address && allValues.address.trim() !== '')}
-          errorText={errors.address?.message}
-        />
-      )}
-      {isKakao && (
-        <TextInput
-          label={'상세 주소'}
-          placeholder={'상세 주소를 입력하세요'}
-          {...register('addressDetail')}
-        />
-      )}
       <div>
         <label className={cx('radio')} htmlFor="WARD">
           <input id="WARD" type="radio" value="WARD" {...register('role')} defaultChecked />
@@ -344,7 +151,7 @@ export default function SignupForm({ isKakao = false, kakaoData }: SignupFormPro
           <span>보호자</span>
         </label>
       </div>
-      <button className={cx('button')} disabled={submitDisabled} type="submit">
+      <button className={cx('button')} disabled={!isValid || !isEmailCheck || !isSmsCheck} type="submit">
         회원가입 완료
       </button>
     </form>
