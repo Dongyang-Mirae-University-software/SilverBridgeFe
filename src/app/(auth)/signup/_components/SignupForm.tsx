@@ -76,7 +76,7 @@ export default function SignupForm() {
     <form className={cx('container')} onSubmit={onSubmit}>
       <TextInput
         label="이메일"
-        placeholder="이메일을 입력 해주세요"
+        placeholder="이메일을 입력해주세요"
         required
         {...register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
         onBlur={handleEmailCheck}
@@ -119,12 +119,14 @@ export default function SignupForm() {
         disabled={isCode}
         errorText={errors.phone?.message}
       />
-      <button type="button" onClick={handlePhoneCheck}>
-        인증번호 전송
-      </button>
-      <button type="button" onClick={handlePhoneReset}>
-        재설정
-      </button>
+      <div className={cx('actionRow')}>
+        <button className={cx('secondaryButton')} type="button" onClick={handlePhoneCheck}>
+          인증번호 전송
+        </button>
+        <button className={cx('secondaryButton')} type="button" onClick={handlePhoneReset}>
+          재설정
+        </button>
+      </div>
       {isCode && (
         <>
           <TextInput
@@ -134,14 +136,14 @@ export default function SignupForm() {
             maxLength={6}
             value={smsCode}
             onChange={handleCode}
-            placeholder="인증번호를 입력하세요."
+            placeholder="인증번호를 입력하세요"
           />
-          <button type="button" onClick={handleSmsVerify}>
+          <button className={cx('secondaryButton')} type="button" onClick={handleSmsVerify}>
             인증 확인
           </button>
         </>
       )}
-      <div>
+      <div className={cx('radioGroup')}>
         <label className={cx('radio')} htmlFor="WARD">
           <input id="WARD" type="radio" value="WARD" {...register('role')} defaultChecked />
           <span>노인</span>

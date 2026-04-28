@@ -128,12 +128,14 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
         errorText={errors.phone?.message}
         disabled={isCode}
       />
-      <button type="button" onClick={handlePhoneCheck}>
-        인증번호 전송
-      </button>
-      <button type="button" onClick={handlePhoneReset}>
-        재설정
-      </button>
+      <div className={cx('actionRow')}>
+        <button className={cx('secondaryButton')} type="button" onClick={handlePhoneCheck}>
+          인증번호 전송
+        </button>
+        <button className={cx('secondaryButton')} type="button" onClick={handlePhoneReset}>
+          재설정
+        </button>
+      </div>
       {isCode && (
         <>
           <TextInput
@@ -145,14 +147,14 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
             error={Boolean(isError)}
             errorText="인증번호가 올바르지 않습니다."
           />
-          <button type="button" onClick={handleSmsVerify}>
+          <button className={cx('secondaryButton')} type="button" onClick={handleSmsVerify}>
             인증 확인
           </button>
         </>
       )}
       <TextInput label="주소" placeholder="주소를 입력하세요" {...register('address', requiredRule('주소를 입력하세요.'))} error={Boolean(errors.address)} errorText={errors.address?.message} />
       <TextInput label="상세 주소" placeholder="상세 주소를 입력하세요" {...register('addressDetail')} />
-      <div>
+      <div className={cx('radioGroup')}>
         <label className={cx('radio')} htmlFor="WARD">
           <input id="WARD" type="radio" value="WARD" {...register('role')} defaultChecked />
           <span>노인</span>
