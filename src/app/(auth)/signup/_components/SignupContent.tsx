@@ -37,14 +37,22 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
     : undefined;
 
   return (
-    <div className={cx('sign-wrap')}>
-      <div>
-        <h1> 회원가입</h1>
+    <section className={cx('container')}>
+      <div className={cx('panel')}>
+        <div className={cx('header')}>
+          <p className={cx('eyebrow')}>Silver Bridge</p>
+          <h1 className={cx('title')}>회원가입</h1>
+          <p className={cx('description')}>안전한 회원가입을 위해 필요한 정보를 입력해주세요.</p>
+        </div>
+
+        <div className={cx('content')}>
+          {isKakao && kakaoData ? <KakaoSignupForm kakaoData={kakaoData} /> : <SignupForm />}
+        </div>
+
+        <button className={cx('backButton')} type="button" onClick={() => router.push('/login')}>
+          돌아가기
+        </button>
       </div>
-      <div className={cx('contnet')}>
-        {isKakao && kakaoData ? <KakaoSignupForm kakaoData={kakaoData} /> : <SignupForm />}
-      </div>
-      <button onClick={() => router.push('/login')}>뒤로 가기</button>
-    </div>
+    </section>
   );
 }
