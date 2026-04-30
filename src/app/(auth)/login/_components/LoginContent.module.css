@@ -59,6 +59,13 @@
   line-height: 1.4;
 }
 
+.primaryActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
 .submitButton,
 .kakaoButton {
   width: 100%;
@@ -93,29 +100,33 @@
   background: #f8e71c;
 }
 
-.subActions {
+.secondaryActions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-
-.textButton,
-.linkButton {
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-top: 18px;
 }
 
 .textButton {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+  transition: color 0.2s ease;
+}
+
+.textButton:hover {
   color: #475569;
 }
 
-.linkButton {
-  color: #2563eb;
+.separator {
+  color: #cbd5e1;
+  margin: 0 4px;
+  font-weight: 300;
 }
 
 .footer {
@@ -123,12 +134,27 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 24px;
+  margin-top: 28px;
 }
 
 .footerText {
-  color: #64748b;
+  color: #94a3b8;
   font-size: 14px;
+}
+
+.signupLink {
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.2s ease;
+}
+
+.signupLink:hover {
+  opacity: 0.8;
 }
 
 @media (max-width: 640px) {
