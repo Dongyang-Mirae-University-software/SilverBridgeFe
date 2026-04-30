@@ -82,29 +82,29 @@ export default function LoginContent() {
           />
           {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
 
-          <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
-            {isPending ? '로그인 중...' : '로그인'}
-          </button>
+          <div className={cx('primaryActions')}>
+            <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
+              {isPending ? '로그인 중...' : '로그인'}
+            </button>
+            <button className={cx('kakaoButton')} type="button" onClick={handleKakaoLogin}>
+              카카오로 로그인
+            </button>
+          </div>
         </form>
 
-        <div className={cx('subActions')}>
+        <div className={cx('secondaryActions')}>
           <button className={cx('textButton')} type="button" onClick={() => router.push('/find-email')}>
             이메일 찾기
           </button>
+          <span className={cx('separator')}>·</span>
           <button className={cx('textButton')} type="button" onClick={() => router.push('/find-password')}>
             비밀번호 찾기
           </button>
         </div>
 
-        <div className={cx('socialLogin')}>
-          <button className={cx('kakaoButton')} type="button" onClick={handleKakaoLogin}>
-            카카오로 로그인
-          </button>
-        </div>
-
         <div className={cx('footer')}>
           <span className={cx('footerText')}>아직 계정이 없나요?</span>
-          <button className={cx('linkButton')} type="button" onClick={() => router.push('/signup')}>
+          <button className={cx('signupLink')} type="button" onClick={() => router.push('/signup')}>
             회원가입
           </button>
         </div>
