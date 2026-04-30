@@ -25,6 +25,7 @@ export default function SignupForm() {
   } = useSignupForm();
 
   const [isEmailCheck, setIsEmailCheck] = useState(false);
+  const [isEmailTouched, setIsEmailTouched] = useState(false);
   const [isCode, setIsCode] = useState(false);
   const [smsCode, setSmsCode] = useState('');
   const [isSmsCheck, setIsSmsCheck] = useState(false);
@@ -51,6 +52,7 @@ export default function SignupForm() {
   });
 
   const handleEmailCheck = () => {
+    setIsEmailTouched(true);
     emailCheckMutate({ email: getValues('email') });
   };
 
@@ -72,6 +74,10 @@ export default function SignupForm() {
     smsVerifyMutate({ code: smsCode, phone: getValues('phone') });
   };
 
+  const emailError =
+    (errors.email && allValues.email && allValues.email.trim() !== '') ||
+    (isEmailTouched && !isEmailCheck && !!getValues('email').length);
+
   return (
     <form className={cx('container')} onSubmit={onSubmit}>
       <TextInput
@@ -80,11 +86,8 @@ export default function SignupForm() {
         required
         {...register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
         onBlur={handleEmailCheck}
-        error={
-          Boolean(errors.email && allValues.email && allValues.email.trim() !== '') ||
-          (!isEmailCheck && !!getValues('email').length)
-        }
-        errorText={errors.email?.message ?? '이메일이 중복되었습니다.'}
+        error={emailError}
+        errorText={emailError ? (errors.email?.message ?? '이메일이 중복되었습니다.') : undefined}
       />
       <TextInput
         label="비밀번호"
@@ -131,7 +134,7 @@ export default function SignupForm() {
         <>
           <TextInput
             error={Boolean(isError)}
-            errorText="인증번호가 올바르지 않습니다."
+            errorText={isError ? '인증번호가 올바르지 않습니다.' : undefined}
             label="인증번호"
             maxLength={6}
             value={smsCode}

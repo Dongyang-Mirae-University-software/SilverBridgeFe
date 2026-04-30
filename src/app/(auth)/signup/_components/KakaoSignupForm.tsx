@@ -145,7 +145,7 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
             value={smsCode}
             onChange={handleCodeChange}
             error={Boolean(isError)}
-            errorText="인증번호가 올바르지 않습니다."
+            errorText={isError ? '인증번호가 올바르지 않습니다.' : undefined}
           />
           <button className={cx('secondaryButton')} type="button" onClick={handleSmsVerify}>
             인증 확인
