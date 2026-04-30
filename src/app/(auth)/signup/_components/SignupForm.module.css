@@ -72,12 +72,52 @@
 }
 
 @media (max-width: 640px) {
+  .container {
+    gap: 16px;
+  }
+
   .actionRow {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
 
   .secondaryButton {
     width: 100%;
+    min-height: 48px;
+  }
+
+  .radioGroup {
+    gap: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    gap: 20px;
+  }
+
+  .button,
+  .secondaryButton {
+    min-height: 56px;
+    font-size: 16px;
+  }
+
+  .actionRow {
+    gap: 14px;
+  }
+
+  .secondaryButton {
+    min-width: 160px;
+  }
+
+  .radio {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    gap: 22px;
   }
 }
