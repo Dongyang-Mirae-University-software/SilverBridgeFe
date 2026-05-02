@@ -1,10 +1,20 @@
 .signup-layout {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 34%),
+    linear-gradient(180deg, #f8fafc 0%, #eef4f8 100%);
 }
 
 .content {
-  width: fit-content;
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  margin: 64px auto;
+  width: min(100%, 680px);
+  margin: 48px auto;
+  padding: 0 16px;
+}
+
+@media (max-width: 640px) {
+  .content {
+    margin: 24px auto;
+    width: 100%;
+  }
 }
