@@ -10,7 +10,7 @@
 
 .panel {
   width: 100%;
-  max-width: 560px;
+  max-width: 620px;
   padding: 40px 32px;
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.96);
@@ -93,7 +93,7 @@
 
 @media (min-width: 768px) {
   .panel {
-    max-width: 580px;
+    max-width: 620px;
     padding: 48px 40px;
   }
 
@@ -117,6 +117,6 @@
   }
 
   .panel {
-    max-width: 600px;
+    max-width: 620px;
   }
 }
