@@ -37,22 +37,27 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
     : undefined;
 
   return (
-    <section className={cx('container')}>
-      <div className={cx('panel')}>
-        <div className={cx('header')}>
-          <p className={cx('eyebrow')}>Silver Bridge</p>
-          <h1 className={cx('title')}>회원가입</h1>
-          <p className={cx('description')}>안전한 회원가입을 위해 필요한 정보를 입력해주세요.</p>
-        </div>
+    <>
+      <div className={cx('progress')} aria-hidden="true">
+        <span />
+        <span />
+      </div>
 
-        <div className={cx('content')}>
-          {isKakao && kakaoData ? <KakaoSignupForm kakaoData={kakaoData} /> : <SignupForm />}
-        </div>
+      <div className={cx('header')}>
+        <h1 className={cx('title')}>회원가입</h1>
+        <p className={cx('description')}>{isKakao ? '전화번호 인증으로 마무리할게요' : '기본 정보를 입력해 주세요'}</p>
+      </div>
 
-        <button className={cx('backButton')} type="button" onClick={() => router.push('/login')}>
-          돌아가기
+      <div className={cx('content')}>
+        {isKakao && kakaoData ? <KakaoSignupForm kakaoData={kakaoData} /> : <SignupForm />}
+      </div>
+
+      <div className={cx('footer')}>
+        이미 계정이 있으신가요?{' '}
+        <button className={cx('loginLink')} type="button" onClick={() => router.push('/login')}>
+          로그인
         </button>
       </div>
-    </section>
+    </>
   );
 }
