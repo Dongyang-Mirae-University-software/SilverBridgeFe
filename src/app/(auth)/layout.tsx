@@ -1,17 +1,9 @@
-import classNames from 'classnames/bind';
-
-import styles from './layout.module.css';
-
-const cx = classNames.bind(styles);
+import AuthShell from './_components/AuthShell';
 
 export default function Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <div className={cx('signup-layout')}>
-      <div className={cx('content')}>{children}</div>
-    </div>
-  );
+  return <AuthShell>{children}</AuthShell>;
 }
