@@ -10,7 +10,7 @@ import styles from './SignupForm.module.css';
 import TextInput from '@/app/_components/common/TextInput';
 import { signupKakao, smsSend, smsVerify } from '@/service/api/auth';
 import { PHONE_PATTRERN } from '@/app/constant/pattern';
-import { RoleType } from '@/service/interface/auth';
+import { IKakaoSignupRes, RoleType } from '@/service/interface/auth';
 
 const cx = classNames.bind(styles);
 
@@ -30,6 +30,15 @@ type FormData = {
   address: string;
   addressDetail: string;
 };
+
+type KakaoSignupData = IKakaoSignupRes['data'];
+
+function getKakaoSignupData(response: unknown): KakaoSignupData {
+  const data = (response as { data?: unknown }).data;
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+
+  return (nestedData ?? data ?? response) as KakaoSignupData;
+}
 
 const requiredRule = (message: string) => ({
   required: { value: true, message },
@@ -83,10 +92,12 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
   const { mutate: signupKakaoMutate } = useMutation({
     mutationKey: ['kakao-signup'],
     mutationFn: signupKakao,
-    onSuccess: (response: any) => {
-      if (response.data.accessToken && response.data.refreshToken) {
-        localStorage.setItem('access_token', response.data.accessToken);
-        localStorage.setItem('refresh_token', response.data.refreshToken);
+    onSuccess: response => {
+      const data = getKakaoSignupData(response);
+
+      if (data.accessToken && data.refreshToken) {
+        localStorage.setItem('access_token', data.accessToken);
+        localStorage.setItem('refresh_token', data.refreshToken);
       }
       router.push('/');
     },
