@@ -4,6 +4,16 @@ import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { signinKakao } from '@/service/api/auth';
+import { IKakaoSigninRes } from '@/service/interface/auth';
+
+type KakaoSigninData = IKakaoSigninRes['data'];
+
+function getKakaoSigninData(response: unknown): KakaoSigninData {
+  const data = (response as { data?: unknown }).data;
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+
+  return (nestedData ?? data ?? response) as KakaoSigninData;
+}
 
 function KakaoCallbackContent() {
   const router = useRouter();
@@ -13,8 +23,8 @@ function KakaoCallbackContent() {
   const { mutate } = useMutation({
     mutationKey: ['kakaoSignin'],
     mutationFn: signinKakao,
-    onSuccess: (response: any) => {
-      const data = response.data;
+    onSuccess: response => {
+      const data = getKakaoSigninData(response);
       if (data.newUser) {
         const params = new URLSearchParams({
           kakaoId: data.kakaoId || '',
