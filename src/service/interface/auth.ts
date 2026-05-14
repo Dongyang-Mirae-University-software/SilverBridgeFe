@@ -1,53 +1,9 @@
 export type RoleType = 'WARD' | 'GUARDIAN';
-export interface ISignupReq {
-  name: string;
+
+// ── 인증 ──────────────────────────────────────────────────────────────────────
+export interface ISigninReq {
   email: string;
   password: string;
-  phone: string;
-  role: RoleType;
-}
-
-export interface IEmailVerityReq {
-  email: string;
-  code: string;
-}
-
-export interface IFindEmailResponse {
-  maskedEmail: string | null;
-  hasKakaoAccount: boolean;
-  createdAt?: string | null;
-}
-
-export interface IFindEmailReq {
-  name: string;
-  phone: string;
-}
-
-export interface IFindPasswordEmailSendReq {
-  email: string;
-}
-
-export interface IFindPasswordEmailVerifyReq {
-  token: string;
-}
-
-export interface IFindPasswordSmsSendReq {
-  name: string;
-  phone: string;
-}
-
-export interface IFindPasswordSmsVerifyReq {
-  phone: string;
-  code: string;
-}
-
-export interface IPasswordResetReq {
-  token: string;
-  newPassword: string;
-}
-
-export interface IFindPasswordTokenResponse {
-  token: string;
 }
 
 export interface IKakaoSigninReq {
@@ -67,7 +23,16 @@ export interface IKakaoSigninRes {
     userId?: string;
     role?: string;
     newUser: boolean;
-  }
+  };
+}
+
+// ── 회원가입 ──────────────────────────────────────────────────────────────────
+export interface ISignupReq {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  role: RoleType;
 }
 
 export interface IKakaoSignupReq {
@@ -90,5 +55,46 @@ export interface IKakaoSignupRes {
     email: string;
     name: string;
     role: string;
-  }
+  };
+}
+
+// ── 아이디(이메일) 찾기 ────────────────────────────────────────────────────────
+export interface IFindEmailReq {
+  name: string;
+  phone: string;
+}
+
+export interface IFindEmailResponse {
+  maskedEmail: string | null;
+  hasKakaoAccount: boolean;
+  createdAt?: string | null;
+}
+
+// ── 비밀번호 찾기 ─────────────────────────────────────────────────────────────
+export interface IFindPasswordEmailSendReq {
+  email: string;
+}
+
+export interface IFindPasswordEmailVerifyReq {
+  token: string;
+}
+
+export interface IFindPasswordSmsSendReq {
+  name: string;
+  phone: string;
+}
+
+export interface IFindPasswordSmsVerifyReq {
+  phone: string;
+  code: string;
+}
+
+export interface IFindPasswordTokenResponse {
+  token: string;
+}
+
+// ── 비밀번호 재설정 ────────────────────────────────────────────────────────────
+export interface IPasswordResetReq {
+  token: string;
+  newPassword: string;
 }
