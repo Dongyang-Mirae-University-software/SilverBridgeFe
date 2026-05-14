@@ -5,13 +5,26 @@
   width: 100%;
 }
 
+.roleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldLabel {
+  color: #5c4d3f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .actionRow {
   display: flex;
   gap: 8px;
 }
 
 .button,
-.secondaryButton {
+.secondaryButton,
+.prevButton {
   min-height: 48px;
   border-radius: 12px;
   border: none;
@@ -29,7 +42,8 @@
 }
 
 .button:disabled,
-.secondaryButton:disabled {
+.secondaryButton:disabled,
+.prevButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -48,25 +62,108 @@
   gap: 10px;
 }
 
-.radio {
+.roleCard {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 48px;
+  min-height: 72px;
   padding: 12px 14px;
   border: 1.5px solid #e5d8c5;
   border-radius: 12px;
   background: #fbf6f0;
-  color: #5c4d3f;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 700;
 }
 
-.radio input {
+.roleCard.active {
+  border: 2px solid #d97757;
+  background: #fbe7da;
+}
+
+.roleCard input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.roleEmoji {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #d97757;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.roleCopy {
+  flex: 1;
+  min-width: 0;
+}
+
+.roleCopy strong,
+.roleCopy small {
+  display: block;
+}
+
+.roleCopy strong {
+  color: #1f1916;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.roleCopy small {
+  margin-top: 1px;
+  color: #8a7868;
+  font-size: 11px;
+}
+
+.checkMark {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #d97757;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #5c4d3f;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.terms input {
   width: 16px;
   height: 16px;
+  margin-top: 2px;
   accent-color: #d97757;
+}
+
+.stepActions {
+  display: flex;
+  gap: 10px;
+}
+
+.stepActions .button {
+  flex: 1;
+}
+
+.prevButton {
+  flex: 0 0 90px;
+  padding: 14px;
+  border: 1.5px solid #e5d8c5;
+  background: #ffffff;
+  color: #5c4d3f;
 }
 
 @media (max-width: 640px) {
@@ -84,6 +181,14 @@
   }
 
   .radioGroup {
-    gap: 16px;
+    gap: 10px;
+  }
+
+  .stepActions {
+    flex-direction: column;
+  }
+
+  .prevButton {
+    flex: auto;
   }
 }
