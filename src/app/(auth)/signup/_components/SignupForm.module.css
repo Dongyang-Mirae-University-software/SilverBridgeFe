@@ -1,38 +1,31 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   width: 100%;
 }
 
 .actionRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: flex-end;
+  gap: 8px;
 }
 
 .button,
 .secondaryButton {
-  min-height: 52px;
-  border-radius: 16px;
+  min-height: 48px;
+  border-radius: 12px;
   border: none;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 }
 
 .button {
   width: 100%;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  padding: 14px;
+  background: #d97757;
   color: #ffffff;
-}
-
-.button:enabled:hover,
-.secondaryButton:enabled:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(30, 58, 138, 0.16);
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.3);
 }
 
 .button:disabled,
@@ -42,33 +35,38 @@
 }
 
 .secondaryButton {
-  min-width: 140px;
-  padding: 0 18px;
-  background: #f8fafc;
-  color: #0f172a;
-  border: 1px solid #cbd5e1;
+  flex: 1;
+  min-width: 0;
+  padding: 0 14px;
+  background: #fbe7da;
+  color: #d97757;
 }
 
 .radioGroup {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin-top: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .radio {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 10px;
-  color: #334155;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1.5px solid #e5d8c5;
+  border-radius: 12px;
+  background: #fbf6f0;
+  color: #5c4d3f;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .radio input {
-  width: 18px;
-  height: 18px;
-  accent-color: #2563eb;
+  width: 16px;
+  height: 16px;
+  accent-color: #d97757;
 }
 
 @media (max-width: 640px) {
@@ -77,8 +75,6 @@
   }
 
   .actionRow {
-    flex-direction: column;
-    align-items: stretch;
     gap: 10px;
   }
 
@@ -89,35 +85,5 @@
 
   .radioGroup {
     gap: 16px;
-  }
-}
-
-@media (min-width: 768px) {
-  .container {
-    gap: 20px;
-  }
-
-  .button,
-  .secondaryButton {
-    min-height: 56px;
-    font-size: 16px;
-  }
-
-  .actionRow {
-    gap: 14px;
-  }
-
-  .secondaryButton {
-    min-width: 160px;
-  }
-
-  .radio {
-    font-size: 16px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .container {
-    gap: 22px;
   }
 }
