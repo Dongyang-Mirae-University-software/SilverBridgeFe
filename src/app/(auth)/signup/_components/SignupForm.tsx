@@ -9,7 +9,12 @@ import { ChangeEvent, useState } from 'react';
 
 const cx = classNames.bind(styles);
 
-export default function SignupForm() {
+interface Props {
+  step: number;
+  onStepChange: (step: number) => void;
+}
+
+export default function SignupForm({ step, onStepChange }: Props) {
   const {
     register,
     onSubmit,
@@ -77,88 +82,136 @@ export default function SignupForm() {
   const emailError =
     (errors.email && allValues.email && allValues.email.trim() !== '') ||
     (isEmailTouched && !isEmailCheck && !!getValues('email').length);
+  const isStepOneValid =
+    allValues.name.trim().length >= 2 &&
+    allValues.email.trim().length > 0 &&
+    isEmailCheck &&
+    allValues.password.trim().length > 0 &&
+    allValues.passwordCheck.trim().length > 0 &&
+    !errors.email &&
+    !errors.password &&
+    !errors.passwordCheck &&
+    !errors.name;
+
+  const handleNextStep = () => {
+    if (isStepOneValid) onStepChange(2);
+  };
 
   return (
     <form className={cx('container')} onSubmit={onSubmit}>
-      <TextInput
-        label="이메일"
-        placeholder="이메일을 입력해주세요"
-        required
-        {...register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
-        onBlur={handleEmailCheck}
-        error={emailError}
-        errorText={emailError ? (errors.email?.message ?? '이메일이 중복되었습니다.') : undefined}
-      />
-      <TextInput
-        label="비밀번호"
-        placeholder="비밀번호를 입력하세요"
-        required
-        {...register('password', passwordRules('비밀번호 형식이 올바르지 않습니다.'))}
-        error={Boolean(errors.password && allValues.password && allValues.password.trim() !== '')}
-        errorText={errors.password?.message}
-      />
-      <TextInput
-        label="비밀번호 확인"
-        placeholder="비밀번호를 다시 입력하세요"
-        required
-        {...register('passwordCheck', passwordCheckRules('비밀번호가 일치하지 않습니다.'))}
-        error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
-        errorText={errors.passwordCheck?.message}
-      />
-      <TextInput
-        label="이름"
-        placeholder="이름을 입력하세요"
-        required
-        {...register('name', textRules('이름을 입력하세요.', 2))}
-        error={Boolean(errors.name && allValues.name && allValues.name.trim() !== '')}
-        errorText={errors.name?.message}
-      />
-      <TextInput
-        label="전화번호"
-        placeholder="전화번호를 입력하세요"
-        required
-        {...register('phone', phoneRules('전화번호 형식이 올바르지 않습니다.'))}
-        error={Boolean(errors.phone && allValues.phone && allValues.phone.trim() !== '')}
-        disabled={isCode}
-        errorText={errors.phone?.message}
-      />
-      <div className={cx('actionRow')}>
-        <button className={cx('secondaryButton')} type="button" onClick={handlePhoneCheck}>
-          인증번호 전송
-        </button>
-        <button className={cx('secondaryButton')} type="button" onClick={handlePhoneReset}>
-          재설정
-        </button>
-      </div>
-      {isCode && (
+      {step === 1 && (
         <>
+          <div className={cx('roleSection')}>
+            <label className={cx('fieldLabel')}>가입 유형</label>
+            <div className={cx('radioGroup')}>
+              <label className={cx('roleCard', { active: allValues.role === 'WARD' })} htmlFor="WARD">
+                <input id="WARD" type="radio" value="WARD" {...register('role')} defaultChecked />
+                <span className={cx('roleEmoji')}>피</span>
+                <span className={cx('roleCopy')}>
+                  <strong>피보호자</strong>
+                  <small>직접 사용</small>
+                </span>
+                {allValues.role === 'WARD' && <span className={cx('checkMark')}>✓</span>}
+              </label>
+              <label className={cx('roleCard', { active: allValues.role === 'GUARDIAN' })} htmlFor="GUARDIAN">
+                <input id="GUARDIAN" type="radio" value="GUARDIAN" {...register('role')} />
+                <span className={cx('roleEmoji')}>보</span>
+                <span className={cx('roleCopy')}>
+                  <strong>보호자</strong>
+                  <small>가족 돌봄</small>
+                </span>
+                {allValues.role === 'GUARDIAN' && <span className={cx('checkMark')}>✓</span>}
+              </label>
+            </div>
+          </div>
           <TextInput
-            error={Boolean(isError)}
-            errorText={isError ? '인증번호가 올바르지 않습니다.' : undefined}
-            label="인증번호"
-            maxLength={6}
-            value={smsCode}
-            onChange={handleCode}
-            placeholder="인증번호를 입력하세요"
+            label="이름"
+            placeholder="홍길동"
+            required
+            {...register('name', textRules('이름을 입력하세요.', 2))}
+            error={Boolean(errors.name && allValues.name && allValues.name.trim() !== '')}
+            errorText={errors.name?.message}
           />
-          <button className={cx('secondaryButton')} type="button" onClick={handleSmsVerify}>
-            인증 확인
+          <TextInput
+            label="이메일"
+            placeholder="example@email.com"
+            required
+            {...register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
+            onBlur={handleEmailCheck}
+            error={emailError}
+            errorText={emailError ? (errors.email?.message ?? '이메일이 중복되었습니다.') : undefined}
+          />
+          <TextInput
+            label="비밀번호"
+            placeholder="8자 이상"
+            required
+            {...register('password', passwordRules('비밀번호 형식이 올바르지 않습니다.'))}
+            error={Boolean(errors.password && allValues.password && allValues.password.trim() !== '')}
+            errorText={errors.password?.message}
+          />
+          <TextInput
+            label="비밀번호 확인"
+            placeholder="비밀번호 다시 입력"
+            required
+            {...register('passwordCheck', passwordCheckRules('비밀번호가 일치하지 않습니다.'))}
+            error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
+            errorText={errors.passwordCheck?.message}
+          />
+          <button className={cx('button')} disabled={!isStepOneValid} type="button" onClick={handleNextStep}>
+            다음
           </button>
         </>
       )}
-      <div className={cx('radioGroup')}>
-        <label className={cx('radio')} htmlFor="WARD">
-          <input id="WARD" type="radio" value="WARD" {...register('role')} defaultChecked />
-          <span>노인</span>
-        </label>
-        <label className={cx('radio')} htmlFor="GUARDIAN">
-          <input id="GUARDIAN" type="radio" value="GUARDIAN" {...register('role')} />
-          <span>보호자</span>
-        </label>
-      </div>
-      <button className={cx('button')} disabled={!isValid || !isEmailCheck || !isSmsCheck} type="submit">
-        회원가입 완료
-      </button>
+
+      {step === 2 && (
+        <>
+          <TextInput
+            label="전화번호"
+            placeholder="010-0000-0000"
+            required
+            {...register('phone', phoneRules('전화번호 형식이 올바르지 않습니다.'))}
+            error={Boolean(errors.phone && allValues.phone && allValues.phone.trim() !== '')}
+            disabled={isCode}
+            errorText={errors.phone?.message}
+          />
+          <div className={cx('actionRow')}>
+            <button className={cx('secondaryButton')} type="button" onClick={handlePhoneCheck}>
+              인증요청
+            </button>
+            <button className={cx('secondaryButton')} type="button" onClick={handlePhoneReset}>
+              재설정
+            </button>
+          </div>
+          {isCode && (
+            <>
+              <TextInput
+                error={Boolean(isError)}
+                errorText={isError ? '인증번호가 올바르지 않습니다.' : undefined}
+                label="인증번호"
+                maxLength={6}
+                value={smsCode}
+                onChange={handleCode}
+                placeholder="6자리 입력"
+              />
+              <button className={cx('secondaryButton')} type="button" onClick={handleSmsVerify}>
+                인증 확인
+              </button>
+            </>
+          )}
+          <label className={cx('terms')}>
+            <input type="checkbox" defaultChecked />
+            <span>이용약관 · 개인정보 처리방침에 동의합니다</span>
+          </label>
+          <div className={cx('stepActions')}>
+            <button className={cx('prevButton')} type="button" onClick={() => onStepChange(1)}>
+              이전
+            </button>
+            <button className={cx('button')} disabled={!isValid || !isEmailCheck || !isSmsCheck} type="submit">
+              가입 완료
+            </button>
+          </div>
+        </>
+      )}
     </form>
   );
 }
