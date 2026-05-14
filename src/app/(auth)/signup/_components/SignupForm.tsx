@@ -3,7 +3,7 @@ import classNames from 'classnames/bind';
 import styles from './SignupForm.module.css';
 import TextInput from '@/app/_components/common/TextInput';
 import useSignupForm from '@/app/_hook/useSignupForm';
-import { emailCheck, smsSend, smsVerify } from '@/service/api/auth';
+import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { useMutation } from '@tanstack/react-query';
 import { ChangeEvent, useState } from 'react';
 
@@ -37,21 +37,21 @@ export default function SignupForm({ step, onStepChange }: Props) {
 
   const { mutate: emailCheckMutate } = useMutation({
     mutationKey: ['email-check'],
-    mutationFn: emailCheck,
+    mutationFn: signupEmailCheck,
     onError: () => setIsEmailCheck(false),
     onSuccess: () => setIsEmailCheck(true),
   });
 
   const { mutate: smsSendMutate } = useMutation({
     mutationKey: ['sms-send'],
-    mutationFn: smsSend,
+    mutationFn: signupSmsSend,
     onError: () => {},
     onSuccess: () => setIsCode(true),
   });
 
   const { mutate: smsVerifyMutate, isError } = useMutation({
     mutationKey: ['sms-verify'],
-    mutationFn: smsVerify,
+    mutationFn: signupSmsVerify,
     onError: () => {},
     onSuccess: () => setIsSmsCheck(true),
   });

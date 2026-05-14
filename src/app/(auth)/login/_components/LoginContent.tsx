@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 
 import TextInput from '@/app/_components/common/TextInput';
-import { login } from '@/service/api/auth';
+import { signin } from '@/service/api/auth';
 import styles from './LoginContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -22,7 +22,7 @@ export default function LoginContent() {
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['login'],
-    mutationFn: login,
+    mutationFn: signin,
     onMutate: () => {
       setErrorMessage('');
     },

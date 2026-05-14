@@ -8,7 +8,7 @@ import { ChangeEvent, useState } from 'react';
 
 import styles from './SignupForm.module.css';
 import TextInput from '@/app/_components/common/TextInput';
-import { signupKakao, smsSend, smsVerify } from '@/service/api/auth';
+import { signupKakao, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { PHONE_PATTRERN } from '@/app/constant/pattern';
 import { IKakaoSignupRes, RoleType } from '@/service/interface/auth';
 
@@ -77,14 +77,14 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
 
   const { mutate: sendSms } = useMutation({
     mutationKey: ['kakao-sms-send'],
-    mutationFn: smsSend,
+    mutationFn: signupSmsSend,
     onSuccess: () => setIsCode(true),
     onError: () => {},
   });
 
   const { mutate: verifySms, isError } = useMutation({
     mutationKey: ['kakao-sms-verify'],
-    mutationFn: smsVerify,
+    mutationFn: signupSmsVerify,
     onSuccess: () => setIsSmsCheck(true),
     onError: () => {},
   });
