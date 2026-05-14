@@ -8,6 +8,11 @@
   flex: 1;
   height: 6px;
   border-radius: 3px;
+  background: #efe3d2;
+  transition: background 0.2s;
+}
+
+.progress span.active {
   background: #d97757;
 }
 
