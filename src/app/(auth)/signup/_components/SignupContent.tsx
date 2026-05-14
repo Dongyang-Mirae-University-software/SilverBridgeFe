@@ -1,11 +1,12 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 
 import styles from './SignupContent.module.css';
 import SignupForm from './SignupForm';
 import KakaoSignupForm from './KakaoSignupForm';
-import { useRouter } from 'next/navigation';
 
 const cx = classNames.bind(styles);
 
@@ -20,6 +21,7 @@ type SignupContentProps = {
 
 export default function SignupContent({ searchParams }: SignupContentProps) {
   const router = useRouter();
+  const [signupStep, setSignupStep] = useState(1);
   const kakaoId = searchParams.kakaoId;
   const email = searchParams.email;
   const name = searchParams.name;
@@ -35,21 +37,28 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
         profileImageUrl: profileImageUrl || undefined,
       }
     : undefined;
+  const currentStep = isKakao ? 2 : signupStep;
 
   return (
     <>
       <div className={cx('progress')} aria-hidden="true">
-        <span />
-        <span />
+        <span className={cx({ active: currentStep >= 1 })} />
+        <span className={cx({ active: currentStep >= 2 })} />
       </div>
 
       <div className={cx('header')}>
         <h1 className={cx('title')}>회원가입</h1>
-        <p className={cx('description')}>{isKakao ? '전화번호 인증으로 마무리할게요' : '기본 정보를 입력해 주세요'}</p>
+        <p className={cx('description')}>
+          {currentStep === 1 ? '기본 정보를 입력해 주세요' : '전화번호 인증으로 마무리할게요'}
+        </p>
       </div>
 
       <div className={cx('content')}>
-        {isKakao && kakaoData ? <KakaoSignupForm kakaoData={kakaoData} /> : <SignupForm />}
+        {isKakao && kakaoData ? (
+          <KakaoSignupForm kakaoData={kakaoData} />
+        ) : (
+          <SignupForm step={signupStep} onStepChange={setSignupStep} />
+        )}
       </div>
 
       <div className={cx('footer')}>
