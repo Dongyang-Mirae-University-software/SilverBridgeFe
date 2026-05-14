@@ -5,8 +5,8 @@
 // 서비스나 훅에서 이걸 import해서 apiClient.get(...) 형태로 쓰면 됨
 // ─────────────────────────────────────────────
 
-import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { resolveError, ApiErrorShape, ServerErrorBody } from './errorHandler';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { resolveError, ServerErrorBody } from './errorHandler';
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
