@@ -6,6 +6,22 @@ import { useMutation } from '@tanstack/react-query';
 import { findEmail } from '@/service/api/auth';
 import { IFindEmailReq, IFindEmailResponse } from '@/service/interface/auth';
 
+function isFindEmailResponse(value: unknown): value is IFindEmailResponse {
+  return typeof value === 'object' && value !== null && ('maskedEmail' in value || 'hasKakaoAccount' in value);
+}
+
+function getFindEmailResult(response: unknown) {
+  if (isFindEmailResponse(response)) return response;
+
+  const data = (response as { data?: unknown }).data;
+  if (isFindEmailResponse(data)) return data;
+
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+  if (isFindEmailResponse(nestedData)) return nestedData;
+
+  return { maskedEmail: null, hasKakaoAccount: false };
+}
+
 export default function useFindEmailFlow() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<IFindEmailReq>({ name: '', phone: '' });
@@ -17,7 +33,7 @@ export default function useFindEmailFlow() {
     mutationFn: findEmail,
     onSuccess: response => {
       setErrorMessage('');
-      setResult(response.data.data);
+      setResult(getFindEmailResult(response));
       setStep(2);
     },
     onError: (error: Error) => setErrorMessage(error.message || '이메일 찾기에 실패했습니다.'),
@@ -32,6 +48,6 @@ export default function useFindEmailFlow() {
     setForm,
     setStep,
     setErrorMessage,
-    requestCode: (payload: IFindEmailReq) => requestMutation.mutateAsync(payload),
+    requestEmail: (payload: IFindEmailReq) => requestMutation.mutateAsync(payload),
   };
 }
