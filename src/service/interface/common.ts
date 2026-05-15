@@ -1,5 +1,5 @@
 export interface CommonResponse<T> {
-  code?: number;
+  code: number;
   success?: boolean;
   message: string;
   data: T;
