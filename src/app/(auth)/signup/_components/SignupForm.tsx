@@ -32,6 +32,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
   const [isEmailCheck, setIsEmailCheck] = useState(false);
   const [isEmailTouched, setIsEmailTouched] = useState(false);
   const [isCode, setIsCode] = useState(false);
+  const [isSmsSendError, setIsSmsSendError] = useState(false);
   const [smsCode, setSmsCode] = useState('');
   const [isSmsCheck, setIsSmsCheck] = useState(false);
 
@@ -45,7 +46,8 @@ export default function SignupForm({ step, onStepChange }: Props) {
   const { mutate: smsSendMutate } = useMutation({
     mutationKey: ['sms-send'],
     mutationFn: signupSmsSend,
-    onError: () => {},
+    onMutate: () => setIsSmsSendError(false),
+    onError: () => setIsSmsSendError(true),
     onSuccess: () => setIsCode(true),
   });
 
@@ -72,6 +74,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
 
   const handlePhoneReset = () => {
     setIsCode(false);
+    setIsSmsSendError(false);
     setValue('phone', '');
   };
 
@@ -170,9 +173,9 @@ export default function SignupForm({ step, onStepChange }: Props) {
             placeholder="010-0000-0000"
             required
             {...register('phone', phoneRules('전화번호 형식이 올바르지 않습니다.'))}
-            error={Boolean(errors.phone && allValues.phone && allValues.phone.trim() !== '')}
+            error={Boolean((errors.phone && allValues.phone && allValues.phone.trim() !== '') || isSmsSendError)}
             disabled={isCode}
-            errorText={errors.phone?.message}
+            errorText={isSmsSendError ? '인증번호 발송에 실패했습니다.' : errors.phone?.message}
           />
           <div className={cx('actionRow')}>
             <button className={cx('secondaryButton')} type="button" onClick={handlePhoneCheck}>
