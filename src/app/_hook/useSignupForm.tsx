@@ -15,6 +15,8 @@ type FormData = {
   passwordCheck: string;
   phone: string;
   role: RoleType;
+  address: string;
+  addressDetail: string;
 };
 
 export default function useSignupForm() {
@@ -35,6 +37,8 @@ export default function useSignupForm() {
       passwordCheck: '',
       phone: '',
       role: 'WARD',
+      address: '',
+      addressDetail: '',
     },
   });
 
@@ -80,6 +84,8 @@ export default function useSignupForm() {
       password: '',
       passwordCheck: '',
       phone: '',
+      address: '',
+      addressDetail: '',
     });
   }
 
@@ -90,13 +96,15 @@ export default function useSignupForm() {
 
   const router = useRouter();
 
-  function onSubmit(formData: ISignupReq) {
+  function onSubmit(formData: FormData) {
     const form: ISignupReq = {
       name: formData.name,
       email: formData.email,
       password: formData.password,
       phone: formData.phone,
       role: formData.role,
+      address: formData.address,
+      addressDetail: formData.addressDetail,
     };
 
     mutate(form, {
