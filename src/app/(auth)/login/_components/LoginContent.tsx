@@ -7,9 +7,17 @@ import classNames from 'classnames/bind';
 
 import TextInput from '@/app/_components/common/TextInput';
 import { signin } from '@/service/api/auth';
+import { ISigninResponse } from '@/service/interface/auth';
 import styles from './LoginContent.module.css';
 
 const cx = classNames.bind(styles);
+
+function getSigninData(response: unknown) {
+  const data = (response as { data?: unknown }).data;
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+
+  return (nestedData ?? data ?? response) as ISigninResponse;
+}
 
 export default function LoginContent() {
   const router = useRouter();
@@ -26,7 +34,14 @@ export default function LoginContent() {
     onMutate: () => {
       setErrorMessage('');
     },
-    onSuccess: () => {
+    onSuccess: response => {
+      const data = getSigninData(response);
+
+      if (data.accessToken && data.refreshToken) {
+        localStorage.setItem('access_token', data.accessToken);
+        localStorage.setItem('refresh_token', data.refreshToken);
+      }
+
       router.push('/');
     },
     onError: (error: Error) => {
