@@ -1,5 +1,17 @@
 export type RoleType = 'WARD' | 'GUARDIAN';
 
+export interface IAuthTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface ISigninResponse extends IAuthTokenResponse {
+  userId: string;
+  email: string;
+  name: string;
+  role: RoleType;
+}
+
 // ── 인증 ──────────────────────────────────────────────────────────────────────
 export interface ISigninReq {
   email: string;
@@ -21,9 +33,14 @@ export interface IKakaoSigninRes {
     accessToken?: string;
     refreshToken?: string;
     userId?: string;
-    role?: string;
-    newUser: boolean;
+    role?: RoleType;
+    isNewUser?: boolean;
+    newUser?: boolean;
   };
+}
+
+export interface IRefreshReq {
+  refreshToken: string;
 }
 
 // ── 회원가입 ──────────────────────────────────────────────────────────────────
@@ -33,6 +50,8 @@ export interface ISignupReq {
   password: string;
   phone: string;
   role: RoleType;
+  address: string;
+  addressDetail: string;
 }
 
 export interface IKakaoSignupReq {
@@ -48,13 +67,11 @@ export interface IKakaoSignupReq {
 export interface IKakaoSignupRes {
   success: boolean;
   message: string;
-  data: {
-    accessToken: string;
-    refreshToken: string;
+  data: IAuthTokenResponse & {
     userId: string;
     email: string;
     name: string;
-    role: string;
+    role: RoleType;
   };
 }
 
