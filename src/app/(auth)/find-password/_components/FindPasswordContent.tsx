@@ -15,7 +15,7 @@ import styles from './FindPasswordContent.module.css';
 
 const cx = classNames.bind(styles);
 
-const STEP_LIST = ['방식 선택', '정보 입력', '인증 확인', '비밀번호 재설정'];
+const STEP_LIST = ['방식 선택', '정보 입력', '인증 확인', '새 비밀번호 생성'];
 
 export default function FindPasswordContent() {
   const flow = useFindPasswordFlow();
@@ -39,8 +39,11 @@ export default function FindPasswordContent() {
   };
 
   const handleVerifySubmit = async (code: string) => {
-    await flow.verifyCode(flow.method === 'email' ? { token: code } : { phone: flow.phone, code });
-    flow.setStep(4);
+    const isVerified = await flow.verifyCode(flow.method === 'email' ? { token: code } : { phone: flow.phone, code });
+
+    if (isVerified) {
+      flow.setStep(4);
+    }
   };
 
   const handleResetSubmit = async (newPassword: string) => {
