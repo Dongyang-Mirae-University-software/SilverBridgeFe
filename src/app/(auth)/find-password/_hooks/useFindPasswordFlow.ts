@@ -23,7 +23,7 @@ import {
 type Method = 'email' | 'sms';
 
 function isCommonResponse<T>(value: unknown): value is CommonResponse<T> {
-  return typeof value === 'object' && value !== null && 'success' in value && 'data' in value;
+  return typeof value === 'object' && value !== null && 'data' in value && ('code' in value || 'success' in value);
 }
 
 function getCommonResponse<T>(response: unknown) {
@@ -39,7 +39,7 @@ function getVerifiedToken(response: unknown) {
   const result = getCommonResponse<IFindPasswordTokenResponse>(response);
   const token = result?.data?.token;
 
-  if (result?.success === true && typeof token === 'string' && token.length > 0) {
+  if ((result?.success === true || result?.code === 200) && typeof token === 'string' && token.length > 0) {
     return token;
   }
 
