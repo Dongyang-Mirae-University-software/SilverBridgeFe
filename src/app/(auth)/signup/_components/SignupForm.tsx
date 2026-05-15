@@ -37,7 +37,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
   const [smsCode, setSmsCode] = useState('');
   const [isSmsCheck, setIsSmsCheck] = useState(false);
 
-  const { mutate: emailCheckMutate } = useMutation({
+  const { mutate: emailCheckMutate, isPending: isEmailCheckPending } = useMutation({
     mutationKey: ['email-check'],
     mutationFn: signupEmailCheck,
     onError: error => {
@@ -90,7 +90,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
 
   const emailError =
     (errors.email && allValues.email && allValues.email.trim() !== '') ||
-    (isEmailTouched && !isEmailCheck && !!getValues('email').length);
+    (isEmailTouched && !isEmailCheck && !isEmailCheckPending && !!getValues('email').length);
   const isStepOneValid =
     allValues.name.trim().length >= 2 &&
     allValues.email.trim().length > 0 &&
