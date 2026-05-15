@@ -31,30 +31,36 @@ export default function SignupForm({ step, onStepChange }: Props) {
 
   const [isEmailCheck, setIsEmailCheck] = useState(false);
   const [isEmailTouched, setIsEmailTouched] = useState(false);
+  const [emailCheckErrorMsg, setEmailCheckErrorMsg] = useState('');
   const [isCode, setIsCode] = useState(false);
-  const [isSmsSendError, setIsSmsSendError] = useState(false);
+  const [smsSendErrorMsg, setSmsSendErrorMsg] = useState('');
   const [smsCode, setSmsCode] = useState('');
   const [isSmsCheck, setIsSmsCheck] = useState(false);
 
   const { mutate: emailCheckMutate } = useMutation({
     mutationKey: ['email-check'],
     mutationFn: signupEmailCheck,
-    onError: () => setIsEmailCheck(false),
-    onSuccess: () => setIsEmailCheck(true),
+    onError: error => {
+      setIsEmailCheck(false);
+      setEmailCheckErrorMsg((error as Error).message || '이메일이 중복되었습니다.');
+    },
+    onSuccess: () => {
+      setIsEmailCheck(true);
+      setEmailCheckErrorMsg('');
+    },
   });
 
   const { mutate: smsSendMutate } = useMutation({
     mutationKey: ['sms-send'],
     mutationFn: signupSmsSend,
-    onMutate: () => setIsSmsSendError(false),
-    onError: () => setIsSmsSendError(true),
+    onMutate: () => setSmsSendErrorMsg(''),
+    onError: error => setSmsSendErrorMsg((error as Error).message || '인증번호 발송에 실패했습니다.'),
     onSuccess: () => setIsCode(true),
   });
 
-  const { mutate: smsVerifyMutate, isError } = useMutation({
+  const { mutate: smsVerifyMutate, error: smsVerifyError } = useMutation({
     mutationKey: ['sms-verify'],
     mutationFn: signupSmsVerify,
-    onError: () => {},
     onSuccess: () => setIsSmsCheck(true),
   });
 
@@ -74,7 +80,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
 
   const handlePhoneReset = () => {
     setIsCode(false);
-    setIsSmsSendError(false);
+    setSmsSendErrorMsg('');
     setValue('phone', '');
   };
 
@@ -142,7 +148,9 @@ export default function SignupForm({ step, onStepChange }: Props) {
             {...register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
             onBlur={handleEmailCheck}
             error={emailError}
-            errorText={emailError ? (errors.email?.message ?? '이메일이 중복되었습니다.') : undefined}
+            errorText={
+              emailError ? (errors.email?.message ?? (emailCheckErrorMsg || '이메일이 중복되었습니다.')) : undefined
+            }
           />
           <TextInput
             label="비밀번호"
@@ -173,9 +181,9 @@ export default function SignupForm({ step, onStepChange }: Props) {
             placeholder="010-0000-0000"
             required
             {...register('phone', phoneRules('전화번호 형식이 올바르지 않습니다.'))}
-            error={Boolean((errors.phone && allValues.phone && allValues.phone.trim() !== '') || isSmsSendError)}
+            error={Boolean((errors.phone && allValues.phone && allValues.phone.trim() !== '') || smsSendErrorMsg)}
             disabled={isCode}
-            errorText={isSmsSendError ? '인증번호 발송에 실패했습니다.' : errors.phone?.message}
+            errorText={smsSendErrorMsg || errors.phone?.message}
           />
           <div className={cx('actionRow')}>
             <button className={cx('secondaryButton')} type="button" onClick={handlePhoneCheck}>
@@ -188,8 +196,10 @@ export default function SignupForm({ step, onStepChange }: Props) {
           {isCode && (
             <>
               <TextInput
-                error={Boolean(isError)}
-                errorText={isError ? '인증번호가 올바르지 않습니다.' : undefined}
+                error={Boolean(smsVerifyError)}
+                errorText={
+                  smsVerifyError ? (smsVerifyError as Error).message || '인증번호가 올바르지 않습니다.' : undefined
+                }
                 label="인증번호"
                 maxLength={6}
                 value={smsCode}
