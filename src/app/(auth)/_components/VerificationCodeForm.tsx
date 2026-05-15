@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import TextInput from '@/app/_components/common/TextInput';
@@ -21,7 +21,6 @@ export default function VerificationCodeForm({ content, errorMessage, onResend, 
   const [code, setCode] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasSentRef = useRef(false);
   const { formattedTime, isExpired, reset } = useTimer(180);
 
   const handleResend = async () => {
@@ -47,12 +46,6 @@ export default function VerificationCodeForm({ content, errorMessage, onResend, 
     if (event.target.value.length > 6) return;
     setCode(event.target.value);
   };
-
-  useEffect(() => {
-    if (hasSentRef.current) return;
-    hasSentRef.current = true;
-    void handleResend();
-  });
 
   return (
     <div className={cx('wrap')}>
