@@ -8,12 +8,15 @@ import {
   IFindPasswordSmsSendReq,
   IFindPasswordSmsVerifyReq,
   IFindPasswordTokenResponse,
+  IAuthTokenResponse,
+  IRefreshReq,
   IKakaoSigninReq,
   IKakaoSigninRes,
   IKakaoSignupReq,
   IKakaoSignupRes,
   IPasswordResetReq,
   ISigninReq,
+  ISigninResponse,
   ISignupReq,
 } from '../interface/auth';
 
@@ -21,7 +24,7 @@ const BASE = '/api/auth';
 
 // ── 인증 ──────────────────────────────────────────────────────────────────────
 export async function signin(body: ISigninReq) {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/signin`, body);
+  return apiClient.post<CommonResponse<ISigninResponse>>(`${BASE}/signin`, body);
 }
 
 export async function signinKakao(body: IKakaoSigninReq) {
@@ -32,8 +35,8 @@ export async function logout() {
   return apiClient.post<CommonResponse<null>>(`${BASE}/logout`);
 }
 
-export async function refresh() {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/refresh`);
+export async function refresh(body: IRefreshReq) {
+  return apiClient.post<CommonResponse<IAuthTokenResponse>>(`${BASE}/refresh`, body);
 }
 
 // ── 회원가입 ──────────────────────────────────────────────────────────────────
