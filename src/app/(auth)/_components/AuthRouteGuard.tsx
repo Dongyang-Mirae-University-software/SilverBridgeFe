@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-async function hasActiveCookieSession() {
+async function refreshStoredToken(refreshToken: string) {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
   const response = await fetch(`${baseUrl}/api/auth/refresh`, {
     method: 'POST',
@@ -11,13 +11,21 @@ async function hasActiveCookieSession() {
     headers: {
       'Content-Type': 'application/json',
     },
+    body: JSON.stringify({ refreshToken }),
   });
 
   if (!response.ok) return false;
 
-  const data = await response.json().catch(() => null);
+  const responseBody = await response.json().catch(() => null);
+  const data = responseBody?.data;
+  const isSuccess = responseBody?.success === true || responseBody?.code === 200;
 
-  return data?.success === true;
+  if (!isSuccess || !data?.accessToken || !data?.refreshToken) return false;
+
+  localStorage.setItem('access_token', data.accessToken);
+  localStorage.setItem('refresh_token', data.refreshToken);
+
+  return true;
 }
 
 export default function AuthRouteGuard({ children }: { children: ReactNode }) {
@@ -29,14 +37,20 @@ export default function AuthRouteGuard({ children }: { children: ReactNode }) {
 
     const redirectIfAuthenticated = async () => {
       const accessToken = localStorage.getItem('access_token');
+      const refreshToken = localStorage.getItem('refresh_token');
 
       if (accessToken) {
         router.replace('/');
         return;
       }
 
+      if (!refreshToken) {
+        if (isMounted) setIsChecking(false);
+        return;
+      }
+
       try {
-        const hasSession = await hasActiveCookieSession();
+        const hasSession = await refreshStoredToken(refreshToken);
 
         if (hasSession) {
           router.replace('/');

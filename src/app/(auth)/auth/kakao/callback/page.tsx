@@ -25,7 +25,7 @@ function KakaoCallbackContent() {
     mutationFn: signinKakao,
     onSuccess: response => {
       const data = getKakaoSigninData(response);
-      if (data.newUser) {
+      if (data.isNewUser ?? data.newUser) {
         const params = new URLSearchParams({
           kakaoId: data.kakaoId || '',
           email: data.email || '',
