@@ -7,6 +7,7 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { resolveError, ServerErrorBody } from './errorHandler';
+import { getAccessToken } from '@/lib/auth/tokenStore';
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -22,7 +23,7 @@ const apiClient = axios.create({
 // 주로 토큰을 헤더에 붙이는 용도로 씀
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
 
     // 토큰이 있으면 Authorization 헤더에 자동으로 붙여줌
     if (token) {
