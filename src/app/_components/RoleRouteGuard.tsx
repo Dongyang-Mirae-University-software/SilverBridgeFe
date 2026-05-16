@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { AuthRole, getAccessToken, getAuthRole } from '@/lib/auth/tokenStore';
@@ -10,28 +10,41 @@ interface Props {
   children: ReactNode;
 }
 
+function subscribeAuthStore() {
+  return () => {};
+}
+
+function getAuthSnapshot() {
+  const hasAccessToken = getAccessToken() ? '1' : '0';
+  const role = getAuthRole() ?? 'none';
+
+  return `${hasAccessToken}:${role}`;
+}
+
+function getServerAuthSnapshot() {
+  return '0:none';
+}
+
 export default function RoleRouteGuard({ allowedRole, children }: Props) {
   const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
+  const authSnapshot = useSyncExternalStore(subscribeAuthStore, getAuthSnapshot, getServerAuthSnapshot);
+  const [hasAccessTokenValue, roleValue] = authSnapshot.split(':');
+  const hasAccessToken = hasAccessTokenValue === '1';
+  const role = roleValue === 'none' ? null : (roleValue as AuthRole);
+  const isAllowed = hasAccessToken && role === allowedRole;
 
   useEffect(() => {
-    const accessToken = getAccessToken();
-    const role = getAuthRole();
-
-    if (!accessToken) {
+    if (!hasAccessToken) {
       router.replace('/login');
       return;
     }
 
     if (role !== allowedRole) {
       router.replace('/');
-      return;
     }
+  }, [allowedRole, hasAccessToken, role, router]);
 
-    setIsChecking(false);
-  }, [allowedRole, router]);
-
-  if (isChecking) return null;
+  if (!isAllowed) return null;
 
   return children;
 }
