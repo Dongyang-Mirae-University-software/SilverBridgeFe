@@ -24,6 +24,13 @@ export function setAuthTokens(tokens: { accessToken: string; refreshToken: strin
   if (tokens.role) storage?.setItem(AUTH_ROLE_KEY, tokens.role);
 }
 
+export function setAuthRole(role: AuthRole) {
+  authRole = role;
+
+  const storage = getSessionStorage();
+  storage?.setItem(AUTH_ROLE_KEY, role);
+}
+
 export function getAccessToken() {
   if (accessToken) return accessToken;
 
