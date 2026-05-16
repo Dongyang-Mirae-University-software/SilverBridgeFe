@@ -1,3 +1,5 @@
+import UserDashboard from '@/app/_components/app/UserDashboard';
+
 export default function WardPage() {
-  return null;
+  return <UserDashboard pageKey="home" role="WARD" />;
 }
