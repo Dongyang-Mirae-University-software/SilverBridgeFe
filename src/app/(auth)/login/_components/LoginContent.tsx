@@ -42,6 +42,7 @@ export default function LoginContent() {
         setAuthTokens({
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
+          role: data.role,
         });
       }
 

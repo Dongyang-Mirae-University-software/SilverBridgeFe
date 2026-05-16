@@ -100,6 +100,7 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
         setAuthTokens({
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
+          role: data.role,
         });
       }
       router.push('/');
