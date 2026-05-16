@@ -3,6 +3,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { getAccessToken, getRefreshToken, setAuthTokens } from '@/lib/auth/tokenStore';
+
 async function refreshStoredToken(refreshToken: string) {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
   const response = await fetch(`${baseUrl}/api/auth/refresh`, {
@@ -22,8 +24,10 @@ async function refreshStoredToken(refreshToken: string) {
 
   if (!isSuccess || !data?.accessToken || !data?.refreshToken) return false;
 
-  localStorage.setItem('access_token', data.accessToken);
-  localStorage.setItem('refresh_token', data.refreshToken);
+  setAuthTokens({
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+  });
 
   return true;
 }
@@ -36,8 +40,8 @@ export default function AuthRouteGuard({ children }: { children: ReactNode }) {
     let isMounted = true;
 
     const redirectIfAuthenticated = async () => {
-      const accessToken = localStorage.getItem('access_token');
-      const refreshToken = localStorage.getItem('refresh_token');
+      const accessToken = getAccessToken();
+      const refreshToken = getRefreshToken();
 
       if (accessToken) {
         router.replace('/');
