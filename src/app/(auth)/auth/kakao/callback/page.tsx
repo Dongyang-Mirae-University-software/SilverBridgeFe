@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { signinKakao } from '@/service/api/auth';
 import { IKakaoSigninRes } from '@/service/interface/auth';
+import { setAuthTokens } from '@/lib/auth/tokenStore';
 
 type KakaoSigninData = IKakaoSigninRes['data'];
 
@@ -37,8 +38,10 @@ function KakaoCallbackContent() {
       }
 
       if (data.accessToken && data.refreshToken) {
-        localStorage.setItem('access_token', data.accessToken);
-        localStorage.setItem('refresh_token', data.refreshToken);
+        setAuthTokens({
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        });
       }
       router.push('/');
     },

@@ -11,6 +11,7 @@ import TextInput from '@/app/_components/common/TextInput';
 import { signupKakao, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { PHONE_PATTRERN } from '@/app/constant/pattern';
 import { IKakaoSignupRes, RoleType } from '@/service/interface/auth';
+import { setAuthTokens } from '@/lib/auth/tokenStore';
 
 const cx = classNames.bind(styles);
 
@@ -96,8 +97,10 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
       const data = getKakaoSignupData(response);
 
       if (data.accessToken && data.refreshToken) {
-        localStorage.setItem('access_token', data.accessToken);
-        localStorage.setItem('refresh_token', data.refreshToken);
+        setAuthTokens({
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        });
       }
       router.push('/');
     },
