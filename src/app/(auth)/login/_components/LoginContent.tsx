@@ -8,6 +8,7 @@ import classNames from 'classnames/bind';
 import TextInput from '@/app/_components/common/TextInput';
 import { signin } from '@/service/api/auth';
 import { ISigninResponse } from '@/service/interface/auth';
+import { getRoleHomePath } from '@/lib/auth/routes';
 import { setAuthTokens } from '@/lib/auth/tokenStore';
 import styles from './LoginContent.module.css';
 
@@ -46,7 +47,7 @@ export default function LoginContent() {
         });
       }
 
-      router.push('/');
+      router.push(getRoleHomePath(data.role));
     },
     onError: (error: Error) => {
       setErrorMessage(error.message || '로그인에 실패했습니다.');

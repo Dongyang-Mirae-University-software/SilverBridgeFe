@@ -3,7 +3,10 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { getAccessToken, getRefreshToken, setAuthTokens } from '@/lib/auth/tokenStore';
+import { getMyProfile } from '@/service/api/user';
+import { getRoleHomePath } from '@/lib/auth/routes';
+import { getUserProfileData } from '@/lib/auth/userProfile';
+import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthRole, setAuthTokens } from '@/lib/auth/tokenStore';
 
 async function refreshStoredToken(refreshToken: string) {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
@@ -44,8 +47,17 @@ export default function AuthRouteGuard({ children }: { children: ReactNode }) {
       const refreshToken = getRefreshToken();
 
       if (accessToken) {
-        router.replace('/');
-        return;
+        try {
+          const profile = getUserProfileData(await getMyProfile());
+
+          if (profile?.role) {
+            setAuthRole(profile.role);
+            router.replace(getRoleHomePath(profile.role));
+            return;
+          }
+        } catch {
+          clearAuthTokens();
+        }
       }
 
       if (!refreshToken) {
@@ -57,12 +69,22 @@ export default function AuthRouteGuard({ children }: { children: ReactNode }) {
         const hasSession = await refreshStoredToken(refreshToken);
 
         if (hasSession) {
-          router.replace('/');
-          return;
+          try {
+            const profile = getUserProfileData(await getMyProfile());
+
+            if (profile?.role) {
+              setAuthRole(profile.role);
+              router.replace(getRoleHomePath(profile.role));
+              return;
+            }
+          } catch {
+            clearAuthTokens();
+          }
         }
 
         if (isMounted) setIsChecking(false);
       } catch {
+        clearAuthTokens();
         if (isMounted) setIsChecking(false);
       }
     };
