@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { signinKakao } from '@/service/api/auth';
 import { IKakaoSigninRes } from '@/service/interface/auth';
+import { getRoleHomePath } from '@/lib/auth/routes';
 import { setAuthTokens } from '@/lib/auth/tokenStore';
 
 type KakaoSigninData = IKakaoSigninRes['data'];
@@ -44,7 +45,12 @@ function KakaoCallbackContent() {
           role: data.role,
         });
       }
-      router.push('/');
+      if (data.role) {
+        router.push(getRoleHomePath(data.role));
+        return;
+      }
+
+      router.push('/login');
     },
     onError: (error) => {
       console.error('카카오 로그인 실패:', error);

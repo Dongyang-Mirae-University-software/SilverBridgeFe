@@ -11,6 +11,7 @@ import TextInput from '@/app/_components/common/TextInput';
 import { signupKakao, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { PHONE_PATTRERN } from '@/app/constant/pattern';
 import { IKakaoSignupRes, RoleType } from '@/service/interface/auth';
+import { getRoleHomePath } from '@/lib/auth/routes';
 import { setAuthTokens } from '@/lib/auth/tokenStore';
 
 const cx = classNames.bind(styles);
@@ -103,7 +104,7 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
           role: data.role,
         });
       }
-      router.push('/');
+      router.push(getRoleHomePath(data.role));
     },
     onError: () => {},
   });
