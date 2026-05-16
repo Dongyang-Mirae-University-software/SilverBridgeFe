@@ -1,4 +1,19 @@
 :root {
+  --sb-brand: #1f5e48;
+  --sb-brand-50: #e6efeb;
+  --sb-accent: #4a8fb1;
+  --sb-sun: #c99030;
+  --sb-warn: #c04b3a;
+  --sb-safe: #2e8559;
+  --sb-ink: #14110c;
+  --sb-ink-soft: #4b4538;
+  --sb-ink-mute: #8c8576;
+  --sb-bg: #f7f4ed;
+  --sb-bg-soft: #efebe0;
+  --sb-line: #ddd6c4;
+  --sb-line-soft: #e8e2d2;
+  --sb-radius: 16px;
+  --sb-shadow-sm: 0 1px 2px rgba(20, 17, 12, 0.06), 0 1px 3px rgba(20, 17, 12, 0.04);
 }
 
 html {
@@ -8,6 +23,14 @@ html {
 body {
   margin: 0;
   padding: 0;
+  background: var(--sb-bg);
+  color: var(--sb-ink);
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
 }
 
 .layout {
