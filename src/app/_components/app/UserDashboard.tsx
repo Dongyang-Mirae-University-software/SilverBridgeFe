@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { getMyProfile } from '@/service/api/user';
+import { myProfileQueryOptions } from '@/service/query/user';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
@@ -102,10 +102,7 @@ export default function UserDashboard({ pageKey, role }: Props) {
   const pathname = usePathname();
   const isWard = role === 'WARD';
   const navItems = isWard ? WARD_NAV : GUARDIAN_NAV;
-  const { data: profileResponse } = useQuery({
-    queryKey: ['my-profile'],
-    queryFn: getMyProfile,
-  });
+  const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
 

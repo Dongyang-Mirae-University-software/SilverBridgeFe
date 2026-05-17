@@ -1,10 +1,10 @@
 'use client';
 
 import { ReactNode, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
-import { getMyProfile } from '@/service/api/user';
+import { myProfileQueryOptions } from '@/service/query/user';
 import { getRoleHomePath } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import { AuthRole, clearAuthTokens, getAccessToken, setAuthRole } from '@/lib/auth/tokenStore';
@@ -16,12 +16,11 @@ interface Props {
 
 export default function RoleRouteGuard({ allowedRole, children }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const accessToken = getAccessToken();
   const { data: profileResponse, isError, isLoading } = useQuery({
-    queryKey: ['my-profile'],
-    queryFn: getMyProfile,
+    ...myProfileQueryOptions,
     enabled: Boolean(accessToken),
-    retry: false,
   });
   const profile = getUserProfileData(profileResponse);
   const isAllowed = Boolean(accessToken && profile?.role === allowedRole);
@@ -46,6 +45,12 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
       router.replace(getRoleHomePath(profile.role));
     }
   }, [accessToken, allowedRole, isError, profile?.role, router]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    void queryClient.prefetchQuery(myProfileQueryOptions);
+  }, [accessToken, queryClient]);
 
   if (isLoading || !isAllowed) return null;
 
