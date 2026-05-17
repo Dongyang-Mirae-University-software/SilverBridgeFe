@@ -7,7 +7,13 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { resolveError, ServerErrorBody } from './errorHandler';
-import { getAccessToken } from '@/lib/auth/tokenStore';
+import { CommonResponse } from '@/service/interface/common';
+import { IAuthTokenResponse } from '@/service/interface/auth';
+import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthTokens } from '@/lib/auth/tokenStore';
+
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -17,6 +23,56 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+const refreshClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  timeout: 10_000,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+let refreshRequest: Promise<string> | null = null;
+
+async function refreshAccessToken() {
+  const refreshToken = getRefreshToken();
+
+  if (!refreshToken) {
+    clearAuthTokens();
+    throw new Error('리프레시 토큰이 없습니다.');
+  }
+
+  if (!refreshRequest) {
+    refreshRequest = refreshClient
+      .post<CommonResponse<IAuthTokenResponse>>('/api/auth/refresh', { refreshToken })
+      .then(response => {
+        const responseBody = response.data;
+        const tokens = responseBody.data;
+        const isSuccess = responseBody.success === true || responseBody.code === 200;
+
+        if (!isSuccess || !tokens?.accessToken || !tokens.refreshToken) {
+          throw new Error(responseBody.message || '토큰 재발급에 실패했습니다.');
+        }
+
+        setAuthTokens({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+        });
+
+        return tokens.accessToken;
+      })
+      .catch(error => {
+        clearAuthTokens();
+        throw error;
+      })
+      .finally(() => {
+        refreshRequest = null;
+      });
+  }
+
+  return refreshRequest;
+}
 
 // ── request interceptor ───────────────────────
 // 요청을 보내기 전에 실행됨
@@ -46,7 +102,30 @@ apiClient.interceptors.response.use(
 
   // ❌ 실패 (4xx, 5xx): errorHandler가 변환한 에러 객체로 reject
   // catch 블록에서 error.message, error.status 바로 꺼내 쓸 수 있음
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
+    const isUnauthorized = error.response?.status === 401;
+    const isRefreshRequest = originalRequest?.url?.includes('/api/auth/refresh');
+
+    if (isUnauthorized && originalRequest && !originalRequest._retry && !isRefreshRequest) {
+      originalRequest._retry = true;
+
+      try {
+        const newAccessToken = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        return apiClient(originalRequest);
+      } catch {
+        const apiError = resolveError(error as AxiosError<ServerErrorBody>);
+        error.message = apiError.message;
+        return Promise.reject(error);
+      }
+    }
+
+    if (isUnauthorized) {
+      clearAuthTokens();
+    }
+
     const apiError = resolveError(error as AxiosError<ServerErrorBody>);
     error.message = apiError.message;
     return Promise.reject(error);
