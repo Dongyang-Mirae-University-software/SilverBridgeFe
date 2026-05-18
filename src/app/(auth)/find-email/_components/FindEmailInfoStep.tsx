@@ -3,7 +3,6 @@
 import { FormEvent } from 'react';
 import classNames from 'classnames/bind';
 
-import TextInput from '@/app/_components/common/TextInput';
 import { IFindEmailReq } from '@/service/interface/auth';
 import styles from './FindEmailContent.module.css';
 
@@ -22,25 +21,44 @@ export default function FindEmailInfoStep({ errorMessage, form, isPending, onCha
 
   return (
     <form className={cx('form')} onSubmit={onSubmit}>
-      <TextInput
-        label="이름"
-        name="name"
-        placeholder="이름을 입력하세요"
-        value={form.name}
-        onChange={event => onChange({ ...form, name: event.target.value })}
-      />
-      <TextInput
-        autoComplete="tel"
-        label="휴대폰 번호"
-        name="phone"
-        placeholder="숫자만 입력하세요"
-        type="tel"
-        value={form.phone}
-        onChange={event => onChange({ ...form, phone: event.target.value })}
-      />
+      <p className={cx('description')}>
+        이름과 전화번호를 입력하시면
+        <br />
+        가입한 이메일을 마스킹 처리해 알려드려요.
+      </p>
+      <div className={cx('fieldGroup')}>
+        <div className={cx('field')}>
+          <label className={cx('label')} htmlFor="find-email-name">
+            이름
+          </label>
+          <input
+            className={cx('input')}
+            id="find-email-name"
+            name="name"
+            placeholder="홍길동"
+            value={form.name}
+            onChange={event => onChange({ ...form, name: event.target.value })}
+          />
+        </div>
+        <div className={cx('field')}>
+          <label className={cx('label')} htmlFor="find-email-phone">
+            전화번호
+          </label>
+          <input
+            autoComplete="tel"
+            className={cx('input')}
+            id="find-email-phone"
+            name="phone"
+            placeholder="010-0000-0000"
+            type="tel"
+            value={form.phone}
+            onChange={event => onChange({ ...form, phone: event.target.value })}
+          />
+        </div>
+      </div>
       {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
       <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
-        이메일 찾기
+        {isPending ? '찾는 중...' : '아이디 찾기'}
       </button>
     </form>
   );

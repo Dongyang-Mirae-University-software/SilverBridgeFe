@@ -4,14 +4,12 @@ import { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 
-import Step from '@/app/(auth)/_components/Step';
 import useFindEmailFlow from '../_hooks/useFindEmailFlow';
 import FindEmailInfoStep from './FindEmailInfoStep';
 import FindEmailResultStep from './FindEmailResultStep';
 import styles from './FindEmailContent.module.css';
 
 const cx = classNames.bind(styles);
-const STEP_LIST = ['정보 입력', '결과 확인'];
 
 export default function FindEmailContent() {
   const flow = useFindEmailFlow();
@@ -19,32 +17,28 @@ export default function FindEmailContent() {
 
   const handleInfoSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await flow.requestCode(flow.form);
+    await flow.requestEmail(flow.form);
   };
 
   return (
-    <section className={cx('container')}>
-      <div className={cx('panel')}>
-        <div className={cx('header')}>
-          <button className={cx('backButton')} type="button" onClick={() => router.push('/login')}>
-            ← 뒤로 가기
-          </button>
-          <p className={cx('eyebrow')}>Silver Bridge</p>
-          <h1 className={cx('title')}>이메일 찾기</h1>
-          <p className={cx('description')}>이름과 휴대폰 번호를 입력하세요.</p>
-          <Step step={flow.step} stepList={STEP_LIST} />
-        </div>
-        {flow.step === 1 && (
-          <FindEmailInfoStep
-            errorMessage={flow.errorMessage}
-            form={flow.form}
-            isPending={flow.isRequesting}
-            onChange={flow.setForm}
-            onSubmit={handleInfoSubmit}
-          />
-        )}
-        {flow.step === 2 && flow.result && <FindEmailResultStep result={flow.result} onBack={() => flow.setStep(1)} />}
+    <>
+      <div className={cx('header')}>
+        <h1 className={cx('title')}>아이디 찾기</h1>
+        <button className={cx('closeButton')} type="button" onClick={() => router.push('/login')}>
+          ✕
+        </button>
       </div>
-    </section>
+
+      {flow.step === 1 && (
+        <FindEmailInfoStep
+          errorMessage={flow.errorMessage}
+          form={flow.form}
+          isPending={flow.isRequesting}
+          onChange={flow.setForm}
+          onSubmit={handleInfoSubmit}
+        />
+      )}
+      {flow.step === 2 && flow.result && <FindEmailResultStep result={flow.result} />}
+    </>
   );
 }

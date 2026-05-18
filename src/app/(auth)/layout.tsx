@@ -1,8 +1,5 @@
-import classNames from 'classnames/bind';
-
-import styles from './layout.module.css';
-
-const cx = classNames.bind(styles);
+import AuthShell from './_components/AuthShell';
+import AuthRouteGuard from './_components/AuthRouteGuard';
 
 export default function Layout({
   children,
@@ -10,8 +7,8 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className={cx('signup-layout')}>
-      <div className={cx('content')}>{children}</div>
-    </div>
+    <AuthRouteGuard>
+      <AuthShell>{children}</AuthShell>
+    </AuthRouteGuard>
   );
 }

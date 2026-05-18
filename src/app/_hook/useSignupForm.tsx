@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ISignupReq, RoleType } from '@/service/interface/auth';
@@ -15,6 +16,8 @@ type FormData = {
   passwordCheck: string;
   phone: string;
   role: RoleType;
+  address: string;
+  addressDetail: string;
 };
 
 export default function useSignupForm() {
@@ -35,6 +38,8 @@ export default function useSignupForm() {
       passwordCheck: '',
       phone: '',
       role: 'WARD',
+      address: '',
+      addressDetail: '',
     },
   });
 
@@ -80,8 +85,12 @@ export default function useSignupForm() {
       password: '',
       passwordCheck: '',
       phone: '',
+      address: '',
+      addressDetail: '',
     });
   }
+
+  const [signupError, setSignupError] = useState<string | null>(null);
 
   const { mutate } = useMutation({
     mutationKey: ['signup'],
@@ -90,21 +99,24 @@ export default function useSignupForm() {
 
   const router = useRouter();
 
-  function onSubmit(formData: ISignupReq) {
+  function onSubmit(formData: FormData) {
     const form: ISignupReq = {
       name: formData.name,
       email: formData.email,
       password: formData.password,
       phone: formData.phone,
       role: formData.role,
+      address: formData.address,
+      addressDetail: formData.addressDetail,
     };
 
     mutate(form, {
       onSuccess: () => {
         formDataInit();
+        router.push('/login');
       },
-      onError: () => {
-        router.push('/');
+      onError: error => {
+        setSignupError((error as Error).message || '회원가입에 실패했습니다. 다시 시도해 주세요.');
       },
     });
   }
@@ -122,5 +134,7 @@ export default function useSignupForm() {
     passwordRules,
     phoneRules,
     allValues,
+    signupError,
+    clearSignupError: () => setSignupError(null),
   };
 }

@@ -8,9 +8,11 @@ import { ChangeEvent, useState } from 'react';
 
 import styles from './SignupForm.module.css';
 import TextInput from '@/app/_components/common/TextInput';
-import { signupKakao, smsSend, smsVerify } from '@/service/api/auth';
+import { signupKakao, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { PHONE_PATTRERN } from '@/app/constant/pattern';
-import { RoleType } from '@/service/interface/auth';
+import { IKakaoSignupRes, RoleType } from '@/service/interface/auth';
+import { getRoleHomePath } from '@/lib/auth/routes';
+import { setAuthTokens } from '@/lib/auth/tokenStore';
 
 const cx = classNames.bind(styles);
 
@@ -30,6 +32,15 @@ type FormData = {
   address: string;
   addressDetail: string;
 };
+
+type KakaoSignupData = IKakaoSignupRes['data'];
+
+function getKakaoSignupData(response: unknown): KakaoSignupData {
+  const data = (response as { data?: unknown }).data;
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+
+  return (nestedData ?? data ?? response) as KakaoSignupData;
+}
 
 const requiredRule = (message: string) => ({
   required: { value: true, message },
@@ -68,14 +79,14 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
 
   const { mutate: sendSms } = useMutation({
     mutationKey: ['kakao-sms-send'],
-    mutationFn: smsSend,
+    mutationFn: signupSmsSend,
     onSuccess: () => setIsCode(true),
     onError: () => {},
   });
 
   const { mutate: verifySms, isError } = useMutation({
     mutationKey: ['kakao-sms-verify'],
-    mutationFn: smsVerify,
+    mutationFn: signupSmsVerify,
     onSuccess: () => setIsSmsCheck(true),
     onError: () => {},
   });
@@ -83,12 +94,17 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
   const { mutate: signupKakaoMutate } = useMutation({
     mutationKey: ['kakao-signup'],
     mutationFn: signupKakao,
-    onSuccess: (response: any) => {
-      if (response.data.accessToken && response.data.refreshToken) {
-        localStorage.setItem('access_token', response.data.accessToken);
-        localStorage.setItem('refresh_token', response.data.refreshToken);
+    onSuccess: response => {
+      const data = getKakaoSignupData(response);
+
+      if (data.accessToken && data.refreshToken) {
+        setAuthTokens({
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          role: data.role,
+        });
       }
-      router.push('/');
+      router.push(getRoleHomePath(data.role));
     },
     onError: () => {},
   });

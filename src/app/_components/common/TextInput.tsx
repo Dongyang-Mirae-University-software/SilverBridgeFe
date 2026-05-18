@@ -13,7 +13,7 @@ interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 function TextInput(
-  { label, required = true, errorText, error, ...props }: TextInputProps,
+  { label, required = false, errorText, error, ...props }: TextInputProps,
   ref: ForwardedRef<HTMLInputElement>,
 ) {
   return (

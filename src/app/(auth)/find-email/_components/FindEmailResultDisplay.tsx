@@ -12,10 +12,13 @@ interface Props {
 }
 
 export default function FindEmailResultDisplay({ result }: Props) {
+  const email = result.maskedEmail ?? (result.hasKakaoAccount ? '카카오 계정' : '가입 정보 없음');
+
   return (
     <div className={cx('resultBox')}>
-      {result.maskedEmail && <p className={cx('resultText')}>가입된 이메일: {result.maskedEmail}</p>}
-      {result.hasKakaoAccount && <p className={cx('resultText')}>카카오 계정이 존재합니다.</p>}
+      <div className={cx('resultLabel')}>회원님의 아이디</div>
+      <div className={cx('resultEmail')}>{email}</div>
+      {result.createdAt && <div className={cx('resultDate')}>가입일 {result.createdAt}</div>}
     </div>
   );
 }
