@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -119,10 +119,6 @@ export default function UserDashboard({ pageKey, role }: Props) {
       router.replace('/login');
     },
   });
-
-  useEffect(() => {
-    setIsSidebarOpen(false);
-  }, [pathname]);
 
   const handleLogout = () => {
     if (isLoggingOut) return;
