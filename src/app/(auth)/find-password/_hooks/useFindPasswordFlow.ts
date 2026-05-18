@@ -12,9 +12,39 @@ import {
   findPasswordSmsResend,
   passwordReset,
 } from '@/service/api/auth';
-import { IFindPasswordEmailSendReq, IFindPasswordSmsSendReq, IPasswordResetReq } from '@/service/interface/auth';
+import { CommonResponse } from '@/service/interface/common';
+import {
+  IFindPasswordEmailSendReq,
+  IFindPasswordSmsSendReq,
+  IFindPasswordTokenResponse,
+  IPasswordResetReq,
+} from '@/service/interface/auth';
 
 type Method = 'email' | 'sms';
+
+function isCommonResponse<T>(value: unknown): value is CommonResponse<T> {
+  return typeof value === 'object' && value !== null && 'data' in value && ('code' in value || 'success' in value);
+}
+
+function getCommonResponse<T>(response: unknown) {
+  if (isCommonResponse<T>(response)) return response;
+
+  const data = (response as { data?: unknown }).data;
+  if (isCommonResponse<T>(data)) return data;
+
+  return null;
+}
+
+function getVerifiedToken(response: unknown) {
+  const result = getCommonResponse<IFindPasswordTokenResponse>(response);
+  const token = result?.data?.token;
+
+  if ((result?.success === true || result?.code === 200) && typeof token === 'string' && token.length > 0) {
+    return token;
+  }
+
+  return null;
+}
 
 export default function useFindPasswordFlow() {
   const [step, setStep] = useState(1);
@@ -33,10 +63,6 @@ export default function useFindPasswordFlow() {
 
   const verifyEmailMutation = useMutation({
     mutationFn: findPasswordEmailVerify,
-    onSuccess: (response) => {
-      setErrorMessage('');
-      setToken(response.data.data.token);
-    },
     onError: (error: Error) => setErrorMessage(error.message || '토큰 검증에 실패했습니다.'),
   });
 
@@ -54,10 +80,6 @@ export default function useFindPasswordFlow() {
 
   const verifySmsMutation = useMutation({
     mutationFn: findPasswordSmsVerify,
-    onSuccess: (response) => {
-      setErrorMessage('');
-      setToken(response.data.data.token);
-    },
     onError: (error: Error) => setErrorMessage(error.message || '인증코드 확인에 실패했습니다.'),
   });
 
@@ -93,9 +115,21 @@ export default function useFindPasswordFlow() {
     },
     setErrorMessage,
     sendEmail: (body: IFindPasswordEmailSendReq) => sendEmailMutation.mutateAsync(body),
-    verifyCode: (body: { token: string } | { phone: string; code: string }) => {
-      if ('token' in body) return verifyEmailMutation.mutateAsync(body);
-      else return verifySmsMutation.mutateAsync(body);
+    verifyCode: async (body: { token: string } | { phone: string; code: string }) => {
+      const response = 'token' in body
+        ? await verifyEmailMutation.mutateAsync(body)
+        : await verifySmsMutation.mutateAsync(body);
+      const verifiedToken = getVerifiedToken(response);
+
+      if (!verifiedToken) {
+        setToken(null);
+        setErrorMessage('인증번호가 올바르지 않습니다.');
+        return false;
+      }
+
+      setErrorMessage('');
+      setToken(verifiedToken);
+      return true;
     },
     resendEmail: (body: IFindPasswordEmailSendReq) => resendEmailMutation.mutateAsync(body),
     sendSms: (body: IFindPasswordSmsSendReq) => sendSmsMutation.mutateAsync(body),

@@ -4,6 +4,18 @@ import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { signinKakao } from '@/service/api/auth';
+import { IKakaoSigninRes } from '@/service/interface/auth';
+import { getRoleHomePath } from '@/lib/auth/routes';
+import { setAuthTokens } from '@/lib/auth/tokenStore';
+
+type KakaoSigninData = IKakaoSigninRes['data'];
+
+function getKakaoSigninData(response: unknown): KakaoSigninData {
+  const data = (response as { data?: unknown }).data;
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+
+  return (nestedData ?? data ?? response) as KakaoSigninData;
+}
 
 function KakaoCallbackContent() {
   const router = useRouter();
@@ -13,9 +25,9 @@ function KakaoCallbackContent() {
   const { mutate } = useMutation({
     mutationKey: ['kakaoSignin'],
     mutationFn: signinKakao,
-    onSuccess: (response: any) => {
-      const data = response.data;
-      if (data.newUser) {
+    onSuccess: response => {
+      const data = getKakaoSigninData(response);
+      if (data.isNewUser ?? data.newUser) {
         const params = new URLSearchParams({
           kakaoId: data.kakaoId || '',
           email: data.email || '',
@@ -27,10 +39,18 @@ function KakaoCallbackContent() {
       }
 
       if (data.accessToken && data.refreshToken) {
-        localStorage.setItem('access_token', data.accessToken);
-        localStorage.setItem('refresh_token', data.refreshToken);
+        setAuthTokens({
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          role: data.role,
+        });
       }
-      router.push('/');
+      if (data.role) {
+        router.push(getRoleHomePath(data.role));
+        return;
+      }
+
+      router.push('/login');
     },
     onError: (error) => {
       console.error('카카오 로그인 실패:', error);

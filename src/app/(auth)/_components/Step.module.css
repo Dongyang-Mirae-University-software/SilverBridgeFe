@@ -1,27 +1,27 @@
 .step-list {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 6px;
+  margin: 0 0 22px;
 }
 
 .step-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #b6b6b6;
-  font-size: 14px;
-  font-weight: 500;
+  gap: 6px;
+  color: #b8a998;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .step-number {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
-  background-color: #e8e8e8;
+  background-color: #efe3d2;
 }
 
 .step-label {
@@ -29,10 +29,16 @@
 }
 
 .step-item.active {
-  color: #111111;
+  color: #d97757;
 }
 
 .step-item.active .step-number {
-  background-color: #111111;
+  background-color: #d97757;
   color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .step-list {
+    flex-wrap: wrap;
+  }
 }
