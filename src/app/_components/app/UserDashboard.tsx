@@ -1,12 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { usePathname, useRouter } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { logout } from '@/service/api/auth';
 import { myProfileQueryOptions } from '@/service/query/user';
-import { AuthRole } from '@/lib/auth/tokenStore';
+import { AuthRole, clearAuthTokens } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import styles from './UserDashboard.module.css';
@@ -99,41 +101,85 @@ const GUARDIAN_STATS = [
 ];
 
 export default function UserDashboard({ pageKey, role }: Props) {
+  const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isWard = role === 'WARD';
   const navItems = isWard ? WARD_NAV : GUARDIAN_NAV;
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
+  const { mutate: logoutMutate, isPending: isLoggingOut } = useMutation({
+    mutationKey: ['logout'],
+    mutationFn: logout,
+    onSettled: () => {
+      clearAuthTokens();
+      queryClient.clear();
+      router.replace('/login');
+    },
+  });
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
+
+  const handleLogout = () => {
+    if (isLoggingOut) return;
+    logoutMutate();
+  };
 
   return (
     <div className={cx('stage')}>
-      <aside className={cx('sidebar')}>
-        <div className={cx('brand')}>
-          <div className={cx('brandMark')}>SB</div>
-          <div>
-            <strong>SilverBridge</strong>
-            <span>{getRoleLabel(role)} 웹</span>
-          </div>
-        </div>
+      {!isSidebarOpen && (
+        <button className={cx('menuButton', { ward: isWard })} type="button" aria-label="메뉴 열기" onClick={() => setIsSidebarOpen(true)}>
+          ☰
+        </button>
+      )}
 
-        <nav className={cx('nav')} aria-label={`${getRoleLabel(role)} 메뉴`}>
-          {navItems.map(item => (
-            <Link key={item.href} className={cx('navItem', { active: pathname === item.href })} href={item.href}>
-              <span className={cx('navDot')} />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+      {isSidebarOpen && (
+        <>
+          <button className={cx('scrim')} type="button" aria-label="메뉴 닫기" onClick={() => setIsSidebarOpen(false)} />
+          <aside className={cx('sidebar')} aria-label={`${getRoleLabel(role)} 메뉴`}>
+            <div className={cx('brand')}>
+              <div className={cx('brandMark')}>SB</div>
+              <div>
+                <strong>SilverBridge</strong>
+                <span>{getRoleLabel(role)} 웹</span>
+              </div>
+              <button className={cx('closeButton')} type="button" aria-label="메뉴 닫기" onClick={() => setIsSidebarOpen(false)}>
+                ×
+              </button>
+            </div>
 
-        <div className={cx('userCard')}>
-          <div className={cx('avatar')}>{userName.charAt(0)}</div>
-          <div>
-            <strong>{userName}</strong>
-            <span>{profile?.email ?? getRoleLabel(role)}</span>
-          </div>
-        </div>
-      </aside>
+            <nav className={cx('nav')} aria-label={`${getRoleLabel(role)} 메뉴`}>
+              {navItems.map(item => (
+                <Link
+                  key={item.href}
+                  className={cx('navItem', { active: pathname === item.href })}
+                  href={item.href}
+                  onClick={() => setIsSidebarOpen(false)}
+                >
+                  <span className={cx('navDot')} />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
+              {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+            </button>
+
+            <div className={cx('userCard')}>
+              <div className={cx('avatar')}>{userName.charAt(0)}</div>
+              <div>
+                <strong>{userName}</strong>
+                <span>{profile?.email ?? getRoleLabel(role)}</span>
+              </div>
+            </div>
+          </aside>
+        </>
+      )}
 
       <main className={cx('main')}>
         <header className={cx('header')}>
@@ -141,7 +187,12 @@ export default function UserDashboard({ pageKey, role }: Props) {
             <h1>{PAGE_TITLES[pageKey]}</h1>
             <p>{isWard ? '오늘도 편안하게 이용할 수 있도록 준비했어요.' : '가족의 상태를 한눈에 확인하고 필요한 일을 처리하세요.'}</p>
           </div>
-          <span className={cx('roleBadge')}>{getRoleLabel(role)}</span>
+          <div className={cx('headerActions')}>
+            <span className={cx('roleBadge')}>{getRoleLabel(role)}</span>
+            <button className={cx('headerLogoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
+              {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+            </button>
+          </div>
         </header>
 
         {isWard ? renderWardContent(pageKey, userName) : renderGuardianContent(pageKey, userName)}
