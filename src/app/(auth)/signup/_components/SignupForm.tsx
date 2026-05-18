@@ -220,12 +220,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
                 onChange={handleCode}
                 placeholder="6자리 입력"
               />
-              <button
-                className={cx('secondaryButton')}
-                type="button"
-                disabled={smsCode.length !== 6 || isSmsCheck}
-                onClick={handleSmsVerify}
-              >
+              <button className={cx('secondaryButton')} type="button" onClick={handleSmsVerify}>
                 인증 확인
               </button>
             </>
