@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ISignupReq, RoleType } from '@/service/interface/auth';
@@ -89,6 +90,8 @@ export default function useSignupForm() {
     });
   }
 
+  const [signupError, setSignupError] = useState<string | null>(null);
+
   const { mutate } = useMutation({
     mutationKey: ['signup'],
     mutationFn: signup,
@@ -110,9 +113,10 @@ export default function useSignupForm() {
     mutate(form, {
       onSuccess: () => {
         formDataInit();
+        router.push('/login');
       },
-      onError: () => {
-        router.push('/');
+      onError: error => {
+        setSignupError((error as Error).message || '회원가입에 실패했습니다. 다시 시도해 주세요.');
       },
     });
   }
@@ -130,5 +134,7 @@ export default function useSignupForm() {
     passwordRules,
     phoneRules,
     allValues,
+    signupError,
+    clearSignupError: () => setSignupError(null),
   };
 }
