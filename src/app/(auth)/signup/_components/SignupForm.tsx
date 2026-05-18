@@ -97,6 +97,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
     isEmailCheck &&
     allValues.password.trim().length > 0 &&
     allValues.passwordCheck.trim().length > 0 &&
+    allValues.address.trim().length > 0 &&
     !errors.email &&
     !errors.password &&
     !errors.passwordCheck &&
@@ -167,6 +168,19 @@ export default function SignupForm({ step, onStepChange }: Props) {
             {...register('passwordCheck', passwordCheckRules('비밀번호가 일치하지 않습니다.'))}
             error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
             errorText={errors.passwordCheck?.message}
+          />
+          <TextInput
+            label="주소"
+            placeholder="주소를 입력하세요"
+            required
+            {...register('address', textRules('주소를 입력하세요.', 1))}
+            error={Boolean(errors.address && allValues.address && allValues.address.trim() !== '')}
+            errorText={errors.address?.message}
+          />
+          <TextInput
+            label="상세주소"
+            placeholder="상세주소를 입력하세요"
+            {...register('addressDetail')}
           />
           <button className={cx('button')} disabled={!isStepOneValid} type="button" onClick={handleNextStep}>
             다음
