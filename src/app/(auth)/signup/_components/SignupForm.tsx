@@ -18,7 +18,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
   const {
     register,
     onSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
     getValues,
     setValue,
     emailRules,
@@ -242,7 +242,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
               <button className={cx('prevButton')} type="button" onClick={() => onStepChange(1)}>
                 이전
               </button>
-              <button className={cx('button')} disabled={!isValid || !isEmailCheck || !isSmsCheck} type="submit">
+              <button className={cx('button')} disabled={!isEmailCheck || !isSmsCheck} type="submit">
                 가입 완료
               </button>
             </div>
