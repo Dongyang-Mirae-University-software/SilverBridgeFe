@@ -231,6 +231,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
                 >
                   인증 확인
                 </button>
+                {isSmsCheck && <p className={cx('verifySuccess')}>인증이 완료되었습니다.</p>}
               </>
             )}
             <label className={cx('terms')}>

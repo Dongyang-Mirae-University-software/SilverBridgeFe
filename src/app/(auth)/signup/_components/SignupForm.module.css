@@ -166,6 +166,12 @@
   color: #5c4d3f;
 }
 
+.verifySuccess {
+  color: #2e7d32;
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .popupOverlay {
   position: fixed;
   inset: 0;
