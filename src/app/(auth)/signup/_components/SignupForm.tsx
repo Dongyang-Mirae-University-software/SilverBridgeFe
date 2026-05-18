@@ -200,7 +200,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
               {...register('phone', phoneRules('전화번호 형식이 올바르지 않습니다.'))}
               error={Boolean((errors.phone && allValues.phone && allValues.phone.trim() !== '') || smsSendErrorMsg)}
               disabled={isCode}
-              errorText={smsSendErrorMsg || errors.phone?.message}
+              errorText={smsSendErrorMsg || (allValues.phone && allValues.phone.trim() !== '' ? errors.phone?.message : undefined)}
             />
             <div className={cx('actionRow')}>
               <button className={cx('secondaryButton')} type="button" onClick={handlePhoneCheck}>
