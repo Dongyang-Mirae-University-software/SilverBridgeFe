@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -40,6 +40,7 @@ interface NavItem {
 }
 
 interface Props {
+  children?: ReactNode;
   pageKey: PageKey;
   role: AuthRole;
 }
@@ -101,7 +102,7 @@ const GUARDIAN_STATS = [
   { label: '정서 체크', value: '안정', state: '최근 7일 기준' },
 ];
 
-export default function UserDashboard({ pageKey, role }: Props) {
+export default function UserDashboard({ children, pageKey, role }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
@@ -192,7 +193,7 @@ export default function UserDashboard({ pageKey, role }: Props) {
           </div>
         </header>
 
-        {isWard ? renderWardContent(pageKey, userName) : renderGuardianContent(pageKey, userName)}
+        {children ?? (isWard ? renderWardContent(pageKey, userName) : renderGuardianContent(pageKey, userName))}
       </main>
     </div>
   );
