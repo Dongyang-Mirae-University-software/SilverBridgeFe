@@ -11,7 +11,6 @@ import { myProfileQueryOptions } from '@/service/query/user';
 import { AuthRole, clearAuthTokens } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
-import { GuardianWardRegisterPanel, GuardianWardsPanel, WardGuardiansPanel } from './ConnectionPanels';
 import styles from './UserDashboard.module.css';
 
 const cx = classNames.bind(styles);
@@ -200,7 +199,6 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
 }
 
 function renderWardContent(pageKey: PageKey, userName: string) {
-  if (pageKey === 'guardians') return <WardGuardiansPanel />;
   if (pageKey !== 'home') return <FeaturePanel title={PAGE_TITLES[pageKey]} role="WARD" />;
 
   return (
@@ -239,8 +237,6 @@ function renderWardContent(pageKey: PageKey, userName: string) {
 }
 
 function renderGuardianContent(pageKey: PageKey, userName: string) {
-  if (pageKey === 'wards') return <GuardianWardsPanel />;
-  if (pageKey === 'ward-register') return <GuardianWardRegisterPanel />;
   if (pageKey !== 'dashboard') return <FeaturePanel title={PAGE_TITLES[pageKey]} role="GUARDIAN" />;
 
   return (
