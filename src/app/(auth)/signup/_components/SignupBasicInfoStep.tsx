@@ -65,6 +65,7 @@ export default function SignupBasicInfoStep({
         label="비밀번호"
         placeholder="8자 이상"
         required
+        type="password"
         {...passwordField}
         error={Boolean(errors.password && allValues.password && allValues.password.trim() !== '')}
         errorText={errors.password?.message}
@@ -73,6 +74,7 @@ export default function SignupBasicInfoStep({
         label="비밀번호 확인"
         placeholder="비밀번호 다시 입력"
         required
+        type="password"
         {...passwordCheckField}
         error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
         errorText={errors.passwordCheck?.message}
