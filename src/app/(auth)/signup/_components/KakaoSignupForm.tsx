@@ -12,7 +12,7 @@ import { signupKakao, signupSmsSend, signupSmsVerify } from '@/service/api/auth'
 import { PHONE_PATTRERN } from '@/app/constant/pattern';
 import { IKakaoSignupRes, RoleType } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
-import { setAuthTokens } from '@/lib/auth/tokenStore';
+import { completeSigninSession } from '@/lib/auth/completeSignin';
 
 const cx = classNames.bind(styles);
 
@@ -98,7 +98,7 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
       const data = getKakaoSignupData(response);
 
       if (data.accessToken && data.refreshToken) {
-        setAuthTokens({
+        completeSigninSession({
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
           role: data.role,
