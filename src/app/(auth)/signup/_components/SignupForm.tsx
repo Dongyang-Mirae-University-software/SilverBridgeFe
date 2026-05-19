@@ -54,17 +54,29 @@ export default function SignupForm({ step, onStepChange }: Props) {
     },
   });
 
-  const { mutate: smsSendMutate } = useMutation({
+  const { mutate: smsSendMutate, isPending: isSmsSendPending } = useMutation({
     mutationKey: ['sms-send'],
     mutationFn: signupSmsSend,
-    onMutate: () => setSmsSendErrorMsg(''),
-    onError: error => setSmsSendErrorMsg((error as Error).message || '인증번호 발송에 실패했습니다.'),
+    onMutate: () => {
+      setSmsSendErrorMsg('');
+      setSmsCode('');
+      setIsSmsCheck(false);
+    },
+    onError: error => {
+      setIsCode(false);
+      setSmsSendErrorMsg((error as Error).message || '인증번호 발송에 실패했습니다.');
+    },
     onSuccess: () => setIsCode(true),
   });
 
-  const { mutate: smsVerifyMutate, error: smsVerifyError } = useMutation({
+  const {
+    mutate: smsVerifyMutate,
+    error: smsVerifyError,
+    isPending: isSmsVerifyPending,
+  } = useMutation({
     mutationKey: ['sms-verify'],
     mutationFn: signupSmsVerify,
+    onMutate: () => setIsSmsCheck(false),
     onSuccess: () => setIsSmsCheck(true),
   });
 
@@ -78,17 +90,20 @@ export default function SignupForm({ step, onStepChange }: Props) {
   };
 
   const handleCode = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    if (value.length <= 6) setSmsCode(value);
+    const value = event.target.value.replace(/\D/g, '');
+    setSmsCode(value.slice(0, 6));
   };
 
   const handlePhoneReset = () => {
     setIsCode(false);
     setSmsSendErrorMsg('');
+    setSmsCode('');
+    setIsSmsCheck(false);
     setValue('phone', '');
   };
 
   const handleSmsVerify = () => {
+    if (smsCode.length !== 6 || isSmsVerifyPending) return;
     smsVerifyMutate({ code: smsCode, phone: getValues('phone') });
   };
 
@@ -147,6 +162,8 @@ export default function SignupForm({ step, onStepChange }: Props) {
             isCode={isCode}
             isEmailCheck={isEmailCheck}
             isSmsCheck={isSmsCheck}
+            isSmsSendPending={isSmsSendPending}
+            isSmsVerifyPending={isSmsVerifyPending}
             onCodeChange={handleCode}
             onPhoneCheck={handlePhoneCheck}
             onPhoneReset={handlePhoneReset}
