@@ -1,6 +1,7 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, ReactNode, useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -51,6 +52,35 @@ function EmptyState({ message }: { message: string }) {
   return <p className={cx('connectionEmpty')}>{message}</p>;
 }
 
+function splitConnections(connections: IConnectionItem[]) {
+  return {
+    activeConnections: connections.filter(connection => connection.status === 'ACTIVE'),
+    pendingConnections: connections.filter(connection => connection.status === 'PENDING'),
+  };
+}
+
+function ConnectionSection({
+  children,
+  count,
+  title,
+}: {
+  children: ReactNode;
+  count: number;
+  title: string;
+}) {
+  if (count === 0) return null;
+
+  return (
+    <div className={cx('connectionSection')}>
+      <div className={cx('connectionSectionHeader')}>
+        <h3>{title}</h3>
+        <span>{count}건</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function ConnectionCard({
   connection,
   isPending,
@@ -73,7 +103,7 @@ function ConnectionCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img alt="" src={connection.partnerProfileImage} />
         ) : (
-          connection.partnerName.charAt(0)
+          connection.partnerName.charAt(0) || '?'
         )}
       </div>
       <div className={cx('connectionInfo')}>
@@ -121,7 +151,7 @@ export function GuardianWardRegisterPanel() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedTargetId = targetId.trim();
+    const trimmedTargetId = targetId.trim().toUpperCase();
     if (!trimmedTargetId || isPending) return;
     mutate({ targetId: trimmedTargetId });
   };
@@ -139,7 +169,7 @@ export function GuardianWardRegisterPanel() {
           <span>피보호자 ID</span>
           <input
             value={targetId}
-            onChange={event => setTargetId(event.target.value)}
+            onChange={event => setTargetId(event.target.value.toUpperCase())}
             placeholder="예: AB1234"
             maxLength={20}
             autoComplete="off"
@@ -151,58 +181,107 @@ export function GuardianWardRegisterPanel() {
       </form>
 
       {message && <p className={cx('connectionMessage')}>{message}</p>}
+
+      <Link className={cx('connectionTextLink')} href="/guardian/wards">
+        피보호자 목록에서 요청 상태 확인하기
+      </Link>
     </section>
   );
 }
 
 export function GuardianWardsPanel() {
   const queryClient = useQueryClient();
-  const { data, isLoading, isError } = useQuery(guardianConnectionsQueryOptions);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const { data, isFetching, isLoading, isError, refetch } = useQuery(guardianConnectionsQueryOptions);
   const connections = getConnectionData(data);
+  const { activeConnections, pendingConnections } = splitConnections(connections);
 
   const cancelMutation = useMutation({
     mutationKey: ['guardian-connection-cancel'],
     mutationFn: cancelGuardianConnectionRequest,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: async () => {
+      setFeedbackMessage('연결 요청을 취소했습니다.');
+      await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+    },
+    onError: error => setFeedbackMessage(getErrorMessage(error, '연결 요청 취소에 실패했습니다.')),
   });
 
   const disconnectMutation = useMutation({
     mutationKey: ['guardian-connection-disconnect'],
     mutationFn: disconnectGuardianConnection,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: async () => {
+      setFeedbackMessage('연결을 해제했습니다.');
+      await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+    },
+    onError: error => setFeedbackMessage(getErrorMessage(error, '연결 해제에 실패했습니다.')),
   });
 
   const isPending = cancelMutation.isPending || disconnectMutation.isPending;
+  const handleDisconnect = (connectionId: number) => {
+    if (!window.confirm('이 피보호자와의 연결을 해제할까요?')) return;
+    disconnectMutation.mutate(connectionId);
+  };
 
   return (
     <section className={cx('connectionPanel')}>
       <div className={cx('connectionHeader')}>
-        <span className={cx('eyebrow')}>피보호자 목록</span>
+        <div className={cx('connectionHeaderTop')}>
+          <span className={cx('eyebrow')}>피보호자 목록</span>
+          <div className={cx('connectionHeaderActions')}>
+            <button className={cx('connectionSecondaryButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>
+              {isFetching ? '새로고침 중' : '새로고침'}
+            </button>
+            <Link className={cx('connectionLinkButton')} href="/guardian/wards/register">
+              연결 요청
+            </Link>
+          </div>
+        </div>
         <h2>연결된 피보호자와 대기 중인 요청을 관리하세요.</h2>
       </div>
 
+      {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
       {isLoading && <EmptyState message="피보호자 목록을 불러오는 중입니다." />}
       {isError && <EmptyState message="피보호자 목록을 불러오지 못했습니다." />}
-      {!isLoading && !isError && connections.length === 0 && <EmptyState message="아직 연결된 피보호자가 없습니다." />}
+      {!isLoading && !isError && connections.length === 0 && (
+        <div className={cx('connectionEmptyBox')}>
+          <EmptyState message="아직 연결된 피보호자가 없습니다." />
+          <Link className={cx('connectionLinkButton')} href="/guardian/wards/register">
+            피보호자 연결 요청하기
+          </Link>
+        </div>
+      )}
 
       {connections.length > 0 && (
-        <ul className={cx('connectionList')}>
-          {connections.map(connection => {
-            const isActive = connection.status === 'ACTIVE';
-
-            return (
-              <ConnectionCard
-                key={connection.id}
-                connection={connection}
-                isPending={isPending}
-                primaryAction={() =>
-                  isActive ? disconnectMutation.mutate(connection.id) : cancelMutation.mutate(connection.id)
-                }
-                primaryLabel={isActive ? '연결 해제' : '요청 취소'}
-              />
-            );
-          })}
-        </ul>
+        <>
+          <ConnectionSection title="연결된 피보호자" count={activeConnections.length}>
+            <ul className={cx('connectionList')}>
+              {activeConnections.map(connection => (
+                <ConnectionCard
+                  key={connection.id}
+                  connection={connection}
+                  isPending={isPending}
+                  primaryAction={() => handleDisconnect(connection.id)}
+                  primaryLabel="연결 해제"
+                />
+              ))}
+            </ul>
+          </ConnectionSection>
+          <ConnectionSection title="수락 대기 중" count={pendingConnections.length}>
+            <ul className={cx('connectionList')}>
+              {pendingConnections.map(connection => (
+                <ConnectionCard
+                  key={connection.id}
+                  connection={connection}
+                  isPending={isPending}
+                  primaryAction={() => cancelMutation.mutate(connection.id)}
+                  primaryLabel="요청 취소"
+                />
+              ))}
+            </ul>
+          </ConnectionSection>
+        </>
       )}
     </section>
   );
@@ -210,60 +289,98 @@ export function GuardianWardsPanel() {
 
 export function WardGuardiansPanel() {
   const queryClient = useQueryClient();
-  const { data, isLoading, isError } = useQuery(wardConnectionsQueryOptions);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const { data, isFetching, isLoading, isError, refetch } = useQuery(wardConnectionsQueryOptions);
   const connections = getConnectionData(data);
+  const { activeConnections, pendingConnections } = splitConnections(connections);
 
   const acceptMutation = useMutation({
     mutationKey: ['ward-connection-accept'],
     mutationFn: acceptWardConnection,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey }),
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: async () => {
+      setFeedbackMessage('보호자 연결 요청을 수락했습니다.');
+      await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
+    },
+    onError: error => setFeedbackMessage(getErrorMessage(error, '보호자 요청 수락에 실패했습니다.')),
   });
 
   const refuseMutation = useMutation({
     mutationKey: ['ward-connection-refuse'],
     mutationFn: refuseWardConnectionRequest,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey }),
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: async () => {
+      setFeedbackMessage('보호자 연결 요청을 거절했습니다.');
+      await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
+    },
+    onError: error => setFeedbackMessage(getErrorMessage(error, '보호자 요청 거절에 실패했습니다.')),
   });
 
   const disconnectMutation = useMutation({
     mutationKey: ['ward-connection-disconnect'],
     mutationFn: disconnectWardConnection,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey }),
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: async () => {
+      setFeedbackMessage('보호자 연결을 해제했습니다.');
+      await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
+    },
+    onError: error => setFeedbackMessage(getErrorMessage(error, '보호자 연결 해제에 실패했습니다.')),
   });
 
   const isPending = acceptMutation.isPending || refuseMutation.isPending || disconnectMutation.isPending;
+  const handleDisconnect = (connectionId: number) => {
+    if (!window.confirm('이 보호자와의 연결을 해제할까요?')) return;
+    disconnectMutation.mutate(connectionId);
+  };
 
   return (
     <section className={cx('connectionPanel')}>
       <div className={cx('connectionHeader')}>
-        <span className={cx('eyebrow')}>내 보호자</span>
+        <div className={cx('connectionHeaderTop')}>
+          <span className={cx('eyebrow')}>내 보호자</span>
+          <button className={cx('connectionSecondaryButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>
+            {isFetching ? '새로고침 중' : '새로고침'}
+          </button>
+        </div>
         <h2>보호자 연결 요청을 수락하거나 연결을 해제할 수 있습니다.</h2>
       </div>
 
+      {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
       {isLoading && <EmptyState message="보호자 목록을 불러오는 중입니다." />}
       {isError && <EmptyState message="보호자 목록을 불러오지 못했습니다." />}
       {!isLoading && !isError && connections.length === 0 && <EmptyState message="아직 연결된 보호자가 없습니다." />}
 
       {connections.length > 0 && (
-        <ul className={cx('connectionList')}>
-          {connections.map(connection => {
-            const isActive = connection.status === 'ACTIVE';
-
-            return (
-              <ConnectionCard
-                key={connection.id}
-                connection={connection}
-                isPending={isPending}
-                primaryAction={() =>
-                  isActive ? disconnectMutation.mutate(connection.id) : acceptMutation.mutate(connection.id)
-                }
-                primaryLabel={isActive ? '연결 해제' : '수락'}
-                secondaryAction={isActive ? undefined : () => refuseMutation.mutate(connection.id)}
-                secondaryLabel={isActive ? undefined : '거절'}
-              />
-            );
-          })}
-        </ul>
+        <>
+          <ConnectionSection title="연결된 보호자" count={activeConnections.length}>
+            <ul className={cx('connectionList')}>
+              {activeConnections.map(connection => (
+                <ConnectionCard
+                  key={connection.id}
+                  connection={connection}
+                  isPending={isPending}
+                  primaryAction={() => handleDisconnect(connection.id)}
+                  primaryLabel="연결 해제"
+                />
+              ))}
+            </ul>
+          </ConnectionSection>
+          <ConnectionSection title="받은 연결 요청" count={pendingConnections.length}>
+            <ul className={cx('connectionList')}>
+              {pendingConnections.map(connection => (
+                <ConnectionCard
+                  key={connection.id}
+                  connection={connection}
+                  isPending={isPending}
+                  primaryAction={() => acceptMutation.mutate(connection.id)}
+                  primaryLabel="수락"
+                  secondaryAction={() => refuseMutation.mutate(connection.id)}
+                  secondaryLabel="거절"
+                />
+              ))}
+            </ul>
+          </ConnectionSection>
+        </>
       )}
     </section>
   );
