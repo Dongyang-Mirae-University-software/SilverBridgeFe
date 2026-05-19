@@ -9,7 +9,7 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       NODE_ENV: development
-    command: sh -c "npm ci && npm run dev -- --hostname 0.0.0.0 --port 3000"
+    command: sh -c "npm ci --ignore-scripts && npm run dev:docker"
     ports:
       - "6510:3000"
     volumes:
