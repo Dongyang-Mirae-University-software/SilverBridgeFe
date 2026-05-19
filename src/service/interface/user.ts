@@ -30,5 +30,6 @@ export interface IUserPasswordChangeReq {
 }
 
 export interface IUserDeleteReq {
-  password: string | null;
+  password?: string | null;
+  confirmation?: string;
 }
