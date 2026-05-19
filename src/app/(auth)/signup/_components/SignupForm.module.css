@@ -24,7 +24,9 @@
 
 .button,
 .secondaryButton,
-.prevButton {
+.prevButton,
+.inlineButton,
+.outlineButton {
   min-height: 48px;
   border-radius: 12px;
   border: none;
@@ -43,7 +45,9 @@
 
 .button:disabled,
 .secondaryButton:disabled,
-.prevButton:disabled {
+.prevButton:disabled,
+.inlineButton:disabled,
+.outlineButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -54,6 +58,70 @@
   padding: 0 14px;
   background: #fbe7da;
   color: #d97757;
+}
+
+.inlineButton,
+.outlineButton {
+  flex: 0 0 118px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.inlineButton {
+  background: #d97757;
+  color: #ffffff;
+}
+
+.outlineButton {
+  border: 1.5px solid #e5d8c5;
+  background: #ffffff;
+  color: #5c4d3f;
+}
+
+.phoneVerification {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.phoneActionRow,
+.codeActionRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.fieldGrow {
+  flex: 1;
+  min-width: 0;
+}
+
+.phoneActionRow .inlineButton,
+.phoneActionRow .outlineButton,
+.codeActionRow .inlineButton {
+  margin-top: 26px;
+}
+
+.codePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1.5px solid #f0d3c1;
+  border-radius: 12px;
+  background: #fff8f3;
+}
+
+.codePanel.complete {
+  border-color: #b8dfba;
+  background: #f3fbf3;
+}
+
+.codeGuide {
+  color: #5c4d3f;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .radioGroup {
@@ -224,6 +292,18 @@
   .secondaryButton {
     width: 100%;
     min-height: 48px;
+  }
+
+  .phoneActionRow,
+  .codeActionRow {
+    flex-direction: column;
+  }
+
+  .phoneActionRow .inlineButton,
+  .phoneActionRow .outlineButton,
+  .codeActionRow .inlineButton {
+    width: 100%;
+    margin-top: 0;
   }
 
   .radioGroup {
