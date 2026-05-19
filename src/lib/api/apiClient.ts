@@ -35,6 +35,12 @@ const refreshClient = axios.create({
 
 let refreshRequest: Promise<string> | null = null;
 
+function isSigninRequest(url?: string) {
+  if (!url) return false;
+
+  return url.includes('/api/auth/signin');
+}
+
 async function refreshAccessToken() {
   const refreshToken = getRefreshToken();
 
@@ -106,8 +112,9 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as RetryableRequestConfig | undefined;
     const isUnauthorized = error.response?.status === 401;
     const isRefreshRequest = originalRequest?.url?.includes('/api/auth/refresh');
+    const isSigninEndpoint = isSigninRequest(originalRequest?.url);
 
-    if (isUnauthorized && originalRequest && !originalRequest._retry && !isRefreshRequest) {
+    if (isUnauthorized && originalRequest && !originalRequest._retry && !isRefreshRequest && !isSigninEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -122,7 +129,7 @@ apiClient.interceptors.response.use(
       }
     }
 
-    if (isUnauthorized) {
+    if (isUnauthorized && !isSigninEndpoint) {
       clearAuthTokens();
     }
 
