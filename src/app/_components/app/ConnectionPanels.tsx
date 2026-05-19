@@ -24,7 +24,7 @@ import styles from './UserDashboard.module.css';
 const cx = classNames.bind(styles);
 
 function getConnectionData(response: unknown) {
-  const data = (response as { data?: unknown }).data;
+  const data = (response as { data?: unknown } | undefined)?.data;
   return Array.isArray(data) ? (data as IConnectionItem[]) : [];
 }
 
