@@ -33,24 +33,12 @@ const ERROR_MESSAGES: Record<number, string> = {
   500: '서버에 문제가 생겼어요. 잠시 후 다시 시도해주세요.',
 };
 
-// ── 401 처리 ─────────────────────────────────
-// 나중에 토큰 재발급 로직 붙일 때 여기만 수정하면 됨
-function handleUnauthorized() {
-  // TODO: refresh token 재발급 붙이기
-  // const ok = await tokenService.refresh();
-  // if (!ok) window.location.href = '/login';
-  window.location.href = '/login';
-}
-
 // ── 메인 함수 ─────────────────────────────────
 // AxiosError를 받아서 ApiErrorShape으로 변환해서 반환
 // interceptor에서 이 함수 호출 후 Promise.reject()에 넘김
 export function resolveError(error: AxiosError<ServerErrorBody>): ApiErrorShape {
   const status = error.response?.status ?? 0;
   const code = error.response?.data?.code;
-
-  // 401은 추가 처리 (리다이렉트 or 재발급)
-  if (status === 401) handleUnauthorized();
 
   return {
     status,
