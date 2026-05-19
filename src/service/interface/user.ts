@@ -19,6 +19,7 @@ export interface IUserProfile {
 export interface IUserUpdateReq {
   name: string;
   phone?: string;
+  verificationNonce?: string;
   address?: string;
   addressDetail?: string;
 }
