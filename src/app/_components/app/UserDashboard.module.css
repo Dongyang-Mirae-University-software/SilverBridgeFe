@@ -385,6 +385,20 @@
   gap: 10px;
 }
 
+.connectionHeaderTop {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.connectionHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .connectionHeader h2 {
   margin: 0;
   color: var(--sb-ink);
@@ -440,15 +454,21 @@
 
 .connectionSubmitButton,
 .connectionPrimaryButton,
-.connectionSecondaryButton {
+.connectionSecondaryButton,
+.connectionLinkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 800;
+  text-decoration: none;
   white-space: nowrap;
 }
 
-.connectionSubmitButton {
+.connectionSubmitButton,
+.connectionLinkButton {
   min-height: 46px;
   background: var(--sb-brand);
   color: #fff;
@@ -491,6 +511,63 @@
   font-weight: 700;
   line-height: 1.5;
   padding: 12px 14px;
+}
+
+.connectionEmptyBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
+  padding: 12px;
+}
+
+.connectionEmptyBox .connectionEmpty {
+  flex: 1;
+  background: transparent;
+  padding: 0;
+}
+
+.connectionTextLink {
+  width: fit-content;
+  color: var(--sb-brand);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.connectionTextLink:hover {
+  text-decoration: underline;
+}
+
+.connectionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.connectionSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.connectionSectionHeader h3 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.connectionSectionHeader span {
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-size: 11px;
+  font-weight: 850;
+  padding: 4px 8px;
 }
 
 .connectionList {
@@ -623,12 +700,20 @@
   }
 
   .connectionForm,
+  .connectionHeaderActions,
+  .connectionHeaderTop,
   .connectionActions {
     align-items: stretch;
     flex-direction: column;
   }
 
+  .connectionEmptyBox {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .connectionSubmitButton,
+  .connectionLinkButton,
   .connectionPrimaryButton,
   .connectionSecondaryButton {
     width: 100%;
