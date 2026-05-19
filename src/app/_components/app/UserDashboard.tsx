@@ -11,6 +11,7 @@ import { myProfileQueryOptions } from '@/service/query/user';
 import { AuthRole, clearAuthTokens } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
+import { unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
 import styles from './UserDashboard.module.css';
 
 const cx = classNames.bind(styles);
@@ -113,7 +114,13 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
   const { mutate: logoutMutate, isPending: isLoggingOut } = useMutation({
     mutationKey: ['logout'],
-    mutationFn: logout,
+    mutationFn: async () => {
+      await unregisterFcmTokenForCurrentDevice().catch(error => {
+        console.error('FCM 토큰 삭제 실패:', error);
+      });
+
+      return logout();
+    },
     onSettled: () => {
       clearAuthTokens();
       queryClient.clear();

@@ -6,7 +6,7 @@ import { useMutation } from '@tanstack/react-query';
 import { signinKakao } from '@/service/api/auth';
 import { IKakaoSigninRes } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
-import { setAuthTokens } from '@/lib/auth/tokenStore';
+import { completeSigninSession } from '@/lib/auth/completeSignin';
 
 type KakaoSigninData = IKakaoSigninRes['data'];
 
@@ -39,7 +39,7 @@ function KakaoCallbackContent() {
       }
 
       if (data.accessToken && data.refreshToken) {
-        setAuthTokens({
+        completeSigninSession({
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
           role: data.role,

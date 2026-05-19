@@ -9,7 +9,7 @@ import TextInput from '@/app/_components/common/TextInput';
 import { signin } from '@/service/api/auth';
 import { ISigninResponse } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
-import { setAuthTokens } from '@/lib/auth/tokenStore';
+import { completeSigninSession } from '@/lib/auth/completeSignin';
 import styles from './LoginContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -59,7 +59,7 @@ export default function LoginContent() {
       const data = getSigninData(response);
 
       if (data.accessToken && data.refreshToken) {
-        setAuthTokens({
+        completeSigninSession({
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
           role: data.role,
