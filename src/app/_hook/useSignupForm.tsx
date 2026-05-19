@@ -9,7 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import { signup } from '@/service/api/auth';
 import { useRouter } from 'next/navigation';
 
-type FormData = {
+export type SignupFormValues = {
   name: string;
   email: string;
   password: string;
@@ -29,7 +29,7 @@ export default function useSignupForm() {
     watch,
     reset,
     getValues,
-  } = useForm<FormData>({
+  } = useForm<SignupFormValues>({
     mode: 'all',
     defaultValues: {
       name: '',
@@ -99,7 +99,7 @@ export default function useSignupForm() {
 
   const router = useRouter();
 
-  function onSubmit(formData: FormData) {
+  function onSubmit(formData: SignupFormValues) {
     const form: ISignupReq = {
       name: formData.name,
       email: formData.email,
