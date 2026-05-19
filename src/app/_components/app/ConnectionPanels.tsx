@@ -52,6 +52,36 @@ function EmptyState({ message }: { message: string }) {
   return <p className={cx('connectionEmpty')}>{message}</p>;
 }
 
+function ConnectionStats({
+  activeCount,
+  pendingCount,
+  totalCount,
+}: {
+  activeCount: number;
+  pendingCount: number;
+  totalCount: number;
+}) {
+  return (
+    <div className={cx('connectionStatGrid')}>
+      <div className={cx('connectionStat')}>
+        <span>전체 연결</span>
+        <strong>{totalCount}건</strong>
+        <small>현재 조회된 관계</small>
+      </div>
+      <div className={cx('connectionStat')}>
+        <span>연결됨</span>
+        <strong>{activeCount}건</strong>
+        <small>ACTIVE 상태</small>
+      </div>
+      <div className={cx('connectionStat')}>
+        <span>수락 대기</span>
+        <strong>{pendingCount}건</strong>
+        <small>PENDING 상태</small>
+      </div>
+    </div>
+  );
+}
+
 function splitConnections(connections: IConnectionItem[]) {
   return {
     activeConnections: connections.filter(connection => connection.status === 'ACTIVE'),
@@ -157,28 +187,36 @@ export function GuardianWardRegisterPanel() {
   };
 
   return (
-    <section className={cx('connectionPanel')}>
+    <section className={cx('connectionPage')}>
       <div className={cx('connectionHeader')}>
         <span className={cx('eyebrow')}>피보호자 연결</span>
         <h2>피보호자 ID로 연결 요청을 보내세요.</h2>
         <p>피보호자가 요청을 수락하면 보호자 대시보드에서 상태를 확인할 수 있습니다.</p>
       </div>
 
-      <form className={cx('connectionForm')} onSubmit={handleSubmit}>
-        <label className={cx('connectionField')}>
-          <span>피보호자 ID</span>
-          <input
-            value={targetId}
-            onChange={event => setTargetId(event.target.value.toUpperCase())}
-            placeholder="예: AB1234"
-            maxLength={20}
-            autoComplete="off"
-          />
-        </label>
-        <button className={cx('connectionSubmitButton')} type="submit" disabled={!targetId.trim() || isPending}>
-          {isPending ? '요청 중...' : '연결 요청'}
-        </button>
-      </form>
+      <div className={cx('connectionRegisterGrid')}>
+        <form className={cx('connectionFormCard')} onSubmit={handleSubmit}>
+          <label className={cx('connectionField')}>
+            <span>피보호자 ID</span>
+            <input
+              value={targetId}
+              onChange={event => setTargetId(event.target.value.toUpperCase())}
+              placeholder="예: AB1234"
+              maxLength={20}
+              autoComplete="off"
+            />
+          </label>
+          <button className={cx('connectionSubmitButton')} type="submit" disabled={!targetId.trim() || isPending}>
+            {isPending ? '요청 중...' : '연결 요청'}
+          </button>
+        </form>
+
+        <div className={cx('connectionGuideCard')}>
+          <span className={cx('connectionStatus')}>안내</span>
+          <strong>요청 후 피보호자 수락이 필요합니다.</strong>
+          <p>요청이 전송되면 피보호자에게 알림이 전달되고, 수락 전까지 목록에서 수락 대기 상태로 표시됩니다.</p>
+        </div>
+      </div>
 
       {message && <p className={cx('connectionMessage')}>{message}</p>}
 
@@ -225,7 +263,7 @@ export function GuardianWardsPanel() {
   };
 
   return (
-    <section className={cx('connectionPanel')}>
+    <section className={cx('connectionPage')}>
       <div className={cx('connectionHeader')}>
         <div className={cx('connectionHeaderTop')}>
           <span className={cx('eyebrow')}>피보호자 목록</span>
@@ -240,6 +278,12 @@ export function GuardianWardsPanel() {
         </div>
         <h2>연결된 피보호자와 대기 중인 요청을 관리하세요.</h2>
       </div>
+
+      <ConnectionStats
+        activeCount={activeConnections.length}
+        pendingCount={pendingConnections.length}
+        totalCount={connections.length}
+      />
 
       {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
       {isLoading && <EmptyState message="피보호자 목록을 불러오는 중입니다." />}
@@ -334,7 +378,7 @@ export function WardGuardiansPanel() {
   };
 
   return (
-    <section className={cx('connectionPanel')}>
+    <section className={cx('connectionPage')}>
       <div className={cx('connectionHeader')}>
         <div className={cx('connectionHeaderTop')}>
           <span className={cx('eyebrow')}>내 보호자</span>
@@ -344,6 +388,12 @@ export function WardGuardiansPanel() {
         </div>
         <h2>보호자 연결 요청을 수락하거나 연결을 해제할 수 있습니다.</h2>
       </div>
+
+      <ConnectionStats
+        activeCount={activeConnections.length}
+        pendingCount={pendingConnections.length}
+        totalCount={connections.length}
+      />
 
       {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
       {isLoading && <EmptyState message="보호자 목록을 불러오는 중입니다." />}
