@@ -66,7 +66,10 @@ export async function registerFcmTokenForCurrentDevice() {
   if (typeof window === 'undefined' || !('Notification' in window)) return null;
 
   const storedToken = getSessionStorage()?.getItem(FCM_TOKEN_KEY);
-  if (storedToken) return storedToken;
+  if (storedToken) {
+    await registerNotificationFcmToken({ token: storedToken, platform: 'WEB' });
+    return storedToken;
+  }
 
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return null;
