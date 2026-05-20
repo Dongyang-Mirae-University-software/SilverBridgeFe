@@ -22,18 +22,12 @@ interface ConnectConnectionSocketOptions {
 }
 
 const DEFAULT_SOCKET_URL = 'wss://api.dmu.gosky.kr/ws';
+const STOMP_SUBPROTOCOLS = ['v12.stomp', 'v11.stomp', 'v10.stomp'];
 
-function getSocketUrl(token?: string | null) {
+function getSocketUrl() {
   const explicitUrl = process.env.NEXT_PUBLIC_WS_URL;
 
-  let url: URL;
-  if (explicitUrl) {
-    url = new URL(explicitUrl);
-  } else {
-    url = new URL(DEFAULT_SOCKET_URL);
-  }
-
-  if (token) url.searchParams.set('token', token);
+  const url = new URL(explicitUrl || DEFAULT_SOCKET_URL);
   return url.toString();
 }
 
@@ -109,9 +103,9 @@ function getFallbackType(destination?: string): ConnectionRealtimeType {
 
 export function connectConnectionSocket({ onMessage, role, userId }: ConnectConnectionSocketOptions) {
   const accessToken = getAccessToken();
-  const socketUrl = getSocketUrl(accessToken);
-  console.debug('[WS] 연결 시도:', socketUrl.replace(/token=[^&]+/, 'token=***'));
-  const socket = new WebSocket(socketUrl);
+  const socketUrl = getSocketUrl();
+  console.debug('[WS] 연결 시도:', socketUrl);
+  const socket = new WebSocket(socketUrl, STOMP_SUBPROTOCOLS);
   let connected = false;
 
   socket.addEventListener('open', () => {
@@ -151,7 +145,7 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
   });
 
   socket.addEventListener('error', () => {
-    console.error('[WS] 연결 오류 발생 (아래 close 코드 확인)');
+    console.warn('[WS] 연결 오류 발생 — 브라우저 Network 탭의 WS 요청 status와 close code를 확인하세요.');
   });
 
   socket.addEventListener('close', event => {
