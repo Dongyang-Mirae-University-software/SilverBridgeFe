@@ -1,4 +1,4 @@
-import { WardGuardiansPanel } from '@/app/_components/app/ConnectionPanels';
+import { WardGuardiansPanel } from '@/app/_components/app/connections/WardGuardiansPanel';
 import UserDashboard from '@/app/_components/app/UserDashboard';
 
 export default function WardGuardiansPage() {
