@@ -666,6 +666,11 @@
   gap: 8px;
 }
 
+.connectionPageActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .connectionHeader h2 {
   margin: 0;
   color: var(--sb-ink);
@@ -1491,6 +1496,7 @@
   .connectionFormCard,
   .connectionHeaderActions,
   .connectionHeaderTop,
+  .connectionPageActions,
   .connectionActions,
   .wardListToolbar {
     align-items: stretch;
