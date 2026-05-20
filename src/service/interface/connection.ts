@@ -13,5 +13,6 @@ export interface IConnectionItem {
 }
 
 export interface IGuardianConnectionRequestReq {
+  relation: string;
   targetId: string;
 }

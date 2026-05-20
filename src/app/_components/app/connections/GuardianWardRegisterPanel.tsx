@@ -7,14 +7,20 @@ import { requestWardConnection } from '@/service/api/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
 import { cx, getConnectionData, getErrorMessage } from './ConnectionShared';
 
+const RELATION_OPTIONS = ['아들', '딸', '배우자', '부모', '형제자매', '손자녀', '직접입력'] as const;
+const CUSTOM_RELATION_OPTION = '직접입력';
+
 export function GuardianWardRegisterPanel() {
   const queryClient = useQueryClient();
   const [targetId, setTargetId] = useState('');
+  const [relation, setRelation] = useState<(typeof RELATION_OPTIONS)[number]>('아들');
+  const [customRelation, setCustomRelation] = useState('');
   const [message, setMessage] = useState('');
   const { data: connectionsResponse, isLoading } = useQuery(guardianConnectionsQueryOptions);
   const pendingConnections = getConnectionData(connectionsResponse).filter(
     connection => connection.status === 'PENDING',
   );
+  const requestRelation = relation === CUSTOM_RELATION_OPTION ? customRelation.trim() : relation;
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['guardian-connection-request'],
@@ -22,6 +28,8 @@ export function GuardianWardRegisterPanel() {
     onMutate: () => setMessage(''),
     onSuccess: async () => {
       setTargetId('');
+      setRelation('아들');
+      setCustomRelation('');
       setMessage('피보호자에게 연결 요청을 보냈습니다.');
       await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
     },
@@ -31,8 +39,8 @@ export function GuardianWardRegisterPanel() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmedTargetId = targetId.trim();
-    if (!trimmedTargetId || isPending) return;
-    mutate({ targetId: trimmedTargetId });
+    if (!trimmedTargetId || !requestRelation || isPending) return;
+    mutate({ relation: requestRelation, targetId: trimmedTargetId });
   };
 
   return (
@@ -41,6 +49,7 @@ export function GuardianWardRegisterPanel() {
         <div className={cx('connectionRegisterTitle')}>피보호자 회원 ID 입력</div>
         <div className={cx('connectionRegisterFormRow')}>
           <label className={cx('connectionField')}>
+            회원 ID
             <input
               value={targetId}
               onChange={event => setTargetId(event.target.value)}
@@ -49,12 +58,39 @@ export function GuardianWardRegisterPanel() {
               autoComplete="off"
             />
           </label>
-          <button className={cx('connectionSubmitButton')} type="submit" disabled={!targetId.trim() || isPending}>
+        </div>
+        <div className={cx('connectionRegisterFormRow')}>
+          <label className={cx('connectionField')}>
+            관계
+            <select
+              value={relation}
+              onChange={event => setRelation(event.target.value as (typeof RELATION_OPTIONS)[number])}
+            >
+              {RELATION_OPTIONS.map(option => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+          {relation === CUSTOM_RELATION_OPTION && (
+            <label className={cx('connectionField')}>
+              직접입력
+              <input
+                value={customRelation}
+                onChange={event => setCustomRelation(event.target.value)}
+                placeholder="예) 며느리"
+                maxLength={10}
+                autoComplete="off"
+              />
+            </label>
+          )}
+          <button className={cx('connectionSubmitButton')} type="submit" disabled={!targetId.trim() || !requestRelation || isPending}>
             {isPending ? '요청 중...' : '승인 요청'}
           </button>
         </div>
         <p className={cx('connectionRegisterHint')}>
-          피보호자가 본인의 마이페이지에서 확인 가능한 회원 ID를 입력해 주세요. 요청이 전달되면 피보호자가 응답합니다.
+          피보호자가 본인의 마이페이지에서 확인 가능한 회원 ID와 관계를 입력해 주세요. 요청이 전달되면 피보호자가 응답합니다.
         </p>
         {message && <p className={cx('connectionMessage')}>{message}</p>}
       </form>
