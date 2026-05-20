@@ -688,6 +688,135 @@
   gap: 14px;
 }
 
+.connectionRegisterPage {
+  gap: 18px;
+}
+
+.connectionRegisterCard,
+.connectionHistoryCard {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.connectionRegisterCard {
+  padding: 22px;
+}
+
+.connectionRegisterTitle {
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 850;
+  margin-bottom: 12px;
+}
+
+.connectionRegisterFormRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.connectionRegisterFormRow .connectionField input {
+  min-height: 48px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.connectionRegisterFormRow .connectionSubmitButton {
+  min-height: 48px;
+  font-size: 14px;
+  font-weight: 850;
+  padding: 10px 22px;
+}
+
+.connectionRegisterHint {
+  margin: 10px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.connectionRegisterCard .connectionMessage {
+  margin-top: 12px;
+  border-color: #dceee3;
+  background: #dceee3;
+  color: var(--sb-safe);
+  font-weight: 800;
+}
+
+.connectionHistoryCard {
+  padding: 18px;
+}
+
+.connectionHistoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.connectionHistoryHeader strong {
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.connectionHistoryHeader span {
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+}
+
+.connectionHistoryTableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 12px;
+}
+
+.connectionHistoryTable {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.connectionHistoryTable th {
+  border-bottom: 1px solid var(--sb-line);
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.connectionHistoryTable td {
+  border-bottom: 1px solid var(--sb-line-soft);
+  color: var(--sb-ink-soft);
+  font-weight: 650;
+  padding: 12px 16px;
+}
+
+.connectionHistoryTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.connectionHistoryTable tbody tr:hover {
+  background: var(--sb-bg-soft);
+}
+
+.connectionHistoryTable td:first-child {
+  color: var(--sb-ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 800;
+}
+
 .connectionForm,
 .connectionFormCard {
   display: flex;
@@ -1178,6 +1307,16 @@
   .connectionRegisterGrid,
   .connectionStatGrid {
     grid-template-columns: 1fr;
+  }
+
+  .connectionRegisterCard,
+  .connectionHistoryCard {
+    padding: 16px;
+  }
+
+  .connectionRegisterFormRow {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .connectionForm,
