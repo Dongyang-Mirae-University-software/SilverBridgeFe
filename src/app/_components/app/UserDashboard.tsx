@@ -170,6 +170,14 @@ function formatProfileDate(value?: string) {
   }).format(date);
 }
 
+function MenuIcon() {
+  return (
+    <svg className={cx('menuIcon')} viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  );
+}
+
 function NavIcon({ name }: { name: NavIconName }) {
   switch (name) {
     case 'home':
@@ -336,9 +344,7 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
     <div className={cx('stage')}>
       <div className={cx('mobileTopBar')}>
         <button className={cx('topBarMenuButton')} type="button" aria-label="메뉴 열기" onClick={() => setIsSidebarOpen(true)}>
-          <span />
-          <span />
-          <span />
+          <MenuIcon />
         </button>
         <div className={cx('topBarBrand')}>
           <div className={cx('brandMark')}>SB</div>
@@ -352,9 +358,7 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
 
       {!isSidebarOpen && (
         <button className={cx('menuButton', { ward: isWard })} type="button" aria-label="메뉴 열기" onClick={() => setIsSidebarOpen(true)}>
-          <span />
-          <span />
-          <span />
+          <MenuIcon />
         </button>
       )}
 
