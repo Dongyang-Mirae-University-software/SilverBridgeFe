@@ -17,8 +17,12 @@ function getNotificationPath(data) {
     case 'CONNECTION_REQUEST':
       return '/ward/guardians';
     case 'CONNECTION_ACCEPTED':
+    case 'CONNECTION_REFUSED':
     case 'CONNECTION_CANCELLED':
       return '/guardian/wards';
+    case 'DISCONNECTION':
+    case 'CONNECTION_DISCONNECTED':
+      return '/';
     default:
       return '/';
   }

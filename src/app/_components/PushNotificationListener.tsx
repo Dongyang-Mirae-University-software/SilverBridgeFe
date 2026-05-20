@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 import { MessagePayload } from 'firebase/messaging';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { listenForegroundMessages } from '@/lib/fcm';
 import { getAuthRole } from '@/lib/auth/tokenStore';
+import { guardianConnectionsQueryKey, wardConnectionsQueryKey } from '@/service/query/connection';
 import styles from './PushNotificationListener.module.css';
 
 const cx = classNames.bind(styles);
@@ -37,8 +39,13 @@ function getPushRoute(data?: MessagePayload['data']) {
   }
 }
 
+function isConnectionPush(data?: MessagePayload['data']) {
+  return Boolean(data?.type && data.type.includes('CONNECTION'));
+}
+
 export default function PushNotificationListener() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const idRef = useRef(0);
   const [toasts, setToasts] = useState<PushToast[]>([]);
 
@@ -54,12 +61,17 @@ export default function PushNotificationListener() {
         data: payload.data,
       };
 
+      if (isConnectionPush(payload.data)) {
+        void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
+        void queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+      }
+
       setToasts(prev => [toast, ...prev].slice(0, 3));
       window.setTimeout(() => {
         setToasts(prev => prev.filter(item => item.id !== id));
       }, TOAST_LIFETIME_MS);
     });
-  }, []);
+  }, [queryClient]);
 
   if (toasts.length === 0) return null;
 
