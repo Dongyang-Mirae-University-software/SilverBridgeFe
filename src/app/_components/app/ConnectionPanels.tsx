@@ -181,7 +181,7 @@ export function GuardianWardRegisterPanel() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedTargetId = targetId.trim().toUpperCase();
+    const trimmedTargetId = targetId.trim();
     if (!trimmedTargetId || isPending) return;
     mutate({ targetId: trimmedTargetId });
   };
@@ -200,8 +200,8 @@ export function GuardianWardRegisterPanel() {
             <span>피보호자 ID</span>
             <input
               value={targetId}
-              onChange={event => setTargetId(event.target.value.toUpperCase())}
-              placeholder="예: AB1234"
+              onChange={event => setTargetId(event.target.value)}
+              placeholder="피보호자 ID를 입력하세요"
               maxLength={20}
               autoComplete="off"
             />
