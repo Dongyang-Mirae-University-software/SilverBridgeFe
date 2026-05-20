@@ -1,17 +1,18 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import Link from 'next/link';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { requestWardConnection } from '@/service/api/connection';
-import { guardianConnectionsQueryKey } from '@/service/query/connection';
-import { cx, getErrorMessage } from './ConnectionShared';
+import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
+import { cx, getConnectionData, getErrorMessage } from './ConnectionShared';
 
 export function GuardianWardRegisterPanel() {
   const queryClient = useQueryClient();
   const [targetId, setTargetId] = useState('');
   const [message, setMessage] = useState('');
+  const { data: connectionsResponse, isLoading } = useQuery(guardianConnectionsQueryOptions);
+  const pendingConnections = getConnectionData(connectionsResponse).filter(connection => connection.status === 'PENDING');
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['guardian-connection-request'],
@@ -33,42 +34,84 @@ export function GuardianWardRegisterPanel() {
   };
 
   return (
-    <section className={cx('connectionPage')}>
+    <section className={cx('connectionPage', 'connectionRegisterPage')}>
       <div className={cx('connectionHeader')}>
-        <span className={cx('eyebrow')}>피보호자 연결</span>
-        <h2>피보호자 ID로 연결 요청을 보내세요.</h2>
-        <p>피보호자가 요청을 수락하면 보호자 대시보드에서 상태를 확인할 수 있습니다.</p>
+        <h2>피보호자 등록</h2>
+        <p>피보호자의 회원 ID를 입력하여 연결을 요청합니다.</p>
       </div>
 
-      <div className={cx('connectionRegisterGrid')}>
-        <form className={cx('connectionFormCard')} onSubmit={handleSubmit}>
+      <form className={cx('connectionRegisterCard')} onSubmit={handleSubmit}>
+        <div className={cx('connectionRegisterTitle')}>피보호자 회원 ID 입력</div>
+        <div className={cx('connectionRegisterFormRow')}>
           <label className={cx('connectionField')}>
-            <span>피보호자 ID</span>
             <input
               value={targetId}
               onChange={event => setTargetId(event.target.value)}
-              placeholder="피보호자 ID를 입력하세요"
+              placeholder="예) WD-2026-0188"
               maxLength={20}
               autoComplete="off"
             />
           </label>
           <button className={cx('connectionSubmitButton')} type="submit" disabled={!targetId.trim() || isPending}>
-            {isPending ? '요청 중...' : '연결 요청'}
+            {isPending ? '요청 중...' : '승인 요청'}
           </button>
-        </form>
-
-        <div className={cx('connectionGuideCard')}>
-          <span className={cx('connectionStatus')}>안내</span>
-          <strong>요청 후 피보호자 수락이 필요합니다.</strong>
-          <p>요청이 전송되면 피보호자에게 알림이 전달되고, 수락 전까지 목록에서 수락 대기 상태로 표시됩니다.</p>
         </div>
+        <p className={cx('connectionRegisterHint')}>
+          피보호자가 본인의 마이페이지에서 확인 가능한 회원 ID를 입력해 주세요. 요청이 전달되면 피보호자가 응답합니다.
+        </p>
+        {message && <p className={cx('connectionMessage')}>{message}</p>}
+      </form>
+
+      <div className={cx('connectionHistoryCard')}>
+        <div className={cx('connectionHistoryHeader')}>
+          <strong>요청 내역</strong>
+          <span>{pendingConnections.length}건</span>
+        </div>
+
+        {isLoading ? (
+          <p className={cx('connectionEmpty')}>요청 내역을 불러오는 중입니다.</p>
+        ) : pendingConnections.length > 0 ? (
+          <div className={cx('connectionHistoryTableWrap')}>
+            <table className={cx('connectionHistoryTable')}>
+              <thead>
+                <tr>
+                  <th>회원 ID</th>
+                  <th>이름</th>
+                  <th>요청일</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingConnections.map(connection => (
+                  <tr key={connection.id}>
+                    <td>{connection.partnerUserId}</td>
+                    <td>{connection.partnerName || '확인 전'}</td>
+                    <td>{formatRegisterDate(connection.createdAt)}</td>
+                    <td>
+                      <span className={cx('connectionStatus')}>요청중</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className={cx('connectionEmpty')}>수락 대기 중인 요청이 없습니다.</p>
+        )}
       </div>
-
-      {message && <p className={cx('connectionMessage')}>{message}</p>}
-
-      <Link className={cx('connectionTextLink')} href="/guardian/wards">
-        피보호자 목록에서 요청 상태 확인하기
-      </Link>
     </section>
   );
+}
+
+function formatRegisterDate(value: string | null) {
+  if (!value) return '확인 전';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '확인 전';
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+    year: 'numeric',
+  }).format(date);
 }
