@@ -24,7 +24,6 @@
   box-shadow: 0 4px 12px rgba(20, 17, 12, 0.08);
   color: var(--sb-ink);
   cursor: pointer;
-  gap: 4px;
 }
 
 .menuButton.ward {
@@ -32,13 +31,13 @@
   height: 56px;
 }
 
-.menuButton span,
-.topBarMenuButton span {
-  display: block;
-  width: 18px;
-  height: 2px;
-  border-radius: 999px;
-  background: currentColor;
+.menuIcon {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2.2;
 }
 
 .scrim {
@@ -1047,7 +1046,6 @@
     background: #fff;
     color: var(--sb-ink);
     cursor: pointer;
-    gap: 4px;
   }
 
   .topBarBrand {
