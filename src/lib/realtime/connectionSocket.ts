@@ -87,11 +87,16 @@ export function connectConnectionSocket({ onMessage, userId }: ConnectConnection
   });
 
   client.onConnect = () => {
-    console.debug('[WS] 연결됨:', maskSocketUrl(brokerURL));
+    console.info('[WS] CONNECTED - 구독 시작:', maskSocketUrl(brokerURL), '| userId:', userId);
 
     CONNECTION_TOPICS.forEach(topic => {
-      client.subscribe(`/topic/${userId}/${topic.destination}`, message => {
-        onMessage(normalizeMessage(message, topic.type));
+      const destination = `/topic/${userId}/${topic.destination}`;
+      console.info('[WS] SUBSCRIBE:', destination);
+
+      client.subscribe(destination, message => {
+        const payload = normalizeMessage(message, topic.type);
+        console.info('[WS] 알림 받음:', payload);
+        onMessage(payload);
       });
     });
   };
@@ -109,8 +114,15 @@ export function connectConnectionSocket({ onMessage, userId }: ConnectConnection
   };
 
   client.activate();
+  if (typeof window !== 'undefined') {
+    (window as Window & { __connectionStompClient?: Client }).__connectionStompClient = client;
+  }
 
   return () => {
+    if (typeof window !== 'undefined') {
+      const debugWindow = window as Window & { __connectionStompClient?: Client };
+      if (debugWindow.__connectionStompClient === client) delete debugWindow.__connectionStompClient;
+    }
     void client.deactivate();
   };
 }
