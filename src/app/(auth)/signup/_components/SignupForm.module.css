@@ -17,6 +17,46 @@
   font-weight: 700;
 }
 
+.fieldGroup {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.selectField {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selectLabel {
+  color: #5c4d3f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.selectBox {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  border: 1.5px solid #e5d8c5;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0 14px;
+}
+
+.selectBox select {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #1f1916;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+}
+
 .actionRow {
   display: flex;
   gap: 8px;
@@ -308,6 +348,10 @@
 
   .radioGroup {
     gap: 10px;
+  }
+
+  .fieldGroup {
+    grid-template-columns: 1fr;
   }
 
   .stepActions {
