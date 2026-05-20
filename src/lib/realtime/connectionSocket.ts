@@ -21,7 +21,7 @@ interface ConnectConnectionSocketOptions {
   userId: string;
 }
 
-const DEFAULT_SOCKET_URL = 'wss://api.dmu.gosky.kr/ws';
+const DEFAULT_SOCKET_URL = 'wss://api.devdmu.gosky.kr/ws';
 const STOMP_SUBPROTOCOLS = ['v12.stomp', 'v11.stomp', 'v10.stomp'];
 
 interface SocketAttempt {
