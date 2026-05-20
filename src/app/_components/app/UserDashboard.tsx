@@ -12,6 +12,7 @@ import { AuthRole, clearAuthTokens } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import { registerFcmTokenForCurrentDevice, unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
+import { connectConnectionSocket, ConnectionRealtimePayload } from '@/lib/realtime/connectionSocket';
 import styles from './UserDashboard.module.css';
 
 const cx = classNames.bind(styles);
@@ -102,6 +103,36 @@ const GUARDIAN_STATS = [
   { label: '정서 체크', value: '안정', state: '최근 7일 기준' },
 ];
 
+function getRealtimeNotification(payload: ConnectionRealtimePayload) {
+  switch (payload.type) {
+    case 'CONNECTION_REQUEST':
+      return {
+        body: payload.body ?? '보호자가 연결을 요청했습니다.',
+        title: payload.title ?? '연결 요청',
+      };
+    case 'CONNECTION_ACCEPTED':
+      return {
+        body: payload.body ?? '피보호자가 연결 요청을 수락했습니다.',
+        title: payload.title ?? '연결 수락',
+      };
+    case 'CONNECTION_REFUSED':
+      return {
+        body: payload.body ?? '피보호자가 연결 요청을 거절했습니다.',
+        title: payload.title ?? '연결 거절',
+      };
+    case 'CONNECTION_CANCELLED':
+      return {
+        body: payload.body ?? '연결 요청이 취소되었습니다.',
+        title: payload.title ?? '요청 취소',
+      };
+    default:
+      return {
+        body: payload.body ?? '연결 상태가 변경되었습니다.',
+        title: payload.title ?? '연결 변경',
+      };
+  }
+}
+
 function getProviderLabel(provider?: string) {
   if (provider === 'KAKAO') return '카카오';
   if (provider === 'LOCAL') return '일반';
@@ -163,6 +194,30 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
       console.error('FCM 토큰 등록 실패:', error);
     });
   }, []);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    return connectConnectionSocket({
+      role,
+      userId: profile.id,
+      onMessage: payload => {
+        const notification = getRealtimeNotification(payload);
+
+        window.dispatchEvent(
+          new CustomEvent('careai:push', {
+            detail: {
+              data: {
+                connectionId: payload.connectionId ?? '',
+                type: payload.type,
+              },
+              notification,
+            },
+          }),
+        );
+      },
+    });
+  }, [profile?.id, role]);
 
   const profileRows = [
     { label: '사용자 ID', value: profile?.id ?? '정보 없음' },

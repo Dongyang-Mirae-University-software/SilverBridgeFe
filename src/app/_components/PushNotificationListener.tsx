@@ -21,6 +21,14 @@ interface PushToast {
   data?: MessagePayload['data'];
 }
 
+interface LocalPushEventDetail {
+  data?: Record<string, string>;
+  notification?: {
+    body?: string;
+    title?: string;
+  };
+}
+
 function getPushRoute(data?: MessagePayload['data']) {
   const role = getAuthRole();
 
@@ -71,6 +79,34 @@ export default function PushNotificationListener() {
         setToasts(prev => prev.filter(item => item.id !== id));
       }, TOAST_LIFETIME_MS);
     });
+  }, [queryClient]);
+
+  useEffect(() => {
+    const handleLocalPush = (event: Event) => {
+      const detail = (event as CustomEvent<LocalPushEventDetail>).detail;
+      const id = idRef.current + 1;
+      idRef.current = id;
+
+      const toast: PushToast = {
+        id,
+        title: detail.notification?.title ?? '알림',
+        body: detail.notification?.body ?? '',
+        data: detail.data,
+      };
+
+      if (isConnectionPush(detail.data)) {
+        void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
+        void queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+      }
+
+      setToasts(prev => [toast, ...prev].slice(0, 3));
+      window.setTimeout(() => {
+        setToasts(prev => prev.filter(item => item.id !== id));
+      }, TOAST_LIFETIME_MS);
+    };
+
+    window.addEventListener('careai:push', handleLocalPush);
+    return () => window.removeEventListener('careai:push', handleLocalPush);
   }, [queryClient]);
 
   if (toasts.length === 0) return null;
