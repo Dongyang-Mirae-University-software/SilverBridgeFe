@@ -7,7 +7,6 @@ import { acceptWardConnection, disconnectWardConnection, refuseWardConnectionReq
 import { wardConnectionsQueryKey, wardConnectionsQueryOptions } from '@/service/query/connection';
 import {
   ConnectionCard,
-  ConnectionSection,
   ConnectionStats,
   cx,
   EmptyState,
@@ -79,38 +78,54 @@ export function WardGuardiansPanel() {
       {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
       {isLoading && <EmptyState message="보호자 목록을 불러오는 중입니다." />}
       {isError && <EmptyState message="보호자 목록을 불러오지 못했습니다." />}
-      {!isLoading && !isError && connections.length === 0 && <EmptyState message="아직 연결된 보호자가 없습니다." />}
 
-      {connections.length > 0 && (
+      {!isLoading && !isError && (
         <>
-          <ConnectionSection title="연결된 보호자" count={activeConnections.length}>
-            <ul className={cx('connectionList')}>
-              {activeConnections.map(connection => (
-                <ConnectionCard
-                  key={connection.id}
-                  connection={connection}
-                  isPending={isPending}
-                  primaryAction={() => handleDisconnect(connection.id)}
-                  primaryLabel="연결 해제"
-                />
-              ))}
-            </ul>
-          </ConnectionSection>
-          <ConnectionSection title="받은 연결 요청" count={pendingConnections.length}>
-            <ul className={cx('connectionList')}>
-              {pendingConnections.map(connection => (
-                <ConnectionCard
-                  key={connection.id}
-                  connection={connection}
-                  isPending={isPending}
-                  primaryAction={() => acceptMutation.mutate(connection.id)}
-                  primaryLabel="수락"
-                  secondaryAction={() => refuseMutation.mutate(connection.id)}
-                  secondaryLabel="거절"
-                />
-              ))}
-            </ul>
-          </ConnectionSection>
+          <section className={cx('connectionSection')}>
+            <div className={cx('connectionSectionHeader')}>
+              <h3>연결된 보호자</h3>
+              <span>{activeConnections.length}건</span>
+            </div>
+            {activeConnections.length > 0 ? (
+              <ul className={cx('connectionList')}>
+                {activeConnections.map(connection => (
+                  <ConnectionCard
+                    key={connection.id}
+                    connection={connection}
+                    isPending={isPending}
+                    primaryAction={() => handleDisconnect(connection.id)}
+                    primaryLabel="연결 해제"
+                  />
+                ))}
+              </ul>
+            ) : (
+              <EmptyState message="아직 연결된 보호자가 없습니다." />
+            )}
+          </section>
+
+          <section className={cx('connectionSection')}>
+            <div className={cx('connectionSectionHeader')}>
+              <h3>받은 연결 요청</h3>
+              <span>{pendingConnections.length}건</span>
+            </div>
+            {pendingConnections.length > 0 ? (
+              <ul className={cx('connectionList')}>
+                {pendingConnections.map(connection => (
+                  <ConnectionCard
+                    key={connection.id}
+                    connection={connection}
+                    isPending={isPending}
+                    primaryAction={() => acceptMutation.mutate(connection.id)}
+                    primaryLabel="수락"
+                    secondaryAction={() => refuseMutation.mutate(connection.id)}
+                    secondaryLabel="거절"
+                  />
+                ))}
+              </ul>
+            ) : (
+              <EmptyState message="받은 연결 요청이 없습니다." />
+            )}
+          </section>
         </>
       )}
     </section>
