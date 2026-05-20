@@ -1,0 +1,147 @@
+'use client';
+
+import { ReactNode } from 'react';
+import classNames from 'classnames/bind';
+
+import { IConnectionItem } from '@/service/interface/connection';
+import styles from '../UserDashboard.module.css';
+
+export const cx = classNames.bind(styles);
+
+export function getConnectionData(response: unknown) {
+  const data = (response as { data?: unknown } | undefined)?.data;
+  return Array.isArray(data) ? (data as IConnectionItem[]) : [];
+}
+
+export function getErrorMessage(error: unknown, fallback: string) {
+  return (error as Error).message || fallback;
+}
+
+function getStatusLabel(status: IConnectionItem['status']) {
+  return status === 'ACTIVE' ? '연결됨' : '수락 대기';
+}
+
+function formatDate(value: string | null) {
+  if (!value) return '미연결';
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
+export function EmptyState({ message }: { message: string }) {
+  return <p className={cx('connectionEmpty')}>{message}</p>;
+}
+
+export function ConnectionStats({
+  activeCount,
+  pendingCount,
+  totalCount,
+}: {
+  activeCount: number;
+  pendingCount: number;
+  totalCount: number;
+}) {
+  return (
+    <div className={cx('connectionStatGrid')}>
+      <div className={cx('connectionStat')}>
+        <span>전체 연결</span>
+        <strong>{totalCount}건</strong>
+        <small>현재 조회된 관계</small>
+      </div>
+      <div className={cx('connectionStat')}>
+        <span>연결됨</span>
+        <strong>{activeCount}건</strong>
+        <small>ACTIVE 상태</small>
+      </div>
+      <div className={cx('connectionStat')}>
+        <span>수락 대기</span>
+        <strong>{pendingCount}건</strong>
+        <small>PENDING 상태</small>
+      </div>
+    </div>
+  );
+}
+
+export function splitConnections(connections: IConnectionItem[]) {
+  return {
+    activeConnections: connections.filter(connection => connection.status === 'ACTIVE'),
+    pendingConnections: connections.filter(connection => connection.status === 'PENDING'),
+  };
+}
+
+export function ConnectionSection({
+  children,
+  count,
+  title,
+}: {
+  children: ReactNode;
+  count: number;
+  title: string;
+}) {
+  if (count === 0) return null;
+
+  return (
+    <div className={cx('connectionSection')}>
+      <div className={cx('connectionSectionHeader')}>
+        <h3>{title}</h3>
+        <span>{count}건</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function ConnectionCard({
+  connection,
+  isPending,
+  primaryAction,
+  primaryLabel,
+  secondaryAction,
+  secondaryLabel,
+}: {
+  connection: IConnectionItem;
+  isPending: boolean;
+  primaryAction: () => void;
+  primaryLabel: string;
+  secondaryAction?: () => void;
+  secondaryLabel?: string;
+}) {
+  return (
+    <li className={cx('connectionCard')}>
+      <div className={cx('connectionAvatar')}>
+        {connection.partnerProfileImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" src={connection.partnerProfileImage} />
+        ) : (
+          connection.partnerName.charAt(0) || '?'
+        )}
+      </div>
+      <div className={cx('connectionInfo')}>
+        <div className={cx('connectionTitleRow')}>
+          <strong>{connection.partnerName}</strong>
+          <span className={cx('connectionStatus', { active: connection.status === 'ACTIVE' })}>
+            {getStatusLabel(connection.status)}
+          </span>
+        </div>
+        <span className={cx('connectionMeta')}>ID {connection.partnerUserId}</span>
+        <span className={cx('connectionMeta')}>
+          {connection.status === 'ACTIVE' ? `연결일 ${formatDate(connection.connectedAt)}` : `요청일 ${formatDate(connection.createdAt)}`}
+        </span>
+      </div>
+      <div className={cx('connectionActions')}>
+        <button className={cx('connectionPrimaryButton')} type="button" disabled={isPending} onClick={primaryAction}>
+          {primaryLabel}
+        </button>
+        {secondaryAction && secondaryLabel ? (
+          <button className={cx('connectionSecondaryButton')} type="button" disabled={isPending} onClick={secondaryAction}>
+            {secondaryLabel}
+          </button>
+        ) : null}
+      </div>
+    </li>
+  );
+}
