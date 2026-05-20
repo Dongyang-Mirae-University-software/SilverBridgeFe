@@ -102,11 +102,33 @@ const GUARDIAN_STATS = [
   { label: '정서 체크', value: '안정', state: '최근 7일 기준' },
 ];
 
+function getProviderLabel(provider?: string) {
+  if (provider === 'KAKAO') return '카카오';
+  if (provider === 'LOCAL') return '일반';
+  return '확인 전';
+}
+
+function formatProfileDate(value?: string) {
+  if (!value) return '정보 없음';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '정보 없음';
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
 export default function UserDashboard({ children, pageKey, role }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const isWard = role === 'WARD';
   const navItems = isWard ? WARD_NAV : GUARDIAN_NAV;
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
@@ -135,6 +157,18 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
     if (isLoggingOut) return;
     logoutMutate();
   };
+
+  const profileRows = [
+    { label: '사용자 ID', value: profile?.id ?? '정보 없음' },
+    { label: '이메일', value: userEmail },
+    { label: '전화번호', value: userPhone },
+    { label: '가입 방식', value: getProviderLabel(profile?.provider) },
+    { label: '권한', value: getRoleLabel(role) },
+    { label: '주소', value: profile?.address ?? '정보 없음' },
+    { label: '상세 주소', value: profile?.addressDetail ?? '정보 없음' },
+    { label: '최근 로그인', value: formatProfileDate(profile?.lastLoginAt) },
+    { label: '가입일', value: formatProfileDate(profile?.createdAt) },
+  ];
 
   return (
     <div className={cx('stage')}>
@@ -174,7 +208,13 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
             </nav>
 
             <div className={cx('sidebarFooter')}>
-              <div className={cx('userCard')}>
+              <button
+                className={cx('userCard')}
+                type="button"
+                aria-haspopup="dialog"
+                aria-label="사용자 상세 정보 열기"
+                onClick={() => setIsProfileModalOpen(true)}
+              >
                 <div className={cx('avatar')}>
                   {profile?.profileImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -189,9 +229,11 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
                     <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
                   </div>
                   <span>{userEmail}</span>
-                  <span>{userPhone}</span>
                 </div>
-              </div>
+                <span className={cx('userChevron')} aria-hidden="true">
+                  ›
+                </span>
+              </button>
 
               <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
                 {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
@@ -199,6 +241,60 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
             </div>
           </aside>
         </>
+      )}
+
+      {isProfileModalOpen && (
+        <div className={cx('profileModalOverlay')} role="presentation" onClick={() => setIsProfileModalOpen(false)}>
+          <section
+            className={cx('profileModal')}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profile-modal-title"
+            onClick={event => event.stopPropagation()}
+          >
+            <div className={cx('profileModalHeader')}>
+              <div className={cx('profileModalUser')}>
+                <div className={cx('profileModalAvatar')}>
+                  {profile?.profileImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt="" src={profile.profileImage} />
+                  ) : (
+                    userInitial
+                  )}
+                </div>
+                <div>
+                  <div className={cx('profileModalBadges')}>
+                    <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
+                    <span className={cx('profileProviderBadge')}>{getProviderLabel(profile?.provider)}</span>
+                  </div>
+                  <h2 id="profile-modal-title">{userName}</h2>
+                  <p>{userEmail}</p>
+                </div>
+              </div>
+              <button className={cx('profileModalClose')} type="button" aria-label="사용자 상세 정보 닫기" onClick={() => setIsProfileModalOpen(false)}>
+                ×
+              </button>
+            </div>
+
+            <div className={cx('profileDetailGrid')}>
+              {profileRows.map(row => (
+                <div key={row.label} className={cx('profileDetailItem')}>
+                  <span>{row.label}</span>
+                  <strong>{row.value}</strong>
+                </div>
+              ))}
+            </div>
+
+            <div className={cx('profileModalActions')}>
+              <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
+                {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+              </button>
+              <button className={cx('profileModalGhostButton')} type="button" onClick={() => setIsProfileModalOpen(false)}>
+                닫기
+              </button>
+            </div>
+          </section>
+        </div>
       )}
 
       <main className={cx('main')}>
