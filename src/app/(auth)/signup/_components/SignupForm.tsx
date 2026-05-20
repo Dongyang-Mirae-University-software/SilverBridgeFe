@@ -16,6 +16,14 @@ interface Props {
   onStepChange: (step: number) => void;
 }
 
+function getVerificationNonce(response: unknown) {
+  const data = (response as { data?: unknown } | undefined)?.data;
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+  const result = (nestedData ?? data ?? response) as { verificationNonce?: unknown };
+
+  return typeof result.verificationNonce === 'string' ? result.verificationNonce : '';
+}
+
 export default function SignupForm({ step, onStepChange }: Props) {
   const {
     register,
@@ -61,6 +69,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
       setSmsSendErrorMsg('');
       setSmsCode('');
       setIsSmsCheck(false);
+      setValue('verificationNonce', '');
     },
     onError: error => {
       setIsCode(false);
@@ -76,8 +85,15 @@ export default function SignupForm({ step, onStepChange }: Props) {
   } = useMutation({
     mutationKey: ['sms-verify'],
     mutationFn: signupSmsVerify,
-    onMutate: () => setIsSmsCheck(false),
-    onSuccess: () => setIsSmsCheck(true),
+    onMutate: () => {
+      setIsSmsCheck(false);
+      setValue('verificationNonce', '');
+    },
+    onSuccess: response => {
+      const verificationNonce = getVerificationNonce(response);
+      setValue('verificationNonce', verificationNonce);
+      setIsSmsCheck(Boolean(verificationNonce));
+    },
   });
 
   const handleEmailCheck = () => {
@@ -100,6 +116,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
     setSmsCode('');
     setIsSmsCheck(false);
     setValue('phone', '');
+    setValue('verificationNonce', '');
   };
 
   const handleSmsVerify = () => {
@@ -119,11 +136,17 @@ export default function SignupForm({ step, onStepChange }: Props) {
     isEmailCheck &&
     allValues.password.trim().length > 0 &&
     allValues.passwordCheck.trim().length > 0 &&
+    allValues.birthDate.trim().length > 0 &&
+    allValues.postcode.trim().length > 0 &&
     allValues.address.trim().length > 0 &&
+    allValues.addressDetail.trim().length > 0 &&
     !errors.email &&
     !errors.password &&
     !errors.passwordCheck &&
-    !errors.name;
+    !errors.name &&
+    !errors.birthDate &&
+    !errors.postcode &&
+    !errors.address;
 
   const handleNextStep = () => {
     if (isStepOneValid) onStepChange(2);
@@ -144,8 +167,10 @@ export default function SignupForm({ step, onStepChange }: Props) {
             emailField={register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
             passwordField={register('password', passwordRules('비밀번호 형식이 올바르지 않습니다.'))}
             passwordCheckField={register('passwordCheck', passwordCheckRules('비밀번호가 일치하지 않습니다.'))}
+            birthDateField={register('birthDate', textRules('생년월일을 입력하세요.', 1))}
+            postcodeField={register('postcode', textRules('우편번호를 입력하세요.', 1))}
             addressField={register('address', textRules('주소를 입력하세요.', 1))}
-            addressDetailField={register('addressDetail')}
+            addressDetailField={register('addressDetail', textRules('상세주소를 입력하세요.', 1))}
             onEmailCheck={handleEmailCheck}
             onNextStep={handleNextStep}
           />
