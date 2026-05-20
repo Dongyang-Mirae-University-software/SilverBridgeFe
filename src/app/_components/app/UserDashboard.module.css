@@ -55,8 +55,7 @@
   box-shadow: var(--sb-shadow-sm), 16px 0 48px rgba(20, 17, 12, 0.16);
 }
 
-.brand,
-.userCard {
+.brand {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -91,8 +90,7 @@
   line-height: 1;
 }
 
-.brandMark,
-.avatar {
+.brandMark {
   display: grid;
   width: 36px;
   height: 36px;
@@ -157,13 +155,73 @@
   opacity: 0.5;
 }
 
-.userCard {
-  border: 1px solid var(--sb-line-soft);
-  background: var(--sb-bg-soft);
+.sidebarFooter {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding-top: 12px;
 }
 
-.logoutButton,
-.headerLogoutButton {
+.userCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  padding: 10px;
+}
+
+.avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.userTitleRow {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.userTitleRow strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userRoleBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #dceee3;
+  color: var(--sb-safe);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+}
+
+.logoutButton {
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
@@ -174,23 +232,19 @@
 }
 
 .logoutButton {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
   justify-content: center;
   padding: 10px 12px;
 }
 
-.headerLogoutButton {
-  height: 34px;
-  padding: 0 13px;
-}
-
 .logoutButton:hover,
-.headerLogoutButton:hover,
 .closeButton:hover {
   background: var(--sb-bg-soft);
 }
 
-.logoutButton:disabled,
-.headerLogoutButton:disabled {
+.logoutButton:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }

@@ -112,6 +112,9 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
+  const userEmail = profile?.email ?? '이메일 정보 없음';
+  const userPhone = profile?.phone ?? '전화번호 정보 없음';
+  const userInitial = userName.charAt(0) || 'U';
   const { mutate: logoutMutate, isPending: isLoggingOut } = useMutation({
     mutationKey: ['logout'],
     mutationFn: async () => {
@@ -170,16 +173,29 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
               ))}
             </nav>
 
-            <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
-              {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-            </button>
-
-            <div className={cx('userCard')}>
-              <div className={cx('avatar')}>{userName.charAt(0)}</div>
-              <div>
-                <strong>{userName}</strong>
-                <span>{profile?.email ?? getRoleLabel(role)}</span>
+            <div className={cx('sidebarFooter')}>
+              <div className={cx('userCard')}>
+                <div className={cx('avatar')}>
+                  {profile?.profileImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt="" src={profile.profileImage} />
+                  ) : (
+                    userInitial
+                  )}
+                </div>
+                <div className={cx('userInfo')}>
+                  <div className={cx('userTitleRow')}>
+                    <strong>{userName}</strong>
+                    <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
+                  </div>
+                  <span>{userEmail}</span>
+                  <span>{userPhone}</span>
+                </div>
               </div>
+
+              <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
+                {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+              </button>
             </div>
           </aside>
         </>
@@ -193,9 +209,6 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
           </div>
           <div className={cx('headerActions')}>
             <span className={cx('roleBadge')}>{getRoleLabel(role)}</span>
-            <button className={cx('headerLogoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
-              {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-            </button>
           </div>
         </header>
 
