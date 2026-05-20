@@ -64,14 +64,10 @@ export function WardGuardiansPanel() {
 
   return (
     <section className={cx('connectionPage')}>
-      <div className={cx('connectionHeader')}>
-        <div className={cx('connectionHeaderTop')}>
-          <span className={cx('eyebrow')}>내 보호자</span>
-          <button className={cx('connectionSecondaryButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>
-            {isFetching ? '새로고침 중' : '새로고침'}
-          </button>
-        </div>
-        <h2>보호자 연결 요청을 수락하거나 연결을 해제할 수 있습니다.</h2>
+      <div className={cx('connectionPageActions')}>
+        <button className={cx('connectionSecondaryButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>
+          {isFetching ? '새로고침 중' : '새로고침'}
+        </button>
       </div>
 
       <ConnectionStats

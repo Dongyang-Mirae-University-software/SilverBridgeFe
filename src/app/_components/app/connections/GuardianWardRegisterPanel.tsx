@@ -12,7 +12,9 @@ export function GuardianWardRegisterPanel() {
   const [targetId, setTargetId] = useState('');
   const [message, setMessage] = useState('');
   const { data: connectionsResponse, isLoading } = useQuery(guardianConnectionsQueryOptions);
-  const pendingConnections = getConnectionData(connectionsResponse).filter(connection => connection.status === 'PENDING');
+  const pendingConnections = getConnectionData(connectionsResponse).filter(
+    connection => connection.status === 'PENDING',
+  );
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['guardian-connection-request'],
@@ -35,11 +37,6 @@ export function GuardianWardRegisterPanel() {
 
   return (
     <section className={cx('connectionPage', 'connectionRegisterPage')}>
-      <div className={cx('connectionHeader')}>
-        <h2>피보호자 등록</h2>
-        <p>피보호자의 회원 ID를 입력하여 연결을 요청합니다.</p>
-      </div>
-
       <form className={cx('connectionRegisterCard')} onSubmit={handleSubmit}>
         <div className={cx('connectionRegisterTitle')}>피보호자 회원 ID 입력</div>
         <div className={cx('connectionRegisterFormRow')}>
@@ -61,7 +58,6 @@ export function GuardianWardRegisterPanel() {
         </p>
         {message && <p className={cx('connectionMessage')}>{message}</p>}
       </form>
-
       <div className={cx('connectionHistoryCard')}>
         <div className={cx('connectionHistoryHeader')}>
           <strong>요청 내역</strong>
