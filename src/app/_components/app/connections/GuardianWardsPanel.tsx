@@ -59,7 +59,7 @@ export function GuardianWardsPanel() {
           <strong>현재 돌보고 있는 피보호자 {activeConnections.length}명</strong>
           <span>수락 대기 {pendingConnections.length}건</span>
         </div>
-        <div className={cx('connectionHeaderActions')}>
+        <div className={cx('wardListToolbarActions')}>
           <button className={cx('connectionSecondaryButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>
             {isFetching ? '새로고침 중' : '새로고침'}
           </button>
