@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +11,7 @@ import { myProfileQueryOptions } from '@/service/query/user';
 import { AuthRole, clearAuthTokens } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
-import { unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
+import { registerFcmTokenForCurrentDevice, unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
 import styles from './UserDashboard.module.css';
 
 const cx = classNames.bind(styles);
@@ -157,6 +157,12 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
     if (isLoggingOut) return;
     logoutMutate();
   };
+
+  useEffect(() => {
+    void registerFcmTokenForCurrentDevice().catch(error => {
+      console.error('FCM 토큰 등록 실패:', error);
+    });
+  }, []);
 
   const profileRows = [
     { label: '사용자 ID', value: profile?.id ?? '정보 없음' },
