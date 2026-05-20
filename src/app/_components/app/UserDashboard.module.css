@@ -5,6 +5,10 @@
   color: var(--sb-ink);
 }
 
+.mobileTopBar {
+  display: none;
+}
+
 .menuButton {
   position: fixed;
   top: 14px;
@@ -20,15 +24,21 @@
   box-shadow: 0 4px 12px rgba(20, 17, 12, 0.08);
   color: var(--sb-ink);
   cursor: pointer;
-  font-size: 24px;
-  font-weight: 800;
-  line-height: 1;
+  gap: 4px;
 }
 
 .menuButton.ward {
   width: 56px;
   height: 56px;
-  font-size: 30px;
+}
+
+.menuButton span,
+.topBarMenuButton span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 .scrim {
@@ -143,6 +153,9 @@
   font-weight: 600;
   padding: 9px 12px;
   text-decoration: none;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 }
 
 .navItem:hover,
@@ -152,13 +165,22 @@
   font-weight: 700;
 }
 
-.navDot {
-  width: 7px;
-  height: 7px;
+.navIcon {
+  display: grid;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
-  border-radius: 999px;
-  background: currentColor;
-  opacity: 0.5;
+  place-items: center;
+}
+
+.navIcon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .sidebarFooter {
@@ -999,14 +1021,112 @@
     flex-direction: column;
   }
 
+  .mobileTopBar {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 45;
+    display: flex;
+    min-height: 64px;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--sb-line);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 4px 14px rgba(20, 17, 12, 0.08);
+    padding: 10px 14px;
+    backdrop-filter: blur(10px);
+  }
+
+  .topBarMenuButton {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    place-items: center;
+    border: 1px solid var(--sb-line);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--sb-ink);
+    cursor: pointer;
+    gap: 4px;
+  }
+
+  .topBarBrand {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .topBarBrand > div:nth-child(2) {
+    min-width: 0;
+  }
+
+  .topBarBrand strong {
+    display: block;
+    overflow: hidden;
+    color: var(--sb-ink);
+    font-size: 14px;
+    font-weight: 850;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topBarBrand span {
+    display: block;
+    overflow: hidden;
+    color: var(--sb-ink-mute);
+    font-size: 11px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topBarRole {
+    display: inline-flex;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--sb-brand-50);
+    color: var(--sb-brand);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 9px;
+  }
+
+  .menuButton {
+    display: none;
+  }
+
   .sidebar {
-    width: min(82vw, 300px);
+    width: min(78vw, 280px);
+    max-width: 320px;
+    height: 100dvh;
     border-right: 0;
+    padding: 18px 14px 16px;
   }
 
   .nav {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .navItem {
+    border-radius: 10px;
+    font-size: 14px;
+    padding: 12px 13px;
+  }
+
+  .navIcon,
+  .navIcon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sidebarFooter {
+    border-top: 1px solid var(--sb-line-soft);
+    padding-top: 10px;
   }
 
   .contentGrid {
@@ -1018,7 +1138,7 @@
   }
 
   .main {
-    padding: 84px 18px 18px;
+    padding: 88px 18px 18px;
   }
 
   .header {
