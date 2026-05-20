@@ -8,7 +8,7 @@ import classNames from 'classnames/bind';
 
 import { logout } from '@/service/api/auth';
 import { myProfileQueryOptions } from '@/service/query/user';
-import { AuthRole, clearAuthTokens } from '@/lib/auth/tokenStore';
+import { AuthRole, clearAuthTokens, getAccessTokenSubject } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import { registerFcmTokenForCurrentDevice, unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
@@ -273,6 +273,7 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
   const navItems = isWard ? WARD_NAV : GUARDIAN_NAV;
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
+  const realtimeUserId = getAccessTokenSubject() ?? profile?.id;
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
   const userEmail = profile?.email ?? '이메일 정보 없음';
   const userPhone = profile?.phone ?? '전화번호 정보 없음';
@@ -305,11 +306,11 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!profile?.id) return;
+    if (!realtimeUserId) return;
 
     return connectConnectionSocket({
       role,
-      userId: profile.id,
+      userId: realtimeUserId,
       onMessage: payload => {
         const notification = getRealtimeNotification(payload);
 
@@ -326,7 +327,7 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
         );
       },
     });
-  }, [profile?.id, role]);
+  }, [realtimeUserId, role]);
 
   const profileRows = [
     { label: '사용자 ID', value: profile?.id ?? '정보 없음' },
