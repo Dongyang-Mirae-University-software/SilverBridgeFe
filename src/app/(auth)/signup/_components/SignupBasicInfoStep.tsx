@@ -21,6 +21,8 @@ interface SignupBasicInfoStepProps {
   passwordCheckField: UseFormRegisterReturn;
   addressField: UseFormRegisterReturn;
   addressDetailField: UseFormRegisterReturn;
+  birthDateField: UseFormRegisterReturn;
+  postcodeField: UseFormRegisterReturn;
   onEmailCheck: () => void;
   onNextStep: () => void;
 }
@@ -38,6 +40,8 @@ export default function SignupBasicInfoStep({
   passwordCheckField,
   addressField,
   addressDetailField,
+  birthDateField,
+  postcodeField,
   onEmailCheck,
   onNextStep,
 }: SignupBasicInfoStepProps) {
@@ -79,6 +83,35 @@ export default function SignupBasicInfoStep({
         error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
         errorText={errors.passwordCheck?.message}
       />
+      <div className={cx('fieldGroup')}>
+        <label className={cx('selectField')}>
+          <span className={cx('selectLabel')}>성별 *</span>
+          <span className={cx('selectBox')}>
+            <select {...register('gender')}>
+              <option value="FEMALE">여성</option>
+              <option value="MALE">남성</option>
+            </select>
+          </span>
+        </label>
+        <TextInput
+          label="생년월일"
+          required
+          type="date"
+          {...birthDateField}
+          error={Boolean(errors.birthDate && allValues.birthDate && allValues.birthDate.trim() !== '')}
+          errorText={errors.birthDate?.message}
+        />
+      </div>
+      <TextInput
+        label="우편번호"
+        placeholder="06236"
+        required
+        inputMode="numeric"
+        maxLength={10}
+        {...postcodeField}
+        error={Boolean(errors.postcode && allValues.postcode && allValues.postcode.trim() !== '')}
+        errorText={errors.postcode?.message}
+      />
       <TextInput
         label="주소"
         placeholder="주소를 입력하세요"
@@ -87,7 +120,14 @@ export default function SignupBasicInfoStep({
         error={Boolean(errors.address && allValues.address && allValues.address.trim() !== '')}
         errorText={errors.address?.message}
       />
-      <TextInput label="상세주소" placeholder="상세주소를 입력하세요" {...addressDetailField} />
+      <TextInput
+        label="상세주소"
+        placeholder="상세주소를 입력하세요"
+        required
+        {...addressDetailField}
+        error={Boolean(errors.addressDetail && allValues.addressDetail && allValues.addressDetail.trim() !== '')}
+        errorText={errors.addressDetail?.message}
+      />
       <button className={cx('button')} disabled={!isStepOneValid} type="button" onClick={onNextStep}>
         다음
       </button>
