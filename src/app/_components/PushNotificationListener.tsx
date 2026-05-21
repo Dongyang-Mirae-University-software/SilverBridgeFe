@@ -56,6 +56,9 @@ export default function PushNotificationListener() {
   const queryClient = useQueryClient();
   const idRef = useRef(0);
   const [toasts, setToasts] = useState<PushToast[]>([]);
+  const dismissToast = (id: number) => {
+    setToasts(prev => prev.filter(item => item.id !== id));
+  };
 
   useEffect(() => {
     return listenForegroundMessages(payload => {
@@ -114,18 +117,22 @@ export default function PushNotificationListener() {
   return (
     <div className={cx('toastArea')} aria-live="polite">
       {toasts.map(toast => (
-        <button
-          key={toast.id}
-          className={cx('toast')}
-          type="button"
-          onClick={() => {
-            setToasts(prev => prev.filter(item => item.id !== toast.id));
-            router.push(getPushRoute(toast.data));
-          }}
-        >
-          <span className={cx('title')}>{toast.title}</span>
-          {toast.body && <span className={cx('body')}>{toast.body}</span>}
-        </button>
+        <div key={toast.id} className={cx('toast')}>
+          <button
+            className={cx('toastContent')}
+            type="button"
+            onClick={() => {
+              dismissToast(toast.id);
+              router.push(getPushRoute(toast.data));
+            }}
+          >
+            <span className={cx('title')}>{toast.title}</span>
+            {toast.body && <span className={cx('body')}>{toast.body}</span>}
+          </button>
+          <button className={cx('dismissButton')} type="button" aria-label="알림 닫기" onClick={() => dismissToast(toast.id)}>
+            ×
+          </button>
+        </div>
       ))}
     </div>
   );
