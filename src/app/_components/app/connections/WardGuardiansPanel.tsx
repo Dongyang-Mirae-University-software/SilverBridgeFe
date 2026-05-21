@@ -1,10 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/connection';
 import { wardConnectionsQueryKey, wardConnectionsQueryOptions } from '@/service/query/connection';
+import {
+  getPendingConnectionRequestItems,
+  PENDING_CONNECTION_REQUESTS_EVENT,
+  removePendingConnectionRequest,
+} from '@/lib/realtime/pendingConnectionRequests';
 import {
   ConnectionCard,
   cx,
@@ -17,15 +22,25 @@ import {
 export function WardGuardiansPanel() {
   const queryClient = useQueryClient();
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [storedPendingConnections, setStoredPendingConnections] = useState(() => getPendingConnectionRequestItems());
   const { data, isFetching, isLoading, isError, refetch } = useQuery(wardConnectionsQueryOptions);
   const connections = getConnectionData(data);
-  const { pendingConnections } = splitConnections(connections);
+  const { pendingConnections: apiPendingConnections } = splitConnections(connections);
+  const pendingConnections = mergePendingConnections(apiPendingConnections, storedPendingConnections);
+
+  useEffect(() => {
+    const syncStoredPendingConnections = () => setStoredPendingConnections(getPendingConnectionRequestItems());
+
+    window.addEventListener(PENDING_CONNECTION_REQUESTS_EVENT, syncStoredPendingConnections);
+    return () => window.removeEventListener(PENDING_CONNECTION_REQUESTS_EVENT, syncStoredPendingConnections);
+  }, []);
 
   const acceptMutation = useMutation({
     mutationKey: ['ward-connection-accept'],
     mutationFn: acceptWardConnection,
     onMutate: () => setFeedbackMessage(''),
-    onSuccess: async () => {
+    onSuccess: async (_data, connectionId) => {
+      removePendingConnectionRequest(connectionId);
       setFeedbackMessage('보호자 연결 요청을 수락했습니다.');
       await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
     },
@@ -36,7 +51,8 @@ export function WardGuardiansPanel() {
     mutationKey: ['ward-connection-refuse'],
     mutationFn: refuseWardConnectionRequest,
     onMutate: () => setFeedbackMessage(''),
-    onSuccess: async () => {
+    onSuccess: async (_data, connectionId) => {
+      removePendingConnectionRequest(connectionId);
       setFeedbackMessage('보호자 연결 요청을 거절했습니다.');
       await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
     },
@@ -84,4 +100,14 @@ export function WardGuardiansPanel() {
       )}
     </section>
   );
+}
+
+function mergePendingConnections(...connectionGroups: ReturnType<typeof getConnectionData>[]) {
+  const pendingConnectionMap = new Map<number, ReturnType<typeof getConnectionData>[number]>();
+
+  connectionGroups.flat().forEach(connection => {
+    pendingConnectionMap.set(connection.id, connection);
+  });
+
+  return Array.from(pendingConnectionMap.values());
 }
