@@ -9,11 +9,12 @@ import { cx, getConnectionData, getErrorMessage } from './ConnectionShared';
 
 const RELATION_OPTIONS = ['아들', '딸', '배우자', '부모', '형제자매', '손자녀', '직접입력'] as const;
 const CUSTOM_RELATION_OPTION = '직접입력';
+type RelationOption = (typeof RELATION_OPTIONS)[number] | '';
 
 export function GuardianWardRegisterPanel() {
   const queryClient = useQueryClient();
   const [targetId, setTargetId] = useState('');
-  const [relation, setRelation] = useState<(typeof RELATION_OPTIONS)[number]>('아들');
+  const [relation, setRelation] = useState<RelationOption>('');
   const [customRelation, setCustomRelation] = useState('');
   const [message, setMessage] = useState('');
   const { data: connectionsResponse, isLoading } = useQuery(guardianConnectionsQueryOptions);
@@ -28,7 +29,7 @@ export function GuardianWardRegisterPanel() {
     onMutate: () => setMessage(''),
     onSuccess: async () => {
       setTargetId('');
-      setRelation('아들');
+      setRelation('');
       setCustomRelation('');
       setMessage('피보호자에게 연결 요청을 보냈습니다.');
       await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
@@ -64,8 +65,11 @@ export function GuardianWardRegisterPanel() {
             관계
             <select
               value={relation}
-              onChange={event => setRelation(event.target.value as (typeof RELATION_OPTIONS)[number])}
+              onChange={event => setRelation(event.target.value as RelationOption)}
             >
+              <option value="" disabled>
+                피보호자와의 관계를 선택하세요.
+              </option>
               {RELATION_OPTIONS.map(option => (
                 <option key={option} value={option}>
                   {option}
@@ -85,12 +89,17 @@ export function GuardianWardRegisterPanel() {
               />
             </label>
           )}
-          <button className={cx('connectionSubmitButton')} type="submit" disabled={!targetId.trim() || !requestRelation || isPending}>
+          <button
+            className={cx('connectionSubmitButton')}
+            type="submit"
+            disabled={!targetId.trim() || !requestRelation || isPending}
+          >
             {isPending ? '요청 중...' : '승인 요청'}
           </button>
         </div>
         <p className={cx('connectionRegisterHint')}>
-          피보호자가 본인의 마이페이지에서 확인 가능한 회원 ID와 관계를 입력해 주세요. 요청이 전달되면 피보호자가 응답합니다.
+          피보호자가 본인의 마이페이지에서 확인 가능한 회원 ID와 관계를 입력해 주세요. 요청이 전달되면 피보호자가
+          응답합니다.
         </p>
         {message && <p className={cx('connectionMessage')}>{message}</p>}
       </form>
