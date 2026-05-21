@@ -1,6 +1,7 @@
 import { Client, IMessage } from '@stomp/stompjs';
 
 import { AuthRole, getAccessToken } from '@/lib/auth/tokenStore';
+import { savePendingConnectionRequest } from './pendingConnectionRequests';
 
 type ConnectionRealtimeType = 'CONNECTION_REQUEST' | 'CONNECTION_ACCEPTED' | 'CONNECTION_CANCELLED' | 'CONNECTION_REFUSED';
 
@@ -96,6 +97,7 @@ export function connectConnectionSocket({ onMessage, userId }: ConnectConnection
       client.subscribe(destination, message => {
         const payload = normalizeMessage(message, topic.type);
         console.info('[WS] 알림 받음:', payload);
+        if (payload.type === 'CONNECTION_REQUEST') savePendingConnectionRequest(payload);
         onMessage(payload);
       });
     });
