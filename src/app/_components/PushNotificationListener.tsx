@@ -10,6 +10,7 @@ import { listenForegroundMessages } from '@/lib/fcm';
 import { getAuthRole } from '@/lib/auth/tokenStore';
 import { guardianConnectionsQueryKey, wardConnectionsQueryKey } from '@/service/query/connection';
 import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/connection';
+import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import styles from './PushNotificationListener.module.css';
 
 const cx = classNames.bind(styles);
@@ -107,6 +108,7 @@ export default function PushNotificationListener() {
         await refuseWardConnectionRequest(connectionId);
       }
 
+      removePendingConnectionRequest(connectionId);
       await invalidateConnectionQueries();
       dismissToast(toast.id);
     } catch (error) {
@@ -132,6 +134,7 @@ export default function PushNotificationListener() {
       };
 
       if (isConnectionPush(payload.data)) {
+        if (isConnectionRequest(payload.data)) savePendingConnectionRequest(payload.data);
         void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
         void queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
       }
@@ -154,6 +157,7 @@ export default function PushNotificationListener() {
       };
 
       if (isConnectionPush(detail.data)) {
+        if (isConnectionRequest(detail.data)) savePendingConnectionRequest(detail.data);
         void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
         void queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
       }
