@@ -9,26 +9,64 @@
 }
 
 .toast {
-  display: grid;
-  gap: 6px;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   border: 1px solid var(--sb-line-soft);
   border-radius: 14px;
   background: #fff;
   box-shadow: 0 8px 24px rgba(20, 17, 12, 0.1), 0 16px 48px rgba(20, 17, 12, 0.08);
   color: var(--sb-ink);
+  padding: 12px;
+}
+
+.toastContent {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
-  padding: 14px 16px;
+  padding: 2px 0 2px 4px;
   text-align: left;
 }
 
-.toast:hover {
+.toast:hover,
+.toast:focus-within {
   background: var(--sb-bg);
 }
 
 .title {
+  min-width: 0;
   font-size: 14px;
   font-weight: 800;
   line-height: 1.35;
+}
+
+.dismissButton {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-ink-mute);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dismissButton:hover,
+.dismissButton:focus-visible {
+  background: var(--sb-line-soft);
+  color: var(--sb-ink);
+  outline: none;
 }
 
 .body {
