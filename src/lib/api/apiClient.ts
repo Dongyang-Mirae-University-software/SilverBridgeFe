@@ -5,7 +5,7 @@
 // 서비스나 훅에서 이걸 import해서 apiClient.get(...) 형태로 쓰면 됨
 // ─────────────────────────────────────────────
 
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosHeaders, InternalAxiosRequestConfig } from 'axios';
 import { resolveError, ServerErrorBody } from './errorHandler';
 import { CommonResponse } from '@/service/interface/common';
 import { IAuthTokenResponse } from '@/service/interface/auth';
@@ -34,6 +34,12 @@ const refreshClient = axios.create({
 });
 
 let refreshRequest: Promise<string> | null = null;
+
+function setBearerToken(config: InternalAxiosRequestConfig, token: string) {
+  const headers = AxiosHeaders.from(config.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+  config.headers = headers;
+}
 
 function isSigninRequest(url?: string) {
   if (!url) return false;
@@ -89,7 +95,7 @@ apiClient.interceptors.request.use(
 
     // 토큰이 있으면 Authorization 헤더에 자동으로 붙여줌
     if (token) {
-      config.headers.set('Authorization', `Bearer ${token}`);
+      setBearerToken(config, token);
     }
 
     return config;
@@ -119,7 +125,7 @@ apiClient.interceptors.response.use(
 
       try {
         const newAccessToken = await refreshAccessToken();
-        originalRequest.headers.set('Authorization', `Bearer ${newAccessToken}`);
+        setBearerToken(originalRequest, newAccessToken);
 
         return apiClient(originalRequest);
       } catch {
