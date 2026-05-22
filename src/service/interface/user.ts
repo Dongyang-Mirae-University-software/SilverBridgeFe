@@ -19,6 +19,7 @@ export interface IUserProfile {
 export interface IUserUpdateReq {
   name: string;
   phone?: string;
+  verificationNonce?: string;
   address?: string;
   addressDetail?: string;
 }
@@ -29,5 +30,6 @@ export interface IUserPasswordChangeReq {
 }
 
 export interface IUserDeleteReq {
-  password: string | null;
+  password?: string | null;
+  confirmation?: string;
 }

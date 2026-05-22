@@ -30,17 +30,9 @@ const ERROR_MESSAGES: Record<number, string> = {
   401: '로그인이 필요해요.',
   403: '접근 권한이 없어요.',
   404: '요청한 정보를 찾을 수 없어요.',
+  409: '이미 처리된 요청입니다.',
   500: '서버에 문제가 생겼어요. 잠시 후 다시 시도해주세요.',
 };
-
-// ── 401 처리 ─────────────────────────────────
-// 나중에 토큰 재발급 로직 붙일 때 여기만 수정하면 됨
-function handleUnauthorized() {
-  // TODO: refresh token 재발급 붙이기
-  // const ok = await tokenService.refresh();
-  // if (!ok) window.location.href = '/login';
-  window.location.href = '/login';
-}
 
 // ── 메인 함수 ─────────────────────────────────
 // AxiosError를 받아서 ApiErrorShape으로 변환해서 반환
@@ -48,9 +40,6 @@ function handleUnauthorized() {
 export function resolveError(error: AxiosError<ServerErrorBody>): ApiErrorShape {
   const status = error.response?.status ?? 0;
   const code = error.response?.data?.code;
-
-  // 401은 추가 처리 (리다이렉트 or 재발급)
-  if (status === 401) handleUnauthorized();
 
   return {
     status,

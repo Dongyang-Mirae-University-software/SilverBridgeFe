@@ -58,6 +58,24 @@ export function getAuthRole() {
   return authRole;
 }
 
+export function getAccessTokenSubject() {
+  if (typeof window === 'undefined') return null;
+
+  const token = getAccessToken();
+  const payload = token?.split('.')[1];
+  if (!payload) return null;
+
+  try {
+    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, '=');
+    const decodedPayload = JSON.parse(window.atob(paddedPayload)) as { sub?: unknown };
+
+    return typeof decodedPayload.sub === 'string' ? decodedPayload.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 export function clearAuthTokens() {
   accessToken = null;
   refreshToken = null;
