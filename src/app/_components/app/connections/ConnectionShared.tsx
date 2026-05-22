@@ -17,8 +17,28 @@ export function getErrorMessage(error: unknown, fallback: string) {
   return (error as Error).message || fallback;
 }
 
-function getStatusLabel(status: IConnectionItem['status']) {
-  return status === 'ACTIVE' ? '연결됨' : '수락 대기';
+export function getConnectionStatusLabel(status: IConnectionItem['status']) {
+  switch (status) {
+    case 'ACTIVE':
+      return '연결됨';
+    case 'CANCELLED':
+      return '취소됨';
+    case 'REFUSED':
+      return '거절됨';
+    case 'DISCONNECTED':
+      return '연결 해제됨';
+    default:
+      return '수락 대기';
+  }
+}
+
+export function getConnectionStatusClass(status: IConnectionItem['status']) {
+  return {
+    active: status === 'ACTIVE',
+    cancelled: status === 'CANCELLED',
+    disconnected: status === 'DISCONNECTED',
+    refused: status === 'REFUSED',
+  };
 }
 
 function formatDate(value: string | null) {
@@ -123,8 +143,8 @@ export function ConnectionCard({
       <div className={cx('connectionInfo')}>
         <div className={cx('connectionTitleRow')}>
           <strong>{connection.partnerName}</strong>
-          <span className={cx('connectionStatus', { active: connection.status === 'ACTIVE' })}>
-            {getStatusLabel(connection.status)}
+          <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>
+            {getConnectionStatusLabel(connection.status)}
           </span>
         </div>
         <span className={cx('connectionMeta')}>ID {connection.partnerUserId}</span>

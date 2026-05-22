@@ -10,6 +10,8 @@ import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/
 import {
   cx,
   EmptyState,
+  getConnectionStatusClass,
+  getConnectionStatusLabel,
   getConnectionData,
   getErrorMessage,
   splitConnections,
@@ -45,7 +47,7 @@ export function GuardianWardsPanel() {
   });
 
   const isPending = cancelMutation.isPending || disconnectMutation.isPending;
-  const sortedConnections = [...activeConnections, ...pendingConnections];
+  const sortedConnections = sortGuardianConnections(connections);
 
   const handleDisconnect = (connectionId: number) => {
     if (!window.confirm('이 피보호자와의 연결을 해제할까요?')) return;
@@ -110,8 +112,9 @@ function WardListCard({
   onDisconnect: () => void;
 }) {
   const isActive = connection.status === 'ACTIVE';
-  const actionLabel = isActive ? '연결 해제' : '요청 취소';
-  const actionHandler = isActive ? onDisconnect : onCancel;
+  const isPendingConnection = connection.status === 'PENDING';
+  const actionLabel = isActive ? '연결 해제' : isPendingConnection ? '요청 취소' : '';
+  const actionHandler = isActive ? onDisconnect : isPendingConnection ? onCancel : null;
 
   return (
     <li className={cx('wardListCard')}>
@@ -127,7 +130,9 @@ function WardListCard({
         <div className={cx('wardListProfile')}>
           <div className={cx('wardListNameRow')}>
             <strong>{connection.partnerName || '이름 확인 전'}</strong>
-            <span className={cx('connectionStatus', { active: isActive })}>{isActive ? '연결됨' : '수락 대기'}</span>
+            <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>
+              {getConnectionStatusLabel(connection.status)}
+            </span>
           </div>
           <span>{connection.partnerUserId}</span>
           <small>{isActive ? `연결일 ${formatWardListDate(connection.connectedAt)}` : `요청일 ${formatWardListDate(connection.createdAt)}`}</small>
@@ -136,18 +141,32 @@ function WardListCard({
 
       <div className={cx('wardListInfoGrid')}>
         <InfoRow label="회원 ID" value={connection.partnerUserId} />
-        <InfoRow label="연결 상태" value={isActive ? 'ACTIVE' : 'PENDING'} />
+        <InfoRow label="연결 상태" value={connection.status} />
         <InfoRow label="요청자" value={connection.requester ? '보호자' : '피보호자'} />
         <InfoRow label="우선순위" value={`${connection.priority ?? '-'}순위`} />
       </div>
 
-      <div className={cx('wardListCardFooter')}>
-        <button className={cx('wardListDangerButton')} type="button" disabled={isPending} onClick={actionHandler}>
-          {actionLabel}
-        </button>
-      </div>
+      {actionHandler && (
+        <div className={cx('wardListCardFooter')}>
+          <button className={cx('wardListDangerButton')} type="button" disabled={isPending} onClick={actionHandler}>
+            {actionLabel}
+          </button>
+        </div>
+      )}
     </li>
   );
+}
+
+function sortGuardianConnections(connections: IConnectionItem[]) {
+  const statusOrder: Record<IConnectionItem['status'], number> = {
+    ACTIVE: 0,
+    PENDING: 1,
+    REFUSED: 2,
+    CANCELLED: 3,
+    DISCONNECTED: 4,
+  };
+
+  return [...connections].sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
