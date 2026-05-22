@@ -11,7 +11,7 @@ const RELATION_OPTIONS = ['아들', '딸', '배우자', '부모', '형제자매'
 const CUSTOM_RELATION_OPTION = '직접입력';
 type RelationOption = (typeof RELATION_OPTIONS)[number] | '';
 
-export function GuardianWardRegisterPanel() {
+export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boolean }) {
   const queryClient = useQueryClient();
   const [targetId, setTargetId] = useState('');
   const [relation, setRelation] = useState<RelationOption>('');
@@ -45,7 +45,7 @@ export function GuardianWardRegisterPanel() {
   };
 
   return (
-    <section className={cx('connectionPage', 'connectionRegisterPage')}>
+    <section className={cx(embedded ? 'connectionTabContent' : 'connectionPage', 'connectionRegisterPage')}>
       <form className={cx('connectionRegisterCard')} onSubmit={handleSubmit}>
         <div className={cx('connectionRegisterTitle')}>피보호자 회원 ID 입력</div>
         <div className={cx('connectionRegisterFormRow')}>

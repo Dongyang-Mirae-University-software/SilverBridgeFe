@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/connect/guardian';
@@ -16,10 +15,14 @@ import {
   getErrorMessage,
   splitConnections,
 } from './ConnectionShared';
+import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
 
-export function GuardianWardsPanel() {
+type GuardianWardsTab = 'list' | 'register';
+
+export function GuardianWardsPanel({ initialTab = 'list' }: { initialTab?: GuardianWardsTab }) {
   const queryClient = useQueryClient();
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [activeTab, setActiveTab] = useState<GuardianWardsTab>(initialTab);
   const { data, isFetching, isLoading, isError, refetch } = useQuery(guardianConnectionsQueryOptions);
   const connections = getConnectionData(data);
   const { activeConnections, pendingConnections } = splitConnections(connections);
@@ -65,36 +68,60 @@ export function GuardianWardsPanel() {
           <button className={cx('connectionSecondaryButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>
             {isFetching ? '새로고침 중' : '새로고침'}
           </button>
-          <Link className={cx('connectionLinkButton')} href="/guardian/wards/register">
-            피보호자 등록
-          </Link>
         </div>
       </div>
 
-      {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
-      {isLoading && <EmptyState message="피보호자 목록을 불러오는 중입니다." />}
-      {isError && <EmptyState message="피보호자 목록을 불러오지 못했습니다." />}
-      {!isLoading && !isError && connections.length === 0 && (
-        <div className={cx('connectionEmptyBox')}>
-          <EmptyState message="아직 연결된 피보호자가 없습니다." />
-          <Link className={cx('connectionLinkButton')} href="/guardian/wards/register">
-            피보호자 연결 요청하기
-          </Link>
-        </div>
-      )}
+      <div className={cx('connectionTabs')} role="tablist" aria-label="피보호자 관리 탭">
+        <button
+          className={cx('connectionTabButton', { active: activeTab === 'list' })}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'list'}
+          onClick={() => setActiveTab('list')}
+        >
+          피보호자 리스트
+        </button>
+        <button
+          className={cx('connectionTabButton', { active: activeTab === 'register' })}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'register'}
+          onClick={() => setActiveTab('register')}
+        >
+          피보호자 등록
+        </button>
+      </div>
 
-      {connections.length > 0 && (
-        <ul className={cx('wardListCards')}>
-          {sortedConnections.map(connection => (
-            <WardListCard
-              key={connection.id}
-              connection={connection}
-              isPending={isPending}
-              onCancel={() => cancelMutation.mutate(connection.id)}
-              onDisconnect={() => handleDisconnect(connection.id)}
-            />
-          ))}
-        </ul>
+      {activeTab === 'list' ? (
+        <div className={cx('connectionTabContent')}>
+          {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
+          {isLoading && <EmptyState message="피보호자 목록을 불러오는 중입니다." />}
+          {isError && <EmptyState message="피보호자 목록을 불러오지 못했습니다." />}
+          {!isLoading && !isError && connections.length === 0 && (
+            <div className={cx('connectionEmptyBox')}>
+              <EmptyState message="아직 연결된 피보호자가 없습니다." />
+              <button className={cx('connectionLinkButton')} type="button" onClick={() => setActiveTab('register')}>
+                피보호자 연결 요청하기
+              </button>
+            </div>
+          )}
+
+          {connections.length > 0 && (
+            <ul className={cx('wardListCards')}>
+              {sortedConnections.map(connection => (
+                <WardListCard
+                  key={connection.id}
+                  connection={connection}
+                  isPending={isPending}
+                  onCancel={() => cancelMutation.mutate(connection.id)}
+                  onDisconnect={() => handleDisconnect(connection.id)}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <GuardianWardRegisterPanel embedded />
       )}
     </section>
   );

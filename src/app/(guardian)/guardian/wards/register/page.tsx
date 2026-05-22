@@ -1,10 +1,10 @@
-import { GuardianWardRegisterPanel } from '@/app/_components/app/connections/GuardianWardRegisterPanel';
+import { GuardianWardsPanel } from '@/app/_components/app/connections/GuardianWardsPanel';
 import UserDashboard from '@/app/_components/app/UserDashboard';
 
 export default function GuardianWardRegisterPage() {
   return (
     <UserDashboard pageKey="ward-register" role="GUARDIAN">
-      <GuardianWardRegisterPanel />
+      <GuardianWardsPanel initialTab="register" />
     </UserDashboard>
   );
 }

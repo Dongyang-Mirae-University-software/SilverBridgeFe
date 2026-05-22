@@ -1181,6 +1181,56 @@
   justify-content: flex-end;
 }
 
+.connectionTabs {
+  display: inline-flex;
+  width: fit-content;
+  gap: 4px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 12px;
+  background: #fff;
+  padding: 4px;
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.connectionTabButton {
+  min-width: 132px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--sb-ink-mute);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 16px;
+}
+
+.connectionTabButton:hover {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink);
+}
+
+.connectionTabButton.active {
+  background: var(--sb-brand);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(31, 94, 72, 0.16);
+}
+
+.guardianTheme .connectionTabButton.active {
+  background: var(--guardian-brand);
+  box-shadow: 0 8px 18px rgba(69, 67, 52, 0.16);
+}
+
+.guardianTheme .connectionTabButton:not(.active):hover {
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+}
+
+.connectionTabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .connectionHeader h2 {
   margin: 0;
   color: var(--sb-ink);
@@ -2118,11 +2168,13 @@
   .connectionHeaderActions,
   .connectionHeaderTop,
   .connectionPageActions,
+  .connectionTabs,
   .connectionActions,
   .wardListToolbar,
   .wardListToolbarActions {
     align-items: stretch;
     flex-direction: column;
+    width: 100%;
   }
 
   .connectionEmptyBox {
@@ -2130,6 +2182,7 @@
     flex-direction: column;
   }
 
+  .connectionTabButton,
   .connectionSubmitButton,
   .connectionLinkButton,
   .connectionPrimaryButton,
