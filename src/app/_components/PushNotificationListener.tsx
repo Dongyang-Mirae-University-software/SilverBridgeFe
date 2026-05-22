@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 import { MessagePayload } from 'firebase/messaging';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,6 +15,7 @@ import styles from './PushNotificationListener.module.css';
 
 const cx = classNames.bind(styles);
 const TOAST_LIFETIME_MS = 6000;
+type ConnectionTargetRole = 'WARD' | 'GUARDIAN';
 
 interface PushToast {
   id: number;
@@ -32,15 +33,13 @@ interface LocalPushEventDetail {
   };
 }
 
-function getPushRoute(data?: MessagePayload['data']) {
-  const role = getAuthRole();
-
+function getPushRoute(data?: MessagePayload['data'], role?: ConnectionTargetRole | null) {
   switch (data?.type) {
     case 'CONNECTION_REQUEST':
+    case 'CONNECTION_CANCELLED':
       return '/ward/guardians';
     case 'CONNECTION_ACCEPTED':
     case 'CONNECTION_REFUSED':
-    case 'CONNECTION_CANCELLED':
       return '/guardian/wards';
     case 'DISCONNECTION':
     case 'CONNECTION_DISCONNECTED':
@@ -54,8 +53,34 @@ function isConnectionPush(data?: MessagePayload['data']) {
   return Boolean(data?.type && data.type.includes('CONNECTION'));
 }
 
-function isConnectionRequest(data?: MessagePayload['data']) {
-  return data?.type === 'CONNECTION_REQUEST' && Boolean(data.connectionId);
+function getCurrentRole(pathname: string): ConnectionTargetRole | null {
+  if (pathname.startsWith('/ward')) return 'WARD';
+  if (pathname.startsWith('/guardian')) return 'GUARDIAN';
+
+  const role = getAuthRole();
+  return role === 'WARD' || role === 'GUARDIAN' ? role : null;
+}
+
+function getConnectionTargetRole(data?: MessagePayload['data']): ConnectionTargetRole | null {
+  switch (data?.type) {
+    case 'CONNECTION_REQUEST':
+    case 'CONNECTION_CANCELLED':
+      return 'WARD';
+    case 'CONNECTION_ACCEPTED':
+    case 'CONNECTION_REFUSED':
+      return 'GUARDIAN';
+    default:
+      return null;
+  }
+}
+
+function shouldHandleConnectionPush(data: MessagePayload['data'] | undefined, currentRole: ConnectionTargetRole | null) {
+  const targetRole = getConnectionTargetRole(data);
+  return !targetRole || !currentRole || targetRole === currentRole;
+}
+
+function isConnectionRequest(data?: MessagePayload['data'], currentRole?: ConnectionTargetRole | null) {
+  return currentRole === 'WARD' && data?.type === 'CONNECTION_REQUEST' && Boolean(data.connectionId);
 }
 
 function getConnectionId(data?: MessagePayload['data']) {
@@ -69,22 +94,24 @@ function getActionError(error: unknown, fallback: string) {
 
 export default function PushNotificationListener() {
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
   const idRef = useRef(0);
   const [toasts, setToasts] = useState<PushToast[]>([]);
   const [processingToastIds, setProcessingToastIds] = useState<number[]>([]);
+  const currentRole = getCurrentRole(pathname);
   const dismissToast = useCallback((id: number) => {
     setToasts(prev => prev.filter(item => item.id !== id));
   }, []);
   const addToast = useCallback((toast: PushToast) => {
     setToasts(prev => [toast, ...prev].slice(0, 3));
 
-    if (isConnectionRequest(toast.data)) return;
+    if (isConnectionRequest(toast.data, currentRole)) return;
 
     window.setTimeout(() => {
       dismissToast(toast.id);
     }, TOAST_LIFETIME_MS);
-  }, [dismissToast]);
+  }, [currentRole, dismissToast]);
   const updateToastError = (id: number, error: string) => {
     setToasts(prev => prev.map(item => (item.id === id ? { ...item, error } : item)));
   };
@@ -94,6 +121,14 @@ export default function PushNotificationListener() {
       queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
     ]);
   };
+  const refreshConnectionPage = useCallback(async (data?: MessagePayload['data']) => {
+    const targetRole = getConnectionTargetRole(data) ?? currentRole;
+    const queryKey = targetRole === 'GUARDIAN' ? guardianConnectionsQueryKey : wardConnectionsQueryKey;
+
+    await queryClient.invalidateQueries({ queryKey });
+    await queryClient.refetchQueries({ queryKey, type: 'active' });
+    router.refresh();
+  }, [currentRole, queryClient, router]);
   const handleConnectionAction = async (toast: PushToast, action: 'accept' | 'refuse') => {
     const connectionId = getConnectionId(toast.data);
     if (!connectionId || processingToastIds.includes(toast.id)) return;
@@ -110,6 +145,7 @@ export default function PushNotificationListener() {
 
       removePendingConnectionRequest(connectionId);
       await invalidateConnectionQueries();
+      router.refresh();
       dismissToast(toast.id);
     } catch (error) {
       updateToastError(
@@ -134,14 +170,14 @@ export default function PushNotificationListener() {
       };
 
       if (isConnectionPush(payload.data)) {
-        if (isConnectionRequest(payload.data)) savePendingConnectionRequest(payload.data);
-        void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
-        void queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+        if (!shouldHandleConnectionPush(payload.data, currentRole)) return;
+        if (isConnectionRequest(payload.data, currentRole)) savePendingConnectionRequest(payload.data);
+        void refreshConnectionPage(payload.data);
       }
 
       addToast(toast);
     });
-  }, [addToast, queryClient]);
+  }, [addToast, currentRole, refreshConnectionPage]);
 
   useEffect(() => {
     const handleLocalPush = (event: Event) => {
@@ -157,9 +193,9 @@ export default function PushNotificationListener() {
       };
 
       if (isConnectionPush(detail.data)) {
-        if (isConnectionRequest(detail.data)) savePendingConnectionRequest(detail.data);
-        void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
-        void queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+        if (!shouldHandleConnectionPush(detail.data, currentRole)) return;
+        if (isConnectionRequest(detail.data, currentRole)) savePendingConnectionRequest(detail.data);
+        void refreshConnectionPage(detail.data);
       }
 
       addToast(toast);
@@ -167,15 +203,15 @@ export default function PushNotificationListener() {
 
     window.addEventListener('careai:push', handleLocalPush);
     return () => window.removeEventListener('careai:push', handleLocalPush);
-  }, [addToast, queryClient]);
+  }, [addToast, currentRole, refreshConnectionPage]);
 
   if (toasts.length === 0) return null;
 
   return (
     <div className={cx('toastArea')} aria-live="polite">
       {toasts.map(toast => (
-        <div key={toast.id} className={cx('toast', { actionAlert: isConnectionRequest(toast.data) })}>
-          {isConnectionRequest(toast.data) ? (
+        <div key={toast.id} className={cx('toast', { actionAlert: isConnectionRequest(toast.data, currentRole) })}>
+          {isConnectionRequest(toast.data, currentRole) ? (
             <div className={cx('toastContent')}>
               <span className={cx('title')}>{toast.title}</span>
               {toast.body && <span className={cx('body')}>{toast.body}</span>}
@@ -205,7 +241,7 @@ export default function PushNotificationListener() {
               type="button"
               onClick={() => {
                 dismissToast(toast.id);
-                router.push(getPushRoute(toast.data));
+                router.push(getPushRoute(toast.data, currentRole));
               }}
             >
               <span className={cx('title')}>{toast.title}</span>
