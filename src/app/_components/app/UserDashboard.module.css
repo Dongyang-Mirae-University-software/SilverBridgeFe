@@ -2168,7 +2168,6 @@
   .connectionHeaderActions,
   .connectionHeaderTop,
   .connectionPageActions,
-  .connectionTabs,
   .connectionActions,
   .wardListToolbar,
   .wardListToolbarActions {
@@ -2177,12 +2176,22 @@
     width: 100%;
   }
 
+  .connectionTabs {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .connectionTabButton {
+    min-width: 0;
+    flex: 1 0 0;
+  }
+
   .connectionEmptyBox {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .connectionTabButton,
   .connectionSubmitButton,
   .connectionLinkButton,
   .connectionPrimaryButton,
