@@ -616,6 +616,7 @@
   border: 1px solid var(--sb-line-soft);
   border-radius: 12px;
   background: #fff;
+  min-height: 326px;
   padding: 18px;
 }
 
@@ -2052,6 +2053,10 @@
 
   .profileManageStack {
     padding: 16px;
+  }
+
+  .profileManageCard {
+    min-height: 0;
   }
 
   .profileModalActions .logoutButton,
