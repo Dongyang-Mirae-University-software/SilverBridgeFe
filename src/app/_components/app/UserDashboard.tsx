@@ -67,7 +67,6 @@ const WARD_NAV: NavItem[] = [
   { href: '/ward/sos', icon: 'phone', label: '긴급 전화', key: 'sos' },
   { href: '/ward/chatbot', icon: 'message', label: 'AI 의료 챗봇', key: 'chatbot' },
   { href: '/ward/game', icon: 'game', label: '치매 예방 게임', key: 'game' },
-  { href: '/ward/hospital', icon: 'hospital', label: '병원 예약하기', key: 'hospital' },
   { href: '/ward/medication', icon: 'heart', label: '복약 알림', key: 'medication' },
   { href: '/ward/guardians', icon: 'users', label: '내 보호자', key: 'guardians' },
   { href: '/ward/notices', icon: 'bell', label: '공지사항', key: 'notices' },
@@ -106,10 +105,9 @@ const PAGE_TITLES: Record<PageKey, string> = {
 };
 
 const WARD_ACTIONS = [
-  { href: '/ward/sos', label: '긴급 전화', desc: '보호자와 119에 빠르게 연결' },
-  { href: '/ward/chatbot', label: 'AI 의료 챗봇', desc: '증상과 복약 궁금증 확인' },
-  { href: '/ward/game', label: '치매 예방 게임', desc: '매일 가볍게 두뇌 운동' },
-  { href: '/ward/hospital', label: '병원 예약하기', desc: '가까운 병원 일정 확인' },
+  { href: '/ward/sos', label: '긴급전화' },
+  { href: '/ward/chatbot', label: 'AI 챗봇' },
+  { href: '/ward/game', label: '치매예방 게임' },
 ];
 
 const GUARDIAN_STATS = [
@@ -344,7 +342,12 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
   return (
     <div className={cx('stage')}>
       <div className={cx('mobileTopBar')}>
-        <button className={cx('topBarMenuButton')} type="button" aria-label="메뉴 열기" onClick={() => setIsSidebarOpen(true)}>
+        <button
+          className={cx('topBarMenuButton')}
+          type="button"
+          aria-label="메뉴 열기"
+          onClick={() => setIsSidebarOpen(true)}
+        >
           <MenuIcon />
         </button>
         <div className={cx('topBarBrand')}>
@@ -358,14 +361,24 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
       </div>
 
       {!isSidebarOpen && (
-        <button className={cx('menuButton', { ward: isWard })} type="button" aria-label="메뉴 열기" onClick={() => setIsSidebarOpen(true)}>
+        <button
+          className={cx('menuButton', { ward: isWard })}
+          type="button"
+          aria-label="메뉴 열기"
+          onClick={() => setIsSidebarOpen(true)}
+        >
           <MenuIcon />
         </button>
       )}
 
       {isSidebarOpen && (
         <>
-          <button className={cx('scrim')} type="button" aria-label="메뉴 닫기" onClick={() => setIsSidebarOpen(false)} />
+          <button
+            className={cx('scrim')}
+            type="button"
+            aria-label="메뉴 닫기"
+            onClick={() => setIsSidebarOpen(false)}
+          />
           <aside className={cx('sidebar')} aria-label={`${getRoleLabel(role)} 메뉴`}>
             <div className={cx('brand')}>
               <div className={cx('brandMark')}>SB</div>
@@ -373,7 +386,12 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
                 <strong>SilverBridge</strong>
                 <span>{getRoleLabel(role)} 웹</span>
               </div>
-              <button className={cx('closeButton')} type="button" aria-label="메뉴 닫기" onClick={() => setIsSidebarOpen(false)}>
+              <button
+                className={cx('closeButton')}
+                type="button"
+                aria-label="메뉴 닫기"
+                onClick={() => setIsSidebarOpen(false)}
+              >
                 ×
               </button>
             </div>
@@ -458,7 +476,12 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
                   <p>{userEmail}</p>
                 </div>
               </div>
-              <button className={cx('profileModalClose')} type="button" aria-label="사용자 상세 정보 닫기" onClick={() => setIsProfileModalOpen(false)}>
+              <button
+                className={cx('profileModalClose')}
+                type="button"
+                aria-label="사용자 상세 정보 닫기"
+                onClick={() => setIsProfileModalOpen(false)}
+              >
                 ×
               </button>
             </div>
@@ -476,7 +499,11 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
               <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
                 {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
               </button>
-              <button className={cx('profileModalGhostButton')} type="button" onClick={() => setIsProfileModalOpen(false)}>
+              <button
+                className={cx('profileModalGhostButton')}
+                type="button"
+                onClick={() => setIsProfileModalOpen(false)}
+              >
                 닫기
               </button>
             </div>
@@ -485,55 +512,23 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
       )}
 
       <main className={cx('main')}>
-        <header className={cx('header')}>
-          <div>
-            <h1>{PAGE_TITLES[pageKey]}</h1>
-            <p>{isWard ? '오늘도 편안하게 이용할 수 있도록 준비했어요.' : '가족의 상태를 한눈에 확인하고 필요한 일을 처리하세요.'}</p>
-          </div>
-          <div className={cx('headerActions')}>
-            <span className={cx('roleBadge')}>{getRoleLabel(role)}</span>
-          </div>
-        </header>
-
-        {children ?? (isWard ? renderWardContent(pageKey, userName) : renderGuardianContent(pageKey, userName))}
+        {children ?? (isWard ? renderWardContent(pageKey) : renderGuardianContent(pageKey, userName))}
       </main>
     </div>
   );
 }
 
-function renderWardContent(pageKey: PageKey, userName: string) {
+function renderWardContent(pageKey: PageKey) {
   if (pageKey !== 'home') return <FeaturePanel title={PAGE_TITLES[pageKey]} role="WARD" />;
 
   return (
-    <div className={cx('contentGrid')}>
-      <section className={cx('heroCard')}>
-        <span className={cx('eyebrow')}>안녕하세요, {userName}님</span>
-        <h2>필요한 돌봄 기능을 크게, 쉽게 배치했어요.</h2>
-        <p>긴급 연락, AI 상담, 병원 예약, 복약 알림을 한 화면에서 시작할 수 있습니다.</p>
-        <Link className={cx('primaryButton')} href="/ward/sos">
-          긴급 전화 열기
-        </Link>
-      </section>
-
-      <section className={cx('quickGrid')}>
+    <div className={cx('wardHomeActions')}>
+      <section className={cx('quickGrid', 'wardHomeActionGrid')}>
         {WARD_ACTIONS.map(action => (
           <Link key={action.href} className={cx('actionCard')} href={action.href}>
             <strong>{action.label}</strong>
-            <span>{action.desc}</span>
           </Link>
         ))}
-      </section>
-
-      <section className={cx('wideCard')}>
-        <div>
-          <span className={cx('eyebrow')}>오늘의 상태</span>
-          <h3>복약 알림 2건, 병원 일정 1건이 남아 있어요.</h3>
-        </div>
-        <div className={cx('statusList')}>
-          <span>아침 혈압 기록 완료</span>
-          <span>점심 약 복용 대기</span>
-          <span>오후 3시 내과 예약</span>
-        </div>
       </section>
     </div>
   );
@@ -580,7 +575,10 @@ function FeaturePanel({ title, role }: { title: string; role: AuthRole }) {
     <section className={cx('featurePanel')}>
       <span className={cx('eyebrow')}>{getRoleLabel(role)} 전용 기능</span>
       <h2>{title}</h2>
-      <p>이 화면은 역할별 route group 안에 분리되어 있습니다. 이후 실제 API와 상세 기능을 이 페이지 단위로 연결하면 됩니다.</p>
+      <p>
+        이 화면은 역할별 route group 안에 분리되어 있습니다. 이후 실제 API와 상세 기능을 이 페이지 단위로 연결하면
+        됩니다.
+      </p>
     </section>
   );
 }
