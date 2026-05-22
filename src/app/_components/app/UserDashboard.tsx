@@ -324,10 +324,25 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
       router.replace('/login');
     },
   });
+  const { mutate: profileImageMutate, isPending: isProfileImageChanging } = useMutation({
+    mutationKey: ['user-profile-image-change'],
+    mutationFn: changeMyProfileImage,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+    },
+    onError: error => {
+      console.error('프로필 이미지 변경 실패:', error);
+    },
+  });
 
   const handleLogout = () => {
     if (isLoggingOut) return;
     logoutMutate();
+  };
+
+  const handleProfileImageChange = (file?: File) => {
+    if (!file || isProfileImageChanging) return;
+    profileImageMutate(file);
   };
 
   const updateWardSettings = (settings: Partial<WardSettings>) => {
@@ -529,13 +544,30 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
           >
             <div className={cx('profileModalHeader')}>
               <div className={cx('profileModalUser')}>
-                <div className={cx('profileModalAvatar')}>
-                  {profile?.profileImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img alt="" src={profile.profileImage} />
-                  ) : (
-                    userInitial
-                  )}
+                <div className={cx('profilePhotoBlock')}>
+                  <div className={cx('profileModalAvatar')}>
+                    {profile?.profileImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img alt="" src={profile.profileImage} />
+                    ) : (
+                      userInitial
+                    )}
+                  </div>
+                  <label className={cx('profilePhotoEditButton')} aria-label="프로필 이미지 변경">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M8.5 7.5 10 5h4l1.5 2.5H18a3 3 0 0 1 3 3V17a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-6.5a3 3 0 0 1 3-3h2.5Z" />
+                      <path d="M12 10.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" />
+                    </svg>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isProfileImageChanging}
+                      onChange={event => {
+                        handleProfileImageChange(event.target.files?.[0]);
+                        event.currentTarget.value = '';
+                      }}
+                    />
+                  </label>
                 </div>
                 <div>
                   <div className={cx('profileModalBadges')}>
@@ -608,7 +640,7 @@ function ProfileModalControls({
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [activePanel, setActivePanel] = useState<'profile' | 'security'>('profile');
   const isKakaoUser = profile?.provider === 'KAKAO';
-  const isPhoneChanged = profileForm.phone.trim() !== (profile?.phone ?? '');
+  const isPhoneChanged = (profileForm.phone ?? '').trim() !== (profile?.phone ?? '');
 
   const profileMutation = useMutation({
     mutationKey: ['user-profile-update'],
@@ -622,17 +654,6 @@ function ProfileModalControls({
       await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
     },
     onError: error => setFeedbackMessage(getModalErrorMessage(error, '프로필 수정에 실패했습니다.')),
-  });
-
-  const imageMutation = useMutation({
-    mutationKey: ['user-profile-image-change'],
-    mutationFn: changeMyProfileImage,
-    onMutate: () => setFeedbackMessage(''),
-    onSuccess: async () => {
-      setFeedbackMessage('프로필 이미지를 변경했습니다.');
-      await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
-    },
-    onError: error => setFeedbackMessage(getModalErrorMessage(error, '프로필 이미지 변경에 실패했습니다.')),
   });
 
   const smsSendMutation = useMutation({
@@ -694,17 +715,24 @@ function ProfileModalControls({
   const handleProfileSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!profileForm.name.trim()) {
+    const name = (profileForm.name ?? '').trim();
+    const phone = (profileForm.phone ?? '').trim();
+    const birthDate = profileForm.birthDate ?? '';
+    const postcode = (profileForm.postcode ?? '').trim();
+    const address = (profileForm.address ?? '').trim();
+    const addressDetail = (profileForm.addressDetail ?? '').trim();
+
+    if (!name) {
       setFeedbackMessage('이름을 입력하세요.');
       return;
     }
 
-    if (!/^\d{10,11}$/.test(profileForm.phone.trim())) {
+    if (!/^\d{10,11}$/.test(phone)) {
       setFeedbackMessage('전화번호는 숫자 10~11자리로 입력하세요.');
       return;
     }
 
-    if (!profileForm.birthDate || !profileForm.postcode.trim() || !profileForm.address.trim()) {
+    if (!birthDate || !postcode || !address) {
       setFeedbackMessage('생년월일, 우편번호, 주소를 모두 입력하세요.');
       return;
     }
@@ -716,11 +744,12 @@ function ProfileModalControls({
 
     profileMutation.mutate({
       ...profileForm,
-      address: profileForm.address.trim(),
-      addressDetail: profileForm.addressDetail.trim(),
-      name: profileForm.name.trim(),
-      phone: profileForm.phone.trim(),
-      postcode: profileForm.postcode.trim(),
+      address,
+      addressDetail,
+      birthDate,
+      name,
+      phone,
+      postcode,
       verificationNonce: isPhoneChanged ? phoneNonce : null,
     });
   };
@@ -784,29 +813,12 @@ function ProfileModalControls({
       {activePanel === 'profile' ? (
         <section className={cx('profileManageCard')}>
           <form className={cx('profileForm')} onSubmit={handleProfileSubmit}>
-            <div className={cx('profileUploadRow')}>
-              <span>프로필 이미지</span>
-              <label className={cx('profileFileButton')}>
-                {imageMutation.isPending ? '업로드 중' : '이미지 변경'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={imageMutation.isPending}
-                  onChange={event => {
-                    const file = event.target.files?.[0];
-                    if (file) imageMutation.mutate(file);
-                    event.currentTarget.value = '';
-                  }}
-                />
-              </label>
-            </div>
-
             <div className={cx('profileFormGrid')}>
               <label className={cx('profileField')}>
                 <span>이름</span>
                 <input
                   maxLength={20}
-                  value={profileForm.name}
+                  value={profileForm.name ?? ''}
                   onChange={event => updateProfileForm('name', event.target.value)}
                 />
               </label>
@@ -814,14 +826,14 @@ function ProfileModalControls({
                 <span>전화번호</span>
                 <input
                   inputMode="numeric"
-                  value={profileForm.phone}
+                  value={profileForm.phone ?? ''}
                   onChange={event => updateProfileForm('phone', event.target.value.replace(/\D/g, ''))}
                 />
               </label>
               <label className={cx('profileField')}>
                 <span>성별</span>
                 <select
-                  value={profileForm.gender}
+                  value={profileForm.gender ?? 'FEMALE'}
                   onChange={event => updateProfileForm('gender', event.target.value as GenderType)}
                 >
                   <option value="FEMALE">여성</option>
@@ -832,7 +844,7 @@ function ProfileModalControls({
                 <span>생년월일</span>
                 <input
                   type="date"
-                  value={profileForm.birthDate}
+                  value={profileForm.birthDate ?? ''}
                   onChange={event => updateProfileForm('birthDate', event.target.value)}
                 />
               </label>
@@ -841,20 +853,20 @@ function ProfileModalControls({
                 <input
                   inputMode="numeric"
                   maxLength={5}
-                  value={profileForm.postcode}
+                  value={profileForm.postcode ?? ''}
                   onChange={event => updateProfileForm('postcode', event.target.value.replace(/\D/g, ''))}
                 />
               </label>
               <label className={cx('profileField')}>
                 <span>주소</span>
-                <input value={profileForm.address} onChange={event => updateProfileForm('address', event.target.value)} />
+                <input value={profileForm.address ?? ''} onChange={event => updateProfileForm('address', event.target.value)} />
               </label>
             </div>
 
             <label className={cx('profileField')}>
               <span>상세 주소</span>
               <input
-                value={profileForm.addressDetail}
+                value={profileForm.addressDetail ?? ''}
                 onChange={event => updateProfileForm('addressDetail', event.target.value)}
               />
             </label>
@@ -865,7 +877,7 @@ function ProfileModalControls({
                   className={cx('profileModalGhostButton')}
                   type="button"
                   disabled={smsSendMutation.isPending}
-                  onClick={() => smsSendMutation.mutate({ phone: profileForm.phone.trim() })}
+                  onClick={() => smsSendMutation.mutate({ phone: (profileForm.phone ?? '').trim() })}
                 >
                   {smsSendMutation.isPending ? '발송 중' : '인증번호 발송'}
                 </button>
@@ -879,7 +891,7 @@ function ProfileModalControls({
                   className={cx('profileModalGhostButton')}
                   type="button"
                   disabled={smsVerifyMutation.isPending || !phoneCode.trim()}
-                  onClick={() => smsVerifyMutation.mutate({ phone: profileForm.phone.trim(), code: phoneCode.trim() })}
+                  onClick={() => smsVerifyMutation.mutate({ phone: (profileForm.phone ?? '').trim(), code: phoneCode.trim() })}
                 >
                   {smsVerifyMutation.isPending ? '확인 중' : phoneNonce ? '인증 완료' : '인증 확인'}
                 </button>
@@ -902,7 +914,7 @@ function ProfileModalControls({
                 <input
                   type="password"
                   disabled={isKakaoUser}
-                  value={passwordForm.currentPassword}
+                  value={passwordForm.currentPassword ?? ''}
                   onChange={event => setPasswordForm(current => ({ ...current, currentPassword: event.target.value }))}
                 />
               </label>
@@ -911,7 +923,7 @@ function ProfileModalControls({
                 <input
                   type="password"
                   disabled={isKakaoUser}
-                  value={passwordForm.newPassword}
+                  value={passwordForm.newPassword ?? ''}
                   onChange={event => setPasswordForm(current => ({ ...current, newPassword: event.target.value }))}
                 />
               </label>
@@ -920,7 +932,7 @@ function ProfileModalControls({
                 <input
                   type="password"
                   disabled={isKakaoUser}
-                  value={passwordForm.newPasswordConfirm}
+                  value={passwordForm.newPasswordConfirm ?? ''}
                   onChange={event => setPasswordForm(current => ({ ...current, newPasswordConfirm: event.target.value }))}
                 />
               </label>
@@ -936,7 +948,7 @@ function ProfileModalControls({
             <input
               type={isKakaoUser ? 'text' : 'password'}
               placeholder={isKakaoUser ? '탈퇴' : '현재 비밀번호'}
-              value={isKakaoUser ? deleteConfirmation : deletePassword}
+              value={isKakaoUser ? deleteConfirmation ?? '' : deletePassword ?? ''}
               onChange={event =>
                 isKakaoUser ? setDeleteConfirmation(event.target.value) : setDeletePassword(event.target.value)
               }

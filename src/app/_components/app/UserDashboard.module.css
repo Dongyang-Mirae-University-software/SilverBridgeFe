@@ -385,32 +385,42 @@
 
 .profileModalHeader {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  justify-content: center;
   border-bottom: 1px solid var(--sb-line-soft);
   background: #fbfaf6;
-  padding: 22px 24px;
+  padding: 28px 56px 22px;
 }
 
 .profileModalUser {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+
+.profilePhotoBlock {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding-bottom: 18px;
 }
 
 .profileModalAvatar {
   display: grid;
-  width: 56px;
-  height: 56px;
+  width: 92px;
+  height: 92px;
   flex-shrink: 0;
   place-items: center;
   overflow: hidden;
-  border-radius: 14px;
+  border: 3px solid #fff;
+  border-radius: 24px;
   background: var(--sb-brand);
   color: #fff;
-  font-size: 20px;
+  box-shadow: 0 10px 24px rgba(20, 17, 12, 0.12);
+  font-size: 32px;
   font-weight: 800;
 }
 
@@ -421,10 +431,48 @@
 }
 
 .profileModalBadges {
+  justify-content: center;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 7px;
+}
+
+.profilePhotoEditButton {
+  position: absolute;
+  bottom: 0;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-brand);
+  cursor: pointer;
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.profilePhotoEditButton:hover {
+  background: var(--sb-brand-50);
+}
+
+.profilePhotoEditButton svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.profilePhotoEditButton input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
 }
 
 .profileProviderBadge {
@@ -456,6 +504,9 @@
 }
 
 .profileModalClose {
+  position: absolute;
+  top: 18px;
+  right: 18px;
   display: grid;
   width: 32px;
   height: 32px;
@@ -704,44 +755,6 @@
   background: #fff;
   color: var(--sb-ink);
   box-shadow: var(--sb-shadow-sm);
-}
-
-.profileUploadRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 12px;
-  background: #fbfaf6;
-  color: var(--sb-ink-soft);
-  font-size: 12px;
-  font-weight: 800;
-  padding: 12px 14px;
-}
-
-.profileFileButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--sb-line);
-  border-radius: 9px;
-  background: #fff;
-  color: var(--sb-ink-soft);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
-  min-height: 34px;
-  padding: 7px 12px;
-  white-space: nowrap;
-}
-
-.profileFileButton input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
 }
 
 .main {
@@ -2008,11 +2021,13 @@
     max-height: 90vh;
   }
 
-  .profileModalHeader,
-  .profileModalUser,
   .profileModalActions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .profileModalHeader {
+    padding: 28px 48px 20px;
   }
 
   .profileModalClose {
@@ -2048,11 +2063,6 @@
   .profilePhoneVerify,
   .profileDeleteRow {
     grid-template-columns: 1fr;
-  }
-
-  .profileUploadRow {
-    align-items: stretch;
-    flex-direction: column;
   }
 
   .connectionPage,
