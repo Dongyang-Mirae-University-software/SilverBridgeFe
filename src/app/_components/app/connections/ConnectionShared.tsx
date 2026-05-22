@@ -148,6 +148,13 @@ export function ConnectionCard({
           </span>
         </div>
         <span className={cx('connectionMeta')}>ID {connection.partnerUserId}</span>
+        {connection.relation && <span className={cx('connectionMeta')}>관계 {connection.relation}</span>}
+        {connection.partnerPhone && <span className={cx('connectionMeta')}>연락처 {connection.partnerPhone}</span>}
+        {connection.status === 'ACTIVE' && connection.partnerAddress && (
+          <span className={cx('connectionMeta')}>
+            주소 {[connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ')}
+          </span>
+        )}
         <span className={cx('connectionMeta')}>
           {connection.status === 'ACTIVE' ? `연결일 ${formatDate(connection.connectedAt)}` : `요청일 ${formatDate(connection.createdAt)}`}
         </span>
