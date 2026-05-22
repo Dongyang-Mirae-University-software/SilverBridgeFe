@@ -301,6 +301,7 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
   const [isWardSettingsLoaded, setIsWardSettingsLoaded] = useState(false);
   const isWard = role === 'WARD';
   const navItems = isWard ? WARD_NAV : GUARDIAN_NAV;
+  const pageTitle = PAGE_TITLES[pageKey];
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const realtimeUserId = getAccessTokenSubject() ?? profile?.id;
@@ -438,7 +439,7 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
           <div className={cx('brandMark')}>SB</div>
           <div>
             <strong>SilverBridge</strong>
-            <span>{PAGE_TITLES[pageKey]}</span>
+            <span>{pageTitle}</span>
           </div>
         </div>
         <span className={cx('topBarRole')}>{getRoleLabel(role)}</span>
@@ -608,6 +609,32 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
       )}
 
       <main className={cx('main')}>
+        <header className={cx('desktopHeader')}>
+          <div className={cx('desktopHeaderTitle')}>
+            <span className={cx('roleBadge')}>{getRoleLabel(role)} 웹</span>
+            <h1>{pageTitle}</h1>
+          </div>
+          <button
+            className={cx('desktopUserButton')}
+            type="button"
+            aria-haspopup="dialog"
+            aria-label="사용자 상세 정보 열기"
+            onClick={() => setIsProfileModalOpen(true)}
+          >
+            <div className={cx('avatar')}>
+              {profile?.profileImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img alt="" src={profile.profileImage} />
+              ) : (
+                userInitial
+              )}
+            </div>
+            <div className={cx('desktopUserInfo')}>
+              <strong>{userName}</strong>
+              <span>{userEmail}</span>
+            </div>
+          </button>
+        </header>
         {children ??
           (isWard
             ? renderWardContent(pageKey, wardSettings, updateWardSettings)

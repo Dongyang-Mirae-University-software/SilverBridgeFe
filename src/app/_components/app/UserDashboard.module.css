@@ -784,6 +784,91 @@
   padding: 28px 28px 28px 80px;
 }
 
+.desktopHeader {
+  position: sticky;
+  top: 0;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--sb-shadow-sm);
+  margin-bottom: 18px;
+  padding: 14px 16px 14px 18px;
+  backdrop-filter: blur(10px);
+}
+
+.desktopHeaderTitle {
+  min-width: 0;
+}
+
+.desktopHeaderTitle h1 {
+  overflow: hidden;
+  margin: 7px 0 0;
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 850;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktopUserButton {
+  display: flex;
+  min-width: 210px;
+  max-width: 320px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
+  color: inherit;
+  cursor: pointer;
+  padding: 9px 12px;
+  text-align: left;
+}
+
+.desktopUserButton:hover {
+  background: #fff;
+}
+
+.guardianTheme .desktopUserButton {
+  border-color: var(--guardian-line);
+  background: var(--guardian-brand-soft);
+}
+
+.guardianTheme .desktopUserButton:hover {
+  background: var(--guardian-brand-hover);
+}
+
+.desktopUserInfo {
+  min-width: 0;
+}
+
+.desktopUserInfo strong,
+.desktopUserInfo span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktopUserInfo strong {
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.desktopUserInfo span {
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+  font-weight: 650;
+  margin-top: 2px;
+}
+
 .header {
   display: flex;
   align-items: flex-end;
@@ -2080,6 +2165,10 @@
 
   .main {
     padding: 88px 18px 18px;
+  }
+
+  .desktopHeader {
+    display: none;
   }
 
   .header {
