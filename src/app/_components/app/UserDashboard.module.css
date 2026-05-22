@@ -39,28 +39,6 @@
   display: none;
 }
 
-.menuButton {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 50;
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border: 1px solid var(--sb-line);
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(20, 17, 12, 0.08);
-  color: var(--sb-ink);
-  cursor: pointer;
-}
-
-.menuButton.ward {
-  width: 56px;
-  height: 56px;
-}
-
 .menuIcon {
   width: 24px;
   height: 24px;
@@ -71,6 +49,7 @@
 }
 
 .scrim {
+  display: none;
   position: fixed;
   inset: 0;
   z-index: 60;
@@ -80,21 +59,20 @@
 }
 
 .sidebar {
-  position: fixed;
-  inset: 0 auto 0 0;
-  z-index: 70;
+  position: sticky;
+  top: 0;
+  z-index: 30;
   box-sizing: border-box;
   display: flex;
-  width: 240px;
-  max-width: calc(100vw - 32px);
-  height: 100dvh;
+  width: 260px;
+  height: 100vh;
   flex-shrink: 0;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   border-right: 1px solid var(--sb-line);
   background: #fff;
-  padding: 20px 14px;
-  box-shadow: var(--sb-shadow-sm), 16px 0 48px rgba(20, 17, 12, 0.16);
+  padding: 22px 16px;
+  box-shadow: none;
 }
 
 .brand {
@@ -119,7 +97,7 @@
 }
 
 .closeButton {
-  display: grid;
+  display: none;
   width: 32px;
   height: 32px;
   flex-shrink: 0;
@@ -143,12 +121,9 @@
   border-radius: 10px;
   background: var(--sb-brand);
   color: #fff;
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 19px;
-  font-weight: 500;
-  font-feature-settings: "kern" on, "liga" off;
-  letter-spacing: -0.14em;
-  padding-right: 2px;
+  font-size: 15px;
+  font-weight: 850;
+  letter-spacing: 0;
 }
 
 .guardianTheme .brandMark,
@@ -181,6 +156,8 @@
   min-height: 0;
   flex-direction: column;
   gap: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .navItem {
@@ -781,7 +758,7 @@
 .main {
   flex: 1;
   min-width: 0;
-  padding: 28px 28px 28px 80px;
+  padding: 28px;
 }
 
 .desktopHeader {
@@ -2055,16 +2032,25 @@
   }
 
   .topBarMenuButton {
-    display: grid;
-    width: 42px;
+    display: inline-flex;
+    width: auto;
     height: 42px;
     flex-shrink: 0;
-    place-items: center;
+    align-items: center;
+    gap: 6px;
     border: 1px solid var(--sb-line);
     border-radius: 12px;
     background: #fff;
     color: var(--sb-ink);
     cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 0 12px;
+  }
+
+  .topBarMenuButton .menuIcon {
+    width: 20px;
+    height: 20px;
   }
 
   .topBarBrand {
@@ -2111,15 +2097,30 @@
     padding: 4px 9px;
   }
 
-  .menuButton {
-    display: none;
+  .scrim {
+    display: block;
   }
 
   .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 70;
     width: min(78vw, 280px);
     max-width: 320px;
+    height: 100dvh;
     border-right: 0;
+    box-shadow: var(--sb-shadow-sm), 16px 0 48px rgba(20, 17, 12, 0.16);
     padding: max(18px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+    transform: translateX(-105%);
+    transition: transform 0.18s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .closeButton {
+    display: grid;
   }
 
   .nav {
