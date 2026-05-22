@@ -6,7 +6,7 @@ import styles from './SignupForm.module.css';
 import SignupBasicInfoStep from './SignupBasicInfoStep';
 import SignupErrorPopup from './SignupErrorPopup';
 import SignupPhoneVerificationStep from './SignupPhoneVerificationStep';
-import useSignupForm from '@/app/_hook/useSignupForm';
+import useSignupForm from '@/hooks/useSignupForm';
 import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 
 const cx = classNames.bind(styles);

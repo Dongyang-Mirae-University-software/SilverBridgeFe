@@ -3,8 +3,8 @@
 import { ChangeEvent, useState } from 'react';
 import classNames from 'classnames/bind';
 
-import TextInput from '@/app/_components/common/TextInput';
-import useTimer from '@/app/_hook/useTimer';
+import TextInput from '@/components/TextInput';
+import useTimer from '@/hooks/useTimer';
 import AuthTimer from './AuthTimer';
 import styles from './VerificationCodeForm.module.css';
 

@@ -3,7 +3,7 @@
 import { FormEvent } from 'react';
 import classNames from 'classnames/bind';
 
-import TextInput from '@/app/_components/common/TextInput';
+import TextInput from '@/components/TextInput';
 import styles from './FindPasswordContent.module.css';
 
 const cx = classNames.bind(styles);
