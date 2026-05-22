@@ -11,19 +11,20 @@ services:
       NODE_ENV: development
     command: sh -c "npm ci --ignore-scripts && npm run dev:docker"
     ports:
-      - "6510:3000"
+      - '6510:3000'
     volumes:
       - .:/app
       - silver-bridge-fe-dev-node-modules:/app/node_modules
+      - silver-bridge-fe-dev-next:/app/.next
     networks:
       - silver-bridge-fe-dev-net
     stdin_open: true
     tty: true
-
 networks:
   silver-bridge-fe-dev-net:
     name: silver-bridge-fe-dev-net
-
 volumes:
   silver-bridge-fe-dev-node-modules:
     name: silver-bridge-fe-dev-node-modules
+  silver-bridge-fe-dev-next:
+    name: silver-bridge-fe-dev-next
