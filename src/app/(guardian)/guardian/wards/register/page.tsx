@@ -1,5 +1,10 @@
-import { GuardianWardsPanel } from '@/app/_components/app/connections/GuardianWardsPanel';
+import PageLayout from '@/components/layout/PageLayout';
+import { GuardianWardsPanel } from '@/components/app/connections/GuardianWardsPanel';
 
 export default function GuardianWardRegisterPage() {
-  return <GuardianWardsPanel initialTab="register" />;
+  return (
+    <PageLayout title="피보호자 등록">
+      <GuardianWardsPanel initialTab="register" />
+    </PageLayout>
+  );
 }

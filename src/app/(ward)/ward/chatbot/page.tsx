@@ -1,5 +1,5 @@
-import { WardChatbotContent } from './_components/WardChatbotContent';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function WardChatbotPage() {
-  return <WardChatbotContent />;
+  return <PageLayout title="AI 의료 챗봇" />;
 }
