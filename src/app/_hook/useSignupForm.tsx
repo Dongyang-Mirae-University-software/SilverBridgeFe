@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { ISignupReq, RoleType } from '@/service/interface/auth';
+import { GenderType, ISignupReq, RoleType } from '@/service/interface/auth';
 import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '../constant/pattern';
 import { useMutation } from '@tanstack/react-query';
 import { signup } from '@/service/api/auth';
@@ -15,9 +15,13 @@ export type SignupFormValues = {
   password: string;
   passwordCheck: string;
   phone: string;
+  verificationNonce: string;
   role: RoleType;
   address: string;
   addressDetail: string;
+  gender: GenderType;
+  birthDate: string;
+  postcode: string;
 };
 
 export default function useSignupForm() {
@@ -37,9 +41,13 @@ export default function useSignupForm() {
       password: '',
       passwordCheck: '',
       phone: '',
+      verificationNonce: '',
       role: 'WARD',
       address: '',
       addressDetail: '',
+      gender: 'FEMALE',
+      birthDate: '',
+      postcode: '',
     },
   });
 
@@ -85,8 +93,13 @@ export default function useSignupForm() {
       password: '',
       passwordCheck: '',
       phone: '',
+      verificationNonce: '',
+      role: 'WARD',
       address: '',
       addressDetail: '',
+      gender: 'FEMALE',
+      birthDate: '',
+      postcode: '',
     });
   }
 
@@ -105,9 +118,13 @@ export default function useSignupForm() {
       email: formData.email,
       password: formData.password,
       phone: formData.phone,
+      verificationNonce: formData.verificationNonce,
       role: formData.role,
       address: formData.address,
       addressDetail: formData.addressDetail,
+      gender: formData.gender,
+      birthDate: formData.birthDate,
+      postcode: formData.postcode,
     };
 
     mutate(form, {

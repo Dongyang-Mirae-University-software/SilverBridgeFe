@@ -1,0 +1,31 @@
+export type ConnectionStatus = 'PENDING' | 'ACTIVE' | 'CANCELLED' | 'REFUSED' | 'DISCONNECTED';
+
+export interface IConnectionItem {
+  id: number;
+  partnerUserId: string;
+  partnerName: string;
+  partnerProfileImage: string | null;
+  partnerPhone?: string | null;
+  partnerAddress?: string | null;
+  partnerAddressDetail?: string | null;
+  relation?: string | null;
+  status: ConnectionStatus;
+  priority?: number;
+  connectedAt: string | null;
+  createdAt: string;
+  requester: boolean;
+}
+
+export interface IGuardianConnectionRequestReq {
+  relation: string;
+  targetId: string;
+}
+
+export interface IWardPendingConnectionRequest {
+  connectionId: number;
+  guardianId: string;
+  guardianName: string;
+  guardianPhone: string;
+  relation: string;
+  requestedAt: string;
+}

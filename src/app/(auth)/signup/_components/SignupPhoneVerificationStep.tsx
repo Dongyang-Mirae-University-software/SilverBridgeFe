@@ -114,7 +114,7 @@ export default function SignupPhoneVerificationStep({
         <button className={cx('prevButton')} type="button" onClick={onPrevStep}>
           이전
         </button>
-        <button className={cx('button')} disabled={!isEmailCheck || !isSmsCheck} type="submit">
+        <button className={cx('button')} disabled={!isEmailCheck || !isSmsCheck || !allValues.verificationNonce} type="submit">
           가입 완료
         </button>
       </div>
