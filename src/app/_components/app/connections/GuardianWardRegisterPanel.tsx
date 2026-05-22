@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { requestWardConnection } from '@/service/api/connection';
+import { requestWardConnection } from '@/service/api/guardianConnection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
 import { cx, getConnectionData, getErrorMessage } from './ConnectionShared';
 

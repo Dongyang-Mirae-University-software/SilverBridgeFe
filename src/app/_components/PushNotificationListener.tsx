@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { listenForegroundMessages } from '@/lib/fcm';
 import { getAuthRole } from '@/lib/auth/tokenStore';
 import { guardianConnectionsQueryKey, wardConnectionsQueryKey } from '@/service/query/connection';
-import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/connection';
+import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/wardConnection';
 import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import styles from './PushNotificationListener.module.css';
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { acceptWardConnection, disconnectWardConnection, refuseWardConnectionRequest } from '@/service/api/connection';
+import { acceptWardConnection, disconnectWardConnection, refuseWardConnectionRequest } from '@/service/api/wardConnection';
 import { wardConnectionsQueryKey, wardConnectionsQueryOptions } from '@/service/query/connection';
 import {
   getPendingConnectionRequestItems,

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/connection';
+import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/guardianConnection';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
 import {
