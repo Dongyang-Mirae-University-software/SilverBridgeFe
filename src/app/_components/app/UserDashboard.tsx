@@ -19,7 +19,7 @@ import { IUserProfile, IUserUpdateReq } from '@/service/interface/user';
 import { AuthRole, clearAuthTokens, getAccessTokenSubject } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
-import { registerFcmTokenForCurrentDevice, unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
+import { unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { connectConnectionSocket, ConnectionRealtimePayload } from '@/lib/realtime/connectionSocket';
 import styles from './UserDashboard.module.css';
 
@@ -376,12 +376,6 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
 
     window.localStorage.setItem(WARD_SETTINGS_STORAGE_KEY, JSON.stringify(wardSettings));
   }, [isWard, isWardSettingsLoaded, wardSettings]);
-
-  useEffect(() => {
-    void registerFcmTokenForCurrentDevice().catch(error => {
-      console.error('FCM 토큰 등록 실패:', error);
-    });
-  }, []);
 
   useEffect(() => {
     if (!realtimeUserId) return;

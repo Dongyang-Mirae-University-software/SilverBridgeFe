@@ -8,6 +8,7 @@ import { myProfileQueryOptions } from '@/service/query/user';
 import { getRoleHomePath } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import { AuthRole, clearAuthTokens, getAccessToken, setAuthRole } from '@/lib/auth/tokenStore';
+import { registerFcmTokenForCurrentDevice } from '@/lib/fcm';
 
 interface Props {
   allowedRole: AuthRole;
@@ -51,6 +52,14 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
 
     void queryClient.prefetchQuery(myProfileQueryOptions);
   }, [accessToken, queryClient]);
+
+  useEffect(() => {
+    if (!isAllowed) return;
+
+    void registerFcmTokenForCurrentDevice().catch(error => {
+      console.error('FCM 토큰 등록 실패:', error);
+    });
+  }, [isAllowed]);
 
   if (isLoading || !isAllowed) return null;
 
