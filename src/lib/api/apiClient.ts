@@ -16,7 +16,6 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
 }
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   timeout: 10_000,
   withCredentials: true, // 쿠키 기반 인증 쓸 때 필요 (아니면 제거)
   headers: {
@@ -25,7 +24,6 @@ const apiClient = axios.create({
 });
 
 const refreshClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   timeout: 10_000,
   withCredentials: true,
   headers: {
