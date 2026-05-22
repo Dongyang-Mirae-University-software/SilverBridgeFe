@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { CSSProperties, ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -115,6 +115,29 @@ const GUARDIAN_STATS = [
   { label: '오늘 이상감지', value: '1건', state: '확인 필요' },
   { label: '복약 완료율', value: '86%', state: '전일 대비 +4%' },
   { label: '정서 체크', value: '안정', state: '최근 7일 기준' },
+];
+
+type WardSosAction = 'call119' | 'call119AndNotify' | 'notifyGuardianFirst';
+
+interface WardSettings {
+  fontSize: number;
+  highContrast: boolean;
+  sosAction: WardSosAction;
+}
+
+const WARD_SETTINGS_STORAGE_KEY = 'silverbridge_ward_settings';
+const MIN_WARD_FONT_SIZE = 14;
+const MAX_WARD_FONT_SIZE = 28;
+const DEFAULT_WARD_SETTINGS: WardSettings = {
+  fontSize: 17,
+  highContrast: false,
+  sosAction: 'call119AndNotify',
+};
+
+const WARD_SOS_OPTIONS: Array<{ label: string; value: WardSosAction }> = [
+  { value: 'call119', label: '119에 바로 연결' },
+  { value: 'call119AndNotify', label: '119 연결과 동시에 보호자에게 알림' },
+  { value: 'notifyGuardianFirst', label: '보호자에게 먼저 알림한 뒤 119 연결 안내' },
 ];
 
 function getRealtimeNotification(payload: ConnectionRealtimePayload) {
@@ -267,6 +290,8 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
   const queryClient = useQueryClient();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [wardSettings, setWardSettings] = useState<WardSettings>(DEFAULT_WARD_SETTINGS);
+  const [isWardSettingsLoaded, setIsWardSettingsLoaded] = useState(false);
   const isWard = role === 'WARD';
   const navItems = isWard ? WARD_NAV : GUARDIAN_NAV;
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
@@ -296,6 +321,37 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
     if (isLoggingOut) return;
     logoutMutate();
   };
+
+  const updateWardSettings = (settings: Partial<WardSettings>) => {
+    setWardSettings(current => ({ ...current, ...settings }));
+  };
+
+  useEffect(() => {
+    if (!isWard) return;
+
+    try {
+      const rawSettings = window.localStorage.getItem(WARD_SETTINGS_STORAGE_KEY);
+      if (rawSettings) {
+        const parsedSettings = JSON.parse(rawSettings) as Partial<WardSettings>;
+        setWardSettings({
+          ...DEFAULT_WARD_SETTINGS,
+          ...parsedSettings,
+          fontSize: clampFontSize(parsedSettings.fontSize),
+          sosAction: getValidSosAction(parsedSettings.sosAction),
+        });
+      }
+    } catch (error) {
+      console.error('피보호자 환경설정 불러오기 실패:', error);
+    } finally {
+      setIsWardSettingsLoaded(true);
+    }
+  }, [isWard]);
+
+  useEffect(() => {
+    if (!isWard || !isWardSettingsLoaded) return;
+
+    window.localStorage.setItem(WARD_SETTINGS_STORAGE_KEY, JSON.stringify(wardSettings));
+  }, [isWard, isWardSettingsLoaded, wardSettings]);
 
   useEffect(() => {
     void registerFcmTokenForCurrentDevice().catch(error => {
@@ -339,8 +395,19 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
     { label: '가입일', value: formatProfileDate(profile?.createdAt) },
   ];
 
+  const stageStyle = isWard
+    ? ({ '--ward-preferred-font-size': `${wardSettings.fontSize}px` } as CSSProperties)
+    : undefined;
+
   return (
-    <div className={cx('stage', { guardianTheme: !isWard })}>
+    <div
+      className={cx('stage', {
+        guardianTheme: !isWard,
+        wardHighContrast: isWard && wardSettings.highContrast,
+        wardReadableText: isWard,
+      })}
+      style={stageStyle}
+    >
       <div className={cx('mobileTopBar')}>
         <button
           className={cx('topBarMenuButton')}
@@ -512,13 +579,36 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
       )}
 
       <main className={cx('main')}>
-        {children ?? (isWard ? renderWardContent(pageKey) : renderGuardianContent(pageKey, userName))}
+        {children ??
+          (isWard
+            ? renderWardContent(pageKey, wardSettings, updateWardSettings)
+            : renderGuardianContent(pageKey, userName))}
       </main>
     </div>
   );
 }
 
-function renderWardContent(pageKey: PageKey) {
+function clampFontSize(value?: number) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return DEFAULT_WARD_SETTINGS.fontSize;
+
+  return Math.min(MAX_WARD_FONT_SIZE, Math.max(MIN_WARD_FONT_SIZE, value));
+}
+
+function getValidSosAction(value: unknown): WardSosAction {
+  return WARD_SOS_OPTIONS.some(option => option.value === value)
+    ? (value as WardSosAction)
+    : DEFAULT_WARD_SETTINGS.sosAction;
+}
+
+function renderWardContent(
+  pageKey: PageKey,
+  wardSettings: WardSettings,
+  updateWardSettings: (settings: Partial<WardSettings>) => void,
+) {
+  if (pageKey === 'settings') {
+    return <WardSettingsPanel settings={wardSettings} onSettingsChange={updateWardSettings} />;
+  }
+
   if (pageKey !== 'home') return <FeaturePanel title={PAGE_TITLES[pageKey]} role="WARD" />;
 
   return (
@@ -531,6 +621,110 @@ function renderWardContent(pageKey: PageKey) {
         ))}
       </section>
     </div>
+  );
+}
+
+function WardSettingsPanel({
+  settings,
+  onSettingsChange,
+}: {
+  settings: WardSettings;
+  onSettingsChange: (settings: Partial<WardSettings>) => void;
+}) {
+  const fontRangeProgress =
+    ((settings.fontSize - MIN_WARD_FONT_SIZE) / (MAX_WARD_FONT_SIZE - MIN_WARD_FONT_SIZE)) * 100;
+  const rangeStyle = { '--settings-range-progress': `${fontRangeProgress}%` } as CSSProperties;
+
+  return (
+    <section className={cx('settingsPage')} aria-labelledby="ward-settings-title">
+      <div className={cx('settingsHeader')}>
+        <span className={cx('eyebrow')}>피보호자 전용</span>
+        <h2 id="ward-settings-title">환경설정</h2>
+        <p>글자 크기, 화면 대비, 긴급 SOS 동작 방식을 이 기기에 저장합니다.</p>
+      </div>
+
+      <div className={cx('settingsStack')}>
+        <section className={cx('settingsCard')} aria-labelledby="ward-font-size-title">
+          <div className={cx('settingsCardHeader')}>
+            <span className={cx('settingsNumber')}>1</span>
+            <div>
+              <h3 id="ward-font-size-title">글자 크기</h3>
+              <p>화면 글자 크기 ({MIN_WARD_FONT_SIZE}px ~ {MAX_WARD_FONT_SIZE}px)</p>
+            </div>
+          </div>
+
+          <div className={cx('settingsRangeWrap')}>
+            <input
+              className={cx('settingsRange')}
+              type="range"
+              min={MIN_WARD_FONT_SIZE}
+              max={MAX_WARD_FONT_SIZE}
+              value={settings.fontSize}
+              aria-label="화면 글자 크기"
+              style={rangeStyle}
+              onChange={event => onSettingsChange({ fontSize: clampFontSize(Number(event.target.value)) })}
+            />
+            <div className={cx('settingsRangeLabels')} aria-hidden="true">
+              <span>{MIN_WARD_FONT_SIZE}px</span>
+              <span>기본</span>
+              <span>{MAX_WARD_FONT_SIZE}px</span>
+            </div>
+          </div>
+
+          <p className={cx('settingsPreview')} style={{ fontSize: `${settings.fontSize}px` }}>
+            현재: <strong>{settings.fontSize}px</strong> — 글자가 이렇게 보입니다.
+          </p>
+        </section>
+
+        <section className={cx('settingsCard')} aria-labelledby="ward-display-title">
+          <div className={cx('settingsCardHeader')}>
+            <span className={cx('settingsNumber')}>2</span>
+            <div>
+              <h3 id="ward-display-title">화면</h3>
+              <p>화면의 글자와 테두리 표시 방식을 조정합니다.</p>
+            </div>
+          </div>
+
+          <label className={cx('settingsCheckRow')}>
+            <input
+              type="checkbox"
+              checked={settings.highContrast}
+              onChange={event => onSettingsChange({ highContrast: event.target.checked })}
+            />
+            <span>고대비(진한 글자) 켜기</span>
+          </label>
+          <p className={cx('settingsHelp')}>체크 시 글자와 테두리를 더 또렷하게 표시합니다. (이 기기에만 저장)</p>
+        </section>
+
+        <section className={cx('settingsCard')} aria-labelledby="ward-sos-title">
+          <div className={cx('settingsCardHeader')}>
+            <span className={cx('settingsNumber')}>3</span>
+            <div>
+              <h3 id="ward-sos-title">SOS 동작 설정</h3>
+              <p>긴급 SOS를 눌렀을 때 어떻게 동작할지 선택합니다.</p>
+            </div>
+          </div>
+
+          <div className={cx('settingsRadioGroup')} role="radiogroup" aria-labelledby="ward-sos-title">
+            {WARD_SOS_OPTIONS.map(option => (
+              <label
+                key={option.value}
+                className={cx('settingsRadioCard', { active: settings.sosAction === option.value })}
+              >
+                <input
+                  type="radio"
+                  name="ward-sos-action"
+                  value={option.value}
+                  checked={settings.sosAction === option.value}
+                  onChange={() => onSettingsChange({ sosAction: option.value })}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </section>
+      </div>
+    </section>
   );
 }
 
