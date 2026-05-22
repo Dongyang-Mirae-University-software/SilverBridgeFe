@@ -8,6 +8,26 @@ const AUTH_ROLE_KEY = 'careai_auth_role';
 
 export type AuthRole = 'WARD' | 'GUARDIAN' | 'ADMIN';
 
+function setCookie(name: string, value: string) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Lax`;
+}
+
+function removeCookie(name: string) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+}
+
+function getCookie(name: string) {
+  if (typeof document === 'undefined') return null;
+
+  const cookie = document.cookie
+    .split('; ')
+    .find(item => item.startsWith(`${name}=`));
+
+  return cookie ? decodeURIComponent(cookie.split('=')[1] ?? '') : null;
+}
+
 function getSessionStorage() {
   if (typeof window === 'undefined') return null;
   return window.sessionStorage;
@@ -22,6 +42,7 @@ export function setAuthTokens(tokens: { accessToken: string; refreshToken: strin
   storage?.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
   storage?.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
   if (tokens.role) storage?.setItem(AUTH_ROLE_KEY, tokens.role);
+  setCookie(ACCESS_TOKEN_KEY, tokens.accessToken);
 }
 
 export function setAuthRole(role: AuthRole) {
@@ -36,6 +57,8 @@ export function getAccessToken() {
 
   const storage = getSessionStorage();
   accessToken = storage?.getItem(ACCESS_TOKEN_KEY) ?? null;
+  if (accessToken) setCookie(ACCESS_TOKEN_KEY, accessToken);
+  if (!accessToken) accessToken = getCookie(ACCESS_TOKEN_KEY);
 
   return accessToken;
 }
@@ -85,4 +108,5 @@ export function clearAuthTokens() {
   storage?.removeItem(ACCESS_TOKEN_KEY);
   storage?.removeItem(REFRESH_TOKEN_KEY);
   storage?.removeItem(AUTH_ROLE_KEY);
+  removeCookie(ACCESS_TOKEN_KEY);
 }

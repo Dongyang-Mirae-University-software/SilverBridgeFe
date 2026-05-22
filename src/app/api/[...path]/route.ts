@@ -4,6 +4,7 @@ const HOP_BY_HOP_HEADERS = new Set([
   'connection',
   'content-encoding',
   'content-length',
+  'cookie',
   'host',
   'keep-alive',
   'origin',
@@ -34,8 +35,12 @@ function getBackendApiUrl(path: string[], search: string) {
 
 function getProxyRequestHeaders(request: NextRequest) {
   const headers = new Headers(request.headers);
+  const accessToken = request.cookies.get('careai_access_token')?.value;
 
   HOP_BY_HOP_HEADERS.forEach(header => headers.delete(header));
+  if (!headers.has('authorization') && accessToken) {
+    headers.set('authorization', `Bearer ${accessToken}`);
+  }
 
   return headers;
 }
