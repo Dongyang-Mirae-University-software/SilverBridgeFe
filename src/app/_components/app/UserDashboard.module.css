@@ -1027,6 +1027,31 @@
   opacity: 0.55;
 }
 
+.guardianTheme .primaryButton,
+.guardianTheme .connectionSubmitButton,
+.guardianTheme .connectionPrimaryButton,
+.guardianTheme .connectionLinkButton {
+  background: var(--guardian-brand);
+  color: #fff;
+}
+
+.guardianTheme .primaryButton:hover,
+.guardianTheme .connectionSubmitButton:not(:disabled):hover,
+.guardianTheme .connectionPrimaryButton:not(:disabled):hover,
+.guardianTheme .connectionLinkButton:not(:disabled):hover {
+  filter: brightness(0.94);
+}
+
+.guardianTheme .connectionSecondaryButton {
+  border-color: var(--guardian-line);
+  background: #fff;
+  color: var(--guardian-brand);
+}
+
+.guardianTheme .connectionSecondaryButton:not(:disabled):hover {
+  background: var(--guardian-brand-soft);
+}
+
 .connectionStatGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
