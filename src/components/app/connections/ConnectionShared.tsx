@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 
-import { cx } from '@/app/_common/layout/dashboard/styles';
+import { cx } from '@/components/layout/dashboard/styles';
 import { IConnectionItem } from '@/service/interface/connection';
 
 export { cx };

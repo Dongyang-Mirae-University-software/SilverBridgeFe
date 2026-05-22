@@ -1,4 +1,4 @@
-import { NavItem, PageKey } from '@/app/_common/layout/dashboard/types';
+import { NavItem, PageKey } from '@/components/layout/dashboard/types';
 
 export const WARD_NAV: NavItem[] = [
   { href: '/ward', icon: 'home', label: '홈', key: 'home' },
