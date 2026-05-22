@@ -2082,9 +2082,8 @@
     flex-direction: column;
   }
 
-  .profileModalActions .logoutButton,
   .profileModalFooter .logoutButton,
-  .profileModalGhostButton {
+  .profileModalFooter .profileModalGhostButton {
     width: 100%;
   }
 
