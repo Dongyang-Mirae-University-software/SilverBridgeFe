@@ -22,10 +22,14 @@ interface ConnectConnectionSocketOptions {
 const DEFAULT_SOCKET_URL = 'wss://api.devdmu.gosky.kr/ws';
 const RECONNECT_DELAY_MS = 5000;
 
-const CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
+const WARD_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
   { destination: 'connection-request', type: 'CONNECTION_REQUEST' },
-  { destination: 'connection-accepted', type: 'CONNECTION_ACCEPTED' },
   { destination: 'connection-cancelled', type: 'CONNECTION_CANCELLED' },
+];
+
+const GUARDIAN_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
+  { destination: 'connection-accepted', type: 'CONNECTION_ACCEPTED' },
+  { destination: 'connection-refused', type: 'CONNECTION_REFUSED' },
 ];
 
 function getSocketUrl(accessToken: string) {
@@ -70,7 +74,7 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
   }
 }
 
-export function connectConnectionSocket({ onMessage, userId }: ConnectConnectionSocketOptions) {
+export function connectConnectionSocket({ onMessage, role, userId }: ConnectConnectionSocketOptions) {
   const accessToken = getAccessToken();
 
   if (!accessToken) {
@@ -90,14 +94,16 @@ export function connectConnectionSocket({ onMessage, userId }: ConnectConnection
   client.onConnect = () => {
     console.info('[WS] CONNECTED - 구독 시작:', maskSocketUrl(brokerURL), '| userId:', userId);
 
-    CONNECTION_TOPICS.forEach(topic => {
+    const topics = role === 'WARD' ? WARD_CONNECTION_TOPICS : role === 'GUARDIAN' ? GUARDIAN_CONNECTION_TOPICS : [];
+
+    topics.forEach(topic => {
       const destination = `/topic/${userId}/${topic.destination}`;
       console.info('[WS] SUBSCRIBE:', destination);
 
       client.subscribe(destination, message => {
         const payload = normalizeMessage(message, topic.type);
         console.info('[WS] 알림 받음:', payload);
-        if (payload.type === 'CONNECTION_REQUEST') savePendingConnectionRequest(payload);
+        if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST') savePendingConnectionRequest(payload);
         onMessage(payload);
       });
     });
