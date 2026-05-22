@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import { WardGameContent } from './_components/WardGameContent';
 
 export default function WardGamePage() {
-  return <UserDashboard pageKey="game" role="WARD" />;
+  return <WardGameContent />;
 }

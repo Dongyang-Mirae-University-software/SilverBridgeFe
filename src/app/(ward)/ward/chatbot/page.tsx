@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import { WardChatbotContent } from './_components/WardChatbotContent';
 
 export default function WardChatbotPage() {
-  return <UserDashboard pageKey="chatbot" role="WARD" />;
+  return <WardChatbotContent />;
 }

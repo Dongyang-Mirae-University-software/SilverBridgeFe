@@ -1,12 +1,11 @@
 'use client';
 
 import { ReactNode } from 'react';
-import classNames from 'classnames/bind';
 
+import { cx } from '@/app/_common/layout/dashboard/styles';
 import { IConnectionItem } from '@/service/interface/connection';
-import styles from '../UserDashboard.module.css';
 
-export const cx = classNames.bind(styles);
+export { cx };
 
 export function getConnectionData(response: unknown) {
   const data = (response as { data?: unknown } | undefined)?.data;

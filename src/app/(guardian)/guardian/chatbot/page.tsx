@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import { GuardianChatbotContent } from './_components/GuardianChatbotContent';
 
 export default function GuardianChatbotPage() {
-  return <UserDashboard pageKey="chatbot" role="GUARDIAN" />;
+  return <GuardianChatbotContent />;
 }

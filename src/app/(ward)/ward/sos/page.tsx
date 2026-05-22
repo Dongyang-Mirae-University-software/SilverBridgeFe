@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import { WardSosContent } from './_components/WardSosContent';
 
 export default function WardSosPage() {
-  return <UserDashboard pageKey="sos" role="WARD" />;
+  return <WardSosContent />;
 }

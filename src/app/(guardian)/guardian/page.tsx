@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import { GuardianDashboardContent } from './_components/GuardianDashboardContent';
 
 export default function GuardianPage() {
-  return <UserDashboard pageKey="dashboard" role="GUARDIAN" />;
+  return <GuardianDashboardContent />;
 }

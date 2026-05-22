@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import { WardSettingsContent } from './_components/WardSettingsContent';
 
 export default function WardSettingsPage() {
-  return <UserDashboard pageKey="settings" role="WARD" />;
+  return <WardSettingsContent />;
 }

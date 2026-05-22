@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import { GuardianDetectionContent } from './_components/GuardianDetectionContent';
 
 export default function GuardianDetectionPage() {
-  return <UserDashboard pageKey="detection" role="GUARDIAN" />;
+  return <GuardianDetectionContent />;
 }
