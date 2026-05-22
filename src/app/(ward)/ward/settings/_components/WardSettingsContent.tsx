@@ -2,14 +2,14 @@
 
 import { CSSProperties } from 'react';
 
-import { useDashboard } from '@/app/_common/layout/dashboard/DashboardContext';
-import { cx } from '@/app/_common/layout/dashboard/styles';
+import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
+import { cx } from '@/components/layout/dashboard/styles';
 import {
   MAX_WARD_FONT_SIZE,
   MIN_WARD_FONT_SIZE,
   WARD_SOS_OPTIONS,
   clampFontSize,
-} from '@/app/constant/wardSettings';
+} from '@/constants/wardSettings';
 
 export function WardSettingsContent() {
   const { updateWardSettings, wardSettings } = useDashboard();

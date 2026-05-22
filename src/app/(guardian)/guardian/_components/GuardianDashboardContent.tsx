@@ -1,5 +1,5 @@
-import { GUARDIAN_STATS } from '@/app/constant/dashboard';
-import { cx } from '@/app/_common/layout/dashboard/styles';
+import { GUARDIAN_STATS } from '@/constants/dashboard';
+import { cx } from '@/components/layout/dashboard/styles';
 
 export function GuardianDashboardContent() {
   return (
