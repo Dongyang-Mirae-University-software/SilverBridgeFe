@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 
-import { getGuardianConnections, getWardConnections } from '../api/connection';
+import { getGuardianConnections } from '../api/guardianConnection';
+import { getWardConnections } from '../api/wardConnection';
 
 export const guardianConnectionsQueryKey = ['guardian-connections'] as const;
 export const wardConnectionsQueryKey = ['ward-connections'] as const;
