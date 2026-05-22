@@ -4,7 +4,7 @@ let authRole: AuthRole | null = null;
 
 const ACCESS_TOKEN_KEY = 'careai_access_token';
 const REFRESH_TOKEN_KEY = 'careai_refresh_token';
-const AUTH_ROLE_KEY = 'careai_auth_role';
+const LEGACY_AUTH_ROLE_KEY = 'careai_auth_role';
 
 export type AuthRole = 'WARD' | 'GUARDIAN' | 'ADMIN';
 
@@ -39,7 +39,7 @@ export function setAuthTokens(tokens: { accessToken: string; refreshToken: strin
   authRole = tokens.role ?? authRole;
 
   const storage = getSessionStorage();
-  if (tokens.role) storage?.setItem(AUTH_ROLE_KEY, tokens.role);
+  storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
   setCookie(ACCESS_TOKEN_KEY, tokens.accessToken);
   setCookie(REFRESH_TOKEN_KEY, tokens.refreshToken);
 }
@@ -48,7 +48,7 @@ export function setAuthRole(role: AuthRole) {
   authRole = role;
 
   const storage = getSessionStorage();
-  storage?.setItem(AUTH_ROLE_KEY, role);
+  storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
 }
 
 export function getAccessToken() {
@@ -72,10 +72,8 @@ export function getRefreshToken() {
 }
 
 export function getAuthRole() {
-  if (authRole) return authRole;
-
   const storage = getSessionStorage();
-  authRole = (storage?.getItem(AUTH_ROLE_KEY) as AuthRole | null) ?? null;
+  storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
 
   return authRole;
 }
@@ -106,7 +104,7 @@ export function clearAuthTokens() {
   const storage = getSessionStorage();
   storage?.removeItem(ACCESS_TOKEN_KEY);
   storage?.removeItem(REFRESH_TOKEN_KEY);
-  storage?.removeItem(AUTH_ROLE_KEY);
+  storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
   removeCookie(ACCESS_TOKEN_KEY);
   removeCookie(REFRESH_TOKEN_KEY);
 }
