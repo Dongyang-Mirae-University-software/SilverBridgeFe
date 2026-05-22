@@ -1,13 +1,21 @@
 'use client';
 
-import { CSSProperties, ReactNode, useEffect, useState } from 'react';
+import { CSSProperties, FormEvent, ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { logout } from '@/service/api/auth';
-import { myProfileQueryOptions } from '@/service/query/user';
+import { logout, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
+import {
+  changeMyPassword,
+  changeMyProfileImage,
+  deleteMyAccount,
+  updateMyProfile,
+} from '@/service/api/user';
+import { myProfileQueryKey, myProfileQueryOptions } from '@/service/query/user';
+import { GenderType } from '@/service/interface/auth';
+import { IUserProfile, IUserUpdateReq } from '@/service/interface/user';
 import { AuthRole, clearAuthTokens, getAccessTokenSubject } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
@@ -174,6 +182,12 @@ function getProviderLabel(provider?: string) {
   if (provider === 'KAKAO') return '카카오';
   if (provider === 'LOCAL') return '일반';
   return '확인 전';
+}
+
+function getGenderLabel(gender?: GenderType | null) {
+  if (gender === 'FEMALE') return '여성';
+  if (gender === 'MALE') return '남성';
+  return '정보 없음';
 }
 
 function formatProfileDate(value?: string) {
@@ -389,6 +403,9 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
     { label: '전화번호', value: userPhone },
     { label: '가입 방식', value: getProviderLabel(profile?.provider) },
     { label: '권한', value: getRoleLabel(role) },
+    { label: '성별', value: getGenderLabel(profile?.gender) },
+    { label: '생년월일', value: profile?.birthDate ?? '정보 없음' },
+    { label: '우편번호', value: profile?.postcode ?? '정보 없음' },
     { label: '주소', value: profile?.address ?? '정보 없음' },
     { label: '상세 주소', value: profile?.addressDetail ?? '정보 없음' },
     { label: '최근 로그인', value: formatProfileDate(profile?.lastLoginAt) },
@@ -562,18 +579,13 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
               ))}
             </div>
 
-            <div className={cx('profileModalActions')}>
-              <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
-                {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-              </button>
-              <button
-                className={cx('profileModalGhostButton')}
-                type="button"
-                onClick={() => setIsProfileModalOpen(false)}
-              >
-                닫기
-              </button>
-            </div>
+            <ProfileModalControls
+              key={profile?.id ?? 'anonymous-profile'}
+              profile={profile}
+              isLoggingOut={isLoggingOut}
+              onClose={() => setIsProfileModalOpen(false)}
+              onLogout={handleLogout}
+            />
           </section>
         </div>
       )}
@@ -586,6 +598,396 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
       </main>
     </div>
   );
+}
+
+function ProfileModalControls({
+  profile,
+  isLoggingOut,
+  onClose,
+  onLogout,
+}: {
+  profile: IUserProfile | null;
+  isLoggingOut: boolean;
+  onClose: () => void;
+  onLogout: () => void;
+}) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [profileForm, setProfileForm] = useState<IUserUpdateReq>(getProfileFormValue(profile));
+  const [phoneCode, setPhoneCode] = useState('');
+  const [phoneNonce, setPhoneNonce] = useState<string | null>(null);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const isKakaoUser = profile?.provider === 'KAKAO';
+  const isPhoneChanged = profileForm.phone.trim() !== (profile?.phone ?? '');
+
+  const profileMutation = useMutation({
+    mutationKey: ['user-profile-update'],
+    mutationFn: updateMyProfile,
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: async response => {
+      setProfileForm(getProfileFormValue(getUserProfileData(response)));
+      setPhoneCode('');
+      setPhoneNonce(null);
+      setFeedbackMessage('프로필 정보를 수정했습니다.');
+      await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+    },
+    onError: error => setFeedbackMessage(getModalErrorMessage(error, '프로필 수정에 실패했습니다.')),
+  });
+
+  const imageMutation = useMutation({
+    mutationKey: ['user-profile-image-change'],
+    mutationFn: changeMyProfileImage,
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: async () => {
+      setFeedbackMessage('프로필 이미지를 변경했습니다.');
+      await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+    },
+    onError: error => setFeedbackMessage(getModalErrorMessage(error, '프로필 이미지 변경에 실패했습니다.')),
+  });
+
+  const smsSendMutation = useMutation({
+    mutationKey: ['user-profile-phone-sms-send'],
+    mutationFn: signupSmsSend,
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: () => setFeedbackMessage('새 전화번호로 인증번호를 보냈습니다.'),
+    onError: error => setFeedbackMessage(getModalErrorMessage(error, '인증번호 발송에 실패했습니다.')),
+  });
+
+  const smsVerifyMutation = useMutation({
+    mutationKey: ['user-profile-phone-sms-verify'],
+    mutationFn: signupSmsVerify,
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: response => {
+      const verificationNonce = getSmsVerificationNonce(response);
+      setPhoneNonce(verificationNonce);
+      setFeedbackMessage('전화번호 인증이 완료되었습니다.');
+    },
+    onError: error => setFeedbackMessage(getModalErrorMessage(error, '전화번호 인증에 실패했습니다.')),
+  });
+
+  const passwordMutation = useMutation({
+    mutationKey: ['user-password-change'],
+    mutationFn: changeMyPassword,
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: () => {
+      clearAuthTokens();
+      queryClient.clear();
+      router.replace('/login');
+    },
+    onError: error => setFeedbackMessage(getModalErrorMessage(error, '비밀번호 변경에 실패했습니다.')),
+  });
+
+  const deleteMutation = useMutation({
+    mutationKey: ['user-account-delete'],
+    mutationFn: deleteMyAccount,
+    onMutate: () => setFeedbackMessage(''),
+    onSuccess: () => {
+      clearAuthTokens();
+      queryClient.clear();
+      router.replace('/login');
+    },
+    onError: error => setFeedbackMessage(getModalErrorMessage(error, '회원 탈퇴에 실패했습니다.')),
+  });
+
+  const updateProfileForm = (field: keyof IUserUpdateReq, value: string) => {
+    setProfileForm(current => ({
+      ...current,
+      [field]: value,
+    }));
+
+    if (field === 'phone') {
+      setPhoneCode('');
+      setPhoneNonce(null);
+    }
+  };
+
+  const handleProfileSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!profileForm.name.trim()) {
+      setFeedbackMessage('이름을 입력하세요.');
+      return;
+    }
+
+    if (!/^\d{10,11}$/.test(profileForm.phone.trim())) {
+      setFeedbackMessage('전화번호는 숫자 10~11자리로 입력하세요.');
+      return;
+    }
+
+    if (!profileForm.birthDate || !profileForm.postcode.trim() || !profileForm.address.trim()) {
+      setFeedbackMessage('생년월일, 우편번호, 주소를 모두 입력하세요.');
+      return;
+    }
+
+    if (isPhoneChanged && !phoneNonce) {
+      setFeedbackMessage('전화번호를 변경하려면 SMS 인증을 완료하세요.');
+      return;
+    }
+
+    profileMutation.mutate({
+      ...profileForm,
+      address: profileForm.address.trim(),
+      addressDetail: profileForm.addressDetail.trim(),
+      name: profileForm.name.trim(),
+      phone: profileForm.phone.trim(),
+      postcode: profileForm.postcode.trim(),
+      verificationNonce: isPhoneChanged ? phoneNonce : null,
+    });
+  };
+
+  const handlePasswordSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (isKakaoUser) {
+      setFeedbackMessage('카카오 가입 계정은 비밀번호를 변경할 수 없습니다.');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.newPasswordConfirm) {
+      setFeedbackMessage('새 비밀번호 확인이 일치하지 않습니다.');
+      return;
+    }
+
+    passwordMutation.mutate({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+    });
+  };
+
+  const handleDeleteSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!window.confirm('정말 회원 탈퇴를 진행할까요? 탈퇴 후 해당 계정으로 로그인할 수 없습니다.')) return;
+
+    deleteMutation.mutate(
+      isKakaoUser
+        ? { confirmation: deleteConfirmation }
+        : { password: deletePassword },
+    );
+  };
+
+  return (
+    <div className={cx('profileManageStack')}>
+      {feedbackMessage && <p className={cx('profileModalMessage')}>{feedbackMessage}</p>}
+
+      <section className={cx('profileManageCard')}>
+        <div className={cx('profileManageHeader')}>
+          <h3>프로필 수정</h3>
+          <p>전화번호를 변경할 때만 새 번호 SMS 인증이 필요합니다.</p>
+        </div>
+        <form className={cx('profileForm')} onSubmit={handleProfileSubmit}>
+          <div className={cx('profileFormGrid')}>
+            <label className={cx('profileField')}>
+              <span>이름</span>
+              <input
+                maxLength={20}
+                value={profileForm.name}
+                onChange={event => updateProfileForm('name', event.target.value)}
+              />
+            </label>
+            <label className={cx('profileField')}>
+              <span>전화번호</span>
+              <input
+                inputMode="numeric"
+                value={profileForm.phone}
+                onChange={event => updateProfileForm('phone', event.target.value.replace(/\D/g, ''))}
+              />
+            </label>
+            <label className={cx('profileField')}>
+              <span>성별</span>
+              <select
+                value={profileForm.gender}
+                onChange={event => updateProfileForm('gender', event.target.value as GenderType)}
+              >
+                <option value="FEMALE">여성</option>
+                <option value="MALE">남성</option>
+              </select>
+            </label>
+            <label className={cx('profileField')}>
+              <span>생년월일</span>
+              <input
+                type="date"
+                value={profileForm.birthDate}
+                onChange={event => updateProfileForm('birthDate', event.target.value)}
+              />
+            </label>
+            <label className={cx('profileField')}>
+              <span>우편번호</span>
+              <input
+                inputMode="numeric"
+                maxLength={5}
+                value={profileForm.postcode}
+                onChange={event => updateProfileForm('postcode', event.target.value.replace(/\D/g, ''))}
+              />
+            </label>
+            <label className={cx('profileField')}>
+              <span>주소</span>
+              <input value={profileForm.address} onChange={event => updateProfileForm('address', event.target.value)} />
+            </label>
+          </div>
+
+          <label className={cx('profileField')}>
+            <span>상세 주소</span>
+            <input
+              value={profileForm.addressDetail}
+              onChange={event => updateProfileForm('addressDetail', event.target.value)}
+            />
+          </label>
+
+          {isPhoneChanged && (
+            <div className={cx('profilePhoneVerify')}>
+              <button
+                className={cx('profileModalGhostButton')}
+                type="button"
+                disabled={smsSendMutation.isPending}
+                onClick={() => smsSendMutation.mutate({ phone: profileForm.phone.trim() })}
+              >
+                {smsSendMutation.isPending ? '발송 중' : '인증번호 발송'}
+              </button>
+              <input
+                inputMode="numeric"
+                placeholder="인증번호"
+                value={phoneCode}
+                onChange={event => setPhoneCode(event.target.value)}
+              />
+              <button
+                className={cx('profileModalGhostButton')}
+                type="button"
+                disabled={smsVerifyMutation.isPending || !phoneCode.trim()}
+                onClick={() => smsVerifyMutation.mutate({ phone: profileForm.phone.trim(), code: phoneCode.trim() })}
+              >
+                {smsVerifyMutation.isPending ? '확인 중' : phoneNonce ? '인증 완료' : '인증 확인'}
+              </button>
+            </div>
+          )}
+
+          <div className={cx('profileModalActions')}>
+            <button className={cx('profilePrimaryButton')} type="submit" disabled={profileMutation.isPending}>
+              {profileMutation.isPending ? '저장 중' : '프로필 저장'}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className={cx('profileManageCard')}>
+        <div className={cx('profileManageHeader')}>
+          <h3>프로필 이미지</h3>
+          <p>이미지 파일을 선택하면 바로 업로드됩니다.</p>
+        </div>
+        <input
+          className={cx('profileFileInput')}
+          type="file"
+          accept="image/*"
+          disabled={imageMutation.isPending}
+          onChange={event => {
+            const file = event.target.files?.[0];
+            if (file) imageMutation.mutate(file);
+            event.currentTarget.value = '';
+          }}
+        />
+      </section>
+
+      <section className={cx('profileManageCard')}>
+        <div className={cx('profileManageHeader')}>
+          <h3>비밀번호 변경</h3>
+          <p>{isKakaoUser ? '카카오 가입 계정은 비밀번호 변경을 사용할 수 없습니다.' : '변경 성공 시 다시 로그인해야 합니다.'}</p>
+        </div>
+        <form className={cx('profileForm')} onSubmit={handlePasswordSubmit}>
+          <div className={cx('profileFormGrid')}>
+            <label className={cx('profileField')}>
+              <span>현재 비밀번호</span>
+              <input
+                type="password"
+                disabled={isKakaoUser}
+                value={passwordForm.currentPassword}
+                onChange={event => setPasswordForm(current => ({ ...current, currentPassword: event.target.value }))}
+              />
+            </label>
+            <label className={cx('profileField')}>
+              <span>새 비밀번호</span>
+              <input
+                type="password"
+                disabled={isKakaoUser}
+                value={passwordForm.newPassword}
+                onChange={event => setPasswordForm(current => ({ ...current, newPassword: event.target.value }))}
+              />
+            </label>
+            <label className={cx('profileField')}>
+              <span>새 비밀번호 확인</span>
+              <input
+                type="password"
+                disabled={isKakaoUser}
+                value={passwordForm.newPasswordConfirm}
+                onChange={event => setPasswordForm(current => ({ ...current, newPasswordConfirm: event.target.value }))}
+              />
+            </label>
+          </div>
+          <div className={cx('profileModalActions')}>
+            <button className={cx('profilePrimaryButton')} type="submit" disabled={isKakaoUser || passwordMutation.isPending}>
+              {passwordMutation.isPending ? '변경 중' : '비밀번호 변경'}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className={cx('profileManageCard', 'profileDangerCard')}>
+        <div className={cx('profileManageHeader')}>
+          <h3>회원 탈퇴</h3>
+          <p>{isKakaoUser ? '정확히 "탈퇴"를 입력해야 합니다.' : '현재 비밀번호를 입력해야 합니다.'}</p>
+        </div>
+        <form className={cx('profileDeleteRow')} onSubmit={handleDeleteSubmit}>
+          <input
+            type={isKakaoUser ? 'text' : 'password'}
+            placeholder={isKakaoUser ? '탈퇴' : '현재 비밀번호'}
+            value={isKakaoUser ? deleteConfirmation : deletePassword}
+            onChange={event =>
+              isKakaoUser ? setDeleteConfirmation(event.target.value) : setDeletePassword(event.target.value)
+            }
+          />
+          <button className={cx('profileDangerButton')} type="submit" disabled={deleteMutation.isPending}>
+            {deleteMutation.isPending ? '처리 중' : '회원 탈퇴'}
+          </button>
+        </form>
+      </section>
+
+      <div className={cx('profileModalActions')}>
+        <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={onLogout}>
+          {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+        </button>
+        <button className={cx('profileModalGhostButton')} type="button" onClick={onClose}>
+          닫기
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function getProfileFormValue(profile?: IUserProfile | null): IUserUpdateReq {
+  return {
+    address: profile?.address ?? '',
+    addressDetail: profile?.addressDetail ?? '',
+    birthDate: profile?.birthDate ?? '',
+    gender: profile?.gender ?? 'FEMALE',
+    name: profile?.name ?? '',
+    phone: profile?.phone ?? '',
+    postcode: profile?.postcode ?? '',
+    verificationNonce: null,
+  };
+}
+
+function getModalErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+function getSmsVerificationNonce(response: unknown) {
+  const data = (response as { data?: unknown } | undefined)?.data;
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+  const verificationData = (nestedData ?? data ?? response) as { verificationNonce?: string } | null;
+
+  return verificationData?.verificationNonce ?? '';
 }
 
 function clampFontSize(value?: number) {
