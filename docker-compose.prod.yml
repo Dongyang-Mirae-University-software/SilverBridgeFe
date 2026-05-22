@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_DOMAIN: ${NEXT_PUBLIC_API_DOMAIN:-http://211.236.174.23:6511}
+        NEXT_PUBLIC_API_DOMAIN: ${NEXT_PUBLIC_API_DOMAIN:-https://api.dmu.gosky.kr}
     image: silver-bridge-fe-web:prod
     container_name: silver-bridge-fe-prod-web
     env_file:
