@@ -16,6 +16,7 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
 }
 
 const apiClient = axios.create({
+  baseURL: '/api',
   timeout: 10_000,
   withCredentials: true, // 쿠키 기반 인증 쓸 때 필요 (아니면 제거)
   headers: {
@@ -24,6 +25,7 @@ const apiClient = axios.create({
 });
 
 const refreshClient = axios.create({
+  baseURL: '/api',
   timeout: 10_000,
   withCredentials: true,
   headers: {
@@ -36,7 +38,7 @@ let refreshRequest: Promise<string> | null = null;
 function isSigninRequest(url?: string) {
   if (!url) return false;
 
-  return url.includes('/api/auth/signin');
+  return url.includes('/auth/signin');
 }
 
 async function refreshAccessToken() {
@@ -49,7 +51,7 @@ async function refreshAccessToken() {
 
   if (!refreshRequest) {
     refreshRequest = refreshClient
-      .post<CommonResponse<IAuthTokenResponse>>('/api/auth/refresh', { refreshToken })
+      .post<CommonResponse<IAuthTokenResponse>>('/auth/refresh', { refreshToken })
       .then(response => {
         const responseBody = response.data;
         const tokens = responseBody.data;
@@ -109,7 +111,7 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
     const isUnauthorized = error.response?.status === 401;
-    const isRefreshRequest = originalRequest?.url?.includes('/api/auth/refresh');
+    const isRefreshRequest = originalRequest?.url?.includes('/auth/refresh');
     const isSigninEndpoint = isSigninRequest(originalRequest?.url);
 
     if (isUnauthorized && originalRequest && !originalRequest._retry && !isRefreshRequest && !isSigninEndpoint) {

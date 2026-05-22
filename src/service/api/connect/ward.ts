@@ -2,7 +2,7 @@ import { apiClient } from '@/lib/api/apiClient';
 import { CommonResponse } from '../../interface/common';
 import { IConnectionItem, IWardPendingConnectionRequest } from '../../interface/connection';
 
-const WARD_CONNECTION_BASE = '/api/ward/connection';
+const WARD_CONNECTION_BASE = '/ward/connection';
 
 export async function acceptWardConnection(connectionId: number) {
   return apiClient.post<CommonResponse<null>>(`${WARD_CONNECTION_BASE}/${connectionId}/accept`);

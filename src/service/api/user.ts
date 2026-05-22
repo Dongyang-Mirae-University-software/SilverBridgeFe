@@ -7,7 +7,7 @@ import {
   IUserUpdateReq,
 } from '../interface/user';
 
-const BASE = '/api/user';
+const BASE = '/user';
 
 export async function getMyProfile() {
   return apiClient.get<CommonResponse<IUserProfile>>(`${BASE}/me/select`);
