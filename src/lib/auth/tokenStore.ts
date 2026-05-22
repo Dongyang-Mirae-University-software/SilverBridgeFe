@@ -6,7 +6,7 @@ const ACCESS_TOKEN_KEY = 'careai_access_token';
 const REFRESH_TOKEN_KEY = 'careai_refresh_token';
 const AUTH_ROLE_KEY = 'careai_auth_role';
 
-export type AuthRole = 'WARD' | 'GUARDIAN';
+export type AuthRole = 'WARD' | 'GUARDIAN' | 'ADMIN';
 
 function getSessionStorage() {
   if (typeof window === 'undefined') return null;

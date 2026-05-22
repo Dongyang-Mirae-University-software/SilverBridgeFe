@@ -1,4 +1,4 @@
-export type RoleType = 'WARD' | 'GUARDIAN';
+export type RoleType = 'WARD' | 'GUARDIAN' | 'ADMIN';
 export type GenderType = 'MALE' | 'FEMALE';
 
 export interface IAuthTokenResponse {
