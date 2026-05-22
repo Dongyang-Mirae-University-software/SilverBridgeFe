@@ -89,7 +89,7 @@ apiClient.interceptors.request.use(
 
     // 토큰이 있으면 Authorization 헤더에 자동으로 붙여줌
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.set('Authorization', `Bearer ${token}`);
     }
 
     return config;
@@ -119,7 +119,7 @@ apiClient.interceptors.response.use(
 
       try {
         const newAccessToken = await refreshAccessToken();
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        originalRequest.headers.set('Authorization', `Bearer ${newAccessToken}`);
 
         return apiClient(originalRequest);
       } catch {
