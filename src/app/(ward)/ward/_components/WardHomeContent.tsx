@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
-import { WARD_ACTIONS } from '@/app/constant/dashboard';
-import { cx } from '@/app/_common/layout/dashboard/styles';
+import { WARD_ACTIONS } from '@/constants/dashboard';
+import { cx } from '@/components/layout/dashboard/styles';
 
 export function WardHomeContent() {
   return (
