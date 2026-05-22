@@ -1,4 +1,5 @@
 export type RoleType = 'WARD' | 'GUARDIAN';
+export type GenderType = 'MALE' | 'FEMALE';
 
 export interface IAuthTokenResponse {
   accessToken: string;
@@ -49,19 +50,31 @@ export interface ISignupReq {
   email: string;
   password: string;
   phone: string;
+  verificationNonce: string;
   role: RoleType;
   address: string;
   addressDetail: string;
+  gender: GenderType;
+  birthDate: string;
+  postcode: string;
+}
+
+export interface ISmsVerifyResponse {
+  verificationNonce: string;
 }
 
 export interface IKakaoSignupReq {
   kakaoId: string;
   name: string;
   phone: string;
+  verificationNonce: string;
   role: RoleType;
   profileImageUrl?: string;
   address: string;
   addressDetail: string;
+  gender: GenderType;
+  birthDate: string;
+  postcode: string;
 }
 
 export interface IKakaoSignupRes {

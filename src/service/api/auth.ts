@@ -10,6 +10,7 @@ import {
   IFindPasswordTokenResponse,
   IAuthTokenResponse,
   IRefreshReq,
+  ISmsVerifyResponse,
   IKakaoSigninReq,
   IKakaoSigninRes,
   IKakaoSignupReq,
@@ -57,7 +58,7 @@ export async function signupSmsSend(body: { phone: string }) {
 }
 
 export async function signupSmsVerify(body: { phone: string; code: string }) {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/signup/sms/verify`, body);
+  return apiClient.post<CommonResponse<ISmsVerifyResponse>>(`${BASE}/signup/sms/verify`, body);
 }
 
 export async function signupSmsResend(body: { phone: string }) {

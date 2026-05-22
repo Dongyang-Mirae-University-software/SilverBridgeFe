@@ -1,0 +1,149 @@
+.toastArea {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 100;
+  display: grid;
+  width: min(360px, calc(100vw - 36px));
+  gap: 10px;
+}
+
+.toast {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(20, 17, 12, 0.1), 0 16px 48px rgba(20, 17, 12, 0.08);
+  color: var(--sb-ink);
+  padding: 12px;
+}
+
+.toast.actionAlert {
+  border-color: rgba(31, 94, 72, 0.24);
+  box-shadow: 0 10px 30px rgba(31, 94, 72, 0.14), 0 18px 52px rgba(20, 17, 12, 0.1);
+}
+
+.toastContent {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px 0 2px 4px;
+  text-align: left;
+}
+
+div.toastContent {
+  cursor: default;
+}
+
+.toast:hover,
+.toast:focus-within {
+  background: var(--sb-bg);
+}
+
+.title {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.dismissButton {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-ink-mute);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dismissButton:hover,
+.dismissButton:focus-visible {
+  background: var(--sb-line-soft);
+  color: var(--sb-ink);
+  outline: none;
+}
+
+.body {
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.error {
+  border-radius: 8px;
+  background: #fbe5e0;
+  color: var(--sb-warn);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+  padding: 8px 10px;
+}
+
+.actionRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.acceptButton,
+.refuseButton {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 850;
+  padding: 8px 14px;
+}
+
+.acceptButton {
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.refuseButton {
+  background: #fbe5e0;
+  color: var(--sb-warn);
+}
+
+.acceptButton:disabled,
+.refuseButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 520px) {
+  .toastArea {
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
+  }
+
+  .actionRow {
+    flex-direction: column;
+  }
+
+  .acceptButton,
+  .refuseButton {
+    width: 100%;
+  }
+}

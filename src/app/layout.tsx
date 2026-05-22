@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import ReactQueryProvider from '@/lib/ReactQueryProvider';
+import PushNotificationListener from './_components/PushNotificationListener';
 
 export const metadata: Metadata = {
   title: 'silver bridge',
@@ -15,7 +16,10 @@ export default function RootLayout({
   return (
     <html>
       <body>
-        <ReactQueryProvider>{children}</ReactQueryProvider>
+        <ReactQueryProvider>
+          {children}
+          <PushNotificationListener />
+        </ReactQueryProvider>
       </body>
     </html>
   );

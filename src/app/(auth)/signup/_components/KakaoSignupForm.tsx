@@ -10,9 +10,9 @@ import styles from './SignupForm.module.css';
 import TextInput from '@/app/_components/common/TextInput';
 import { signupKakao, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { PHONE_PATTRERN } from '@/app/constant/pattern';
-import { IKakaoSignupRes, RoleType } from '@/service/interface/auth';
+import { GenderType, IKakaoSignupRes, RoleType } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
-import { setAuthTokens } from '@/lib/auth/tokenStore';
+import { completeSigninSession } from '@/lib/auth/completeSignin';
 
 const cx = classNames.bind(styles);
 
@@ -28,9 +28,13 @@ interface KakaoSignupFormProps {
 type FormData = {
   name: string;
   phone: string;
+  verificationNonce: string;
   role: RoleType;
   address: string;
   addressDetail: string;
+  gender: GenderType;
+  birthDate: string;
+  postcode: string;
 };
 
 type KakaoSignupData = IKakaoSignupRes['data'];
@@ -40,6 +44,14 @@ function getKakaoSignupData(response: unknown): KakaoSignupData {
   const nestedData = (data as { data?: unknown } | undefined)?.data;
 
   return (nestedData ?? data ?? response) as KakaoSignupData;
+}
+
+function getVerificationNonce(response: unknown) {
+  const data = (response as { data?: unknown } | undefined)?.data;
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+  const result = (nestedData ?? data ?? response) as { verificationNonce?: unknown };
+
+  return typeof result.verificationNonce === 'string' ? result.verificationNonce : '';
 }
 
 const requiredRule = (message: string) => ({
@@ -67,9 +79,13 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
     defaultValues: {
       name: kakaoData.name,
       phone: '',
+      verificationNonce: '',
       role: 'WARD',
       address: '',
       addressDetail: '',
+      gender: 'FEMALE',
+      birthDate: '',
+      postcode: '',
     },
   });
 
@@ -80,6 +96,11 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
   const { mutate: sendSms } = useMutation({
     mutationKey: ['kakao-sms-send'],
     mutationFn: signupSmsSend,
+    onMutate: () => {
+      setSmsCode('');
+      setIsSmsCheck(false);
+      setValue('verificationNonce', '');
+    },
     onSuccess: () => setIsCode(true),
     onError: () => {},
   });
@@ -87,7 +108,15 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
   const { mutate: verifySms, isError } = useMutation({
     mutationKey: ['kakao-sms-verify'],
     mutationFn: signupSmsVerify,
-    onSuccess: () => setIsSmsCheck(true),
+    onMutate: () => {
+      setIsSmsCheck(false);
+      setValue('verificationNonce', '');
+    },
+    onSuccess: response => {
+      const verificationNonce = getVerificationNonce(response);
+      setValue('verificationNonce', verificationNonce);
+      setIsSmsCheck(Boolean(verificationNonce));
+    },
     onError: () => {},
   });
 
@@ -98,7 +127,7 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
       const data = getKakaoSignupData(response);
 
       if (data.accessToken && data.refreshToken) {
-        setAuthTokens({
+        completeSigninSession({
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
           role: data.role,
@@ -111,24 +140,34 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
 
   const handlePhoneCheck = () => sendSms({ phone: getValues('phone') });
   const handleCodeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    if (value.length <= 6) setSmsCode(value);
+    const value = event.target.value.replace(/\D/g, '');
+    setSmsCode(value.slice(0, 6));
   };
   const handlePhoneReset = () => {
     setIsCode(false);
+    setSmsCode('');
+    setIsSmsCheck(false);
     setValue('phone', '');
+    setValue('verificationNonce', '');
   };
-  const handleSmsVerify = () => verifySms({ code: smsCode, phone: getValues('phone') });
+  const handleSmsVerify = () => {
+    if (smsCode.length !== 6) return;
+    verifySms({ code: smsCode, phone: getValues('phone') });
+  };
 
   const onSubmit = handleSubmit(data => {
     signupKakaoMutate({
       kakaoId: kakaoData.kakaoId,
       name: data.name,
       phone: data.phone,
+      verificationNonce: data.verificationNonce,
       role: data.role,
       profileImageUrl: kakaoData.profileImageUrl,
       address: data.address,
       addressDetail: data.addressDetail,
+      gender: data.gender,
+      birthDate: data.birthDate,
+      postcode: data.postcode,
     });
   });
 
@@ -168,8 +207,44 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
           </button>
         </>
       )}
+      <div className={cx('fieldGroup')}>
+        <label className={cx('selectField')}>
+          <span className={cx('selectLabel')}>성별 *</span>
+          <span className={cx('selectBox')}>
+            <select {...register('gender')}>
+              <option value="FEMALE">여성</option>
+              <option value="MALE">남성</option>
+            </select>
+          </span>
+        </label>
+        <TextInput
+          label="생년월일"
+          required
+          type="date"
+          {...register('birthDate', requiredRule('생년월일을 입력하세요.'))}
+          error={Boolean(errors.birthDate)}
+          errorText={errors.birthDate?.message}
+        />
+      </div>
+      <TextInput
+        label="우편번호"
+        placeholder="06236"
+        required
+        inputMode="numeric"
+        maxLength={10}
+        {...register('postcode', requiredRule('우편번호를 입력하세요.'))}
+        error={Boolean(errors.postcode)}
+        errorText={errors.postcode?.message}
+      />
       <TextInput label="주소" placeholder="주소를 입력하세요" {...register('address', requiredRule('주소를 입력하세요.'))} error={Boolean(errors.address)} errorText={errors.address?.message} />
-      <TextInput label="상세 주소" placeholder="상세 주소를 입력하세요" {...register('addressDetail')} />
+      <TextInput
+        label="상세 주소"
+        placeholder="상세 주소를 입력하세요"
+        required
+        {...register('addressDetail', requiredRule('상세 주소를 입력하세요.'))}
+        error={Boolean(errors.addressDetail)}
+        errorText={errors.addressDetail?.message}
+      />
       <div className={cx('radioGroup')}>
         <label className={cx('radio')} htmlFor="WARD">
           <input id="WARD" type="radio" value="WARD" {...register('role')} defaultChecked />
@@ -180,7 +255,7 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
           <span>보호자</span>
         </label>
       </div>
-      <button className={cx('button')} type="submit" disabled={!isValid || !isSmsCheck}>
+      <button className={cx('button')} type="submit" disabled={!isValid || !isSmsCheck || !getValues('verificationNonce')}>
         회원가입 완료
       </button>
     </form>
