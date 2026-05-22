@@ -712,6 +712,27 @@ function ProfileModalControls({
     }
   };
 
+  const resetProfilePanel = () => {
+    setProfileForm(getProfileFormValue(profile));
+    setPhoneCode('');
+    setPhoneNonce(null);
+  };
+
+  const resetSecurityPanel = () => {
+    setPasswordForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
+    setDeletePassword('');
+    setDeleteConfirmation('');
+  };
+
+  const handlePanelChange = (panel: 'profile' | 'security') => {
+    if (panel === activePanel) return;
+
+    setFeedbackMessage('');
+    resetProfilePanel();
+    resetSecurityPanel();
+    setActivePanel(panel);
+  };
+
   const handleProfileSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -795,7 +816,7 @@ function ProfileModalControls({
           type="button"
           role="tab"
           aria-selected={activePanel === 'profile'}
-          onClick={() => setActivePanel('profile')}
+          onClick={() => handlePanelChange('profile')}
         >
           기본 정보
         </button>
@@ -804,7 +825,7 @@ function ProfileModalControls({
           type="button"
           role="tab"
           aria-selected={activePanel === 'security'}
-          onClick={() => setActivePanel('security')}
+          onClick={() => handlePanelChange('security')}
         >
           보안
         </button>
