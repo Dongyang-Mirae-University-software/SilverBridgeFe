@@ -5,10 +5,12 @@ import { getMessaging, getToken, isSupported, MessagePayload, Messaging, onMessa
 import { deleteNotificationFcmToken, registerNotificationFcmToken } from '@/service/api/notification';
 
 const FCM_TOKEN_KEY = 'careai_fcm_token';
+const FCM_REGISTERED_TOKEN_KEY = 'careai_fcm_registered_token';
 const DEFAULT_FIREBASE_API_KEY = 'AIzaSyB82QGIFGkeSsda2qg3Yg3feYKSAxvqI1Y';
 const DEFAULT_FIREBASE_SENDER_ID = '608365601427';
 const DEFAULT_FIREBASE_APP_ID = '1:608365601427:web:b3ac76ab46895df2fda366';
 const DEFAULT_FIREBASE_VAPID_KEY = 'BHUOhweRqH1Gq6_IV5uFPgUI3XW2TiLX0E8bhT2mRufiIdEfyw9SuBS_O0TshJOcKLMatk6V-RpWB4heYU2ceM0';
+let registrationPromise: Promise<string | null> | null = null;
 
 function getSessionStorage() {
   if (typeof window === 'undefined') return null;
@@ -65,22 +67,38 @@ async function getCurrentFcmToken() {
 export async function registerFcmTokenForCurrentDevice() {
   if (typeof window === 'undefined' || !('Notification' in window)) return null;
 
-  const storedToken = getSessionStorage()?.getItem(FCM_TOKEN_KEY);
-  if (storedToken) {
-    await registerNotificationFcmToken({ token: storedToken, platform: 'WEB' });
-    return storedToken;
+  const storage = getSessionStorage();
+  const storedToken = storage?.getItem(FCM_TOKEN_KEY);
+  const registeredToken = storage?.getItem(FCM_REGISTERED_TOKEN_KEY);
+
+  if (storedToken && registeredToken === storedToken) return storedToken;
+  if (registrationPromise) return registrationPromise;
+
+  registrationPromise = (async () => {
+    if (storedToken) {
+      await registerNotificationFcmToken({ token: storedToken, platform: 'WEB' });
+      storage?.setItem(FCM_REGISTERED_TOKEN_KEY, storedToken);
+      return storedToken;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return null;
+
+    const token = await getCurrentFcmToken();
+    if (!token) return null;
+
+    await registerNotificationFcmToken({ token, platform: 'WEB' });
+    storage?.setItem(FCM_TOKEN_KEY, token);
+    storage?.setItem(FCM_REGISTERED_TOKEN_KEY, token);
+
+    return token;
+  })();
+
+  try {
+    return await registrationPromise;
+  } finally {
+    registrationPromise = null;
   }
-
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return null;
-
-  const token = await getCurrentFcmToken();
-  if (!token) return null;
-
-  await registerNotificationFcmToken({ token, platform: 'WEB' });
-  getSessionStorage()?.setItem(FCM_TOKEN_KEY, token);
-
-  return token;
 }
 
 export async function unregisterFcmTokenForCurrentDevice() {
@@ -93,6 +111,7 @@ export async function unregisterFcmTokenForCurrentDevice() {
     await deleteNotificationFcmToken(token);
   } finally {
     getSessionStorage()?.removeItem(FCM_TOKEN_KEY);
+    getSessionStorage()?.removeItem(FCM_REGISTERED_TOKEN_KEY);
   }
 }
 
