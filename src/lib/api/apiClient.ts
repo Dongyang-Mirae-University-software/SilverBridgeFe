@@ -5,7 +5,7 @@
 // 서비스나 훅에서 이걸 import해서 apiClient.get(...) 형태로 쓰면 됨
 // ─────────────────────────────────────────────
 
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosHeaders, InternalAxiosRequestConfig } from 'axios';
 import { resolveError, ServerErrorBody } from './errorHandler';
 import { CommonResponse } from '@/service/interface/common';
 import { IAuthTokenResponse } from '@/service/interface/auth';
@@ -16,7 +16,7 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
 }
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  baseURL: '/api',
   timeout: 10_000,
   withCredentials: true, // 쿠키 기반 인증 쓸 때 필요 (아니면 제거)
   headers: {
@@ -25,7 +25,7 @@ const apiClient = axios.create({
 });
 
 const refreshClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  baseURL: '/api',
   timeout: 10_000,
   withCredentials: true,
   headers: {
@@ -35,10 +35,16 @@ const refreshClient = axios.create({
 
 let refreshRequest: Promise<string> | null = null;
 
+function setBearerToken(config: InternalAxiosRequestConfig, token: string) {
+  const headers = AxiosHeaders.from(config.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+  config.headers = headers;
+}
+
 function isSigninRequest(url?: string) {
   if (!url) return false;
 
-  return url.includes('/api/auth/signin');
+  return url.includes('/auth/signin');
 }
 
 async function refreshAccessToken() {
@@ -51,7 +57,7 @@ async function refreshAccessToken() {
 
   if (!refreshRequest) {
     refreshRequest = refreshClient
-      .post<CommonResponse<IAuthTokenResponse>>('/api/auth/refresh', { refreshToken })
+      .post<CommonResponse<IAuthTokenResponse>>('/auth/refresh', { refreshToken })
       .then(response => {
         const responseBody = response.data;
         const tokens = responseBody.data;
@@ -89,7 +95,7 @@ apiClient.interceptors.request.use(
 
     // 토큰이 있으면 Authorization 헤더에 자동으로 붙여줌
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      setBearerToken(config, token);
     }
 
     return config;
@@ -111,7 +117,7 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
     const isUnauthorized = error.response?.status === 401;
-    const isRefreshRequest = originalRequest?.url?.includes('/api/auth/refresh');
+    const isRefreshRequest = originalRequest?.url?.includes('/auth/refresh');
     const isSigninEndpoint = isSigninRequest(originalRequest?.url);
 
     if (isUnauthorized && originalRequest && !originalRequest._retry && !isRefreshRequest && !isSigninEndpoint) {
@@ -119,7 +125,7 @@ apiClient.interceptors.response.use(
 
       try {
         const newAccessToken = await refreshAccessToken();
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        setBearerToken(originalRequest, newAccessToken);
 
         return apiClient(originalRequest);
       } catch {

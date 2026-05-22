@@ -9,8 +9,7 @@ import { getUserProfileData } from '@/lib/auth/userProfile';
 import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthRole, setAuthTokens } from '@/lib/auth/tokenStore';
 
 async function refreshStoredToken(refreshToken: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
-  const response = await fetch(`${baseUrl}/api/auth/refresh`, {
+  const response = await fetch('/api/auth/refresh', {
     method: 'POST',
     credentials: 'include',
     headers: {
