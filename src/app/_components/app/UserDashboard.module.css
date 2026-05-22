@@ -1337,6 +1337,17 @@
   color: var(--sb-safe);
 }
 
+.connectionStatus.cancelled,
+.connectionStatus.refused {
+  background: #fbe5e0;
+  color: var(--sb-warn);
+}
+
+.connectionStatus.disconnected {
+  background: var(--sb-line-soft);
+  color: var(--sb-ink-mute);
+}
+
 .connectionMeta {
   overflow: hidden;
   color: var(--sb-ink-mute);

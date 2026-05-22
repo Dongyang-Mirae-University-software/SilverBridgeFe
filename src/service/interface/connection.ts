@@ -1,4 +1,4 @@
-export type ConnectionStatus = 'PENDING' | 'ACTIVE';
+export type ConnectionStatus = 'PENDING' | 'ACTIVE' | 'CANCELLED' | 'REFUSED' | 'DISCONNECTED';
 
 export interface IConnectionItem {
   id: number;
