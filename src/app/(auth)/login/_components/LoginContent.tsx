@@ -9,7 +9,7 @@ import TextInput from '@/app/_components/common/TextInput';
 import { signin } from '@/service/api/auth';
 import { ISigninResponse } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
-import { setAuthTokens } from '@/lib/auth/tokenStore';
+import { completeSigninSession } from '@/lib/auth/completeSignin';
 import styles from './LoginContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -19,6 +19,25 @@ function getSigninData(response: unknown) {
   const nestedData = (data as { data?: unknown } | undefined)?.data;
 
   return (nestedData ?? data ?? response) as ISigninResponse;
+}
+
+function getLoginErrorMessage(error: unknown) {
+  const status = (error as { response?: { status?: number } }).response?.status;
+
+  switch (status) {
+    case 400:
+      return '입력값을 확인해주세요.';
+    case 401:
+      return '이메일 또는 비밀번호가 올바르지 않습니다.';
+    case 403:
+      return '비활성화된 계정입니다. 관리자에게 문의해주세요.';
+    case 429:
+      return '비밀번호를 5회 이상 틀려 30분 동안 로그인이 제한됩니다.';
+    case 500:
+      return '서버에 문제가 생겼어요. 잠시 후 다시 시도해주세요.';
+    default:
+      return (error as Error).message || '로그인에 실패했습니다.';
+  }
 }
 
 export default function LoginContent() {
@@ -40,7 +59,7 @@ export default function LoginContent() {
       const data = getSigninData(response);
 
       if (data.accessToken && data.refreshToken) {
-        setAuthTokens({
+        completeSigninSession({
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
           role: data.role,
@@ -49,8 +68,8 @@ export default function LoginContent() {
 
       router.push(getRoleHomePath(data.role));
     },
-    onError: (error: Error) => {
-      setErrorMessage(error.message || '로그인에 실패했습니다.');
+    onError: error => {
+      setErrorMessage(getLoginErrorMessage(error));
     },
   });
 
