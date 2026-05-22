@@ -340,7 +340,7 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
   ];
 
   return (
-    <div className={cx('stage')}>
+    <div className={cx('stage', { guardianTheme: !isWard })}>
       <div className={cx('mobileTopBar')}>
         <button
           className={cx('topBarMenuButton')}
