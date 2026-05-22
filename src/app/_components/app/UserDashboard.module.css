@@ -366,21 +366,21 @@
   z-index: 200;
   display: grid;
   place-items: center;
-  background: rgba(20, 16, 12, 0.5);
-  backdrop-filter: blur(3px);
+  background: rgba(20, 16, 12, 0.42);
+  backdrop-filter: blur(6px);
   padding: 20px;
 }
 
 .profileModal {
   position: relative;
-  width: min(760px, 100%);
+  width: min(720px, 100%);
   max-height: 85vh;
   overflow: auto;
-  border: 0;
-  border-radius: 18px;
+  border: 1px solid rgba(232, 226, 210, 0.9);
+  border-radius: 16px;
   background: #fff;
-  box-shadow: 0 8px 24px rgba(20, 17, 12, 0.1), 0 16px 48px rgba(20, 17, 12, 0.08);
-  padding: 28px;
+  box-shadow: 0 20px 70px rgba(20, 17, 12, 0.18);
+  padding: 0;
 }
 
 .profileModalHeader {
@@ -388,7 +388,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  border-bottom: 1px solid var(--sb-line-soft);
+  background: #fbfaf6;
+  padding: 22px 24px;
 }
 
 .profileModalUser {
@@ -400,12 +402,12 @@
 
 .profileModalAvatar {
   display: grid;
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
   place-items: center;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 14px;
   background: var(--sb-brand);
   color: #fff;
   font-size: 20px;
@@ -422,7 +424,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 }
 
 .profileProviderBadge {
@@ -439,9 +441,8 @@
 .profileModal h2 {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
-  letter-spacing: -0.02em;
   line-height: 1.3;
 }
 
@@ -461,7 +462,7 @@
   flex-shrink: 0;
   place-items: center;
   border: 1px solid var(--sb-line);
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
@@ -476,33 +477,38 @@
 
 .profileDetailGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border-bottom: 1px solid var(--sb-line-soft);
+  background: #fff;
+  padding: 10px 24px;
 }
 
 .profileDetailItem {
   min-width: 0;
-  border-radius: 12px;
-  background: var(--sb-bg-soft);
-  padding: 12px 14px;
+  border-right: 1px solid var(--sb-line-soft);
+  padding: 8px 12px;
+}
+
+.profileDetailItem:nth-child(4n) {
+  border-right: 0;
 }
 
 .profileDetailItem span {
   display: block;
   color: var(--sb-ink-mute);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 
 .profileDetailItem strong {
   display: block;
   overflow-wrap: anywhere;
   color: var(--sb-ink);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
 .profileModalActions {
@@ -538,14 +544,14 @@
 
 .profileManageStack {
   display: grid;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 14px;
+  padding: 18px 24px 22px;
 }
 
 .profileModalMessage {
   margin: 0;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 10px;
+  border: 1px solid rgba(31, 94, 72, 0.18);
+  border-radius: 12px;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
   font-size: 13px;
@@ -557,14 +563,9 @@
 
 .profileManageCard {
   border: 1px solid var(--sb-line-soft);
-  border-radius: 14px;
+  border-radius: 12px;
   background: #fff;
-  padding: 16px;
-}
-
-.profileDangerCard {
-  border-color: #f0c4bb;
-  background: #fff9f7;
+  padding: 18px;
 }
 
 .profileManageHeader {
@@ -589,13 +590,13 @@
 
 .profileForm {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .profileFormGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .profileField {
@@ -613,13 +614,13 @@
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--sb-line);
-  border-radius: 10px;
-  background: #fff;
+  border-radius: 9px;
+  background: #fcfbf8;
   color: var(--sb-ink);
   font: inherit;
   font-size: 13px;
   font-weight: 650;
-  min-height: 40px;
+  min-height: 42px;
   outline: none;
   padding: 0 12px;
 }
@@ -641,6 +642,9 @@
 
 .profileDeleteRow {
   grid-template-columns: minmax(0, 1fr) auto;
+  border-top: 1px solid var(--sb-line-soft);
+  margin-top: 16px;
+  padding-top: 16px;
 }
 
 .profilePrimaryButton,
@@ -664,7 +668,9 @@
 }
 
 .profileDangerButton {
-  background: var(--sb-warn);
+  border: 1px solid #e0a69c;
+  background: #fff7f5;
+  color: var(--sb-warn);
 }
 
 .profilePrimaryButton:disabled,
@@ -674,16 +680,68 @@
   opacity: 0.55;
 }
 
-.profileFileInput {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px dashed var(--sb-line);
+.profileTabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--sb-line-soft);
   border-radius: 12px;
   background: var(--sb-bg-soft);
-  color: var(--sb-ink-soft);
+  padding: 4px;
+}
+
+.profileTab {
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--sb-ink-mute);
+  cursor: pointer;
   font-size: 13px;
-  font-weight: 650;
-  padding: 12px;
+  font-weight: 800;
+  min-height: 36px;
+}
+
+.profileTabActive {
+  background: #fff;
+  color: var(--sb-ink);
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.profileUploadRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 12px;
+  background: #fbfaf6;
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 12px 14px;
+}
+
+.profileFileButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 34px;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+
+.profileFileButton input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
 }
 
 .main {
@@ -1946,7 +2004,8 @@
   }
 
   .profileModal {
-    padding: 20px;
+    width: min(100%, 560px);
+    max-height: 90vh;
   }
 
   .profileModalHeader,
@@ -1958,12 +2017,26 @@
 
   .profileModalClose {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 16px;
+    right: 16px;
   }
 
   .profileDetailGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 10px 16px;
+  }
+
+  .profileDetailItem,
+  .profileDetailItem:nth-child(4n) {
+    border-right: 0;
+  }
+
+  .profileDetailItem:nth-child(odd) {
+    border-right: 1px solid var(--sb-line-soft);
+  }
+
+  .profileManageStack {
+    padding: 16px;
   }
 
   .profileModalActions .logoutButton,
@@ -1975,6 +2048,11 @@
   .profilePhoneVerify,
   .profileDeleteRow {
     grid-template-columns: 1fr;
+  }
+
+  .profileUploadRow {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .connectionPage,
