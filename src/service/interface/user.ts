@@ -1,4 +1,4 @@
-import { RoleType } from './auth';
+import { GenderType, RoleType } from './auth';
 
 export type UserProvider = 'LOCAL' | 'KAKAO';
 
@@ -10,18 +10,24 @@ export interface IUserProfile {
   provider: UserProvider;
   role: RoleType;
   profileImage?: string | null;
-  address?: string;
-  addressDetail?: string;
+  gender: GenderType | null;
+  birthDate: string | null;
+  postcode: string | null;
+  address: string;
+  addressDetail: string;
   lastLoginAt?: string;
   createdAt?: string;
 }
 
 export interface IUserUpdateReq {
   name: string;
-  phone?: string;
-  verificationNonce?: string;
-  address?: string;
-  addressDetail?: string;
+  phone: string;
+  verificationNonce?: string | null;
+  gender: GenderType;
+  birthDate: string;
+  postcode: string;
+  address: string;
+  addressDetail: string;
 }
 
 export interface IUserPasswordChangeReq {
