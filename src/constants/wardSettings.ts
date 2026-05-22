@@ -1,4 +1,4 @@
-import { WardSettings, WardSosAction } from '@/app/_common/layout/dashboard/types';
+import { WardSettings, WardSosAction } from '@/components/layout/dashboard/types';
 
 export const WARD_SETTINGS_STORAGE_KEY = 'silverbridge_ward_settings';
 export const MIN_WARD_FONT_SIZE = 14;

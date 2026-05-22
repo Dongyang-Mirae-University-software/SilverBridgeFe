@@ -15,20 +15,16 @@ import { DashboardProvider } from './DashboardContext';
 import { DesktopHeader, MobileTopBar } from './DashboardHeader';
 import { DashboardSidebar } from './DashboardSidebar';
 import { ProfileModal } from './ProfileModal';
-import { GUARDIAN_NAV, PAGE_TITLES, WARD_NAV } from '@/app/constant/dashboard';
+import { GUARDIAN_NAV, PAGE_TITLES, WARD_NAV } from '@/constants/dashboard';
 import { getRealtimeNotification } from '@/lib/dashboard/realtime';
 import { cx } from './styles';
 import { PageKey, WardSettings } from './types';
-import { DEFAULT_WARD_SETTINGS, clampFontSize, getValidSosAction, WARD_SETTINGS_STORAGE_KEY } from '@/app/constant/wardSettings';
+import { DEFAULT_WARD_SETTINGS, clampFontSize, getValidSosAction, WARD_SETTINGS_STORAGE_KEY } from '@/constants/wardSettings';
 
-interface Props {
-  children: ReactNode;
-  role: AuthRole;
-}
-
-export function DashboardLayout({ children, role }: Props) {
+export function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const role: AuthRole = pathname.startsWith('/ward') ? 'WARD' : 'GUARDIAN';
   const queryClient = useQueryClient();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
