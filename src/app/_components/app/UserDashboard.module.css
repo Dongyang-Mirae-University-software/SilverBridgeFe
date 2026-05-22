@@ -600,11 +600,16 @@
 
 .profileManageStack {
   display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  min-height: 0;
+  gap: 14px;
+  padding: 18px 24px 22px;
+}
+
+.profileManageScroll {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  gap: 14px;
-  padding: 18px 24px 22px;
 }
 
 .profileModalMessage {
@@ -739,7 +744,7 @@
   opacity: 0.55;
 }
 
-.profileTabs {
+.profileTabsBar {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   border: 1px solid var(--sb-line-soft);
@@ -763,6 +768,14 @@
   background: #fff;
   color: var(--sb-ink);
   box-shadow: var(--sb-shadow-sm);
+}
+
+.profileModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding-top: 14px;
 }
 
 .main {
@@ -2063,7 +2076,14 @@
     padding: 16px;
   }
 
+  .profileModalFooter,
+  .profileModalActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .profileModalActions .logoutButton,
+  .profileModalFooter .logoutButton,
   .profileModalGhostButton {
     width: 100%;
   }
