@@ -14,7 +14,7 @@ export async function getGuardianConnections() {
 }
 
 export async function disconnectGuardianConnection(connectionId: number) {
-  return apiClient.delete<CommonResponse<null>>(`${GUARDIAN_BASE}/disconnection/${connectionId}`);
+  return apiClient.delete<CommonResponse<null>>(`${GUARDIAN_BASE}/connection/disconnection/${connectionId}`);
 }
 
 export async function cancelGuardianConnectionRequest(connectionId: number) {
@@ -30,7 +30,7 @@ export async function getWardConnections() {
 }
 
 export async function disconnectWardConnection(connectionId: number) {
-  return apiClient.delete<CommonResponse<null>>(`${WARD_BASE}/disconnection/${connectionId}`);
+  return apiClient.delete<CommonResponse<null>>(`${WARD_BASE}/connection/disconnection/${connectionId}`);
 }
 
 export async function refuseWardConnectionRequest(connectionId: number) {
