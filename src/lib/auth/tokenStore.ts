@@ -10,7 +10,7 @@ export type AuthRole = 'WARD' | 'GUARDIAN' | 'ADMIN';
 
 function setCookie(name: string, value: string) {
   if (typeof document === 'undefined') return;
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Lax`;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=604800; SameSite=Lax`;
 }
 
 function removeCookie(name: string) {
@@ -39,10 +39,9 @@ export function setAuthTokens(tokens: { accessToken: string; refreshToken: strin
   authRole = tokens.role ?? authRole;
 
   const storage = getSessionStorage();
-  storage?.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
-  storage?.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
   if (tokens.role) storage?.setItem(AUTH_ROLE_KEY, tokens.role);
   setCookie(ACCESS_TOKEN_KEY, tokens.accessToken);
+  setCookie(REFRESH_TOKEN_KEY, tokens.refreshToken);
 }
 
 export function setAuthRole(role: AuthRole) {
@@ -56,9 +55,8 @@ export function getAccessToken() {
   if (accessToken) return accessToken;
 
   const storage = getSessionStorage();
-  accessToken = storage?.getItem(ACCESS_TOKEN_KEY) ?? null;
+  accessToken = getCookie(ACCESS_TOKEN_KEY) ?? storage?.getItem(ACCESS_TOKEN_KEY) ?? null;
   if (accessToken) setCookie(ACCESS_TOKEN_KEY, accessToken);
-  if (!accessToken) accessToken = getCookie(ACCESS_TOKEN_KEY);
 
   return accessToken;
 }
@@ -67,7 +65,8 @@ export function getRefreshToken() {
   if (refreshToken) return refreshToken;
 
   const storage = getSessionStorage();
-  refreshToken = storage?.getItem(REFRESH_TOKEN_KEY) ?? null;
+  refreshToken = getCookie(REFRESH_TOKEN_KEY) ?? storage?.getItem(REFRESH_TOKEN_KEY) ?? null;
+  if (refreshToken) setCookie(REFRESH_TOKEN_KEY, refreshToken);
 
   return refreshToken;
 }
@@ -109,4 +108,5 @@ export function clearAuthTokens() {
   storage?.removeItem(REFRESH_TOKEN_KEY);
   storage?.removeItem(AUTH_ROLE_KEY);
   removeCookie(ACCESS_TOKEN_KEY);
+  removeCookie(REFRESH_TOKEN_KEY);
 }
