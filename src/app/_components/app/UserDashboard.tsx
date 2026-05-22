@@ -184,12 +184,6 @@ function getProviderLabel(provider?: string) {
   return '확인 전';
 }
 
-function getGenderLabel(gender?: GenderType | null) {
-  if (gender === 'FEMALE') return '여성';
-  if (gender === 'MALE') return '남성';
-  return '정보 없음';
-}
-
 function formatProfileDate(value?: string) {
   if (!value) return '정보 없음';
 
@@ -399,15 +393,7 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
 
   const profileRows = [
     { label: '사용자 ID', value: profile?.id ?? '정보 없음' },
-    { label: '이메일', value: userEmail },
     { label: '전화번호', value: userPhone },
-    { label: '가입 방식', value: getProviderLabel(profile?.provider) },
-    { label: '권한', value: getRoleLabel(role) },
-    { label: '성별', value: getGenderLabel(profile?.gender) },
-    { label: '생년월일', value: profile?.birthDate ?? '정보 없음' },
-    { label: '우편번호', value: profile?.postcode ?? '정보 없음' },
-    { label: '주소', value: profile?.address ?? '정보 없음' },
-    { label: '상세 주소', value: profile?.addressDetail ?? '정보 없음' },
     { label: '최근 로그인', value: formatProfileDate(profile?.lastLoginAt) },
     { label: '가입일', value: formatProfileDate(profile?.createdAt) },
   ];
@@ -620,6 +606,7 @@ function ProfileModalControls({
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [activePanel, setActivePanel] = useState<'profile' | 'security'>('profile');
   const isKakaoUser = profile?.provider === 'KAKAO';
   const isPhoneChanged = profileForm.phone.trim() !== (profile?.phone ?? '');
 
@@ -773,185 +760,193 @@ function ProfileModalControls({
     <div className={cx('profileManageStack')}>
       {feedbackMessage && <p className={cx('profileModalMessage')}>{feedbackMessage}</p>}
 
-      <section className={cx('profileManageCard')}>
-        <div className={cx('profileManageHeader')}>
-          <h3>프로필 수정</h3>
-          <p>전화번호를 변경할 때만 새 번호 SMS 인증이 필요합니다.</p>
-        </div>
-        <form className={cx('profileForm')} onSubmit={handleProfileSubmit}>
-          <div className={cx('profileFormGrid')}>
-            <label className={cx('profileField')}>
-              <span>이름</span>
-              <input
-                maxLength={20}
-                value={profileForm.name}
-                onChange={event => updateProfileForm('name', event.target.value)}
-              />
-            </label>
-            <label className={cx('profileField')}>
-              <span>전화번호</span>
-              <input
-                inputMode="numeric"
-                value={profileForm.phone}
-                onChange={event => updateProfileForm('phone', event.target.value.replace(/\D/g, ''))}
-              />
-            </label>
-            <label className={cx('profileField')}>
-              <span>성별</span>
-              <select
-                value={profileForm.gender}
-                onChange={event => updateProfileForm('gender', event.target.value as GenderType)}
-              >
-                <option value="FEMALE">여성</option>
-                <option value="MALE">남성</option>
-              </select>
-            </label>
-            <label className={cx('profileField')}>
-              <span>생년월일</span>
-              <input
-                type="date"
-                value={profileForm.birthDate}
-                onChange={event => updateProfileForm('birthDate', event.target.value)}
-              />
-            </label>
-            <label className={cx('profileField')}>
-              <span>우편번호</span>
-              <input
-                inputMode="numeric"
-                maxLength={5}
-                value={profileForm.postcode}
-                onChange={event => updateProfileForm('postcode', event.target.value.replace(/\D/g, ''))}
-              />
-            </label>
-            <label className={cx('profileField')}>
-              <span>주소</span>
-              <input value={profileForm.address} onChange={event => updateProfileForm('address', event.target.value)} />
-            </label>
-          </div>
+      <div className={cx('profileTabs')} role="tablist" aria-label="사용자 정보 관리">
+        <button
+          className={cx('profileTab', { profileTabActive: activePanel === 'profile' })}
+          type="button"
+          role="tab"
+          aria-selected={activePanel === 'profile'}
+          onClick={() => setActivePanel('profile')}
+        >
+          기본 정보
+        </button>
+        <button
+          className={cx('profileTab', { profileTabActive: activePanel === 'security' })}
+          type="button"
+          role="tab"
+          aria-selected={activePanel === 'security'}
+          onClick={() => setActivePanel('security')}
+        >
+          보안
+        </button>
+      </div>
 
-          <label className={cx('profileField')}>
-            <span>상세 주소</span>
-            <input
-              value={profileForm.addressDetail}
-              onChange={event => updateProfileForm('addressDetail', event.target.value)}
-            />
-          </label>
+      {activePanel === 'profile' ? (
+        <section className={cx('profileManageCard')}>
+          <form className={cx('profileForm')} onSubmit={handleProfileSubmit}>
+            <div className={cx('profileUploadRow')}>
+              <span>프로필 이미지</span>
+              <label className={cx('profileFileButton')}>
+                {imageMutation.isPending ? '업로드 중' : '이미지 변경'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={imageMutation.isPending}
+                  onChange={event => {
+                    const file = event.target.files?.[0];
+                    if (file) imageMutation.mutate(file);
+                    event.currentTarget.value = '';
+                  }}
+                />
+              </label>
+            </div>
 
-          {isPhoneChanged && (
-            <div className={cx('profilePhoneVerify')}>
-              <button
-                className={cx('profileModalGhostButton')}
-                type="button"
-                disabled={smsSendMutation.isPending}
-                onClick={() => smsSendMutation.mutate({ phone: profileForm.phone.trim() })}
-              >
-                {smsSendMutation.isPending ? '발송 중' : '인증번호 발송'}
-              </button>
+            <div className={cx('profileFormGrid')}>
+              <label className={cx('profileField')}>
+                <span>이름</span>
+                <input
+                  maxLength={20}
+                  value={profileForm.name}
+                  onChange={event => updateProfileForm('name', event.target.value)}
+                />
+              </label>
+              <label className={cx('profileField')}>
+                <span>전화번호</span>
+                <input
+                  inputMode="numeric"
+                  value={profileForm.phone}
+                  onChange={event => updateProfileForm('phone', event.target.value.replace(/\D/g, ''))}
+                />
+              </label>
+              <label className={cx('profileField')}>
+                <span>성별</span>
+                <select
+                  value={profileForm.gender}
+                  onChange={event => updateProfileForm('gender', event.target.value as GenderType)}
+                >
+                  <option value="FEMALE">여성</option>
+                  <option value="MALE">남성</option>
+                </select>
+              </label>
+              <label className={cx('profileField')}>
+                <span>생년월일</span>
+                <input
+                  type="date"
+                  value={profileForm.birthDate}
+                  onChange={event => updateProfileForm('birthDate', event.target.value)}
+                />
+              </label>
+              <label className={cx('profileField')}>
+                <span>우편번호</span>
+                <input
+                  inputMode="numeric"
+                  maxLength={5}
+                  value={profileForm.postcode}
+                  onChange={event => updateProfileForm('postcode', event.target.value.replace(/\D/g, ''))}
+                />
+              </label>
+              <label className={cx('profileField')}>
+                <span>주소</span>
+                <input value={profileForm.address} onChange={event => updateProfileForm('address', event.target.value)} />
+              </label>
+            </div>
+
+            <label className={cx('profileField')}>
+              <span>상세 주소</span>
               <input
-                inputMode="numeric"
-                placeholder="인증번호"
-                value={phoneCode}
-                onChange={event => setPhoneCode(event.target.value)}
+                value={profileForm.addressDetail}
+                onChange={event => updateProfileForm('addressDetail', event.target.value)}
               />
-              <button
-                className={cx('profileModalGhostButton')}
-                type="button"
-                disabled={smsVerifyMutation.isPending || !phoneCode.trim()}
-                onClick={() => smsVerifyMutation.mutate({ phone: profileForm.phone.trim(), code: phoneCode.trim() })}
-              >
-                {smsVerifyMutation.isPending ? '확인 중' : phoneNonce ? '인증 완료' : '인증 확인'}
+            </label>
+
+            {isPhoneChanged && (
+              <div className={cx('profilePhoneVerify')}>
+                <button
+                  className={cx('profileModalGhostButton')}
+                  type="button"
+                  disabled={smsSendMutation.isPending}
+                  onClick={() => smsSendMutation.mutate({ phone: profileForm.phone.trim() })}
+                >
+                  {smsSendMutation.isPending ? '발송 중' : '인증번호 발송'}
+                </button>
+                <input
+                  inputMode="numeric"
+                  placeholder="인증번호"
+                  value={phoneCode}
+                  onChange={event => setPhoneCode(event.target.value)}
+                />
+                <button
+                  className={cx('profileModalGhostButton')}
+                  type="button"
+                  disabled={smsVerifyMutation.isPending || !phoneCode.trim()}
+                  onClick={() => smsVerifyMutation.mutate({ phone: profileForm.phone.trim(), code: phoneCode.trim() })}
+                >
+                  {smsVerifyMutation.isPending ? '확인 중' : phoneNonce ? '인증 완료' : '인증 확인'}
+                </button>
+              </div>
+            )}
+
+            <div className={cx('profileModalActions')}>
+              <button className={cx('profilePrimaryButton')} type="submit" disabled={profileMutation.isPending}>
+                {profileMutation.isPending ? '저장 중' : '프로필 저장'}
               </button>
             </div>
-          )}
+          </form>
+        </section>
+      ) : (
+        <section className={cx('profileManageCard')}>
+          <form className={cx('profileForm')} onSubmit={handlePasswordSubmit}>
+            <div className={cx('profileFormGrid')}>
+              <label className={cx('profileField')}>
+                <span>현재 비밀번호</span>
+                <input
+                  type="password"
+                  disabled={isKakaoUser}
+                  value={passwordForm.currentPassword}
+                  onChange={event => setPasswordForm(current => ({ ...current, currentPassword: event.target.value }))}
+                />
+              </label>
+              <label className={cx('profileField')}>
+                <span>새 비밀번호</span>
+                <input
+                  type="password"
+                  disabled={isKakaoUser}
+                  value={passwordForm.newPassword}
+                  onChange={event => setPasswordForm(current => ({ ...current, newPassword: event.target.value }))}
+                />
+              </label>
+              <label className={cx('profileField')}>
+                <span>새 비밀번호 확인</span>
+                <input
+                  type="password"
+                  disabled={isKakaoUser}
+                  value={passwordForm.newPasswordConfirm}
+                  onChange={event => setPasswordForm(current => ({ ...current, newPasswordConfirm: event.target.value }))}
+                />
+              </label>
+            </div>
+            <div className={cx('profileModalActions')}>
+              <button className={cx('profilePrimaryButton')} type="submit" disabled={isKakaoUser || passwordMutation.isPending}>
+                {passwordMutation.isPending ? '변경 중' : '비밀번호 변경'}
+              </button>
+            </div>
+          </form>
 
-          <div className={cx('profileModalActions')}>
-            <button className={cx('profilePrimaryButton')} type="submit" disabled={profileMutation.isPending}>
-              {profileMutation.isPending ? '저장 중' : '프로필 저장'}
+          <form className={cx('profileDeleteRow')} onSubmit={handleDeleteSubmit}>
+            <input
+              type={isKakaoUser ? 'text' : 'password'}
+              placeholder={isKakaoUser ? '탈퇴' : '현재 비밀번호'}
+              value={isKakaoUser ? deleteConfirmation : deletePassword}
+              onChange={event =>
+                isKakaoUser ? setDeleteConfirmation(event.target.value) : setDeletePassword(event.target.value)
+              }
+            />
+            <button className={cx('profileDangerButton')} type="submit" disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? '처리 중' : '회원 탈퇴'}
             </button>
-          </div>
-        </form>
-      </section>
-
-      <section className={cx('profileManageCard')}>
-        <div className={cx('profileManageHeader')}>
-          <h3>프로필 이미지</h3>
-          <p>이미지 파일을 선택하면 바로 업로드됩니다.</p>
-        </div>
-        <input
-          className={cx('profileFileInput')}
-          type="file"
-          accept="image/*"
-          disabled={imageMutation.isPending}
-          onChange={event => {
-            const file = event.target.files?.[0];
-            if (file) imageMutation.mutate(file);
-            event.currentTarget.value = '';
-          }}
-        />
-      </section>
-
-      <section className={cx('profileManageCard')}>
-        <div className={cx('profileManageHeader')}>
-          <h3>비밀번호 변경</h3>
-          <p>{isKakaoUser ? '카카오 가입 계정은 비밀번호 변경을 사용할 수 없습니다.' : '변경 성공 시 다시 로그인해야 합니다.'}</p>
-        </div>
-        <form className={cx('profileForm')} onSubmit={handlePasswordSubmit}>
-          <div className={cx('profileFormGrid')}>
-            <label className={cx('profileField')}>
-              <span>현재 비밀번호</span>
-              <input
-                type="password"
-                disabled={isKakaoUser}
-                value={passwordForm.currentPassword}
-                onChange={event => setPasswordForm(current => ({ ...current, currentPassword: event.target.value }))}
-              />
-            </label>
-            <label className={cx('profileField')}>
-              <span>새 비밀번호</span>
-              <input
-                type="password"
-                disabled={isKakaoUser}
-                value={passwordForm.newPassword}
-                onChange={event => setPasswordForm(current => ({ ...current, newPassword: event.target.value }))}
-              />
-            </label>
-            <label className={cx('profileField')}>
-              <span>새 비밀번호 확인</span>
-              <input
-                type="password"
-                disabled={isKakaoUser}
-                value={passwordForm.newPasswordConfirm}
-                onChange={event => setPasswordForm(current => ({ ...current, newPasswordConfirm: event.target.value }))}
-              />
-            </label>
-          </div>
-          <div className={cx('profileModalActions')}>
-            <button className={cx('profilePrimaryButton')} type="submit" disabled={isKakaoUser || passwordMutation.isPending}>
-              {passwordMutation.isPending ? '변경 중' : '비밀번호 변경'}
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <section className={cx('profileManageCard', 'profileDangerCard')}>
-        <div className={cx('profileManageHeader')}>
-          <h3>회원 탈퇴</h3>
-          <p>{isKakaoUser ? '정확히 "탈퇴"를 입력해야 합니다.' : '현재 비밀번호를 입력해야 합니다.'}</p>
-        </div>
-        <form className={cx('profileDeleteRow')} onSubmit={handleDeleteSubmit}>
-          <input
-            type={isKakaoUser ? 'text' : 'password'}
-            placeholder={isKakaoUser ? '탈퇴' : '현재 비밀번호'}
-            value={isKakaoUser ? deleteConfirmation : deletePassword}
-            onChange={event =>
-              isKakaoUser ? setDeleteConfirmation(event.target.value) : setDeletePassword(event.target.value)
-            }
-          />
-          <button className={cx('profileDangerButton')} type="submit" disabled={deleteMutation.isPending}>
-            {deleteMutation.isPending ? '처리 중' : '회원 탈퇴'}
-          </button>
-        </form>
-      </section>
+          </form>
+        </section>
+      )}
 
       <div className={cx('profileModalActions')}>
         <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={onLogout}>
