@@ -20,8 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*", "./src/app/*"],
-      "@component/*": ["./src/app/_components/*"],
-      "@hooks/*": ["./src/app/_hook/*"],
+      "@component/*": ["./src/components/*"],
+      "@hooks/*": ["./src/hooks/*"],
       "@public/*": ["./public/*"],
       "@type/*": ["./src/type/*"],
       "@api/*": ["./src/app/_api/*"],
