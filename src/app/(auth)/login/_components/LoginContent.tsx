@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 
-import TextInput from '@/app/_components/common/TextInput';
+import TextInput from '@/components/TextInput';
 import { signin } from '@/service/api/auth';
 import { ISigninResponse } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';

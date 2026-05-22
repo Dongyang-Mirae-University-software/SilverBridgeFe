@@ -3,8 +3,8 @@ import { ChangeEvent } from 'react';
 import { FieldErrors, UseFormRegisterReturn } from 'react-hook-form';
 
 import styles from './SignupForm.module.css';
-import TextInput from '@/app/_components/common/TextInput';
-import { SignupFormValues } from '@/app/_hook/useSignupForm';
+import TextInput from '@/components/TextInput';
+import { SignupFormValues } from '@/hooks/useSignupForm';
 
 const cx = classNames.bind(styles);
 

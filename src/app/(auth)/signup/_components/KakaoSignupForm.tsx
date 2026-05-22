@@ -7,9 +7,9 @@ import { useRouter } from 'next/navigation';
 import { ChangeEvent, useState } from 'react';
 
 import styles from './SignupForm.module.css';
-import TextInput from '@/app/_components/common/TextInput';
+import TextInput from '@/components/TextInput';
 import { signupKakao, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
-import { PHONE_PATTRERN } from '@/app/constant/pattern';
+import { PHONE_PATTRERN } from '@/constants/pattern';
 import { GenderType, IKakaoSignupRes, RoleType } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
