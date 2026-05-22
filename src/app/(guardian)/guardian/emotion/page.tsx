@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import { GuardianEmotionContent } from './_components/GuardianEmotionContent';
 
 export default function GuardianEmotionPage() {
-  return <UserDashboard pageKey="emotion" role="GUARDIAN" />;
+  return <GuardianEmotionContent />;
 }

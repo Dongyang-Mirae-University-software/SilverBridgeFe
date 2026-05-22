@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import { WardHospitalContent } from './_components/WardHospitalContent';
 
 export default function WardHospitalPage() {
-  return <UserDashboard pageKey="hospital" role="WARD" />;
+  return <WardHospitalContent />;
 }
