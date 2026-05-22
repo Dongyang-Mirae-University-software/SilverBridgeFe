@@ -2,7 +2,7 @@ import { apiClient } from '@/lib/api/apiClient';
 import { CommonResponse } from '../../interface/common';
 import { IConnectionItem, IGuardianConnectionRequestReq } from '../../interface/connection';
 
-const GUARDIAN_CONNECTION_BASE = '/api/guardian/connection';
+const GUARDIAN_CONNECTION_BASE = '/guardian/connection';
 
 export async function requestWardConnection(body: IGuardianConnectionRequestReq) {
   return apiClient.post<CommonResponse<null>>(`${GUARDIAN_CONNECTION_BASE}/request`, body);

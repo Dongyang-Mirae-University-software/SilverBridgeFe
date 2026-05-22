@@ -21,7 +21,7 @@ import {
   ISignupReq,
 } from '../interface/auth';
 
-const BASE = '/api/auth';
+const BASE = '/auth';
 
 // ── 인증 ──────────────────────────────────────────────────────────────────────
 export async function signin(body: ISigninReq) {

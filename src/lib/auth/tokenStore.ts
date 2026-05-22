@@ -4,9 +4,29 @@ let authRole: AuthRole | null = null;
 
 const ACCESS_TOKEN_KEY = 'careai_access_token';
 const REFRESH_TOKEN_KEY = 'careai_refresh_token';
-const AUTH_ROLE_KEY = 'careai_auth_role';
+const LEGACY_AUTH_ROLE_KEY = 'careai_auth_role';
 
-export type AuthRole = 'WARD' | 'GUARDIAN';
+export type AuthRole = 'WARD' | 'GUARDIAN' | 'ADMIN';
+
+function setCookie(name: string, value: string) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=604800; SameSite=Lax`;
+}
+
+function removeCookie(name: string) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+}
+
+function getCookie(name: string) {
+  if (typeof document === 'undefined') return null;
+
+  const cookie = document.cookie
+    .split('; ')
+    .find(item => item.startsWith(`${name}=`));
+
+  return cookie ? decodeURIComponent(cookie.split('=')[1] ?? '') : null;
+}
 
 function getSessionStorage() {
   if (typeof window === 'undefined') return null;
@@ -19,23 +39,24 @@ export function setAuthTokens(tokens: { accessToken: string; refreshToken: strin
   authRole = tokens.role ?? authRole;
 
   const storage = getSessionStorage();
-  storage?.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
-  storage?.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
-  if (tokens.role) storage?.setItem(AUTH_ROLE_KEY, tokens.role);
+  storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
+  setCookie(ACCESS_TOKEN_KEY, tokens.accessToken);
+  setCookie(REFRESH_TOKEN_KEY, tokens.refreshToken);
 }
 
 export function setAuthRole(role: AuthRole) {
   authRole = role;
 
   const storage = getSessionStorage();
-  storage?.setItem(AUTH_ROLE_KEY, role);
+  storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
 }
 
 export function getAccessToken() {
   if (accessToken) return accessToken;
 
   const storage = getSessionStorage();
-  accessToken = storage?.getItem(ACCESS_TOKEN_KEY) ?? null;
+  accessToken = getCookie(ACCESS_TOKEN_KEY) ?? storage?.getItem(ACCESS_TOKEN_KEY) ?? null;
+  if (accessToken) setCookie(ACCESS_TOKEN_KEY, accessToken);
 
   return accessToken;
 }
@@ -44,16 +65,15 @@ export function getRefreshToken() {
   if (refreshToken) return refreshToken;
 
   const storage = getSessionStorage();
-  refreshToken = storage?.getItem(REFRESH_TOKEN_KEY) ?? null;
+  refreshToken = getCookie(REFRESH_TOKEN_KEY) ?? storage?.getItem(REFRESH_TOKEN_KEY) ?? null;
+  if (refreshToken) setCookie(REFRESH_TOKEN_KEY, refreshToken);
 
   return refreshToken;
 }
 
 export function getAuthRole() {
-  if (authRole) return authRole;
-
   const storage = getSessionStorage();
-  authRole = (storage?.getItem(AUTH_ROLE_KEY) as AuthRole | null) ?? null;
+  storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
 
   return authRole;
 }
@@ -84,5 +104,7 @@ export function clearAuthTokens() {
   const storage = getSessionStorage();
   storage?.removeItem(ACCESS_TOKEN_KEY);
   storage?.removeItem(REFRESH_TOKEN_KEY);
-  storage?.removeItem(AUTH_ROLE_KEY);
+  storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
+  removeCookie(ACCESS_TOKEN_KEY);
+  removeCookie(REFRESH_TOKEN_KEY);
 }
