@@ -585,6 +585,16 @@
   gap: 12px;
 }
 
+.wardHomeActions {
+  display: grid;
+  min-height: calc(100dvh - 160px);
+  align-items: center;
+}
+
+.wardHomeActionGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .actionCard,
 .statCard {
   display: flex;
@@ -1484,6 +1494,15 @@
   }
 
   .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .wardHomeActions {
+    min-height: auto;
+    align-items: stretch;
+  }
+
+  .wardHomeActionGrid {
     grid-template-columns: 1fr;
   }
 
