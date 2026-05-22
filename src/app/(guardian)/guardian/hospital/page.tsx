@@ -1,5 +1,5 @@
-import { GuardianHospitalContent } from './_components/GuardianHospitalContent';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function GuardianHospitalPage() {
-  return <GuardianHospitalContent />;
+  return <PageLayout title="병원 예약하기" />;
 }

@@ -1,5 +1,5 @@
-import { WardSosContent } from './_components/WardSosContent';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function WardSosPage() {
-  return <WardSosContent />;
+  return <PageLayout title="긴급 전화" />;
 }

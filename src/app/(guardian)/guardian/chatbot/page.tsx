@@ -1,5 +1,5 @@
-import { GuardianChatbotContent } from './_components/GuardianChatbotContent';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function GuardianChatbotPage() {
-  return <GuardianChatbotContent />;
+  return <PageLayout title="AI 의료 챗봇" />;
 }

@@ -1,5 +1,5 @@
-import { GuardianInquiriesContent } from './_components/GuardianInquiriesContent';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function GuardianInquiriesPage() {
-  return <GuardianInquiriesContent />;
+  return <PageLayout title="문의하기" />;
 }

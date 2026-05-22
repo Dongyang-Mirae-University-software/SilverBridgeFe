@@ -1,5 +1,5 @@
-import { GuardianEmotionContent } from './_components/GuardianEmotionContent';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function GuardianEmotionPage() {
-  return <GuardianEmotionContent />;
+  return <PageLayout title="정서 상태 체크" />;
 }

@@ -1,5 +1,5 @@
-import { GuardianDetectionContent } from './_components/GuardianDetectionContent';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function GuardianDetectionPage() {
-  return <GuardianDetectionContent />;
+  return <PageLayout title="이상감지" />;
 }

@@ -1,5 +1,5 @@
-import { WardHospitalContent } from './_components/WardHospitalContent';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function WardHospitalPage() {
-  return <WardHospitalContent />;
+  return <PageLayout title="병원 예약하기" />;
 }
