@@ -302,6 +302,7 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
   const isWard = role === 'WARD';
   const navItems = isWard ? WARD_NAV : GUARDIAN_NAV;
   const pageTitle = PAGE_TITLES[pageKey];
+  const rootPath = isWard ? '/ward' : '/guardian';
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const realtimeUserId = getAccessTokenSubject() ?? profile?.id;
@@ -434,9 +435,10 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
           onClick={() => setIsSidebarOpen(true)}
         >
           <MenuIcon />
+          <span>메뉴</span>
         </button>
         <div className={cx('topBarBrand')}>
-          <div className={cx('brandMark')}>SB</div>
+          <div className={cx('brandMark')}>S</div>
           <div>
             <strong>SilverBridge</strong>
             <span>{pageTitle}</span>
@@ -445,93 +447,83 @@ export default function UserDashboard({ children, pageKey, role }: Props) {
         <span className={cx('topBarRole')}>{getRoleLabel(role)}</span>
       </div>
 
-      {!isSidebarOpen && (
+      {isSidebarOpen && (
         <button
-          className={cx('menuButton', { ward: isWard })}
+          className={cx('scrim')}
           type="button"
-          aria-label="메뉴 열기"
-          onClick={() => setIsSidebarOpen(true)}
-        >
-          <MenuIcon />
-        </button>
+          aria-label="메뉴 닫기"
+          onClick={() => setIsSidebarOpen(false)}
+        />
       )}
 
-      {isSidebarOpen && (
-        <>
+      <aside className={cx('sidebar', { open: isSidebarOpen })} aria-label={`${getRoleLabel(role)} 메뉴`}>
+        <div className={cx('brand')}>
+          <div className={cx('brandMark')}>S</div>
+          <div>
+            <strong>SilverBridge</strong>
+            <span>{getRoleLabel(role)} 웹</span>
+          </div>
           <button
-            className={cx('scrim')}
+            className={cx('closeButton')}
             type="button"
             aria-label="메뉴 닫기"
             onClick={() => setIsSidebarOpen(false)}
-          />
-          <aside className={cx('sidebar')} aria-label={`${getRoleLabel(role)} 메뉴`}>
-            <div className={cx('brand')}>
-              <div className={cx('brandMark')}>SB</div>
-              <div>
-                <strong>SilverBridge</strong>
-                <span>{getRoleLabel(role)} 웹</span>
+          >
+            ×
+          </button>
+        </div>
+
+        <nav className={cx('nav')} aria-label={`${getRoleLabel(role)} 메뉴`}>
+          {navItems.map(item => (
+            <Link
+              key={item.href}
+              className={cx('navItem', {
+                active: pathname === item.href || (item.href !== rootPath && pathname.startsWith(`${item.href}/`)),
+              })}
+              href={item.href}
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <span className={cx('navIcon')}>
+                <NavIcon name={item.icon} />
+              </span>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+
+        <div className={cx('sidebarFooter')}>
+          <button
+            className={cx('userCard')}
+            type="button"
+            aria-haspopup="dialog"
+            aria-label="사용자 상세 정보 열기"
+            onClick={() => setIsProfileModalOpen(true)}
+          >
+            <div className={cx('avatar')}>
+              {profile?.profileImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img alt="" src={profile.profileImage} />
+              ) : (
+                userInitial
+              )}
+            </div>
+            <div className={cx('userInfo')}>
+              <div className={cx('userTitleRow')}>
+                <strong>{userName}</strong>
+                <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
               </div>
-              <button
-                className={cx('closeButton')}
-                type="button"
-                aria-label="메뉴 닫기"
-                onClick={() => setIsSidebarOpen(false)}
-              >
-                ×
-              </button>
+              <span>{userEmail}</span>
             </div>
+            <span className={cx('userChevron')} aria-hidden="true">
+              ›
+            </span>
+          </button>
 
-            <nav className={cx('nav')} aria-label={`${getRoleLabel(role)} 메뉴`}>
-              {navItems.map(item => (
-                <Link
-                  key={item.href}
-                  className={cx('navItem', { active: pathname === item.href })}
-                  href={item.href}
-                  onClick={() => setIsSidebarOpen(false)}
-                >
-                  <span className={cx('navIcon')}>
-                    <NavIcon name={item.icon} />
-                  </span>
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </nav>
-
-            <div className={cx('sidebarFooter')}>
-              <button
-                className={cx('userCard')}
-                type="button"
-                aria-haspopup="dialog"
-                aria-label="사용자 상세 정보 열기"
-                onClick={() => setIsProfileModalOpen(true)}
-              >
-                <div className={cx('avatar')}>
-                  {profile?.profileImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img alt="" src={profile.profileImage} />
-                  ) : (
-                    userInitial
-                  )}
-                </div>
-                <div className={cx('userInfo')}>
-                  <div className={cx('userTitleRow')}>
-                    <strong>{userName}</strong>
-                    <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
-                  </div>
-                  <span>{userEmail}</span>
-                </div>
-                <span className={cx('userChevron')} aria-hidden="true">
-                  ›
-                </span>
-              </button>
-
-              <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
-                {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-              </button>
-            </div>
-          </aside>
-        </>
-      )}
+          <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
+            {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+          </button>
+        </div>
+      </aside>
 
       {isProfileModalOpen && (
         <div className={cx('profileModalOverlay')} role="presentation" onClick={() => setIsProfileModalOpen(false)}>
