@@ -1,3 +1,24 @@
+.backButton {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  border: 1px solid #e5d8c5;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5c4d3f;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.backButton:hover {
+  border-color: #d97757;
+  background: #fff8f3;
+  color: #d97757;
+}
+
 .progress {
   display: flex;
   gap: 6px;

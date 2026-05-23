@@ -39,8 +39,35 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
     : undefined;
   const currentStep = isKakao ? 2 : signupStep;
 
+  const handleBack = () => {
+    if (!isKakao && signupStep > 1) {
+      setSignupStep(step => step - 1);
+      return;
+    }
+
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push('/');
+  };
+
   return (
     <>
+      <button className={cx('backButton')} type="button" aria-label="이전 페이지로 이동" onClick={handleBack}>
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M15 18l-6-6 6-6"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2.4"
+          />
+        </svg>
+      </button>
+
       <div className={cx('progress')} aria-hidden="true">
         <span className={cx({ active: currentStep >= 1 })} />
         <span className={cx({ active: currentStep >= 2 })} />
