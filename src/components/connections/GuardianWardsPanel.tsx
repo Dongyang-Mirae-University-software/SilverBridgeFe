@@ -82,8 +82,15 @@ export function GuardianWardsPanel() {
           <span>수락 대기 {pendingConnections.length}건</span>
         </div>
         <div className={cx('wardListToolbarActions')}>
-          <button className={cx('connectionSecondaryButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>
-            {isFetching ? '새로고침 중' : '새로고침'}
+          <button
+            className={cx('connectionSecondaryButton', 'wardListRefreshButton')}
+            type="button"
+            aria-label={isFetching ? '피보호자 목록 새로고침 중' : '피보호자 목록 새로고침'}
+            disabled={isFetching}
+            onClick={() => void refetch()}
+          >
+            <RefreshIcon isSpinning={isFetching} />
+            <span>{isFetching ? '새로고침 중' : '새로고침'}</span>
           </button>
         </div>
       </div>
@@ -223,6 +230,45 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
+  );
+}
+
+function RefreshIcon({ isSpinning }: { isSpinning: boolean }) {
+  return (
+    <svg className={cx('wardListRefreshIcon', { spinning: isSpinning })} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M20 6v5h-5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.2"
+      />
+      <path
+        d="M4.6 10.2A7.6 7.6 0 0 1 17.7 6.6L20 11"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.2"
+      />
+      <path
+        d="M4 18v-5h5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.2"
+      />
+      <path
+        d="M19.4 13.8A7.6 7.6 0 0 1 6.3 17.4L4 13"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.2"
+      />
+    </svg>
   );
 }
 
