@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -19,10 +20,13 @@ import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
 
 type GuardianWardsTab = 'list' | 'register';
 
-export function GuardianWardsPanel({ initialTab = 'list' }: { initialTab?: GuardianWardsTab }) {
+export function GuardianWardsPanel() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [feedbackMessage, setFeedbackMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<GuardianWardsTab>(initialTab);
+  const activeTab: GuardianWardsTab = searchParams.get('tab') === 'register' ? 'register' : 'list';
   const { data, isFetching, isLoading, isError, refetch } = useQuery(guardianConnectionsQueryOptions);
   const connections = getConnectionData(data);
   const { activeConnections, pendingConnections } = splitConnections(connections);
@@ -56,6 +60,19 @@ export function GuardianWardsPanel({ initialTab = 'list' }: { initialTab?: Guard
     if (!window.confirm('이 피보호자와의 연결을 해제할까요?')) return;
     disconnectMutation.mutate(connectionId);
   };
+  const handleTabChange = (tab: GuardianWardsTab) => {
+    if (tab === activeTab) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'register') {
+      params.set('tab', 'register');
+    } else {
+      params.delete('tab');
+    }
+
+    const queryString = params.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+  };
 
   return (
     <section className={cx('connectionPage', 'wardListPage')}>
@@ -77,7 +94,7 @@ export function GuardianWardsPanel({ initialTab = 'list' }: { initialTab?: Guard
           type="button"
           role="tab"
           aria-selected={activeTab === 'list'}
-          onClick={() => setActiveTab('list')}
+          onClick={() => handleTabChange('list')}
         >
           피보호자 리스트
         </button>
@@ -86,7 +103,7 @@ export function GuardianWardsPanel({ initialTab = 'list' }: { initialTab?: Guard
           type="button"
           role="tab"
           aria-selected={activeTab === 'register'}
-          onClick={() => setActiveTab('register')}
+          onClick={() => handleTabChange('register')}
         >
           피보호자 등록
         </button>
@@ -100,7 +117,7 @@ export function GuardianWardsPanel({ initialTab = 'list' }: { initialTab?: Guard
           {!isLoading && !isError && connections.length === 0 && (
             <div className={cx('connectionEmptyBox')}>
               <EmptyState message="아직 연결된 피보호자가 없습니다." />
-              <button className={cx('connectionLinkButton')} type="button" onClick={() => setActiveTab('register')}>
+              <button className={cx('connectionLinkButton')} type="button" onClick={() => handleTabChange('register')}>
                 피보호자 연결 요청하기
               </button>
             </div>
