@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GenderType, ISignupReq, RoleType } from '@/service/interface/auth';
-import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '../constant/pattern';
+import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '@/constants/pattern';
 import { useMutation } from '@tanstack/react-query';
 import { signup } from '@/service/api/auth';
 import { useRouter } from 'next/navigation';
