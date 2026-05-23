@@ -48,6 +48,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
   const [smsSendErrorMsg, setSmsSendErrorMsg] = useState('');
   const [smsCode, setSmsCode] = useState('');
   const [isSmsCheck, setIsSmsCheck] = useState(false);
+  const [smsTimerKey, setSmsTimerKey] = useState(0);
 
   const { mutate: emailCheckMutate, isPending: isEmailCheckPending } = useMutation({
     mutationKey: ['email-check'],
@@ -75,7 +76,10 @@ export default function SignupForm({ step, onStepChange }: Props) {
       setIsCode(false);
       setSmsSendErrorMsg((error as Error).message || '인증번호 발송에 실패했습니다.');
     },
-    onSuccess: () => setIsCode(true),
+    onSuccess: () => {
+      setIsCode(true);
+      setSmsTimerKey(key => key + 1);
+    },
   });
 
   const {
@@ -189,6 +193,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
             isSmsCheck={isSmsCheck}
             isSmsSendPending={isSmsSendPending}
             isSmsVerifyPending={isSmsVerifyPending}
+            smsTimerKey={smsTimerKey}
             onCodeChange={handleCode}
             onPhoneCheck={handlePhoneCheck}
             onPhoneReset={handlePhoneReset}
