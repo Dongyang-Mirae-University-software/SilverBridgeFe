@@ -12,7 +12,7 @@ import { getUserProfileData } from '@/lib/auth/userProfile';
 import { unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { DashboardProvider } from './DashboardContext';
-import { DesktopHeader, MobileTopBar } from './DashboardHeader';
+import { MobileTopBar } from './DashboardHeader';
 import { DashboardSidebar } from './DashboardSidebar';
 import { ProfileModal } from './ProfileModal';
 import { GUARDIAN_NAV, PAGE_TITLES, WARD_NAV } from '@/constants/dashboard';
@@ -92,17 +92,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           />
         )}
         <main className={cx('main')}>
-          <DesktopHeader
-            isProfileImageChanging={isProfileImageChanging}
-            onOpenProfile={() => setIsProfileModalOpen(true)}
-            onOpenSidebar={() => setIsSidebarOpen(true)}
-            pageTitle={pageTitle}
-            profile={profile}
-            role={role}
-            userEmail={userEmail}
-            userInitial={userInitial}
-            userName={userName}
-          />
           {children}
         </main>
       </div>
