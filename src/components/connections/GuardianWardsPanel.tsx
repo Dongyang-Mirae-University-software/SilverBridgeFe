@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -21,12 +21,10 @@ import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
 type GuardianWardsTab = 'list' | 'register';
 
 export function GuardianWardsPanel() {
-  const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [feedbackMessage, setFeedbackMessage] = useState('');
-  const activeTab: GuardianWardsTab = searchParams.get('tab') === 'register' ? 'register' : 'list';
+  const [activeTab, setActiveTab] = useState<GuardianWardsTab>(() => getInitialTab(searchParams));
   const { data, isFetching, isLoading, isError, refetch } = useQuery(guardianConnectionsQueryOptions);
   const connections = getConnectionData(data);
   const { activeConnections, pendingConnections } = splitConnections(connections);
@@ -62,8 +60,9 @@ export function GuardianWardsPanel() {
   };
   const handleTabChange = (tab: GuardianWardsTab) => {
     if (tab === activeTab) return;
+    setActiveTab(tab);
 
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     if (tab === 'register') {
       params.set('tab', 'register');
     } else {
@@ -71,7 +70,8 @@ export function GuardianWardsPanel() {
     }
 
     const queryString = params.toString();
-    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+    const nextUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ''}${window.location.hash}`;
+    window.history.replaceState(window.history.state, '', nextUrl);
   };
 
   return (
@@ -142,6 +142,10 @@ export function GuardianWardsPanel() {
       )}
     </section>
   );
+}
+
+function getInitialTab(searchParams: ReturnType<typeof useSearchParams>): GuardianWardsTab {
+  return searchParams.get('tab') === 'register' ? 'register' : 'list';
 }
 
 function WardListCard({
