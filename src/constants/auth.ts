@@ -1,0 +1,1 @@
+export const SIGNUP_SMS_CODE_EXPIRES_SECONDS = 5 * 60;
