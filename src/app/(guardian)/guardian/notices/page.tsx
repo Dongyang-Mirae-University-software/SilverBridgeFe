@@ -1,5 +1,5 @@
 import PageLayout from '@/components/layout/PageLayout';
-import { NoticesPanel } from '@/components/app/NoticesPanel';
+import { NoticesPanel } from '@/components/notices/NoticesPanel';
 
 export default function GuardianNoticesPage() {
   return (
