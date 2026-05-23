@@ -674,6 +674,23 @@
   box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.1);
 }
 
+.profileField input[readonly] {
+  cursor: default;
+  background: #f7f3eb;
+}
+
+.profileAddressSearch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.profileAddressSearch .profileModalGhostButton {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
 .profilePhoneVerify,
 .profileDeleteRow {
   display: grid;
@@ -2228,6 +2245,7 @@
   }
 
   .profileFormGrid,
+  .profileAddressSearch,
   .profilePhoneVerify,
   .profileDeleteRow {
     grid-template-columns: 1fr;

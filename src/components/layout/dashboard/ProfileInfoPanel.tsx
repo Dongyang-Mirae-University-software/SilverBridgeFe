@@ -11,6 +11,7 @@ interface Props {
   isPhoneChanged: boolean;
   isProfilePending: boolean;
   onChange: (field: keyof IUserUpdateReq, value: string) => void;
+  onAddressSearch: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   phoneCode: string;
   phoneNonce: string | null;
@@ -24,6 +25,7 @@ export function ProfileInfoPanel({
   isPhoneChanged,
   isProfilePending,
   onChange,
+  onAddressSearch,
   onSubmit,
   phoneCode,
   phoneNonce,
@@ -50,14 +52,20 @@ export function ProfileInfoPanel({
             </select>
           </label>
           <ProfileInput label="생년월일" type="date" value={form.birthDate ?? ''} onValueChange={value => onChange('birthDate', value)} />
-          <ProfileInput
-            inputMode="numeric"
-            label="우편번호"
-            maxLength={5}
-            value={form.postcode ?? ''}
-            onValueChange={value => onChange('postcode', value.replace(/\D/g, ''))}
-          />
-          <ProfileInput label="주소" value={form.address ?? ''} onValueChange={value => onChange('address', value)} />
+          <div className={cx('profileAddressSearch')}>
+            <ProfileInput
+              inputMode="numeric"
+              label="우편번호"
+              maxLength={5}
+              readOnly
+              value={form.postcode ?? ''}
+              onValueChange={value => onChange('postcode', value.replace(/\D/g, ''))}
+            />
+            <button className={cx('profileModalGhostButton')} type="button" onClick={onAddressSearch}>
+              주소 검색
+            </button>
+          </div>
+          <ProfileInput label="주소" readOnly value={form.address ?? ''} onValueChange={value => onChange('address', value)} />
         </div>
 
         <ProfileInput label="상세 주소" value={form.addressDetail ?? ''} onValueChange={value => onChange('addressDetail', value)} />
