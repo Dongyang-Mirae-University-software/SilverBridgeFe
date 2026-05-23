@@ -23,6 +23,7 @@ interface SignupBasicInfoStepProps {
   addressDetailField: UseFormRegisterReturn;
   birthDateField: UseFormRegisterReturn;
   postcodeField: UseFormRegisterReturn;
+  onAddressSearch: () => void;
   onEmailCheck: () => void;
   onNextStep: () => void;
 }
@@ -42,6 +43,7 @@ export default function SignupBasicInfoStep({
   addressDetailField,
   birthDateField,
   postcodeField,
+  onAddressSearch,
   onEmailCheck,
   onNextStep,
 }: SignupBasicInfoStepProps) {
@@ -102,20 +104,27 @@ export default function SignupBasicInfoStep({
           errorText={errors.birthDate?.message}
         />
       </div>
-      <TextInput
-        label="우편번호"
-        placeholder="06236"
-        required
-        inputMode="numeric"
-        maxLength={10}
-        {...postcodeField}
-        error={Boolean(errors.postcode && allValues.postcode && allValues.postcode.trim() !== '')}
-        errorText={errors.postcode?.message}
-      />
+      <div className={cx('addressSearchRow')}>
+        <TextInput
+          label="우편번호"
+          placeholder="주소 검색"
+          required
+          inputMode="numeric"
+          maxLength={10}
+          readOnly
+          {...postcodeField}
+          error={Boolean(errors.postcode && allValues.postcode && allValues.postcode.trim() !== '')}
+          errorText={errors.postcode?.message}
+        />
+        <button className={cx('addressSearchButton')} type="button" onClick={onAddressSearch}>
+          주소 검색
+        </button>
+      </div>
       <TextInput
         label="주소"
-        placeholder="주소를 입력하세요"
+        placeholder="주소 검색으로 입력하세요"
         required
+        readOnly
         {...addressField}
         error={Boolean(errors.address && allValues.address && allValues.address.trim() !== '')}
         errorText={errors.address?.message}
