@@ -1,5 +1,5 @@
 import PageLayout from '@/components/layout/PageLayout';
-import { WardGuardiansPanel } from '@/components/app/connections/WardGuardiansPanel';
+import { WardGuardiansPanel } from '@/components/connections/WardGuardiansPanel';
 
 export default function WardGuardiansPage() {
   return (
