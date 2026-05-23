@@ -2351,19 +2351,19 @@
 
   .wardListRefreshButton {
     position: fixed;
-    right: 18px;
-    bottom: calc(18px + env(safe-area-inset-bottom));
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
     z-index: 40;
-    width: 54px;
-    min-width: 54px !important;
-    height: 54px;
-    min-height: 54px;
+    width: 46px;
+    min-width: 46px !important;
+    height: 46px;
+    min-height: 46px;
     padding: 0;
     border: 0;
     border-radius: 999px;
     background: var(--sb-brand);
     color: #fff;
-    box-shadow: 0 14px 30px rgba(31, 94, 72, 0.28);
+    box-shadow: 0 10px 22px rgba(31, 94, 72, 0.24);
   }
 
   .wardListRefreshButton span {
@@ -2382,8 +2382,8 @@
 
   .wardListRefreshIcon {
     display: block;
-    width: 21px;
-    height: 21px;
+    width: 18px;
+    height: 18px;
   }
 
   .wardListRefreshIcon.spinning {
