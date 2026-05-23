@@ -13,6 +13,7 @@ import { getUserProfileData } from '@/lib/auth/userProfile';
 import { ProfileInfoPanel } from './ProfileInfoPanel';
 import { ProfileSecurityPanel } from './ProfileSecurityPanel';
 import { getModalErrorMessage, getProfileFormValue, getSmsVerificationNonce } from '@/lib/dashboard/profile';
+import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 import { cx } from './styles';
 
 interface Props {
@@ -108,6 +109,15 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
     profileMutation.mutate(nextProfile);
   };
 
+  const handleAddressSearch = async () => {
+    try {
+      const { address, postcode } = await openKakaoPostcode();
+      setProfileForm(current => ({ ...current, address, postcode }));
+    } catch (error) {
+      setFeedbackMessage(getModalErrorMessage(error, '주소 검색을 불러오지 못했습니다.'));
+    }
+  };
+
   const handlePasswordSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isKakaoUser) return setFeedbackMessage('카카오 가입 계정은 비밀번호를 변경할 수 없습니다.');
@@ -131,6 +141,7 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
             form={profileForm}
             isPhoneChanged={isPhoneChanged}
             isProfilePending={profileMutation.isPending}
+            onAddressSearch={handleAddressSearch}
             onChange={updateProfileForm}
             onSubmit={handleProfileSubmit}
             phoneCode={phoneCode}
