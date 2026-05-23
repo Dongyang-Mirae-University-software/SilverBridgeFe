@@ -14,6 +14,7 @@ import { PHONE_PATTRERN } from '@/constants/pattern';
 import { GenderType, IKakaoSignupRes, RoleType } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
+import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 
 const cx = classNames.bind(styles);
 
@@ -159,6 +160,15 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
     if (smsCode.length !== 6) return;
     verifySms({ code: smsCode, phone: getValues('phone') });
   };
+  const handleAddressSearch = async () => {
+    try {
+      const { address, postcode } = await openKakaoPostcode();
+      setValue('postcode', postcode, { shouldDirty: true, shouldValidate: true });
+      setValue('address', address, { shouldDirty: true, shouldValidate: true });
+    } catch (error) {
+      window.alert((error as Error).message || '주소 검색을 불러오지 못했습니다.');
+    }
+  };
 
   const onSubmit = handleSubmit(data => {
     signupKakaoMutate({
@@ -232,17 +242,30 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
           errorText={errors.birthDate?.message}
         />
       </div>
+      <div className={cx('addressSearchRow')}>
+        <TextInput
+          label="우편번호"
+          placeholder="주소 검색"
+          required
+          inputMode="numeric"
+          maxLength={10}
+          readOnly
+          {...register('postcode', requiredRule('우편번호를 입력하세요.'))}
+          error={Boolean(errors.postcode)}
+          errorText={errors.postcode?.message}
+        />
+        <button className={cx('addressSearchButton')} type="button" onClick={handleAddressSearch}>
+          주소 검색
+        </button>
+      </div>
       <TextInput
-        label="우편번호"
-        placeholder="06236"
-        required
-        inputMode="numeric"
-        maxLength={10}
-        {...register('postcode', requiredRule('우편번호를 입력하세요.'))}
-        error={Boolean(errors.postcode)}
-        errorText={errors.postcode?.message}
+        label="주소"
+        placeholder="주소 검색으로 입력하세요"
+        readOnly
+        {...register('address', requiredRule('주소를 입력하세요.'))}
+        error={Boolean(errors.address)}
+        errorText={errors.address?.message}
       />
-      <TextInput label="주소" placeholder="주소를 입력하세요" {...register('address', requiredRule('주소를 입력하세요.'))} error={Boolean(errors.address)} errorText={errors.address?.message} />
       <TextInput
         label="상세 주소"
         placeholder="상세 주소를 입력하세요"

@@ -62,6 +62,26 @@
   gap: 8px;
 }
 
+.addressSearchRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.addressSearchButton {
+  min-height: 48px;
+  margin-top: 25px;
+  border: 1.5px solid #e5d8c5;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #5c4d3f;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .button,
 .secondaryButton,
 .prevButton,
@@ -349,6 +369,14 @@
 
   .actionRow {
     gap: 10px;
+  }
+
+  .addressSearchRow {
+    grid-template-columns: 1fr;
+  }
+
+  .addressSearchButton {
+    margin-top: 0;
   }
 
   .secondaryButton {
