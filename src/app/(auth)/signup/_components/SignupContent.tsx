@@ -55,29 +55,30 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
 
   return (
     <>
-      <button className={cx('backButton')} type="button" aria-label="이전 페이지로 이동" onClick={handleBack}>
-        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M15 18l-6-6 6-6"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2.4"
-          />
-        </svg>
-      </button>
-
       <div className={cx('progress')} aria-hidden="true">
         <span className={cx({ active: currentStep >= 1 })} />
         <span className={cx({ active: currentStep >= 2 })} />
       </div>
 
       <div className={cx('header')}>
-        <h1 className={cx('title')}>회원가입</h1>
-        <p className={cx('description')}>
-          {currentStep === 1 ? '기본 정보를 입력해 주세요' : '전화번호 인증으로 마무리할게요'}
-        </p>
+        <button className={cx('backButton')} type="button" aria-label="이전 페이지로 이동" onClick={handleBack}>
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M15 18l-6-6 6-6"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.4"
+            />
+          </svg>
+        </button>
+        <div>
+          <h1 className={cx('title')}>회원가입</h1>
+          <p className={cx('description')}>
+            {currentStep === 1 ? '기본 정보를 입력해 주세요' : '전화번호 인증으로 마무리할게요'}
+          </p>
+        </div>
       </div>
 
       <div className={cx('content')}>
