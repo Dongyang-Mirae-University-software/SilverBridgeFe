@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { IAnnouncement } from '@/service/interface/announcement';
 import { announcementDetailQueryOptions, announcementsQueryOptions } from '@/service/query/announcement';
 import styles from './NoticesPanel.module.css';
 
@@ -16,27 +15,16 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
 
-function getList(response: unknown): IAnnouncement[] {
-  const data = (response as { data?: unknown } | undefined)?.data;
-  return Array.isArray(data) ? (data as IAnnouncement[]) : [];
-}
-
-function getDetail(response: unknown): IAnnouncement | null {
-  const data = (response as { data?: unknown } | undefined)?.data;
-  return data ? (data as IAnnouncement) : null;
-}
-
 export function NoticesPanel() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const { data: listRes, isFetching, isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
-  const { data: detailRes } = useQuery({
+  const { data: announcements = [], isFetching, isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
+  const { data: detail } = useQuery({
     ...announcementDetailQueryOptions(selectedId!),
     enabled: selectedId !== null,
   });
 
-  const announcements = getList(listRes);
-  const detail = selectedId !== null ? (getDetail(detailRes) ?? announcements.find(a => a.id === selectedId) ?? null) : null;
+  const selectedNotice = selectedId !== null ? (detail ?? announcements.find(a => a.id === selectedId) ?? null) : null;
 
   const handleToggle = (id: number) => {
     setSelectedId(prev => (prev === id ? null : id));
@@ -82,7 +70,7 @@ export function NoticesPanel() {
 
                 {isOpen && (
                   <div className={cx('itemBody')}>
-                    <p>{detail?.content ?? item.content}</p>
+                    <p>{selectedNotice?.content ?? item.content}</p>
                     {item.updatedAt !== item.createdAt && (
                       <span className={cx('updatedAt')}>수정일: {formatDate(item.updatedAt)}</span>
                     )}
