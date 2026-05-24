@@ -94,7 +94,7 @@ apiClient.interceptors.request.use(
     const token = getAccessToken();
 
     // 토큰이 있으면 Authorization 헤더에 자동으로 붙여줌
-    if (token) {
+    if (token && !isSigninRequest(config.url)) {
       setBearerToken(config, token);
     }
 
