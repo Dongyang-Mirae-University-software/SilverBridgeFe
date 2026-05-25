@@ -7,6 +7,7 @@ import { signinKakao } from '@/service/api/auth';
 import { IKakaoSigninRes } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
+import { getKakaoRedirectUri } from '@/lib/auth/kakao';
 
 type KakaoSigninData = IKakaoSigninRes['data'];
 
@@ -60,7 +61,7 @@ function KakaoCallbackContent() {
 
   useEffect(() => {
     if (code) {
-      mutate({ code });
+      mutate({ code, redirectUri: getKakaoRedirectUri() });
     } else {
       router.push('/login');
     }
