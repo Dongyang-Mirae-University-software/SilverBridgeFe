@@ -1820,10 +1820,6 @@
   min-width: 96px;
 }
 
-.wardListRefreshIcon {
-  display: none;
-}
-
 .wardListToolbar strong {
   display: block;
   color: var(--sb-ink);
@@ -2378,47 +2374,6 @@
     width: 100%;
   }
 
-  .wardListRefreshButton {
-    position: fixed;
-    right: 16px;
-    bottom: calc(16px + env(safe-area-inset-bottom));
-    z-index: 40;
-    width: 46px;
-    min-width: 46px !important;
-    height: 46px;
-    min-height: 46px;
-    padding: 0;
-    border: 0;
-    border-radius: 999px;
-    background: var(--sb-brand);
-    color: #fff;
-    box-shadow: 0 10px 22px rgba(31, 94, 72, 0.24);
-  }
-
-  .wardListRefreshButton span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    overflow: hidden;
-    white-space: nowrap;
-  }
-
-  .wardListRefreshButton:disabled {
-    opacity: 0.82;
-  }
-
-  .wardListRefreshIcon {
-    display: block;
-    width: 18px;
-    height: 18px;
-  }
-
-  .wardListRefreshIcon.spinning {
-    animation: refreshSpin 0.8s linear infinite;
-  }
-
   .connectionCard {
     grid-template-columns: 42px minmax(0, 1fr);
     align-items: flex-start;
@@ -2454,11 +2409,5 @@
 
   .connectionActions {
     grid-column: 1 / -1;
-  }
-}
-
-@keyframes refreshSpin {
-  to {
-    transform: rotate(360deg);
   }
 }

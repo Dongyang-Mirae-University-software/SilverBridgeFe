@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { RefreshButton } from '@/components/RefreshButton';
 import { acceptWardConnection, disconnectWardConnection, refuseWardConnectionRequest } from '@/service/api/connect/ward';
 import { wardConnectionsQueryKey, wardConnectionsQueryOptions } from '@/service/query/connection';
 import {
@@ -79,9 +80,7 @@ export function WardGuardiansPanel() {
   return (
     <section className={cx('connectionPage')}>
       <div className={cx('connectionPageActions')}>
-        <button className={cx('connectionSecondaryButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>
-          {isFetching ? '새로고침 중' : '새로고침'}
-        </button>
+        <RefreshButton isRefreshing={isFetching} ariaLabel="보호자 목록 새로고침" onRefresh={() => void refetch()} />
       </div>
 
       {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
