@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { RefreshButton } from '@/components/RefreshButton';
 import { announcementDetailQueryOptions, announcementsQueryOptions } from '@/service/query/announcement';
 import styles from './NoticesPanel.module.css';
 
@@ -35,9 +36,7 @@ export function NoticesPanel() {
       <div className={cx('header')}>
         <div className={cx('headerTop')}>
           <span className={cx('eyebrow')}>공지사항</span>
-          <button className={cx('refreshButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>
-            {isFetching ? '새로고침 중' : '새로고침'}
-          </button>
+          <RefreshButton isRefreshing={isFetching} ariaLabel="공지사항 새로고침" onRefresh={() => void refetch()} />
         </div>
         <h2>서비스 운영 관련 공지를 확인하세요.</h2>
       </div>
