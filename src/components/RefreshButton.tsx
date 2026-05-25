@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import classNames from 'classnames/bind';
 
 import styles from './RefreshButton.module.css';
@@ -5,29 +6,45 @@ import styles from './RefreshButton.module.css';
 const cx = classNames.bind(styles);
 
 type RefreshButtonProps = {
-  isRefreshing: boolean;
-  onRefresh: () => void;
+  onRefresh: () => Promise<unknown> | void;
   ariaLabel?: string;
+  disabled?: boolean;
+  isRefreshing?: boolean;
   label?: string;
   refreshingLabel?: string;
 };
 
 export function RefreshButton({
-  isRefreshing,
   onRefresh,
   ariaLabel = '새로고침',
+  disabled = false,
+  isRefreshing,
   label = '새로고침',
   refreshingLabel = '새로고침 중',
 }: RefreshButtonProps) {
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const isActive = isRefreshing ?? isManualRefreshing;
+
+  const handleRefresh = async () => {
+    if (disabled || isActive) return;
+
+    setIsManualRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  };
+
   return (
     <button
       className={cx('button')}
       type="button"
-      aria-label={isRefreshing ? `${ariaLabel} 중` : ariaLabel}
-      disabled={isRefreshing}
-      onClick={onRefresh}
+      aria-label={isActive ? `${ariaLabel} 중` : ariaLabel}
+      disabled={disabled || isActive}
+      onClick={handleRefresh}
     >
-      <svg className={cx('icon', { spinning: isRefreshing })} viewBox="0 0 24 24" aria-hidden="true">
+      <svg className={cx('icon', { spinning: isActive })} viewBox="0 0 24 24" aria-hidden="true">
         <path
           d="M20 12a8 8 0 1 1-2.34-5.66"
           fill="none"
@@ -45,7 +62,7 @@ export function RefreshButton({
           strokeWidth="2.2"
         />
       </svg>
-      <span>{isRefreshing ? refreshingLabel : label}</span>
+      <span>{isActive ? refreshingLabel : label}</span>
     </button>
   );
 }

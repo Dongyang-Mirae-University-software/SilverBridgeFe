@@ -19,7 +19,7 @@ function formatDate(value: string) {
 export function NoticesPanel() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const { data: announcements = [], isFetching, isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
+  const { data: announcements = [], isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
   const { data: detail } = useQuery({
     ...announcementDetailQueryOptions(selectedId!),
     enabled: selectedId !== null,
@@ -36,7 +36,7 @@ export function NoticesPanel() {
       <div className={cx('header')}>
         <div className={cx('headerTop')}>
           <span className={cx('eyebrow')}>공지사항</span>
-          <RefreshButton isRefreshing={isFetching} ariaLabel="공지사항 새로고침" onRefresh={() => void refetch()} />
+          <RefreshButton ariaLabel="공지사항 새로고침" disabled={isLoading} onRefresh={() => refetch()} />
         </div>
         <h2>서비스 운영 관련 공지를 확인하세요.</h2>
       </div>
