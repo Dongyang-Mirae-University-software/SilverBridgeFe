@@ -26,7 +26,7 @@ export function GuardianWardsPanel() {
   const queryClient = useQueryClient();
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [activeTab, setActiveTab] = useState<GuardianWardsTab>(() => getInitialTab(searchParams));
-  const { data, isFetching, isLoading, isError, refetch } = useQuery(guardianConnectionsQueryOptions);
+  const { data, isLoading, isError, refetch } = useQuery(guardianConnectionsQueryOptions);
   const connections = getConnectionData(data);
   const { activeConnections, pendingConnections } = splitConnections(connections);
 
@@ -83,7 +83,7 @@ export function GuardianWardsPanel() {
           <span>수락 대기 {pendingConnections.length}건</span>
         </div>
         <div className={cx('wardListToolbarActions')}>
-          <RefreshButton isRefreshing={isFetching} ariaLabel="피보호자 목록 새로고침" onRefresh={() => void refetch()} />
+          <RefreshButton ariaLabel="피보호자 목록 새로고침" disabled={isLoading} onRefresh={() => refetch()} />
         </div>
       </div>
 

@@ -24,7 +24,7 @@ export function WardGuardiansPanel() {
   const queryClient = useQueryClient();
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [storedPendingConnections, setStoredPendingConnections] = useState(() => getPendingConnectionRequestItems());
-  const { data, isFetching, isLoading, isError, refetch } = useQuery(wardConnectionsQueryOptions);
+  const { data, isLoading, isError, refetch } = useQuery(wardConnectionsQueryOptions);
   const connections = getConnectionData(data);
   const { activeConnections, pendingConnections: apiPendingConnections } = splitConnections(connections);
   const pendingConnections = mergePendingConnections(apiPendingConnections, storedPendingConnections);
@@ -80,7 +80,7 @@ export function WardGuardiansPanel() {
   return (
     <section className={cx('connectionPage')}>
       <div className={cx('connectionPageActions')}>
-        <RefreshButton isRefreshing={isFetching} ariaLabel="보호자 목록 새로고침" onRefresh={() => void refetch()} />
+        <RefreshButton ariaLabel="보호자 목록 새로고침" disabled={isLoading} onRefresh={() => refetch()} />
       </div>
 
       {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
