@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import ReactQueryProvider from '@/lib/ReactQueryProvider';
-import PushNotificationListener from './_components/PushNotificationListener';
+import PushNotificationListener from '@/components/PushNotificationListener';
 
 export const metadata: Metadata = {
   title: 'silver bridge',

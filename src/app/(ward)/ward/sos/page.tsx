@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function WardSosPage() {
-  return <UserDashboard pageKey="sos" role="WARD" />;
+  return <PageLayout title="긴급 전화" description="긴급 상황에서 빠르게 도움을 요청합니다." />;
 }

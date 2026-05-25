@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 import { UseFormRegister } from 'react-hook-form';
 
 import styles from './SignupForm.module.css';
-import { SignupFormValues } from '@/app/_hook/useSignupForm';
+import { SignupFormValues } from '@/hooks/useSignupForm';
 import { RoleType } from '@/service/interface/auth';
 
 const cx = classNames.bind(styles);

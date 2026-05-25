@@ -39,6 +39,20 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
     : undefined;
   const currentStep = isKakao ? 2 : signupStep;
 
+  const handleBack = () => {
+    if (!isKakao && signupStep > 1) {
+      setSignupStep(step => step - 1);
+      return;
+    }
+
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push('/');
+  };
+
   return (
     <>
       <div className={cx('progress')} aria-hidden="true">
@@ -47,10 +61,24 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
       </div>
 
       <div className={cx('header')}>
-        <h1 className={cx('title')}>회원가입</h1>
-        <p className={cx('description')}>
-          {currentStep === 1 ? '기본 정보를 입력해 주세요' : '전화번호 인증으로 마무리할게요'}
-        </p>
+        <button className={cx('backButton')} type="button" aria-label="이전 페이지로 이동" onClick={handleBack}>
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M15 18l-6-6 6-6"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.4"
+            />
+          </svg>
+        </button>
+        <div>
+          <h1 className={cx('title')}>회원가입</h1>
+          <p className={cx('description')}>
+            {currentStep === 1 ? '기본 정보를 입력해 주세요' : '전화번호 인증으로 마무리할게요'}
+          </p>
+        </div>
       </div>
 
       <div className={cx('content')}>

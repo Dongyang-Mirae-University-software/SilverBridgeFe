@@ -1,0 +1,75 @@
+.button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 8px 13px;
+  white-space: nowrap;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.icon {
+  display: none;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .button {
+    position: fixed;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 40;
+    width: 46px;
+    min-width: 46px;
+    height: 46px;
+    min-height: 46px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--sb-brand);
+    color: #fff;
+    padding: 0;
+    box-shadow: 0 10px 22px rgba(31, 94, 72, 0.24);
+  }
+
+  .button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .button:disabled {
+    opacity: 0.82;
+  }
+
+  .icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+  }
+
+  .icon.spinning {
+    animation: refreshSpin 0.8s linear infinite;
+  }
+}
+
+@keyframes refreshSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

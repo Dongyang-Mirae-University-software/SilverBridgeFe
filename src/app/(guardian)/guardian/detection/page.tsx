@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function GuardianDetectionPage() {
-  return <UserDashboard pageKey="detection" role="GUARDIAN" />;
+  return <PageLayout title="이상감지" description="피보호자의 위험 신호와 이상 상황을 확인합니다." />;
 }

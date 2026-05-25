@@ -33,12 +33,18 @@ function getBackendApiUrl(path: string[], search: string) {
   return `${apiDomain.replace(/\/$/, '')}/api/${pathname}${search}`;
 }
 
-function getProxyRequestHeaders(request: NextRequest) {
+function shouldAttachCookieAccessToken(path: string[]) {
+  const normalizedPath = `/${path.join('/')}`;
+
+  return normalizedPath !== '/auth/signin' && normalizedPath !== '/auth/signin/kakao';
+}
+
+function getProxyRequestHeaders(request: NextRequest, path: string[]) {
   const headers = new Headers(request.headers);
   const accessToken = request.cookies.get('careai_access_token')?.value;
 
   HOP_BY_HOP_HEADERS.forEach(header => headers.delete(header));
-  if (!headers.has('authorization') && accessToken) {
+  if (!headers.has('authorization') && accessToken && shouldAttachCookieAccessToken(path)) {
     headers.set('authorization', `Bearer ${accessToken}`);
   }
 
@@ -61,7 +67,7 @@ async function proxyApiRequest(request: NextRequest, context: RouteContext) {
   const response = await fetch(targetUrl, {
     body,
     cache: 'no-store',
-    headers: getProxyRequestHeaders(request),
+    headers: getProxyRequestHeaders(request, path),
     method,
     redirect: 'manual',
   });

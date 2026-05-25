@@ -6,7 +6,8 @@ import styles from './SignupForm.module.css';
 import SignupBasicInfoStep from './SignupBasicInfoStep';
 import SignupErrorPopup from './SignupErrorPopup';
 import SignupPhoneVerificationStep from './SignupPhoneVerificationStep';
-import useSignupForm from '@/app/_hook/useSignupForm';
+import useSignupForm from '@/hooks/useSignupForm';
+import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 
 const cx = classNames.bind(styles);
@@ -48,6 +49,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
   const [smsSendErrorMsg, setSmsSendErrorMsg] = useState('');
   const [smsCode, setSmsCode] = useState('');
   const [isSmsCheck, setIsSmsCheck] = useState(false);
+  const [smsTimerKey, setSmsTimerKey] = useState(0);
 
   const { mutate: emailCheckMutate, isPending: isEmailCheckPending } = useMutation({
     mutationKey: ['email-check'],
@@ -75,7 +77,10 @@ export default function SignupForm({ step, onStepChange }: Props) {
       setIsCode(false);
       setSmsSendErrorMsg((error as Error).message || '인증번호 발송에 실패했습니다.');
     },
-    onSuccess: () => setIsCode(true),
+    onSuccess: () => {
+      setIsCode(true);
+      setSmsTimerKey(key => key + 1);
+    },
   });
 
   const {
@@ -152,6 +157,16 @@ export default function SignupForm({ step, onStepChange }: Props) {
     if (isStepOneValid) onStepChange(2);
   };
 
+  const handleAddressSearch = async () => {
+    try {
+      const { address, postcode } = await openKakaoPostcode();
+      setValue('postcode', postcode, { shouldDirty: true, shouldValidate: true });
+      setValue('address', address, { shouldDirty: true, shouldValidate: true });
+    } catch (error) {
+      window.alert((error as Error).message || '주소 검색을 불러오지 못했습니다.');
+    }
+  };
+
   return (
     <>
       <form className={cx('container')} onSubmit={onSubmit}>
@@ -171,6 +186,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
             postcodeField={register('postcode', textRules('우편번호를 입력하세요.', 1))}
             addressField={register('address', textRules('주소를 입력하세요.', 1))}
             addressDetailField={register('addressDetail', textRules('상세주소를 입력하세요.', 1))}
+            onAddressSearch={handleAddressSearch}
             onEmailCheck={handleEmailCheck}
             onNextStep={handleNextStep}
           />
@@ -189,6 +205,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
             isSmsCheck={isSmsCheck}
             isSmsSendPending={isSmsSendPending}
             isSmsVerifyPending={isSmsVerifyPending}
+            smsTimerKey={smsTimerKey}
             onCodeChange={handleCode}
             onPhoneCheck={handlePhoneCheck}
             onPhoneReset={handlePhoneReset}

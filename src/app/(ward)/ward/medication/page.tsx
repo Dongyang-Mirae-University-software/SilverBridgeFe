@@ -1,5 +1,5 @@
-import UserDashboard from '@/app/_components/app/UserDashboard';
+import PageLayout from '@/components/layout/PageLayout';
 
 export default function WardMedicationPage() {
-  return <UserDashboard pageKey="medication" role="WARD" />;
+  return <PageLayout title="복약 알림" description="복약 일정과 알림 상태를 확인합니다." />;
 }
