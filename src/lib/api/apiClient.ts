@@ -35,6 +35,16 @@ const refreshClient = axios.create({
 
 let refreshRequest: Promise<string> | null = null;
 
+function clearReactQueryCache() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('careai:auth-expired'));
+}
+
+function clearSession() {
+  clearAuthTokens();
+  clearReactQueryCache();
+}
+
 function setBearerToken(config: InternalAxiosRequestConfig, token: string) {
   const headers = AxiosHeaders.from(config.headers);
   headers.set('Authorization', `Bearer ${token}`);
@@ -51,7 +61,7 @@ async function refreshAccessToken() {
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {
-    clearAuthTokens();
+    clearSession();
     throw new Error('리프레시 토큰이 없습니다.');
   }
 
@@ -75,7 +85,7 @@ async function refreshAccessToken() {
         return tokens.accessToken;
       })
       .catch(error => {
-        clearAuthTokens();
+        clearSession();
         throw error;
       })
       .finally(() => {
@@ -94,7 +104,7 @@ apiClient.interceptors.request.use(
     const token = getAccessToken();
 
     // 토큰이 있으면 Authorization 헤더에 자동으로 붙여줌
-    if (token) {
+    if (token && !isSigninRequest(config.url)) {
       setBearerToken(config, token);
     }
 
@@ -136,7 +146,7 @@ apiClient.interceptors.response.use(
     }
 
     if (isUnauthorized && !isSigninEndpoint) {
-      clearAuthTokens();
+      clearSession();
     }
 
     const apiError = resolveError(error as AxiosError<ServerErrorBody>);

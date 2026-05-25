@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 
-import TextInput from '@/app/_components/common/TextInput';
+import TextInput from '@/components/TextInput';
 import { signin } from '@/service/api/auth';
 import { ISigninResponse } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
@@ -84,10 +84,7 @@ export default function LoginContent() {
   };
 
   const handleKakaoLogin = () => {
-    const clientId = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID;
-    const redirectUri = `${window.location.origin}/auth/kakao/callback`;
-    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
-    window.location.href = kakaoAuthUrl;
+    window.location.href = '/api/oauth/kakao/authorize';
   };
 
   return (

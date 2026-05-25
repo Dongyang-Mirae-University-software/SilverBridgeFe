@@ -7,12 +7,14 @@ import { useRouter } from 'next/navigation';
 import { ChangeEvent, useState } from 'react';
 
 import styles from './SignupForm.module.css';
-import TextInput from '@/app/_components/common/TextInput';
+import SignupSmsCodeFields from './SignupSmsCodeFields';
+import TextInput from '@/components/TextInput';
 import { signupKakao, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
-import { PHONE_PATTRERN } from '@/app/constant/pattern';
+import { PHONE_PATTRERN } from '@/constants/pattern';
 import { GenderType, IKakaoSignupRes, RoleType } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
+import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 
 const cx = classNames.bind(styles);
 
@@ -92,6 +94,7 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
   const [isCode, setIsCode] = useState(false);
   const [smsCode, setSmsCode] = useState('');
   const [isSmsCheck, setIsSmsCheck] = useState(false);
+  const [smsTimerKey, setSmsTimerKey] = useState(0);
 
   const { mutate: sendSms } = useMutation({
     mutationKey: ['kakao-sms-send'],
@@ -101,7 +104,10 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
       setIsSmsCheck(false);
       setValue('verificationNonce', '');
     },
-    onSuccess: () => setIsCode(true),
+    onSuccess: () => {
+      setIsCode(true);
+      setSmsTimerKey(key => key + 1);
+    },
     onError: () => {},
   });
 
@@ -154,6 +160,15 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
     if (smsCode.length !== 6) return;
     verifySms({ code: smsCode, phone: getValues('phone') });
   };
+  const handleAddressSearch = async () => {
+    try {
+      const { address, postcode } = await openKakaoPostcode();
+      setValue('postcode', postcode, { shouldDirty: true, shouldValidate: true });
+      setValue('address', address, { shouldDirty: true, shouldValidate: true });
+    } catch (error) {
+      window.alert((error as Error).message || '주소 검색을 불러오지 못했습니다.');
+    }
+  };
 
   const onSubmit = handleSubmit(data => {
     signupKakaoMutate({
@@ -193,18 +208,19 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
       </div>
       {isCode && (
         <>
-          <TextInput
-            label="인증번호"
-            placeholder="인증번호를 입력하세요"
-            maxLength={6}
-            value={smsCode}
-            onChange={handleCodeChange}
-            error={Boolean(isError)}
-            errorText={isError ? '인증번호가 올바르지 않습니다.' : undefined}
-          />
-          <button className={cx('secondaryButton')} type="button" onClick={handleSmsVerify}>
-            인증 확인
-          </button>
+          {isSmsCheck ? (
+            <p className={cx('codeGuide')}>전화번호 인증이 완료되었습니다.</p>
+          ) : (
+            <SignupSmsCodeFields
+              key={smsTimerKey}
+              phone={getValues('phone')}
+              smsCode={smsCode}
+              errorMessage={isError ? '인증번호가 올바르지 않습니다.' : undefined}
+              expiredMessage="인증 시간이 만료되었습니다. 재설정 후 다시 인증번호를 받아주세요."
+              onCodeChange={handleCodeChange}
+              onSubmit={handleSmsVerify}
+            />
+          )}
         </>
       )}
       <div className={cx('fieldGroup')}>
@@ -226,17 +242,30 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
           errorText={errors.birthDate?.message}
         />
       </div>
+      <div className={cx('addressSearchRow')}>
+        <TextInput
+          label="우편번호"
+          placeholder="주소 검색"
+          required
+          inputMode="numeric"
+          maxLength={10}
+          readOnly
+          {...register('postcode', requiredRule('우편번호를 입력하세요.'))}
+          error={Boolean(errors.postcode)}
+          errorText={errors.postcode?.message}
+        />
+        <button className={cx('addressSearchButton')} type="button" onClick={handleAddressSearch}>
+          주소 검색
+        </button>
+      </div>
       <TextInput
-        label="우편번호"
-        placeholder="06236"
-        required
-        inputMode="numeric"
-        maxLength={10}
-        {...register('postcode', requiredRule('우편번호를 입력하세요.'))}
-        error={Boolean(errors.postcode)}
-        errorText={errors.postcode?.message}
+        label="주소"
+        placeholder="주소 검색으로 입력하세요"
+        readOnly
+        {...register('address', requiredRule('주소를 입력하세요.'))}
+        error={Boolean(errors.address)}
+        errorText={errors.address?.message}
       />
-      <TextInput label="주소" placeholder="주소를 입력하세요" {...register('address', requiredRule('주소를 입력하세요.'))} error={Boolean(errors.address)} errorText={errors.address?.message} />
       <TextInput
         label="상세 주소"
         placeholder="상세 주소를 입력하세요"
