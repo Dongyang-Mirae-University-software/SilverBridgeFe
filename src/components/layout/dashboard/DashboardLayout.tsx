@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { logout } from '@/service/api/auth';
-import { changeMyProfileImage } from '@/service/api/user';
+import { changeMyProfileImage, deleteMyProfileImage } from '@/service/api/user';
 import { myProfileQueryKey, myProfileQueryOptions } from '@/service/query/user';
 import { AuthRole, clearAuthTokens, getAccessTokenSubject } from '@/lib/auth/tokenStore';
 import { getUserProfileData } from '@/lib/auth/userProfile';
@@ -44,6 +44,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const userInitial = userName.charAt(0) || 'U';
   const { mutate: logoutMutate, isPending: isLoggingOut } = useLogoutMutation(queryClient, router);
   const { mutate: profileImageMutate, isPending: isProfileImageChanging } = useProfileImageMutation(queryClient);
+  const { mutate: profileImageDeleteMutate, isPending: isProfileImageDeleting } = useProfileImageDeleteMutation(queryClient);
 
   useWardSettings(isWard, isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
   useConnectionSocket(realtimeUserId, role);
@@ -54,6 +55,11 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   };
   const handleProfileImageChange = (file?: File) => {
     if (file && !isProfileImageChanging) profileImageMutate(file);
+  };
+  const handleProfileImageDelete = () => {
+    if (isProfileImageDeleting || !profile?.profileImage) return;
+    if (!window.confirm('프로필 이미지를 삭제할까요?')) return;
+    profileImageDeleteMutate();
   };
 
   return (
@@ -79,9 +85,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         {isProfileModalOpen && (
           <ProfileModal
             isLoggingOut={isLoggingOut}
-            isProfileImageChanging={isProfileImageChanging}
+            isProfileImageChanging={isProfileImageChanging || isProfileImageDeleting}
             onClose={() => setIsProfileModalOpen(false)}
             onLogout={handleLogout}
+            onProfileImageDelete={handleProfileImageDelete}
             onProfileImageChange={handleProfileImageChange}
             profile={profile}
             role={role}
@@ -122,6 +129,17 @@ function useProfileImageMutation(queryClient: ReturnType<typeof useQueryClient>)
       await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
     },
     onError: error => console.error('프로필 이미지 변경 실패:', error),
+  });
+}
+
+function useProfileImageDeleteMutation(queryClient: ReturnType<typeof useQueryClient>) {
+  return useMutation({
+    mutationKey: ['user-profile-image-delete'],
+    mutationFn: deleteMyProfileImage,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+    },
+    onError: error => console.error('프로필 이미지 삭제 실패:', error),
   });
 }
 

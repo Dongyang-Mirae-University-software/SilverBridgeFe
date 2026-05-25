@@ -11,6 +11,7 @@ interface Props {
   onClose: () => void;
   onLogout: () => void;
   onProfileImageChange: (file?: File) => void;
+  onProfileImageDelete: () => void;
   profile: IUserProfile | null;
   role: AuthRole;
   userEmail: string;
@@ -25,6 +26,7 @@ export function ProfileModal({
   onClose,
   onLogout,
   onProfileImageChange,
+  onProfileImageDelete,
   profile,
   role,
   userEmail,
@@ -74,6 +76,17 @@ export function ProfileModal({
                   }}
                 />
               </label>
+              {profile?.profileImage && (
+                <button
+                  className={cx('profilePhotoDeleteButton')}
+                  type="button"
+                  aria-label="프로필 이미지 삭제"
+                  disabled={isProfileImageChanging}
+                  onClick={onProfileImageDelete}
+                >
+                  ×
+                </button>
+              )}
             </div>
             <div>
               <div className={cx('profileModalBadges')}>
