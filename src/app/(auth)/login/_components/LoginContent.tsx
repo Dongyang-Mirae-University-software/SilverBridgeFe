@@ -10,6 +10,7 @@ import { signin } from '@/service/api/auth';
 import { ISigninResponse } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
+import { getKakaoAuthorizeUrl } from '@/lib/auth/kakao';
 import styles from './LoginContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -84,10 +85,11 @@ export default function LoginContent() {
   };
 
   const handleKakaoLogin = () => {
-    const clientId = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID;
-    const redirectUri = `${window.location.origin}/auth/kakao/callback`;
-    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
-    window.location.href = kakaoAuthUrl;
+    try {
+      window.location.href = getKakaoAuthorizeUrl();
+    } catch (error) {
+      setErrorMessage((error as Error).message || '카카오 로그인 설정을 확인해주세요.');
+    }
   };
 
   return (

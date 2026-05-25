@@ -21,6 +21,7 @@ export interface ISigninReq {
 
 export interface IKakaoSigninReq {
   code: string;
+  redirectUri: string;
 }
 
 export interface IKakaoSigninRes {
