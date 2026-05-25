@@ -440,8 +440,37 @@
   box-shadow: var(--sb-shadow-sm);
 }
 
+.profilePhotoDeleteButton {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid #f0c9c2;
+  border-radius: 999px;
+  background: #fff7f5;
+  color: var(--sb-warn);
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 850;
+  line-height: 1;
+  box-shadow: var(--sb-shadow-sm);
+}
+
 .profilePhotoEditButton:hover {
   background: var(--sb-brand-50);
+}
+
+.profilePhotoDeleteButton:hover {
+  background: #fee9e5;
+}
+
+.profilePhotoEditButton:disabled,
+.profilePhotoDeleteButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .profilePhotoEditButton svg {
