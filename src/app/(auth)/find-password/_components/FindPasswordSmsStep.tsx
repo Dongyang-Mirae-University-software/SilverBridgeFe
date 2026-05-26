@@ -4,6 +4,7 @@ import { FormEvent } from 'react';
 import classNames from 'classnames/bind';
 
 import TextInput from '@/components/TextInput';
+import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
 import styles from './FindPasswordContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -36,8 +37,8 @@ export default function FindPasswordSmsStep({ name, phone, errorMessage, isPendi
         name="phone"
         placeholder="숫자만 입력하세요"
         type="tel"
-        value={phone}
-        onChange={event => onChange('phone', event.target.value)}
+        value={formatPhoneNumber(phone)}
+        onChange={event => onChange('phone', getPhoneDigits(event.target.value))}
       />
       {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
       <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">

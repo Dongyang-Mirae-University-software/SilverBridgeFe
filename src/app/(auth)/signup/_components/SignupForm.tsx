@@ -7,6 +7,7 @@ import SignupBasicInfoStep from './SignupBasicInfoStep';
 import SignupErrorPopup from './SignupErrorPopup';
 import SignupPhoneVerificationStep from './SignupPhoneVerificationStep';
 import useSignupForm from '@/hooks/useSignupForm';
+import { getPhoneDigits } from '@/lib/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 
@@ -109,6 +110,9 @@ export default function SignupForm({ step, onStepChange }: Props) {
   const handlePhoneCheck = () => {
     smsSendMutate({ phone: getValues('phone') });
   };
+  const handlePhoneChange = (value: string) => {
+    setValue('phone', getPhoneDigits(value), { shouldDirty: true, shouldValidate: true });
+  };
 
   const handleCode = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value.replace(/\D/g, '');
@@ -207,6 +211,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
             isSmsVerifyPending={isSmsVerifyPending}
             smsTimerKey={smsTimerKey}
             onCodeChange={handleCode}
+            onPhoneChange={handlePhoneChange}
             onPhoneCheck={handlePhoneCheck}
             onPhoneReset={handlePhoneReset}
             onPrevStep={() => onStepChange(1)}

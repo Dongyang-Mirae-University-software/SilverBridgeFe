@@ -13,6 +13,7 @@ import { getUserProfileData } from '@/lib/auth/userProfile';
 import { ProfileInfoPanel } from './ProfileInfoPanel';
 import { ProfileSecurityPanel } from './ProfileSecurityPanel';
 import { getModalErrorMessage, getProfileFormValue, getSmsVerificationNonce } from '@/lib/dashboard/profile';
+import { getPhoneDigits } from '@/lib/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 import { cx } from './styles';
 
@@ -35,7 +36,7 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [activePanel, setActivePanel] = useState<'profile' | 'security'>('profile');
   const isKakaoUser = profile?.provider === 'KAKAO';
-  const isPhoneChanged = (profileForm.phone ?? '').trim() !== (profile?.phone ?? '');
+  const isPhoneChanged = (profileForm.phone ?? '').trim() !== getPhoneDigits(profile?.phone ?? '');
 
   const profileMutation = useMutation({
     mutationKey: ['user-profile-update'],

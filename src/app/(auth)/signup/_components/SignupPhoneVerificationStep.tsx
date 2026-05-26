@@ -6,6 +6,7 @@ import styles from './SignupForm.module.css';
 import SignupSmsCodeFields from './SignupSmsCodeFields';
 import TextInput from '@/components/TextInput';
 import { SignupFormValues } from '@/hooks/useSignupForm';
+import { formatPhoneNumber } from '@/lib/format/phone';
 
 const cx = classNames.bind(styles);
 
@@ -23,6 +24,7 @@ interface SignupPhoneVerificationStepProps {
   isSmsVerifyPending: boolean;
   smsTimerKey: number;
   onCodeChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onPhoneChange: (value: string) => void;
   onPhoneCheck: () => void;
   onPhoneReset: () => void;
   onPrevStep: () => void;
@@ -43,6 +45,7 @@ export default function SignupPhoneVerificationStep({
   isSmsVerifyPending,
   smsTimerKey,
   onCodeChange,
+  onPhoneChange,
   onPhoneCheck,
   onPhoneReset,
   onPrevStep,
@@ -67,6 +70,8 @@ export default function SignupPhoneVerificationStep({
               placeholder="010-0000-0000"
               required
               {...phoneField}
+              value={formatPhoneNumber(allValues.phone)}
+              onChange={event => onPhoneChange(event.target.value)}
               error={Boolean(hasPhoneError || smsSendErrorMsg)}
               disabled={isCode}
               errorText={phoneErrorText}

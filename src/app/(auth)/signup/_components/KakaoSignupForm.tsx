@@ -14,6 +14,7 @@ import { PHONE_PATTRERN } from '@/constants/pattern';
 import { GenderType, IKakaoSignupRes, RoleType } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
+import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 
 const cx = classNames.bind(styles);
@@ -95,6 +96,8 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
   const [smsCode, setSmsCode] = useState('');
   const [isSmsCheck, setIsSmsCheck] = useState(false);
   const [smsTimerKey, setSmsTimerKey] = useState(0);
+  const [phoneValue, setPhoneValue] = useState('');
+  const phoneField = register('phone', phoneRule('전화번호 형식이 올바르지 않습니다.'));
 
   const { mutate: sendSms } = useMutation({
     mutationKey: ['kakao-sms-send'],
@@ -145,6 +148,11 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
   });
 
   const handlePhoneCheck = () => sendSms({ phone: getValues('phone') });
+  const handlePhoneChange = (value: string) => {
+    const digits = getPhoneDigits(value);
+    setPhoneValue(digits);
+    setValue('phone', digits, { shouldDirty: true, shouldValidate: true });
+  };
   const handleCodeChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value.replace(/\D/g, '');
     setSmsCode(value.slice(0, 6));
@@ -153,6 +161,7 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
     setIsCode(false);
     setSmsCode('');
     setIsSmsCheck(false);
+    setPhoneValue('');
     setValue('phone', '');
     setValue('verificationNonce', '');
   };
@@ -193,7 +202,9 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
       <TextInput
         label="전화번호"
         placeholder="전화번호를 입력하세요"
-        {...register('phone', phoneRule('전화번호 형식이 올바르지 않습니다.'))}
+        {...phoneField}
+        value={formatPhoneNumber(phoneValue)}
+        onChange={event => handlePhoneChange(event.target.value)}
         error={Boolean(errors.phone && getValues('phone').trim() !== '')}
         errorText={errors.phone?.message}
         disabled={isCode}

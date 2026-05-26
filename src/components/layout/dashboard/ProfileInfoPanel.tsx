@@ -4,6 +4,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import { signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { GenderType } from '@/service/interface/auth';
 import { IUserUpdateReq } from '@/service/interface/user';
+import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
 import { cx } from './styles';
 
 interface Props {
@@ -41,8 +42,8 @@ export function ProfileInfoPanel({
           <ProfileInput
             inputMode="numeric"
             label="전화번호"
-            value={form.phone ?? ''}
-            onValueChange={value => onChange('phone', value.replace(/\D/g, ''))}
+            value={formatPhoneNumber(form.phone ?? '')}
+            onValueChange={value => onChange('phone', getPhoneDigits(value))}
           />
           <label className={cx('profileField')}>
             <span>성별</span>
