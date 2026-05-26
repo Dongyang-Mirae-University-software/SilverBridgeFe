@@ -7,6 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import { getKakaoRedirectUri } from '@/lib/auth/kakao';
 import { getRoleHomePath } from '@/lib/auth/routes';
+import { reportNonApiError } from '@/lib/api/reportError';
 import { signinKakao } from '@/service/api/auth';
 import { IKakaoSigninRes } from '@/service/interface/auth';
 
@@ -55,7 +56,7 @@ function KakaoCallbackInner() {
       router.push('/login');
     },
     onError: error => {
-      console.error('카카오 로그인 실패:', error);
+      reportNonApiError('카카오 로그인 실패:', error);
       router.push('/login');
     },
   });

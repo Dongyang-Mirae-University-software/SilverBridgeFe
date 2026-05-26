@@ -2,6 +2,7 @@
 
 import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import { getMessaging, getToken, isSupported, MessagePayload, Messaging, onMessage } from 'firebase/messaging';
+import { reportNonApiError } from '@/lib/api/reportError';
 import { deleteNotificationFcmToken, registerNotificationFcmToken } from '@/service/api/notification';
 
 const FCM_TOKEN_KEY = 'careai_fcm_token';
@@ -125,7 +126,7 @@ export function listenForegroundMessages(handler: (payload: MessagePayload) => v
       unsubscribe = onMessage(messaging, handler);
     })
     .catch(error => {
-      console.error('FCM 포그라운드 메시지 연결 실패:', error);
+      reportNonApiError('FCM 포그라운드 메시지 연결 실패:', error);
     });
 
   return () => {
