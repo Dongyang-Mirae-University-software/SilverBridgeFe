@@ -112,7 +112,7 @@ export function ProfileModal({
         </div>
 
         <ProfileModalControls
-          key={profile?.id ?? 'anonymous-profile'}
+          key={getProfileControlsKey(profile)}
           profile={profile}
           isLoggingOut={isLoggingOut}
           onClose={onClose}
@@ -121,4 +121,19 @@ export function ProfileModal({
       </section>
     </div>
   );
+}
+
+function getProfileControlsKey(profile: IUserProfile | null) {
+  if (!profile) return 'profile-loading';
+
+  return [
+    profile.id,
+    profile.name,
+    profile.phone,
+    profile.gender,
+    profile.birthDate,
+    profile.postcode,
+    profile.address,
+    profile.addressDetail,
+  ].join('|');
 }
