@@ -17,6 +17,7 @@ import { DashboardSidebar } from './DashboardSidebar';
 import { ProfileModal } from './ProfileModal';
 import { GUARDIAN_NAV, PAGE_TITLES, WARD_NAV } from '@/constants/dashboard';
 import { getRealtimeNotification } from '@/lib/dashboard/realtime';
+import { reportNonApiError } from '@/lib/api/reportError';
 import { cx } from './styles';
 import { PageKey, WardSettings } from './types';
 import { DEFAULT_WARD_SETTINGS, clampFontSize, getValidSosAction, WARD_SETTINGS_STORAGE_KEY } from '@/constants/wardSettings';
@@ -110,7 +111,7 @@ function useLogoutMutation(queryClient: ReturnType<typeof useQueryClient>, route
   return useMutation({
     mutationKey: ['logout'],
     mutationFn: async () => {
-      await unregisterFcmTokenForCurrentDevice().catch(error => console.error('FCM 토큰 삭제 실패:', error));
+      await unregisterFcmTokenForCurrentDevice().catch(error => reportNonApiError('FCM 토큰 삭제 실패:', error));
       return logout();
     },
     onSettled: () => {
@@ -128,7 +129,7 @@ function useProfileImageMutation(queryClient: ReturnType<typeof useQueryClient>)
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
     },
-    onError: error => console.error('프로필 이미지 변경 실패:', error),
+    onError: error => reportNonApiError('프로필 이미지 변경 실패:', error),
   });
 }
 
@@ -139,7 +140,7 @@ function useProfileImageDeleteMutation(queryClient: ReturnType<typeof useQueryCl
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
     },
-    onError: error => console.error('프로필 이미지 삭제 실패:', error),
+    onError: error => reportNonApiError('프로필 이미지 삭제 실패:', error),
   });
 }
 
