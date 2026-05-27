@@ -9,6 +9,7 @@ import { changeMyProfileImage, deleteMyProfileImage } from '@/service/api/user';
 import { myProfileQueryKey, myProfileQueryOptions } from '@/service/query/user';
 import { AuthRole, clearAuthTokens, getAccessTokenSubject } from '@/lib/auth/tokenStore';
 import { getUserProfileData } from '@/lib/auth/userProfile';
+import { setMyProfileCache, updateMyProfileCache } from '@/lib/dashboard/profileCache';
 import { unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { formatPhoneNumber } from '@/lib/format/phone';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
@@ -127,8 +128,9 @@ function useProfileImageMutation(queryClient: ReturnType<typeof useQueryClient>)
   return useMutation({
     mutationKey: ['user-profile-image-change'],
     mutationFn: changeMyProfileImage,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+    onSuccess: response => {
+      setMyProfileCache(queryClient, response);
+      void queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
     },
     onError: error => reportNonApiError('프로필 이미지 변경 실패:', error),
   });
@@ -138,10 +140,22 @@ function useProfileImageDeleteMutation(queryClient: ReturnType<typeof useQueryCl
   return useMutation({
     mutationKey: ['user-profile-image-delete'],
     mutationFn: deleteMyProfileImage,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: myProfileQueryKey });
+      const previousProfile = queryClient.getQueryData(myProfileQueryKey);
+      updateMyProfileCache(queryClient, profile => ({ ...profile, profileImage: null }));
+
+      return { previousProfile };
     },
-    onError: error => reportNonApiError('프로필 이미지 삭제 실패:', error),
+    onError: (error, _variables, context) => {
+      if (context?.previousProfile) queryClient.setQueryData(myProfileQueryKey, context.previousProfile);
+      reportNonApiError('프로필 이미지 삭제 실패:', error);
+    },
+    onSuccess: response => {
+      const profile = setMyProfileCache(queryClient, response);
+      if (!profile) updateMyProfileCache(queryClient, current => ({ ...current, profileImage: null }));
+      void queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+    },
   });
 }
 
