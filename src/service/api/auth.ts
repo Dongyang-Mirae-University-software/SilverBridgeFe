@@ -7,6 +7,7 @@ import {
   IFindPasswordEmailVerifyReq,
   IFindPasswordSmsSendReq,
   IFindPasswordSmsVerifyReq,
+  IFindPasswordSendResponse,
   IFindPasswordTokenResponse,
   IAuthTokenResponse,
   IRefreshReq,
@@ -72,7 +73,7 @@ export async function findEmail(body: IFindEmailReq) {
 
 // ── 비밀번호 찾기 · 이메일 ───────────────────────────────────────────────────
 export async function findPasswordEmailSend(body: IFindPasswordEmailSendReq) {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/email/send`, body);
+  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/email/send`, body);
 }
 
 export async function findPasswordEmailVerify(body: IFindPasswordEmailVerifyReq) {
@@ -80,12 +81,12 @@ export async function findPasswordEmailVerify(body: IFindPasswordEmailVerifyReq)
 }
 
 export async function findPasswordEmailResend(body: IFindPasswordEmailSendReq) {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/email/resend`, body);
+  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/email/resend`, body);
 }
 
 // ── 비밀번호 찾기 · SMS ──────────────────────────────────────────────────────
 export async function findPasswordSmsSend(body: IFindPasswordSmsSendReq) {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/sms/send`, body);
+  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/sms/send`, body);
 }
 
 export async function findPasswordSmsVerify(body: IFindPasswordSmsVerifyReq) {
@@ -93,7 +94,7 @@ export async function findPasswordSmsVerify(body: IFindPasswordSmsVerifyReq) {
 }
 
 export async function findPasswordSmsResend(body: IFindPasswordSmsSendReq) {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/sms/resend`, body);
+  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/sms/resend`, body);
 }
 
 // ── 비밀번호 재설정 ────────────────────────────────────────────────────────────

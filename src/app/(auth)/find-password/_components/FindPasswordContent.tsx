@@ -25,17 +25,26 @@ export default function FindPasswordContent() {
     flow.setMethod(method);
     flow.setStep(2);
   };
+  const handleKakaoLogin = () => {
+    window.location.href = '/api/oauth/kakao/authorize';
+  };
 
   const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await flow.sendEmail({ email: flow.email });
-    flow.setStep(3);
+    try {
+      await flow.sendEmail({ email: flow.email });
+      flow.setStep(3);
+    } catch {
+    }
   };
 
   const handleSmsSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await flow.sendSms({ name: flow.name, phone: flow.phone });
-    flow.setStep(3);
+    try {
+      await flow.sendSms({ name: flow.name, phone: flow.phone });
+      flow.setStep(3);
+    } catch {
+    }
   };
 
   const handleVerifySubmit = async (code: string) => {
@@ -47,9 +56,11 @@ export default function FindPasswordContent() {
   };
 
   const handleResetSubmit = async (newPassword: string) => {
-    await flow.resetPassword({ token: flow.token!, newPassword });
-    // 성공 시 로그인 페이지로 이동
-    router.push('/login');
+    try {
+      await flow.resetPassword({ token: flow.token!, newPassword });
+      router.push('/login');
+    } catch {
+    }
   };
 
   return (
@@ -68,6 +79,9 @@ export default function FindPasswordContent() {
           errorMessage={flow.errorMessage}
           isPending={flow.isSending}
           onChange={flow.setEmail}
+          onFindEmail={() => router.push('/find-email')}
+          onKakaoLogin={handleKakaoLogin}
+          onSignup={() => router.push('/signup')}
           onSubmit={handleEmailSubmit}
           onResend={flow.step > 2 ? () => flow.resendEmail({ email: flow.email }) : undefined}
         />
@@ -79,6 +93,8 @@ export default function FindPasswordContent() {
           errorMessage={flow.errorMessage}
           isPending={flow.isSending}
           onChange={flow.setFormField}
+          onKakaoLogin={handleKakaoLogin}
+          onSignup={() => router.push('/signup')}
           onSubmit={handleSmsSubmit}
           onResend={flow.step > 2 ? () => flow.resendSms({ name: flow.name, phone: flow.phone }) : undefined}
         />
@@ -86,6 +102,8 @@ export default function FindPasswordContent() {
       {flow.step === 3 && (
         <FindPasswordVerifyStep
           errorMessage={flow.errorMessage}
+          codeLength={flow.verificationConfig.codeLength}
+          expiresInSeconds={flow.verificationConfig.expiresInSeconds}
           onResend={flow.method === 'email' ? () => flow.resendEmail({ email: flow.email }) : () => flow.resendSms({ name: flow.name, phone: flow.phone })}
           onSubmit={handleVerifySubmit}
         />
