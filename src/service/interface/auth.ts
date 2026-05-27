@@ -120,6 +120,11 @@ export interface IFindPasswordSmsVerifyReq {
   code: string;
 }
 
+export interface IFindPasswordSendResponse {
+  expiresInSeconds: number;
+  codeLength: number;
+}
+
 export interface IFindPasswordTokenResponse {
   token: string;
 }
