@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 
 import { cx } from '@/components/layout/dashboard/styles';
+import { formatPhoneNumber } from '@/lib/format/phone';
 import { IConnectionItem } from '@/service/interface/connection';
 
 export { cx };
@@ -49,6 +50,21 @@ function formatDate(value: string | null) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value));
+}
+
+function getConnectionAddress(connection: IConnectionItem) {
+  return [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
+}
+
+function ConnectionDetail({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+
+  return (
+    <div className={cx('connectionDetailItem')}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
 }
 
 export function EmptyState({ message }: { message: string }) {
@@ -129,34 +145,43 @@ export function ConnectionCard({
   secondaryAction?: () => void;
   secondaryLabel?: string;
 }) {
+  const address = connection.status === 'ACTIVE' ? getConnectionAddress(connection) : '';
+  const dateLabel = connection.status === 'ACTIVE' ? '연결일' : '요청일';
+  const dateValue = connection.status === 'ACTIVE' ? formatDate(connection.connectedAt) : formatDate(connection.createdAt);
+
   return (
     <li className={cx('connectionCard')}>
-      <div className={cx('connectionAvatar')}>
-        {connection.partnerProfileImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img alt="" src={connection.partnerProfileImage} />
-        ) : (
-          connection.partnerName.charAt(0) || '?'
-        )}
-      </div>
-      <div className={cx('connectionInfo')}>
-        <div className={cx('connectionTitleRow')}>
-          <strong>{connection.partnerName}</strong>
-          <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>
-            {getConnectionStatusLabel(connection.status)}
-          </span>
+      <div className={cx('connectionCardMain')}>
+        <div className={cx('connectionAvatar')}>
+          {connection.partnerProfileImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img alt="" src={connection.partnerProfileImage} />
+          ) : (
+            connection.partnerName.charAt(0) || '?'
+          )}
         </div>
-        <span className={cx('connectionMeta')}>ID {connection.partnerUserId}</span>
-        {connection.relation && <span className={cx('connectionMeta')}>관계 {connection.relation}</span>}
-        {connection.partnerPhone && <span className={cx('connectionMeta')}>연락처 {connection.partnerPhone}</span>}
-        {connection.status === 'ACTIVE' && connection.partnerAddress && (
-          <span className={cx('connectionMeta')}>
-            주소 {[connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ')}
-          </span>
-        )}
-        <span className={cx('connectionMeta')}>
-          {connection.status === 'ACTIVE' ? `연결일 ${formatDate(connection.connectedAt)}` : `요청일 ${formatDate(connection.createdAt)}`}
-        </span>
+        <div className={cx('connectionInfo')}>
+          <div className={cx('connectionTitleRow')}>
+            <div className={cx('connectionNameBlock')}>
+              <strong>{connection.partnerName || '이름 확인 전'}</strong>
+              <span>ID {connection.partnerUserId}</span>
+            </div>
+            <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>
+              {getConnectionStatusLabel(connection.status)}
+            </span>
+          </div>
+
+          <div className={cx('connectionSummaryRow')}>
+            {connection.relation && <span>{connection.relation}</span>}
+            <span>{dateValue}</span>
+          </div>
+
+          <div className={cx('connectionDetailGrid')}>
+            <ConnectionDetail label="연락처" value={connection.partnerPhone ? formatPhoneNumber(connection.partnerPhone) : null} />
+            <ConnectionDetail label={dateLabel} value={dateValue} />
+            <ConnectionDetail label="주소" value={address} />
+          </div>
+        </div>
       </div>
       <div className={cx('connectionActions')}>
         <button className={cx('connectionPrimaryButton')} type="button" disabled={isPending} onClick={primaryAction}>
