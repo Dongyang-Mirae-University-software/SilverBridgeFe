@@ -10,6 +10,7 @@ import { IUserProfile, IUserUpdateReq } from '@/service/interface/user';
 import { myProfileQueryKey } from '@/service/query/user';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
 import { getUserProfileData } from '@/lib/auth/userProfile';
+import { setMyProfileCache } from '@/lib/dashboard/profileCache';
 import { ProfileInfoPanel } from './ProfileInfoPanel';
 import { ProfileSecurityPanel } from './ProfileSecurityPanel';
 import { getModalErrorMessage, getProfileFormValue, getSmsVerificationNonce } from '@/lib/dashboard/profile';
@@ -43,11 +44,12 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
     mutationFn: updateMyProfile,
     onMutate: () => setFeedbackMessage(''),
     onSuccess: async response => {
-      setProfileForm(getProfileFormValue(getUserProfileData(response)));
+      const profile = setMyProfileCache(queryClient, response) ?? getUserProfileData(response);
+      setProfileForm(getProfileFormValue(profile));
       setPhoneCode('');
       setPhoneNonce(null);
       setFeedbackMessage('프로필 정보를 수정했습니다.');
-      await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+      void queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
     },
     onError: error => setFeedbackMessage(getModalErrorMessage(error, '프로필 수정에 실패했습니다.')),
   });
