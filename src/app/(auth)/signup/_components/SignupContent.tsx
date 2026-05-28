@@ -27,13 +27,13 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
   const name = searchParams.name;
   const profileImageUrl = searchParams.profileImageUrl;
 
-  const isKakao = Boolean(kakaoId && email && name);
+  const isKakao = Boolean(kakaoId && email);
 
   const kakaoData = isKakao
     ? {
         kakaoId: kakaoId!,
         email: email!,
-        name: name!,
+        name: name || '',
         profileImageUrl: profileImageUrl || undefined,
       }
     : undefined;
