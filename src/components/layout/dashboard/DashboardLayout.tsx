@@ -40,7 +40,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const rootPath = isWard ? '/ward' : '/guardian';
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
-  const realtimeUserId = profile?.id ?? getAccessTokenSubject();
+  const accessTokenSubject = getAccessTokenSubject();
+  const realtimeUserIds = [profile?.id, accessTokenSubject].filter((id): id is string => Boolean(id));
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
   const userEmail = profile?.email ?? '이메일 정보 없음';
   const userPhone = profile?.phone ? formatPhoneNumber(profile.phone) : '전화번호 정보 없음';
@@ -50,7 +51,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const { mutate: profileImageDeleteMutate, isPending: isProfileImageDeleting } = useProfileImageDeleteMutation(queryClient);
 
   useWardSettings(isWard, isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
-  useConnectionSocket(realtimeUserId, role);
+  useConnectionSocket(realtimeUserIds, role);
 
   const stageStyle = isWard ? ({ '--ward-preferred-font-size': `${wardSettings.fontSize}px` } as CSSProperties) : undefined;
   const handleLogout = () => {
@@ -184,17 +185,20 @@ function useWardSettings(
   }, [isWard, isLoaded, settings]);
 }
 
-function useConnectionSocket(realtimeUserId: string | null | undefined, role: AuthRole) {
+function useConnectionSocket(realtimeUserIds: string[], role: AuthRole) {
+  const realtimeUserIdKey = realtimeUserIds.join('|');
+
   useEffect(() => {
-    if (!realtimeUserId) return;
+    const userIds = realtimeUserIdKey.split('|').filter(Boolean);
+    if (userIds.length === 0) return;
     return connectConnectionSocket({
       role,
-      userId: realtimeUserId,
+      userId: userIds,
       onMessage: payload => {
         window.dispatchEvent(new CustomEvent('careai:push', { detail: { data: { connectionId: payload.connectionId ?? '', type: payload.type }, notification: getRealtimeNotification(payload) } }));
       },
     });
-  }, [realtimeUserId, role]);
+  }, [realtimeUserIdKey, role]);
 }
 
 function getPageKey(pathname: string, navItems: Array<{ href: string; key: PageKey }>) {
