@@ -6,7 +6,6 @@ import styles from './SignupForm.module.css';
 import SignupSmsCodeFields from './SignupSmsCodeFields';
 import TextInput from '@/components/TextInput';
 import { SignupFormValues } from '@/hooks/useSignupForm';
-import { formatPhoneNumber } from '@/lib/format/phone';
 
 const cx = classNames.bind(styles);
 
@@ -67,10 +66,12 @@ export default function SignupPhoneVerificationStep({
           <div className={cx('fieldGrow')}>
             <TextInput
               label="전화번호"
-              placeholder="010-0000-0000"
+              placeholder="01012345678"
               required
+              inputMode="numeric"
+              maxLength={11}
               {...phoneField}
-              value={formatPhoneNumber(allValues.phone)}
+              value={allValues.phone}
               onChange={event => onPhoneChange(event.target.value)}
               error={Boolean(hasPhoneError || smsSendErrorMsg)}
               disabled={isCode}
