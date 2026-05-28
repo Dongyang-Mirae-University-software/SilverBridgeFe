@@ -17,10 +17,8 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
 
 function getApiBaseUrl() {
   const apiDomain = process.env.NEXT_PUBLIC_API_DOMAIN?.replace(/\/$/, '');
-  const isLocalBrowser =
-    typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
-  if (!apiDomain || isLocalBrowser) return '/api';
+  if (!apiDomain) return '/api';
 
   return `${apiDomain}/api`;
 }
