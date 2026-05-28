@@ -4,8 +4,8 @@ import { useMutation } from '@tanstack/react-query';
 
 import styles from './SignupForm.module.css';
 import SignupBasicInfoStep from './SignupBasicInfoStep';
-import SignupErrorPopup from './SignupErrorPopup';
 import SignupPhoneVerificationStep from './SignupPhoneVerificationStep';
+import { CommonModal } from '@/components/CommonModal';
 import useSignupForm from '@/hooks/useSignupForm';
 import { getPhoneDigits } from '@/lib/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
@@ -220,7 +220,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
         )}
       </form>
 
-      {signupError && <SignupErrorPopup message={signupError} onClose={clearSignupError} />}
+      {signupError && <CommonModal type="error" title="회원가입 실패" message={signupError} onClose={clearSignupError} />}
     </>
   );
 }
