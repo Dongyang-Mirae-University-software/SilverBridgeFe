@@ -10,6 +10,7 @@ import { signup, signupKakao } from '@/service/api/auth';
 import { useRouter } from 'next/navigation';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import { getRoleHomePath } from '@/lib/auth/routes';
+import { getPhoneDigits } from '@/lib/format/phone';
 
 export type SignupFormValues = {
   name: string;
@@ -137,11 +138,13 @@ export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) 
   const router = useRouter();
 
   function onSubmit(formData: SignupFormValues) {
+    const phone = getPhoneDigits(formData.phone);
+
     if (isKakaoSignup && kakaoData) {
       const form: IKakaoSignupReq = {
         kakaoId: kakaoData.kakaoId,
         name: formData.name,
-        phone: formData.phone,
+        phone,
         verificationNonce: formData.verificationNonce,
         role: formData.role,
         profileImageUrl: kakaoData.profileImageUrl,
@@ -182,7 +185,7 @@ export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) 
       name: formData.name,
       email: formData.email,
       password: formData.password,
-      phone: formData.phone,
+      phone,
       verificationNonce: formData.verificationNonce,
       role: formData.role,
       address: formData.address,
