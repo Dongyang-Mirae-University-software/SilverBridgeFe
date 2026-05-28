@@ -40,7 +40,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const rootPath = isWard ? '/ward' : '/guardian';
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
-  const realtimeUserId = getAccessTokenSubject() ?? profile?.id;
+  const realtimeUserId = profile?.id ?? getAccessTokenSubject();
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
   const userEmail = profile?.email ?? '이메일 정보 없음';
   const userPhone = profile?.phone ? formatPhoneNumber(profile.phone) : '전화번호 정보 없음';
