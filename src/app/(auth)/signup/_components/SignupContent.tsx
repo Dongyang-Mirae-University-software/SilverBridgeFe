@@ -14,7 +14,6 @@ type SignupContentProps = {
   searchParams: {
     kakaoId?: string;
     email?: string;
-    name?: string;
     profileImageUrl?: string;
   };
 };
@@ -25,7 +24,6 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
   const [signupStep, setSignupStep] = useState(1);
   const kakaoId = searchParams.kakaoId || clientSearchParams.get('kakaoId') || '';
   const email = searchParams.email || clientSearchParams.get('email') || '';
-  const name = searchParams.name ?? clientSearchParams.get('name') ?? '';
   const profileImageUrl = searchParams.profileImageUrl || clientSearchParams.get('profileImageUrl') || '';
 
   const isKakao = Boolean(kakaoId && email);
@@ -34,7 +32,6 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
     ? {
         kakaoId: kakaoId!,
         email: email!,
-        name,
         profileImageUrl: profileImageUrl || undefined,
       }
     : undefined;

@@ -35,7 +35,6 @@ function KakaoCallbackInner() {
         const params = new URLSearchParams({
           kakaoId: data.kakaoId || '',
           email: data.email || '',
-          name: data.name || '',
           profileImageUrl: data.profileImageUrl || '',
         });
         router.push(`/signup?${params.toString()}`);
