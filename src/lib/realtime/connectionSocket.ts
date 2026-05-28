@@ -30,6 +30,7 @@ const WARD_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealt
 const GUARDIAN_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
   { destination: 'connection-accepted', type: 'CONNECTION_ACCEPTED' },
   { destination: 'connection-refused', type: 'CONNECTION_REFUSED' },
+  { destination: 'connection-cancelled', type: 'CONNECTION_REFUSED' },
 ];
 
 function getSocketUrl(accessToken: string) {
