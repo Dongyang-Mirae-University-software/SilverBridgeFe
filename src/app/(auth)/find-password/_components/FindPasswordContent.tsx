@@ -48,7 +48,9 @@ export default function FindPasswordContent() {
   };
 
   const handleVerifySubmit = async (code: string) => {
-    const isVerified = await flow.verifyCode(flow.method === 'email' ? { token: code } : { phone: flow.phone, code });
+    const isVerified = await flow.verifyCode(
+      flow.method === 'email' ? { email: flow.email, code } : { phone: flow.phone, code },
+    );
 
     if (isVerified) {
       flow.setStep(4);
@@ -57,7 +59,11 @@ export default function FindPasswordContent() {
 
   const handleResetSubmit = async (newPassword: string) => {
     try {
-      await flow.resetPassword({ token: flow.token!, newPassword });
+      await flow.resetPassword(
+        flow.method === 'email'
+          ? { email: flow.email, code: flow.verifiedCode, newPassword }
+          : { phone: flow.phone, code: flow.verifiedCode, newPassword },
+      );
       router.push('/login');
     } catch {
     }

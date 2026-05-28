@@ -17,7 +17,6 @@ import {
   IFindPasswordEmailSendReq,
   IFindPasswordSmsSendReq,
   IFindPasswordSendResponse,
-  IFindPasswordTokenResponse,
   IPasswordResetReq,
 } from '@/service/interface/auth';
 
@@ -38,15 +37,10 @@ function getCommonResponse<T>(response: unknown) {
   return null;
 }
 
-function getVerifiedToken(response: unknown) {
-  const result = getCommonResponse<IFindPasswordTokenResponse>(response);
-  const token = result?.data?.token;
+function isVerifySuccess(response: unknown) {
+  const result = getCommonResponse<null>(response);
 
-  if ((result?.success === true || result?.code === 200) && typeof token === 'string' && token.length > 0) {
-    return token;
-  }
-
-  return null;
+  return result?.success === true || result?.code === 200;
 }
 
 function getSendResult(response: unknown) {
@@ -64,7 +58,7 @@ export default function useFindPasswordFlow() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [token, setToken] = useState<string | null>(null);
+  const [verifiedCode, setVerifiedCode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [verificationConfig, setVerificationConfig] = useState({
     expiresInSeconds: DEFAULT_VERIFICATION_EXPIRES_SECONDS,
@@ -129,7 +123,7 @@ export default function useFindPasswordFlow() {
     email,
     name,
     phone,
-    token,
+    verifiedCode,
     errorMessage,
     verificationConfig,
     isSending: sendEmailMutation.isPending || sendSmsMutation.isPending,
@@ -144,24 +138,23 @@ export default function useFindPasswordFlow() {
     },
     setErrorMessage,
     sendEmail: (body: IFindPasswordEmailSendReq) => sendEmailMutation.mutateAsync(body),
-    verifyCode: async (body: { token: string } | { phone: string; code: string }) => {
+    verifyCode: async (body: { email: string; code: string } | { phone: string; code: string }) => {
       try {
-        const response = 'token' in body
+        const response = 'email' in body
           ? await verifyEmailMutation.mutateAsync(body)
           : await verifySmsMutation.mutateAsync(body);
-        const verifiedToken = getVerifiedToken(response);
 
-        if (!verifiedToken) {
-          setToken(null);
+        if (!isVerifySuccess(response)) {
+          setVerifiedCode('');
           setErrorMessage('인증번호가 올바르지 않습니다.');
           return false;
         }
 
         setErrorMessage('');
-        setToken(verifiedToken);
+        setVerifiedCode(body.code);
         return true;
       } catch {
-        setToken(null);
+        setVerifiedCode('');
         return false;
       }
     },

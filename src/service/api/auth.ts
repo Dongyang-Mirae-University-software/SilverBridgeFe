@@ -8,7 +8,6 @@ import {
   IFindPasswordSmsSendReq,
   IFindPasswordSmsVerifyReq,
   IFindPasswordSendResponse,
-  IFindPasswordTokenResponse,
   IAuthTokenResponse,
   IRefreshReq,
   ISmsVerifyResponse,
@@ -77,7 +76,7 @@ export async function findPasswordEmailSend(body: IFindPasswordEmailSendReq) {
 }
 
 export async function findPasswordEmailVerify(body: IFindPasswordEmailVerifyReq) {
-  return apiClient.post<CommonResponse<IFindPasswordTokenResponse>>(`${BASE}/find-password/email/verify`, body);
+  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/email/verify`, body);
 }
 
 export async function findPasswordEmailResend(body: IFindPasswordEmailSendReq) {
@@ -90,7 +89,7 @@ export async function findPasswordSmsSend(body: IFindPasswordSmsSendReq) {
 }
 
 export async function findPasswordSmsVerify(body: IFindPasswordSmsVerifyReq) {
-  return apiClient.post<CommonResponse<IFindPasswordTokenResponse>>(`${BASE}/find-password/sms/verify`, body);
+  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/sms/verify`, body);
 }
 
 export async function findPasswordSmsResend(body: IFindPasswordSmsSendReq) {
