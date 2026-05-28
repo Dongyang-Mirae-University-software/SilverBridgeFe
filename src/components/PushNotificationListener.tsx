@@ -53,6 +53,57 @@ function isConnectionPush(data?: MessagePayload['data']) {
   return Boolean(data?.type && data.type.includes('CONNECTION'));
 }
 
+function getConnectionPushNotification(data?: MessagePayload['data']) {
+  switch (data?.type) {
+    case 'CONNECTION_REQUEST':
+      return {
+        body: '보호자가 연결을 요청했습니다.',
+        title: '연결 요청',
+      };
+    case 'CONNECTION_ACCEPTED':
+      return {
+        body: '연결 요청이 수락되었습니다.',
+        title: '연결 수락',
+      };
+    case 'CONNECTION_REFUSED':
+      return {
+        body: '연결 요청이 거절되었습니다.',
+        title: '연결 거절',
+      };
+    case 'CONNECTION_CANCELLED':
+      return {
+        body: '연결 상태가 변경되었습니다.',
+        title: '연결 변경',
+      };
+    case 'DISCONNECTION':
+    case 'CONNECTION_DISCONNECTED':
+      return {
+        body: '연결이 해제되었습니다.',
+        title: '연결 해제',
+      };
+    default:
+      return {
+        body: '',
+        title: '알림',
+      };
+  }
+}
+
+function getPushNotificationContent({
+  data,
+  notification,
+}: {
+  data?: MessagePayload['data'];
+  notification?: { body?: string; title?: string };
+}) {
+  const fallback = getConnectionPushNotification(data);
+
+  return {
+    body: notification?.body ?? fallback.body,
+    title: notification?.title ?? fallback.title,
+  };
+}
+
 function getCurrentRole(pathname: string): ConnectionTargetRole | null {
   if (pathname.startsWith('/ward')) return 'WARD';
   if (pathname.startsWith('/guardian')) return 'GUARDIAN';
@@ -161,11 +212,15 @@ export default function PushNotificationListener() {
     return listenForegroundMessages(payload => {
       const id = idRef.current + 1;
       idRef.current = id;
+      const notification = getPushNotificationContent({
+        data: payload.data,
+        notification: payload.notification,
+      });
 
       const toast: PushToast = {
         id,
-        title: payload.notification?.title ?? '알림',
-        body: payload.notification?.body ?? '',
+        title: notification.title,
+        body: notification.body,
         data: payload.data,
       };
 
@@ -184,11 +239,15 @@ export default function PushNotificationListener() {
       const detail = (event as CustomEvent<LocalPushEventDetail>).detail;
       const id = idRef.current + 1;
       idRef.current = id;
+      const notification = getPushNotificationContent({
+        data: detail.data,
+        notification: detail.notification,
+      });
 
       const toast: PushToast = {
         id,
-        title: detail.notification?.title ?? '알림',
-        body: detail.notification?.body ?? '',
+        title: notification.title,
+        body: notification.body,
         data: detail.data,
       };
 
