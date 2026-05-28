@@ -57,6 +57,22 @@ function isSigninRequest(url?: string) {
   return url.includes('/auth/signin');
 }
 
+function isUserDeleteRequest(config?: RetryableRequestConfig) {
+  if (!config?.url) return false;
+
+  return config.method?.toLowerCase() === 'delete' && config.url.includes('/user/me');
+}
+
+function shouldRefreshOnUnauthorized(config?: RetryableRequestConfig): config is RetryableRequestConfig {
+  if (!config) return false;
+  if (config._retry) return false;
+  if (config.url?.includes('/auth/refresh')) return false;
+  if (isSigninRequest(config.url)) return false;
+  if (isUserDeleteRequest(config)) return false;
+
+  return true;
+}
+
 async function refreshAccessToken() {
   const refreshToken = getRefreshToken();
 
@@ -127,10 +143,9 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
     const isUnauthorized = error.response?.status === 401;
-    const isRefreshRequest = originalRequest?.url?.includes('/auth/refresh');
     const isSigninEndpoint = isSigninRequest(originalRequest?.url);
 
-    if (isUnauthorized && originalRequest && !originalRequest._retry && !isRefreshRequest && !isSigninEndpoint) {
+    if (isUnauthorized && shouldRefreshOnUnauthorized(originalRequest)) {
       originalRequest._retry = true;
 
       try {
