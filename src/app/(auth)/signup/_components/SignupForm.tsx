@@ -6,7 +6,7 @@ import styles from './SignupForm.module.css';
 import SignupBasicInfoStep from './SignupBasicInfoStep';
 import SignupPhoneVerificationStep from './SignupPhoneVerificationStep';
 import { CommonModal } from '@/components/CommonModal';
-import useSignupForm from '@/hooks/useSignupForm';
+import useSignupForm, { type KakaoSignupData } from '@/hooks/useSignupForm';
 import { getPhoneDigits } from '@/lib/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
@@ -16,6 +16,7 @@ const cx = classNames.bind(styles);
 interface Props {
   step: number;
   onStepChange: (step: number) => void;
+  kakaoData?: KakaoSignupData;
 }
 
 function getVerificationNonce(response: unknown) {
@@ -26,7 +27,7 @@ function getVerificationNonce(response: unknown) {
   return typeof result.verificationNonce === 'string' ? result.verificationNonce : '';
 }
 
-export default function SignupForm({ step, onStepChange }: Props) {
+export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
   const {
     register,
     onSubmit,
@@ -40,10 +41,11 @@ export default function SignupForm({ step, onStepChange }: Props) {
     textRules,
     allValues,
     signupError,
+    isKakaoSignup,
     clearSignupError,
-  } = useSignupForm();
+  } = useSignupForm({ kakaoData });
 
-  const [isEmailCheck, setIsEmailCheck] = useState(false);
+  const [isEmailCheck, setIsEmailCheck] = useState(Boolean(kakaoData));
   const [isEmailTouched, setIsEmailTouched] = useState(false);
   const [emailCheckErrorMsg, setEmailCheckErrorMsg] = useState('');
   const [isCode, setIsCode] = useState(false);
@@ -103,6 +105,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
   });
 
   const handleEmailCheck = () => {
+    if (isKakaoSignup) return;
     setIsEmailTouched(true);
     emailCheckMutate({ email: getValues('email') });
   };
@@ -142,16 +145,16 @@ export default function SignupForm({ step, onStepChange }: Props) {
   const isStepOneValid =
     allValues.name.trim().length >= 2 &&
     allValues.email.trim().length > 0 &&
-    isEmailCheck &&
-    allValues.password.trim().length > 0 &&
-    allValues.passwordCheck.trim().length > 0 &&
+    (isKakaoSignup || isEmailCheck) &&
+    (isKakaoSignup || allValues.password.trim().length > 0) &&
+    (isKakaoSignup || allValues.passwordCheck.trim().length > 0) &&
     allValues.birthDate.trim().length > 0 &&
     allValues.postcode.trim().length > 0 &&
     allValues.address.trim().length > 0 &&
     allValues.addressDetail.trim().length > 0 &&
     !errors.email &&
-    !errors.password &&
-    !errors.passwordCheck &&
+    (isKakaoSignup || !errors.password) &&
+    (isKakaoSignup || !errors.passwordCheck) &&
     !errors.name &&
     !errors.birthDate &&
     !errors.postcode &&
@@ -181,6 +184,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
             emailError={Boolean(emailError)}
             emailErrorText={emailErrorText}
             isStepOneValid={isStepOneValid}
+            isKakaoSignup={isKakaoSignup}
             register={register}
             nameField={register('name', textRules('이름을 입력하세요.', 2))}
             emailField={register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
@@ -205,7 +209,7 @@ export default function SignupForm({ step, onStepChange }: Props) {
             smsSendErrorMsg={smsSendErrorMsg}
             smsVerifyError={smsVerifyError}
             isCode={isCode}
-            isEmailCheck={isEmailCheck}
+            isEmailCheck={isKakaoSignup || isEmailCheck}
             isSmsCheck={isSmsCheck}
             isSmsSendPending={isSmsSendPending}
             isSmsVerifyPending={isSmsVerifyPending}

@@ -6,7 +6,6 @@ import classNames from 'classnames/bind';
 
 import styles from './SignupContent.module.css';
 import SignupForm from './SignupForm';
-import KakaoSignupForm from './KakaoSignupForm';
 
 const cx = classNames.bind(styles);
 
@@ -35,10 +34,10 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
         profileImageUrl: profileImageUrl || undefined,
       }
     : undefined;
-  const currentStep = isKakao ? 2 : signupStep;
+  const currentStep = signupStep;
 
   const handleBack = () => {
-    if (!isKakao && signupStep > 1) {
+    if (signupStep > 1) {
       setSignupStep(step => step - 1);
       return;
     }
@@ -80,11 +79,7 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
       </div>
 
       <div className={cx('content')}>
-        {isKakao && kakaoData ? (
-          <KakaoSignupForm kakaoData={kakaoData} />
-        ) : (
-          <SignupForm step={signupStep} onStepChange={setSignupStep} />
-        )}
+        <SignupForm step={signupStep} onStepChange={setSignupStep} kakaoData={kakaoData} />
       </div>
 
       <div className={cx('footer')}>
