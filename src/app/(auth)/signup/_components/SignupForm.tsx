@@ -111,7 +111,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
   };
 
   const handlePhoneCheck = () => {
-    smsSendMutate({ phone: getValues('phone') });
+    smsSendMutate({ phone: getPhoneDigits(getValues('phone')) });
   };
   const handlePhoneChange = (value: string) => {
     setValue('phone', getPhoneDigits(value), { shouldDirty: true, shouldValidate: true });
@@ -133,7 +133,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
 
   const handleSmsVerify = () => {
     if (smsCode.length !== 6 || isSmsVerifyPending) return;
-    smsVerifyMutate({ code: smsCode, phone: getValues('phone') });
+    smsVerifyMutate({ code: smsCode, phone: getPhoneDigits(getValues('phone')) });
   };
 
   const emailError =
