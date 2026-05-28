@@ -197,8 +197,8 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
 
   return (
     <form className={cx('container')} onSubmit={onSubmit}>
-      <TextInput label="이메일" value={kakaoData.email} disabled />
-      <TextInput label="이름" value={kakaoData.name} disabled />
+      <TextInput label="이메일" value={kakaoData.email} disabled readOnly />
+      <TextInput label="이름" value={kakaoData.name} disabled readOnly />
       <TextInput
         label="전화번호"
         placeholder="전화번호를 입력하세요"
