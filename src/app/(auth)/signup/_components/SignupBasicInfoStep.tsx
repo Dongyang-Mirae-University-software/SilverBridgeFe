@@ -14,6 +14,7 @@ interface SignupBasicInfoStepProps {
   emailError: boolean;
   emailErrorText?: string;
   isStepOneValid: boolean;
+  isKakaoSignup?: boolean;
   register: UseFormRegister<SignupFormValues>;
   nameField: UseFormRegisterReturn;
   emailField: UseFormRegisterReturn;
@@ -34,6 +35,7 @@ export default function SignupBasicInfoStep({
   emailError,
   emailErrorText,
   isStepOneValid,
+  isKakaoSignup = false,
   register,
   nameField,
   emailField,
@@ -63,28 +65,34 @@ export default function SignupBasicInfoStep({
         placeholder="example@email.com"
         required
         {...emailField}
-        onBlur={onEmailCheck}
-        error={emailError}
-        errorText={emailErrorText}
+        disabled={isKakaoSignup}
+        readOnly={isKakaoSignup}
+        onBlur={isKakaoSignup ? undefined : onEmailCheck}
+        error={isKakaoSignup ? false : emailError}
+        errorText={isKakaoSignup ? undefined : emailErrorText}
       />
-      <TextInput
-        label="비밀번호"
-        placeholder="8자 이상"
-        required
-        type="password"
-        {...passwordField}
-        error={Boolean(errors.password && allValues.password && allValues.password.trim() !== '')}
-        errorText={errors.password?.message}
-      />
-      <TextInput
-        label="비밀번호 확인"
-        placeholder="비밀번호 다시 입력"
-        required
-        type="password"
-        {...passwordCheckField}
-        error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
-        errorText={errors.passwordCheck?.message}
-      />
+      {!isKakaoSignup && (
+        <>
+          <TextInput
+            label="비밀번호"
+            placeholder="8자 이상"
+            required
+            type="password"
+            {...passwordField}
+            error={Boolean(errors.password && allValues.password && allValues.password.trim() !== '')}
+            errorText={errors.password?.message}
+          />
+          <TextInput
+            label="비밀번호 확인"
+            placeholder="비밀번호 다시 입력"
+            required
+            type="password"
+            {...passwordCheckField}
+            error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
+            errorText={errors.passwordCheck?.message}
+          />
+        </>
+      )}
       <div className={cx('fieldGroup')}>
         <label className={cx('selectField')}>
           <span className={cx('selectLabel')}>성별 *</span>
