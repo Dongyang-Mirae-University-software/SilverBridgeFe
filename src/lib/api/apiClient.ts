@@ -15,8 +15,16 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+function getApiBaseUrl() {
+  const apiDomain = process.env.NEXT_PUBLIC_API_DOMAIN?.replace(/\/$/, '');
+
+  return apiDomain ? `${apiDomain}/api` : '/api';
+}
+
+const API_BASE_URL = getApiBaseUrl();
+
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   timeout: 10_000,
   withCredentials: true, // 쿠키 기반 인증 쓸 때 필요 (아니면 제거)
   headers: {
@@ -25,7 +33,7 @@ const apiClient = axios.create({
 });
 
 const refreshClient = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   timeout: 10_000,
   withCredentials: true,
   headers: {
