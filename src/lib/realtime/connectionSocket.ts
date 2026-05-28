@@ -16,7 +16,7 @@ export interface ConnectionRealtimePayload {
 interface ConnectConnectionSocketOptions {
   onMessage: (payload: ConnectionRealtimePayload) => void;
   role: AuthRole;
-  userId: string | string[];
+  userId: string;
 }
 
 const DEFAULT_SOCKET_URL = 'wss://api.devdmu.gosky.kr/ws';
@@ -76,14 +76,13 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
 
 export function connectConnectionSocket({ onMessage, role, userId }: ConnectConnectionSocketOptions) {
   const accessToken = getAccessToken();
-  const userIds = Array.from(new Set((Array.isArray(userId) ? userId : [userId]).filter(Boolean)));
 
   if (!accessToken) {
     console.warn('[WS] accessToken이 없어 연결 WebSocket을 시작하지 않았습니다.');
     return () => {};
   }
 
-  if (userIds.length === 0) {
+  if (!userId) {
     console.warn('[WS] userId가 없어 연결 WebSocket 구독을 시작하지 않았습니다.');
     return () => {};
   }
@@ -98,21 +97,19 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
   });
 
   client.onConnect = () => {
-    console.info('[WS] CONNECTED - 구독 시작:', maskSocketUrl(brokerURL), '| userIds:', userIds.join(', '));
+    console.info('[WS] CONNECTED - 구독 시작:', maskSocketUrl(brokerURL), '| userId:', userId);
 
     const topics = role === 'WARD' ? WARD_CONNECTION_TOPICS : role === 'GUARDIAN' ? GUARDIAN_CONNECTION_TOPICS : [];
 
-    userIds.forEach(topicUserId => {
-      topics.forEach(topic => {
-        const destination = `/topic/${topicUserId}/${topic.destination}`;
-        console.info('[WS] SUBSCRIBE:', destination);
+    topics.forEach(topic => {
+      const destination = `/topic/${userId}/${topic.destination}`;
+      console.info('[WS] SUBSCRIBE:', destination);
 
-        client.subscribe(destination, message => {
-          const payload = normalizeMessage(message, topic.type);
-          console.info('[WS] 알림 받음:', payload);
-          if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST') savePendingConnectionRequest(payload);
-          onMessage(payload);
-        });
+      client.subscribe(destination, message => {
+        const payload = normalizeMessage(message, topic.type);
+        console.info('[WS] 알림 받음:', payload);
+        if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST') savePendingConnectionRequest(payload);
+        onMessage(payload);
       });
     });
   };

@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { logout } from '@/service/api/auth';
 import { changeMyProfileImage, deleteMyProfileImage } from '@/service/api/user';
 import { myProfileQueryKey, myProfileQueryOptions } from '@/service/query/user';
-import { AuthRole, clearAuthTokens, getAccessTokenSubject } from '@/lib/auth/tokenStore';
+import { AuthRole, clearAuthTokens } from '@/lib/auth/tokenStore';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import { setMyProfileCache, updateMyProfileCache } from '@/lib/dashboard/profileCache';
 import { unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
@@ -40,8 +40,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const rootPath = isWard ? '/ward' : '/guardian';
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
-  const accessTokenSubject = getAccessTokenSubject();
-  const realtimeUserIds = [profile?.id, accessTokenSubject].filter((id): id is string => Boolean(id));
+  const realtimeUserId = profile?.id;
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
   const userEmail = profile?.email ?? '이메일 정보 없음';
   const userPhone = profile?.phone ? formatPhoneNumber(profile.phone) : '전화번호 정보 없음';
@@ -51,7 +50,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const { mutate: profileImageDeleteMutate, isPending: isProfileImageDeleting } = useProfileImageDeleteMutation(queryClient);
 
   useWardSettings(isWard, isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
-  useConnectionSocket(realtimeUserIds, role);
+  useConnectionSocket(realtimeUserId, role);
 
   const stageStyle = isWard ? ({ '--ward-preferred-font-size': `${wardSettings.fontSize}px` } as CSSProperties) : undefined;
   const handleLogout = () => {
@@ -185,20 +184,17 @@ function useWardSettings(
   }, [isWard, isLoaded, settings]);
 }
 
-function useConnectionSocket(realtimeUserIds: string[], role: AuthRole) {
-  const realtimeUserIdKey = realtimeUserIds.join('|');
-
+function useConnectionSocket(realtimeUserId: string | undefined, role: AuthRole) {
   useEffect(() => {
-    const userIds = realtimeUserIdKey.split('|').filter(Boolean);
-    if (userIds.length === 0) return;
+    if (!realtimeUserId) return;
     return connectConnectionSocket({
       role,
-      userId: userIds,
+      userId: realtimeUserId,
       onMessage: payload => {
         window.dispatchEvent(new CustomEvent('careai:push', { detail: { data: { connectionId: payload.connectionId ?? '', type: payload.type }, notification: getRealtimeNotification(payload) } }));
       },
     });
-  }, [realtimeUserIdKey, role]);
+  }, [realtimeUserId, role]);
 }
 
 function getPageKey(pathname: string, navItems: Array<{ href: string; key: PageKey }>) {
