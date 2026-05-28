@@ -23,7 +23,6 @@ interface KakaoSignupFormProps {
   kakaoData: {
     kakaoId: string;
     email: string;
-    name: string;
     profileImageUrl?: string;
   };
 }
@@ -80,7 +79,7 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
   } = useForm<FormData>({
     mode: 'all',
     defaultValues: {
-      name: kakaoData.name,
+      name: '',
       phone: '',
       verificationNonce: '',
       role: 'WARD',
@@ -198,7 +197,14 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
   return (
     <form className={cx('container')} onSubmit={onSubmit}>
       <TextInput label="이메일" value={kakaoData.email} disabled readOnly />
-      <TextInput label="이름" value={kakaoData.name} disabled readOnly />
+      <TextInput
+        label="이름"
+        placeholder="홍길동"
+        required
+        {...register('name', requiredRule('이름을 입력하세요.'))}
+        error={Boolean(errors.name)}
+        errorText={errors.name?.message}
+      />
       <TextInput
         label="전화번호"
         placeholder="전화번호를 입력하세요"
@@ -295,7 +301,11 @@ export default function KakaoSignupForm({ kakaoData }: KakaoSignupFormProps) {
           <span>보호자</span>
         </label>
       </div>
-      <button className={cx('button')} type="submit" disabled={!isValid || !isSmsCheck || !getValues('verificationNonce')}>
+      <button
+        className={cx('button')}
+        type="submit"
+        disabled={!isValid || !isSmsCheck || !getValues('verificationNonce')}
+      >
         회원가입 완료
       </button>
     </form>

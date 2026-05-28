@@ -4,7 +4,6 @@ type SignupPageProps = {
   searchParams: Promise<{
     kakaoId?: string;
     email?: string;
-    name?: string;
     profileImageUrl?: string;
   }>;
 };
