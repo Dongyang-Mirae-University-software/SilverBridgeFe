@@ -36,11 +36,12 @@ interface LocalPushEventDetail {
 function getPushRoute(data?: MessagePayload['data'], role?: ConnectionTargetRole | null) {
   switch (data?.type) {
     case 'CONNECTION_REQUEST':
-    case 'CONNECTION_CANCELLED':
       return '/ward/guardians';
     case 'CONNECTION_ACCEPTED':
     case 'CONNECTION_REFUSED':
       return '/guardian/wards';
+    case 'CONNECTION_CANCELLED':
+      return role === 'GUARDIAN' ? '/guardian/wards' : '/ward/guardians';
     case 'DISCONNECTION':
     case 'CONNECTION_DISCONNECTED':
       return role === 'WARD' ? '/ward/guardians' : '/guardian/wards';
@@ -115,11 +116,12 @@ function getCurrentRole(pathname: string): ConnectionTargetRole | null {
 function getConnectionTargetRole(data?: MessagePayload['data']): ConnectionTargetRole | null {
   switch (data?.type) {
     case 'CONNECTION_REQUEST':
-    case 'CONNECTION_CANCELLED':
       return 'WARD';
     case 'CONNECTION_ACCEPTED':
     case 'CONNECTION_REFUSED':
       return 'GUARDIAN';
+    case 'CONNECTION_CANCELLED':
+      return null;
     default:
       return null;
   }
