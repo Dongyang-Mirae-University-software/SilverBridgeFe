@@ -104,7 +104,7 @@ export default function GuardianMonitorContent() {
         )}
       </aside>
 
-      {/* 뷰어 패널 — 세션 미선택 빈 상태 */}
+      {/* 뷰어 패널 */}
       <div className={styles.viewerPanel}>
         {!selectedId ? (
           <div className={styles.emptyState}>
@@ -112,7 +112,32 @@ export default function GuardianMonitorContent() {
           </div>
         ) : (
           <>
-            {void selectedSession}{void detectState}{void mjpegSrc}{void status}
+            {/* 세션 헤더 — 이름, 세션 ID, fps/시청자/분석 상태 */}
+            <div className={styles.viewerHeader}>
+              <div>
+                <strong>{selectedSession?.ward_name ?? '피보호자'}</strong>
+                <span>{selectedId}</span>
+              </div>
+              <div className={styles.statusRow}>
+                {status?.fps != null && <span>FPS {status.fps}</span>}
+                {status?.viewer_count != null && <span>시청자 {status.viewer_count}명</span>}
+                {status?.is_analyzing && <span className={styles.analyzingBadge}>AI 분석 중</span>}
+              </div>
+            </div>
+
+            {/* MJPEG 실시간 스트림 — key로 세션 변경 시 img 재마운트 */}
+            <div className={styles.frameWrapper}>
+              {mjpegSrc && (
+                <img
+                  key={selectedId}
+                  src={mjpegSrc}
+                  alt="실시간 영상"
+                  className={styles.mjpegImg}
+                />
+              )}
+            </div>
+
+            {void detectState}{void analysis}
           </>
         )}
       </div>
