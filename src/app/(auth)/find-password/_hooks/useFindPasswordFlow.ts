@@ -25,7 +25,7 @@ const DEFAULT_VERIFICATION_EXPIRES_SECONDS = 300;
 const DEFAULT_VERIFICATION_CODE_LENGTH = 6;
 
 function isCommonResponse<T>(value: unknown): value is CommonResponse<T> {
-  return typeof value === 'object' && value !== null && 'data' in value && ('code' in value || 'success' in value);
+  return typeof value === 'object' && value !== null && ('code' in value || 'success' in value);
 }
 
 function getCommonResponse<T>(response: unknown) {
