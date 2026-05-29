@@ -33,7 +33,7 @@ export async function changeMyProfileImage(file: File) {
 }
 
 export async function deleteMyProfileImage() {
-  return apiClient.patch<CommonResponse<IUserProfile>>(`${BASE}/me/image`);
+  return apiClient.delete<CommonResponse<null>>(`${BASE}/me/image`);
 }
 
 export async function deleteMyAccount(body: IUserDeleteReq) {
