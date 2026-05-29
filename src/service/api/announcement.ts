@@ -9,7 +9,7 @@ function getResponseData<T>(response: unknown): T {
   const data = body.data;
 
   if (data && typeof data === 'object' && 'data' in data) {
-    return (data as CommonResponse<T>).data;
+    return (data as CommonResponse<T>).data as T;
   }
 
   return data as T;

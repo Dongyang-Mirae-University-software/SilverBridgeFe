@@ -21,11 +21,11 @@ export async function getWardConnections(): Promise<CommonResponse<IConnectionIt
     getWardActiveConnections(),
     getWardPendingConnectionRequests(),
   ]);
-  const activeConnections = activeResponse.data.map(connection => ({
+  const activeConnections = (activeResponse.data ?? []).map(connection => ({
     ...connection,
     status: 'ACTIVE' as const,
   }));
-  const pendingConnections = pendingResponse.data.map(mapWardPendingRequestToConnection);
+  const pendingConnections = (pendingResponse.data ?? []).map(mapWardPendingRequestToConnection);
 
   return {
     code: activeResponse.code ?? pendingResponse.code ?? 200,
