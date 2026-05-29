@@ -126,9 +126,7 @@
   letter-spacing: 0;
 }
 
-.guardianTheme .brandMark,
-.guardianTheme .avatar,
-.guardianTheme .profileModalAvatar {
+.guardianTheme .brandMark {
   background: var(--guardian-brand);
 }
 
@@ -239,26 +237,6 @@
 
 .guardianTheme .userCard:hover {
   background: var(--guardian-brand-hover);
-}
-
-.avatar {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 10px;
-  background: var(--sb-brand);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .userInfo {
@@ -387,36 +365,6 @@
   min-width: 0;
 }
 
-.profilePhotoBlock {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  flex: 0 0 auto;
-  padding: 0;
-}
-
-.profileModalAvatar {
-  display: grid;
-  width: 76px;
-  height: 76px;
-  flex-shrink: 0;
-  place-items: center;
-  overflow: hidden;
-  border: 3px solid #fff;
-  border-radius: 20px;
-  background: var(--sb-brand);
-  color: #fff;
-  box-shadow: 0 10px 24px rgba(20, 17, 12, 0.12);
-  font-size: 28px;
-  font-weight: 800;
-}
-
-.profileModalAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .profileModalBadges {
   display: flex;
   flex-wrap: wrap;
@@ -424,72 +372,6 @@
   margin-bottom: 8px;
 }
 
-.profilePhotoEditButton {
-  position: absolute;
-  right: -5px;
-  bottom: -5px;
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 1px solid var(--sb-line);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--sb-brand);
-  cursor: pointer;
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.profilePhotoDeleteButton {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  display: grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border: 1px solid #f0c9c2;
-  border-radius: 999px;
-  background: #fff7f5;
-  color: var(--sb-warn);
-  cursor: pointer;
-  font-size: 17px;
-  font-weight: 850;
-  line-height: 1;
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.profilePhotoEditButton:hover {
-  background: var(--sb-brand-50);
-}
-
-.profilePhotoDeleteButton:hover {
-  background: #fee9e5;
-}
-
-.profilePhotoEditButton:disabled,
-.profilePhotoDeleteButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.profilePhotoEditButton svg {
-  width: 17px;
-  height: 17px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
-}
-
-.profilePhotoEditButton input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-}
 
 .profileProviderBadge {
   display: inline-flex;
@@ -1859,26 +1741,6 @@
   padding: 18px 22px;
 }
 
-.wardListAvatar {
-  display: grid;
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 50%;
-  background: #ffe0b0;
-  color: #5c4d3f;
-  font-size: 22px;
-  font-weight: 850;
-}
-
-.wardListAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .wardListProfile {
   display: flex;
   min-width: 0;
@@ -2006,25 +1868,6 @@
   grid-template-columns: 56px minmax(0, 1fr);
   align-items: flex-start;
   gap: 14px;
-}
-
-.connectionAvatar {
-  display: grid;
-  width: 56px;
-  height: 56px;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 18px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 20px;
-  font-weight: 850;
-}
-
-.connectionAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .connectionInfo {
@@ -2345,17 +2188,7 @@
     gap: 12px;
   }
 
-  .profileModalAvatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
-    font-size: 24px;
-  }
 
-  .profilePhotoEditButton {
-    width: 30px;
-    height: 30px;
-  }
 
   .profileModalClose {
     position: absolute;
@@ -2464,11 +2297,6 @@
     grid-template-columns: 48px minmax(0, 1fr);
   }
 
-  .connectionAvatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
-  }
 
   .connectionTitleRow {
     flex-direction: column;
@@ -2488,11 +2316,6 @@
     padding: 16px;
   }
 
-  .wardListAvatar {
-    width: 48px;
-    height: 48px;
-    font-size: 19px;
-  }
 
   .wardListNameRow strong {
     font-size: 18px;
