@@ -2,9 +2,12 @@
 
 import { ReactNode } from 'react';
 
+import { UserAvatar } from '@/components/UserAvatar';
 import { cx } from '@/components/layout/dashboard/styles';
 import { formatPhoneNumber } from '@/lib/format/phone';
 import { IConnectionItem } from '@/service/interface/connection';
+
+export { UserAvatar };
 
 export { cx };
 
@@ -152,14 +155,7 @@ export function ConnectionCard({
   return (
     <li className={cx('connectionCard')}>
       <div className={cx('connectionCardMain')}>
-        <div className={cx('connectionAvatar')}>
-          {connection.partnerProfileImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img alt="" src={connection.partnerProfileImage} />
-          ) : (
-            connection.partnerName.charAt(0) || '?'
-          )}
-        </div>
+        <UserAvatar size="w-60" imageUrl={connection.partnerProfileImage} />
         <div className={cx('connectionInfo')}>
           <div className={cx('connectionTitleRow')}>
             <div className={cx('connectionNameBlock')}>

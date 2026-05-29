@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { RefreshButton } from '@/components/RefreshButton';
+import { UserAvatar } from '@/components/UserAvatar';
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/connect/guardian';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
@@ -166,14 +167,7 @@ function WardListCard({
   return (
     <li className={cx('wardListCard')}>
       <div className={cx('wardListCardHeader')}>
-        <div className={cx('wardListAvatar')}>
-          {connection.partnerProfileImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img alt="" src={connection.partnerProfileImage} />
-          ) : (
-            connection.partnerName.charAt(0) || '?'
-          )}
-        </div>
+        <UserAvatar size="w-60" imageUrl={connection.partnerProfileImage} />
         <div className={cx('wardListProfile')}>
           <div className={cx('wardListNameRow')}>
             <strong>{connection.partnerName || '이름 확인 전'}</strong>
