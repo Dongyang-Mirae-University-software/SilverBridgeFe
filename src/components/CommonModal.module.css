@@ -4,49 +4,56 @@
   z-index: 1000;
   display: grid;
   place-items: center;
-  background: rgba(18, 16, 14, 0.48);
+  background: rgba(15, 23, 42, 0.34);
   padding: 20px;
 }
 
 .modal {
+  --common-modal-accent: var(--sb-brand, #3182f6);
+  --common-modal-accent-soft: var(--sb-brand-50, #e8f3ff);
   display: flex;
-  width: min(360px, 100%);
+  width: min(340px, 100%);
   flex-direction: column;
   align-items: center;
-  gap: 18px;
-  border: 1px solid #eadccb;
-  border-radius: 18px;
+  gap: 20px;
+  border: 1px solid #edf0f3;
+  border-radius: 20px;
   background: #fff;
-  box-shadow: 0 24px 70px rgba(20, 17, 12, 0.22);
-  padding: 26px 24px 22px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  padding: 28px 24px 22px;
   text-align: center;
+}
+
+.guardianTone {
+  --common-modal-accent: var(--guardian-brand, #8a4b38);
+  --common-modal-accent-soft: var(--guardian-brand-soft, #f7ebe6);
 }
 
 .icon {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   place-items: center;
-  border-radius: 14px;
-  background: #fbe7da;
-  color: #d97757;
-  font-size: 17px;
-  font-weight: 900;
+  border-radius: 50%;
+  background: var(--common-modal-accent-soft);
+  color: var(--common-modal-accent);
+  font-size: 22px;
+  font-weight: 800;
 }
 
 .success .icon {
-  background: #eaf8ef;
-  color: #2f7d4e;
+  background: var(--common-modal-accent-soft);
+  color: var(--common-modal-accent);
 }
 
 .warning .icon {
-  background: #fff4df;
-  color: #9f641e;
+  background: #fff6e5;
+  color: #f59f00;
 }
 
 .error .icon {
-  background: #fff0eb;
-  color: #cf4f3b;
+  background: #fff0f0;
+  color: #f04452;
 }
 
 .content {
@@ -56,17 +63,17 @@
 }
 
 .content h2 {
-  color: #1f1916;
-  font-size: 18px;
-  font-weight: 850;
+  color: #191f28;
+  font-size: 19px;
+  font-weight: 800;
   line-height: 1.3;
   margin: 0;
 }
 
 .content p {
-  color: #5c4d3f;
+  color: #6b7684;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.55;
   margin: 0;
   white-space: pre-line;
@@ -77,9 +84,9 @@
   min-height: 46px;
   border: 0;
   border-radius: 12px;
-  background: #d97757;
+  background: var(--common-modal-accent);
   color: #fff;
   cursor: pointer;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
 }
