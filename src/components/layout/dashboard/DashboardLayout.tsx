@@ -1,16 +1,13 @@
 'use client';
 
 import { CSSProperties, ReactNode, useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { usePathname } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 
-import { logout } from '@/service/api/auth';
-import { changeMyProfileImage, deleteMyProfileImage } from '@/service/api/user';
-import { myProfileQueryKey, myProfileQueryOptions } from '@/service/query/user';
-import { AuthRole, clearAuthTokens } from '@/lib/auth/tokenStore';
+import { useLogoutMutation } from '@/service/query/auth';
+import { myProfileQueryOptions, useProfileImageChangeMutation, useProfileImageDeleteMutation } from '@/service/query/user';
+import { AuthRole } from '@/lib/auth/tokenStore';
 import { getUserProfileData } from '@/lib/auth/userProfile';
-import { setMyProfileCache, updateMyProfileCache } from '@/lib/dashboard/profileCache';
-import { unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { formatPhoneNumber } from '@/lib/format/phone';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { DashboardProvider } from './DashboardContext';
@@ -19,16 +16,13 @@ import { DashboardSidebar } from './DashboardSidebar';
 import { ProfileModal } from './ProfileModal';
 import { GUARDIAN_NAV, PAGE_TITLES, WARD_NAV } from '@/constants/dashboard';
 import { getRealtimeNotification } from '@/lib/dashboard/realtime';
-import { reportNonApiError } from '@/lib/api/reportError';
 import { cx } from './styles';
 import { PageKey, WardSettings } from './types';
 import { DEFAULT_WARD_SETTINGS, clampFontSize, getValidSosAction, WARD_SETTINGS_STORAGE_KEY } from '@/constants/wardSettings';
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const role: AuthRole = pathname.startsWith('/ward') ? 'WARD' : 'GUARDIAN';
-  const queryClient = useQueryClient();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [wardSettings, setWardSettings] = useState<WardSettings>(DEFAULT_WARD_SETTINGS);
@@ -45,9 +39,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const userEmail = profile?.email ?? '이메일 정보 없음';
   const userPhone = profile?.phone ? formatPhoneNumber(profile.phone) : '전화번호 정보 없음';
   const userInitial = userName.charAt(0) || 'U';
-  const { mutate: logoutMutate, isPending: isLoggingOut } = useLogoutMutation(queryClient, router);
-  const { mutate: profileImageMutate, isPending: isProfileImageChanging } = useProfileImageMutation(queryClient);
-  const { mutate: profileImageDeleteMutate, isPending: isProfileImageDeleting } = useProfileImageDeleteMutation(queryClient);
+  const { mutate: logoutMutate, isPending: isLoggingOut } = useLogoutMutation();
+  const { mutate: profileImageMutate, isPending: isProfileImageChanging } = useProfileImageChangeMutation();
+  const { mutate: profileImageDeleteMutate, isPending: isProfileImageDeleting } = useProfileImageDeleteMutation();
 
   useWardSettings(isWard, isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
   useConnectionSocket(realtimeUserId, role);
@@ -107,54 +101,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       </div>
     </DashboardProvider>
   );
-}
-
-function useLogoutMutation(queryClient: ReturnType<typeof useQueryClient>, router: ReturnType<typeof useRouter>) {
-  return useMutation({
-    mutationKey: ['logout'],
-    mutationFn: async () => {
-      await unregisterFcmTokenForCurrentDevice().catch(error => reportNonApiError('FCM 토큰 삭제 실패:', error));
-      return logout();
-    },
-    onSettled: () => {
-      clearAuthTokens();
-      queryClient.clear();
-      router.replace('/login');
-    },
-  });
-}
-
-function useProfileImageMutation(queryClient: ReturnType<typeof useQueryClient>) {
-  return useMutation({
-    mutationKey: ['user-profile-image-change'],
-    mutationFn: changeMyProfileImage,
-    onSuccess: response => {
-      setMyProfileCache(queryClient, response);
-      void queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
-    },
-    onError: error => reportNonApiError('프로필 이미지 변경 실패:', error),
-  });
-}
-
-function useProfileImageDeleteMutation(queryClient: ReturnType<typeof useQueryClient>) {
-  return useMutation({
-    mutationKey: ['user-profile-image-delete'],
-    mutationFn: deleteMyProfileImage,
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: myProfileQueryKey });
-      const previousProfile = queryClient.getQueryData(myProfileQueryKey);
-      updateMyProfileCache(queryClient, profile => ({ ...profile, profileImage: null }));
-
-      return { previousProfile };
-    },
-    onError: (error, _variables, context) => {
-      if (context?.previousProfile) queryClient.setQueryData(myProfileQueryKey, context.previousProfile);
-      reportNonApiError('프로필 이미지 삭제 실패:', error);
-    },
-    onSuccess: () => {
-      updateMyProfileCache(queryClient, current => ({ ...current, profileImage: null }));
-    },
-  });
 }
 
 function useWardSettings(
