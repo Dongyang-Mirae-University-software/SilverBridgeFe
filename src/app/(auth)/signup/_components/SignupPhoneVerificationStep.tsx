@@ -55,9 +55,7 @@ export default function SignupPhoneVerificationStep({
   const canRequestCode = phoneHasValue && !hasPhoneError && !isSmsSendPending;
   const phoneErrorText =
     smsSendErrorMsg || (allValues.phone && allValues.phone.trim() !== '' ? errors.phone?.message : undefined);
-  const smsVerifyErrorMessage = smsVerifyError
-    ? smsVerifyError.message || '인증번호가 올바르지 않습니다.'
-    : undefined;
+  const smsVerifyErrorMessage = smsVerifyError ? smsVerifyError.message || '인증번호가 올바르지 않습니다.' : undefined;
 
   return (
     <>
@@ -108,10 +106,6 @@ export default function SignupPhoneVerificationStep({
           </div>
         )}
       </div>
-      <label className={cx('terms')}>
-        <input type="checkbox" defaultChecked />
-        <span>이용약관 · 개인정보 처리방침에 동의합니다</span>
-      </label>
       <div className={cx('stepActions')}>
         <button className={cx('prevButton')} type="button" onClick={onPrevStep}>
           이전
