@@ -1,0 +1,118 @@
+.monitorPage {
+  display: flex;
+  gap: 16px;
+  min-height: calc(100vh - 140px);
+}
+
+/* ── 세션 목록 패널 ── */
+.sessionPanel {
+  display: flex;
+  width: 260px;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  overflow: hidden;
+  padding: 16px;
+}
+
+.sessionPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--sb-line-soft);
+  flex-shrink: 0;
+  padding-bottom: 10px;
+}
+
+.sessionPanelHeader strong {
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.sessionPanelHeader span {
+  border-radius: 999px;
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+}
+
+.sessionEmpty {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.sessionList {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0;
+  list-style: none;
+}
+
+.sessionCard {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 10px;
+  background: #fcfbf8;
+  color: inherit;
+  cursor: pointer;
+  padding: 10px 12px;
+  text-align: left;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.sessionCard:hover {
+  background: var(--guardian-brand-soft);
+  border-color: var(--guardian-line);
+}
+
+.sessionCard.active {
+  background: var(--guardian-brand-soft);
+  border-color: var(--guardian-brand);
+}
+
+.sessionCard strong {
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sessionId {
+  color: var(--sb-ink-mute);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.analyzingBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  background: #dceee3;
+  color: var(--sb-safe);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+}
