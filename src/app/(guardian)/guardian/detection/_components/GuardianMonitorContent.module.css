@@ -116,3 +116,96 @@
   font-weight: 800;
   padding: 2px 7px;
 }
+
+/* ── 뷰어 패널 ── */
+.viewerPanel {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptyState {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--sb-line);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  text-align: center;
+}
+
+.emptyState p {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.viewerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  flex-shrink: 0;
+  padding: 14px 18px;
+}
+
+.viewerHeader strong {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.viewerHeader > div:first-child span {
+  display: block;
+  margin-top: 3px;
+  color: var(--sb-ink-mute);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.statusRow {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusRow span {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+/* ── MJPEG 프레임 ── */
+.frameWrapper {
+  display: flex;
+  flex: 1;
+  min-height: 320px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #111;
+}
+
+.mjpegImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
