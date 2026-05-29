@@ -144,6 +144,7 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as RetryableRequestConfig | undefined;
     const isUnauthorized = error.response?.status === 401;
     const isSigninEndpoint = isSigninRequest(originalRequest?.url);
+    const isDeleteAccountEndpoint = isUserDeleteRequest(originalRequest);
 
     if (isUnauthorized && shouldRefreshOnUnauthorized(originalRequest)) {
       originalRequest._retry = true;
@@ -160,7 +161,7 @@ apiClient.interceptors.response.use(
       }
     }
 
-    if (isUnauthorized && !isSigninEndpoint) {
+    if (isUnauthorized && !isSigninEndpoint && !isDeleteAccountEndpoint) {
       clearSession();
     }
 
