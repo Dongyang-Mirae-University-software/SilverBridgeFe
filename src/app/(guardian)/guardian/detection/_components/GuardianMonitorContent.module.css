@@ -209,3 +209,57 @@
   height: 100%;
   object-fit: contain;
 }
+
+/* ── AI 감지 결과 카드 ── */
+.detectCard,
+.dangerCard,
+.safeCard {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid;
+  border-radius: 14px;
+  padding: 14px 20px;
+}
+
+.detectCard {
+  border-color: #f5a5a5;
+  background: #fff5f5;
+}
+
+.detectCard strong {
+  color: #c0392b;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.detectCard span {
+  color: #c0392b;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.dangerCard {
+  border-color: #f5c842;
+  background: #fff9ec;
+}
+
+.dangerCard strong {
+  color: #b7860a;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.safeCard {
+  border-color: #9dccb2;
+  background: #dceee3;
+}
+
+.safeCard strong {
+  color: var(--sb-safe);
+  font-size: 15px;
+  font-weight: 850;
+}
