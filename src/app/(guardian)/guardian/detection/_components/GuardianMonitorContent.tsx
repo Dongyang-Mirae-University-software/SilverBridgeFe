@@ -137,7 +137,33 @@ export default function GuardianMonitorContent() {
               )}
             </div>
 
-            {void detectState}{void analysis}
+            {/* AI 감지 결과 카드 — fire/smoke/danger/safe */}
+            {detectState === 'fire' && (
+              <div className={styles.detectCard}>
+                <strong>화재 감지됨</strong>
+                {analysis?.confidence != null && (
+                  <span>신뢰도 {Math.round(analysis.confidence * 100)}%</span>
+                )}
+              </div>
+            )}
+            {detectState === 'smoke' && (
+              <div className={styles.detectCard}>
+                <strong>연기 감지됨</strong>
+                {analysis?.confidence != null && (
+                  <span>신뢰도 {Math.round(analysis.confidence * 100)}%</span>
+                )}
+              </div>
+            )}
+            {detectState === 'danger' && (
+              <div className={styles.dangerCard}>
+                <strong>위험 감지됨</strong>
+              </div>
+            )}
+            {detectState === 'safe' && (
+              <div className={styles.safeCard}>
+                <strong>화재·연기: 미감지</strong>
+              </div>
+            )}
           </>
         )}
       </div>
