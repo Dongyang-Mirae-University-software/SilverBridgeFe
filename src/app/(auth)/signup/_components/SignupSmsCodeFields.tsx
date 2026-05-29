@@ -5,6 +5,7 @@ import styles from './SignupForm.module.css';
 import TextInput from '@/components/TextInput';
 import { SIGNUP_SMS_CODE_EXPIRES_SECONDS } from '@/constants/auth';
 import useTimer from '@/hooks/useTimer';
+import { formatPhoneNumber } from '@/lib/format/phone';
 
 const cx = classNames.bind(styles);
 
@@ -33,7 +34,7 @@ export default function SignupSmsCodeFields({
   return (
     <>
       <div className={cx('codeHeader')}>
-        <p className={cx('codeGuide')}>{phone}으로 인증번호를 보냈습니다.</p>
+        <p className={cx('codeGuide')}>입력하신 번호로 발송했습니다. 문자가 오지 않으면 번호를 확인해주세요.</p>
         <span className={cx('codeTimer', { expired: isExpired })}>{isExpired ? '시간 만료' : formattedTime}</span>
       </div>
       <div className={cx('codeActionRow')}>

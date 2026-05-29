@@ -18,6 +18,7 @@ function getNotificationPath(data) {
       return '/ward/guardians';
     case 'CONNECTION_ACCEPTED':
     case 'CONNECTION_REFUSED':
+      return '/guardian/wards';
     case 'CONNECTION_CANCELLED':
       return '/guardian/wards';
     case 'DISCONNECTION':
@@ -28,9 +29,42 @@ function getNotificationPath(data) {
   }
 }
 
+function getNotificationContent(payload) {
+  switch (payload.data?.type) {
+    case 'CONNECTION_REQUEST':
+      return {
+        body: payload.notification?.body || '보호자가 연결을 요청했습니다.',
+        title: payload.notification?.title || '연결 요청',
+      };
+    case 'CONNECTION_ACCEPTED':
+      return {
+        body: payload.notification?.body || '연결 요청이 수락되었습니다.',
+        title: payload.notification?.title || '연결 수락',
+      };
+    case 'CONNECTION_REFUSED':
+      return {
+        body: payload.notification?.body || '연결 요청이 거절되었습니다.',
+        title: payload.notification?.title || '연결 거절',
+      };
+    case 'DISCONNECTION':
+    case 'CONNECTION_DISCONNECTED':
+      return {
+        body: payload.notification?.body || '연결이 해제되었습니다.',
+        title: payload.notification?.title || '연결 해제',
+      };
+    default:
+      return {
+        body: payload.notification?.body || '',
+        title: payload.notification?.title || '알림',
+      };
+  }
+}
+
 messaging.onBackgroundMessage(payload => {
-  self.registration.showNotification(payload.notification?.title || '알림', {
-    body: payload.notification?.body || '',
+  const notification = getNotificationContent(payload);
+
+  self.registration.showNotification(notification.title, {
+    body: notification.body,
     data: payload.data,
   });
 });

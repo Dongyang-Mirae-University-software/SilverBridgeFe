@@ -16,14 +16,16 @@ import { CommonResponse } from '@/service/interface/common';
 import {
   IFindPasswordEmailSendReq,
   IFindPasswordSmsSendReq,
-  IFindPasswordTokenResponse,
+  IFindPasswordSendResponse,
   IPasswordResetReq,
 } from '@/service/interface/auth';
 
 type Method = 'email' | 'sms';
+const DEFAULT_VERIFICATION_EXPIRES_SECONDS = 300;
+const DEFAULT_VERIFICATION_CODE_LENGTH = 6;
 
 function isCommonResponse<T>(value: unknown): value is CommonResponse<T> {
-  return typeof value === 'object' && value !== null && 'data' in value && ('code' in value || 'success' in value);
+  return typeof value === 'object' && value !== null && ('code' in value || 'success' in value);
 }
 
 function getCommonResponse<T>(response: unknown) {
@@ -35,15 +37,19 @@ function getCommonResponse<T>(response: unknown) {
   return null;
 }
 
-function getVerifiedToken(response: unknown) {
-  const result = getCommonResponse<IFindPasswordTokenResponse>(response);
-  const token = result?.data?.token;
+function isVerifySuccess(response: unknown) {
+  const result = getCommonResponse<null>(response);
 
-  if ((result?.success === true || result?.code === 200) && typeof token === 'string' && token.length > 0) {
-    return token;
-  }
+  return result?.success === true || result?.code === 200;
+}
 
-  return null;
+function getSendResult(response: unknown) {
+  const result = getCommonResponse<IFindPasswordSendResponse>(response);
+
+  return {
+    expiresInSeconds: result?.data?.expiresInSeconds ?? DEFAULT_VERIFICATION_EXPIRES_SECONDS,
+    codeLength: result?.data?.codeLength ?? DEFAULT_VERIFICATION_CODE_LENGTH,
+  };
 }
 
 export default function useFindPasswordFlow() {
@@ -52,12 +58,19 @@ export default function useFindPasswordFlow() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [token, setToken] = useState<string | null>(null);
+  const [verifiedCode, setVerifiedCode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [verificationConfig, setVerificationConfig] = useState({
+    expiresInSeconds: DEFAULT_VERIFICATION_EXPIRES_SECONDS,
+    codeLength: DEFAULT_VERIFICATION_CODE_LENGTH,
+  });
 
   const sendEmailMutation = useMutation({
     mutationFn: findPasswordEmailSend,
-    onSuccess: () => setErrorMessage(''),
+    onSuccess: response => {
+      setVerificationConfig(getSendResult(response));
+      setErrorMessage('');
+    },
     onError: (error: Error) => setErrorMessage(error.message || '이메일 발송에 실패했습니다.'),
   });
 
@@ -68,13 +81,19 @@ export default function useFindPasswordFlow() {
 
   const resendEmailMutation = useMutation({
     mutationFn: findPasswordEmailResend,
-    onSuccess: () => setErrorMessage(''),
+    onSuccess: response => {
+      setVerificationConfig(getSendResult(response));
+      setErrorMessage('');
+    },
     onError: (error: Error) => setErrorMessage(error.message || '이메일 재발송에 실패했습니다.'),
   });
 
   const sendSmsMutation = useMutation({
     mutationFn: findPasswordSmsSend,
-    onSuccess: () => setErrorMessage(''),
+    onSuccess: response => {
+      setVerificationConfig(getSendResult(response));
+      setErrorMessage('');
+    },
     onError: (error: Error) => setErrorMessage(error.message || 'SMS 발송에 실패했습니다.'),
   });
 
@@ -85,7 +104,10 @@ export default function useFindPasswordFlow() {
 
   const resendSmsMutation = useMutation({
     mutationFn: findPasswordSmsResend,
-    onSuccess: () => setErrorMessage(''),
+    onSuccess: response => {
+      setVerificationConfig(getSendResult(response));
+      setErrorMessage('');
+    },
     onError: (error: Error) => setErrorMessage(error.message || 'SMS 재발송에 실패했습니다.'),
   });
 
@@ -101,8 +123,9 @@ export default function useFindPasswordFlow() {
     email,
     name,
     phone,
-    token,
+    verifiedCode,
     errorMessage,
+    verificationConfig,
     isSending: sendEmailMutation.isPending || sendSmsMutation.isPending,
     isVerifying: verifyEmailMutation.isPending || verifySmsMutation.isPending,
     isResetting: resetPasswordMutation.isPending,
@@ -115,21 +138,25 @@ export default function useFindPasswordFlow() {
     },
     setErrorMessage,
     sendEmail: (body: IFindPasswordEmailSendReq) => sendEmailMutation.mutateAsync(body),
-    verifyCode: async (body: { token: string } | { phone: string; code: string }) => {
-      const response = 'token' in body
-        ? await verifyEmailMutation.mutateAsync(body)
-        : await verifySmsMutation.mutateAsync(body);
-      const verifiedToken = getVerifiedToken(response);
+    verifyCode: async (body: { email: string; code: string } | { phone: string; code: string }) => {
+      try {
+        const response = 'email' in body
+          ? await verifyEmailMutation.mutateAsync(body)
+          : await verifySmsMutation.mutateAsync(body);
 
-      if (!verifiedToken) {
-        setToken(null);
-        setErrorMessage('인증번호가 올바르지 않습니다.');
+        if (!isVerifySuccess(response)) {
+          setVerifiedCode('');
+          setErrorMessage('인증번호가 올바르지 않습니다.');
+          return false;
+        }
+
+        setErrorMessage('');
+        setVerifiedCode(body.code);
+        return true;
+      } catch {
+        setVerifiedCode('');
         return false;
       }
-
-      setErrorMessage('');
-      setToken(verifiedToken);
-      return true;
     },
     resendEmail: (body: IFindPasswordEmailSendReq) => resendEmailMutation.mutateAsync(body),
     sendSms: (body: IFindPasswordSmsSendReq) => sendSmsMutation.mutateAsync(body),

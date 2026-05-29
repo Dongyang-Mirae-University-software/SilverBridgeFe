@@ -3,11 +3,14 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { GenderType, ISignupReq, RoleType } from '@/service/interface/auth';
+import { GenderType, IKakaoSignupReq, ISignupReq, RoleType } from '@/service/interface/auth';
 import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '@/constants/pattern';
 import { useMutation } from '@tanstack/react-query';
-import { signup } from '@/service/api/auth';
+import { signup, signupKakao } from '@/service/api/auth';
 import { useRouter } from 'next/navigation';
+import { completeSigninSession } from '@/lib/auth/completeSignin';
+import { getRoleHomePath } from '@/lib/auth/routes';
+import { getPhoneDigits } from '@/lib/format/phone';
 
 export type SignupFormValues = {
   name: string;
@@ -24,7 +27,25 @@ export type SignupFormValues = {
   postcode: string;
 };
 
-export default function useSignupForm() {
+export type KakaoSignupData = {
+  kakaoId: string;
+  email: string;
+  profileImageUrl?: string;
+};
+
+type UseSignupFormOptions = {
+  kakaoData?: KakaoSignupData;
+};
+
+function getKakaoSignupResponseData(response: unknown) {
+  const data = (response as { data?: unknown }).data;
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+
+  return nestedData ?? data ?? response;
+}
+
+export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) {
+  const isKakaoSignup = Boolean(kakaoData);
   const {
     register,
     handleSubmit,
@@ -37,7 +58,7 @@ export default function useSignupForm() {
     mode: 'all',
     defaultValues: {
       name: '',
-      email: '', // 초기값은 빈 문자열
+      email: kakaoData?.email || '',
       password: '',
       passwordCheck: '',
       phone: '',
@@ -109,15 +130,62 @@ export default function useSignupForm() {
     mutationKey: ['signup'],
     mutationFn: signup,
   });
+  const { mutate: mutateKakao } = useMutation({
+    mutationKey: ['kakao-signup'],
+    mutationFn: signupKakao,
+  });
 
   const router = useRouter();
 
   function onSubmit(formData: SignupFormValues) {
+    const phone = getPhoneDigits(formData.phone);
+
+    if (isKakaoSignup && kakaoData) {
+      const form: IKakaoSignupReq = {
+        kakaoId: kakaoData.kakaoId,
+        name: formData.name,
+        phone,
+        verificationNonce: formData.verificationNonce,
+        role: formData.role,
+        profileImageUrl: kakaoData.profileImageUrl,
+        address: formData.address,
+        addressDetail: formData.addressDetail,
+        gender: formData.gender,
+        birthDate: formData.birthDate,
+        postcode: formData.postcode,
+      };
+
+      mutateKakao(form, {
+        onSuccess: response => {
+          const data = getKakaoSignupResponseData(response) as {
+            accessToken?: string;
+            refreshToken?: string;
+            role?: RoleType;
+          };
+          const role = data.role ?? formData.role;
+
+          if (data.accessToken && data.refreshToken) {
+            completeSigninSession({
+              accessToken: data.accessToken,
+              refreshToken: data.refreshToken,
+              role,
+            });
+          }
+
+          router.push(getRoleHomePath(role));
+        },
+        onError: error => {
+          setSignupError((error as Error).message || '카카오 회원가입에 실패했습니다. 다시 시도해 주세요.');
+        },
+      });
+      return;
+    }
+
     const form: ISignupReq = {
       name: formData.name,
       email: formData.email,
       password: formData.password,
-      phone: formData.phone,
+      phone,
       verificationNonce: formData.verificationNonce,
       role: formData.role,
       address: formData.address,
@@ -152,6 +220,7 @@ export default function useSignupForm() {
     phoneRules,
     allValues,
     signupError,
+    isKakaoSignup,
     clearSignupError: () => setSignupError(null),
   };
 }

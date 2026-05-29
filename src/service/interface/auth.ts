@@ -107,7 +107,8 @@ export interface IFindPasswordEmailSendReq {
 }
 
 export interface IFindPasswordEmailVerifyReq {
-  token: string;
+  email: string;
+  code: string;
 }
 
 export interface IFindPasswordSmsSendReq {
@@ -120,12 +121,20 @@ export interface IFindPasswordSmsVerifyReq {
   code: string;
 }
 
-export interface IFindPasswordTokenResponse {
-  token: string;
+export interface IFindPasswordSendResponse {
+  expiresInSeconds: number;
+  codeLength: number;
 }
 
 // ── 비밀번호 재설정 ────────────────────────────────────────────────────────────
-export interface IPasswordResetReq {
-  token: string;
-  newPassword: string;
-}
+export type IPasswordResetReq =
+  | {
+      email: string;
+      code: string;
+      newPassword: string;
+    }
+  | {
+      phone: string;
+      code: string;
+      newPassword: string;
+    };

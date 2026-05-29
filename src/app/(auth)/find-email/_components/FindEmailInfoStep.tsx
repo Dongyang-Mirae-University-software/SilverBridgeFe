@@ -4,6 +4,7 @@ import { FormEvent } from 'react';
 import classNames from 'classnames/bind';
 
 import { IFindEmailReq } from '@/service/interface/auth';
+import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
 import styles from './FindEmailContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -51,8 +52,8 @@ export default function FindEmailInfoStep({ errorMessage, form, isPending, onCha
             name="phone"
             placeholder="010-0000-0000"
             type="tel"
-            value={form.phone}
-            onChange={event => onChange({ ...form, phone: event.target.value })}
+            value={formatPhoneNumber(form.phone)}
+            onChange={event => onChange({ ...form, phone: getPhoneDigits(event.target.value) })}
           />
         </div>
       </div>

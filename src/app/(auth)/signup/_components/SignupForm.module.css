@@ -229,6 +229,16 @@
   background: #fbe7da;
 }
 
+.roleCard.wardRole.active {
+  border-color: #c73e3e;
+  background: #fce4e4;
+}
+
+.roleCard.guardianRole.active {
+  border-color: #d97757;
+  background: #fbe7da;
+}
+
 .roleCard input {
   position: absolute;
   opacity: 0;
@@ -236,16 +246,12 @@
 }
 
 .roleEmoji {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
+  display: block;
+  min-width: 24px;
   flex-shrink: 0;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #d97757;
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 22px;
+  line-height: 1;
+  text-align: center;
 }
 
 .roleCopy {
@@ -262,6 +268,14 @@
   color: #1f1916;
   font-size: 14px;
   font-weight: 800;
+}
+
+.wardRole.active .roleCopy strong {
+  color: #c73e3e;
+}
+
+.guardianRole.active .roleCopy strong {
+  color: #d97757;
 }
 
 .roleCopy small {
@@ -281,6 +295,14 @@
   color: #ffffff;
   font-size: 11px;
   font-weight: 800;
+}
+
+.wardRole.active .checkMark {
+  background: #c73e3e;
+}
+
+.guardianRole.active .checkMark {
+  background: #d97757;
 }
 
 .terms {
@@ -320,46 +342,6 @@
   color: #2e7d32;
   font-size: 13px;
   font-weight: 500;
-}
-
-.popupOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.popup {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: min(320px, calc(100vw - 40px));
-  padding: 28px 24px;
-  border-radius: 16px;
-  background: #ffffff;
-  text-align: center;
-}
-
-.popupMessage {
-  color: #1f1916;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.popupButton {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  background: #d97757;
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
 }
 
 @media (max-width: 640px) {

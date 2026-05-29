@@ -30,6 +30,7 @@ const WARD_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealt
 const GUARDIAN_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
   { destination: 'connection-accepted', type: 'CONNECTION_ACCEPTED' },
   { destination: 'connection-refused', type: 'CONNECTION_REFUSED' },
+  { destination: 'connection-cancelled', type: 'CONNECTION_REFUSED' },
 ];
 
 function getSocketUrl(accessToken: string) {
@@ -79,6 +80,11 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
 
   if (!accessToken) {
     console.warn('[WS] accessToken이 없어 연결 WebSocket을 시작하지 않았습니다.');
+    return () => {};
+  }
+
+  if (!userId) {
+    console.warn('[WS] userId가 없어 연결 WebSocket 구독을 시작하지 않았습니다.');
     return () => {};
   }
 

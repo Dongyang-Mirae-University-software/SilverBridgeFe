@@ -1978,30 +1978,46 @@
 }
 
 .connectionCard {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 14px;
+  border-radius: 18px;
   background: #fff;
-  padding: 14px;
+  box-shadow: 0 8px 24px rgba(20, 17, 12, 0.05);
+  padding: 18px;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 
 .connectionCard:hover {
-  background: var(--sb-bg);
+  border-color: var(--sb-line);
+  box-shadow: 0 12px 28px rgba(20, 17, 12, 0.08);
+  transform: translateY(-1px);
+}
+
+.connectionCardMain {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 14px;
 }
 
 .connectionAvatar {
   display: grid;
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   place-items: center;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: 18px;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 850;
 }
 
@@ -2015,21 +2031,40 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
 }
 
 .connectionTitleRow {
   display: flex;
   min-width: 0;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.connectionNameBlock {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .connectionTitleRow strong {
   overflow: hidden;
   color: var(--sb-ink);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 850;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connectionNameBlock span {
+  overflow: hidden;
+  color: var(--sb-ink-mute);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2062,13 +2097,58 @@
   color: var(--sb-ink-mute);
 }
 
-.connectionMeta {
-  overflow: hidden;
+.connectionSummaryRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.connectionSummaryRow span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  background: var(--sb-bg);
   color: var(--sb-ink-mute);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 750;
+  padding: 4px 10px;
+}
+
+.connectionDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.connectionDetailItem {
+  min-width: 0;
+  border-radius: 12px;
+  background: var(--sb-bg);
+  padding: 10px 12px;
+}
+
+.connectionDetailItem span {
+  display: block;
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.connectionDetailItem strong {
+  display: block;
+  overflow: hidden;
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.connectionDetailItem:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .connectionActions {
@@ -2375,8 +2455,32 @@
   }
 
   .connectionCard {
-    grid-template-columns: 42px minmax(0, 1fr);
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .connectionCardMain {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .connectionAvatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+  }
+
+  .connectionTitleRow {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .connectionStatus {
+    align-self: flex-start;
+  }
+
+  .connectionDetailGrid {
+    grid-template-columns: 1fr;
   }
 
   .wardListCardHeader {
@@ -2408,6 +2512,6 @@
   }
 
   .connectionActions {
-    grid-column: 1 / -1;
+    width: 100%;
   }
 }

@@ -1,4 +1,5 @@
 import { IUserProfile, IUserUpdateReq } from '@/service/interface/user';
+import { getPhoneDigits } from '@/lib/format/phone';
 
 export function getProviderLabel(provider?: string) {
   if (provider === 'KAKAO') return '카카오';
@@ -28,7 +29,7 @@ export function getProfileFormValue(profile?: IUserProfile | null): IUserUpdateR
     birthDate: profile?.birthDate ?? '',
     gender: profile?.gender ?? 'FEMALE',
     name: profile?.name ?? '',
-    phone: profile?.phone ?? '',
+    phone: getPhoneDigits(profile?.phone ?? ''),
     postcode: profile?.postcode ?? '',
     verificationNonce: null,
   };

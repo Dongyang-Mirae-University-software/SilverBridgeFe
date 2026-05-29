@@ -23,6 +23,7 @@ interface SignupPhoneVerificationStepProps {
   isSmsVerifyPending: boolean;
   smsTimerKey: number;
   onCodeChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onPhoneChange: (value: string) => void;
   onPhoneCheck: () => void;
   onPhoneReset: () => void;
   onPrevStep: () => void;
@@ -43,6 +44,7 @@ export default function SignupPhoneVerificationStep({
   isSmsVerifyPending,
   smsTimerKey,
   onCodeChange,
+  onPhoneChange,
   onPhoneCheck,
   onPhoneReset,
   onPrevStep,
@@ -53,9 +55,7 @@ export default function SignupPhoneVerificationStep({
   const canRequestCode = phoneHasValue && !hasPhoneError && !isSmsSendPending;
   const phoneErrorText =
     smsSendErrorMsg || (allValues.phone && allValues.phone.trim() !== '' ? errors.phone?.message : undefined);
-  const smsVerifyErrorMessage = smsVerifyError
-    ? smsVerifyError.message || '인증번호가 올바르지 않습니다.'
-    : undefined;
+  const smsVerifyErrorMessage = smsVerifyError ? smsVerifyError.message || '인증번호가 올바르지 않습니다.' : undefined;
 
   return (
     <>
@@ -64,9 +64,13 @@ export default function SignupPhoneVerificationStep({
           <div className={cx('fieldGrow')}>
             <TextInput
               label="전화번호"
-              placeholder="010-0000-0000"
+              placeholder="01012345678"
               required
+              inputMode="numeric"
+              maxLength={11}
               {...phoneField}
+              value={allValues.phone}
+              onChange={event => onPhoneChange(event.target.value)}
               error={Boolean(hasPhoneError || smsSendErrorMsg)}
               disabled={isCode}
               errorText={phoneErrorText}
@@ -102,15 +106,11 @@ export default function SignupPhoneVerificationStep({
           </div>
         )}
       </div>
-      <label className={cx('terms')}>
-        <input type="checkbox" defaultChecked />
-        <span>이용약관 · 개인정보 처리방침에 동의합니다</span>
-      </label>
       <div className={cx('stepActions')}>
         <button className={cx('prevButton')} type="button" onClick={onPrevStep}>
           이전
         </button>
-        <button className={cx('button')} disabled={!isEmailCheck || !isSmsCheck || !allValues.verificationNonce} type="submit">
+        <button className={cx('button')} disabled={!isEmailCheck || !isSmsCheck} type="submit">
           가입 완료
         </button>
       </div>

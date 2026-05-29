@@ -9,6 +9,7 @@ import { getRoleHomePath } from '@/lib/auth/routes';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import { AuthRole, clearAuthTokens, getAccessToken, setAuthRole } from '@/lib/auth/tokenStore';
 import { registerFcmTokenForCurrentDevice } from '@/lib/fcm';
+import { reportNonApiError } from '@/lib/api/reportError';
 
 interface Props {
   allowedRole: AuthRole;
@@ -57,7 +58,7 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
     if (!isAllowed) return;
 
     void registerFcmTokenForCurrentDevice().catch(error => {
-      console.error('FCM 토큰 등록 실패:', error);
+      reportNonApiError('FCM 토큰 등록 실패:', error);
     });
   }, [isAllowed]);
 

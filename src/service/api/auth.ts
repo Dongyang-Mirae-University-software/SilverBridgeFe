@@ -7,7 +7,7 @@ import {
   IFindPasswordEmailVerifyReq,
   IFindPasswordSmsSendReq,
   IFindPasswordSmsVerifyReq,
-  IFindPasswordTokenResponse,
+  IFindPasswordSendResponse,
   IAuthTokenResponse,
   IRefreshReq,
   ISmsVerifyResponse,
@@ -72,28 +72,28 @@ export async function findEmail(body: IFindEmailReq) {
 
 // ── 비밀번호 찾기 · 이메일 ───────────────────────────────────────────────────
 export async function findPasswordEmailSend(body: IFindPasswordEmailSendReq) {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/email/send`, body);
+  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/email/send`, body);
 }
 
 export async function findPasswordEmailVerify(body: IFindPasswordEmailVerifyReq) {
-  return apiClient.post<CommonResponse<IFindPasswordTokenResponse>>(`${BASE}/find-password/email/verify`, body);
+  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/email/verify`, body);
 }
 
 export async function findPasswordEmailResend(body: IFindPasswordEmailSendReq) {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/email/resend`, body);
+  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/email/resend`, body);
 }
 
 // ── 비밀번호 찾기 · SMS ──────────────────────────────────────────────────────
 export async function findPasswordSmsSend(body: IFindPasswordSmsSendReq) {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/sms/send`, body);
+  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/sms/send`, body);
 }
 
 export async function findPasswordSmsVerify(body: IFindPasswordSmsVerifyReq) {
-  return apiClient.post<CommonResponse<IFindPasswordTokenResponse>>(`${BASE}/find-password/sms/verify`, body);
+  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/sms/verify`, body);
 }
 
 export async function findPasswordSmsResend(body: IFindPasswordSmsSendReq) {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/find-password/sms/resend`, body);
+  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/sms/resend`, body);
 }
 
 // ── 비밀번호 재설정 ────────────────────────────────────────────────────────────
