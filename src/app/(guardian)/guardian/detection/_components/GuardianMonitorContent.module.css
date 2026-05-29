@@ -263,3 +263,34 @@
   font-size: 15px;
   font-weight: 850;
 }
+
+/* ── 반응형 ── */
+@media (max-width: 900px) {
+  .monitorPage {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .sessionPanel {
+    width: 100%;
+    max-height: 260px;
+  }
+
+  .sessionList {
+    max-height: 180px;
+  }
+
+  .frameWrapper {
+    min-height: 220px;
+  }
+
+  .viewerHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .statusRow {
+    flex-wrap: wrap;
+  }
+}
