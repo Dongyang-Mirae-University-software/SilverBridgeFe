@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 
+import { CommonModal } from '@/components/CommonModal';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import { getKakaoRedirectUri } from '@/lib/auth/kakao';
 import { getRoleHomePath } from '@/lib/auth/routes';
@@ -23,6 +24,7 @@ function KakaoCallbackInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const { mutate } = useMutation({
     mutationKey: ['kakaoSignin'],
@@ -33,7 +35,6 @@ function KakaoCallbackInner() {
         const params = new URLSearchParams({
           kakaoId: data.kakaoId || '',
           email: data.email || '',
-          name: data.name || '',
           profileImageUrl: data.profileImageUrl || '',
         });
         router.push(`/signup?${params.toString()}`);
@@ -55,8 +56,7 @@ function KakaoCallbackInner() {
       router.push('/login');
     },
     onError: error => {
-      console.error('카카오 로그인 실패:', error);
-      router.push('/login');
+      setErrorMessage((error as Error).message || '카카오 로그인에 실패했습니다. 다시 시도해주세요.');
     },
   });
 
@@ -68,7 +68,19 @@ function KakaoCallbackInner() {
     }
   }, [code, mutate, router]);
 
-  return <div>카카오 로그인 처리 중...</div>;
+  const handleErrorClose = () => {
+    setErrorMessage('');
+    router.replace('/login');
+  };
+
+  return (
+    <>
+      <div>카카오 로그인 처리 중...</div>
+      {errorMessage && (
+        <CommonModal type="error" title="카카오 로그인 실패" message={errorMessage} onClose={handleErrorClose} />
+      )}
+    </>
+  );
 }
 
 export function KakaoCallbackContent() {

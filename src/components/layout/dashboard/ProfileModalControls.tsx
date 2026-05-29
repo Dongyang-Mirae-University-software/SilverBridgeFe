@@ -4,15 +4,18 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { CommonModal } from '@/components/CommonModal';
 import { signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { changeMyPassword, deleteMyAccount, updateMyProfile } from '@/service/api/user';
 import { IUserProfile, IUserUpdateReq } from '@/service/interface/user';
 import { myProfileQueryKey } from '@/service/query/user';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
 import { getUserProfileData } from '@/lib/auth/userProfile';
+import { setMyProfileCache } from '@/lib/dashboard/profileCache';
 import { ProfileInfoPanel } from './ProfileInfoPanel';
 import { ProfileSecurityPanel } from './ProfileSecurityPanel';
 import { getModalErrorMessage, getProfileFormValue, getSmsVerificationNonce } from '@/lib/dashboard/profile';
+import { getPhoneDigits } from '@/lib/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 import { cx } from './styles';
 
@@ -33,20 +36,22 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [isDeleteCompleteModalOpen, setIsDeleteCompleteModalOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<'profile' | 'security'>('profile');
   const isKakaoUser = profile?.provider === 'KAKAO';
-  const isPhoneChanged = (profileForm.phone ?? '').trim() !== (profile?.phone ?? '');
+  const isPhoneChanged = (profileForm.phone ?? '').trim() !== getPhoneDigits(profile?.phone ?? '');
 
   const profileMutation = useMutation({
     mutationKey: ['user-profile-update'],
     mutationFn: updateMyProfile,
     onMutate: () => setFeedbackMessage(''),
     onSuccess: async response => {
-      setProfileForm(getProfileFormValue(getUserProfileData(response)));
+      const profile = setMyProfileCache(queryClient, response) ?? getUserProfileData(response);
+      setProfileForm(getProfileFormValue(profile));
       setPhoneCode('');
       setPhoneNonce(null);
       setFeedbackMessage('프로필 정보를 수정했습니다.');
-      await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+      void queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
     },
     onError: error => setFeedbackMessage(getModalErrorMessage(error, '프로필 수정에 실패했습니다.')),
   });
@@ -78,7 +83,7 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
     mutationKey: ['user-account-delete'],
     mutationFn: deleteMyAccount,
     onMutate: () => setFeedbackMessage(''),
-    onSuccess: () => redirectToLogin(queryClient, router),
+    onSuccess: () => setIsDeleteCompleteModalOpen(true),
     onError: error => setFeedbackMessage(getModalErrorMessage(error, '회원 탈퇴에 실패했습니다.')),
   });
 
@@ -133,6 +138,16 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
 
   return (
     <div className={cx('profileManageStack')}>
+      {isDeleteCompleteModalOpen && (
+        <CommonModal
+          type="success"
+          tone={profile?.role === 'GUARDIAN' ? 'guardian' : 'default'}
+          title="회원 탈퇴가 완료되었습니다"
+          message="그동안 이용해 주셔서 감사합니다."
+          confirmText="확인"
+          onClose={() => redirectToLogin(queryClient, router)}
+        />
+      )}
       {feedbackMessage && <p className={cx('profileModalMessage')}>{feedbackMessage}</p>}
       <ProfileTabs activePanel={activePanel} onChange={handlePanelChange} />
       <div className={cx('profileManageScroll')}>

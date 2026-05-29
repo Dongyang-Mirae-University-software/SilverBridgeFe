@@ -8,17 +8,21 @@ import styles from './FindPasswordContent.module.css';
 const cx = classNames.bind(styles);
 
 interface Props {
+  codeLength: number;
   errorMessage: string;
+  expiresInSeconds: number;
   onResend: () => Promise<unknown>;
   onSubmit: (code: string) => Promise<unknown>;
 }
 
-export default function FindPasswordVerifyStep({ errorMessage, onResend, onSubmit }: Props) {
+export default function FindPasswordVerifyStep({ codeLength, errorMessage, expiresInSeconds, onResend, onSubmit }: Props) {
   return (
     <div className={cx('section')}>
       <VerificationCodeForm
         content="받은 인증코드를 입력하세요."
+        codeLength={codeLength}
         errorMessage={errorMessage}
+        expiresInSeconds={expiresInSeconds}
         onResend={onResend}
         onSubmit={onSubmit}
       />

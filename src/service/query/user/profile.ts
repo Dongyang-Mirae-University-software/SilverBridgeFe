@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 
-import { getMyProfile } from '../api/user';
+import { getMyProfile } from '@/service/api/user';
 
 export const myProfileQueryKey = ['my-profile'] as const;
 
