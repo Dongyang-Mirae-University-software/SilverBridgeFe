@@ -82,7 +82,10 @@ export function ProfileModal({
                   type="button"
                   aria-label="프로필 이미지 삭제"
                   disabled={isProfileImageChanging}
-                  onClick={onProfileImageDelete}
+                  onClick={event => {
+                    event.stopPropagation();
+                    onProfileImageDelete();
+                  }}
                 >
                   ×
                 </button>
