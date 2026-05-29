@@ -22,8 +22,7 @@
 .wardReadableText .connectionMessage,
 .wardReadableText .connectionEmpty,
 .wardReadableText .connectionCard,
-.wardReadableText .wardListCard,
-.wardReadableText .actionCard strong {
+.wardReadableText .wardListCard {
   font-size: var(--ward-preferred-font-size, 17px);
 }
 
@@ -346,9 +345,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   border-bottom: 1px solid var(--sb-line-soft);
-  background:
-    linear-gradient(135deg, rgba(31, 94, 72, 0.08), rgba(217, 119, 87, 0.08)),
-    #fff;
+  background: linear-gradient(135deg, rgba(31, 94, 72, 0.08), rgba(217, 119, 87, 0.08)), #fff;
   gap: 18px;
   padding: 24px 62px 22px 24px;
 }
@@ -371,7 +368,6 @@
   gap: 6px;
   margin-bottom: 8px;
 }
-
 
 .profileProviderBadge {
   display: inline-flex;
@@ -898,12 +894,14 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  height: 100%;
 }
 
 .wardHomeActions {
   display: grid;
   min-height: calc(100dvh - 160px);
   align-items: center;
+  height: 100%;
 }
 
 .wardHomeActionGrid {
@@ -923,8 +921,9 @@
 .actionCard strong,
 .statCard strong {
   color: var(--sb-ink);
-  font-size: 20px;
+  font-size: 30px;
   font-weight: 850;
+  text-align: center;
 }
 
 .actionCard span,
@@ -2099,7 +2098,9 @@
     max-width: 320px;
     height: 100dvh;
     border-right: 0;
-    box-shadow: var(--sb-shadow-sm), 16px 0 48px rgba(20, 17, 12, 0.16);
+    box-shadow:
+      var(--sb-shadow-sm),
+      16px 0 48px rgba(20, 17, 12, 0.16);
     padding: max(18px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
     transform: translateX(-105%);
     transition: transform 0.18s ease;
@@ -2142,12 +2143,19 @@
   }
 
   .wardHomeActions {
-    min-height: auto;
     align-items: stretch;
   }
 
   .wardHomeActionGrid {
-    grid-template-columns: 1fr;
+    /* grid-template-columns: 1fr; */
+
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    & > a {
+      flex: 1;
+    }
   }
 
   .wideCard {
@@ -2187,8 +2195,6 @@
     align-items: center;
     gap: 12px;
   }
-
-
 
   .profileModalClose {
     position: absolute;
@@ -2297,7 +2303,6 @@
     grid-template-columns: 48px minmax(0, 1fr);
   }
 
-
   .connectionTitleRow {
     flex-direction: column;
     gap: 8px;
@@ -2315,7 +2320,6 @@
     align-items: flex-start;
     padding: 16px;
   }
-
 
   .wardListNameRow strong {
     font-size: 18px;
