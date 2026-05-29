@@ -151,10 +151,8 @@ function useProfileImageDeleteMutation(queryClient: ReturnType<typeof useQueryCl
       if (context?.previousProfile) queryClient.setQueryData(myProfileQueryKey, context.previousProfile);
       reportNonApiError('프로필 이미지 삭제 실패:', error);
     },
-    onSuccess: response => {
-      const profile = setMyProfileCache(queryClient, response);
-      if (!profile) updateMyProfileCache(queryClient, current => ({ ...current, profileImage: null }));
-      void queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+    onSuccess: () => {
+      updateMyProfileCache(queryClient, current => ({ ...current, profileImage: null }));
     },
   });
 }
