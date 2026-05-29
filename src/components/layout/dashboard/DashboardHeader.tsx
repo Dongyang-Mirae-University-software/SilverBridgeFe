@@ -1,6 +1,7 @@
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { IUserProfile } from '@/service/interface/user';
+import { UserAvatar } from '@/components/UserAvatar';
 import { MenuIcon } from './icons';
 import { cx } from './styles';
 
@@ -12,7 +13,6 @@ interface Props {
   profile?: IUserProfile | null;
   role: AuthRole;
   userEmail: string;
-  userInitial: string;
   userName: string;
 }
 
@@ -35,7 +35,7 @@ export function MobileTopBar({ onOpenSidebar, pageTitle, role }: Pick<Props, 'on
   );
 }
 
-export function DesktopHeader({ onOpenProfile, pageTitle, profile, role, userEmail, userInitial, userName }: Props) {
+export function DesktopHeader({ onOpenProfile, pageTitle, profile, role, userEmail, userName }: Props) {
   return (
     <header className={cx('desktopHeader')}>
       <div className={cx('desktopHeaderTitle')}>
@@ -49,25 +49,12 @@ export function DesktopHeader({ onOpenProfile, pageTitle, profile, role, userEma
         aria-label="사용자 상세 정보 열기"
         onClick={onOpenProfile}
       >
-        <UserAvatar profile={profile} userInitial={userInitial} />
+        <UserAvatar size="w-60" imageUrl={profile?.profileImage} />
         <div className={cx('desktopUserInfo')}>
           <strong>{userName}</strong>
           <span>{userEmail}</span>
         </div>
       </button>
     </header>
-  );
-}
-
-export function UserAvatar({ profile, userInitial }: { profile?: IUserProfile | null; userInitial: string }) {
-  return (
-    <div className={cx('avatar')}>
-      {profile?.profileImage ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img alt="" src={profile.profileImage} />
-      ) : (
-        userInitial
-      )}
-    </div>
   );
 }

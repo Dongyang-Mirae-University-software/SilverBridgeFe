@@ -1,0 +1,296 @@
+.monitorPage {
+  display: flex;
+  gap: 16px;
+  min-height: calc(100vh - 140px);
+}
+
+/* ── 세션 목록 패널 ── */
+.sessionPanel {
+  display: flex;
+  width: 260px;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  overflow: hidden;
+  padding: 16px;
+}
+
+.sessionPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--sb-line-soft);
+  flex-shrink: 0;
+  padding-bottom: 10px;
+}
+
+.sessionPanelHeader strong {
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.sessionPanelHeader span {
+  border-radius: 999px;
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+}
+
+.sessionEmpty {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.sessionList {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0;
+  list-style: none;
+}
+
+.sessionCard {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 10px;
+  background: #fcfbf8;
+  color: inherit;
+  cursor: pointer;
+  padding: 10px 12px;
+  text-align: left;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.sessionCard:hover {
+  background: var(--guardian-brand-soft);
+  border-color: var(--guardian-line);
+}
+
+.sessionCard.active {
+  background: var(--guardian-brand-soft);
+  border-color: var(--guardian-brand);
+}
+
+.sessionCard strong {
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sessionId {
+  color: var(--sb-ink-mute);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.analyzingBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  background: #dceee3;
+  color: var(--sb-safe);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+}
+
+/* ── 뷰어 패널 ── */
+.viewerPanel {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptyState {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--sb-line);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  text-align: center;
+}
+
+.emptyState p {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.viewerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  flex-shrink: 0;
+  padding: 14px 18px;
+}
+
+.viewerHeader strong {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.viewerHeader > div:first-child span {
+  display: block;
+  margin-top: 3px;
+  color: var(--sb-ink-mute);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.statusRow {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusRow span {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+/* ── MJPEG 프레임 ── */
+.frameWrapper {
+  display: flex;
+  flex: 1;
+  min-height: 320px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #111;
+}
+
+.mjpegImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ── AI 감지 결과 카드 ── */
+.detectCard,
+.dangerCard,
+.safeCard {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid;
+  border-radius: 14px;
+  padding: 14px 20px;
+}
+
+.detectCard {
+  border-color: #f5a5a5;
+  background: #fff5f5;
+}
+
+.detectCard strong {
+  color: #c0392b;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.detectCard span {
+  color: #c0392b;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.dangerCard {
+  border-color: #f5c842;
+  background: #fff9ec;
+}
+
+.dangerCard strong {
+  color: #b7860a;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.safeCard {
+  border-color: #9dccb2;
+  background: #dceee3;
+}
+
+.safeCard strong {
+  color: var(--sb-safe);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 900px) {
+  .monitorPage {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .sessionPanel {
+    width: 100%;
+    max-height: 260px;
+  }
+
+  .sessionList {
+    max-height: 180px;
+  }
+
+  .frameWrapper {
+    min-height: 220px;
+  }
+
+  .viewerHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .statusRow {
+    flex-wrap: wrap;
+  }
+}

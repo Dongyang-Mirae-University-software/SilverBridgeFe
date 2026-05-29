@@ -1,6 +1,7 @@
 import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user';
+import { UserAvatar } from '@/components/UserAvatar';
 import { ProfileModalControls } from './ProfileModalControls';
 import { formatProfileDate, getProviderLabel } from '@/lib/dashboard/profile';
 import { cx } from './styles';
@@ -15,7 +16,6 @@ interface Props {
   profile: IUserProfile | null;
   role: AuthRole;
   userEmail: string;
-  userInitial: string;
   userName: string;
   userPhone: string;
 }
@@ -30,7 +30,6 @@ export function ProfileModal({
   profile,
   role,
   userEmail,
-  userInitial,
   userName,
   userPhone,
 }: Props) {
@@ -52,45 +51,13 @@ export function ProfileModal({
       >
         <div className={cx('profileModalHeader')}>
           <div className={cx('profileModalUser')}>
-            <div className={cx('profilePhotoBlock')}>
-              <div className={cx('profileModalAvatar')}>
-                {profile?.profileImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img alt="" src={profile.profileImage} />
-                ) : (
-                  userInitial
-                )}
-              </div>
-              <label className={cx('profilePhotoEditButton')} aria-label="프로필 이미지 변경">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8.5 7.5 10 5h4l1.5 2.5H18a3 3 0 0 1 3 3V17a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-6.5a3 3 0 0 1 3-3h2.5Z" />
-                  <path d="M12 10.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" />
-                </svg>
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={isProfileImageChanging}
-                  onChange={event => {
-                    onProfileImageChange(event.target.files?.[0]);
-                    event.currentTarget.value = '';
-                  }}
-                />
-              </label>
-              {profile?.profileImage && (
-                <button
-                  className={cx('profilePhotoDeleteButton')}
-                  type="button"
-                  aria-label="프로필 이미지 삭제"
-                  disabled={isProfileImageChanging}
-                  onClick={event => {
-                    event.stopPropagation();
-                    onProfileImageDelete();
-                  }}
-                >
-                  ×
-                </button>
-              )}
-            </div>
+            <UserAvatar
+              size="w-120"
+              imageUrl={profile?.profileImage}
+              disabled={isProfileImageChanging}
+              onImageChange={onProfileImageChange}
+              onImageDelete={onProfileImageDelete}
+            />
             <div>
               <div className={cx('profileModalBadges')}>
                 <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
@@ -100,7 +67,12 @@ export function ProfileModal({
               <p>{userEmail}</p>
             </div>
           </div>
-          <button className={cx('profileModalClose')} type="button" aria-label="사용자 상세 정보 닫기" onClick={onClose}>
+          <button
+            className={cx('profileModalClose')}
+            type="button"
+            aria-label="사용자 상세 정보 닫기"
+            onClick={onClose}
+          >
             ×
           </button>
         </div>
