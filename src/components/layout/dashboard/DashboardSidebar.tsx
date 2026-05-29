@@ -6,7 +6,7 @@ import { IUserProfile } from '@/service/interface/user';
 import { NavIcon } from './icons';
 import { cx } from './styles';
 import { NavItem } from './types';
-import { UserAvatar } from './DashboardHeader';
+import { UserAvatar } from '@/components/UserAvatar';
 
 interface Props {
   isLoggingOut: boolean;
@@ -20,7 +20,6 @@ interface Props {
   role: AuthRole;
   rootPath: string;
   userEmail: string;
-  userInitial: string;
   userName: string;
 }
 
@@ -36,7 +35,6 @@ export function DashboardSidebar({
   role,
   rootPath,
   userEmail,
-  userInitial,
   userName,
 }: Props) {
   return (
@@ -72,7 +70,7 @@ export function DashboardSidebar({
 
       <div className={cx('sidebarFooter')}>
         <button className={cx('userCard')} type="button" aria-haspopup="dialog" onClick={onOpenProfile}>
-          <UserAvatar profile={profile} userInitial={userInitial} />
+          <UserAvatar size="w-60" imageUrl={profile?.profileImage} />
           <div className={cx('userInfo')}>
             <div className={cx('userTitleRow')}>
               <strong>{userName}</strong>

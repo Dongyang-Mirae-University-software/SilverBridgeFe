@@ -22,8 +22,7 @@
 .wardReadableText .connectionMessage,
 .wardReadableText .connectionEmpty,
 .wardReadableText .connectionCard,
-.wardReadableText .wardListCard,
-.wardReadableText .actionCard strong {
+.wardReadableText .wardListCard {
   font-size: var(--ward-preferred-font-size, 17px);
 }
 
@@ -126,9 +125,7 @@
   letter-spacing: 0;
 }
 
-.guardianTheme .brandMark,
-.guardianTheme .avatar,
-.guardianTheme .profileModalAvatar {
+.guardianTheme .brandMark {
   background: var(--guardian-brand);
 }
 
@@ -241,26 +238,6 @@
   background: var(--guardian-brand-hover);
 }
 
-.avatar {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 10px;
-  background: var(--sb-brand);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .userInfo {
   min-width: 0;
   flex: 1;
@@ -368,9 +345,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   border-bottom: 1px solid var(--sb-line-soft);
-  background:
-    linear-gradient(135deg, rgba(31, 94, 72, 0.08), rgba(217, 119, 87, 0.08)),
-    #fff;
+  background: linear-gradient(135deg, rgba(31, 94, 72, 0.08), rgba(217, 119, 87, 0.08)), #fff;
   gap: 18px;
   padding: 24px 62px 22px 24px;
 }
@@ -387,108 +362,11 @@
   min-width: 0;
 }
 
-.profilePhotoBlock {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  flex: 0 0 auto;
-  padding: 0;
-}
-
-.profileModalAvatar {
-  display: grid;
-  width: 76px;
-  height: 76px;
-  flex-shrink: 0;
-  place-items: center;
-  overflow: hidden;
-  border: 3px solid #fff;
-  border-radius: 20px;
-  background: var(--sb-brand);
-  color: #fff;
-  box-shadow: 0 10px 24px rgba(20, 17, 12, 0.12);
-  font-size: 28px;
-  font-weight: 800;
-}
-
-.profileModalAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .profileModalBadges {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 8px;
-}
-
-.profilePhotoEditButton {
-  position: absolute;
-  right: -5px;
-  bottom: -5px;
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 1px solid var(--sb-line);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--sb-brand);
-  cursor: pointer;
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.profilePhotoDeleteButton {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  display: grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border: 1px solid #f0c9c2;
-  border-radius: 999px;
-  background: #fff7f5;
-  color: var(--sb-warn);
-  cursor: pointer;
-  font-size: 17px;
-  font-weight: 850;
-  line-height: 1;
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.profilePhotoEditButton:hover {
-  background: var(--sb-brand-50);
-}
-
-.profilePhotoDeleteButton:hover {
-  background: #fee9e5;
-}
-
-.profilePhotoEditButton:disabled,
-.profilePhotoDeleteButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.profilePhotoEditButton svg {
-  width: 17px;
-  height: 17px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
-}
-
-.profilePhotoEditButton input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
 }
 
 .profileProviderBadge {
@@ -1016,12 +894,14 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  height: 100%;
 }
 
 .wardHomeActions {
   display: grid;
   min-height: calc(100dvh - 160px);
   align-items: center;
+  height: 100%;
 }
 
 .wardHomeActionGrid {
@@ -1041,8 +921,9 @@
 .actionCard strong,
 .statCard strong {
   color: var(--sb-ink);
-  font-size: 20px;
+  font-size: 30px;
   font-weight: 850;
+  text-align: center;
 }
 
 .actionCard span,
@@ -1859,26 +1740,6 @@
   padding: 18px 22px;
 }
 
-.wardListAvatar {
-  display: grid;
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 50%;
-  background: #ffe0b0;
-  color: #5c4d3f;
-  font-size: 22px;
-  font-weight: 850;
-}
-
-.wardListAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .wardListProfile {
   display: flex;
   min-width: 0;
@@ -2006,25 +1867,6 @@
   grid-template-columns: 56px minmax(0, 1fr);
   align-items: flex-start;
   gap: 14px;
-}
-
-.connectionAvatar {
-  display: grid;
-  width: 56px;
-  height: 56px;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 18px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 20px;
-  font-weight: 850;
-}
-
-.connectionAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .connectionInfo {
@@ -2256,7 +2098,9 @@
     max-width: 320px;
     height: 100dvh;
     border-right: 0;
-    box-shadow: var(--sb-shadow-sm), 16px 0 48px rgba(20, 17, 12, 0.16);
+    box-shadow:
+      var(--sb-shadow-sm),
+      16px 0 48px rgba(20, 17, 12, 0.16);
     padding: max(18px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
     transform: translateX(-105%);
     transition: transform 0.18s ease;
@@ -2299,12 +2143,19 @@
   }
 
   .wardHomeActions {
-    min-height: auto;
     align-items: stretch;
   }
 
   .wardHomeActionGrid {
-    grid-template-columns: 1fr;
+    /* grid-template-columns: 1fr; */
+
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    & > a {
+      flex: 1;
+    }
   }
 
   .wideCard {
@@ -2312,7 +2163,7 @@
   }
 
   .main {
-    padding: 88px 18px 18px;
+    padding: 100px 18px 18px;
   }
 
   .desktopHeader {
@@ -2343,18 +2194,6 @@
   .profileModalUser {
     align-items: center;
     gap: 12px;
-  }
-
-  .profileModalAvatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
-    font-size: 24px;
-  }
-
-  .profilePhotoEditButton {
-    width: 30px;
-    height: 30px;
   }
 
   .profileModalClose {
@@ -2464,12 +2303,6 @@
     grid-template-columns: 48px minmax(0, 1fr);
   }
 
-  .connectionAvatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
-  }
-
   .connectionTitleRow {
     flex-direction: column;
     gap: 8px;
@@ -2486,12 +2319,6 @@
   .wardListCardHeader {
     align-items: flex-start;
     padding: 16px;
-  }
-
-  .wardListAvatar {
-    width: 48px;
-    height: 48px;
-    font-size: 19px;
   }
 
   .wardListNameRow strong {

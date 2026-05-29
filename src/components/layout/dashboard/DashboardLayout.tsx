@@ -38,7 +38,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
   const userEmail = profile?.email ?? '이메일 정보 없음';
   const userPhone = profile?.phone ? formatPhoneNumber(profile.phone) : '전화번호 정보 없음';
-  const userInitial = userName.charAt(0) || 'U';
   const { mutate: logoutMutate, isPending: isLoggingOut } = useLogoutMutation();
   const { mutate: profileImageMutate, isPending: isProfileImageChanging } = useProfileImageChangeMutation();
   const { mutate: profileImageDeleteMutate, isPending: isProfileImageDeleting } = useProfileImageDeleteMutation();
@@ -76,7 +75,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           role={role}
           rootPath={rootPath}
           userEmail={userEmail}
-          userInitial={userInitial}
           userName={userName}
         />
         {isProfileModalOpen && (
@@ -90,7 +88,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             profile={profile}
             role={role}
             userEmail={userEmail}
-            userInitial={userInitial}
             userName={userName}
             userPhone={userPhone}
           />
