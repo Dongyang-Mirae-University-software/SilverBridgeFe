@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { CommonModal } from '@/components/CommonModal';
 import { signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { changeMyPassword, deleteMyAccount, updateMyProfile } from '@/service/api/user';
 import { IUserProfile, IUserUpdateReq } from '@/service/interface/user';
@@ -35,6 +36,7 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [isDeleteCompleteModalOpen, setIsDeleteCompleteModalOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<'profile' | 'security'>('profile');
   const isKakaoUser = profile?.provider === 'KAKAO';
   const isPhoneChanged = (profileForm.phone ?? '').trim() !== getPhoneDigits(profile?.phone ?? '');
@@ -81,7 +83,7 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
     mutationKey: ['user-account-delete'],
     mutationFn: deleteMyAccount,
     onMutate: () => setFeedbackMessage(''),
-    onSuccess: () => redirectToLogin(queryClient, router),
+    onSuccess: () => setIsDeleteCompleteModalOpen(true),
     onError: error => setFeedbackMessage(getModalErrorMessage(error, '회원 탈퇴에 실패했습니다.')),
   });
 
@@ -136,6 +138,16 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
 
   return (
     <div className={cx('profileManageStack')}>
+      {isDeleteCompleteModalOpen && (
+        <CommonModal
+          type="success"
+          tone={profile?.role === 'GUARDIAN' ? 'guardian' : 'default'}
+          title="회원 탈퇴가 완료되었습니다"
+          message="그동안 이용해 주셔서 감사합니다."
+          confirmText="확인"
+          onClose={() => redirectToLogin(queryClient, router)}
+        />
+      )}
       {feedbackMessage && <p className={cx('profileModalMessage')}>{feedbackMessage}</p>}
       <ProfileTabs activePanel={activePanel} onChange={handlePanelChange} />
       <div className={cx('profileManageScroll')}>
