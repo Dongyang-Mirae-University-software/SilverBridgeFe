@@ -1,11 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
-import { announcementDetailQueryOptions, announcementsQueryOptions } from '@/service/query/announcement';
+import {
+  announcementDetailQueryKey,
+  announcementDetailQueryOptions,
+  announcementsQueryKey,
+  announcementsQueryOptions,
+} from '@/service/query/announcement';
+import { IAnnouncement } from '@/service/interface/announcement';
 import styles from './NoticesPanel.module.css';
 
 const cx = classNames.bind(styles);
@@ -17,6 +23,7 @@ function formatDate(value: string) {
 }
 
 export function NoticesPanel() {
+  const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const { data: announcements = [], isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
@@ -28,7 +35,12 @@ export function NoticesPanel() {
   const selectedNotice = selectedId !== null ? (detail ?? announcements.find(a => a.id === selectedId) ?? null) : null;
 
   const handleToggle = (id: number) => {
-    setSelectedId(prev => (prev === id ? null : id));
+    setSelectedId(prev => {
+      if (prev === id) return null;
+
+      optimisticIncreaseViewCount(queryClient, id);
+      return id;
+    });
   };
 
   return (
@@ -81,5 +93,14 @@ export function NoticesPanel() {
         </ul>
       )}
     </section>
+  );
+}
+
+function optimisticIncreaseViewCount(queryClient: QueryClient, id: number) {
+  queryClient.setQueryData<IAnnouncement[]>(announcementsQueryKey, current =>
+    current?.map(item => (item.id === id ? { ...item, viewCount: item.viewCount + 1 } : item)),
+  );
+  queryClient.setQueryData<IAnnouncement>(announcementDetailQueryKey(id), current =>
+    current ? { ...current, viewCount: current.viewCount + 1 } : current,
   );
 }
