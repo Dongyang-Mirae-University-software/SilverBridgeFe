@@ -1,0 +1,49 @@
+.chatPage {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: calc(100vh - 140px);
+  min-height: 500px;
+}
+
+/* ── 상단 바 ── */
+.topBar {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.topBarLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.newBtn {
+  flex-shrink: 0;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 16px;
+  white-space: nowrap;
+}
+
+.newBtn:hover {
+  background: var(--sb-bg-soft);
+}
+
+/* ── Fallback 경고 ── */
+.fallbackWarning {
+  flex-shrink: 0;
+  border: 1px solid #f5c842;
+  border-radius: 10px;
+  background: #fff9ec;
+  color: #b7860a;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 10px 14px;
+}
