@@ -164,3 +164,24 @@
   cursor: not-allowed;
   opacity: 0.5;
 }
+
+/* ── 반응형 ── */
+@media (max-width: 900px) {
+  .chatPage {
+    height: auto;
+    min-height: calc(100dvh - 160px);
+  }
+
+  .topBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .newBtn {
+    align-self: flex-end;
+  }
+
+  .messageList {
+    min-height: 320px;
+  }
+}
