@@ -22,6 +22,7 @@ function profileToContext(p: IUserProfile): ChatContext {
     address: p.address || undefined,
     addressDetail: p.addressDetail || undefined,
     location: p.address || undefined,
+    guardianId: Number(p.id) || undefined,
     role: p.role,
   };
 }
