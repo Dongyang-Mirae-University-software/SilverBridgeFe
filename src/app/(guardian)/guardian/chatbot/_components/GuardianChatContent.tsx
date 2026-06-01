@@ -62,15 +62,15 @@ export default function GuardianChatContent() {
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 최신 값을 클로저 없이 읽기 위한 ref
+  // 렌더마다 동기적으로 업데이트 — useEffect 대신 직접 할당해야 send 호출 시점에 항상 최신값 보장
   const profileRef = useRef(profile);
   const contextRef = useRef(context);
   const messagesRef = useRef(messages);
   const sendingRef = useRef(sending);
-  useEffect(() => { profileRef.current = profile; }, [profile]);
-  useEffect(() => { contextRef.current = context; }, [context]);
-  useEffect(() => { messagesRef.current = messages; }, [messages]);
-  useEffect(() => { sendingRef.current = sending; }, [sending]);
+  profileRef.current = profile;
+  contextRef.current = context;
+  messagesRef.current = messages;
+  sendingRef.current = sending;
 
   // 프로필 로드 시 context 초기값 세팅 (사용자가 이미 수정했으면 덮어쓰지 않음)
   useEffect(() => {
@@ -144,12 +144,12 @@ export default function GuardianChatContent() {
 
     try {
       const res = await sendChatMessage({
-        message: uiSelection ? undefined : trimmed,
+        message: uiSelection ? '' : trimmed,
         userId: currentProfile?.id ? Number(currentProfile.id) : undefined,
         sessionId,
         history,
         context: Object.keys(currentContext).length > 0 ? currentContext : undefined,
-        uiSelection,
+        uiSelection: uiSelection ?? undefined,
       });
 
       setMessages(prev => [
