@@ -1,0 +1,118 @@
+.rowUser {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.rowAssistant {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.avatar {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--guardian-brand);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 850;
+  margin-top: 2px;
+}
+
+.assistantBody {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── 배지 ── */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.intentBadge,
+.riskBadge,
+.fallbackBadge,
+.modelBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+}
+
+.intentBadge {
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+}
+
+.riskHigh {
+  background: #fbe5e0;
+  color: var(--sb-warn);
+}
+
+.riskMedium {
+  background: #fbf1db;
+  color: var(--sb-sun);
+}
+
+.riskLow {
+  background: #dceee3;
+  color: var(--sb-safe);
+}
+
+.fallbackBadge {
+  background: #fbe5e0;
+  color: var(--sb-warn);
+}
+
+.modelBadge {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+}
+
+/* ── 말풍선 ── */
+.bubbleUser {
+  max-width: min(480px, 78%);
+  border-radius: 18px 18px 4px 18px;
+  background: var(--guardian-brand);
+  color: #fff;
+  padding: 10px 14px;
+}
+
+.bubbleUser p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bubbleAssistant {
+  max-width: min(600px, 92%);
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 4px 18px 18px 18px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.replyText {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
