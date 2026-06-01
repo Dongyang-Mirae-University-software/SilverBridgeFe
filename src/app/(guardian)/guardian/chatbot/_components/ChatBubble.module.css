@@ -116,3 +116,52 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ── 구조화된 의학 정보 섹션 ── */
+.medSection {
+  border-top: 1px solid var(--sb-line-soft);
+  padding-top: 8px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.medTitle {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.medTitleDanger {
+  color: #c0392b;
+}
+
+.medList {
+  margin: 0;
+  padding: 0 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.medList li {
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.medSection:has(.medTitleDanger) {
+  background: #fff5f5;
+  border-color: #f5a5a5;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 8px;
+}
+
+.medSection:has(.medTitleDanger) .medList li {
+  color: #c0392b;
+}
