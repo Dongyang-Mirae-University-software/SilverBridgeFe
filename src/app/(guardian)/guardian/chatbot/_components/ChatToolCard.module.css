@@ -1,0 +1,169 @@
+.card {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 12px;
+  background: #fafaf8;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.successCard {
+  border-color: #9dccb2;
+  background: #dceee3;
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.empty {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+}
+
+/* 병원 목록 */
+.hospitalList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hospitalItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.hospitalInfo {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hospitalInfo strong {
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.hospitalInfo span {
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.address {
+  color: var(--sb-ink-mute) !important;
+  font-size: 11px !important;
+}
+
+/* 예약 상세 */
+.apptDetail {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.apptDetail dt {
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.apptDetail dd {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+/* 예약 목록 */
+.apptList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.apptRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 9px;
+  background: #fff;
+  padding: 8px 12px;
+}
+
+.apptRow > div {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.apptRow strong {
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.apptRow span {
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+}
+
+/* 버튼 */
+.reserveBtn,
+.listBtn,
+.detailBtn {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.reserveBtn {
+  background: var(--guardian-brand);
+  color: #fff;
+}
+
+.listBtn,
+.detailBtn {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  border: 1px solid var(--sb-line-soft);
+}
+
+.reserveBtn:hover {
+  filter: brightness(0.94);
+}
+
+.listBtn:hover,
+.detailBtn:hover {
+  background: #fff;
+}

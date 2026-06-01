@@ -36,7 +36,7 @@ function getBackendApiUrl(path: string[], search: string) {
 function shouldAttachCookieAccessToken(path: string[]) {
   const normalizedPath = `/${path.join('/')}`;
 
-  return normalizedPath !== '/auth/signin' && normalizedPath !== '/auth/signin/kakao';
+  return normalizedPath !== '/auth/signin' && normalizedPath !== '/auth/signin/kakao' && normalizedPath !== '/auth/refresh';
 }
 
 function getProxyRequestHeaders(request: NextRequest, path: string[]) {
