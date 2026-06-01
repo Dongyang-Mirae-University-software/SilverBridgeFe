@@ -17,7 +17,8 @@ export type PageKey =
   | 'emotion'
   | 'wards'
   | 'ward-register'
-  | 'inquiries';
+  | 'inquiries'
+  | 'stream';
 
 export type NavIconName =
   | 'home'
@@ -32,7 +33,8 @@ export type NavIconName =
   | 'dashboard'
   | 'alert'
   | 'plus'
-  | 'inquiry';
+  | 'inquiry'
+  | 'camera';
 
 export interface NavItem {
   href: string;

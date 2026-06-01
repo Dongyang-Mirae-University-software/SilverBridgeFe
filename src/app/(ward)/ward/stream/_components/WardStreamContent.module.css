@@ -1,0 +1,184 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: calc(100vh - 140px);
+}
+
+/* ── 패널 ── */
+.panel {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panelTitle {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+/* ── 3열 그리드 ── */
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 40px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 13px;
+  padding: 0 12px;
+  outline: none;
+}
+
+.field input[type='file'] { padding: 8px 12px; min-height: auto; }
+.field input[type='number'] { padding: 0 10px; }
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--sb-brand);
+  box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.1);
+}
+
+.checkRow {
+  flex-direction: row;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--sb-ink);
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkRow input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  padding: 0;
+  accent-color: var(--sb-brand);
+}
+
+.hint {
+  margin: 0;
+  grid-column: 1 / -1;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+/* ── 액션 버튼 행 ── */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.actions button {
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 9px 16px;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+
+.actions button:hover:not(:disabled) {
+  background: var(--sb-bg-soft);
+}
+
+.actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* ── 상태 메시지 ── */
+.statusMsg {
+  margin: 0;
+  border-radius: 9px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+  padding: 9px 12px;
+}
+
+.statusMsg.ok { background: #dceee3; color: var(--sb-safe); }
+.statusMsg.err { background: #fbe5e0; color: var(--sb-warn); }
+
+/* ── 비디오 박스 ── */
+.wardStreamBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.video {
+  width: 100%;
+  max-height: 360px;
+  border-radius: 12px;
+  background: #111;
+  object-fit: contain;
+  display: block;
+}
+
+.hiddenCanvas { display: none; }
+
+.mediaStatus {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+/* ── 카메라 등록 토글 ── */
+.toggleBtn {
+  border: 0;
+  background: transparent;
+  color: var(--sb-brand);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 0;
+  text-align: left;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 900px) {
+  .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .actions { flex-direction: column; }
+  .actions button { width: 100%; }
+}
+
+@media (max-width: 600px) {
+  .grid3 { grid-template-columns: 1fr; }
+}
