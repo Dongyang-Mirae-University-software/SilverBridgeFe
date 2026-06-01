@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createStreamSession, ensureCameraRegistered, registerCamera, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
+import { createStreamSession, registerCamera, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
 import styles from './WardStreamContent.module.css';
 
 type CameraFacing = 'user' | 'environment' | 'screen';
@@ -64,9 +64,8 @@ export default function WardStreamContent() {
   /* ── 세션 생성 (수동) — 카메라 미등록 시 자동 등록 ── */
   async function createSession() {
     setLoading(true);
-    setStatusMsg('카메라 확인 중…');
+    setStatusMsg('세션 생성 중…');
     try {
-      await ensureCameraRegistered(cameraIdentifier, cameraIdentifier);
       const res = await createStreamSession({ sessionId, cameraIdentifier, deviceType });
       setActiveSessionId(res.session_id ?? sessionId);
       setStatusMsg(`세션 생성 완료: ${res.session_id ?? sessionId}`);
@@ -127,7 +126,6 @@ export default function WardStreamContent() {
   async function startCameraStreaming() {
     if (!mediaStreamRef.current) { alert('먼저 카메라/화면을 켜주세요.'); return; }
     try {
-      await ensureCameraRegistered(cameraIdentifier, cameraIdentifier);
       const liveId = `live_${Date.now()}`;
       const res = await createStreamSession({ sessionId: liveId, cameraIdentifier, deviceType });
       streamSessionIdRef.current = res.session_id ?? liveId;
