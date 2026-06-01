@@ -39,9 +39,15 @@ export default function WardStreamContent() {
   /* ── 카메라 등록 (접이식) ── */
   const [showCamReg, setShowCamReg] = useState(false);
   const [camRegForm, setCamRegForm] = useState({
-    cameraNo: '', identifier: DEFAULT_CAM_ID, name: '',
-    streamUrl: '', streamType: 'rtsp',
-    targetUserId: '', guardianUserId: '', locationName: '', isActive: true,
+    cameraNo: 'CAM-001',
+    identifier: DEFAULT_CAM_ID,
+    name: '거실 카메라',
+    streamUrl: 'rtsp://192.168.1.100:554/live',
+    streamType: 'rtsp',
+    targetUserId: '',
+    guardianUserId: '',
+    locationName: '거실',
+    isActive: true,
   });
   const [camRegMsg, setCamRegMsg] = useState('');
   const [camRegOk, setCamRegOk]   = useState<boolean | null>(null);
