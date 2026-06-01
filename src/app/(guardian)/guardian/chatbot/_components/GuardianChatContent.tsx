@@ -21,8 +21,7 @@ function profileToContext(p: IUserProfile): ChatContext {
     postcode: p.postcode || undefined,
     address: p.address || undefined,
     addressDetail: p.addressDetail || undefined,
-    location: [p.address, p.addressDetail].filter(Boolean).join(' ') || undefined,
-    guardianId: Number(p.id) || undefined,
+    location: p.address || undefined,
     role: p.role,
   };
 }
