@@ -1,5 +1,5 @@
 import classNames from 'classnames/bind';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, FormEvent, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 
 import styles from './SignupForm.module.css';
@@ -46,23 +46,31 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
   } = useSignupForm({ kakaoData });
 
   const [isEmailCheck, setIsEmailCheck] = useState(Boolean(kakaoData));
+  const [checkedEmail, setCheckedEmail] = useState(kakaoData?.email.trim() ?? '');
   const [isEmailTouched, setIsEmailTouched] = useState(false);
   const [emailCheckErrorMsg, setEmailCheckErrorMsg] = useState('');
   const [isCode, setIsCode] = useState(false);
   const [smsSendErrorMsg, setSmsSendErrorMsg] = useState('');
   const [smsCode, setSmsCode] = useState('');
   const [isSmsCheck, setIsSmsCheck] = useState(false);
+  const [verifiedPhone, setVerifiedPhone] = useState('');
   const [smsTimerKey, setSmsTimerKey] = useState(0);
+  const currentEmail = allValues.email.trim();
+  const currentPhone = getPhoneDigits(allValues.phone);
+  const isEmailVerified = isKakaoSignup || (isEmailCheck && checkedEmail === currentEmail);
+  const isSmsVerified = isSmsCheck && verifiedPhone === currentPhone && Boolean(allValues.verificationNonce);
 
   const { mutate: emailCheckMutate, isPending: isEmailCheckPending } = useMutation({
     mutationKey: ['email-check'],
     mutationFn: signupEmailCheck,
     onError: error => {
       setIsEmailCheck(false);
+      setCheckedEmail('');
       setEmailCheckErrorMsg((error as Error).message || '이메일이 중복되었습니다.');
     },
-    onSuccess: () => {
+    onSuccess: (_response, variables) => {
       setIsEmailCheck(true);
+      setCheckedEmail(variables.email.trim());
       setEmailCheckErrorMsg('');
     },
   });
@@ -74,6 +82,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
       setSmsSendErrorMsg('');
       setSmsCode('');
       setIsSmsCheck(false);
+      setVerifiedPhone('');
       setValue('verificationNonce', '');
     },
     onError: error => {
@@ -95,11 +104,13 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
     mutationFn: signupSmsVerify,
     onMutate: () => {
       setIsSmsCheck(false);
+      setVerifiedPhone('');
       setValue('verificationNonce', '');
     },
-    onSuccess: response => {
+    onSuccess: (response, variables) => {
       const verificationNonce = getVerificationNonce(response);
       setValue('verificationNonce', verificationNonce);
+      setVerifiedPhone(verificationNonce ? variables.phone : '');
       setIsSmsCheck(Boolean(verificationNonce));
     },
   });
@@ -114,7 +125,14 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
     smsSendMutate({ phone: getPhoneDigits(getValues('phone')) });
   };
   const handlePhoneChange = (value: string) => {
-    setValue('phone', getPhoneDigits(value), { shouldDirty: true, shouldValidate: true });
+    const nextPhone = getPhoneDigits(value);
+    setValue('phone', nextPhone, { shouldDirty: true, shouldValidate: true });
+
+    if (verifiedPhone && verifiedPhone !== nextPhone) {
+      setIsSmsCheck(false);
+      setVerifiedPhone('');
+      setValue('verificationNonce', '');
+    }
   };
 
   const handleCode = (event: ChangeEvent<HTMLInputElement>) => {
@@ -127,6 +145,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
     setSmsSendErrorMsg('');
     setSmsCode('');
     setIsSmsCheck(false);
+    setVerifiedPhone('');
     setValue('phone', '');
     setValue('verificationNonce', '');
   };
@@ -138,14 +157,14 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
 
   const emailError =
     (errors.email && allValues.email && allValues.email.trim() !== '') ||
-    (isEmailTouched && !isEmailCheck && !isEmailCheckPending && !!getValues('email').length);
+    (isEmailTouched && !isEmailVerified && !isEmailCheckPending && !!getValues('email').length);
   const emailErrorText = emailError
     ? (errors.email?.message ?? (emailCheckErrorMsg || '이메일이 중복되었습니다.'))
     : undefined;
   const isStepOneValid =
     allValues.name.trim().length >= 2 &&
     allValues.email.trim().length > 0 &&
-    (isKakaoSignup || isEmailCheck) &&
+    (isKakaoSignup || isEmailVerified) &&
     (isKakaoSignup || allValues.password.trim().length > 0) &&
     (isKakaoSignup || allValues.passwordCheck.trim().length > 0) &&
     allValues.birthDate.trim().length > 0 &&
@@ -164,6 +183,22 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
     if (isStepOneValid) onStepChange(2);
   };
 
+  const handleSignupSubmit = (event: FormEvent<HTMLFormElement>) => {
+    if (!isKakaoSignup && !isEmailVerified) {
+      event.preventDefault();
+      return;
+    }
+
+    if (!isSmsVerified) {
+      event.preventDefault();
+      setIsSmsCheck(false);
+      setValue('verificationNonce', '');
+      return;
+    }
+
+    onSubmit(event);
+  };
+
   const handleAddressSearch = async () => {
     try {
       const { address, postcode } = await openKakaoPostcode();
@@ -176,7 +211,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
 
   return (
     <>
-      <form className={cx('container')} onSubmit={onSubmit}>
+      <form className={cx('container')} onSubmit={handleSignupSubmit}>
         {step === 1 && (
           <SignupBasicInfoStep
             allValues={allValues}
@@ -209,8 +244,8 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
             smsSendErrorMsg={smsSendErrorMsg}
             smsVerifyError={smsVerifyError}
             isCode={isCode}
-            isEmailCheck={isKakaoSignup || isEmailCheck}
-            isSmsCheck={isSmsCheck}
+            isEmailCheck={isEmailVerified}
+            isSmsCheck={isSmsVerified}
             isSmsSendPending={isSmsSendPending}
             isSmsVerifyPending={isSmsVerifyPending}
             smsTimerKey={smsTimerKey}

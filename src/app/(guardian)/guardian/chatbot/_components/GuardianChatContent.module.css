@@ -1,0 +1,187 @@
+.chatPage {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: calc(100vh - 140px);
+  min-height: 500px;
+}
+
+/* ── 상단 바 ── */
+.topBar {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.topBarLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.newBtn {
+  flex-shrink: 0;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 16px;
+  white-space: nowrap;
+}
+
+.newBtn:hover {
+  background: var(--sb-bg-soft);
+}
+
+/* ── Fallback 경고 ── */
+.fallbackWarning {
+  flex-shrink: 0;
+  border: 1px solid #f5c842;
+  border-radius: 10px;
+  background: #fff9ec;
+  color: #b7860a;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 10px 14px;
+}
+
+/* ── 메시지 목록 ── */
+.messageList {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fafaf8;
+  padding: 18px;
+}
+
+/* ── 타이핑 인디케이터 ── */
+.typing {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 42px;
+}
+
+.typingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--guardian-brand);
+  opacity: 0.6;
+  animation: bounce 1.2s infinite;
+}
+
+.typingDot:nth-child(2) { animation-delay: 0.2s; }
+.typingDot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+}
+
+/* ── 샘플 칩 ── */
+.chips {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  border: 1px solid var(--guardian-line, #e3c5b8);
+  border-radius: 999px;
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 6px 14px;
+  transition: background 0.12s ease;
+}
+
+.chip:hover:not(:disabled) {
+  background: var(--guardian-brand-hover);
+}
+
+.chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ── 입력창 ── */
+.inputArea {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-end;
+  gap: 10px;
+  border: 1px solid var(--sb-line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.textarea {
+  flex: 1;
+  min-height: 44px;
+  max-height: 120px;
+  resize: none;
+  border: 0;
+  background: transparent;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+}
+
+.textarea::placeholder {
+  color: var(--sb-ink-mute);
+}
+
+.sendBtn {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 10px;
+  background: var(--guardian-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 850;
+  padding: 10px 20px;
+  white-space: nowrap;
+}
+
+.sendBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 900px) {
+  .chatPage {
+    height: auto;
+    min-height: calc(100dvh - 160px);
+  }
+
+  .topBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .newBtn {
+    align-self: flex-end;
+  }
+
+  .messageList {
+    min-height: 320px;
+  }
+}
