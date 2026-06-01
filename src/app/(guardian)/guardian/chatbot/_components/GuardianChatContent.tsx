@@ -10,6 +10,19 @@ import type { ChatContext, ChatMessage } from '@/service/interface/chat';
 import { SAMPLE_CHIPS, calcAge } from '@/service/interface/chat';
 import type { IUserProfile } from '@/service/interface/user';
 
+import ChatContextForm from './ChatContextForm';
+import ChatBubble from './ChatBubble';
+import styles from './GuardianChatContent.module.css';
+
+function makeId() {
+  return Math.random().toString(36).slice(2);
+}
+
+function makeSessionId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return makeId();
+}
+
 function profileToContext(p: IUserProfile): ChatContext {
   return {
     name: p.name || undefined,
@@ -25,19 +38,6 @@ function profileToContext(p: IUserProfile): ChatContext {
     guardianId: Number(p.id) || undefined,
     role: p.role,
   };
-}
-
-import ChatContextForm from './ChatContextForm';
-import ChatBubble from './ChatBubble';
-import styles from './GuardianChatContent.module.css';
-
-function makeId() {
-  return Math.random().toString(36).slice(2);
-}
-
-function makeSessionId() {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-  return makeId();
 }
 
 const WELCOME: ChatMessage = {
@@ -62,7 +62,7 @@ export default function GuardianChatContent() {
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 렌더마다 동기적으로 업데이트 — useEffect 대신 직접 할당해야 send 호출 시점에 항상 최신값 보장
+  // 렌더마다 동기 업데이트 — send 호출 시점에 항상 최신값 보장
   const profileRef = useRef(profile);
   const contextRef = useRef(context);
   const messagesRef = useRef(messages);
@@ -72,7 +72,7 @@ export default function GuardianChatContent() {
   messagesRef.current = messages;
   sendingRef.current = sending;
 
-  // 프로필 로드 시 context 초기값 세팅 (사용자가 이미 수정했으면 덮어쓰지 않음)
+  // 프로필 로드 시 context 초기값 세팅
   useEffect(() => {
     if (!profile) return;
     setContext(prev => (Object.values(prev).some(Boolean) ? prev : profileToContext(profile)));
@@ -81,112 +81,122 @@ export default function GuardianChatContent() {
   // 과거 대화 복원
   useEffect(() => {
     if (!userId) return;
-    getChatLogs(userId).then(logs => {
-      if (logs.length === 0) return;
-      const restored: ChatMessage[] = [];
-      logs.forEach(log => {
-        if (log.message) {
-          restored.push({
-            id: makeId(),
-            role: 'user',
-            content: log.message,
-            timestamp: log.createdAt ?? new Date().toISOString(),
-          });
-        }
-        if (log.reply) {
-          restored.push({
-            id: makeId(),
-            role: 'assistant',
-            content: log.reply,
-            timestamp: log.createdAt ?? new Date().toISOString(),
-            engine: log.engine,
-            intent: log.intent,
-            tool: log.tool as ChatMessage['tool'],
-            toolData: log.toolData,
-            type: log.type as ChatMessage['type'],
-            ui: log.ui,
-          });
-        }
-      });
-      if (restored.length > 0) setMessages([WELCOME, ...restored]);
-    }).catch(() => {});
+    getChatLogs(userId)
+      .then(logs => {
+        if (logs.length === 0) return;
+        const restored: ChatMessage[] = [];
+        logs.forEach(log => {
+          if (log.message) {
+            restored.push({
+              id: makeId(),
+              role: 'user',
+              content: log.message,
+              timestamp: log.createdAt ?? new Date().toISOString(),
+            });
+          }
+          if (log.reply) {
+            restored.push({
+              id: makeId(),
+              role: 'assistant',
+              content: log.reply,
+              timestamp: log.createdAt ?? new Date().toISOString(),
+              engine: log.engine,
+              intent: log.intent,
+              tool: log.tool as ChatMessage['tool'],
+              toolData: log.toolData,
+              type: log.type as ChatMessage['type'],
+              ui: log.ui,
+            });
+          }
+        });
+        if (restored.length > 0) setMessages([WELCOME, ...restored]);
+      })
+      .catch(() => {});
   }, [userId]);
 
-  // 새 메시지 추가마다 스크롤 최하단
+  // 새 메시지마다 스크롤 최하단
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
-  const send = useCallback(async (text: string, uiSelection?: { field: string; value: string }) => {
-    const trimmed = text.trim();
-    if (!trimmed && !uiSelection) return;
-    if (sendingRef.current) return;
+  const send = useCallback(
+    async (text: string, uiSelection?: { field: string; value: string }) => {
+      const trimmed = text.trim();
+      if (!trimmed && !uiSelection) return;
+      if (sendingRef.current) return;
 
-    // ref로 최신 값 읽기 — 클로저 stale 방지
-    const currentProfile = profileRef.current;
-    const currentContext = contextRef.current;
-    const history = messagesRef.current
-      .filter(m => m.id !== 'welcome')
-      .slice(-24)
-      .map(m => ({ role: m.role, content: m.content }));
+      const currentProfile = profileRef.current;
+      const currentContext = contextRef.current;
+      const history = messagesRef.current
+        .filter(m => m.id !== 'welcome')
+        .slice(-24)
+        .map(m => ({ role: m.role, content: m.content }));
 
-    const userMsg: ChatMessage = {
-      id: makeId(),
-      role: 'user',
-      content: uiSelection ? `[선택] ${uiSelection.field}: ${uiSelection.value}` : trimmed,
-      timestamp: new Date().toISOString(),
-    };
+      const userMsg: ChatMessage = {
+        id: makeId(),
+        role: 'user',
+        content: uiSelection ? `[선택] ${uiSelection.field}: ${uiSelection.value}` : trimmed,
+        timestamp: new Date().toISOString(),
+      };
 
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setSending(true);
-    setFallback(false);
+      setMessages(prev => [...prev, userMsg]);
+      setInput('');
+      setSending(true);
+      setFallback(false);
 
-    try {
-      const res = await sendChatMessage({
-        message: uiSelection ? '' : trimmed,
-        userId: currentProfile?.id ? Number(currentProfile.id) : undefined,
-        sessionId,
-        history,
-        context: Object.keys(currentContext).length > 0 ? currentContext : undefined,
-        uiSelection: uiSelection ?? undefined,
-      });
+      try {
+        const res = await sendChatMessage({
+          message: uiSelection ? '' : trimmed,
+          userId: currentProfile?.id ? Number(currentProfile.id) : undefined,
+          sessionId,
+          history,
+          context: Object.keys(currentContext).length > 0 ? currentContext : undefined,
+          uiSelection: uiSelection ?? undefined,
+        });
 
-      setMessages(prev => [
-        ...prev,
-        {
-          id: makeId(),
-          role: 'assistant',
-          content: res.reply,
-          timestamp: new Date().toISOString(),
-          engine: res.engine,
-          modelName: res.modelName,
-          riskLevel: res.riskLevel,
-          intent: res.intent,
-          type: res.type,
-          tool: res.tool,
-          toolData: res.toolData,
-          ui: res.ui,
-        },
-      ]);
-      if (res.engine === 'fallback') setFallback(true);
-    } catch {
-      setMessages(prev => [
-        ...prev,
-        {
-          id: makeId(),
-          role: 'assistant',
-          content: '죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-    } finally {
-      setSending(false);
-      textareaRef.current?.focus();
-    }
-  }, [sessionId]); // ref로 읽으므로 deps 최소화
+        setMessages(prev => [
+          ...prev,
+          {
+            id: makeId(),
+            role: 'assistant',
+            content: res.reply,
+            timestamp: new Date().toISOString(),
+            engine: res.engine,
+            modelName: res.modelName,
+            riskLevel: res.riskLevel,
+            intent: res.intent,
+            type: res.type,
+            tool: res.tool ?? undefined,
+            toolData: res.toolData,
+            ui: res.ui ?? undefined,
+            summary: res.summary,
+            possibleCauses: res.possibleCauses,
+            homeCare: res.homeCare,
+            visitHospitalIf: res.visitHospitalIf,
+            emergencyWarning: res.emergencyWarning,
+            recommendedAction: res.recommendedAction,
+            reservationRequired: res.reservationRequired,
+          },
+        ]);
+        if (res.engine === 'fallback') setFallback(true);
+      } catch {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: makeId(),
+            role: 'assistant',
+            content: '죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+      } finally {
+        setSending(false);
+        textareaRef.current?.focus();
+      }
+    },
+    [sessionId],
+  );
 
-  // Enter 전송 / Shift+Enter 줄바꿈
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -194,12 +204,10 @@ export default function GuardianChatContent() {
     }
   }
 
-  // UI 프롬프트 선택 → uiSelection으로 재전송
   function handleUiSelect(field: string, value: string) {
     void send('', { field, value });
   }
 
-  // 새 상담 — 메시지 초기화 + 페이지 리로드로 sessionId 갱신
   function handleNewSession() {
     setMessages([WELCOME]);
     setInput('');
@@ -211,7 +219,6 @@ export default function GuardianChatContent() {
 
   return (
     <div className={styles.chatPage}>
-      {/* 상단 바 — 컨텍스트 폼 + 새 상담 버튼 */}
       <div className={styles.topBar}>
         <div className={styles.topBarLeft}>
           <ChatContextForm value={context} onChange={setContext} />
@@ -221,14 +228,12 @@ export default function GuardianChatContent() {
         </button>
       </div>
 
-      {/* fallback 경고 배너 */}
       {fallback && (
         <div className={styles.fallbackWarning}>
           AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.
         </div>
       )}
 
-      {/* 메시지 목록 */}
       <div ref={listRef} className={styles.messageList}>
         {messages.map(msg => (
           <ChatBubble
@@ -247,7 +252,6 @@ export default function GuardianChatContent() {
         )}
       </div>
 
-      {/* 샘플 질문 칩 */}
       <div className={styles.chips}>
         {SAMPLE_CHIPS.map(chip => (
           <button
@@ -262,7 +266,6 @@ export default function GuardianChatContent() {
         ))}
       </div>
 
-      {/* 입력창 */}
       <div className={styles.inputArea}>
         <textarea
           ref={textareaRef}

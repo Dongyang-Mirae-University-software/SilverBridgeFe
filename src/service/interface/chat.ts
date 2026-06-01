@@ -24,10 +24,18 @@ export interface ChatMessage {
   modelName?: string;
   riskLevel?: ChatRiskLevel;
   intent?: string;
-  type?: 'tool_result' | 'ui' | null;
+  type?: 'message' | 'tool_result' | 'ui' | null;
   tool?: ChatToolName;
   toolData?: unknown;
-  ui?: ChatUiPromptData;
+  ui?: ChatUiPromptData | null;
+  // 구조화된 의학 응답 필드
+  summary?: string;
+  possibleCauses?: string[];
+  homeCare?: string[];
+  visitHospitalIf?: string[];
+  emergencyWarning?: string[];
+  recommendedAction?: string;
+  reservationRequired?: boolean;
 }
 
 export interface ChatContext {
@@ -71,10 +79,20 @@ export interface ChatResponse {
   modelName?: string;
   riskLevel?: ChatRiskLevel;
   intent?: string;
-  type?: 'tool_result' | 'ui' | null;
-  tool?: ChatToolName;
+  type?: 'message' | 'tool_result' | 'ui' | null;
+  tool?: ChatToolName | null;
   toolData?: unknown;
-  ui?: ChatUiPromptData;
+  ui?: ChatUiPromptData | null;
+  summary?: string;
+  possibleCauses?: string[];
+  homeCare?: string[];
+  visitHospitalIf?: string[];
+  emergencyWarning?: string[];
+  recommendedAction?: string;
+  reservationRequired?: boolean;
+  chatLogId?: number;
+  chatNo?: string;
+  sessionId?: string;
 }
 
 export interface ChatLogItem {

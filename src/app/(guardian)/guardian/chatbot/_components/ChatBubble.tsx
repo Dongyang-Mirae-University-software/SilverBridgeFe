@@ -53,6 +53,54 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect }: Pro
         <div className={styles.bubbleAssistant}>
           <p className={styles.replyText}>{message.content}</p>
 
+          {/* 응급 경고 — 최우선 표시 */}
+          {message.emergencyWarning && message.emergencyWarning.length > 0 && (
+            <div className={styles.medSection}>
+              <p className={`${styles.medTitle} ${styles.medTitleDanger}`}>응급 주의</p>
+              <ul className={styles.medList}>
+                {message.emergencyWarning.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* 가능한 원인 */}
+          {message.possibleCauses && message.possibleCauses.length > 0 && (
+            <div className={styles.medSection}>
+              <p className={styles.medTitle}>가능한 원인</p>
+              <ul className={styles.medList}>
+                {message.possibleCauses.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* 자가 관리 */}
+          {message.homeCare && message.homeCare.length > 0 && (
+            <div className={styles.medSection}>
+              <p className={styles.medTitle}>자가 관리</p>
+              <ul className={styles.medList}>
+                {message.homeCare.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* 병원 방문 기준 */}
+          {message.visitHospitalIf && message.visitHospitalIf.length > 0 && (
+            <div className={styles.medSection}>
+              <p className={styles.medTitle}>병원 방문이 필요한 경우</p>
+              <ul className={styles.medList}>
+                {message.visitHospitalIf.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* 툴 결과 카드 */}
           {message.type === 'tool_result' && message.tool && (
             <ChatToolCard

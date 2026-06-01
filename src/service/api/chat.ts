@@ -2,8 +2,11 @@ import { streamClient } from '@/lib/api/streamClient';
 import type { ChatLogItem, ChatRequest, ChatResponse } from '../interface/chat';
 
 export async function sendChatMessage(body: ChatRequest): Promise<ChatResponse> {
-  const res = await streamClient.post<ChatResponse>('/v1/chat', body);
-  return res.data;
+  const res = await streamClient.post<unknown>('/v1/chat', body);
+  const raw = res.data as Record<string, unknown>;
+  // { success, message, data: ChatResponse } 래핑 구조 언래핑
+  if (raw?.data && typeof raw.data === 'object') return raw.data as ChatResponse;
+  return raw as unknown as ChatResponse;
 }
 
 export async function getChatLogs(userId: string): Promise<ChatLogItem[]> {
