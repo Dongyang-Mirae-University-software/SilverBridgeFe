@@ -146,8 +146,8 @@ export default function GuardianChatContent() {
 
       try {
         const res = await sendChatMessage({
-          message: uiSelection ? '' : trimmed,
-          userId: currentProfile?.id ? Number(currentProfile.id) : undefined,
+          message: uiSelection ? undefined : trimmed,
+          userId: 1,
           sessionId,
           history,
           context: Object.keys(currentContext).length > 0 ? currentContext : undefined,
@@ -228,11 +228,7 @@ export default function GuardianChatContent() {
         </button>
       </div>
 
-      {fallback && (
-        <div className={styles.fallbackWarning}>
-          AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.
-        </div>
-      )}
+      {fallback && <div className={styles.fallbackWarning}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
 
       <div ref={listRef} className={styles.messageList}>
         {messages.map(msg => (
@@ -254,13 +250,7 @@ export default function GuardianChatContent() {
 
       <div className={styles.chips}>
         {SAMPLE_CHIPS.map(chip => (
-          <button
-            key={chip}
-            type="button"
-            className={styles.chip}
-            disabled={sending}
-            onClick={() => void send(chip)}
-          >
+          <button key={chip} type="button" className={styles.chip} disabled={sending} onClick={() => void send(chip)}>
             {chip}
           </button>
         ))}
