@@ -87,3 +87,80 @@
   0%, 80%, 100% { transform: translateY(0); }
   40% { transform: translateY(-6px); }
 }
+
+/* ── 샘플 칩 ── */
+.chips {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  border: 1px solid var(--guardian-line, #e3c5b8);
+  border-radius: 999px;
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 6px 14px;
+  transition: background 0.12s ease;
+}
+
+.chip:hover:not(:disabled) {
+  background: var(--guardian-brand-hover);
+}
+
+.chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ── 입력창 ── */
+.inputArea {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-end;
+  gap: 10px;
+  border: 1px solid var(--sb-line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.textarea {
+  flex: 1;
+  min-height: 44px;
+  max-height: 120px;
+  resize: none;
+  border: 0;
+  background: transparent;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+}
+
+.textarea::placeholder {
+  color: var(--sb-ink-mute);
+}
+
+.sendBtn {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 10px;
+  background: var(--guardian-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 850;
+  padding: 10px 20px;
+  white-space: nowrap;
+}
+
+.sendBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
