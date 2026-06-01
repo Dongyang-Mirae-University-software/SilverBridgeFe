@@ -16,6 +16,7 @@ export default function WardStreamContent() {
   /* ── 수동 업로드 상태 ── */
   const [sessionId, setSessionId] = useState('stream_001');
   const [cameraIdentifier, setCameraIdentifier] = useState('ipad-room-001');
+  const [deviceType, setDeviceType] = useState('ipad');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
@@ -66,7 +67,7 @@ export default function WardStreamContent() {
     setStatusMsg('카메라 확인 중…');
     try {
       await ensureCameraRegistered(cameraIdentifier, cameraIdentifier);
-      const res = await createStreamSession({ sessionId, cameraIdentifier });
+      const res = await createStreamSession({ sessionId, cameraIdentifier, deviceType });
       setActiveSessionId(res.session_id ?? sessionId);
       setStatusMsg(`세션 생성 완료: ${res.session_id ?? sessionId}`);
     } catch { setStatusMsg('세션 생성 실패'); }
@@ -128,7 +129,7 @@ export default function WardStreamContent() {
     try {
       await ensureCameraRegistered(cameraIdentifier, cameraIdentifier);
       const liveId = `live_${Date.now()}`;
-      const res = await createStreamSession({ sessionId: liveId, cameraIdentifier });
+      const res = await createStreamSession({ sessionId: liveId, cameraIdentifier, deviceType });
       streamSessionIdRef.current = res.session_id ?? liveId;
       setIsStreaming(true);
 
@@ -191,6 +192,14 @@ export default function WardStreamContent() {
           <label className={styles.field}>
             Camera Identifier
             <input value={cameraIdentifier} onChange={e => setCameraIdentifier(e.target.value)} />
+          </label>
+          <label className={styles.field}>
+            Device Type
+            <select value={deviceType} onChange={e => setDeviceType(e.target.value)}>
+              <option value="ipad">iPad</option>
+              <option value="phone">Phone</option>
+              <option value="web">Web</option>
+            </select>
           </label>
           <label className={styles.field}>
             Frame (JPEG)
