@@ -108,15 +108,7 @@ async function refreshAccessToken() {
 
   if (!refreshRequest) {
     refreshRequest = refreshClient
-      .post<CommonResponse<IAuthTokenResponse>>(
-        '/auth/refresh',
-        { refreshToken },
-        {
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-          },
-        },
-      )
+      .post<CommonResponse<IAuthTokenResponse>>('/auth/refresh', { refreshToken })
       .then(response => {
         const responseBody = response.data;
         const tokens = responseBody.data;
