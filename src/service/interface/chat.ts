@@ -40,7 +40,7 @@ export interface ChatContext {
 
 export interface ChatRequest {
   message?: string;
-  userId?: string;
+  userId?: number;
   sessionId?: string;
   history?: Array<{ role: ChatRole; content: string }>;
   context?: ChatContext;
