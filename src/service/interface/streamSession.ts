@@ -1,6 +1,7 @@
 export interface CreateStreamSessionReq {
   sessionId: string;
   cameraIdentifier: string;
+  deviceType: string;
 }
 
 export interface StreamSession {
