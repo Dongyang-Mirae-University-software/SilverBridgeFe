@@ -73,8 +73,8 @@ function getConnectionPushNotification(data?: MessagePayload['data']) {
       };
     case 'CONNECTION_CANCELLED':
       return {
-        body: '연결 상태가 변경되었습니다.',
-        title: '연결 변경',
+        body: '연결이 해제되었습니다.',
+        title: '연결 해제',
       };
     case 'DISCONNECTION':
     case 'CONNECTION_DISCONNECTED':
