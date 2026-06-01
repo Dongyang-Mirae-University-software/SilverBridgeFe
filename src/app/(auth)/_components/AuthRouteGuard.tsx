@@ -13,6 +13,7 @@ async function refreshStoredToken(refreshToken: string) {
     method: 'POST',
     credentials: 'include',
     headers: {
+      Authorization: `Bearer ${refreshToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ refreshToken }),

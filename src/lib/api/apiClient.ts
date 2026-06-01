@@ -57,6 +57,12 @@ function isSigninRequest(url?: string) {
   return url.includes('/auth/signin');
 }
 
+function isRefreshRequest(url?: string) {
+  if (!url) return false;
+
+  return url.includes('/auth/refresh');
+}
+
 function isPublicAuthRequest(url?: string) {
   if (!url) return false;
 
@@ -83,7 +89,7 @@ function isUserPasswordChangeRequest(config?: RetryableRequestConfig) {
 function shouldRefreshOnUnauthorized(config?: RetryableRequestConfig): config is RetryableRequestConfig {
   if (!config) return false;
   if (config._retry) return false;
-  if (config.url?.includes('/auth/refresh')) return false;
+  if (isRefreshRequest(config.url)) return false;
   if (isSigninRequest(config.url)) return false;
   if (isPublicAuthRequest(config.url)) return false;
   if (isUserDeleteRequest(config)) return false;
@@ -102,7 +108,15 @@ async function refreshAccessToken() {
 
   if (!refreshRequest) {
     refreshRequest = refreshClient
-      .post<CommonResponse<IAuthTokenResponse>>('/auth/refresh', { refreshToken })
+      .post<CommonResponse<IAuthTokenResponse>>(
+        '/auth/refresh',
+        { refreshToken },
+        {
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+          },
+        },
+      )
       .then(response => {
         const responseBody = response.data;
         const tokens = responseBody.data;
@@ -139,7 +153,7 @@ apiClient.interceptors.request.use(
     const token = getAccessToken();
 
     // 토큰이 있으면 Authorization 헤더에 자동으로 붙여줌
-    if (token && !isSigninRequest(config.url) && !isPublicAuthRequest(config.url)) {
+    if (token && !isSigninRequest(config.url) && !isRefreshRequest(config.url) && !isPublicAuthRequest(config.url)) {
       setBearerToken(config, token);
     }
 
