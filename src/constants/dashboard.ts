@@ -46,10 +46,3 @@ export const WARD_ACTIONS = [
   { href: '/ward/chatbot', label: 'AI 챗봇' },
   { href: '/ward/game', label: '치매예방 게임' },
 ];
-
-export const GUARDIAN_STATS = [
-  { label: '연결된 피보호자', value: '3명', state: '정상 관리 중' },
-  { label: '오늘 이상감지', value: '1건', state: '확인 필요' },
-  { label: '복약 완료율', value: '86%', state: '전일 대비 +4%' },
-  { label: '정서 체크', value: '안정', state: '최근 7일 기준' },
-];

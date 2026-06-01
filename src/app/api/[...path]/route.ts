@@ -39,11 +39,16 @@ function shouldAttachCookieAccessToken(path: string[]) {
   return normalizedPath !== '/auth/signin' && normalizedPath !== '/auth/signin/kakao' && normalizedPath !== '/auth/refresh';
 }
 
+function isRefreshPath(path: string[]) {
+  return `/${path.join('/')}` === '/auth/refresh';
+}
+
 function getProxyRequestHeaders(request: NextRequest, path: string[]) {
   const headers = new Headers(request.headers);
   const accessToken = request.cookies.get('careai_access_token')?.value;
 
   HOP_BY_HOP_HEADERS.forEach(header => headers.delete(header));
+  if (isRefreshPath(path)) headers.delete('authorization');
   if (!headers.has('authorization') && accessToken && shouldAttachCookieAccessToken(path)) {
     headers.set('authorization', `Bearer ${accessToken}`);
   }

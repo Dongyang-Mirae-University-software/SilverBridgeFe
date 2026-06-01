@@ -3,6 +3,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { getAnnouncementDetail, getAnnouncements } from '@/service/api/announcement';
 
 export const announcementsQueryKey = ['announcements'] as const;
+export const announcementDetailQueryKey = (id: number) => ['announcement', id] as const;
 
 export const announcementsQueryOptions = queryOptions({
   queryKey: announcementsQueryKey,
@@ -12,7 +13,7 @@ export const announcementsQueryOptions = queryOptions({
 
 export const announcementDetailQueryOptions = (id: number) =>
   queryOptions({
-    queryKey: ['announcement', id] as const,
+    queryKey: announcementDetailQueryKey(id),
     queryFn: () => getAnnouncementDetail(id),
     staleTime: 10 * 60 * 1000,
   });
