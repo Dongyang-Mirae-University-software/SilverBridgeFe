@@ -44,7 +44,7 @@ export default function GuardianChatContent() {
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 과거 대화 복원 — 마운트 시 getChatLogs로 이전 메시지 말풍선 재구성
+  // 과거 대화 복원
   useEffect(() => {
     if (!userId) return;
     getChatLogs(userId).then(logs => {
@@ -78,9 +78,81 @@ export default function GuardianChatContent() {
     }).catch(() => {});
   }, [userId]);
 
-  void sending; void fallback; void input; void context; void sessionId;
-  void listRef; void textareaRef; void SAMPLE_CHIPS; void sendChatMessage;
-  void useCallback; void ChatContextForm; void ChatBubble; void styles;
+  // 새 메시지 추가마다 스크롤 최하단
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages]);
+
+  // 최근 12턴 history 구성 (welcome 제외, 최대 24개 메시지)
+  function buildHistory() {
+    const convo = messages.filter(m => m.id !== 'welcome');
+    return convo.slice(-24).map(m => ({ role: m.role, content: m.content }));
+  }
+
+  // 메시지 전송 — 일반 텍스트 또는 uiSelection(UI 프롬프트 응답)
+  const send = useCallback(async (text: string, uiSelection?: { field: string; value: string }) => {
+    const trimmed = text.trim();
+    if (!trimmed && !uiSelection) return;
+    if (sending) return;
+
+    const userMsg: ChatMessage = {
+      id: makeId(),
+      role: 'user',
+      content: uiSelection ? `[선택] ${uiSelection.field}: ${uiSelection.value}` : trimmed,
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setSending(true);
+    setFallback(false);
+
+    try {
+      const res = await sendChatMessage({
+        message: uiSelection ? undefined : trimmed,
+        userId: userId ? Number(userId) : undefined,
+        sessionId,
+        history: buildHistory(),
+        context: Object.keys(context).length > 0 ? context : undefined,
+        uiSelection,
+      });
+
+      const assistantMsg: ChatMessage = {
+        id: makeId(),
+        role: 'assistant',
+        content: res.reply,
+        timestamp: new Date().toISOString(),
+        engine: res.engine,
+        modelName: res.modelName,
+        riskLevel: res.riskLevel,
+        intent: res.intent,
+        type: res.type,
+        tool: res.tool,
+        toolData: res.toolData,
+        ui: res.ui,
+      };
+
+      setMessages(prev => [...prev, assistantMsg]);
+      if (res.engine === 'fallback') setFallback(true);
+    } catch {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: makeId(),
+          role: 'assistant',
+          content: '죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      setSending(false);
+      textareaRef.current?.focus();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sending, userId, sessionId, context, messages]);
+
+  void fallback; void input; void setContext; void SAMPLE_CHIPS;
+  void ChatContextForm; void ChatBubble; void styles;
 
   return null;
 }
