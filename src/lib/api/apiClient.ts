@@ -57,10 +57,27 @@ function isSigninRequest(url?: string) {
   return url.includes('/auth/signin');
 }
 
+function isPublicAuthRequest(url?: string) {
+  if (!url) return false;
+
+  return (
+    url.includes('/auth/find-password') ||
+    url.includes('/auth/find-email') ||
+    url.includes('/auth/password/reset') ||
+    url.includes('/auth/signup')
+  );
+}
+
 function isUserDeleteRequest(config?: RetryableRequestConfig) {
   if (!config?.url) return false;
 
   return config.method?.toLowerCase() === 'delete' && config.url.includes('/user/me');
+}
+
+function isUserPasswordChangeRequest(config?: RetryableRequestConfig) {
+  if (!config?.url) return false;
+
+  return config.method?.toLowerCase() === 'put' && config.url.includes('/user/me/password');
 }
 
 function shouldRefreshOnUnauthorized(config?: RetryableRequestConfig): config is RetryableRequestConfig {
@@ -68,7 +85,9 @@ function shouldRefreshOnUnauthorized(config?: RetryableRequestConfig): config is
   if (config._retry) return false;
   if (config.url?.includes('/auth/refresh')) return false;
   if (isSigninRequest(config.url)) return false;
+  if (isPublicAuthRequest(config.url)) return false;
   if (isUserDeleteRequest(config)) return false;
+  if (isUserPasswordChangeRequest(config)) return false;
 
   return true;
 }
@@ -120,7 +139,7 @@ apiClient.interceptors.request.use(
     const token = getAccessToken();
 
     // 토큰이 있으면 Authorization 헤더에 자동으로 붙여줌
-    if (token && !isSigninRequest(config.url)) {
+    if (token && !isSigninRequest(config.url) && !isPublicAuthRequest(config.url)) {
       setBearerToken(config, token);
     }
 
@@ -144,7 +163,9 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as RetryableRequestConfig | undefined;
     const isUnauthorized = error.response?.status === 401;
     const isSigninEndpoint = isSigninRequest(originalRequest?.url);
+    const isPublicAuthEndpoint = isPublicAuthRequest(originalRequest?.url);
     const isDeleteAccountEndpoint = isUserDeleteRequest(originalRequest);
+    const isPasswordChangeEndpoint = isUserPasswordChangeRequest(originalRequest);
 
     if (isUnauthorized && shouldRefreshOnUnauthorized(originalRequest)) {
       originalRequest._retry = true;
@@ -161,7 +182,7 @@ apiClient.interceptors.response.use(
       }
     }
 
-    if (isUnauthorized && !isSigninEndpoint && !isDeleteAccountEndpoint) {
+    if (isUnauthorized && !isSigninEndpoint && !isPublicAuthEndpoint && !isDeleteAccountEndpoint && !isPasswordChangeEndpoint) {
       clearSession();
     }
 
