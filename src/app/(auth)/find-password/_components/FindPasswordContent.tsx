@@ -1,9 +1,10 @@
 'use client';
 
-import { FormEvent } from 'react';
+import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 
+import { CommonModal } from '@/components/CommonModal';
 import Step from '@/app/(auth)/_components/Step';
 import useFindPasswordFlow from '../_hooks/useFindPasswordFlow';
 import FindPasswordMethodStep from './FindPasswordMethodStep';
@@ -20,6 +21,7 @@ const STEP_LIST = ['방식 선택', '정보 입력', '인증 확인', '새 비�
 export default function FindPasswordContent() {
   const flow = useFindPasswordFlow();
   const router = useRouter();
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
 
   const handleMethodSelect = (method: 'email' | 'sms') => {
     flow.setMethod(method);
@@ -64,13 +66,22 @@ export default function FindPasswordContent() {
           ? { email: flow.email, code: flow.verifiedCode, newPassword }
           : { phone: flow.phone, code: flow.verifiedCode, newPassword },
       );
-      router.push('/login');
+      setIsCompleteModalOpen(true);
     } catch {
     }
   };
 
   return (
     <>
+      {isCompleteModalOpen && (
+        <CommonModal
+          type="success"
+          title="비밀번호가 변경되었습니다"
+          message="새 비밀번호로 다시 로그인해주세요."
+          confirmText="로그인하기"
+          onClose={() => router.push('/login')}
+        />
+      )}
       <div className={cx('header')}>
         <h1 className={cx('title')}>비밀번호 찾기</h1>
         <button className={cx('closeButton')} type="button" onClick={() => router.push('/login')}>

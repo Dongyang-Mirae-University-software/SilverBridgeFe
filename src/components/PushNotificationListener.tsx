@@ -4,11 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 import { MessagePayload } from 'firebase/messaging';
-import { useQueryClient } from '@tanstack/react-query';
+import { QueryClient, useQueryClient } from '@tanstack/react-query';
 
 import { listenForegroundMessages } from '@/lib/fcm';
 import { getAuthRole } from '@/lib/auth/tokenStore';
 import { guardianConnectionsQueryKey, wardConnectionsQueryKey } from '@/service/query/connection';
+import { CommonResponse } from '@/service/interface/common';
+import { IConnectionItem } from '@/service/interface/connection';
 import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/connect/ward';
 import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import styles from './PushNotificationListener.module.css';
@@ -73,8 +75,8 @@ function getConnectionPushNotification(data?: MessagePayload['data']) {
       };
     case 'CONNECTION_CANCELLED':
       return {
-        body: '연결 상태가 변경되었습니다.',
-        title: '연결 변경',
+        body: '연결이 해제되었습니다.',
+        title: '연결 해제',
       };
     case 'DISCONNECTION':
     case 'CONNECTION_DISCONNECTED':
@@ -141,6 +143,64 @@ function getConnectionId(data?: MessagePayload['data']) {
   return Number.isFinite(connectionId) ? connectionId : null;
 }
 
+function getConnectionStatusFromPush(data?: MessagePayload['data']): IConnectionItem['status'] | null {
+  switch (data?.type) {
+    case 'CONNECTION_ACCEPTED':
+      return 'ACTIVE';
+    case 'CONNECTION_REFUSED':
+      return 'REFUSED';
+    case 'CONNECTION_CANCELLED':
+    case 'DISCONNECTION':
+    case 'CONNECTION_DISCONNECTED':
+      return 'DISCONNECTED';
+    default:
+      return null;
+  }
+}
+
+function updateConnectionCache(
+  queryClient: QueryClient,
+  queryKey: typeof guardianConnectionsQueryKey | typeof wardConnectionsQueryKey,
+  connectionId: number,
+  status: IConnectionItem['status'],
+) {
+  queryClient.setQueryData<CommonResponse<IConnectionItem[]>>(queryKey, current => {
+    if (!Array.isArray(current?.data)) return current;
+
+    return {
+      ...current,
+      data: current.data.map(connection => (connection.id === connectionId ? { ...connection, status } : connection)),
+    };
+  });
+}
+
+function applyConnectionPushToCache(
+  queryClient: QueryClient,
+  data: MessagePayload['data'] | undefined,
+  currentRole: ConnectionTargetRole | null,
+) {
+  const connectionId = getConnectionId(data);
+  const status = getConnectionStatusFromPush(data);
+  if (!connectionId || !status) return;
+
+  const targetRole = getConnectionTargetRole(data);
+  if (targetRole === 'GUARDIAN') {
+    updateConnectionCache(queryClient, guardianConnectionsQueryKey, connectionId, status);
+    return;
+  }
+
+  if (targetRole === 'WARD') {
+    updateConnectionCache(queryClient, wardConnectionsQueryKey, connectionId, status);
+    return;
+  }
+
+  if (currentRole === 'GUARDIAN') {
+    updateConnectionCache(queryClient, guardianConnectionsQueryKey, connectionId, status);
+  } else if (currentRole === 'WARD') {
+    updateConnectionCache(queryClient, wardConnectionsQueryKey, connectionId, status);
+  }
+}
+
 function getActionError(error: unknown, fallback: string) {
   return (error as Error).message || fallback;
 }
@@ -178,6 +238,7 @@ export default function PushNotificationListener() {
     const targetRole = getConnectionTargetRole(data) ?? currentRole;
     const queryKey = targetRole === 'GUARDIAN' ? guardianConnectionsQueryKey : wardConnectionsQueryKey;
 
+    applyConnectionPushToCache(queryClient, data, currentRole);
     await queryClient.invalidateQueries({ queryKey });
     await queryClient.refetchQueries({ queryKey, type: 'active' });
     router.refresh();

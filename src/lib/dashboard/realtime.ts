@@ -19,8 +19,8 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload) {
       };
     case 'CONNECTION_CANCELLED':
       return {
-        body: payload.body ?? '연결 요청이 취소되었습니다.',
-        title: payload.title ?? '요청 취소',
+        body: payload.body ?? '연결이 해제되었습니다.',
+        title: payload.title ?? '연결 해제',
       };
     default:
       return {
