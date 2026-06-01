@@ -1,0 +1,98 @@
+.wrap {
+  border-top: 1px solid var(--sb-line-soft);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  border: 1px solid var(--guardian-line, #e3c5b8);
+  border-radius: 999px;
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 6px 14px;
+  transition: background 0.12s ease;
+}
+
+.chip:hover:not(:disabled) {
+  background: var(--guardian-brand-hover);
+}
+
+.chip:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.inputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dateInput,
+.textInput {
+  flex: 1;
+  min-height: 38px;
+  box-sizing: border-box;
+  border: 1px solid var(--sb-line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 13px;
+  padding: 0 10px;
+  outline: none;
+}
+
+.dateInput:focus,
+.textInput:focus {
+  border-color: var(--guardian-brand);
+  box-shadow: 0 0 0 3px rgba(138, 75, 56, 0.1);
+}
+
+.dateInput:disabled,
+.textInput:disabled {
+  background: var(--sb-bg-soft);
+  cursor: default;
+}
+
+.applyBtn {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 9px;
+  background: var(--guardian-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0 14px;
+  min-height: 38px;
+}
+
+.applyBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.inactiveNote {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+}
