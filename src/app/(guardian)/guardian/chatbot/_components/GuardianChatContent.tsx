@@ -83,13 +83,12 @@ export default function GuardianChatContent() {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
-  // 최근 12턴 history 구성 (welcome 제외, 최대 24개 메시지)
+  // 최근 12턴 history 구성
   function buildHistory() {
     const convo = messages.filter(m => m.id !== 'welcome');
     return convo.slice(-24).map(m => ({ role: m.role, content: m.content }));
   }
 
-  // 메시지 전송 — 일반 텍스트 또는 uiSelection(UI 프롬프트 응답)
   const send = useCallback(async (text: string, uiSelection?: { field: string; value: string }) => {
     const trimmed = text.trim();
     if (!trimmed && !uiSelection) return;
@@ -117,22 +116,23 @@ export default function GuardianChatContent() {
         uiSelection,
       });
 
-      const assistantMsg: ChatMessage = {
-        id: makeId(),
-        role: 'assistant',
-        content: res.reply,
-        timestamp: new Date().toISOString(),
-        engine: res.engine,
-        modelName: res.modelName,
-        riskLevel: res.riskLevel,
-        intent: res.intent,
-        type: res.type,
-        tool: res.tool,
-        toolData: res.toolData,
-        ui: res.ui,
-      };
-
-      setMessages(prev => [...prev, assistantMsg]);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: makeId(),
+          role: 'assistant',
+          content: res.reply,
+          timestamp: new Date().toISOString(),
+          engine: res.engine,
+          modelName: res.modelName,
+          riskLevel: res.riskLevel,
+          intent: res.intent,
+          type: res.type,
+          tool: res.tool,
+          toolData: res.toolData,
+          ui: res.ui,
+        },
+      ]);
       if (res.engine === 'fallback') setFallback(true);
     } catch {
       setMessages(prev => [
@@ -151,8 +151,103 @@ export default function GuardianChatContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sending, userId, sessionId, context, messages]);
 
-  void fallback; void input; void setContext; void SAMPLE_CHIPS;
-  void ChatContextForm; void ChatBubble; void styles;
+  // Enter 전송 / Shift+Enter 줄바꿈
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      void send(input);
+    }
+  }
 
-  return null;
+  // UI 프롬프트 선택 → uiSelection으로 재전송
+  function handleUiSelect(field: string, value: string) {
+    void send('', { field, value });
+  }
+
+  // 새 상담 — 메시지 초기화 + 페이지 리로드로 sessionId 갱신
+  function handleNewSession() {
+    setMessages([WELCOME]);
+    setInput('');
+    setFallback(false);
+    window.location.reload();
+  }
+
+  const lastAssistantId = [...messages].reverse().find(m => m.role === 'assistant')?.id;
+
+  return (
+    <div className={styles.chatPage}>
+      {/* 상단 바 — 컨텍스트 폼 + 새 상담 버튼 */}
+      <div className={styles.topBar}>
+        <div className={styles.topBarLeft}>
+          <ChatContextForm value={context} onChange={setContext} />
+        </div>
+        <button type="button" className={styles.newBtn} onClick={handleNewSession}>
+          새 상담
+        </button>
+      </div>
+
+      {/* fallback 경고 배너 */}
+      {fallback && (
+        <div className={styles.fallbackWarning}>
+          AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.
+        </div>
+      )}
+
+      {/* 메시지 목록 */}
+      <div ref={listRef} className={styles.messageList}>
+        {messages.map(msg => (
+          <ChatBubble
+            key={msg.id}
+            message={msg}
+            isLastAssistant={msg.id === lastAssistantId}
+            onUiSelect={handleUiSelect}
+          />
+        ))}
+        {sending && (
+          <div className={styles.typing}>
+            <span className={styles.typingDot} />
+            <span className={styles.typingDot} />
+            <span className={styles.typingDot} />
+          </div>
+        )}
+      </div>
+
+      {/* 샘플 질문 칩 */}
+      <div className={styles.chips}>
+        {SAMPLE_CHIPS.map(chip => (
+          <button
+            key={chip}
+            type="button"
+            className={styles.chip}
+            disabled={sending}
+            onClick={() => void send(chip)}
+          >
+            {chip}
+          </button>
+        ))}
+      </div>
+
+      {/* 입력창 */}
+      <div className={styles.inputArea}>
+        <textarea
+          ref={textareaRef}
+          className={styles.textarea}
+          rows={2}
+          placeholder="메시지를 입력하세요 (Enter 전송 · Shift+Enter 줄바꿈)"
+          value={input}
+          disabled={sending}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <button
+          type="button"
+          className={styles.sendBtn}
+          disabled={sending || !input.trim()}
+          onClick={() => void send(input)}
+        >
+          전송
+        </button>
+      </div>
+    </div>
+  );
 }
