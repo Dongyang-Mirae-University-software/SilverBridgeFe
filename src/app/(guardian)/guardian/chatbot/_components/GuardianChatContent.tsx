@@ -7,7 +7,25 @@ import { getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import type { ChatContext, ChatMessage } from '@/service/interface/chat';
-import { SAMPLE_CHIPS } from '@/service/interface/chat';
+import { SAMPLE_CHIPS, calcAge } from '@/service/interface/chat';
+import type { IUserProfile } from '@/service/interface/user';
+
+function profileToContext(p: IUserProfile): ChatContext {
+  return {
+    name: p.name || undefined,
+    phone: p.phone || undefined,
+    email: p.email || undefined,
+    gender: p.gender?.toLowerCase() || undefined,
+    birthDate: p.birthDate || undefined,
+    age: p.birthDate ? calcAge(p.birthDate) : undefined,
+    postcode: p.postcode || undefined,
+    address: p.address || undefined,
+    addressDetail: p.addressDetail || undefined,
+    location: [p.address, p.addressDetail].filter(Boolean).join(' ') || undefined,
+    guardianId: Number(p.id) || undefined,
+    role: p.role,
+  };
+}
 
 import ChatContextForm from './ChatContextForm';
 import ChatBubble from './ChatBubble';
@@ -43,6 +61,12 @@ export default function GuardianChatContent() {
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // 프로필 로드 시 context 초기값 세팅 (사용자가 이미 수정했으면 덮어쓰지 않음)
+  useEffect(() => {
+    if (!profile) return;
+    setContext(prev => (Object.values(prev).some(Boolean) ? prev : profileToContext(profile)));
+  }, [profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 과거 대화 복원
   useEffect(() => {

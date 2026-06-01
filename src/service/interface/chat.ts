@@ -31,11 +31,27 @@ export interface ChatMessage {
 }
 
 export interface ChatContext {
-  age?: string;
-  gender?: string;
-  location?: string;
+  age?: number;
+  email?: string;
   name?: string;
   phone?: string;
+  gender?: string;
+  birthDate?: string;
+  postcode?: string;
+  address?: string;
+  addressDetail?: string;
+  guardianId?: number;
+  location?: string;
+  role?: string;
+}
+
+export function calcAge(birthDate: string): number {
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
 }
 
 export interface ChatRequest {

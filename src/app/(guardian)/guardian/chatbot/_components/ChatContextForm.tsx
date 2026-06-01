@@ -12,7 +12,7 @@ interface Props {
 export default function ChatContextForm({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
 
-  function set(field: keyof ChatContext, v: string) {
+  function set<K extends keyof ChatContext>(field: K, v: ChatContext[K]) {
     onChange({ ...value, [field]: v });
   }
 
@@ -34,7 +34,7 @@ export default function ChatContextForm({ value, onChange }: Props) {
               type="number"
               placeholder="예: 72"
               value={value.age ?? ''}
-              onChange={e => set('age', e.target.value)}
+              onChange={e => set('age', e.target.value ? Number(e.target.value) : undefined)}
             />
           </label>
           <label className={styles.field}>
