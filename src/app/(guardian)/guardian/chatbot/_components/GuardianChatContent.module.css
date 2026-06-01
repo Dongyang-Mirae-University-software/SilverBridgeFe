@@ -47,3 +47,43 @@
   font-weight: 750;
   padding: 10px 14px;
 }
+
+/* ── 메시지 목록 ── */
+.messageList {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fafaf8;
+  padding: 18px;
+}
+
+/* ── 타이핑 인디케이터 ── */
+.typing {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 42px;
+}
+
+.typingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--guardian-brand);
+  opacity: 0.6;
+  animation: bounce 1.2s infinite;
+}
+
+.typingDot:nth-child(2) { animation-delay: 0.2s; }
+.typingDot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+}
