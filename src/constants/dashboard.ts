@@ -7,6 +7,7 @@ export const WARD_NAV: NavItem[] = [
   { href: '/ward/game', icon: 'game', label: '치매 예방 게임', key: 'game' },
   { href: '/ward/medication', icon: 'heart', label: '복약 알림', key: 'medication' },
   { href: '/ward/guardians', icon: 'users', label: '내 보호자', key: 'guardians' },
+  { href: '/ward/stream', icon: 'camera', label: '화면 송출', key: 'stream' },
   { href: '/ward/notices', icon: 'bell', label: '공지사항', key: 'notices' },
   { href: '/ward/settings', icon: 'settings', label: '환경설정', key: 'settings' },
 ];
@@ -39,6 +40,7 @@ export const PAGE_TITLES: Record<PageKey, string> = {
   wards: '피보호자 관리',
   'ward-register': '피보호자 등록',
   inquiries: '문의하기',
+  stream: '화면 송출',
 };
 
 export const WARD_ACTIONS = [
