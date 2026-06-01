@@ -62,6 +62,16 @@ export default function GuardianChatContent() {
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // 최신 값을 클로저 없이 읽기 위한 ref
+  const profileRef = useRef(profile);
+  const contextRef = useRef(context);
+  const messagesRef = useRef(messages);
+  const sendingRef = useRef(sending);
+  useEffect(() => { profileRef.current = profile; }, [profile]);
+  useEffect(() => { contextRef.current = context; }, [context]);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+  useEffect(() => { sendingRef.current = sending; }, [sending]);
+
   // 프로필 로드 시 context 초기값 세팅 (사용자가 이미 수정했으면 덮어쓰지 않음)
   useEffect(() => {
     if (!profile) return;
@@ -107,16 +117,18 @@ export default function GuardianChatContent() {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
-  // 최근 12턴 history 구성
-  function buildHistory() {
-    const convo = messages.filter(m => m.id !== 'welcome');
-    return convo.slice(-24).map(m => ({ role: m.role, content: m.content }));
-  }
-
   const send = useCallback(async (text: string, uiSelection?: { field: string; value: string }) => {
     const trimmed = text.trim();
     if (!trimmed && !uiSelection) return;
-    if (sending) return;
+    if (sendingRef.current) return;
+
+    // ref로 최신 값 읽기 — 클로저 stale 방지
+    const currentProfile = profileRef.current;
+    const currentContext = contextRef.current;
+    const history = messagesRef.current
+      .filter(m => m.id !== 'welcome')
+      .slice(-24)
+      .map(m => ({ role: m.role, content: m.content }));
 
     const userMsg: ChatMessage = {
       id: makeId(),
@@ -133,10 +145,10 @@ export default function GuardianChatContent() {
     try {
       const res = await sendChatMessage({
         message: uiSelection ? undefined : trimmed,
-        userId: userId ? Number(userId) : undefined,
+        userId: currentProfile?.id ? Number(currentProfile.id) : undefined,
         sessionId,
-        history: buildHistory(),
-        context: Object.keys(context).length > 0 ? context : undefined,
+        history,
+        context: Object.keys(currentContext).length > 0 ? currentContext : undefined,
         uiSelection,
       });
 
@@ -172,8 +184,7 @@ export default function GuardianChatContent() {
       setSending(false);
       textareaRef.current?.focus();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sending, userId, sessionId, context, messages]);
+  }, [sessionId]); // ref로 읽으므로 deps 최소화
 
   // Enter 전송 / Shift+Enter 줄바꿈
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
