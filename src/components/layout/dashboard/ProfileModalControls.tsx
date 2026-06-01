@@ -37,6 +37,7 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [isDeleteCompleteModalOpen, setIsDeleteCompleteModalOpen] = useState(false);
+  const [passwordModal, setPasswordModal] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [activePanel, setActivePanel] = useState<'profile' | 'security'>('profile');
   const isKakaoUser = profile?.provider === 'KAKAO';
   const isPhoneChanged = (profileForm.phone ?? '').trim() !== getPhoneDigits(profile?.phone ?? '');
@@ -75,9 +76,12 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
   const passwordMutation = useMutation({
     mutationKey: ['user-password-change'],
     mutationFn: changeMyPassword,
-    onMutate: () => setFeedbackMessage(''),
-    onSuccess: () => redirectToLogin(queryClient, router),
-    onError: error => setFeedbackMessage(getModalErrorMessage(error, '비밀번호 변경에 실패했습니다.')),
+    onMutate: () => {
+      setFeedbackMessage('');
+      setPasswordModal(null);
+    },
+    onSuccess: () => setPasswordModal({ message: '비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.', type: 'success' }),
+    onError: error => setPasswordModal({ message: getModalErrorMessage(error, '비밀번호 변경에 실패했습니다.'), type: 'error' }),
   });
   const deleteMutation = useMutation({
     mutationKey: ['user-account-delete'],
@@ -146,6 +150,23 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
           message="그동안 이용해 주셔서 감사합니다."
           confirmText="확인"
           onClose={() => redirectToLogin(queryClient, router)}
+        />
+      )}
+      {passwordModal && (
+        <CommonModal
+          type={passwordModal.type}
+          tone={profile?.role === 'GUARDIAN' ? 'guardian' : 'default'}
+          title={passwordModal.type === 'success' ? '비밀번호 변경 완료' : '비밀번호 변경 실패'}
+          message={passwordModal.message}
+          confirmText="확인"
+          onClose={() => {
+            if (passwordModal.type === 'success') {
+              redirectToLogin(queryClient, router);
+              return;
+            }
+
+            setPasswordModal(null);
+          }}
         />
       )}
       {feedbackMessage && <p className={cx('profileModalMessage')}>{feedbackMessage}</p>}
