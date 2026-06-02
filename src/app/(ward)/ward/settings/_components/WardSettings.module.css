@@ -2,7 +2,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 640px;
 }
 
 /* ── 카드 공통 ── */
@@ -73,7 +72,9 @@
   width: 30px;
 }
 
-.sliderLabel:last-child { text-align: right; }
+.sliderLabel:last-child {
+  text-align: right;
+}
 
 .slider {
   flex: 1;
@@ -146,7 +147,9 @@
   gap: 16px;
 }
 
-.toggleInfo { min-width: 0; }
+.toggleInfo {
+  min-width: 0;
+}
 
 .toggleLabel {
   display: block;
@@ -171,7 +174,11 @@
   flex-shrink: 0;
 }
 
-.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
 
 .toggleThumb {
   position: absolute;
@@ -195,8 +202,12 @@
   transition: transform 0.2s;
 }
 
-.toggle input:checked + .toggleThumb { background: var(--sb-brand); }
-.toggle input:checked + .toggleThumb::after { transform: translateX(22px); }
+.toggle input:checked + .toggleThumb {
+  background: var(--sb-brand);
+}
+.toggle input:checked + .toggleThumb::after {
+  transform: translateX(22px);
+}
 
 .contrastPreview {
   border-radius: 10px;
@@ -206,7 +217,9 @@
   font-weight: 700;
   color: var(--sb-ink-soft);
   line-height: 1.5;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .contrastPreviewOn {
@@ -231,17 +244,24 @@
   background: #fafaf8;
   cursor: pointer;
   padding: 16px;
-  transition: border-color 0.12s, background 0.12s;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
 }
 
-.sosCard:hover { border-color: var(--sb-brand); background: var(--sb-brand-50); }
+.sosCard:hover {
+  border-color: var(--sb-brand);
+  background: var(--sb-brand-50);
+}
 
 .sosCardActive {
   border-color: var(--sb-brand);
   background: var(--sb-brand-50);
 }
 
-.sosCard input { display: none; }
+.sosCard input {
+  display: none;
+}
 
 .sosIcon {
   display: grid;
@@ -255,9 +275,13 @@
   box-shadow: var(--sb-shadow-sm);
 }
 
-.sosCardActive .sosIcon { background: var(--sb-brand); }
+.sosCardActive .sosIcon {
+  background: var(--sb-brand);
+}
 
-.sosText { min-width: 0; }
+.sosText {
+  min-width: 0;
+}
 
 .sosCardLabel {
   display: block;
@@ -267,7 +291,9 @@
   line-height: 1.3;
 }
 
-.sosCardActive .sosCardLabel { color: var(--sb-brand); }
+.sosCardActive .sosCardLabel {
+  color: var(--sb-brand);
+}
 
 .sosCardHint {
   display: block;
@@ -286,7 +312,9 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  transition: border-color 0.12s, background 0.12s;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
 }
 
 .sosCardActive .sosCheck {
@@ -303,9 +331,15 @@
   background: #fff;
 }
 
-.sosCardActive .sosCheck::after { display: block; }
+.sosCardActive .sosCheck::after {
+  display: block;
+}
 
 @media (max-width: 700px) {
-  .page { max-width: 100%; }
-  .card { padding: 18px; }
+  .page {
+    max-width: 100%;
+  }
+  .card {
+    padding: 18px;
+  }
 }
