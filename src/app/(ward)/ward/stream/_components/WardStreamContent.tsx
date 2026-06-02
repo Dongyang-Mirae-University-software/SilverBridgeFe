@@ -11,7 +11,6 @@ type StreamStatus = 'off' | 'ready' | 'streaming';
 const MAX_QUEUE = 90;
 const DEFAULT_CAM_ID = 'ipad-room-001';
 const MIN_UPLOAD_INTERVAL_MS = 500; // 최대 초당 2프레임 업로드
-const MIN_UPLOAD_INTERVAL_MS = 500; // 최대 초당 2프레임 업로드
 
 const FACING_OPTIONS: { value: CameraFacing; label: string; icon: string }[] = [
   { value: 'user',        label: '정면 카메라', icon: '🤳' },
