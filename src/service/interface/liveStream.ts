@@ -38,13 +38,17 @@ export interface LiveStreamAnalysis {
   image_url?: string;
 }
 
-export type DetectState = 'fire' | 'smoke' | 'danger' | 'safe';
+export type DetectState = 'fire' | 'smoke' | 'knife' | 'fall' | 'person' | 'danger' | 'safe';
 
 export function resolveDetectState(analysis: LiveStreamAnalysis | null | undefined): DetectState {
   if (!analysis) return 'safe';
-  const detectedType = analysis.detectedType ?? analysis.detected_type ?? analysis.label ?? analysis.class_name;
-  if (detectedType === 'fire') return 'fire';
-  if (detectedType === 'smoke') return 'smoke';
+  const raw = (analysis.detectedType ?? analysis.detected_type ?? analysis.label ?? analysis.class_name ?? '').toLowerCase();
+
+  if (raw === 'fire') return 'fire';
+  if (raw === 'smoke') return 'smoke';
+  if (['knife', 'weapon', 'scissors', 'gun'].some(k => raw.includes(k))) return 'knife';
+  if (['fall', 'fallen', 'tumble'].some(k => raw.includes(k)))           return 'fall';
+  if (['person', 'people', 'human'].some(k => raw.includes(k)))          return 'person';
   if (analysis.danger) return 'danger';
   return 'safe';
 }
