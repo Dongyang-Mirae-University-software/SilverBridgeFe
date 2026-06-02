@@ -65,13 +65,16 @@ export function getLatestFrameUrl(analysis: LiveStreamAnalysis) {
   return analysis.latestFrameUrl ?? analysis.latest_frame_url ?? analysis.frameUrl ?? analysis.frame_url ?? analysis.imageUrl ?? analysis.image_url ?? null;
 }
 
-export function normalizeDetectedType(analysis: LiveStreamAnalysis) {
-  const rawType = analysis.detectedType ?? analysis.detected_type ?? analysis.label ?? analysis.class_name;
+export function normalizeDetectedType(analysis: LiveStreamAnalysis): string {
+  const raw = (analysis.detectedType ?? analysis.detected_type ?? analysis.label ?? analysis.class_name ?? '').toLowerCase();
 
-  if (rawType === 'fire') return '화재';
-  if (rawType === 'smoke') return '연기';
-  if (rawType === 'danger') return '위험';
-  return '화재·연기';
+  if (raw === 'fire') return '화재';
+  if (raw === 'smoke') return '연기';
+  if (['knife', 'weapon', 'scissors', 'gun'].some(k => raw.includes(k))) return '흉기';
+  if (['fall', 'fallen', 'tumble'].some(k => raw.includes(k)))           return '낙상';
+  if (['person', 'people', 'human'].some(k => raw.includes(k)))          return '사람';
+  if (raw === 'danger') return '위험';
+  return raw || '알 수 없음';
 }
 
 export function formatNumber(value: number | undefined) {

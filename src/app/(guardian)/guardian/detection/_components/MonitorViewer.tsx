@@ -9,8 +9,10 @@ const cx = classNames.bind(styles);
 interface MonitorViewerProps {
   detectState: DetectState;
   frameSrc: string | null;
+  isStoppingSession: boolean;
   latestAnalysis: LiveStreamAnalysis | null;
   latestFrameUrl: string | null;
+  onStopSession: () => void;
   selectedId: string | null;
   selectedSession?: LiveStreamSession;
   sessionStatus: LiveStreamStatus | null;
@@ -20,8 +22,10 @@ interface MonitorViewerProps {
 export function MonitorViewer({
   detectState,
   frameSrc,
+  isStoppingSession,
   latestAnalysis,
   latestFrameUrl,
+  onStopSession,
   selectedId,
   selectedSession,
   sessionStatus,
@@ -39,7 +43,13 @@ export function MonitorViewer({
 
   return (
     <div className={cx('viewerPanel')}>
-      <MonitorHeader selectedId={selectedId} selectedSession={selectedSession} sessionStatus={sessionStatus} />
+      <MonitorHeader
+        isStoppingSession={isStoppingSession}
+        onStopSession={onStopSession}
+        selectedId={selectedId}
+        selectedSession={selectedSession}
+        sessionStatus={sessionStatus}
+      />
       <div className={cx('monitorGrid')}>
         <FrameViewer frameSrc={frameSrc} latestFrameUrl={latestFrameUrl} selectedId={selectedId} viewerUrl={viewerUrl} />
         <SessionMeta detectState={detectState} latestAnalysis={latestAnalysis} sessionStatus={sessionStatus} />
@@ -49,25 +59,41 @@ export function MonitorViewer({
 }
 
 function MonitorHeader({
+  isStoppingSession,
+  onStopSession,
   selectedId,
   selectedSession,
   sessionStatus,
 }: {
+  isStoppingSession: boolean;
+  onStopSession: () => void;
   selectedId: string;
   selectedSession?: LiveStreamSession;
   sessionStatus: LiveStreamStatus | null;
 }) {
+  const isStopped = sessionStatus?.status === 'stopped';
+
   return (
     <div className={cx('viewerHeader')}>
       <div>
         <strong>{selectedSession?.ward_name ?? '피보호자'}</strong>
         <span>{selectedId}</span>
       </div>
-      <div className={cx('statusRow')}>
-        <span>status {sessionStatus?.status ?? '-'}</span>
-        <span>FPS {formatNumber(sessionStatus?.fps)}</span>
-        <span>시청자 {formatNumber(sessionStatus?.viewerCount ?? sessionStatus?.viewer_count)}명</span>
-        {(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing) && <span className={cx('analyzingBadge')}>AI 분석 중</span>}
+      <div className={cx('viewerActions')}>
+        <div className={cx('statusRow')}>
+          <span>status {sessionStatus?.status ?? '-'}</span>
+          <span>FPS {formatNumber(sessionStatus?.fps)}</span>
+          <span>시청자 {formatNumber(sessionStatus?.viewerCount ?? sessionStatus?.viewer_count)}명</span>
+          {(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing) && <span className={cx('analyzingBadge')}>AI 분석 중</span>}
+        </div>
+        <button
+          type="button"
+          className={cx('stopStreamButton')}
+          disabled={isStoppingSession || isStopped}
+          onClick={onStopSession}
+        >
+          {isStoppingSession ? '종료 중' : isStopped ? '종료됨' : '송출 종료'}
+        </button>
       </div>
     </div>
   );
@@ -126,7 +152,7 @@ function SessionMeta({
 
       <div className={cx('cardHeader', 'analysisHeader')}>
         <h3>최신 감지 결과</h3>
-        <span>화재·연기</span>
+        <span>AI 분석</span>
       </div>
       {latestAnalysis ? (
         <DetectionResult analysis={latestAnalysis} detectState={detectState} />
@@ -146,33 +172,32 @@ function MetaItem({ label, value }: { label: string; value: string }) {
   );
 }
 
+const DETECT_LABEL: Record<DetectState, string> = {
+  fire:   '화재 감지됨',
+  smoke:  '연기 감지됨',
+  knife:  '흉기 발견',
+  fall:   '낙상 감지됨',
+  person: '사람 감지됨',
+  danger: '위험 감지됨',
+  safe:   '이상 없음',
+};
+
 function DetectionResult({ analysis, detectState }: { analysis: LiveStreamAnalysis; detectState: DetectState }) {
   const confidence = analysis.confidence ?? 0;
   const detectedType = normalizeDetectedType(analysis);
+  const label = DETECT_LABEL[detectState];
 
-  if (detectState === 'fire' || detectState === 'smoke') {
-    return (
-      <div className={cx('detectCard')}>
-        <strong>{detectedType} 감지됨</strong>
-        <span>신뢰도 {confidence.toFixed(2)}</span>
-        <small>표시 전용 · 응급 연락은 추후 연동 예정</small>
-      </div>
-    );
-  }
-
-  if (detectState === 'danger') {
-    return (
-      <div className={cx('dangerCard')}>
-        <strong>위험 감지됨</strong>
-        <span>신뢰도 {confidence.toFixed(2)}</span>
-      </div>
-    );
-  }
+  const isAlert  = ['fire', 'smoke', 'knife'].includes(detectState);
+  const isDanger = ['fall', 'person', 'danger'].includes(detectState);
+  const isSafe   = detectState === 'safe';
 
   return (
-    <div className={cx('safeCard')}>
-      <strong>화재·연기: 미감지</strong>
-      <span>신뢰도 {confidence.toFixed(2)}</span>
+    <div className={cx(
+      isSafe ? 'safeCard' : isAlert ? 'detectCard' : 'dangerCard'
+    )}>
+      <strong>{label}</strong>
+      {!isSafe && <span>{detectedType} · 신뢰도 {Math.round(confidence * 100)}%</span>}
+      {isSafe && <span>신뢰도 {Math.round(confidence * 100)}%</span>}
     </div>
   );
 }

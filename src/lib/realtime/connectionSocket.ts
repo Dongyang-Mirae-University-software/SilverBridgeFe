@@ -88,17 +88,29 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
     return () => {};
   }
 
-  const brokerURL = getSocketUrl(accessToken);
+  let currentAccessToken = accessToken;
+  let currentBrokerURL = getSocketUrl(accessToken);
   const client = new Client({
-    brokerURL,
+    brokerURL: currentBrokerURL,
     reconnectDelay: RECONNECT_DELAY_MS,
+    beforeConnect: () => {
+      const latestAccessToken = getAccessToken();
+      if (!latestAccessToken) {
+        void client.deactivate();
+        return;
+      }
+
+      currentAccessToken = latestAccessToken;
+      currentBrokerURL = getSocketUrl(latestAccessToken);
+      client.brokerURL = currentBrokerURL;
+    },
     debug: message => {
-      console.debug('[WS]', message.replace(accessToken, '***'));
+      console.debug('[WS]', message.replace(currentAccessToken, '***'));
     },
   });
 
   client.onConnect = () => {
-    console.info('[WS] CONNECTED - 구독 시작:', maskSocketUrl(brokerURL), '| userId:', userId);
+    console.info('[WS] CONNECTED - 구독 시작:', maskSocketUrl(currentBrokerURL), '| userId:', userId);
 
     const topics = role === 'WARD' ? WARD_CONNECTION_TOPICS : role === 'GUARDIAN' ? GUARDIAN_CONNECTION_TOPICS : [];
 

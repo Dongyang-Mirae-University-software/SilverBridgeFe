@@ -1,9 +1,9 @@
 .chatPage {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 12px;
-  height: calc(100vh - 140px);
-  min-height: 500px;
+  min-height: 0;
 }
 
 /* ── 상단 바 ── */
@@ -168,8 +168,7 @@
 /* ── 반응형 ── */
 @media (max-width: 900px) {
   .chatPage {
-    height: auto;
-    min-height: calc(100dvh - 160px);
+    min-height: 0;
   }
 
   .topBar {
