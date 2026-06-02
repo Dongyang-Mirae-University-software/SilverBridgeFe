@@ -26,12 +26,14 @@ export function useGuardianMonitor() {
     queryKey: ['liveStreamStatus', selectedId],
     queryFn: () => getLiveStreamStatus(selectedId!),
     enabled: !!selectedId,
+    staleTime: 10_000, // WS로 업데이트되므로 10초간 캐시 유지
   });
 
   const { data: analysis } = useQuery({
     queryKey: ['liveStreamAnalysis', selectedId],
     queryFn: () => getLiveStreamLatestAnalysis(selectedId!),
     enabled: !!selectedId,
+    staleTime: 10_000,
   });
 
   useEffect(() => {
@@ -42,7 +44,6 @@ export function useGuardianMonitor() {
     if (event.type === 'live_streams') {
       const nextSessions = normalizeSessions(event.data);
       if (nextSessions) queryClient.setQueryData(['liveStreams'], nextSessions);
-      void queryClient.invalidateQueries({ queryKey: ['liveStreams'] });
       return;
     }
 
@@ -53,7 +54,6 @@ export function useGuardianMonitor() {
         setSocketStatus(nextStatus);
         queryClient.setQueryData(['liveStreamStatus', sessionId], nextStatus);
       }
-      if (sessionId) void queryClient.invalidateQueries({ queryKey: ['liveStreamStatus', sessionId] });
       return;
     }
 
@@ -65,7 +65,6 @@ export function useGuardianMonitor() {
         setLatestFrameUrl(getLatestFrameUrl(nextAnalysis));
         queryClient.setQueryData(['liveStreamAnalysis', sessionId], nextAnalysis);
       }
-      if (sessionId) void queryClient.invalidateQueries({ queryKey: ['liveStreamAnalysis', sessionId] });
     }
   }, [queryClient]);
 
