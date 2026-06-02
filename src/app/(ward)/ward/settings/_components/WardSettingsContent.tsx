@@ -3,18 +3,29 @@
 import { CSSProperties } from 'react';
 
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
-import {
-  MAX_WARD_FONT_SIZE,
-  MIN_WARD_FONT_SIZE,
-  clampFontSize,
-} from '@/constants/wardSettings';
+import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
 
 import styles from './WardSettings.module.css';
 
 const SOS_OPTIONS = [
-  { value: 'call119' as const,              icon: '🚨', label: '119에 바로 연결',                         hint: 'SOS 버튼을 누르면 즉시 119에 전화를 겁니다.' },
-  { value: 'call119AndNotify' as const,     icon: '📞', label: '119 연결 + 보호자 알림',                  hint: '119 통화와 동시에 보호자에게 알림을 보냅니다.' },
-  { value: 'notifyGuardianFirst' as const,  icon: '💬', label: '보호자에게 먼저 알림',                    hint: '보호자에게 먼저 알린 뒤 119 연결 방법을 안내합니다.' },
+  {
+    value: 'call119' as const,
+    icon: '🚨',
+    label: '119에 바로 연결',
+    hint: 'SOS 버튼을 누르면 즉시 119에 전화를 겁니다.',
+  },
+  {
+    value: 'call119AndNotify' as const,
+    icon: '📞',
+    label: '119 연결 + 보호자 알림',
+    hint: '119 통화와 동시에 보호자에게 알림을 보냅니다.',
+  },
+  {
+    value: 'notifyGuardianFirst' as const,
+    icon: '💬',
+    label: '보호자에게 먼저 알림',
+    hint: '보호자에게 먼저 알린 뒤 119 연결 방법을 안내합니다.',
+  },
 ];
 
 export function WardSettingsContent() {
@@ -25,13 +36,14 @@ export function WardSettingsContent() {
 
   return (
     <div className={styles.page}>
-
       {/* 글자 크기 */}
       <section className={styles.card} aria-labelledby="s-font">
         <div className={styles.cardHeader}>
           <span className={styles.cardNum}>1</span>
           <div>
-            <h3 className={styles.cardTitle} id="s-font">글자 크기</h3>
+            <h3 className={styles.cardTitle} id="s-font">
+              글자 크기
+            </h3>
             <p className={styles.cardDesc}>슬라이더를 움직여 화면 글자 크기를 조절합니다.</p>
           </div>
         </div>
@@ -49,7 +61,9 @@ export function WardSettingsContent() {
               aria-label="화면 글자 크기"
               onChange={e => updateWardSettings({ fontSize: clampFontSize(Number(e.target.value)) })}
             />
-            <span className={styles.sliderLabel} style={{ fontSize: 22 }}>가</span>
+            <span className={styles.sliderLabel} style={{ fontSize: 22 }}>
+              가
+            </span>
           </div>
 
           <div className={styles.preview}>
@@ -66,7 +80,9 @@ export function WardSettingsContent() {
         <div className={styles.cardHeader}>
           <span className={styles.cardNum}>2</span>
           <div>
-            <h3 className={styles.cardTitle} id="s-contrast">화면 대비</h3>
+            <h3 className={styles.cardTitle} id="s-contrast">
+              화면 대비
+            </h3>
             <p className={styles.cardDesc}>글자와 테두리를 더 진하게 표시합니다.</p>
           </div>
         </div>
@@ -87,7 +103,9 @@ export function WardSettingsContent() {
         </div>
 
         <div className={`${styles.contrastPreview} ${wardSettings.highContrast ? styles.contrastPreviewOn : ''}`}>
-          {wardSettings.highContrast ? '고대비 모드가 켜져 있습니다. 글자가 더 선명하게 보입니다.' : '일반 모드입니다. 고대비를 켜면 글자가 더 또렷해집니다.'}
+          {wardSettings.highContrast
+            ? '고대비 모드가 켜져 있습니다. 글자가 더 선명하게 보입니다.'
+            : '일반 모드입니다. 고대비를 켜면 글자가 더 또렷해집니다.'}
         </div>
       </section>
 
@@ -96,7 +114,9 @@ export function WardSettingsContent() {
         <div className={styles.cardHeader}>
           <span className={styles.cardNum}>3</span>
           <div>
-            <h3 className={styles.cardTitle} id="s-sos">SOS 동작 설정</h3>
+            <h3 className={styles.cardTitle} id="s-sos">
+              SOS 동작 설정
+            </h3>
             <p className={styles.cardDesc}>긴급 SOS를 눌렀을 때 어떻게 동작할지 선택합니다.</p>
           </div>
         </div>
@@ -105,10 +125,7 @@ export function WardSettingsContent() {
           {SOS_OPTIONS.map(opt => {
             const isActive = wardSettings.sosAction === opt.value;
             return (
-              <label
-                key={opt.value}
-                className={`${styles.sosCard} ${isActive ? styles.sosCardActive : ''}`}
-              >
+              <label key={opt.value} className={`${styles.sosCard} ${isActive ? styles.sosCardActive : ''}`}>
                 <input
                   type="radio"
                   name="ward-sos"
@@ -127,7 +144,6 @@ export function WardSettingsContent() {
           })}
         </div>
       </section>
-
     </div>
   );
 }
