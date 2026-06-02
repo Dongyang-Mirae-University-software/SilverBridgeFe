@@ -8,7 +8,6 @@ type Tab = 'live' | 'manual';
 type CameraFacing = 'user' | 'environment' | 'screen';
 type StreamStatus = 'off' | 'ready' | 'streaming';
 
-const MAX_QUEUE = 90;
 const DEFAULT_CAM_ID = 'ipad-room-001';
 const MIN_UPLOAD_INTERVAL_MS = 500; // 최대 초당 2프레임 업로드
 
@@ -62,13 +61,20 @@ export default function WardStreamContent() {
   const isUploadingRef    = useRef(false);
   const liveSessionIdRef  = useRef<string | null>(null);
 
-  /* ── 업로드 루프 — 최소 500ms 간격으로 순차 처리 ── */
+  function enqueueLatestFrame(blob: Blob) {
+    frameQueueRef.current = [blob];
+    setQueueCount(frameQueueRef.current.length);
+    void drainQueue();
+  }
+
+  /* ── 업로드 루프 — 오래된 프레임을 버리고 최신 프레임만 순차 처리 ── */
   async function drainQueue() {
     if (isUploadingRef.current) return;
     isUploadingRef.current = true;
     while (frameQueueRef.current.length > 0 && liveSessionIdRef.current) {
-      const blob = frameQueueRef.current.shift()!;
-      setQueueCount(frameQueueRef.current.length);
+      const blob = frameQueueRef.current.pop()!;
+      frameQueueRef.current = [];
+      setQueueCount(0);
       const start = Date.now();
       try { await uploadFrame(liveSessionIdRef.current, blob); } catch { /* 실패 무시 */ }
       const elapsed = Date.now() - start;
@@ -120,10 +126,7 @@ export default function WardStreamContent() {
         canvas.getContext('2d')?.drawImage(video, 0, 0);
         canvas.toBlob(blob => {
           if (!blob) return;
-          if (frameQueueRef.current.length >= MAX_QUEUE) frameQueueRef.current.shift();
-          frameQueueRef.current.push(blob);
-          setQueueCount(frameQueueRef.current.length);
-          void drainQueue();
+          enqueueLatestFrame(blob);
         }, 'image/jpeg', 0.8);
       }, Math.floor(1000 / fps));
     } catch { setLiveMsg('세션 생성에 실패했습니다. 다시 시도해주세요.'); }
@@ -147,7 +150,7 @@ export default function WardStreamContent() {
   useEffect(() => () => {
     if (captureTimerRef.current) clearInterval(captureTimerRef.current);
     mediaStreamRef.current?.getTracks().forEach(t => t.stop());
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ── 수동 업로드 액션들 ── */
   async function handleCreateSession() {
