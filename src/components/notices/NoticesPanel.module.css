@@ -1,6 +1,7 @@
 .page {
   display: flex;
-  min-height: calc(100vh - 112px);
+  flex: 1;
+  min-height: 0;
   flex-direction: column;
   gap: 14px;
 }
@@ -175,10 +176,6 @@
 }
 
 @media (max-width: 900px) {
-  .page {
-    min-height: auto;
-  }
-
   .headerTop {
     align-items: stretch;
     flex-direction: column;
