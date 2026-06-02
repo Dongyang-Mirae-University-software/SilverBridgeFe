@@ -899,7 +899,6 @@
 
 .wardHomeActions {
   display: grid;
-  min-height: calc(100dvh - 160px);
   align-items: center;
   height: 100%;
 }
@@ -965,13 +964,14 @@
 }
 
 .featurePanel {
-  min-height: calc(100vh - 112px);
+  flex: 1;
   padding: 34px;
 }
 
 .settingsPage {
   display: flex;
-  min-height: calc(100vh - 112px);
+  flex: 1;
+  min-height: 0;
   flex-direction: column;
   gap: 18px;
   font-size: var(--ward-preferred-font-size, 17px);
@@ -1161,7 +1161,8 @@
 .connectionPage,
 .connectionPanel {
   display: flex;
-  min-height: calc(100vh - 112px);
+  flex: 1;
+  min-height: 0;
   flex-direction: column;
   gap: 14px;
 }
@@ -2236,11 +2237,6 @@
   .profilePhoneVerify,
   .profileDeleteRow {
     grid-template-columns: 1fr;
-  }
-
-  .connectionPage,
-  .connectionPanel {
-    min-height: auto;
   }
 
   .connectionRegisterGrid,

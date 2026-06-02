@@ -25,8 +25,10 @@ export default function GuardianMonitorContent() {
       <MonitorViewer
         detectState={monitor.detectState}
         frameSrc={monitor.frameSrc}
+        isStoppingSession={monitor.isStoppingSession}
         latestAnalysis={monitor.latestAnalysis}
         latestFrameUrl={monitor.latestFrameUrl}
+        onStopSession={monitor.stopSelectedSession}
         selectedId={monitor.selectedId}
         selectedSession={monitor.selectedSession}
         sessionStatus={monitor.sessionStatus}

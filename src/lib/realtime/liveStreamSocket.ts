@@ -27,15 +27,27 @@ export function connectLiveStreamSocket({ wsUrl, onEvent }: LiveStreamSocketOpti
   const ws = new WebSocket(wsUrl);
   let pingTimer: ReturnType<typeof setInterval> | null = null;
   let currentSessionId: string | null = null;
+  let isDisconnected = false;
 
   function send(action: SendAction) {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(action));
+      return true;
     }
+
+    return false;
+  }
+
+  function clearPingTimer() {
+    if (!pingTimer) return;
+    clearInterval(pingTimer);
+    pingTimer = null;
   }
 
   ws.onopen = () => {
     send({ action: 'list' });
+    if (currentSessionId) send({ action: 'subscribe', sessionId: currentSessionId });
+    clearPingTimer();
     pingTimer = setInterval(() => send({ action: 'ping' }), PING_INTERVAL_MS);
   };
 
@@ -49,11 +61,17 @@ export function connectLiveStreamSocket({ wsUrl, onEvent }: LiveStreamSocketOpti
   };
 
   ws.onclose = () => {
-    if (pingTimer) clearInterval(pingTimer);
+    clearPingTimer();
   };
 
   return {
     subscribe(sessionId: string) {
+      if (isDisconnected) return;
+      if (currentSessionId === sessionId) {
+        send({ action: 'subscribe', sessionId });
+        return;
+      }
+
       if (currentSessionId && currentSessionId !== sessionId) {
         send({ action: 'unsubscribe', sessionId: currentSessionId });
       }
@@ -61,14 +79,16 @@ export function connectLiveStreamSocket({ wsUrl, onEvent }: LiveStreamSocketOpti
       send({ action: 'subscribe', sessionId });
     },
     unsubscribeAll() {
+      if (isDisconnected) return;
       if (currentSessionId) {
         send({ action: 'unsubscribe', sessionId: currentSessionId });
         currentSessionId = null;
       }
     },
     disconnect() {
-      if (pingTimer) clearInterval(pingTimer);
-      ws.close();
+      isDisconnected = true;
+      clearPingTimer();
+      if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) ws.close();
     },
   };
 }

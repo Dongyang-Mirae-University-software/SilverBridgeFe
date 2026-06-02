@@ -7,6 +7,7 @@
 
 .header {
   display: flex;
+  flex-shrink: 0;
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
@@ -30,10 +31,17 @@
 }
 
 .content {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: calc(100dvh - 160px);
   min-width: 0;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .emptyContent {
+  flex: 1 1 auto;
+  min-height: 0;
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
   background: #fff;
