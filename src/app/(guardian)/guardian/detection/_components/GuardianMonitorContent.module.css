@@ -1,7 +1,8 @@
 .monitorPage {
   display: flex;
+  flex: 1;
   gap: 16px;
-  min-height: calc(100vh - 160px);
+  min-height: 0;
 }
 
 /* ── 세션 목록 패널 ── */
@@ -407,7 +408,7 @@
 @media (max-width: 900px) {
   .monitorPage {
     flex-direction: column;
-    min-height: auto;
+    min-height: 0;
   }
 
   .sessionPanel {
