@@ -9,8 +9,10 @@ const cx = classNames.bind(styles);
 interface MonitorViewerProps {
   detectState: DetectState;
   frameSrc: string | null;
+  isStoppingSession: boolean;
   latestAnalysis: LiveStreamAnalysis | null;
   latestFrameUrl: string | null;
+  onStopSession: () => void;
   selectedId: string | null;
   selectedSession?: LiveStreamSession;
   sessionStatus: LiveStreamStatus | null;
@@ -20,8 +22,10 @@ interface MonitorViewerProps {
 export function MonitorViewer({
   detectState,
   frameSrc,
+  isStoppingSession,
   latestAnalysis,
   latestFrameUrl,
+  onStopSession,
   selectedId,
   selectedSession,
   sessionStatus,
@@ -39,7 +43,13 @@ export function MonitorViewer({
 
   return (
     <div className={cx('viewerPanel')}>
-      <MonitorHeader selectedId={selectedId} selectedSession={selectedSession} sessionStatus={sessionStatus} />
+      <MonitorHeader
+        isStoppingSession={isStoppingSession}
+        onStopSession={onStopSession}
+        selectedId={selectedId}
+        selectedSession={selectedSession}
+        sessionStatus={sessionStatus}
+      />
       <div className={cx('monitorGrid')}>
         <FrameViewer frameSrc={frameSrc} latestFrameUrl={latestFrameUrl} selectedId={selectedId} viewerUrl={viewerUrl} />
         <SessionMeta detectState={detectState} latestAnalysis={latestAnalysis} sessionStatus={sessionStatus} />
@@ -49,25 +59,41 @@ export function MonitorViewer({
 }
 
 function MonitorHeader({
+  isStoppingSession,
+  onStopSession,
   selectedId,
   selectedSession,
   sessionStatus,
 }: {
+  isStoppingSession: boolean;
+  onStopSession: () => void;
   selectedId: string;
   selectedSession?: LiveStreamSession;
   sessionStatus: LiveStreamStatus | null;
 }) {
+  const isStopped = sessionStatus?.status === 'stopped';
+
   return (
     <div className={cx('viewerHeader')}>
       <div>
         <strong>{selectedSession?.ward_name ?? '피보호자'}</strong>
         <span>{selectedId}</span>
       </div>
-      <div className={cx('statusRow')}>
-        <span>status {sessionStatus?.status ?? '-'}</span>
-        <span>FPS {formatNumber(sessionStatus?.fps)}</span>
-        <span>시청자 {formatNumber(sessionStatus?.viewerCount ?? sessionStatus?.viewer_count)}명</span>
-        {(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing) && <span className={cx('analyzingBadge')}>AI 분석 중</span>}
+      <div className={cx('viewerActions')}>
+        <div className={cx('statusRow')}>
+          <span>status {sessionStatus?.status ?? '-'}</span>
+          <span>FPS {formatNumber(sessionStatus?.fps)}</span>
+          <span>시청자 {formatNumber(sessionStatus?.viewerCount ?? sessionStatus?.viewer_count)}명</span>
+          {(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing) && <span className={cx('analyzingBadge')}>AI 분석 중</span>}
+        </div>
+        <button
+          type="button"
+          className={cx('stopStreamButton')}
+          disabled={isStoppingSession || isStopped}
+          onClick={onStopSession}
+        >
+          {isStoppingSession ? '종료 중' : isStopped ? '종료됨' : '송출 종료'}
+        </button>
       </div>
     </div>
   );

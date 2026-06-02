@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getLiveStreamLatestAnalysis, getLiveStreamStatus, getLiveStreams } from '@/service/api/liveStream';
+import { stopStreamSession } from '@/service/api/streamSession';
 import { connectLiveStreamSocket, type LiveStreamServerEvent } from '@/lib/realtime/liveStreamSocket';
 import type { LiveStreamAnalysis, LiveStreamSession, LiveStreamStatus } from '@/service/interface/liveStream';
 import { resolveDetectState } from '@/service/interface/liveStream';
@@ -34,6 +35,24 @@ export function useGuardianMonitor() {
     queryFn: () => getLiveStreamLatestAnalysis(selectedId!),
     enabled: !!selectedId,
     staleTime: 10_000,
+  });
+
+  const stopSessionMutation = useMutation({
+    mutationFn: stopStreamSession,
+    onSuccess: async (_, sessionId) => {
+      const stoppedStatus: LiveStreamStatus = {
+        ...(socketStatus ?? status ?? {}),
+        session_id: sessionId,
+        status: 'stopped',
+      };
+
+      setSocketStatus(stoppedStatus);
+      queryClient.setQueryData(['liveStreamStatus', sessionId], stoppedStatus);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['liveStreams'] }),
+        queryClient.invalidateQueries({ queryKey: ['liveStreamStatus', sessionId] }),
+      ]);
+    },
   });
 
   useEffect(() => {
@@ -90,6 +109,11 @@ export function useGuardianMonitor() {
     socketRef.current?.subscribe(sessionId);
   }
 
+  function stopSelectedSession() {
+    if (!selectedId || stopSessionMutation.isPending) return;
+    stopSessionMutation.mutate(selectedId);
+  }
+
   const selectedSession = sessions.find((session: LiveStreamSession) => session.session_id === selectedId);
   const sessionStatus = socketStatus ?? status ?? null;
   const latestAnalysis = socketAnalysis ?? analysis ?? null;
@@ -102,6 +126,7 @@ export function useGuardianMonitor() {
     frameSrc: latestFrameUrl ?? mjpegSrc,
     isError,
     isLoading,
+    isStoppingSession: stopSessionMutation.isPending,
     latestAnalysis,
     latestFrameUrl,
     selectSession,
@@ -109,6 +134,7 @@ export function useGuardianMonitor() {
     selectedSession,
     sessionStatus,
     sessions,
+    stopSelectedSession,
     viewerUrl: selectedSession?.viewerUrl ?? selectedSession?.viewer_url ?? mjpegSrc,
   };
 }

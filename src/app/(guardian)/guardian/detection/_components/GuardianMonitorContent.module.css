@@ -192,6 +192,35 @@
   padding: 4px 10px;
 }
 
+.viewerActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.stopStreamButton {
+  min-height: 32px;
+  flex-shrink: 0;
+  border: 1px solid #f0c0b5;
+  border-radius: 999px;
+  background: #fbe5e0;
+  color: var(--sb-warn);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 850;
+  padding: 0 12px;
+}
+
+.stopStreamButton:hover:not(:disabled) {
+  filter: brightness(0.97);
+}
+
+.stopStreamButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .monitorGrid {
   display: grid;
   flex: 1;
@@ -434,6 +463,11 @@
   }
 
   .statusRow {
+    flex-wrap: wrap;
+  }
+
+  .viewerActions {
+    width: 100%;
     flex-wrap: wrap;
   }
 }
