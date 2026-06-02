@@ -45,6 +45,6 @@ export const PAGE_TITLES: Record<PageKey, string> = {
 
 export const WARD_ACTIONS = [
   { href: '/ward/sos', label: '긴급전화' },
-  { href: '/ward/chatbot', label: 'AI 챗봇' },
-  { href: '/ward/game', label: '치매예방 게임' },
+  { href: '/ward/medication', label: '복약 알림' },
+  { href: '/ward/game', label: '기억력 게임' },
 ];
