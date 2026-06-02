@@ -10,6 +10,8 @@ type StreamStatus = 'off' | 'ready' | 'streaming';
 
 const MAX_QUEUE = 90;
 const DEFAULT_CAM_ID = 'ipad-room-001';
+const MIN_UPLOAD_INTERVAL_MS = 500; // 최대 초당 2프레임 업로드
+const MIN_UPLOAD_INTERVAL_MS = 500; // 최대 초당 2프레임 업로드
 
 const FACING_OPTIONS: { value: CameraFacing; label: string; icon: string }[] = [
   { value: 'user',        label: '정면 카메라', icon: '🤳' },
@@ -22,7 +24,7 @@ export default function WardStreamContent() {
 
   /* ── 실시간 상태 ── */
   const [facing, setFacing]         = useState<CameraFacing>('user');
-  const [fps, setFps]               = useState(10);
+  const [fps, setFps]               = useState(5);
   const [camId, setCamId]           = useState(DEFAULT_CAM_ID);
   const [status, setStatus]         = useState<StreamStatus>('off');
   const [queueCount, setQueueCount] = useState(0);
@@ -61,14 +63,18 @@ export default function WardStreamContent() {
   const isUploadingRef    = useRef(false);
   const liveSessionIdRef  = useRef<string | null>(null);
 
-  /* ── 업로드 루프 ── */
+  /* ── 업로드 루프 — 최소 500ms 간격으로 순차 처리 ── */
   async function drainQueue() {
     if (isUploadingRef.current) return;
     isUploadingRef.current = true;
     while (frameQueueRef.current.length > 0 && liveSessionIdRef.current) {
       const blob = frameQueueRef.current.shift()!;
       setQueueCount(frameQueueRef.current.length);
+      const start = Date.now();
       try { await uploadFrame(liveSessionIdRef.current, blob); } catch { /* 실패 무시 */ }
+      const elapsed = Date.now() - start;
+      const wait = MIN_UPLOAD_INTERVAL_MS - elapsed;
+      if (wait > 0) await new Promise(r => setTimeout(r, wait));
     }
     isUploadingRef.current = false;
   }
