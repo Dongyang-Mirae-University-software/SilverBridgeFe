@@ -1,6 +1,7 @@
 import classNames from 'classnames/bind';
 
 import type { LiveStreamSession } from '@/service/interface/liveStream';
+import { formatDateTime, formatRelativeDateTime } from './monitorUtils';
 import styles from './GuardianMonitorContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -41,9 +42,15 @@ export function SessionList({ error, isError, isLoading, onSelectSession, select
                 className={cx('sessionCard', { active: selectedId === session.session_id })}
                 onClick={() => onSelectSession(session.session_id)}
               >
-                <strong>{session.ward_name ?? '피보호자'}</strong>
-                <span className={cx('sessionId')}>{session.session_id.slice(0, 8)}…</span>
-                {session.is_analyzing && <span className={cx('analyzingBadge')}>AI 분석 중</span>}
+                <span className={cx('sessionCardTop')}>
+                  <strong>{session.ward_name ?? '피보호자'}</strong>
+                  {session.is_analyzing && <span className={cx('analyzingBadge')}>AI 분석 중</span>}
+                </span>
+                <span className={cx('sessionId')}>{session.session_id}</span>
+                <span className={cx('sessionTime')}>
+                  {formatRelativeDateTime(session.started_at)}
+                  <small>{formatDateTime(session.started_at)}</small>
+                </span>
               </button>
             </li>
           ))}
