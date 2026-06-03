@@ -23,6 +23,7 @@ export default function WardStreamContent() {
   /* ── 실시간 상태 ── */
   const [facing, setFacing]         = useState<CameraFacing>('user');
   const [fps, setFps]               = useState(5);
+  const [liveSessionName, setLiveSessionName] = useState('stream_001');
   const [camId, setCamId]           = useState(DEFAULT_CAM_ID);
   const [status, setStatus]         = useState<StreamStatus>('off');
   const [queueCount, setQueueCount] = useState(0);
@@ -110,8 +111,13 @@ export default function WardStreamContent() {
   /* ── 송출 시작 ── */
   async function handleStartStreaming() {
     if (!mediaStreamRef.current) return;
+    const sid = liveSessionName.trim();
+    if (!sid) {
+      setLiveMsg('세션 이름을 입력해주세요.');
+      return;
+    }
+
     try {
-      const sid = `live_${Date.now()}`;
       const res = await createStreamSession({ sessionId: sid, cameraIdentifier: camId, deviceType: 'web' });
       liveSessionIdRef.current = res.session_id ?? sid;
       setStatus('streaming');
@@ -267,6 +273,10 @@ export default function WardStreamContent() {
               </div>
 
               <div className={styles.settingsRow}>
+                <label className={styles.settingField}>
+                  <span>Session ID</span>
+                  <input value={liveSessionName} onChange={e => setLiveSessionName(e.target.value)} disabled={status === 'streaming'} />
+                </label>
                 <label className={styles.settingField}>
                   <span>Camera ID</span>
                   <input value={camId} onChange={e => setCamId(e.target.value)} disabled={status === 'streaming'} />
