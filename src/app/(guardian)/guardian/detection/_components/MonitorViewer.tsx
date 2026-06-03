@@ -43,58 +43,17 @@ export function MonitorViewer({
 
   return (
     <div className={cx('viewerPanel')}>
-      <MonitorHeader
-        isStoppingSession={isStoppingSession}
-        onStopSession={onStopSession}
-        selectedId={selectedId}
-        selectedSession={selectedSession}
-        sessionStatus={sessionStatus}
-      />
       <div className={cx('monitorGrid')}>
         <FrameViewer frameSrc={frameSrc} latestFrameUrl={latestFrameUrl} selectedId={selectedId} viewerUrl={viewerUrl} />
-        <SessionMeta detectState={detectState} latestAnalysis={latestAnalysis} sessionStatus={sessionStatus} />
-      </div>
-    </div>
-  );
-}
-
-function MonitorHeader({
-  isStoppingSession,
-  onStopSession,
-  selectedId,
-  selectedSession,
-  sessionStatus,
-}: {
-  isStoppingSession: boolean;
-  onStopSession: () => void;
-  selectedId: string;
-  selectedSession?: LiveStreamSession;
-  sessionStatus: LiveStreamStatus | null;
-}) {
-  const isStopped = sessionStatus?.status === 'stopped';
-
-  return (
-    <div className={cx('viewerHeader')}>
-      <div>
-        <strong>{selectedSession?.ward_name ?? '피보호자'}</strong>
-        <span>{selectedId}</span>
-        <small>{formatDateTime(selectedSession?.started_at ?? sessionStatus?.started_at)}</small>
-      </div>
-      <div className={cx('viewerActions')}>
-        <div className={cx('statusRow')}>
-          <span>status {sessionStatus?.status ?? '-'}</span>
-          <span>FPS {formatNumber(sessionStatus?.fps)}</span>
-          <span>시청자 {formatNumber(sessionStatus?.viewerCount ?? sessionStatus?.viewer_count)}명</span>
-          {(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing) && <span className={cx('analyzingBadge')}>AI 분석 중</span>}
-        </div>
-        <button
-          type="button"
-          className={cx('stopStreamButton')}
-          disabled={isStoppingSession || isStopped}
-          onClick={onStopSession}
-        >
-          {isStoppingSession ? '종료 중' : isStopped ? '종료됨' : '송출 종료'}
-        </button>
+        <SessionMeta
+          detectState={detectState}
+          isStoppingSession={isStoppingSession}
+          latestAnalysis={latestAnalysis}
+          onStopSession={onStopSession}
+          selectedId={selectedId}
+          selectedSession={selectedSession}
+          sessionStatus={sessionStatus}
+        />
       </div>
     </div>
   );
@@ -131,27 +90,55 @@ function FrameViewer({
 
 function SessionMeta({
   detectState,
+  isStoppingSession,
   latestAnalysis,
+  onStopSession,
+  selectedId,
+  selectedSession,
   sessionStatus,
 }: {
   detectState: DetectState;
+  isStoppingSession: boolean;
   latestAnalysis: LiveStreamAnalysis | null;
+  onStopSession: () => void;
+  selectedId: string;
+  selectedSession?: LiveStreamSession;
   sessionStatus: LiveStreamStatus | null;
 }) {
+  const isStopped = sessionStatus?.status === 'stopped';
+
   return (
     <aside className={cx('metaCard')}>
-      <div className={cx('cardHeader')}>
-        <h3>세션 상태</h3>
+      <div className={cx('metaSummary')}>
+        <div className={cx('metaIdentity')}>
+          <span>피보호자</span>
+          <strong>{selectedSession?.ward_name ?? '피보호자'}</strong>
+          <small>{selectedId}</small>
+          <em>{formatDateTime(selectedSession?.started_at ?? sessionStatus?.started_at)}</em>
+        </div>
+        <button
+          type="button"
+          className={cx('stopStreamButton')}
+          disabled={isStoppingSession || isStopped}
+          onClick={onStopSession}
+        >
+          {isStoppingSession ? '종료 중' : isStopped ? '종료됨' : '송출 종료'}
+        </button>
       </div>
+
+      <div className={cx('statusRow', 'metaStatusRow')}>
+        <span>status {sessionStatus?.status ?? '-'}</span>
+        <span>FPS {formatNumber(sessionStatus?.fps)}</span>
+        <span>시청자 {formatNumber(sessionStatus?.viewerCount ?? sessionStatus?.viewer_count)}명</span>
+        {(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing) && <span className={cx('analyzingBadge')}>AI 분석 중</span>}
+      </div>
+
       <dl className={cx('metaList')}>
-        <MetaItem label="status" value={sessionStatus?.status ?? '-'} />
         <MetaItem
           label="lastFrameAt"
           value={formatDateTime(sessionStatus?.lastFrameAt ?? sessionStatus?.last_frame_at)}
           subValue={formatRelativeDateTime(sessionStatus?.lastFrameAt ?? sessionStatus?.last_frame_at)}
         />
-        <MetaItem label="fps" value={formatNumber(sessionStatus?.fps)} />
-        <MetaItem label="viewerCount" value={formatNumber(sessionStatus?.viewerCount ?? sessionStatus?.viewer_count)} />
         <MetaItem label="isAnalyzing" value={String(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing ?? false)} />
       </dl>
 
