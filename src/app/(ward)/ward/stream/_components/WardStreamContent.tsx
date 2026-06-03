@@ -307,8 +307,8 @@ export default function WardStreamContent() {
                   ? <button type="button" className={styles.btnStart} disabled={status === 'off'} onClick={handleStartStreaming}>
                       ▶ 송출 시작
                     </button>
-                  : <button type="button" className={styles.btnStop} onClick={handleStopStreaming}>
-                      ■ 송출 중지
+                  : <button type="button" className={styles.btnStop} disabled={isStoppingLive} onClick={handleStopMedia}>
+                      {isStoppingLive ? '■ 종료 중' : '■ 송출 중지'}
                     </button>
                 }
                 {status === 'streaming' && queueCount > 0 && (
