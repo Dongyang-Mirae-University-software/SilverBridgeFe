@@ -1,4 +1,11 @@
+import dayjs from 'dayjs';
+import 'dayjs/locale/ko';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
 import type { LiveStreamAnalysis, LiveStreamSession, LiveStreamStatus } from '@/service/interface/liveStream';
+
+dayjs.extend(relativeTime);
+dayjs.locale('ko');
 
 export function normalizeSessions(data: unknown) {
   if (!Array.isArray(data)) return null;
@@ -79,6 +86,20 @@ export function normalizeDetectedType(analysis: LiveStreamAnalysis): string {
 
 export function formatNumber(value: number | undefined) {
   return value == null ? '-' : String(value);
+}
+
+export function formatDateTime(value: string | null | undefined) {
+  if (!value) return '-';
+  const date = dayjs(value);
+
+  return date.isValid() ? date.format('YYYY.MM.DD HH:mm') : '-';
+}
+
+export function formatRelativeDateTime(value: string | null | undefined) {
+  if (!value) return '-';
+  const date = dayjs(value);
+
+  return date.isValid() ? date.fromNow() : '-';
 }
 
 function getString(value: unknown) {
