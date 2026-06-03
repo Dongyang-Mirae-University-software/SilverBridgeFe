@@ -27,6 +27,7 @@ export default function WardStreamContent() {
   const [camId, setCamId]           = useState(DEFAULT_CAM_ID);
   const [status, setStatus]         = useState<StreamStatus>('off');
   const [queueCount, setQueueCount] = useState(0);
+  const [isStoppingLive, setIsStoppingLive] = useState(false);
   const [liveMsg, setLiveMsg]       = useState('');
 
   /* ── 수동 업로드 상태 ── */
@@ -99,13 +100,26 @@ export default function WardStreamContent() {
     } catch { setLiveMsg('카메라/화면 권한을 허용해주세요.'); }
   }
 
-  /* ── 카메라/화면 끄기 ── */
-  function handleStopMedia() {
+  /* ── 송출 종료 ── */
+  async function handleStopMedia() {
+    if (isStoppingLive) return;
+    const sessionId = liveSessionIdRef.current;
+    liveSessionIdRef.current = null;
     handleStopStreaming();
-    mediaStreamRef.current?.getTracks().forEach(t => t.stop());
-    mediaStreamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
-    setStatus('off');
+
+    setIsStoppingLive(true);
+    try {
+      if (sessionId) await stopStreamSession(sessionId);
+      setLiveMsg(sessionId ? '송출이 종료됐습니다.' : '');
+    } catch {
+      setLiveMsg('송출 종료 요청에 실패했습니다.');
+    } finally {
+      mediaStreamRef.current?.getTracks().forEach(t => t.stop());
+      mediaStreamRef.current = null;
+      if (videoRef.current) videoRef.current.srcObject = null;
+      setStatus('off');
+      setIsStoppingLive(false);
+    }
   }
 
   /* ── 송출 시작 ── */
@@ -255,8 +269,8 @@ export default function WardStreamContent() {
                   ? <button type="button" className={styles.btnPrimary} onClick={handleStartMedia}>
                       {facing === 'screen' ? '🖥️  화면 켜기' : '📷  카메라 켜기'}
                     </button>
-                  : <button type="button" className={styles.btnDanger} onClick={handleStopMedia}>
-                      {facing === 'screen' ? '화면 끄기' : '카메라 끄기'}
+                  : <button type="button" className={styles.btnDanger} disabled={isStoppingLive} onClick={handleStopMedia}>
+                      {isStoppingLive ? '종료 중' : '송출 종료'}
                     </button>
                 }
               </div>
