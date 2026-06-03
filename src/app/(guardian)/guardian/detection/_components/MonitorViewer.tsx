@@ -1,7 +1,7 @@
 import classNames from 'classnames/bind';
 
 import type { DetectState, LiveStreamAnalysis, LiveStreamSession, LiveStreamStatus } from '@/service/interface/liveStream';
-import { formatNumber, normalizeDetectedType } from './monitorUtils';
+import { formatDateTime, formatNumber, formatRelativeDateTime, normalizeDetectedType } from './monitorUtils';
 import styles from './GuardianMonitorContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -35,7 +35,7 @@ export function MonitorViewer({
     return (
       <div className={cx('viewerPanel')}>
         <div className={cx('emptyState')}>
-          <p>좌측에서 세션을 선택하면<br />실시간 화면을 볼 수 있습니다.</p>
+          <p>상단에서 세션을 선택하면<br />실시간 화면을 볼 수 있습니다.</p>
         </div>
       </div>
     );
@@ -78,6 +78,7 @@ function MonitorHeader({
       <div>
         <strong>{selectedSession?.ward_name ?? '피보호자'}</strong>
         <span>{selectedId}</span>
+        <small>{formatDateTime(selectedSession?.started_at ?? sessionStatus?.started_at)}</small>
       </div>
       <div className={cx('viewerActions')}>
         <div className={cx('statusRow')}>
@@ -144,7 +145,11 @@ function SessionMeta({
       </div>
       <dl className={cx('metaList')}>
         <MetaItem label="status" value={sessionStatus?.status ?? '-'} />
-        <MetaItem label="lastFrameAt" value={sessionStatus?.lastFrameAt ?? sessionStatus?.last_frame_at ?? '-'} />
+        <MetaItem
+          label="lastFrameAt"
+          value={formatDateTime(sessionStatus?.lastFrameAt ?? sessionStatus?.last_frame_at)}
+          subValue={formatRelativeDateTime(sessionStatus?.lastFrameAt ?? sessionStatus?.last_frame_at)}
+        />
         <MetaItem label="fps" value={formatNumber(sessionStatus?.fps)} />
         <MetaItem label="viewerCount" value={formatNumber(sessionStatus?.viewerCount ?? sessionStatus?.viewer_count)} />
         <MetaItem label="isAnalyzing" value={String(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing ?? false)} />
@@ -163,11 +168,14 @@ function SessionMeta({
   );
 }
 
-function MetaItem({ label, value }: { label: string; value: string }) {
+function MetaItem({ label, subValue, value }: { label: string; subValue?: string; value: string }) {
   return (
     <div>
       <dt>{label}</dt>
-      <dd>{value}</dd>
+      <dd>
+        <span>{value}</span>
+        {subValue && subValue !== '-' && <small>{subValue}</small>}
+      </dd>
     </div>
   );
 }
@@ -188,7 +196,6 @@ function DetectionResult({ analysis, detectState }: { analysis: LiveStreamAnalys
   const label = DETECT_LABEL[detectState];
 
   const isAlert  = ['fire', 'smoke', 'knife'].includes(detectState);
-  const isDanger = ['fall', 'person', 'danger'].includes(detectState);
   const isSafe   = detectState === 'safe';
 
   return (
@@ -198,6 +205,7 @@ function DetectionResult({ analysis, detectState }: { analysis: LiveStreamAnalys
       <strong>{label}</strong>
       {!isSafe && <span>{detectedType} · 신뢰도 {Math.round(confidence * 100)}%</span>}
       {isSafe && <span>신뢰도 {Math.round(confidence * 100)}%</span>}
+      {analysis.detected_at && <small>{formatDateTime(analysis.detected_at)}</small>}
     </div>
   );
 }
