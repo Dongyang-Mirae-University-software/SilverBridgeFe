@@ -1,24 +1,24 @@
 .monitorPage {
   display: flex;
   flex: 1;
-  gap: 16px;
+  flex-direction: column;
+  gap: 14px;
   min-height: 0;
 }
 
 /* ── 세션 목록 패널 ── */
 .sessionPanel {
   display: flex;
-  /* width: 260px; */
-  min-width: 260px;
+  width: 100%;
   flex-shrink: 0;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
+  border-radius: 18px;
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
   overflow: hidden;
-  padding: 16px;
+  padding: 16px 16px 14px;
 }
 
 .sessionPanelHeader {
@@ -26,9 +26,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  border-bottom: 1px solid var(--sb-line-soft);
   flex-shrink: 0;
-  padding-bottom: 10px;
 }
 
 .sessionPanelHeader strong {
@@ -48,65 +46,111 @@
 
 .sessionEmpty {
   margin: 0;
+  border: 1px dashed var(--sb-line);
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
   color: var(--sb-ink-mute);
   font-size: 13px;
   line-height: 1.6;
-  padding: 16px 0;
+  padding: 16px;
   text-align: center;
 }
 
 .sessionList {
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   margin: 0;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding: 1px 2px 6px;
   list-style: none;
+  scroll-padding: 2px;
+  scroll-snap-type: x proximity;
+}
+
+.sessionList > li {
+  flex: 0 0 clamp(220px, 26vw, 320px);
+  scroll-snap-align: start;
 }
 
 .sessionCard {
   display: flex;
+  min-height: 112px;
   width: 100%;
   flex-direction: column;
   align-items: flex-start;
-  gap: 3px;
+  justify-content: space-between;
+  gap: 8px;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 10px;
+  border-radius: 15px;
   background: #fcfbf8;
   color: inherit;
   cursor: pointer;
-  padding: 10px 12px;
+  padding: 14px;
   text-align: left;
   transition:
     background 0.12s ease,
-    border-color 0.12s ease;
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
 }
 
 .sessionCard:hover {
   background: var(--guardian-brand-soft);
   border-color: var(--guardian-line);
+  transform: translateY(-1px);
 }
 
 .sessionCard.active {
   background: var(--guardian-brand-soft);
   border-color: var(--guardian-brand);
+  box-shadow: 0 8px 20px rgba(37, 77, 112, 0.12);
+}
+
+.sessionCardTop {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .sessionCard strong {
   color: var(--sb-ink);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
 }
 
 .sessionId {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
   color: var(--sb-ink-mute);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionTime {
+  display: flex;
+  width: 100%;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--guardian-brand);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.sessionTime small {
+  color: var(--sb-ink-mute);
   font-size: 11px;
   font-weight: 650;
+  white-space: nowrap;
 }
 
 .analyzingBadge {
@@ -152,7 +196,7 @@
   justify-content: space-between;
   gap: 16px;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 14px;
+  border-radius: 18px;
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
   flex-shrink: 0;
@@ -173,6 +217,14 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   font-weight: 650;
+}
+
+.viewerHeader > div:first-child small {
+  display: block;
+  margin-top: 5px;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .statusRow {
@@ -225,8 +277,8 @@
   display: grid;
   flex: 1;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.9fr);
+  gap: 14px;
 }
 
 .viewerCard,
@@ -236,7 +288,7 @@
   flex-direction: column;
   gap: 12px;
   border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
+  border-radius: 18px;
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
   padding: 16px;
@@ -276,19 +328,19 @@
 .frameWrapper {
   display: flex;
   flex: 1;
-  min-height: 320px;
+  min-height: 420px;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
+  border-radius: 16px;
   background: #111;
 }
 
 .placeholder {
   display: grid;
   width: 100%;
-  min-height: 320px;
+  min-height: 420px;
   place-items: center;
   color: rgba(255, 255, 255, 0.72);
   font-size: 14px;
@@ -340,10 +392,20 @@
 }
 
 .metaList dd {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
   overflow-wrap: anywhere;
   color: var(--sb-ink);
   font-size: 12px;
   font-weight: 800;
+}
+
+.metaList dd small {
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+  font-weight: 650;
 }
 
 .metaMessage {
@@ -364,9 +426,10 @@
 .safeCard {
   display: flex;
   flex-shrink: 0;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px 12px;
   border: 1px solid;
   border-radius: 14px;
   padding: 14px 20px;
@@ -436,16 +499,15 @@
 /* ── 반응형 ── */
 @media (max-width: 900px) {
   .monitorPage {
-    flex-direction: column;
     min-height: 0;
   }
 
-  .sessionPanel {
-    /* width: 100%; */
+  .sessionList {
+    max-height: none;
   }
 
-  .sessionList {
-    max-height: 180px;
+  .sessionList > li {
+    flex-basis: min(82vw, 320px);
   }
 
   .frameWrapper {
