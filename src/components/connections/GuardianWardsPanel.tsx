@@ -194,7 +194,6 @@ function WardListCard({
         <InfoRow label="주소" value={getActivePartnerValue(connection, address)} />
         <InfoRow label="연결 상태" value={connection.status} />
         <InfoRow label="요청자" value={connection.requester ? '보호자' : '피보호자'} />
-        <InfoRow label="우선순위" value={`${connection.priority ?? '-'}순위`} />
       </div>
 
       {actionHandler && (
