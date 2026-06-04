@@ -1,4 +1,5 @@
 export type ConnectionStatus = 'PENDING' | 'ACTIVE' | 'CANCELLED' | 'REFUSED' | 'DISCONNECTED';
+export type ConnectionPartnerGender = 'FEMALE' | 'MALE';
 
 export interface IConnectionItem {
   id: number;
@@ -8,6 +9,10 @@ export interface IConnectionItem {
   partnerPhone?: string | null;
   partnerAddress?: string | null;
   partnerAddressDetail?: string | null;
+  partnerPostcode?: string | null;
+  partnerGender?: ConnectionPartnerGender | null;
+  partnerBirthDate?: string | null;
+  partnerEmail?: string | null;
   relation?: string | null;
   status: ConnectionStatus;
   priority?: number;
