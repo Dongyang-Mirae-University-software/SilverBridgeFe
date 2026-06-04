@@ -16,6 +16,9 @@ import {
   getConnectionStatusLabel,
   getConnectionData,
   getErrorMessage,
+  formatPartnerGender,
+  getActivePartnerValue,
+  getPartnerPhoneValue,
   splitConnections,
 } from './ConnectionShared';
 import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
@@ -163,6 +166,7 @@ function WardListCard({
   const isPendingConnection = connection.status === 'PENDING';
   const actionLabel = isActive ? '연결 해제' : isPendingConnection ? '요청 취소' : '';
   const actionHandler = isActive ? onDisconnect : isPendingConnection ? onCancel : null;
+  const address = [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
 
   return (
     <li className={cx('wardListCard')}>
@@ -182,6 +186,12 @@ function WardListCard({
 
       <div className={cx('wardListInfoGrid')}>
         <InfoRow label="회원 ID" value={connection.partnerUserId} />
+        <InfoRow label="이메일" value={getActivePartnerValue(connection, connection.partnerEmail)} />
+        <InfoRow label="성별" value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))} />
+        <InfoRow label="생년월일" value={getActivePartnerValue(connection, connection.partnerBirthDate)} />
+        <InfoRow label="연락처" value={getPartnerPhoneValue(connection)} />
+        <InfoRow label="우편번호" value={getActivePartnerValue(connection, connection.partnerPostcode)} />
+        <InfoRow label="주소" value={getActivePartnerValue(connection, address)} />
         <InfoRow label="연결 상태" value={connection.status} />
         <InfoRow label="요청자" value={connection.requester ? '보호자' : '피보호자'} />
         <InfoRow label="우선순위" value={`${connection.priority ?? '-'}순위`} />

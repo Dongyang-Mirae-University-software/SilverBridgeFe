@@ -59,13 +59,28 @@ function getConnectionAddress(connection: IConnectionItem) {
   return [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
 }
 
-function ConnectionDetail({ label, value }: { label: string; value?: string | null }) {
-  if (!value) return null;
+export function formatPartnerGender(value?: IConnectionItem['partnerGender'] | null) {
+  if (value === 'FEMALE') return '여성';
+  if (value === 'MALE') return '남성';
+  return null;
+}
 
+export function getActivePartnerValue(connection: IConnectionItem, value?: string | null) {
+  if (connection.status !== 'ACTIVE') return '연결 후 공개';
+  return value || '정보 없음';
+}
+
+export function getPartnerPhoneValue(connection: IConnectionItem) {
+  if (!connection.partnerPhone) return connection.status === 'ACTIVE' ? '정보 없음' : '연결 후 공개';
+  if (connection.status !== 'ACTIVE') return connection.partnerPhone;
+  return formatPhoneNumber(connection.partnerPhone);
+}
+
+function ConnectionDetail({ label, value }: { label: string; value?: string | null }) {
   return (
     <div className={cx('connectionDetailItem')}>
       <span>{label}</span>
-      <strong>{value}</strong>
+      <strong>{value || '정보 없음'}</strong>
     </div>
   );
 }
@@ -173,9 +188,13 @@ export function ConnectionCard({
           </div>
 
           <div className={cx('connectionDetailGrid')}>
-            <ConnectionDetail label="연락처" value={connection.partnerPhone ? formatPhoneNumber(connection.partnerPhone) : null} />
+            <ConnectionDetail label="이메일" value={getActivePartnerValue(connection, connection.partnerEmail)} />
+            <ConnectionDetail label="성별" value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))} />
+            <ConnectionDetail label="생년월일" value={getActivePartnerValue(connection, connection.partnerBirthDate)} />
+            <ConnectionDetail label="연락처" value={getPartnerPhoneValue(connection)} />
             <ConnectionDetail label={dateLabel} value={dateValue} />
-            <ConnectionDetail label="주소" value={address} />
+            <ConnectionDetail label="우편번호" value={getActivePartnerValue(connection, connection.partnerPostcode)} />
+            <ConnectionDetail label="주소" value={getActivePartnerValue(connection, address)} />
           </div>
         </div>
       </div>
