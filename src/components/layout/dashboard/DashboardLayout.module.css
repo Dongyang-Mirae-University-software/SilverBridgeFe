@@ -1785,10 +1785,19 @@
 .wardListInfoGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 12px;
+  gap: 0 18px;
   border-top: 1px solid rgba(20, 17, 12, 0.06);
   background: rgba(255, 255, 255, 0.72);
-  padding: 18px 24px 20px;
+  padding: 8px 24px 18px;
+}
+
+.wardListQuickInfo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  border-top: 1px solid rgba(20, 17, 12, 0.06);
+  background: rgba(255, 255, 255, 0.78);
+  padding: 18px 24px 8px;
 }
 
 .wardListInfoRow {
@@ -1797,22 +1806,30 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  border-bottom: 1px solid rgba(20, 17, 12, 0.07);
+  padding: 11px 0;
+}
+
+.wardListQuickInfo .wardListInfoRow {
+  display: block;
+  min-height: 72px;
   border: 1px solid rgba(20, 17, 12, 0.06);
-  border-radius: 14px;
-  background: rgba(250, 250, 248, 0.84);
-  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(250, 250, 248, 0.92);
+  padding: 13px 14px;
 }
 
 .wardListInfoRow span {
-  flex-shrink: 0;
   color: var(--sb-ink-mute);
   font-size: 11px;
-  font-weight: 750;
+  font-weight: 800;
 }
 
 .wardListInfoRow strong {
+  display: block;
   min-width: 0;
   overflow: hidden;
+  margin-top: 4px;
   overflow-wrap: anywhere;
   color: var(--sb-ink);
   font-size: 13px;
@@ -1820,6 +1837,12 @@
   text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.wardListQuickInfo .wardListInfoRow strong {
+  margin-top: 8px;
+  font-size: 14px;
+  text-align: left;
 }
 
 .wardListCardFooter {
@@ -2341,11 +2364,17 @@
     padding: 14px 16px 16px;
   }
 
+  .wardListQuickInfo {
+    grid-template-columns: 1fr;
+    padding: 14px 16px 4px;
+  }
+
   .wardListInfoRow {
     align-items: flex-start;
   }
 
   .wardListInfoRow strong {
+    text-align: left;
     white-space: normal;
   }
 
