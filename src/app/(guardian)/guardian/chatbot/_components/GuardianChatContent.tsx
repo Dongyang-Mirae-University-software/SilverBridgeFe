@@ -125,7 +125,6 @@ export default function GuardianChatContent() {
       if (!trimmed && !uiSelection) return;
       if (sendingRef.current) return;
 
-      const currentProfile = profileRef.current;
       const currentContext = contextRef.current;
       const history = messagesRef.current
         .filter(m => m.id !== 'welcome')
@@ -208,6 +207,11 @@ export default function GuardianChatContent() {
     void send('', { field, value });
   }
 
+  function handleChipClick(chip: string) {
+    setInput(chip);
+    textareaRef.current?.focus();
+  }
+
   function handleNewSession() {
     setMessages([WELCOME]);
     setInput('');
@@ -250,7 +254,7 @@ export default function GuardianChatContent() {
 
       <div className={styles.chips}>
         {SAMPLE_CHIPS.map(chip => (
-          <button key={chip} type="button" className={styles.chip} disabled={sending} onClick={() => void send(chip)}>
+          <button key={chip} type="button" className={styles.chip} disabled={sending} onClick={() => handleChipClick(chip)}>
             {chip}
           </button>
         ))}
