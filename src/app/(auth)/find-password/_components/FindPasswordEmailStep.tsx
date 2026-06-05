@@ -1,12 +1,10 @@
 'use client';
 
 import { FormEvent } from 'react';
-import classNames from 'classnames/bind';
 
 import TextInput from '@/components/TextInput';
 import styles from './FindPasswordEmailStep.module.css';
 
-const cx = classNames.bind(styles);
 
 interface Props {
   email: string;
@@ -36,7 +34,7 @@ export default function FindPasswordEmailStep({
   const isUnknownEmail = errorMessage.includes('해당 이메일로 가입된 계정이 없습니다.');
 
   return (
-    <form className={cx('form')} onSubmit={onSubmit}>
+    <form className={styles.form} onSubmit={onSubmit}>
       <TextInput
         label="이메일"
         name="email"
@@ -45,27 +43,27 @@ export default function FindPasswordEmailStep({
         value={email}
         onChange={event => onChange(event.target.value)}
       />
-      {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
+      {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
       {isKakaoAccount && (
-        <button className={cx('secondaryButton')} type="button" onClick={onKakaoLogin}>
+        <button className={styles.secondaryButton} type="button" onClick={onKakaoLogin}>
           카카오 로그인으로 이동
         </button>
       )}
       {isUnknownEmail && (
-        <div className={cx('inlineActions')}>
-          <button className={cx('secondaryButton')} type="button" onClick={onSignup}>
+        <div className={styles.inlineActions}>
+          <button className={styles.secondaryButton} type="button" onClick={onSignup}>
             회원가입
           </button>
-          <button className={cx('secondaryButton')} type="button" onClick={onFindEmail}>
+          <button className={styles.secondaryButton} type="button" onClick={onFindEmail}>
             아이디 찾기
           </button>
         </div>
       )}
-      <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
+      <button className={styles.submitButton} disabled={!isValid || isPending} type="submit">
         이메일 발송
       </button>
       {onResend && (
-        <button className={cx('secondaryButton')} type="button" onClick={onResend}>
+        <button className={styles.secondaryButton} type="button" onClick={onResend}>
           이메일 재발송
         </button>
       )}
