@@ -3,7 +3,9 @@
   flex: 1;
   flex-direction: column;
   gap: 12px;
+  height: calc(100dvh - 210px);
   min-height: 0;
+  overflow: hidden;
 }
 
 /* ── 상단 바 ── */
@@ -51,7 +53,7 @@
 /* ── 메시지 목록 ── */
 .messageList {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 14px;
   min-height: 0;
@@ -216,6 +218,7 @@
 /* ── 반응형 ── */
 @media (max-width: 900px) {
   .chatPage {
+    height: calc(100dvh - 190px);
     min-height: 0;
   }
 
@@ -229,6 +232,32 @@
   }
 
   .messageList {
-    min-height: 320px;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .suggestionPanel {
+    padding: 10px 12px 12px;
+  }
+
+  .suggestionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .suggestionHeader span {
+    text-align: left;
+  }
+
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .chip {
+    flex: 0 0 auto;
   }
 }
