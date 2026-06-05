@@ -1,13 +1,11 @@
 'use client';
 
 import { FormEvent } from 'react';
-import classNames from 'classnames/bind';
 
 import TextInput from '@/components/TextInput';
 import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
 import styles from './FindPasswordSmsStep.module.css';
 
-const cx = classNames.bind(styles);
 
 interface Props {
   name: string;
@@ -37,7 +35,7 @@ export default function FindPasswordSmsStep({
   const isUnknownUser = errorMessage.includes('사용자를 찾을 수 없습니다.');
 
   return (
-    <form className={cx('form')} onSubmit={onSubmit}>
+    <form className={styles.form} onSubmit={onSubmit}>
       <TextInput
         label="이름"
         name="name"
@@ -54,22 +52,22 @@ export default function FindPasswordSmsStep({
         value={formatPhoneNumber(phone)}
         onChange={event => onChange('phone', getPhoneDigits(event.target.value))}
       />
-      {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
+      {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
       {isKakaoAccount && (
-        <button className={cx('secondaryButton')} type="button" onClick={onKakaoLogin}>
+        <button className={styles.secondaryButton} type="button" onClick={onKakaoLogin}>
           카카오 로그인으로 이동
         </button>
       )}
       {isUnknownUser && (
-        <button className={cx('secondaryButton')} type="button" onClick={onSignup}>
+        <button className={styles.secondaryButton} type="button" onClick={onSignup}>
           회원가입
         </button>
       )}
-      <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
+      <button className={styles.submitButton} disabled={!isValid || isPending} type="submit">
         인증번호 발송
       </button>
       {onResend && (
-        <button className={cx('secondaryButton')} type="button" onClick={onResend}>
+        <button className={styles.secondaryButton} type="button" onClick={onResend}>
           인증번호 재발송
         </button>
       )}
