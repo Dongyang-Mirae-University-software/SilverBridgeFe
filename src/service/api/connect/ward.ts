@@ -21,18 +21,22 @@ export async function getWardConnections(): Promise<CommonResponse<IConnectionIt
     getWardActiveConnections(),
     getWardPendingConnectionRequests(),
   ]);
-  const activeConnections = (activeResponse.data ?? []).map(connection => ({
-    ...connection,
-    status: 'ACTIVE' as const,
-  }));
-  const pendingConnections = (pendingResponse.data ?? []).map(mapWardPendingRequestToConnection);
 
   return {
     code: activeResponse.code ?? pendingResponse.code ?? 200,
     success: activeResponse.success ?? pendingResponse.success,
     message: activeResponse.message || pendingResponse.message,
-    data: [...activeConnections, ...pendingConnections],
+    data: mergeWardConnections(activeResponse.data ?? [], pendingResponse.data ?? []),
   };
+}
+
+function mergeWardConnections(
+  active: IConnectionItem[],
+  pending: IWardPendingConnectionRequest[],
+): IConnectionItem[] {
+  const activeConnections = active.map(connection => ({ ...connection, status: 'ACTIVE' as const }));
+  const pendingConnections = pending.map(mapWardPendingRequestToConnection);
+  return [...activeConnections, ...pendingConnections];
 }
 
 export async function refuseWardConnectionRequest(connectionId: number) {
