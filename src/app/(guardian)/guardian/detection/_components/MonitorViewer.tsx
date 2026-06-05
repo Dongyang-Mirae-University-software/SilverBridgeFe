@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 
 import type { DetectState, LiveStreamAnalysis, LiveStreamSession, LiveStreamStatus } from '@/service/interface/liveStream';
 import { formatDateTime, formatNumber, formatRelativeDateTime, normalizeDetectedType } from './monitorUtils';
-import styles from './GuardianMonitorContent.module.css';
+import styles from './MonitorViewer.module.css';
 
 const cx = classNames.bind(styles);
 
