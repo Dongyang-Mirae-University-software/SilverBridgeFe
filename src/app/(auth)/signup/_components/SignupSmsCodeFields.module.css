@@ -1,0 +1,78 @@
+.codeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.codeGuide {
+  color: #5c4d3f;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.codeTimer {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #d97757;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.codeTimer.expired {
+  background: #fff0f0;
+  color: #c0392b;
+}
+
+.codeActionRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.codeActionRow .inlineButton {
+  margin-top: 26px;
+}
+
+.fieldGrow {
+  flex: 1;
+  min-width: 0;
+}
+
+.inlineButton {
+  min-height: 48px;
+  flex: 0 0 118px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 12px;
+  white-space: nowrap;
+  background: #d97757;
+  color: #ffffff;
+}
+
+.inlineButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .codeHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .codeActionRow {
+    flex-direction: column;
+  }
+
+  .codeActionRow .inlineButton {
+    width: 100%;
+    margin-top: 0;
+  }
+}
