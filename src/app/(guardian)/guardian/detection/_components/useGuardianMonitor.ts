@@ -55,10 +55,6 @@ export function useGuardianMonitor() {
     },
   });
 
-  useEffect(() => {
-    selectedIdRef.current = selectedId;
-  }, [selectedId]);
-
   const handleStreamEvent = useCallback((event: LiveStreamServerEvent, currentSessionId: string | null) => {
     if (event.type === 'live_streams') {
       const nextSessions = normalizeSessions(event.data);
