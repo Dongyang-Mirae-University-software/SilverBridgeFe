@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 
 import type { LiveStreamSession } from '@/service/interface/liveStream';
 import { formatDateTime, formatRelativeDateTime } from './monitorUtils';
-import styles from './GuardianMonitorContent.module.css';
+import styles from './SessionList.module.css';
 
 const cx = classNames.bind(styles);
 
