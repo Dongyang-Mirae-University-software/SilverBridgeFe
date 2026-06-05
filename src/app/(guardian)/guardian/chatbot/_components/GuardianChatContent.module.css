@@ -1,24 +1,32 @@
 .chatPage {
+  position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 12px;
-  height: calc(100dvh - 210px);
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
 
 /* ── 상단 바 ── */
 .topBar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
   display: flex;
+  width: min(520px, calc(100% - 24px));
   align-items: flex-start;
   gap: 10px;
   flex-shrink: 0;
+  pointer-events: none;
 }
 
 .topBarLeft {
   flex: 1;
   min-width: 0;
+  pointer-events: auto;
 }
 
 .newBtn {
@@ -31,6 +39,8 @@
   font-size: 13px;
   font-weight: 800;
   padding: 10px 16px;
+  pointer-events: auto;
+  box-shadow: 0 10px 24px rgba(37, 32, 24, 0.06);
   white-space: nowrap;
 }
 
@@ -62,7 +72,7 @@
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
   background: #fafaf8;
-  padding: 18px;
+  padding: 76px 18px 18px;
 }
 
 /* ── 타이핑 인디케이터 ── */
@@ -103,8 +113,19 @@
   padding-top: 2px;
 }
 
+.footerActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 /* ── 추천 질문 ── */
 .suggestionPanel {
+  position: absolute;
+  right: 0;
+  bottom: 78px;
+  z-index: 4;
+  box-sizing: border-box;
+  width: min(680px, 100%);
   flex-shrink: 0;
   border: 1px solid rgba(37, 32, 24, 0.08);
   border-radius: 18px;
@@ -255,13 +276,14 @@
 /* ── 반응형 ── */
 @media (max-width: 900px) {
   .chatPage {
-    height: calc(100dvh - 190px);
+    height: 100%;
     min-height: 0;
   }
 
   .topBar {
-    flex-direction: column;
-    align-items: stretch;
+    top: 10px;
+    right: 10px;
+    width: min(440px, calc(100% - 20px));
   }
 
   .newBtn {
@@ -274,7 +296,17 @@
 }
 
 @media (max-width: 640px) {
+  .topBar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .messageList {
+    padding-top: 118px;
+  }
+
   .suggestionPanel {
+    bottom: 76px;
     padding: 10px 12px 12px;
   }
 
