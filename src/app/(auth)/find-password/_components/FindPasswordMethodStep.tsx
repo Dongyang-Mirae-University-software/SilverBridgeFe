@@ -2,7 +2,7 @@
 
 import classNames from 'classnames/bind';
 
-import styles from './FindPasswordContent.module.css';
+import styles from './FindPasswordMethodStep.module.css';
 
 const cx = classNames.bind(styles);
 
