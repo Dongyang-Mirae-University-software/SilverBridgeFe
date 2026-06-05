@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import classNames from 'classnames/bind';
+import clsx from 'clsx';
 
 import styles from './RefreshButton.module.css';
-
-const cx = classNames.bind(styles);
 
 type RefreshButtonProps = {
   onRefresh: () => Promise<unknown> | void;
@@ -38,13 +36,13 @@ export function RefreshButton({
 
   return (
     <button
-      className={cx('button')}
+      className={styles.button}
       type="button"
       aria-label={isActive ? `${ariaLabel} 중` : ariaLabel}
       disabled={disabled || isActive}
       onClick={handleRefresh}
     >
-      <svg className={cx('icon', { spinning: isActive })} viewBox="0 0 24 24" aria-hidden="true">
+      <svg className={clsx(styles.icon, { [styles.spinning]: isActive })} viewBox="0 0 24 24" aria-hidden="true">
         <path
           d="M20 12a8 8 0 1 1-2.34-5.66"
           fill="none"
