@@ -58,6 +58,7 @@ export default function GuardianChatContent() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(true);
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -255,22 +256,34 @@ export default function GuardianChatContent() {
       <footer className={styles.chatFooter}>
         <div className={styles.suggestionPanel}>
           <div className={styles.suggestionHeader}>
-            <strong>추천 질문</strong>
-            <span>선택하면 입력창에 채워집니다</span>
+            <div className={styles.suggestionTitle}>
+              <strong>추천 질문</strong>
+              <span>{suggestionsOpen ? '선택하면 입력창에 채워집니다' : '필요할 때 펼쳐서 사용할 수 있습니다'}</span>
+            </div>
+            <button
+              type="button"
+              className={styles.suggestionToggle}
+              aria-expanded={suggestionsOpen}
+              onClick={() => setSuggestionsOpen(open => !open)}
+            >
+              {suggestionsOpen ? '접기' : '펼치기'}
+            </button>
           </div>
-          <div className={styles.chips}>
-            {SAMPLE_CHIPS.map(chip => (
-              <button
-                key={chip}
-                type="button"
-                className={styles.chip}
-                disabled={sending}
-                onClick={() => handleChipClick(chip)}
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
+          {suggestionsOpen && (
+            <div className={styles.chips}>
+              {SAMPLE_CHIPS.map(chip => (
+                <button
+                  key={chip}
+                  type="button"
+                  className={styles.chip}
+                  disabled={sending}
+                  onClick={() => handleChipClick(chip)}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className={styles.inputArea}>

@@ -121,17 +121,41 @@
   margin-bottom: 10px;
 }
 
-.suggestionHeader strong {
+.suggestionTitle {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.suggestionTitle strong {
   color: var(--sb-ink);
   font-size: 13px;
   font-weight: 850;
 }
 
-.suggestionHeader span {
+.suggestionTitle span {
   color: var(--sb-ink-mute);
   font-size: 12px;
   font-weight: 650;
-  text-align: right;
+}
+
+.suggestionToggle {
+  flex-shrink: 0;
+  border: 1px solid rgba(37, 32, 24, 0.1);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+}
+
+.suggestionToggle:hover {
+  border-color: var(--guardian-line, #e3c5b8);
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
 }
 
 .chips {
@@ -256,12 +280,6 @@
 
   .suggestionHeader {
     align-items: flex-start;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .suggestionHeader span {
-    text-align: left;
   }
 
   .chips {
