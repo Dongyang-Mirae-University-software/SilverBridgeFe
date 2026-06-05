@@ -1,0 +1,366 @@
+.viewerPanel {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptyState {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--sb-line);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  text-align: center;
+}
+
+.emptyState p {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.statusRow {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusRow span {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+.stopStreamButton {
+  min-height: 32px;
+  flex-shrink: 0;
+  border: 1px solid #f0c0b5;
+  border-radius: 999px;
+  background: #fbe5e0;
+  color: var(--sb-warn);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 850;
+  padding: 0 12px;
+}
+
+.stopStreamButton:hover:not(:disabled) {
+  filter: brightness(0.97);
+}
+
+.stopStreamButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.monitorGrid {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.9fr);
+  gap: 14px;
+}
+
+.metaSummary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 15px;
+  background: #fcfbf8;
+  padding: 14px;
+}
+
+.metaIdentity {
+  min-width: 0;
+}
+
+.metaIdentity span {
+  display: block;
+  color: var(--guardian-brand);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.metaIdentity strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--sb-ink);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.metaIdentity small {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  margin-top: 5px;
+  color: var(--sb-ink-mute);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaIdentity em {
+  display: block;
+  margin-top: 8px;
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 750;
+}
+
+.metaStatusRow {
+  flex-wrap: wrap;
+}
+
+.viewerCard,
+.metaCard {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  padding: 16px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardHeader h3 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.cardHeader span {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+}
+
+.analysisHeader {
+  border-top: 1px solid var(--sb-line-soft);
+  margin-top: 2px;
+  padding-top: 14px;
+}
+
+.frameWrapper {
+  display: flex;
+  flex: 1;
+  min-height: 420px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 16px;
+  background: #111;
+}
+
+.placeholder {
+  display: grid;
+  width: 100%;
+  min-height: 420px;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mjpegImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hint {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.metaList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.metaList div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 10px;
+  background: #fcfbf8;
+  padding: 9px 10px;
+}
+
+.metaList dt,
+.metaList dd {
+  margin: 0;
+}
+
+.metaList dt {
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.metaList dd {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+  color: var(--sb-ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.metaList dd small {
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.metaMessage {
+  margin: 0;
+  border: 1px dashed var(--sb-line);
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.6;
+  padding: 14px;
+}
+
+.detectCard,
+.dangerCard,
+.safeCard {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  border: 1px solid;
+  border-radius: 14px;
+  padding: 14px 20px;
+}
+
+.detectCard small,
+.dangerCard small,
+.safeCard small {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  opacity: 0.72;
+}
+
+.detectCard {
+  border-color: #f5a5a5;
+  background: #fff5f5;
+}
+
+.detectCard strong {
+  color: #c0392b;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.detectCard span {
+  color: #c0392b;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.dangerCard {
+  border-color: #f5c842;
+  background: #fff9ec;
+}
+
+.dangerCard strong {
+  color: #b7860a;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.dangerCard span {
+  color: #b7860a;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.safeCard {
+  border-color: #9dccb2;
+  background: #dceee3;
+}
+
+.safeCard strong {
+  color: var(--sb-safe);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.safeCard span {
+  color: var(--sb-safe);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.analyzingBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  background: #dceee3;
+  color: var(--sb-safe);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+}
+
+@media (max-width: 900px) {
+  .frameWrapper {
+    min-height: 220px;
+  }
+
+  .monitorGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statusRow {
+    flex-wrap: wrap;
+  }
+}
