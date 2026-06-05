@@ -1,10 +1,8 @@
 'use client';
 
-import classNames from 'classnames/bind';
+import clsx from 'clsx';
 
 import styles from './CommonModal.module.css';
-
-const cx = classNames.bind(styles);
 
 export type CommonModalType = 'info' | 'success' | 'warning' | 'error';
 export type CommonModalTone = 'default' | 'guardian';
@@ -34,23 +32,23 @@ const MODAL_ICONS: Record<CommonModalType, string> = {
 
 export function CommonModal({ type = 'info', tone = 'default', title, message, confirmText = '확인', onClose }: CommonModalProps) {
   return (
-    <div className={cx('overlay')} role="presentation" onClick={onClose}>
+    <div className={styles.overlay} role="presentation" onClick={onClose}>
       <section
-        className={cx('modal', type, { guardianTone: tone === 'guardian' })}
+        className={clsx(styles.modal, styles[type], { [styles.guardianTone]: tone === 'guardian' })}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="common-modal-title"
         aria-describedby="common-modal-message"
         onClick={event => event.stopPropagation()}
       >
-        <div className={cx('icon')} aria-hidden="true">
+        <div className={styles.icon} aria-hidden="true">
           {MODAL_ICONS[type]}
         </div>
-        <div className={cx('content')}>
+        <div className={styles.content}>
           <h2 id="common-modal-title">{title || MODAL_LABELS[type]}</h2>
           <p id="common-modal-message">{message}</p>
         </div>
-        <button className={cx('button')} type="button" onClick={onClose}>
+        <button className={styles.button} type="button" onClick={onClose}>
           {confirmText}
         </button>
       </section>
