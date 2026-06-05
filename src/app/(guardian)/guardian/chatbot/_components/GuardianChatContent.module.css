@@ -90,6 +90,19 @@
   40% { transform: translateY(-6px); }
 }
 
+/* ── 하단 입력 푸터 ── */
+.chatFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(180deg, rgba(250, 250, 248, 0), #fff 18px);
+  padding-top: 2px;
+}
+
 /* ── 추천 질문 ── */
 .suggestionPanel {
   flex-shrink: 0;
