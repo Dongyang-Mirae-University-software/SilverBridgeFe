@@ -252,12 +252,24 @@ export default function GuardianChatContent() {
         )}
       </div>
 
-      <div className={styles.chips}>
-        {SAMPLE_CHIPS.map(chip => (
-          <button key={chip} type="button" className={styles.chip} disabled={sending} onClick={() => handleChipClick(chip)}>
-            {chip}
-          </button>
-        ))}
+      <div className={styles.suggestionPanel}>
+        <div className={styles.suggestionHeader}>
+          <strong>추천 질문</strong>
+          <span>선택하면 입력창에 채워집니다</span>
+        </div>
+        <div className={styles.chips}>
+          {SAMPLE_CHIPS.map(chip => (
+            <button
+              key={chip}
+              type="button"
+              className={styles.chip}
+              disabled={sending}
+              onClick={() => handleChipClick(chip)}
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className={styles.inputArea}>
