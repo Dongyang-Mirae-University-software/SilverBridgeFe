@@ -8,12 +8,12 @@ export async function acceptWardConnection(connectionId: number) {
   return apiClient.post<CommonResponse<null>>(`${WARD_CONNECTION_BASE}/${connectionId}/accept`);
 }
 
-export async function getWardActiveConnections(): Promise<CommonResponse<IConnectionItem[]>> {
-  return apiClient.get(`${WARD_CONNECTION_BASE}/active`) as Promise<CommonResponse<IConnectionItem[]>>;
+export async function getWardActiveConnections() {
+  return apiClient.get<CommonResponse<IConnectionItem[]>>(`${WARD_CONNECTION_BASE}/active`);
 }
 
-export async function getWardPendingConnectionRequests(): Promise<CommonResponse<IWardPendingConnectionRequest[]>> {
-  return apiClient.get(`${WARD_CONNECTION_BASE}/pending`) as Promise<CommonResponse<IWardPendingConnectionRequest[]>>;
+export async function getWardPendingConnectionRequests() {
+  return apiClient.get<CommonResponse<IWardPendingConnectionRequest[]>>(`${WARD_CONNECTION_BASE}/pending`);
 }
 
 export async function getWardConnections(): Promise<CommonResponse<IConnectionItem[]>> {
