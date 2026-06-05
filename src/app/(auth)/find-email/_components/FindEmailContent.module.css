@@ -84,7 +84,7 @@
 
 .errorMessage {
   margin: -4px 0 14px;
-  color: #c04b3a;
+  color: var(--sb-warn);
   font-size: 13px;
   line-height: 1.4;
 }
