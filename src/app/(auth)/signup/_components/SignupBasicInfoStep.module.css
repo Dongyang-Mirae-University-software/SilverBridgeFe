@@ -1,0 +1,92 @@
+.fieldGroup {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.selectField {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selectLabel {
+  color: #5c4d3f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.selectBox {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  border: 1.5px solid #e5d8c5;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0 14px;
+}
+
+.selectBox select {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #1f1916;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+}
+
+.addressSearchRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.addressSearchButton {
+  min-height: 48px;
+  margin-top: 25px;
+  border: 1.5px solid #e5d8c5;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #5c4d3f;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.button {
+  min-height: 48px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  padding: 14px;
+  background: #d97757;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.3);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .addressSearchRow {
+    grid-template-columns: 1fr;
+  }
+
+  .addressSearchButton {
+    margin-top: 0;
+  }
+
+  .fieldGroup {
+    grid-template-columns: 1fr;
+  }
+}
