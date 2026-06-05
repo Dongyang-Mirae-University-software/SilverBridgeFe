@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 import { ChangeEvent } from 'react';
 import { FieldErrors, UseFormRegisterReturn } from 'react-hook-form';
 
-import styles from './SignupForm.module.css';
+import styles from './SignupPhoneVerificationStep.module.css';
 import SignupSmsCodeFields from './SignupSmsCodeFields';
 import TextInput from '@/components/TextInput';
 import { SignupFormValues } from '@/hooks/useSignupForm';
