@@ -88,28 +88,64 @@
   40% { transform: translateY(-6px); }
 }
 
-/* ── 샘플 칩 ── */
+/* ── 추천 질문 ── */
+.suggestionPanel {
+  flex-shrink: 0;
+  border: 1px solid rgba(37, 32, 24, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 24px rgba(37, 32, 24, 0.04);
+  padding: 12px 14px 14px;
+}
+
+.suggestionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.suggestionHeader strong {
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.suggestionHeader span {
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 650;
+  text-align: right;
+}
+
 .chips {
   display: flex;
-  flex-shrink: 0;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .chip {
-  border: 1px solid var(--guardian-line, #e3c5b8);
+  border: 1px solid rgba(37, 32, 24, 0.1);
   border-radius: 999px;
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
+  background: #fff;
+  color: var(--sb-ink-soft);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 750;
-  padding: 6px 14px;
-  transition: background 0.12s ease;
+  font-weight: 800;
+  padding: 8px 13px;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease,
+    transform 0.12s ease;
 }
 
 .chip:hover:not(:disabled) {
-  background: var(--guardian-brand-hover);
+  border-color: var(--guardian-line, #e3c5b8);
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+  transform: translateY(-1px);
 }
 
 .chip:disabled {
@@ -123,10 +159,21 @@
   flex-shrink: 0;
   align-items: flex-end;
   gap: 10px;
-  border: 1px solid var(--sb-line);
-  border-radius: 14px;
+  border: 1px solid rgba(37, 32, 24, 0.12);
+  border-radius: 22px;
   background: #fff;
-  padding: 10px 12px;
+  box-shadow: 0 12px 30px rgba(37, 32, 24, 0.06);
+  padding: 12px 12px 12px 16px;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.inputArea:focus-within {
+  border-color: var(--guardian-line, #e3c5b8);
+  box-shadow:
+    0 0 0 4px rgba(107, 78, 66, 0.08),
+    0 12px 30px rgba(37, 32, 24, 0.06);
 }
 
 .textarea {
@@ -150,13 +197,14 @@
 .sendBtn {
   flex-shrink: 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: 999px;
   background: var(--guardian-brand);
   color: #fff;
   cursor: pointer;
   font-size: 14px;
   font-weight: 850;
-  padding: 10px 20px;
+  min-height: 40px;
+  padding: 0 20px;
   white-space: nowrap;
 }
 
