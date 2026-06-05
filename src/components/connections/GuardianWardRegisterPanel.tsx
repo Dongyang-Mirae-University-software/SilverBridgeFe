@@ -47,7 +47,13 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
   return (
     <section className={cx(embedded ? 'connectionTabContent' : 'connectionPage', 'connectionRegisterPage')}>
       <form className={cx('connectionRegisterCard')} onSubmit={handleSubmit}>
-        <div className={cx('connectionRegisterTitle')}>피보호자 회원 ID 입력</div>
+        <div className={cx('connectionRegisterHeader')}>
+          <div>
+            <span>새 연결 요청</span>
+            <strong>피보호자 등록</strong>
+          </div>
+          <small>회원 ID와 관계만 입력하면 요청이 전송됩니다.</small>
+        </div>
         <div className={cx('connectionRegisterFormRow')}>
           <label className={cx('connectionField')}>
             회원 ID
