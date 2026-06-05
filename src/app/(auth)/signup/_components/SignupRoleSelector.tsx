@@ -1,7 +1,7 @@
 import classNames from 'classnames/bind';
 import { UseFormRegister } from 'react-hook-form';
 
-import styles from './SignupForm.module.css';
+import styles from './SignupRoleSelector.module.css';
 import { SignupFormValues } from '@/hooks/useSignupForm';
 import { RoleType } from '@/service/interface/auth';
 
