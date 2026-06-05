@@ -252,46 +252,48 @@ export default function GuardianChatContent() {
         )}
       </div>
 
-      <div className={styles.suggestionPanel}>
-        <div className={styles.suggestionHeader}>
-          <strong>추천 질문</strong>
-          <span>선택하면 입력창에 채워집니다</span>
+      <footer className={styles.chatFooter}>
+        <div className={styles.suggestionPanel}>
+          <div className={styles.suggestionHeader}>
+            <strong>추천 질문</strong>
+            <span>선택하면 입력창에 채워집니다</span>
+          </div>
+          <div className={styles.chips}>
+            {SAMPLE_CHIPS.map(chip => (
+              <button
+                key={chip}
+                type="button"
+                className={styles.chip}
+                disabled={sending}
+                onClick={() => handleChipClick(chip)}
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className={styles.chips}>
-          {SAMPLE_CHIPS.map(chip => (
-            <button
-              key={chip}
-              type="button"
-              className={styles.chip}
-              disabled={sending}
-              onClick={() => handleChipClick(chip)}
-            >
-              {chip}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      <div className={styles.inputArea}>
-        <textarea
-          ref={textareaRef}
-          className={styles.textarea}
-          rows={2}
-          placeholder="메시지를 입력하세요 (Enter 전송 · Shift+Enter 줄바꿈)"
-          value={input}
-          disabled={sending}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <button
-          type="button"
-          className={styles.sendBtn}
-          disabled={sending || !input.trim()}
-          onClick={() => void send(input)}
-        >
-          전송
-        </button>
-      </div>
+        <div className={styles.inputArea}>
+          <textarea
+            ref={textareaRef}
+            className={styles.textarea}
+            rows={2}
+            placeholder="메시지를 입력하세요 (Enter 전송 · Shift+Enter 줄바꿈)"
+            value={input}
+            disabled={sending}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <button
+            type="button"
+            className={styles.sendBtn}
+            disabled={sending || !input.trim()}
+            onClick={() => void send(input)}
+          >
+            전송
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }
