@@ -118,30 +118,20 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
         {isLoading ? (
           <p className={cx('connectionEmpty')}>요청 내역을 불러오는 중입니다.</p>
         ) : pendingConnections.length > 0 ? (
-          <div className={cx('connectionHistoryTableWrap')}>
-            <table className={cx('connectionHistoryTable')}>
-              <thead>
-                <tr>
-                  <th>회원 ID</th>
-                  <th>이름</th>
-                  <th>요청일</th>
-                  <th>상태</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingConnections.map(connection => (
-                  <tr key={connection.id}>
-                    <td>{connection.partnerUserId}</td>
-                    <td>{connection.partnerName || '확인 전'}</td>
-                    <td>{formatRegisterDate(connection.createdAt)}</td>
-                    <td>
-                      <span className={cx('connectionStatus')}>요청중</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ul className={cx('connectionHistoryList')}>
+            {pendingConnections.map(connection => (
+              <li key={connection.id} className={cx('connectionHistoryItem')}>
+                <div>
+                  <strong>{connection.partnerName || '확인 전'}</strong>
+                  <span>{connection.partnerUserId}</span>
+                </div>
+                <div>
+                  <small>{formatRegisterDate(connection.createdAt)}</small>
+                  <span className={cx('connectionStatus')}>요청중</span>
+                </div>
+              </li>
+            ))}
+          </ul>
         ) : (
           <p className={cx('connectionEmpty')}>수락 대기 중인 요청이 없습니다.</p>
         )}
