@@ -1,14 +1,11 @@
 'use client';
 
 import { ChangeEvent, useState } from 'react';
-import classNames from 'classnames/bind';
 
 import TextInput from '@/components/TextInput';
 import useTimer from '@/hooks/useTimer';
 import AuthTimer from './AuthTimer';
 import styles from './VerificationCodeForm.module.css';
-
-const cx = classNames.bind(styles);
 
 interface Props {
   codeLength?: number;
@@ -61,19 +58,19 @@ export default function VerificationCodeForm({
   };
 
   return (
-    <div className={cx('wrap')}>
+    <div className={styles.wrap}>
       <AuthTimer content={content} isExpired={isExpired} time={formattedTime} />
       <TextInput inputMode="numeric" label="인증번호" maxLength={codeLength} value={code} onChange={handleCode} />
-      {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
+      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
       <button
-        className={cx('primary')}
+        className={styles.primary}
         disabled={code.length !== codeLength || isExpired || isSubmitting}
         type="button"
         onClick={handleSubmit}
       >
         {isSubmitting ? '확인 중...' : '인증 확인'}
       </button>
-      <button className={cx('secondary')} disabled={isSending} type="button" onClick={handleResend}>
+      <button className={styles.secondary} disabled={isSending} type="button" onClick={handleResend}>
         {isSending ? '재전송 중...' : '인증번호 재전송'}
       </button>
     </div>

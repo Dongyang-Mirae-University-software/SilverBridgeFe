@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import classNames from 'classnames/bind';
+import clsx from 'clsx';
 
 import TextInput from '@/components/TextInput';
 import { signin } from '@/service/api/auth';
@@ -11,8 +11,6 @@ import { ISigninResponse } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import styles from './LoginContent.module.css';
-
-const cx = classNames.bind(styles);
 
 function getSigninData(response: unknown) {
   const data = (response as { data?: unknown }).data;
@@ -89,13 +87,13 @@ export default function LoginContent() {
 
   return (
     <>
-      <div className={cx('header')}>
-        <h2 className={cx('title')}>로그인</h2>
-        <p className={cx('description')}>다시 오신 것을 환영해요</p>
+      <div className={styles.header}>
+        <h2 className={styles.title}>로그인</h2>
+        <p className={styles.description}>다시 오신 것을 환영해요</p>
       </div>
 
-      <form className={cx('form')} onSubmit={handleSubmit}>
-        <div className={cx('fields')}>
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={styles.fields}>
           <TextInput
             autoComplete="email"
             error={Boolean(errorMessage)}
@@ -118,8 +116,8 @@ export default function LoginContent() {
           />
         </div>
 
-        <div className={cx('secondaryActions')}>
-          <label className={cx('remember')}>
+        <div className={styles.secondaryActions}>
+          <label className={styles.remember}>
             <input
               checked={remember}
               type="checkbox"
@@ -127,31 +125,31 @@ export default function LoginContent() {
             />
             로그인 유지
           </label>
-          <div className={cx('findLinks')}>
-            <button className={cx('textButton')} type="button" onClick={() => router.push('/find-email')}>
+          <div className={styles.findLinks}>
+            <button className={styles.textButton} type="button" onClick={() => router.push('/find-email')}>
               아이디 찾기
             </button>
-            <span className={cx('separator')} />
-            <button className={cx('textButton', 'accentTextButton')} type="button" onClick={() => router.push('/find-password')}>
+            <span className={styles.separator} />
+            <button className={clsx(styles.textButton, styles.accentTextButton)} type="button" onClick={() => router.push('/find-password')}>
               비밀번호 찾기
             </button>
           </div>
         </div>
 
-        {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
+        {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
 
-        <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
+        <button className={styles.submitButton} disabled={!isValid || isPending} type="submit">
           {isPending ? '로그인 중...' : '로그인'}
         </button>
       </form>
 
-      <div className={cx('divider')}>
+      <div className={styles.divider}>
         <span />
         간편 로그인
         <span />
       </div>
 
-      <button className={cx('kakaoButton')} type="button" onClick={handleKakaoLogin}>
+      <button className={styles.kakaoButton} type="button" onClick={handleKakaoLogin}>
         <svg width="20" height="20" viewBox="0 0 36 36" aria-hidden="true">
           <path
             fill="#3C1E1E"
@@ -161,9 +159,9 @@ export default function LoginContent() {
         카카오로 로그인
       </button>
 
-      <div className={cx('footer')}>
+      <div className={styles.footer}>
         아직 계정이 없으신가요?{' '}
-        <button className={cx('signupLink')} type="button" onClick={() => router.push('/signup')}>
+        <button className={styles.signupLink} type="button" onClick={() => router.push('/signup')}>
           회원가입
         </button>
       </div>
