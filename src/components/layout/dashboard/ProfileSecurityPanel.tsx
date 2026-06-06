@@ -1,6 +1,9 @@
 import { FormEvent } from 'react';
 
-import { cx } from './styles';
+import classNames from 'classnames/bind';
+import styles from './ProfileSecurityPanel.module.css';
+
+const cx = classNames.bind(styles);
 
 interface PasswordForm {
   currentPassword: string;
