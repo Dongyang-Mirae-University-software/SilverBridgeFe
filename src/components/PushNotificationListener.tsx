@@ -1,5 +1,4 @@
-import clsx from 'clsx';
-'use client';
+import classNames from 'classnames/bind';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -14,6 +13,7 @@ import { IConnectionItem } from '@/service/interface/connection';
 import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/connect/ward';
 import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import styles from './PushNotificationListener.module.css';
+const cx = classNames.bind(styles);
 
 const TOAST_LIFETIME_MS = 6000;
 type ConnectionTargetRole = 'WARD' | 'GUARDIAN';
@@ -128,7 +128,10 @@ function getConnectionTargetRole(data?: MessagePayload['data']): ConnectionTarge
   }
 }
 
-function shouldHandleConnectionPush(data: MessagePayload['data'] | undefined, currentRole: ConnectionTargetRole | null) {
+function shouldHandleConnectionPush(
+  data: MessagePayload['data'] | undefined,
+  currentRole: ConnectionTargetRole | null,
+) {
   const targetRole = getConnectionTargetRole(data);
   return !targetRole || !currentRole || targetRole === currentRole;
 }
@@ -215,15 +218,18 @@ export default function PushNotificationListener() {
   const dismissToast = useCallback((id: number) => {
     setToasts(prev => prev.filter(item => item.id !== id));
   }, []);
-  const addToast = useCallback((toast: PushToast) => {
-    setToasts(prev => [toast, ...prev].slice(0, 3));
+  const addToast = useCallback(
+    (toast: PushToast) => {
+      setToasts(prev => [toast, ...prev].slice(0, 3));
 
-    if (isConnectionRequest(toast.data, currentRole)) return;
+      if (isConnectionRequest(toast.data, currentRole)) return;
 
-    window.setTimeout(() => {
-      dismissToast(toast.id);
-    }, TOAST_LIFETIME_MS);
-  }, [currentRole, dismissToast]);
+      window.setTimeout(() => {
+        dismissToast(toast.id);
+      }, TOAST_LIFETIME_MS);
+    },
+    [currentRole, dismissToast],
+  );
   const updateToastError = (id: number, error: string) => {
     setToasts(prev => prev.map(item => (item.id === id ? { ...item, error } : item)));
   };
@@ -233,15 +239,18 @@ export default function PushNotificationListener() {
       queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
     ]);
   };
-  const refreshConnectionPage = useCallback(async (data?: MessagePayload['data']) => {
-    const targetRole = getConnectionTargetRole(data) ?? currentRole;
-    const queryKey = targetRole === 'GUARDIAN' ? guardianConnectionsQueryKey : wardConnectionsQueryKey;
+  const refreshConnectionPage = useCallback(
+    async (data?: MessagePayload['data']) => {
+      const targetRole = getConnectionTargetRole(data) ?? currentRole;
+      const queryKey = targetRole === 'GUARDIAN' ? guardianConnectionsQueryKey : wardConnectionsQueryKey;
 
-    applyConnectionPushToCache(queryClient, data, currentRole);
-    await queryClient.invalidateQueries({ queryKey });
-    await queryClient.refetchQueries({ queryKey, type: 'active' });
-    router.refresh();
-  }, [currentRole, queryClient, router]);
+      applyConnectionPushToCache(queryClient, data, currentRole);
+      await queryClient.invalidateQueries({ queryKey });
+      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      router.refresh();
+    },
+    [currentRole, queryClient, router],
+  );
   const handleConnectionAction = async (toast: PushToast, action: 'accept' | 'refuse') => {
     const connectionId = getConnectionId(toast.data);
     if (!connectionId || processingToastIds.includes(toast.id)) return;
@@ -263,7 +272,10 @@ export default function PushNotificationListener() {
     } catch (error) {
       updateToastError(
         toast.id,
-        getActionError(error, action === 'accept' ? '연결 요청 수락에 실패했습니다.' : '연결 요청 거절에 실패했습니다.'),
+        getActionError(
+          error,
+          action === 'accept' ? '연결 요청 수락에 실패했습니다.' : '연결 요청 거절에 실패했습니다.',
+        ),
       );
     } finally {
       setProcessingToastIds(prev => prev.filter(id => id !== toast.id));
@@ -329,17 +341,20 @@ export default function PushNotificationListener() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className={styles.toastArea} aria-live="polite">
+    <div className={cx('toastArea')} aria-live="polite">
       {toasts.map(toast => (
-        <div key={toast.id} className={clsx(styles.toast, { [styles.actionAlert]: isConnectionRequest(toast.data, currentRole) })}>
+        <div
+          key={toast.id}
+          className={cx('toast', { 'actionAlert': isConnectionRequest(toast.data, currentRole) })}
+        >
           {isConnectionRequest(toast.data, currentRole) ? (
-            <div className={styles.toastContent}>
-              <span className={styles.title}>{toast.title}</span>
-              {toast.body && <span className={styles.body}>{toast.body}</span>}
-              {toast.error && <span className={styles.error}>{toast.error}</span>}
-              <div className={styles.actionRow}>
+            <div className={cx('toastContent')}>
+              <span className={cx('title')}>{toast.title}</span>
+              {toast.body && <span className={cx('body')}>{toast.body}</span>}
+              {toast.error && <span className={cx('error')}>{toast.error}</span>}
+              <div className={cx('actionRow')}>
                 <button
-                  className={styles.acceptButton}
+                  className={cx('acceptButton')}
                   type="button"
                   disabled={processingToastIds.includes(toast.id)}
                   onClick={() => void handleConnectionAction(toast, 'accept')}
@@ -347,7 +362,7 @@ export default function PushNotificationListener() {
                   수락
                 </button>
                 <button
-                  className={styles.refuseButton}
+                  className={cx('refuseButton')}
                   type="button"
                   disabled={processingToastIds.includes(toast.id)}
                   onClick={() => void handleConnectionAction(toast, 'refuse')}
@@ -358,18 +373,23 @@ export default function PushNotificationListener() {
             </div>
           ) : (
             <button
-              className={styles.toastContent}
+              className={cx('toastContent')}
               type="button"
               onClick={() => {
                 dismissToast(toast.id);
                 router.push(getPushRoute(toast.data, currentRole));
               }}
             >
-              <span className={styles.title}>{toast.title}</span>
-              {toast.body && <span className={styles.body}>{toast.body}</span>}
+              <span className={cx('title')}>{toast.title}</span>
+              {toast.body && <span className={cx('body')}>{toast.body}</span>}
             </button>
           )}
-          <button className={styles.dismissButton} type="button" aria-label="알림 닫기" onClick={() => dismissToast(toast.id)}>
+          <button
+            className={cx('dismissButton')}
+            type="button"
+            aria-label="알림 닫기"
+            onClick={() => dismissToast(toast.id)}
+          >
             ×
           </button>
         </div>
