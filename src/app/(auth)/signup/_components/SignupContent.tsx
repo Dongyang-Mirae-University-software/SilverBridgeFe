@@ -1,13 +1,12 @@
+import clsx from 'clsx';
 'use client';
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import classNames from 'classnames/bind';
 
 import styles from './SignupContent.module.css';
 import SignupForm from './SignupForm';
 
-const cx = classNames.bind(styles);
 
 type SignupContentProps = {
   searchParams: {
@@ -52,13 +51,13 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
 
   return (
     <>
-      <div className={cx('progress')} aria-hidden="true">
-        <span className={cx({ active: currentStep >= 1 })} />
-        <span className={cx({ active: currentStep >= 2 })} />
+      <div className={styles.progress} aria-hidden="true">
+        <span className={clsx({ [styles.active]: currentStep >= 1 })} />
+        <span className={clsx({ [styles.active]: currentStep >= 2 })} />
       </div>
 
-      <div className={cx('header')}>
-        <button className={cx('backButton')} type="button" aria-label="이전 페이지로 이동" onClick={handleBack}>
+      <div className={styles.header}>
+        <button className={styles.backButton} type="button" aria-label="이전 페이지로 이동" onClick={handleBack}>
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
             <path
               d="M15 18l-6-6 6-6"
@@ -71,20 +70,20 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
           </svg>
         </button>
         <div>
-          <h1 className={cx('title')}>회원가입</h1>
-          <p className={cx('description')}>
+          <h1 className={styles.title}>회원가입</h1>
+          <p className={styles.description}>
             {currentStep === 1 ? '기본 정보를 입력해 주세요' : '전화번호 인증으로 마무리할게요'}
           </p>
         </div>
       </div>
 
-      <div className={cx('content')}>
+      <div className={styles.content}>
         <SignupForm step={signupStep} onStepChange={setSignupStep} kakaoData={kakaoData} />
       </div>
 
-      <div className={cx('footer')}>
+      <div className={styles.footer}>
         이미 계정이 있으신가요?{' '}
-        <button className={cx('loginLink')} type="button" onClick={() => router.push('/login')}>
+        <button className={styles.loginLink} type="button" onClick={() => router.push('/login')}>
           로그인
         </button>
       </div>
