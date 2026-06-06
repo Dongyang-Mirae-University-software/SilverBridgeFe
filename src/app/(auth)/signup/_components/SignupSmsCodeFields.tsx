@@ -1,13 +1,11 @@
 import { ChangeEvent } from 'react';
-import classNames from 'classnames/bind';
+import clsx from 'clsx';
 
 import styles from './SignupSmsCodeFields.module.css';
 import TextInput from '@/components/TextInput';
 import { SIGNUP_SMS_CODE_EXPIRES_SECONDS } from '@/constants/auth';
 import useTimer from '@/hooks/useTimer';
 import { formatPhoneNumber } from '@/lib/format/phone';
-
-const cx = classNames.bind(styles);
 
 interface SignupSmsCodeFieldsProps {
   phone: string;
@@ -33,12 +31,12 @@ export default function SignupSmsCodeFields({
 
   return (
     <>
-      <div className={cx('codeHeader')}>
-        <p className={cx('codeGuide')}>입력하신 번호로 발송했습니다. 문자가 오지 않으면 번호를 확인해주세요.</p>
-        <span className={cx('codeTimer', { expired: isExpired })}>{isExpired ? '시간 만료' : formattedTime}</span>
+      <div className={styles.codeHeader}>
+        <p className={styles.codeGuide}>입력하신 번호로 발송했습니다. 문자가 오지 않으면 번호를 확인해주세요.</p>
+        <span className={clsx(styles.codeTimer, { [styles.expired]: isExpired })}>{isExpired ? '시간 만료' : formattedTime}</span>
       </div>
-      <div className={cx('codeActionRow')}>
-        <div className={cx('fieldGrow')}>
+      <div className={styles.codeActionRow}>
+        <div className={styles.fieldGrow}>
           <TextInput
             error={Boolean(errorMessage || isExpired)}
             errorText={isExpired ? expiredMessage : errorMessage}
@@ -51,7 +49,7 @@ export default function SignupSmsCodeFields({
             autoComplete="one-time-code"
           />
         </div>
-        <button className={cx('inlineButton')} type="button" disabled={!canVerifyCode} onClick={onSubmit}>
+        <button className={styles.inlineButton} type="button" disabled={!canVerifyCode} onClick={onSubmit}>
           {isSubmitting ? '확인 중' : '확인'}
         </button>
       </div>

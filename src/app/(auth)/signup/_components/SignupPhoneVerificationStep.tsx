@@ -1,4 +1,4 @@
-import classNames from 'classnames/bind';
+import clsx from 'clsx';
 import { ChangeEvent } from 'react';
 import { FieldErrors, UseFormRegisterReturn } from 'react-hook-form';
 
@@ -7,7 +7,6 @@ import SignupSmsCodeFields from './SignupSmsCodeFields';
 import TextInput from '@/components/TextInput';
 import { SignupFormValues } from '@/hooks/useSignupForm';
 
-const cx = classNames.bind(styles);
 
 interface SignupPhoneVerificationStepProps {
   allValues: SignupFormValues;
@@ -59,9 +58,9 @@ export default function SignupPhoneVerificationStep({
 
   return (
     <>
-      <div className={cx('phoneVerification')}>
-        <div className={cx('phoneActionRow')}>
-          <div className={cx('fieldGrow')}>
+      <div className={styles.phoneVerification}>
+        <div className={styles.phoneActionRow}>
+          <div className={styles.fieldGrow}>
             <TextInput
               label="전화번호"
               placeholder="01012345678"
@@ -77,20 +76,20 @@ export default function SignupPhoneVerificationStep({
             />
           </div>
           {isCode ? (
-            <button className={cx('outlineButton')} type="button" onClick={onPhoneReset}>
+            <button className={styles.outlineButton} type="button" onClick={onPhoneReset}>
               번호 변경
             </button>
           ) : (
-            <button className={cx('inlineButton')} type="button" disabled={!canRequestCode} onClick={onPhoneCheck}>
+            <button className={styles.inlineButton} type="button" disabled={!canRequestCode} onClick={onPhoneCheck}>
               {isSmsSendPending ? '발송 중' : '인증번호 받기'}
             </button>
           )}
         </div>
 
         {isCode && (
-          <div className={cx('codePanel', { complete: isSmsCheck })}>
+          <div className={clsx(styles.codePanel, { [styles.complete]: isSmsCheck })}>
             {isSmsCheck ? (
-              <p className={cx('codeGuide')}>전화번호 인증이 완료되었습니다.</p>
+              <p className={styles.codeGuide}>전화번호 인증이 완료되었습니다.</p>
             ) : (
               <SignupSmsCodeFields
                 key={smsTimerKey}
@@ -106,11 +105,11 @@ export default function SignupPhoneVerificationStep({
           </div>
         )}
       </div>
-      <div className={cx('stepActions')}>
-        <button className={cx('prevButton')} type="button" onClick={onPrevStep}>
+      <div className={styles.stepActions}>
+        <button className={styles.prevButton} type="button" onClick={onPrevStep}>
           이전
         </button>
-        <button className={cx('button')} disabled={!isEmailCheck || !isSmsCheck} type="submit">
+        <button className={styles.button} disabled={!isEmailCheck || !isSmsCheck} type="submit">
           가입 완료
         </button>
       </div>
