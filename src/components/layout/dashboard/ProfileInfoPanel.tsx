@@ -5,7 +5,10 @@ import { signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { GenderType } from '@/service/interface/auth';
 import { IUserUpdateReq } from '@/service/interface/user';
 import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
-import { cx } from './styles';
+import classNames from 'classnames/bind';
+import styles from './ProfileInfoPanel.module.css';
+
+const cx = classNames.bind(styles);
 
 interface Props {
   form: IUserUpdateReq;
