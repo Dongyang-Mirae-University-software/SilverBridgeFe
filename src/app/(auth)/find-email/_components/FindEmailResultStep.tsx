@@ -5,7 +5,7 @@ import { IFindEmailResponse } from '@/service/interface/auth';
 import FindEmailResultActions from './FindEmailResultActions';
 import FindEmailResultDisplay from './FindEmailResultDisplay';
 import styles from './FindEmailContent.module.css';
-
+const cx = classNames.bind(styles);
 
 interface Props {
   result: IFindEmailResponse;
@@ -13,7 +13,7 @@ interface Props {
 
 export default function FindEmailResultStep({ result }: Props) {
   return (
-    <div className={styles.section}>
+    <div className={cx('section')}>
       <FindEmailResultDisplay result={result} />
       <FindEmailResultActions />
     </div>

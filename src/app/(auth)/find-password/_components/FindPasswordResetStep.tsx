@@ -5,7 +5,7 @@ import { FormEvent, useState } from 'react';
 import TextInput from '@/components/TextInput';
 import { PASSWORD_PATTRERN } from '@/constants/pattern';
 import styles from './FindPasswordResetStep.module.css';
-
+const cx = classNames.bind(styles);
 
 interface Props {
   errorMessage: string;
@@ -29,12 +29,12 @@ export default function FindPasswordResetStep({ errorMessage, isPending, onSubmi
   };
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <div className={styles.resetIntro}>
-        <h2 className={styles.resetTitle}>새 비밀번호 생성</h2>
-        <p className={styles.description}>새로운 비밀번호를 설정해 주세요.</p>
+    <form className={cx('form')} onSubmit={handleSubmit}>
+      <div className={cx('resetIntro')}>
+        <h2 className={cx('resetTitle')}>새 비밀번호 생성</h2>
+        <p className={cx('description')}>새로운 비밀번호를 설정해 주세요.</p>
       </div>
-      <div className={styles.passwordFields}>
+      <div className={cx('passwordFields')}>
         <TextInput
           error={newPassword.length > 0 && !isPasswordValid}
           errorText={newPassword.length > 0 && !isPasswordValid ? '8자 이상, 숫자와 특수문자를 포함해야 합니다.' : undefined}
@@ -56,8 +56,8 @@ export default function FindPasswordResetStep({ errorMessage, isPending, onSubmi
           onChange={event => setConfirmPassword(event.target.value)}
         />
       </div>
-      {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
-      <button className={styles.submitButton} disabled={!isValid || isPending} type="submit">
+      {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
+      <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
         {isPending ? '생성 중...' : '새 비밀번호 생성'}
       </button>
     </form>

@@ -1,7 +1,7 @@
 import { FieldErrors, UseFormRegister, UseFormRegisterReturn } from 'react-hook-form';
 
 import styles from './SignupBasicInfoStep.module.css';
-import SignupRoleSelector from './SignupRoleSelector';
+const cx = classNames.bind(styles);import SignupRoleSelector from './SignupRoleSelector';
 import TextInput from '@/components/TextInput';
 import { SignupFormValues } from '@/hooks/useSignupForm';
 
@@ -91,10 +91,10 @@ export default function SignupBasicInfoStep({
           />
         </>
       )}
-      <div className={styles.fieldGroup}>
-        <label className={styles.selectField}>
-          <span className={styles.selectLabel}>성별 *</span>
-          <span className={styles.selectBox}>
+      <div className={cx('fieldGroup')}>
+        <label className={cx('selectField')}>
+          <span className={cx('selectLabel')}>성별 *</span>
+          <span className={cx('selectBox')}>
             <select {...register('gender')}>
               <option value="FEMALE">여성</option>
               <option value="MALE">남성</option>
@@ -110,7 +110,7 @@ export default function SignupBasicInfoStep({
           errorText={errors.birthDate?.message}
         />
       </div>
-      <div className={styles.addressSearchRow}>
+      <div className={cx('addressSearchRow')}>
         <TextInput
           label="우편번호"
           placeholder="주소 검색"
@@ -122,7 +122,7 @@ export default function SignupBasicInfoStep({
           error={Boolean(errors.postcode && allValues.postcode && allValues.postcode.trim() !== '')}
           errorText={errors.postcode?.message}
         />
-        <button className={styles.addressSearchButton} type="button" onClick={onAddressSearch}>
+        <button className={cx('addressSearchButton')} type="button" onClick={onAddressSearch}>
           주소 검색
         </button>
       </div>
@@ -143,7 +143,7 @@ export default function SignupBasicInfoStep({
         error={Boolean(errors.addressDetail && allValues.addressDetail && allValues.addressDetail.trim() !== '')}
         errorText={errors.addressDetail?.message}
       />
-      <button className={styles.button} disabled={!isStepOneValid} type="button" onClick={onNextStep}>
+      <button className={cx('button')} disabled={!isStepOneValid} type="button" onClick={onNextStep}>
         다음
       </button>
     </>

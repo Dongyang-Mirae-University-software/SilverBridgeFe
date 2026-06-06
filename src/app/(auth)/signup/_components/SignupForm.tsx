@@ -2,7 +2,7 @@ import { ChangeEvent, FormEvent, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 
 import styles from './SignupForm.module.css';
-import SignupBasicInfoStep from './SignupBasicInfoStep';
+const cx = classNames.bind(styles);import SignupBasicInfoStep from './SignupBasicInfoStep';
 import SignupPhoneVerificationStep from './SignupPhoneVerificationStep';
 import { CommonModal } from '@/components/CommonModal';
 import useSignupForm, { type KakaoSignupData } from '@/hooks/useSignupForm';
@@ -209,7 +209,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
 
   return (
     <>
-      <form className={styles.container} onSubmit={handleSignupSubmit}>
+      <form className={cx('container')} onSubmit={handleSignupSubmit}>
         {step === 1 && (
           <SignupBasicInfoStep
             allValues={allValues}
