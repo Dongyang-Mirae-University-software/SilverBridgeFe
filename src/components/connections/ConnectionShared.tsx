@@ -1,15 +1,16 @@
 'use client';
 
 import { ReactNode } from 'react';
+import classNames from 'classnames/bind';
 
 import { UserAvatar } from '@/components/UserAvatar';
-import { cx } from '@/components/layout/dashboard/styles';
 import { formatPhoneNumber } from '@/lib/format/phone';
 import { IConnectionItem } from '@/service/interface/connection';
+import styles from './ConnectionShared.module.css';
 
 export { UserAvatar };
 
-export { cx };
+const cx = classNames.bind(styles);
 
 export function getConnectionData(response: unknown) {
   const data = (response as { data?: unknown } | undefined)?.data;

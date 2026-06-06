@@ -10,7 +10,6 @@ import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
 import {
-  cx,
   EmptyState,
   getConnectionStatusClass,
   getConnectionStatusLabel,
@@ -21,6 +20,10 @@ import {
   getPartnerPhoneValue,
   splitConnections,
 } from './ConnectionShared';
+import classNames from 'classnames/bind';
+import styles from './GuardianWardsPanel.module.css';
+
+const cx = classNames.bind(styles);
 import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
 
 type GuardianWardsTab = 'list' | 'register';
