@@ -1,18 +1,16 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import classNames from 'classnames/bind';
 
 import styles from './FindEmailContent.module.css';
 
-const cx = classNames.bind(styles);
 
 export default function FindEmailResultActions() {
   const router = useRouter();
 
   return (
-    <div className={cx('resultActions')}>
-      <button className={cx('submitButton')} type="button" onClick={() => router.push('/login')}>
+    <div className={styles.resultActions}>
+      <button className={styles.submitButton} type="button" onClick={() => router.push('/login')}>
         로그인하기
       </button>
     </div>

@@ -1,4 +1,3 @@
-import classNames from 'classnames/bind';
 import { ChangeEvent, FormEvent, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 
@@ -11,7 +10,6 @@ import { getPhoneDigits } from '@/lib/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 
-const cx = classNames.bind(styles);
 
 interface Props {
   step: number;
@@ -211,7 +209,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
 
   return (
     <>
-      <form className={cx('container')} onSubmit={handleSignupSubmit}>
+      <form className={styles.container} onSubmit={handleSignupSubmit}>
         {step === 1 && (
           <SignupBasicInfoStep
             allValues={allValues}
