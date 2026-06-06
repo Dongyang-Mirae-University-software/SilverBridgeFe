@@ -3,7 +3,10 @@
 import Link from 'next/link';
 
 import { WARD_ACTIONS } from '@/constants/dashboard';
-import { cx } from '@/components/layout/dashboard/styles';
+import classNames from 'classnames/bind';
+import styles from './WardHomeContent.module.css';
+
+const cx = classNames.bind(styles);
 
 export function WardHomeContent() {
   return (
