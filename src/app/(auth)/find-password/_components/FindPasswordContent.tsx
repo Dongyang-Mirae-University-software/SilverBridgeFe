@@ -12,7 +12,7 @@ import FindPasswordSmsStep from './FindPasswordSmsStep';
 import FindPasswordVerifyStep from './FindPasswordVerifyStep';
 import FindPasswordResetStep from './FindPasswordResetStep';
 import styles from './FindPasswordContent.module.css';
-
+const cx = classNames.bind(styles);
 
 const STEP_LIST = ['방식 선택', '정보 입력', '인증 확인', '새 비밀번호 생성'];
 
@@ -80,9 +80,9 @@ export default function FindPasswordContent() {
           onClose={() => router.push('/login')}
         />
       )}
-      <div className={styles.header}>
-        <h1 className={styles.title}>비밀번호 찾기</h1>
-        <button className={styles.closeButton} type="button" onClick={() => router.push('/login')}>
+      <div className={cx('header')}>
+        <h1 className={cx('title')}>비밀번호 찾기</h1>
+        <button className={cx('closeButton')} type="button" onClick={() => router.push('/login')}>
           ✕
         </button>
       </div>

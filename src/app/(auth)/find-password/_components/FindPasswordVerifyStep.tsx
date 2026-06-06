@@ -3,7 +3,7 @@
 
 import VerificationCodeForm from '@/app/(auth)/_components/VerificationCodeForm';
 import styles from './FindPasswordVerifyStep.module.css';
-
+const cx = classNames.bind(styles);
 
 interface Props {
   codeLength: number;
@@ -15,7 +15,7 @@ interface Props {
 
 export default function FindPasswordVerifyStep({ codeLength, errorMessage, expiresInSeconds, onResend, onSubmit }: Props) {
   return (
-    <div className={styles.section}>
+    <div className={cx('section')}>
       <VerificationCodeForm
         content="받은 인증코드를 입력하세요."
         codeLength={codeLength}

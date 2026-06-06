@@ -7,7 +7,7 @@ import useFindEmailFlow from '../_hooks/useFindEmailFlow';
 import FindEmailInfoStep from './FindEmailInfoStep';
 import FindEmailResultStep from './FindEmailResultStep';
 import styles from './FindEmailContent.module.css';
-
+const cx = classNames.bind(styles);
 
 export default function FindEmailContent() {
   const flow = useFindEmailFlow();
@@ -20,9 +20,9 @@ export default function FindEmailContent() {
 
   return (
     <>
-      <div className={styles.header}>
-        <h1 className={styles.title}>아이디 찾기</h1>
-        <button className={styles.closeButton} type="button" onClick={() => router.push('/login')}>
+      <div className={cx('header')}>
+        <h1 className={cx('title')}>아이디 찾기</h1>
+        <button className={cx('closeButton')} type="button" onClick={() => router.push('/login')}>
           ✕
         </button>
       </div>
