@@ -16,7 +16,10 @@ import { DashboardSidebar } from './DashboardSidebar';
 import { ProfileModal } from './ProfileModal';
 import { GUARDIAN_NAV, PAGE_TITLES, WARD_NAV } from '@/constants/dashboard';
 import { getRealtimeNotification } from '@/lib/dashboard/realtime';
-import { cx } from './styles';
+import classNames from 'classnames/bind';
+import styles from './DashboardLayout.module.css';
+
+const cx = classNames.bind(styles);
 import { PageKey, WardSettings } from './types';
 import { DEFAULT_WARD_SETTINGS, clampFontSize, getValidSosAction, WARD_SETTINGS_STORAGE_KEY } from '@/constants/wardSettings';
 
