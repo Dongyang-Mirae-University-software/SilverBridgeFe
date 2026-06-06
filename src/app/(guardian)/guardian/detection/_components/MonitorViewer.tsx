@@ -1,10 +1,9 @@
-import classNames from 'classnames/bind';
+import clsx from 'clsx';
 
 import type { DetectState, LiveStreamAnalysis, LiveStreamSession, LiveStreamStatus } from '@/service/interface/liveStream';
 import { formatDateTime, formatNumber, formatRelativeDateTime, normalizeDetectedType } from './monitorUtils';
 import styles from './MonitorViewer.module.css';
 
-const cx = classNames.bind(styles);
 
 interface MonitorViewerProps {
   detectState: DetectState;
@@ -33,8 +32,8 @@ export function MonitorViewer({
 }: MonitorViewerProps) {
   if (!selectedId) {
     return (
-      <div className={cx('viewerPanel')}>
-        <div className={cx('emptyState')}>
+      <div className={styles.viewerPanel}>
+        <div className={styles.emptyState}>
           <p>상단에서 세션을 선택하면<br />실시간 화면을 볼 수 있습니다.</p>
         </div>
       </div>
@@ -42,8 +41,8 @@ export function MonitorViewer({
   }
 
   return (
-    <div className={cx('viewerPanel')}>
-      <div className={cx('monitorGrid')}>
+    <div className={styles.viewerPanel}>
+      <div className={styles.monitorGrid}>
         <FrameViewer frameSrc={frameSrc} latestFrameUrl={latestFrameUrl} selectedId={selectedId} viewerUrl={viewerUrl} />
         <SessionMeta
           detectState={detectState}
@@ -71,19 +70,19 @@ function FrameViewer({
   viewerUrl: string | null;
 }) {
   return (
-    <section className={cx('viewerCard')}>
-      <div className={cx('cardHeader')}>
+    <section className={styles.viewerCard}>
+      <div className={styles.cardHeader}>
         <h3>실시간 화면</h3>
         <span>WebSocket 이벤트 기반</span>
       </div>
-      <div className={cx('frameWrapper')}>
+      <div className={styles.frameWrapper}>
         {frameSrc ? (
-          <img key={latestFrameUrl ?? selectedId} src={frameSrc} alt="실시간 영상" className={cx('mjpegImg')} />
+          <img key={latestFrameUrl ?? selectedId} src={frameSrc} alt="실시간 영상" className={styles.mjpegImg} />
         ) : (
-          <div className={cx('placeholder')}>프레임이 아직 수신되지 않았습니다.</div>
+          <div className={styles.placeholder}>프레임이 아직 수신되지 않았습니다.</div>
         )}
       </div>
-      <p className={cx('hint')}>MJPEG URL: {viewerUrl ?? '-'}</p>
+      <p className={styles.hint}>MJPEG URL: {viewerUrl ?? '-'}</p>
     </section>
   );
 }
@@ -108,9 +107,9 @@ function SessionMeta({
   const isStopped = sessionStatus?.status === 'stopped';
 
   return (
-    <aside className={cx('metaCard')}>
-      <div className={cx('metaSummary')}>
-        <div className={cx('metaIdentity')}>
+    <aside className={styles.metaCard}>
+      <div className={styles.metaSummary}>
+        <div className={styles.metaIdentity}>
           <span>피보호자</span>
           <strong>{selectedSession?.ward_name ?? '피보호자'}</strong>
           <small>{selectedId}</small>
@@ -118,7 +117,7 @@ function SessionMeta({
         </div>
         <button
           type="button"
-          className={cx('stopStreamButton')}
+          className={styles.stopStreamButton}
           disabled={isStoppingSession || isStopped}
           onClick={onStopSession}
         >
@@ -126,14 +125,14 @@ function SessionMeta({
         </button>
       </div>
 
-      <div className={cx('statusRow', 'metaStatusRow')}>
+      <div className={clsx(styles.statusRow, styles.metaStatusRow)}>
         <span>status {sessionStatus?.status ?? '-'}</span>
         <span>FPS {formatNumber(sessionStatus?.fps)}</span>
         <span>시청자 {formatNumber(sessionStatus?.viewerCount ?? sessionStatus?.viewer_count)}명</span>
-        {(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing) && <span className={cx('analyzingBadge')}>AI 분석 중</span>}
+        {(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing) && <span className={styles.analyzingBadge}>AI 분석 중</span>}
       </div>
 
-      <dl className={cx('metaList')}>
+      <dl className={styles.metaList}>
         <MetaItem
           label="lastFrameAt"
           value={formatDateTime(sessionStatus?.lastFrameAt ?? sessionStatus?.last_frame_at)}
@@ -142,14 +141,14 @@ function SessionMeta({
         <MetaItem label="isAnalyzing" value={String(sessionStatus?.isAnalyzing ?? sessionStatus?.is_analyzing ?? false)} />
       </dl>
 
-      <div className={cx('cardHeader', 'analysisHeader')}>
+      <div className={clsx(styles.cardHeader, styles.analysisHeader)}>
         <h3>최신 감지 결과</h3>
         <span>AI 분석</span>
       </div>
       {latestAnalysis ? (
         <DetectionResult analysis={latestAnalysis} detectState={detectState} />
       ) : (
-        <p className={cx('metaMessage')}>분석 결과 대기 중입니다. 프레임이 수신되면 표시됩니다.</p>
+        <p className={styles.metaMessage}>분석 결과 대기 중입니다. 프레임이 수신되면 표시됩니다.</p>
       )}
     </aside>
   );
@@ -186,9 +185,7 @@ function DetectionResult({ analysis, detectState }: { analysis: LiveStreamAnalys
   const isSafe   = detectState === 'safe';
 
   return (
-    <div className={cx(
-      isSafe ? 'safeCard' : isAlert ? 'detectCard' : 'dangerCard'
-    )}>
+    <div className={styles[isSafe ? 'safeCard' : isAlert ? 'detectCard' : 'dangerCard']}>
       <strong>{label}</strong>
       {!isSafe && <span>{detectedType} · 신뢰도 {Math.round(confidence * 100)}%</span>}
       {isSafe && <span>신뢰도 {Math.round(confidence * 100)}%</span>}

@@ -1,8 +1,8 @@
+import clsx from 'clsx';
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import classNames from 'classnames/bind';
 import { MessagePayload } from 'firebase/messaging';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 
@@ -15,7 +15,6 @@ import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api
 import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import styles from './PushNotificationListener.module.css';
 
-const cx = classNames.bind(styles);
 const TOAST_LIFETIME_MS = 6000;
 type ConnectionTargetRole = 'WARD' | 'GUARDIAN';
 
@@ -330,17 +329,17 @@ export default function PushNotificationListener() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className={cx('toastArea')} aria-live="polite">
+    <div className={styles.toastArea} aria-live="polite">
       {toasts.map(toast => (
-        <div key={toast.id} className={cx('toast', { actionAlert: isConnectionRequest(toast.data, currentRole) })}>
+        <div key={toast.id} className={clsx(styles.toast, { [styles.actionAlert]: isConnectionRequest(toast.data, currentRole) })}>
           {isConnectionRequest(toast.data, currentRole) ? (
-            <div className={cx('toastContent')}>
-              <span className={cx('title')}>{toast.title}</span>
-              {toast.body && <span className={cx('body')}>{toast.body}</span>}
-              {toast.error && <span className={cx('error')}>{toast.error}</span>}
-              <div className={cx('actionRow')}>
+            <div className={styles.toastContent}>
+              <span className={styles.title}>{toast.title}</span>
+              {toast.body && <span className={styles.body}>{toast.body}</span>}
+              {toast.error && <span className={styles.error}>{toast.error}</span>}
+              <div className={styles.actionRow}>
                 <button
-                  className={cx('acceptButton')}
+                  className={styles.acceptButton}
                   type="button"
                   disabled={processingToastIds.includes(toast.id)}
                   onClick={() => void handleConnectionAction(toast, 'accept')}
@@ -348,7 +347,7 @@ export default function PushNotificationListener() {
                   수락
                 </button>
                 <button
-                  className={cx('refuseButton')}
+                  className={styles.refuseButton}
                   type="button"
                   disabled={processingToastIds.includes(toast.id)}
                   onClick={() => void handleConnectionAction(toast, 'refuse')}
@@ -359,18 +358,18 @@ export default function PushNotificationListener() {
             </div>
           ) : (
             <button
-              className={cx('toastContent')}
+              className={styles.toastContent}
               type="button"
               onClick={() => {
                 dismissToast(toast.id);
                 router.push(getPushRoute(toast.data, currentRole));
               }}
             >
-              <span className={cx('title')}>{toast.title}</span>
-              {toast.body && <span className={cx('body')}>{toast.body}</span>}
+              <span className={styles.title}>{toast.title}</span>
+              {toast.body && <span className={styles.body}>{toast.body}</span>}
             </button>
           )}
-          <button className={cx('dismissButton')} type="button" aria-label="알림 닫기" onClick={() => dismissToast(toast.id)}>
+          <button className={styles.dismissButton} type="button" aria-label="알림 닫기" onClick={() => dismissToast(toast.id)}>
             ×
           </button>
         </div>
