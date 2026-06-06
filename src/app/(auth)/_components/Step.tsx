@@ -1,23 +1,25 @@
 'use client';
 
-import clsx from 'clsx';
+import classNames from 'classnames/bind';
 
 import styles from './Step.module.css';
+
+const cx = classNames.bind(styles);
 
 interface IProps {
   stepList: string[];
   step: number;
 }
+
 export default function Step({ stepList, step }: IProps) {
   return (
-    <div className={styles['step-list']}>
+    <div className={cx('step-list')}>
       {stepList.map((label, index) => {
         const currentStep = index + 1;
-
         return (
-          <div key={label} className={clsx(styles['step-item'], { [styles.active]: step >= currentStep })}>
-            <span className={styles['step-number']}>{currentStep}</span>
-            <span className={styles['step-label']}>{label}</span>
+          <div key={label} className={cx('step-item', { active: step >= currentStep })}>
+            <span className={cx('step-number')}>{currentStep}</span>
+            <span className={cx('step-label')}>{label}</span>
           </div>
         );
       })}
