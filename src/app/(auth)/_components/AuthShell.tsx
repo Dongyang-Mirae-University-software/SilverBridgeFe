@@ -1,10 +1,12 @@
+import classNames from 'classnames/bind';
 import { ReactNode } from 'react';
 
 import styles from './AuthShell.module.css';
+const cx = classNames.bind(styles);
 
 function FriendCharacter() {
   return (
-    <svg className={styles.character} viewBox="0 0 200 200" aria-hidden="true">
+    <svg className={cx('character')} viewBox="0 0 200 200" aria-hidden="true">
       <ellipse cx="100" cy="180" rx="55" ry="6" fill="#000000" opacity="0.08" />
       <ellipse cx="72" cy="38" rx="14" ry="32" fill="#f8e0d4" stroke="#1f1916" strokeWidth="3" />
       <ellipse cx="72" cy="42" rx="6" ry="20" fill="#f4b8a0" />
@@ -29,21 +31,21 @@ function FriendCharacter() {
 
 export default function AuthShell({ children }: { children: ReactNode }) {
   return (
-    <main className={styles.shell}>
-      <section className={styles.hero} aria-label="SilverBridge 소개">
-        <div className={styles.warmCircle} />
-        <div className={styles.greenCircle} />
-        <div className={styles.heroVisual}>
+    <main className={cx('shell')}>
+      <section className={cx('hero')} aria-label="SilverBridge 소개">
+        <div className={cx('warmCircle')} />
+        <div className={cx('greenCircle')} />
+        <div className={cx('heroVisual')}>
           <FriendCharacter />
         </div>
-        <div className={styles.copy}>
-          <span className={styles.badge}>SilverBridge · 시니어 케어</span>
-          <h1 className={styles.headline}>
+        <div className={cx('copy')}>
+          <span className={cx('badge')}>SilverBridge · 시니어 케어</span>
+          <h1 className={cx('headline')}>
             가족이 가까이 있는 것처럼,
             <br />
             <span>안심하고 매일을 보내요</span>
           </h1>
-          <p className={styles.body}>
+          <p className={cx('body')}>
             낙상 감지 · AI 말벗 · 병원 예약 · 보호자 연결까지
             <br />
             하나의 앱에서 함께 돌봅니다.
@@ -51,8 +53,8 @@ export default function AuthShell({ children }: { children: ReactNode }) {
         </div>
       </section>
 
-      <section className={styles.formPane}>
-        <div className={styles.card}>{children}</div>
+      <section className={cx('formPane')}>
+        <div className={cx('card')}>{children}</div>
       </section>
     </main>
   );
