@@ -4,7 +4,10 @@ import { IUserProfile } from '@/service/interface/user';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ProfileModalControls } from './ProfileModalControls';
 import { formatProfileDate, getProviderLabel } from '@/lib/dashboard/profile';
-import { cx } from './styles';
+import classNames from 'classnames/bind';
+import styles from './ProfileModal.module.css';
+
+const cx = classNames.bind(styles);
 
 interface Props {
   isLoggingOut: boolean;
