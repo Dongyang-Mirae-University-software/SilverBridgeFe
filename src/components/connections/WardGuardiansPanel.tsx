@@ -11,14 +11,17 @@ import {
   PENDING_CONNECTION_REQUESTS_EVENT,
   removePendingConnectionRequest,
 } from '@/lib/realtime/pendingConnectionRequests';
+import classNames from 'classnames/bind';
 import {
   ConnectionCard,
-  cx,
   EmptyState,
   getConnectionData,
   getErrorMessage,
   splitConnections,
 } from './ConnectionShared';
+import styles from './WardGuardiansPanel.module.css';
+
+const cx = classNames.bind(styles);
 
 export function WardGuardiansPanel() {
   const queryClient = useQueryClient();

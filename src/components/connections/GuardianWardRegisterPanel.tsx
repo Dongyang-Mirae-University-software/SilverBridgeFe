@@ -5,7 +5,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { requestWardConnection } from '@/service/api/connect/guardian';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
-import { cx, getConnectionData, getErrorMessage } from './ConnectionShared';
+import classNames from 'classnames/bind';
+import { getConnectionData, getErrorMessage } from './ConnectionShared';
+import styles from './GuardianWardRegisterPanel.module.css';
+
+const cx = classNames.bind(styles);
 
 const RELATION_OPTIONS = ['아들', '딸', '배우자', '부모', '형제자매', '손자녀', '직접입력'] as const;
 const CUSTOM_RELATION_OPTION = '직접입력';
