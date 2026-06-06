@@ -1,0 +1,142 @@
+.profileManageCard {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  padding: 18px;
+}
+
+.profileManageHeader {
+  margin-bottom: 12px;
+}
+
+.profileManageHeader h3 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+.profileManageHeader p {
+  margin: 4px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.profileForm {
+  display: grid;
+  gap: 14px;
+}
+
+.profileFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profileField {
+  display: grid;
+  gap: 6px;
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.profileField input,
+.profileField select,
+.profileDeleteRow input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--sb-line);
+  border-radius: 11px;
+  background: #fcfbf8;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  min-height: 44px;
+  outline: none;
+  padding: 0 12px;
+}
+
+.profileField input:focus,
+.profileField select:focus,
+.profileDeleteRow input:focus {
+  border-color: var(--sb-brand);
+  box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.1);
+}
+
+.profileDeleteRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  border-top: 1px solid var(--sb-line-soft);
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.profileModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.profileModalGhostButton {
+  display: inline-flex;
+  min-width: 84px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 10px 14px;
+}
+
+.profileModalGhostButton:hover {
+  background: var(--sb-bg-soft);
+}
+
+.profileModalGhostButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.profilePrimaryButton,
+.profileDangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 11px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.profilePrimaryButton {
+  background: var(--sb-brand);
+}
+
+.profileDangerButton {
+  border: 1px solid #e0a69c;
+  background: #fff7f5;
+  color: var(--sb-warn);
+}
+
+.profilePrimaryButton:disabled,
+.profileDangerButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
