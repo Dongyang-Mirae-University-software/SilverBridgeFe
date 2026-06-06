@@ -1,9 +1,13 @@
+import classNames from 'classnames/bind';
+
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { IUserProfile } from '@/service/interface/user';
 import { UserAvatar } from '@/components/UserAvatar';
 import { MenuIcon } from './icons';
-import { cx } from './styles';
+import styles from './DashboardHeader.module.css';
+
+const cx = classNames.bind(styles);
 
 interface Props {
   isProfileImageChanging: boolean;
