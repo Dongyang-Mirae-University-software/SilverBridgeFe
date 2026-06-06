@@ -17,7 +17,10 @@ import { ProfileSecurityPanel } from './ProfileSecurityPanel';
 import { getModalErrorMessage, getProfileFormValue, getSmsVerificationNonce } from '@/lib/dashboard/profile';
 import { getPhoneDigits } from '@/lib/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
-import { cx } from './styles';
+import classNames from 'classnames/bind';
+import styles from './ProfileModalControls.module.css';
+
+const cx = classNames.bind(styles);
 
 interface Props {
   isLoggingOut: boolean;
