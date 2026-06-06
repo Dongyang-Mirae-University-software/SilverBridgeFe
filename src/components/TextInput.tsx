@@ -1,7 +1,9 @@
 import React, { ForwardedRef, InputHTMLAttributes } from 'react';
-import clsx from 'clsx';
+import classNames from 'classnames/bind';
 
 import styles from './TextInput.module.css';
+
+const cx = classNames.bind(styles);
 
 interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: boolean;
@@ -15,18 +17,18 @@ function TextInput(
   ref: ForwardedRef<HTMLInputElement>,
 ) {
   return (
-    <div className={styles.field}>
+    <div className={cx('field')}>
       {label && (
-        <div className={styles['label-wrapper']}>
-          <label className={styles['input-label']}>{label}</label>
-          {required && <span className={styles.dot}>*</span>}
+        <div className={cx('label-wrapper')}>
+          <label className={cx('input-label')}>{label}</label>
+          {required && <span className={cx('dot')}>*</span>}
         </div>
       )}
-      <div className={clsx(styles['input-area'], { [styles.error]: error })}>
-        <input className={styles.input} ref={ref} {...props} />
+      <div className={cx('input-area', { error })}>
+        <input className={cx('input')} ref={ref} {...props} />
       </div>
       {errorText ? (
-        <span className={styles['input-helperText']} role="alert">
+        <span className={cx('input-helperText')} role="alert">
           {errorText}
         </span>
       ) : null}
