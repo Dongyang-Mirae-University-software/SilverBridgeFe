@@ -1,0 +1,56 @@
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 14px;
+}
+
+.wardHomeActionGrid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  height: 100%;
+}
+
+.actionCard {
+  display: flex;
+  min-height: 132px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 18px;
+  text-decoration: none;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.actionCard strong {
+  color: var(--sb-ink);
+  font-size: 30px;
+  font-weight: 850;
+  text-align: center;
+}
+
+.actionCard span {
+  margin-top: 6px;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .wardHomeActionGrid {
+    flex-direction: column;
+    height: 100%;
+    display: flex;
+  }
+
+  .wardHomeActionGrid > a {
+    flex: 1;
+  }
+}
