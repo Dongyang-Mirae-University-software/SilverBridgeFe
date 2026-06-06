@@ -1,0 +1,125 @@
+.profileManageStack {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  gap: 12px;
+  padding: 18px 24px 20px;
+}
+
+.profileModalMessage {
+  margin: 0;
+  border: 1px solid rgba(31, 94, 72, 0.18);
+  border-radius: 12px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.5;
+  padding: 10px 12px;
+  white-space: normal;
+}
+
+.profileManageScroll {
+  min-height: 0;
+  padding-right: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.profileManageScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.profileTabsBar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
+  padding: 4px;
+}
+
+.profileTab {
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--sb-ink-mute);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  min-height: 36px;
+}
+
+.profileTabActive {
+  background: #fff;
+  color: var(--sb-ink);
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.profileModalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding-top: 14px;
+}
+
+.logoutButton {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 10px 12px;
+}
+
+.profileModalGhostButton {
+  display: inline-flex;
+  min-width: 84px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 10px 14px;
+}
+
+.profileModalGhostButton:hover {
+  background: var(--sb-bg-soft);
+}
+
+.profileModalFooter .logoutButton,
+.profileModalFooter .profileModalGhostButton {
+  width: auto;
+  min-width: 92px;
+  min-height: 42px;
+  padding: 10px 16px;
+}
+
+.logoutButton:hover {
+  background: var(--sb-bg-soft);
+}
+
+.logoutButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.profileModalGhostButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
