@@ -1,8 +1,8 @@
+import clsx from 'clsx';
 'use client';
 
 import { useState } from 'react';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
-import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
 import {
@@ -14,7 +14,6 @@ import {
 import { IAnnouncement } from '@/service/interface/announcement';
 import styles from './NoticesPanel.module.css';
 
-const cx = classNames.bind(styles);
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -44,46 +43,46 @@ export function NoticesPanel() {
   };
 
   return (
-    <section className={cx('page')}>
-      <div className={cx('header')}>
-        <div className={cx('headerTop')}>
-          <span className={cx('eyebrow')}>공지사항</span>
+    <section className={styles.page}>
+      <div className={styles.header}>
+        <div className={styles.headerTop}>
+          <span className={styles.eyebrow}>공지사항</span>
           <RefreshButton ariaLabel="공지사항 새로고침" disabled={isLoading} onRefresh={() => refetch()} />
         </div>
         <h2>서비스 운영 관련 공지를 확인하세요.</h2>
       </div>
 
-      {isLoading && <p className={cx('message')}>공지사항을 불러오는 중입니다.</p>}
-      {isError && <p className={cx('message', 'error')}>공지사항을 불러오지 못했습니다.</p>}
+      {isLoading && <p className={styles.message}>공지사항을 불러오는 중입니다.</p>}
+      {isError && <p className={clsx(styles.message, styles.error)}>공지사항을 불러오지 못했습니다.</p>}
       {!isLoading && !isError && announcements.length === 0 && (
-        <p className={cx('message')}>등록된 공지사항이 없습니다.</p>
+        <p className={styles.message}>등록된 공지사항이 없습니다.</p>
       )}
 
       {announcements.length > 0 && (
-        <ul className={cx('list')}>
+        <ul className={styles.list}>
           {announcements.map(item => {
             const isOpen = selectedId === item.id;
             return (
-              <li key={item.id} className={cx('item', { open: isOpen })}>
-                <button className={cx('itemHeader')} type="button" aria-expanded={isOpen} onClick={() => handleToggle(item.id)}>
-                  <div className={cx('itemInfo')}>
-                    <strong className={cx('itemTitle')}>{item.title}</strong>
-                    <div className={cx('itemMeta')}>
+              <li key={item.id} className={clsx(styles.item, { [styles.open]: isOpen })}>
+                <button className={styles.itemHeader} type="button" aria-expanded={isOpen} onClick={() => handleToggle(item.id)}>
+                  <div className={styles.itemInfo}>
+                    <strong className={styles.itemTitle}>{item.title}</strong>
+                    <div className={styles.itemMeta}>
                       <span>{item.authorName}</span>
                       <span aria-label="조회수">조회 {item.viewCount.toLocaleString()}</span>
                       <time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time>
                     </div>
                   </div>
-                  <span className={cx('chevron')} aria-hidden="true">
+                  <span className={styles.chevron} aria-hidden="true">
                     {isOpen ? '∧' : '∨'}
                   </span>
                 </button>
 
                 {isOpen && (
-                  <div className={cx('itemBody')}>
+                  <div className={styles.itemBody}>
                     <p>{selectedNotice?.content ?? item.content}</p>
                     {item.updatedAt !== item.createdAt && (
-                      <span className={cx('updatedAt')}>수정일: {formatDate(item.updatedAt)}</span>
+                      <span className={styles.updatedAt}>수정일: {formatDate(item.updatedAt)}</span>
                     )}
                   </div>
                 )}
