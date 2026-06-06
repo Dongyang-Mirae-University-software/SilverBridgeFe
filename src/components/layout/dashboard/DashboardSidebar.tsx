@@ -1,12 +1,15 @@
 import Link from 'next/link';
+import classNames from 'classnames/bind';
 
 import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user';
 import { NavIcon } from './icons';
-import { cx } from './styles';
 import { NavItem } from './types';
 import { UserAvatar } from '@/components/UserAvatar';
+import styles from './DashboardSidebar.module.css';
+
+const cx = classNames.bind(styles);
 
 interface Props {
   isLoggingOut: boolean;
