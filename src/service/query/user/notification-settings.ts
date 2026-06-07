@@ -33,15 +33,9 @@ export function getNormalizedNotificationSettings(response: IUserNotificationSet
 
 export const userNotificationSettingsQueryOptions = queryOptions({
   queryKey: userNotificationSettingsQueryKey,
-  queryFn: async () => {
+  queryFn: async (): Promise<IUserNotificationSetting[]> => {
     const response = await getMyNotificationSettings();
-    const responseBody = response.data;
-    return {
-      ...responseBody,
-      data: {
-        settings: normalizeNotificationSettings(responseBody?.data?.settings),
-      },
-    };
+    return normalizeNotificationSettings(response.data.data?.settings);
   },
   staleTime: 5 * 60 * 1000,
   gcTime: 30 * 60 * 1000,
@@ -56,22 +50,12 @@ export function useNotificationSettingsMutation() {
     mutationFn: (body: IUserNotificationSettingsUpdateReq) => updateMyNotificationSettings(body),
     onMutate: async variables => {
       await queryClient.cancelQueries({ queryKey: userNotificationSettingsQueryKey });
-      const previous = queryClient.getQueryData(userNotificationSettingsQueryKey);
+      const previous = queryClient.getQueryData<IUserNotificationSetting[]>(userNotificationSettingsQueryKey) ?? [];
 
-      queryClient.setQueryData(userNotificationSettingsQueryKey, (current: unknown) => {
-        const currentSettings = (current as { data?: IUserNotificationSettingsResponse } | undefined)?.data?.settings;
-        const nextSettings = normalizeNotificationSettings([
-          ...(currentSettings ?? []),
-          ...variables.settings,
-        ]);
-
-        return {
-          ...(current as object),
-          data: {
-            settings: nextSettings,
-          },
-        };
-      });
+      queryClient.setQueryData(
+        userNotificationSettingsQueryKey,
+        normalizeNotificationSettings([...previous, ...variables.settings]),
+      );
 
       return { previous };
     },
@@ -80,13 +64,10 @@ export function useNotificationSettingsMutation() {
       reportNonApiError('알림 설정 변경 실패:', error);
     },
     onSuccess: response => {
-      const responseBody = response.data;
-      queryClient.setQueryData(userNotificationSettingsQueryKey, {
-        ...responseBody,
-        data: {
-          settings: normalizeNotificationSettings(responseBody?.data?.settings),
-        },
-      });
+      queryClient.setQueryData(
+        userNotificationSettingsQueryKey,
+        normalizeNotificationSettings(response.data.data?.settings),
+      );
     },
   });
 }
