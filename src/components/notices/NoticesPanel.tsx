@@ -1,7 +1,7 @@
 'use client';
 import classNames from 'classnames/bind';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { RefreshButton } from '@/components/RefreshButton';
@@ -25,6 +25,7 @@ function formatDate(value: string) {
 export function NoticesPanel() {
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const optimisticViewCountAtRef = useRef<Record<number, number>>({});
 
   const { data: announcements = [], isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
   const { data: detail } = useQuery({
@@ -35,7 +36,16 @@ export function NoticesPanel() {
   const selectedNotice = selectedId !== null ? (detail ?? announcements.find(a => a.id === selectedId) ?? null) : null;
 
   const handleToggle = (id: number) => {
-    setSelectedId(prev => (prev === id ? null : id));
+    setSelectedId(prev => {
+      const next = prev === id ? null : id;
+
+      if (next !== null && shouldOptimisticallyIncreaseViewCount(optimisticViewCountAtRef.current, next)) {
+        optimisticIncreaseViewCount(queryClient, next);
+        optimisticViewCountAtRef.current[next] = Date.now();
+      }
+
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -103,5 +113,22 @@ function syncNoticeViewCount(queryClient: QueryClient, id: number, notice: IAnno
   );
   queryClient.setQueryData<IAnnouncement>(announcementDetailQueryKey(id), current =>
     current ? { ...current, viewCount: notice.viewCount } : notice,
+  );
+}
+
+function shouldOptimisticallyIncreaseViewCount(record: Record<number, number>, id: number) {
+  const now = Date.now();
+  const lastUpdatedAt = record[id] ?? 0;
+  const COOLDOWN_MS = 3000;
+
+  return now - lastUpdatedAt >= COOLDOWN_MS;
+}
+
+function optimisticIncreaseViewCount(queryClient: QueryClient, id: number) {
+  queryClient.setQueryData<IAnnouncement[]>(announcementsQueryKey, current =>
+    current?.map(item => (item.id === id ? { ...item, viewCount: item.viewCount + 1 } : item)),
+  );
+  queryClient.setQueryData<IAnnouncement>(announcementDetailQueryKey(id), current =>
+    current ? { ...current, viewCount: current.viewCount + 1 } : current,
   );
 }
