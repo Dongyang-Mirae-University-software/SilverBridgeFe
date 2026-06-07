@@ -259,6 +259,139 @@
   background: var(--sb-brand-50);
 }
 
+/* ── 연결 알림 채널 ── */
+.notificationNote {
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 12px 14px;
+}
+
+.notificationError {
+  border: 1px solid #f4c6c6;
+  border-radius: 12px;
+  background: #fff7f7;
+  color: #a63d3d;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  padding: 11px 14px;
+}
+
+.notificationList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notificationRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px 16px;
+}
+
+.notificationMeta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.notificationTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notificationTitle {
+  color: var(--sb-ink);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.notificationBadge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-size: 11px;
+  font-weight: 850;
+  padding: 3px 8px;
+}
+
+.notificationDesc {
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.notificationToggle {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.notificationToggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.notificationToggleThumb {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--sb-line-soft);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.notificationToggleThumb::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  transition: transform 0.2s;
+}
+
+.notificationToggle input:checked + .notificationToggleThumb {
+  background: var(--sb-brand);
+}
+
+.notificationToggle input:checked + .notificationToggleThumb::after {
+  transform: translateX(22px);
+}
+
+.notificationToggle input:disabled + .notificationToggleThumb {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+@media (max-width: 640px) {
+  .notificationRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .notificationToggle {
+    align-self: flex-end;
+  }
+}
+
 .sosCard input {
   display: none;
 }
