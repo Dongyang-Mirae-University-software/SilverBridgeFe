@@ -1,10 +1,12 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import classNames from 'classnames/bind';
 
 import TextInput from '@/components/TextInput';
 import { PASSWORD_PATTRERN } from '@/constants/pattern';
 import styles from './FindPasswordResetStep.module.css';
+
 const cx = classNames.bind(styles);
 
 interface Props {
