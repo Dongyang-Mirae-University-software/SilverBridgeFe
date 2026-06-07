@@ -2,7 +2,7 @@
 
 
 import { IFindEmailResponse } from '@/service/interface/auth';
-import styles from './FindEmailContent.module.css';
+import styles from './FindEmailResultDisplay.module.css';
 const cx = classNames.bind(styles);
 
 interface Props {
