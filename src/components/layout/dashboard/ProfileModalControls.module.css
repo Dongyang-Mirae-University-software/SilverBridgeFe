@@ -70,17 +70,19 @@
 
 .logoutButton {
   display: inline-flex;
-  width: 100%;
+  width: auto;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--sb-line);
-  border-radius: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
   background: #fff;
-  color: var(--sb-ink-soft);
+  color: var(--sb-ink);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 750;
-  padding: 10px 12px;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 10px 16px;
+  white-space: nowrap;
 }
 
 .profileModalGhostButton {
@@ -88,18 +90,21 @@
   min-width: 84px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--sb-line);
-  border-radius: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
   background: #fff;
-  color: var(--sb-ink-soft);
+  color: var(--sb-ink);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 750;
-  padding: 10px 14px;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 10px 16px;
+  white-space: nowrap;
 }
 
 .profileModalGhostButton:hover {
-  background: var(--sb-bg-soft);
+  background: #fafafa;
+  border-color: var(--sb-line);
 }
 
 .profileModalFooter .logoutButton,
@@ -111,7 +116,8 @@
 }
 
 .logoutButton:hover {
-  background: var(--sb-bg-soft);
+  background: #fafafa;
+  border-color: var(--sb-line);
 }
 
 .logoutButton:disabled {
@@ -122,4 +128,16 @@
 .profileModalGhostButton:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+@media (max-width: 720px) {
+  .profileModalFooter {
+    flex-wrap: wrap;
+  }
+
+  .profileModalFooter .logoutButton,
+  .profileModalFooter .profileModalGhostButton {
+    min-width: 0;
+    flex: 1 1 0;
+  }
 }

@@ -93,18 +93,21 @@
   min-width: 84px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--sb-line);
-  border-radius: 12px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
   background: #fff;
-  color: var(--sb-ink-soft);
+  color: var(--sb-ink);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 750;
-  padding: 10px 14px;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 10px 16px;
+  white-space: nowrap;
 }
 
 .profileModalGhostButton:hover {
-  background: var(--sb-bg-soft);
+  background: #fafafa;
+  border-color: var(--sb-line);
 }
 
 .profileModalGhostButton:disabled {
@@ -118,13 +121,13 @@
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 12px;
+  border-radius: 999px;
   color: #fff;
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
   min-height: 42px;
-  padding: 10px 14px;
+  padding: 10px 18px;
   white-space: nowrap;
 }
 
@@ -133,7 +136,7 @@
 }
 
 .profileDangerButton {
-  border: 1px solid #e0a69c;
+  border: 1px solid #e7b9ae;
   background: #fff7f5;
   color: var(--sb-warn);
 }
@@ -160,5 +163,17 @@
   .profileDeleteRow {
     grid-template-columns: 1fr;
     padding: 16px;
+  }
+
+  .profileModalActions {
+    justify-content: stretch;
+  }
+
+  .profileModalActions .profilePrimaryButton {
+    width: 100%;
+  }
+
+  .profileDeleteRow .profileDangerButton {
+    width: 100%;
   }
 }
