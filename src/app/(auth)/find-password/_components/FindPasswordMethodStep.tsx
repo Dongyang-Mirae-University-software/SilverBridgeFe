@@ -1,7 +1,8 @@
 'use client';
 
-
+import classNames from 'classnames/bind';
 import styles from './FindPasswordMethodStep.module.css';
+
 const cx = classNames.bind(styles);
 
 type Method = 'email' | 'sms';
