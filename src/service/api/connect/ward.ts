@@ -17,13 +17,10 @@ export async function getWardPendingConnectionRequests() {
 }
 
 export async function getWardConnections(): Promise<CommonResponse<IConnectionItem[]>> {
-  const [activeResponse, pendingResponse] = await Promise.all([
-    getWardActiveConnections(),
-    getWardPendingConnectionRequests(),
-  ]);
+  const [activeResult, pendingResult] = await Promise.allSettled([getWardActiveConnections(), getWardPendingConnectionRequests()]);
 
-  const activeBody = activeResponse.data;
-  const pendingBody = pendingResponse.data;
+  const activeBody = activeResult.status === 'fulfilled' ? activeResult.value.data : undefined;
+  const pendingBody = pendingResult.status === 'fulfilled' ? pendingResult.value.data : undefined;
 
   return {
     code: activeBody?.code ?? pendingBody?.code ?? 200,

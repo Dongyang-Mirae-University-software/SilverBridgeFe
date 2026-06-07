@@ -13,8 +13,13 @@ export { UserAvatar };
 const cx = classNames.bind(styles);
 
 export function getConnectionData(response: unknown) {
+  if (Array.isArray(response)) return response as IConnectionItem[];
+
   const data = (response as { data?: unknown } | undefined)?.data;
-  return Array.isArray(data) ? (data as IConnectionItem[]) : [];
+  if (Array.isArray(data)) return data as IConnectionItem[];
+
+  const nestedData = (data as { data?: unknown } | undefined)?.data;
+  return Array.isArray(nestedData) ? (nestedData as IConnectionItem[]) : [];
 }
 
 export function getErrorMessage(error: unknown, fallback: string) {
