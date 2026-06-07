@@ -2,11 +2,13 @@
 
 import { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import classNames from 'classnames/bind';
 
 import useFindEmailFlow from '../_hooks/useFindEmailFlow';
 import FindEmailInfoStep from './FindEmailInfoStep';
 import FindEmailResultStep from './FindEmailResultStep';
 import styles from './FindEmailContent.module.css';
+
 const cx = classNames.bind(styles);
 
 export default function FindEmailContent() {

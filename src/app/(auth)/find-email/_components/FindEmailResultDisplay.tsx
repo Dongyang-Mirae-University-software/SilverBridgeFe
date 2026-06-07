@@ -1,8 +1,10 @@
 'use client';
 
+import classNames from 'classnames/bind';
 
 import { IFindEmailResponse } from '@/service/interface/auth';
 import styles from './FindEmailResultDisplay.module.css';
+
 const cx = classNames.bind(styles);
 
 interface Props {

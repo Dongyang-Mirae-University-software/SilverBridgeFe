@@ -1,8 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import classNames from 'classnames/bind';
 
 import styles from './FindEmailResultActions.module.css';
+
 const cx = classNames.bind(styles);
 
 export default function FindEmailResultActions() {
