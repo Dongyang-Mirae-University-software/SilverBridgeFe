@@ -251,15 +251,17 @@ function ProfileTabs({ activePanel, onChange }: { activePanel: 'profile' | 'secu
 function getValidatedProfile(form: IUserUpdateReq, isPhoneChanged: boolean, phoneNonce: string | null): IUserUpdateReq | string {
   const name = (form.name ?? '').trim();
   const phone = (form.phone ?? '').trim();
+  const gender = form.gender;
   const birthDate = form.birthDate ?? '';
   const postcode = (form.postcode ?? '').trim();
   const address = (form.address ?? '').trim();
   const addressDetail = (form.addressDetail ?? '').trim();
   if (!name) return '이름을 입력하세요.';
   if (!/^\d{10,11}$/.test(phone)) return '전화번호는 숫자 10~11자리로 입력하세요.';
+  if (!gender) return '성별을 선택하세요.';
   if (!birthDate || !postcode || !address) return '생년월일, 우편번호, 주소를 모두 입력하세요.';
   if (isPhoneChanged && !phoneNonce) return '전화번호를 변경하려면 SMS 인증을 완료하세요.';
-  return { ...form, address, addressDetail, birthDate, name, phone, postcode, verificationNonce: isPhoneChanged ? phoneNonce : null };
+  return { ...form, address, addressDetail, birthDate, gender, name, phone, postcode, verificationNonce: isPhoneChanged ? phoneNonce : null };
 }
 
 function redirectToLogin(queryClient: ReturnType<typeof useQueryClient>, router: ReturnType<typeof useRouter>) {
