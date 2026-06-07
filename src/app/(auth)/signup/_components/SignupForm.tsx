@@ -1,14 +1,17 @@
 import { ChangeEvent, FormEvent, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import classNames from 'classnames/bind';
 
 import styles from './SignupForm.module.css';
-const cx = classNames.bind(styles);import SignupBasicInfoStep from './SignupBasicInfoStep';
+import SignupBasicInfoStep from './SignupBasicInfoStep';
 import SignupPhoneVerificationStep from './SignupPhoneVerificationStep';
 import { CommonModal } from '@/components/CommonModal';
 import useSignupForm, { type KakaoSignupData } from '@/hooks/useSignupForm';
 import { getPhoneDigits } from '@/lib/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
+
+const cx = classNames.bind(styles);
 
 
 interface Props {
