@@ -131,6 +131,26 @@
 }
 
 @media (max-width: 720px) {
+  .profileManageStack {
+    gap: 10px;
+    padding: 14px 16px 16px;
+  }
+
+  .profileTabsBar {
+    border-radius: 12px;
+    padding: 3px;
+  }
+
+  .profileTab {
+    min-height: 34px;
+    font-size: 12px;
+  }
+
+  .profileModalMessage {
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+
   .profileModalFooter {
     justify-content: stretch;
   }
