@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 
-import styles from './FindEmailContent.module.css';
+import styles from './FindEmailResultActions.module.css';
 const cx = classNames.bind(styles);
 
 export default function FindEmailResultActions() {

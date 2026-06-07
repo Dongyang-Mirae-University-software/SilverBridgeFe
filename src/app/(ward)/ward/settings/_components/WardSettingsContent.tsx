@@ -5,7 +5,7 @@ import { CSSProperties } from 'react';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
 
-import styles from './WardSettings.module.css';
+import styles from './WardSettingsContent.module.css';
 
 const SOS_OPTIONS = [
   {

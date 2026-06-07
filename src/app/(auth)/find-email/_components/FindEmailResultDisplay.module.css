@@ -1,0 +1,36 @@
+.resultBox {
+  padding: 24px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: #fbe7da;
+  text-align: center;
+}
+
+.resultLabel {
+  margin-bottom: 8px;
+  color: #8a6850;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.resultEmail {
+  color: #1f1916;
+  font-family: monospace;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.resultDate {
+  margin-top: 8px;
+  color: #8a6850;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .resultEmail {
+    font-size: 19px;
+  }
+}
