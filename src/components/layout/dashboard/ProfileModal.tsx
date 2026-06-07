@@ -71,10 +71,16 @@ export function ProfileModal({
         <ProfileModalControls
           key={getProfileControlsKey(profile)}
           profile={profile}
-          isLoggingOut={isLoggingOut}
-          onClose={onClose}
-          onLogout={onLogout}
         />
+
+        <div className={cx('profileModalFooter')}>
+          <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={onLogout}>
+            {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+          </button>
+          <button className={cx('profileModalGhostButton')} type="button" onClick={onClose}>
+            닫기
+          </button>
+        </div>
       </section>
     </div>
   );

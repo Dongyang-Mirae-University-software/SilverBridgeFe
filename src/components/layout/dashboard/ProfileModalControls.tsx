@@ -23,13 +23,10 @@ import styles from './ProfileModalControls.module.css';
 const cx = classNames.bind(styles);
 
 interface Props {
-  isLoggingOut: boolean;
-  onClose: () => void;
-  onLogout: () => void;
   profile: IUserProfile | null;
 }
 
-export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout }: Props) {
+export function ProfileModalControls({ profile }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [profileForm, setProfileForm] = useState<IUserUpdateReq>(getProfileFormValue(profile));
@@ -200,15 +197,6 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
           passwordForm={passwordForm}
         />
       )}
-
-      <div className={cx('profileModalFooter')}>
-        <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={onLogout}>
-          {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-        </button>
-        <button className={cx('profileModalGhostButton')} type="button" onClick={onClose}>
-          닫기
-        </button>
-      </div>
     </div>
   );
 }

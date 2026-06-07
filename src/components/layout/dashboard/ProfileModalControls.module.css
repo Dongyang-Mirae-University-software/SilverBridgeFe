@@ -1,6 +1,6 @@
 .profileManageStack {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
   overflow: hidden;
   gap: 12px;
@@ -31,78 +31,6 @@
 
 .profileManageScroll::-webkit-scrollbar {
   display: none;
-}
-
-.profileModalFooter {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-  border-top: 1px solid rgba(15, 23, 42, 0.06);
-  padding-top: 14px;
-  background: #fff;
-}
-
-.logoutButton {
-  display: inline-flex;
-  flex: 1 1 120px;
-  min-width: 0;
-  max-width: 100%;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.04);
-  color: var(--sb-ink-mute);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 750;
-  min-height: 42px;
-  padding: 10px 12px;
-  white-space: nowrap;
-}
-
-.profileModalGhostButton {
-  display: inline-flex;
-  flex: 0 1 120px;
-  min-width: 0;
-  max-width: 100%;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.05);
-  color: var(--sb-brand);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
-  min-height: 42px;
-  padding: 10px 12px;
-  white-space: nowrap;
-}
-
-.profileModalGhostButton:hover {
-  background: rgba(15, 23, 42, 0.08);
-}
-
-.profileModalFooter .logoutButton,
-.profileModalFooter .profileModalGhostButton {
-  min-height: 42px;
-}
-
-.logoutButton:hover {
-  background: rgba(15, 23, 42, 0.08);
-}
-
-.logoutButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.profileModalGhostButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 
 .passwordDialogOverlay {
@@ -263,18 +191,6 @@
 
   .profileManageScroll {
     padding-right: 0;
-  }
-
-  .profileModalFooter {
-    justify-content: stretch;
-    padding-top: 10px;
-  }
-
-  .profileModalFooter .logoutButton,
-  .profileModalFooter .profileModalGhostButton {
-    flex: 1 1 100%;
-    width: 100%;
-    min-width: 0;
   }
 
   .passwordDialogOverlay {
