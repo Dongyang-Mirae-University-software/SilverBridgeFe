@@ -86,11 +86,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <MobileTopBar onOpenSidebar={() => setIsSidebarOpen(true)} pageTitle={pageTitle} role={role} />
         {isSidebarOpen && <button className={cx('scrim')} type="button" aria-label="메뉴 닫기" onClick={() => setIsSidebarOpen(false)} />}
         <DashboardSidebar
-          isLoggingOut={isLoggingOut}
           isOpen={isSidebarOpen}
           navItems={navItems}
           onClose={() => setIsSidebarOpen(false)}
-          onLogout={handleLogoutRequest}
           onOpenProfile={() => setIsProfileModalOpen(true)}
           pathname={pathname}
           profile={profile}
