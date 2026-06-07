@@ -68,15 +68,14 @@ const SOS_OPTIONS = [
 
 export function WardSettingsContent() {
   const { updateWardSettings, wardSettings } = useDashboard();
-  const { data: notificationSettingsResponse } = useQuery(userNotificationSettingsQueryOptions);
+  const { data: notificationSettingsQuery = [] } = useQuery(userNotificationSettingsQueryOptions);
   const { mutate: updateNotificationSettings, isPending: isUpdatingNotificationSettings } = useNotificationSettingsMutation();
   const [notificationError, setNotificationError] = useState('');
   const [notificationSettingsDraft, setNotificationSettingsDraft] = useState<IUserNotificationSetting[] | null>(null);
 
   const fontProgress = ((wardSettings.fontSize - MIN_WARD_FONT_SIZE) / (MAX_WARD_FONT_SIZE - MIN_WARD_FONT_SIZE)) * 100;
   const rangeStyle = { '--settings-range-progress': `${fontProgress}%` } as CSSProperties;
-  const querySettings = notificationSettingsResponse?.data?.settings ?? [];
-  const notificationSettings = notificationSettingsDraft ?? querySettings;
+  const notificationSettings = notificationSettingsDraft ?? notificationSettingsQuery;
   const notificationSettingMap = new Map(notificationSettings.map(item => [item.channelType, item.enabled]));
 
   function handleNotificationToggle(channelType: NotificationChannelType, enabled: boolean) {
