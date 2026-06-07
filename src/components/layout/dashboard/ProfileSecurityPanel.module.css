@@ -1,18 +1,22 @@
 .profileManageCard {
-  border: 0;
+  border: 1px solid rgba(15, 23, 42, 0.06);
   border-radius: 28px;
-  background: #f6f1e5;
+  background: #fff;
   box-shadow: none;
   overflow: hidden;
 }
 
 .profileManageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   padding: 22px 22px 12px;
 }
 
 .profileManageHeader h3 {
   margin: 0;
-  color: #6b6256;
+  color: var(--sb-ink);
   font-size: 16px;
   font-weight: 750;
   line-height: 1.3;
@@ -20,57 +24,31 @@
 
 .profileManageHeader p {
   margin: 4px 0 0;
-  color: #8f8677;
+  color: var(--sb-ink-mute);
   font-size: 12px;
   line-height: 1.5;
   white-space: normal;
 }
 
-.profileForm {
-  display: grid;
-  gap: 14px;
-  padding: 8px 20px 0;
-}
-
-.profileFormGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
-}
-
-.profileField {
-  display: grid;
-  gap: 10px;
+.profileHeaderAction {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
   border: 0;
-  border-radius: 26px;
-  background: #efe9dc;
-  color: var(--sb-ink-soft);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.05);
+  color: var(--sb-brand);
+  cursor: pointer;
   font-size: 12px;
-  font-weight: 750;
-  min-width: 0;
-  padding: 18px 20px;
+  font-weight: 800;
+  min-height: 34px;
+  padding: 0 14px;
+  white-space: nowrap;
 }
 
-.profileField input,
-.profileField select {
-  width: 100%;
-  box-sizing: border-box;
-  border: 0;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--sb-ink);
-  font: inherit;
-  font-size: 16px;
-  font-weight: 750;
-  min-height: 52px;
-  outline: none;
-  padding: 0 16px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04);
-}
-
-.profileField input:focus,
-.profileField select:focus {
-  box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.12);
+.profileHeaderAction:hover {
+  background: rgba(15, 23, 42, 0.08);
 }
 
 .profileModalActions {
@@ -79,34 +57,6 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
-}
-
-.profileModalGhostButton {
-  display: inline-flex;
-  flex: 0 1 120px;
-  min-width: 0;
-  max-width: 100%;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(31, 94, 72, 0.12);
-  color: var(--sb-brand);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
-  min-height: 40px;
-  padding: 10px 12px;
-  white-space: nowrap;
-}
-
-.profileModalGhostButton:hover {
-  background: rgba(31, 94, 72, 0.16);
-}
-
-.profileModalGhostButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 
 .profilePrimaryButton {
@@ -142,12 +92,9 @@
     padding: 16px 16px 10px;
   }
 
-  .profileForm {
-    padding: 6px 14px 0;
-  }
-
-  .profileFormGrid {
-    grid-template-columns: 1fr;
+  .profileHeaderAction {
+    min-height: 34px;
+    padding: 0 12px;
   }
 
   .profileModalActions {
