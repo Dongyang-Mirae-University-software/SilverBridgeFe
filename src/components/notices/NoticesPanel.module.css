@@ -10,24 +10,8 @@
 .header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
-}
-
-.title {
-  margin: 0 0 4px;
-  color: var(--sb-ink);
-  font-size: 22px;
-  font-weight: 850;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.subtitle {
-  margin: 0;
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 /* ── 빈 상태 ── */

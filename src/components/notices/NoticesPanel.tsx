@@ -56,10 +56,6 @@ export function NoticesPanel() {
   return (
     <section className={cx('page')}>
       <header className={cx('header')}>
-        <div>
-          <h1 className={cx('title')}>공지사항</h1>
-          <p className={cx('subtitle')}>서비스 운영 관련 공지를 확인하세요.</p>
-        </div>
         <RefreshButton ariaLabel="공지사항 새로고침" disabled={isLoading} onRefresh={() => refetch()} />
       </header>
 
