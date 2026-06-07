@@ -4,10 +4,22 @@ import { IUserProfile } from '@/service/interface/user';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ProfileModalControls } from './ProfileModalControls';
 import { formatProfileDate, getProviderLabel } from '@/lib/dashboard/profile';
+import { formatPhoneNumber } from '@/lib/format/phone';
 import classNames from 'classnames/bind';
 import styles from './ProfileModal.module.css';
 
 const cx = classNames.bind(styles);
+
+function formatGender(gender: IUserProfile['gender']) {
+  if (gender === 'MALE') return '남성';
+  if (gender === 'FEMALE') return '여성';
+  return '정보 없음';
+}
+
+function formatAddress(profile: IUserProfile | null) {
+  const parts = [profile?.address, profile?.addressDetail].filter(Boolean);
+  return parts.length > 0 ? parts.join(' ') : '정보 없음';
+}
 
 interface Props {
   isLoggingOut: boolean;
@@ -20,7 +32,6 @@ interface Props {
   role: AuthRole;
   userEmail: string;
   userName: string;
-  userPhone: string;
 }
 
 export function ProfileModal({
@@ -34,12 +45,15 @@ export function ProfileModal({
   role,
   userEmail,
   userName,
-  userPhone,
 }: Props) {
   const profileRows = [
-    { label: '사용자 ID', value: profile?.id ?? '정보 없음' },
-    { label: '전화번호', value: userPhone },
-    { label: '최근 로그인', value: formatProfileDate(profile?.lastLoginAt) },
+    { label: '이름', value: profile?.name ?? '정보 없음' },
+    { label: '성별', value: formatGender(profile?.gender ?? null) },
+    { label: '생년월일', value: profile?.birthDate ?? '정보 없음' },
+    { label: '전화번호', value: formatPhoneNumber(profile?.phone ?? '') || '정보 없음' },
+    { label: '이메일', value: profile?.email ?? '정보 없음' },
+    { label: '주소', value: formatAddress(profile) },
+    { label: '가입 방법', value: getProviderLabel(profile?.provider) },
     { label: '가입일', value: formatProfileDate(profile?.createdAt) },
   ];
 
