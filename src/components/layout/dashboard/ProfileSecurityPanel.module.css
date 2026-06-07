@@ -96,21 +96,20 @@
   max-width: 100%;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 14px;
-  background: #fff;
-  color: var(--sb-ink);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-brand);
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
   min-height: 42px;
-  padding: 10px 14px;
+  padding: 10px 12px;
   white-space: nowrap;
 }
 
 .profileModalGhostButton:hover {
-  background: #fafafa;
-  border-color: var(--sb-line);
+  background: rgba(31, 94, 72, 0.06);
 }
 
 .profileModalGhostButton:disabled {
@@ -142,9 +141,13 @@
 }
 
 .profileDangerButton {
-  border: 1px solid #e7b9ae;
-  background: #fff7f5;
+  border: 0;
+  background: transparent;
   color: var(--sb-warn);
+}
+
+.profileDangerButton:hover {
+  background: rgba(186, 28, 28, 0.06);
 }
 
 .profilePrimaryButton:disabled,

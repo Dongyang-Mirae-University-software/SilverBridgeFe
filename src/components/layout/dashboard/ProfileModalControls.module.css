@@ -76,15 +76,15 @@
   max-width: 100%;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 14px;
-  background: #fff;
-  color: var(--sb-ink);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-ink-mute);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   min-height: 42px;
-  padding: 10px 14px;
+  padding: 10px 12px;
   white-space: nowrap;
 }
 
@@ -95,21 +95,20 @@
   max-width: 100%;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 14px;
-  background: #fff;
-  color: var(--sb-ink);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-brand);
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
   min-height: 42px;
-  padding: 10px 14px;
+  padding: 10px 12px;
   white-space: nowrap;
 }
 
 .profileModalGhostButton:hover {
-  background: #fafafa;
-  border-color: var(--sb-line);
+  background: rgba(31, 94, 72, 0.06);
 }
 
 .profileModalFooter .logoutButton,
@@ -118,8 +117,7 @@
 }
 
 .logoutButton:hover {
-  background: #fafafa;
-  border-color: var(--sb-line);
+  background: rgba(15, 23, 42, 0.04);
 }
 
 .logoutButton:disabled {
