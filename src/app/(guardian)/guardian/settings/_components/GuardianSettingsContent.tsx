@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { CommonModal } from '@/components/CommonModal';
 import { deleteMyAccount } from '@/service/api/user';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
 import { myProfileQueryOptions } from '@/service/query/user';
@@ -33,6 +32,8 @@ const CHANNEL_DESC: Record<NotificationChannelType, string> = {
   EMAIL: '공지사항 및 서비스 안내를 이메일로 받습니다.',
 };
 
+type DeleteStep = 'confirm' | 'input';
+
 export default function GuardianSettingsContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -44,10 +45,10 @@ export default function GuardianSettingsContent() {
   const { data: notificationSettings = [], isLoading: isLoadingSettings } = useQuery(userNotificationSettingsQueryOptions);
   const notificationMutation = useNotificationSettingsMutation();
 
-  const [deletePassword, setDeletePassword] = useState('');
-  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleteStep, setDeleteStep] = useState<DeleteStep | null>(null);
+  const [deleteValue, setDeleteValue] = useState('');
   const [deleteError, setDeleteError] = useState('');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const deleteMutation = useMutation({
     mutationFn: deleteMyAccount,
@@ -60,37 +61,102 @@ export default function GuardianSettingsContent() {
   });
 
   const handleToggle = (channelType: NotificationChannelType, enabled: boolean) => {
-    notificationMutation.mutate({
-      settings: [{ channelType, enabled }],
-    });
+    notificationMutation.mutate({ settings: [{ channelType, enabled }] });
+  };
+
+  const openConfirm = () => setDeleteStep('confirm');
+
+  const proceedToInput = () => {
+    setDeleteStep('input');
+    setDeleteValue('');
+    setDeleteError('');
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const closeModal = () => {
+    setDeleteStep(null);
+    setDeleteValue('');
+    setDeleteError('');
   };
 
   const handleDeleteSubmit = () => {
     setDeleteError('');
-    if (!isKakaoUser && !deletePassword) {
-      setDeleteError('비밀번호를 입력해주세요.');
-      return;
+    if (isKakaoUser) {
+      if (deleteValue !== '회원탈퇴') {
+        setDeleteError('"회원탈퇴"를 정확히 입력해주세요.');
+        return;
+      }
+      deleteMutation.mutate({ confirmation: deleteValue });
+    } else {
+      if (!deleteValue) {
+        setDeleteError('비밀번호를 입력해주세요.');
+        return;
+      }
+      deleteMutation.mutate({ password: deleteValue });
     }
-    if (isKakaoUser && deleteConfirm !== '회원탈퇴') {
-      setDeleteError('"회원탈퇴"를 정확히 입력해주세요.');
-      return;
-    }
-    deleteMutation.mutate(
-      isKakaoUser ? { confirmation: deleteConfirm } : { password: deletePassword },
-    );
   };
 
   return (
     <div className={cx('page')}>
-      {showDeleteModal && (
-        <CommonModal
-          type="error"
-          tone="guardian"
-          title="정말 탈퇴할까요?"
-          message="탈퇴 후에는 계정을 복구할 수 없습니다. 신중하게 확인해주세요."
-          confirmText="취소"
-          onClose={() => setShowDeleteModal(false)}
-        />
+
+      {/* ── 1단계: 확인 모달 ── */}
+      {deleteStep === 'confirm' && (
+        <div className={cx('overlay')} onClick={closeModal}>
+          <div className={cx('modal')} onClick={e => e.stopPropagation()} role="alertdialog" aria-modal="true">
+            <div className={cx('modalIcon')}>⚠</div>
+            <h3 className={cx('modalTitle')}>정말 탈퇴할까요?</h3>
+            <p className={cx('modalDesc')}>
+              탈퇴 시 모든 데이터가 삭제되며 <strong>복구할 수 없습니다.</strong><br />
+              연결된 피보호자와의 관계도 모두 해제됩니다.
+            </p>
+            <div className={cx('modalActions')}>
+              <button className={cx('modalCancel')} type="button" onClick={closeModal}>
+                취소
+              </button>
+              <button className={cx('modalDanger')} type="button" onClick={proceedToInput}>
+                계속하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2단계: 입력 모달 ── */}
+      {deleteStep === 'input' && (
+        <div className={cx('overlay')} onClick={closeModal}>
+          <div className={cx('modal')} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+            <h3 className={cx('modalTitle')}>탈퇴 확인</h3>
+            <p className={cx('modalDesc')}>
+              {isKakaoUser
+                ? <>확인을 위해 <strong>회원탈퇴</strong>를 입력해주세요.</>
+                : '확인을 위해 현재 비밀번호를 입력해주세요.'}
+            </p>
+            <input
+              ref={inputRef}
+              className={cx('modalInput', { error: !!deleteError })}
+              type={isKakaoUser ? 'text' : 'password'}
+              placeholder={isKakaoUser ? '회원탈퇴' : '비밀번호'}
+              value={deleteValue}
+              autoComplete={isKakaoUser ? 'off' : 'current-password'}
+              onChange={e => setDeleteValue(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleDeleteSubmit()}
+            />
+            {deleteError && <p className={cx('modalError')}>{deleteError}</p>}
+            <div className={cx('modalActions')}>
+              <button className={cx('modalCancel')} type="button" onClick={closeModal}>
+                취소
+              </button>
+              <button
+                className={cx('modalDanger')}
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={handleDeleteSubmit}
+              >
+                {deleteMutation.isPending ? '처리 중…' : '탈퇴하기'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* 알림 설정 */}
@@ -135,42 +201,9 @@ export default function GuardianSettingsContent() {
             연결된 피보호자와의 관계도 모두 해제됩니다.
           </p>
         </div>
-
-        <div className={cx('deleteForm')}>
-          {isKakaoUser ? (
-            <label className={cx('fieldLabel')}>
-              확인을 위해 <strong>회원탈퇴</strong>를 입력하세요.
-              <input
-                className={cx('input')}
-                type="text"
-                placeholder="회원탈퇴"
-                value={deleteConfirm}
-                onChange={e => setDeleteConfirm(e.target.value)}
-              />
-            </label>
-          ) : (
-            <label className={cx('fieldLabel')}>
-              확인을 위해 현재 비밀번호를 입력하세요.
-              <input
-                className={cx('input')}
-                type="password"
-                placeholder="비밀번호"
-                value={deletePassword}
-                onChange={e => setDeletePassword(e.target.value)}
-                autoComplete="current-password"
-              />
-            </label>
-          )}
-
-          {deleteError && <p className={cx('errorText')}>{deleteError}</p>}
-
-          <button
-            className={cx('deleteButton')}
-            type="button"
-            disabled={deleteMutation.isPending}
-            onClick={handleDeleteSubmit}
-          >
-            {deleteMutation.isPending ? '처리 중…' : '회원 탈퇴'}
+        <div className={cx('sectionBody')}>
+          <button className={cx('deleteButton')} type="button" onClick={openConfirm}>
+            회원 탈퇴
           </button>
         </div>
       </section>
