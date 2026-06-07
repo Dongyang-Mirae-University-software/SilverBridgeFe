@@ -116,6 +116,7 @@
 .profileModalActions {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 14px;
 }
@@ -127,18 +128,20 @@
 
 .profileModalGhostButton {
   display: inline-flex;
-  min-width: 84px;
+  flex: 0 1 120px;
+  min-width: 0;
+  max-width: 100%;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 999px;
+  border-radius: 14px;
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
   min-height: 42px;
-  padding: 10px 16px;
+  padding: 10px 14px;
   white-space: nowrap;
 }
 
@@ -154,17 +157,20 @@
 
 .profilePrimaryButton {
   display: inline-flex;
+  flex: 0 1 140px;
+  min-width: 0;
+  max-width: 100%;
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 999px;
+  border-radius: 14px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
   min-height: 42px;
-  padding: 10px 18px;
+  padding: 10px 14px;
   white-space: nowrap;
 }
 
@@ -201,5 +207,6 @@
 
   .profileModalActions .profilePrimaryButton {
     width: 100%;
+    flex: 1 1 100%;
   }
 }
