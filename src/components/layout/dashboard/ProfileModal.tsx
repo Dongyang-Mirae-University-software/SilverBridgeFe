@@ -1,12 +1,12 @@
+import classNames from 'classnames/bind';
+
+import { UserAvatar } from '@/components/UserAvatar';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
-import { IUserProfile } from '@/service/interface/user';
-import { UserAvatar } from '@/components/UserAvatar';
-import { ProfileModalControls } from './ProfileModalControls';
-import { formatProfileDate, getProviderLabel } from '@/lib/dashboard/profile';
 import { formatPhoneNumber } from '@/lib/format/phone';
-import classNames from 'classnames/bind';
+import { ProfileModalControls } from './ProfileModalControls';
 import styles from './ProfileModal.module.css';
+import { IUserProfile } from '@/service/interface/user';
 
 const cx = classNames.bind(styles);
 
@@ -47,14 +47,10 @@ export function ProfileModal({
   userName,
 }: Props) {
   const profileRows = [
-    { label: '이름', value: profile?.name ?? '정보 없음' },
     { label: '성별', value: formatGender(profile?.gender ?? null) },
     { label: '생년월일', value: profile?.birthDate ?? '정보 없음' },
     { label: '전화번호', value: formatPhoneNumber(profile?.phone ?? '') || '정보 없음' },
-    { label: '이메일', value: profile?.email ?? '정보 없음' },
     { label: '주소', value: formatAddress(profile) },
-    { label: '가입 방법', value: getProviderLabel(profile?.provider) },
-    { label: '가입일', value: formatProfileDate(profile?.createdAt) },
   ];
 
   return (
@@ -78,10 +74,9 @@ export function ProfileModal({
             <div>
               <div className={cx('profileModalBadges')}>
                 <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
-                <span className={cx('profileProviderBadge')}>{getProviderLabel(profile?.provider)}</span>
               </div>
               <h2 id="profile-modal-title">{userName}</h2>
-              <p>{userEmail}</p>
+              <p className={cx('profileUserEmail')}>{userEmail}</p>
             </div>
           </div>
           <button
