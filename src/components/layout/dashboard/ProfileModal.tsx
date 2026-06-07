@@ -5,7 +5,7 @@ import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user';
 import { ProfileModalControls } from './ProfileModalControls';
-import { formatProfileDate, getProviderLabel } from '@/lib/dashboard/profile';
+import { getProviderLabel } from '@/lib/dashboard/profile';
 import { formatPhoneNumber } from '@/lib/format/phone';
 import styles from './ProfileModal.module.css';
 
@@ -52,8 +52,6 @@ export function ProfileModal({
     { label: '성별', value: formatGender(profile?.gender ?? null) },
     { label: '생년월일', value: profile?.birthDate ?? '정보 없음' },
     { label: '주소', value: formatAddress(profile) },
-    { label: '가입 방법', value: getProviderLabel(profile?.provider) },
-    { label: '가입일', value: formatProfileDate(profile?.createdAt) },
   ];
 
   return (
@@ -70,7 +68,7 @@ export function ProfileModal({
         {/* 헤더: 아바타 + 이름 */}
         <div className={cx('profileModalHeader')}>
           <UserAvatar
-            size="w-120"
+            size="w-60"
             imageUrl={profile?.profileImage}
             disabled={isProfileImageChanging}
             onImageChange={onProfileImageChange}
