@@ -1,0 +1,197 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 600px;
+}
+
+/* ── 섹션 ── */
+.section {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  overflow: hidden;
+}
+
+.dangerSection {
+  border-color: #f5c6bb;
+}
+
+.sectionHead {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--sb-line-soft);
+}
+
+.dangerSection .sectionHead {
+  border-color: #f5c6bb;
+  background: #fff8f7;
+}
+
+.sectionTitle {
+  margin: 0 0 4px;
+  color: var(--sb-ink);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.dangerTitle {
+  color: var(--sb-warn);
+}
+
+.sectionDesc {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.loadingText {
+  margin: 0;
+  padding: 18px 22px;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+}
+
+/* ── 알림 토글 목록 ── */
+.toggleList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toggleItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--sb-line-soft);
+}
+
+.toggleItem:last-child {
+  border-bottom: 0;
+}
+
+.toggleLabel {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.toggleDesc {
+  display: block;
+  margin-top: 2px;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ── 토글 스위치 ── */
+.toggle {
+  flex-shrink: 0;
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sb-line);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toggle.on {
+  background: var(--guardian-brand);
+}
+
+.toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  transition: transform 0.2s ease;
+}
+
+.toggle.on .toggleThumb {
+  transform: translateX(18px);
+}
+
+/* ── 탈퇴 폼 ── */
+.deleteForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 22px;
+}
+
+.fieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.fieldLabel strong {
+  color: var(--sb-warn);
+  font-weight: 850;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fcfbf8;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 14px;
+  min-height: 42px;
+  outline: none;
+  padding: 0 12px;
+}
+
+.input:focus {
+  border-color: var(--sb-warn);
+  box-shadow: 0 0 0 3px rgba(192, 75, 58, 0.08);
+}
+
+.errorText {
+  margin: 0;
+  color: var(--sb-warn);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.deleteButton {
+  align-self: flex-start;
+  border: 1px solid #f0c0b5;
+  border-radius: 10px;
+  background: #fbe5e0;
+  color: var(--sb-warn);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 9px 18px;
+  transition: filter 0.12s;
+}
+
+.deleteButton:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.deleteButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
