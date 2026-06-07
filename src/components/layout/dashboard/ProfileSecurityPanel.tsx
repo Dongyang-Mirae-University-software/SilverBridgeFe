@@ -40,6 +40,11 @@ export function ProfileSecurityPanel({
 }: Props) {
   return (
     <section className={cx('profileManageCard')}>
+      <div className={cx('profileManageHeader')}>
+        <h3>보안</h3>
+        <p>비밀번호 변경과 회원 탈퇴를 별도 영역으로 분리했습니다.</p>
+      </div>
+
       <form className={cx('profileForm')} onSubmit={onPasswordSubmit}>
         <div className={cx('profileFormGrid')}>
           <PasswordInput
