@@ -109,41 +109,6 @@
   background: var(--sb-bg-soft);
 }
 
-.profileModalMeta {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  border-bottom: 1px solid var(--sb-line-soft);
-  background: #fff;
-  padding: 14px 20px 16px;
-}
-
-.profileMetaItem {
-  min-width: 0;
-  border-radius: 16px;
-  background: var(--sb-bg-soft);
-  padding: 11px 12px;
-}
-
-.profileMetaItem span {
-  display: block;
-  color: var(--sb-ink-mute);
-  font-size: 11px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.profileMetaItem strong {
-  display: block;
-  overflow: hidden;
-  color: var(--sb-ink);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.45;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 @media (max-width: 720px) {
   .profileModalOverlay {
     padding: 6px;
@@ -172,11 +137,6 @@
   .profileUserEmail {
     font-size: 11px;
   }
-
-  .profileModalMeta {
-    display: none;
-  }
-
   .profileModalClose {
     top: 10px;
     right: 10px;
