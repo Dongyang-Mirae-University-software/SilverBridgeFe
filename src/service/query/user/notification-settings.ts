@@ -6,6 +6,7 @@ import {
   getMyNotificationSettings,
   updateMyNotificationSettings,
 } from '@/service/api/user';
+import type { CommonResponse } from '@/service/interface/common';
 import type {
   IUserNotificationSetting,
   IUserNotificationSettingsResponse,
@@ -31,11 +32,24 @@ export function getNormalizedNotificationSettings(response: IUserNotificationSet
   return normalizeNotificationSettings(response?.settings);
 }
 
+function getNotificationSettingsBody(response: unknown) {
+  const body = response as
+    | CommonResponse<IUserNotificationSettingsResponse>
+    | { data?: CommonResponse<IUserNotificationSettingsResponse> | IUserNotificationSettingsResponse };
+  const data = body?.data as CommonResponse<IUserNotificationSettingsResponse> | IUserNotificationSettingsResponse | undefined;
+
+  if (data && typeof data === 'object' && 'settings' in data) {
+    return data as IUserNotificationSettingsResponse;
+  }
+
+  return (data as CommonResponse<IUserNotificationSettingsResponse> | undefined)?.data ?? null;
+}
+
 export const userNotificationSettingsQueryOptions = queryOptions({
   queryKey: userNotificationSettingsQueryKey,
   queryFn: async (): Promise<IUserNotificationSetting[]> => {
     const response = await getMyNotificationSettings();
-    return normalizeNotificationSettings(response.data.data?.settings);
+    return normalizeNotificationSettings(getNotificationSettingsBody(response)?.settings);
   },
   staleTime: 5 * 60 * 1000,
   gcTime: 30 * 60 * 1000,
@@ -66,7 +80,7 @@ export function useNotificationSettingsMutation() {
     onSuccess: response => {
       queryClient.setQueryData(
         userNotificationSettingsQueryKey,
-        normalizeNotificationSettings(response.data.data?.settings),
+        normalizeNotificationSettings(getNotificationSettingsBody(response)?.settings),
       );
     },
   });
