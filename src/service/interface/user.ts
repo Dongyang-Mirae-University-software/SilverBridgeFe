@@ -37,7 +37,7 @@ export interface IUserUpdateReq {
   name: string;
   phone: string;
   verificationNonce?: string | null;
-  gender: GenderType;
+  gender: GenderType | '';
   birthDate: string;
   postcode: string;
   address: string;

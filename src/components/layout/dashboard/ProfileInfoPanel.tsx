@@ -55,7 +55,8 @@ export function ProfileInfoPanel({
           />
           <label className={cx('profileField')}>
             <span>성별</span>
-            <select value={form.gender ?? 'FEMALE'} onChange={event => onChange('gender', event.target.value as GenderType)}>
+            <select value={form.gender ?? ''} onChange={event => onChange('gender', event.target.value as GenderType | '')}>
+              <option value="">선택 안 함</option>
               <option value="FEMALE">여성</option>
               <option value="MALE">남성</option>
             </select>
