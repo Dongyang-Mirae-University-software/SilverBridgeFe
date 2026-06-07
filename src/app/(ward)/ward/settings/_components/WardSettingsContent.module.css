@@ -288,16 +288,6 @@
   background: var(--sb-brand-50);
 }
 
-/* ── 연결 알림 채널 ── */
-.notificationNote {
-  border-radius: 12px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-soft);
-  font-size: 13px;
-  line-height: 1.6;
-  padding: 12px 14px;
-}
-
 .notificationError {
   border: 1px solid #f4c6c6;
   border-radius: 12px;
@@ -713,7 +703,6 @@
     width: 100%;
   }
 
-  .notificationNote,
   .notificationError {
     margin: 0 16px 12px;
   }

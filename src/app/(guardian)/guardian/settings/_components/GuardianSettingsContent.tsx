@@ -280,10 +280,6 @@ export default function GuardianSettingsContent() {
             <p className={cx('loadingText')}>불러오는 중…</p>
           ) : (
             <>
-              <div className={cx('notificationNote')}>
-                현재 실제 발송되는 채널은 FCM입니다. SMS, 카카오 알림톡, 이메일은 설정만 저장됩니다. 회원가입이나 비밀번호 재설정
-                인증번호 발송은 이 설정과 무관합니다.
-              </div>
               {notificationError && <div className={cx('notificationError')}>{notificationError}</div>}
               <ul className={cx('toggleList')}>
                 {notificationSettings.map(({ channelType, enabled }) => (
