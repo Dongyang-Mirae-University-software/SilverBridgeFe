@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
 import Step from '@/app/(auth)/_components/Step';
@@ -12,6 +13,7 @@ import FindPasswordSmsStep from './FindPasswordSmsStep';
 import FindPasswordVerifyStep from './FindPasswordVerifyStep';
 import FindPasswordResetStep from './FindPasswordResetStep';
 import styles from './FindPasswordContent.module.css';
+
 const cx = classNames.bind(styles);
 
 const STEP_LIST = ['방식 선택', '정보 입력', '인증 확인', '새 비밀번호 생성'];
