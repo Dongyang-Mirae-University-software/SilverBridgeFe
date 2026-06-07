@@ -146,31 +146,31 @@
 
 @media (max-width: 720px) {
   .profileModalOverlay {
-    padding: 8px;
+    padding: 6px;
   }
 
   .profileModal {
-    height: calc(100svh - 16px);
-    width: min(100%, calc(100vw - 16px));
-    border-radius: 20px;
+    height: calc(100svh - 12px);
+    width: min(100%, calc(100vw - 12px));
+    border-radius: 22px;
   }
 
   .profileModalHeader {
     grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 15px 16px 14px;
+    gap: 8px;
+    padding: 14px 14px 12px;
   }
 
   .profileModalUser {
-    gap: 10px;
+    gap: 8px;
   }
 
   .profileModal h2 {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .profileUserEmail {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .profileModalMeta {
@@ -178,8 +178,8 @@
   }
 
   .profileModalClose {
-    top: 12px;
-    right: 12px;
+    top: 10px;
+    right: 10px;
     width: 32px;
     height: 32px;
   }
