@@ -3,23 +3,11 @@ import classNames from 'classnames/bind';
 import { UserAvatar } from '@/components/UserAvatar';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
-import { formatPhoneNumber } from '@/lib/format/phone';
 import { ProfileModalControls } from './ProfileModalControls';
 import styles from './ProfileModal.module.css';
 import { IUserProfile } from '@/service/interface/user';
 
 const cx = classNames.bind(styles);
-
-function formatGender(gender: IUserProfile['gender']) {
-  if (gender === 'MALE') return '남성';
-  if (gender === 'FEMALE') return '여성';
-  return '정보 없음';
-}
-
-function formatAddress(profile: IUserProfile | null) {
-  const parts = [profile?.address, profile?.addressDetail].filter(Boolean);
-  return parts.length > 0 ? parts.join(' ') : '정보 없음';
-}
 
 interface Props {
   isLoggingOut: boolean;
@@ -46,13 +34,6 @@ export function ProfileModal({
   userEmail,
   userName,
 }: Props) {
-  const profileMetaRows = [
-    { label: '성별', value: formatGender(profile?.gender ?? null) },
-    { label: '생년월일', value: profile?.birthDate ?? '정보 없음' },
-    { label: '전화번호', value: formatPhoneNumber(profile?.phone ?? '') || '정보 없음' },
-    { label: '주소', value: formatAddress(profile) },
-  ];
-
   return (
     <div className={cx('profileModalOverlay')} role="presentation" onClick={onClose}>
       <section
@@ -87,15 +68,6 @@ export function ProfileModal({
           >
             ×
           </button>
-        </div>
-
-        <div className={cx('profileModalMeta')}>
-          {profileMetaRows.map(row => (
-            <div key={row.label} className={cx('profileMetaItem')}>
-              <span>{row.label}</span>
-              <strong>{row.value}</strong>
-            </div>
-          ))}
         </div>
 
         <ProfileModalControls
