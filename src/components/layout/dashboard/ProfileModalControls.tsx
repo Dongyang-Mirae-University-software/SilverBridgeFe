@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { CommonModal } from '@/components/CommonModal';
 import { signupSmsSend, signupSmsVerify } from '@/service/api/auth';
-import { changeMyPassword, deleteMyAccount, updateMyProfile } from '@/service/api/user';
+import { changeMyPassword, updateMyProfile } from '@/service/api/user';
 import { IUserProfile, IUserUpdateReq } from '@/service/interface/user';
 import { myProfileQueryKey } from '@/service/query/user';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
@@ -36,12 +36,8 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
   const [phoneCode, setPhoneCode] = useState('');
   const [phoneNonce, setPhoneNonce] = useState<string | null>(null);
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
-  const [deletePassword, setDeletePassword] = useState('');
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
-  const [isDeleteCompleteModalOpen, setIsDeleteCompleteModalOpen] = useState(false);
   const [passwordModal, setPasswordModal] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
-  const [activePanel, setActivePanel] = useState<'profile' | 'security'>('profile');
   const [isProfileEditing, setIsProfileEditing] = useState(false);
   const isKakaoUser = profile?.provider === 'KAKAO';
   const isPhoneChanged = (profileForm.phone ?? '').trim() !== getPhoneDigits(profile?.phone ?? '');
@@ -87,33 +83,12 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
     onSuccess: () => setPasswordModal({ message: '비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.', type: 'success' }),
     onError: error => setPasswordModal({ message: getModalErrorMessage(error, '비밀번호 변경에 실패했습니다.'), type: 'error' }),
   });
-  const deleteMutation = useMutation({
-    mutationKey: ['user-account-delete'],
-    mutationFn: deleteMyAccount,
-    onMutate: () => setFeedbackMessage(''),
-    onSuccess: () => setIsDeleteCompleteModalOpen(true),
-    onError: error => setFeedbackMessage(getModalErrorMessage(error, '회원 탈퇴에 실패했습니다.')),
-  });
-
   const updateProfileForm = (field: keyof IUserUpdateReq, value: string) => {
     setProfileForm(current => ({ ...current, [field]: value }));
     if (field === 'phone') {
       setPhoneCode('');
       setPhoneNonce(null);
     }
-  };
-
-  const handlePanelChange = (panel: 'profile' | 'security') => {
-    if (panel === activePanel) return;
-    setFeedbackMessage('');
-    setProfileForm(getProfileFormValue(profile));
-    setPhoneCode('');
-    setPhoneNonce(null);
-    setPasswordForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
-    setDeletePassword('');
-    setDeleteConfirmation('');
-    setActivePanel(panel);
-    setIsProfileEditing(false);
   };
 
   const handleProfileEditStart = () => {
@@ -152,24 +127,8 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
     passwordMutation.mutate({ currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword });
   };
 
-  const handleDeleteSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!window.confirm('정말 회원 탈퇴를 진행할까요? 탈퇴 후 해당 계정으로 로그인할 수 없습니다.')) return;
-    deleteMutation.mutate(isKakaoUser ? { confirmation: deleteConfirmation } : { password: deletePassword });
-  };
-
   return (
     <div className={cx('profileManageStack')}>
-      {isDeleteCompleteModalOpen && (
-        <CommonModal
-          type="success"
-          tone={profile?.role === 'GUARDIAN' ? 'guardian' : 'default'}
-          title="회원 탈퇴가 완료되었습니다"
-          message="그동안 이용해 주셔서 감사합니다."
-          confirmText="확인"
-          onClose={() => redirectToLogin(queryClient, router)}
-        />
-      )}
       {passwordModal && (
         <CommonModal
           type={passwordModal.type}
@@ -189,40 +148,30 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
       )}
       {feedbackMessage && <p className={cx('profileModalMessage')}>{feedbackMessage}</p>}
 
-      <ProfileTabs activePanel={activePanel} onChange={handlePanelChange} />
       <div className={cx('profileManageScroll')}>
-        {activePanel === 'profile' ? (
-          <ProfileInfoPanel
-            form={profileForm}
-            isEditing={isProfileEditing}
-            isPhoneChanged={isPhoneChanged}
-            isProfilePending={profileMutation.isPending}
-            onAddressSearch={handleAddressSearch}
-            onCancelEdit={handleProfileEditCancel}
-            onChange={updateProfileForm}
-            onEditStart={handleProfileEditStart}
-            onSubmit={handleProfileSubmit}
-            phoneCode={phoneCode}
-            phoneNonce={phoneNonce}
-            setPhoneCode={setPhoneCode}
-            smsSendMutation={smsSendMutation}
-            smsVerifyMutation={smsVerifyMutation}
-          />
-        ) : (
-          <ProfileSecurityPanel
-            deleteConfirmation={deleteConfirmation}
-            deletePassword={deletePassword}
-            isDeletePending={deleteMutation.isPending}
-            isKakaoUser={isKakaoUser}
-            isPasswordPending={passwordMutation.isPending}
-            onDeleteSubmit={handleDeleteSubmit}
-            onPasswordChange={setPasswordForm}
-            onPasswordSubmit={handlePasswordSubmit}
-            passwordForm={passwordForm}
-            setDeleteConfirmation={setDeleteConfirmation}
-            setDeletePassword={setDeletePassword}
-          />
-        )}
+        <ProfileInfoPanel
+          form={profileForm}
+          isEditing={isProfileEditing}
+          isPhoneChanged={isPhoneChanged}
+          isProfilePending={profileMutation.isPending}
+          onAddressSearch={handleAddressSearch}
+          onCancelEdit={handleProfileEditCancel}
+          onChange={updateProfileForm}
+          onEditStart={handleProfileEditStart}
+          onSubmit={handleProfileSubmit}
+          phoneCode={phoneCode}
+          phoneNonce={phoneNonce}
+          setPhoneCode={setPhoneCode}
+          smsSendMutation={smsSendMutation}
+          smsVerifyMutation={smsVerifyMutation}
+        />
+        <ProfileSecurityPanel
+          isKakaoUser={isKakaoUser}
+          isPasswordPending={passwordMutation.isPending}
+          onPasswordChange={setPasswordForm}
+          onPasswordSubmit={handlePasswordSubmit}
+          passwordForm={passwordForm}
+        />
       </div>
 
       <div className={cx('profileModalFooter')}>
@@ -233,19 +182,6 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
           닫기
         </button>
       </div>
-    </div>
-  );
-}
-
-function ProfileTabs({ activePanel, onChange }: { activePanel: 'profile' | 'security'; onChange: (panel: 'profile' | 'security') => void }) {
-  return (
-    <div className={cx('profileTabsBar')} role="tablist" aria-label="사용자 정보 관리">
-      <button className={cx('profileTab', { profileTabActive: activePanel === 'profile' })} type="button" onClick={() => onChange('profile')}>
-        기본 정보
-      </button>
-      <button className={cx('profileTab', { profileTabActive: activePanel === 'security' })} type="button" onClick={() => onChange('security')}>
-        보안
-      </button>
     </div>
   );
 }

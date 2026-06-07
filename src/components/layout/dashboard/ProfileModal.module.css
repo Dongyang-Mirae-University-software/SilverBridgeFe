@@ -12,7 +12,7 @@
 .profileModal {
   position: relative;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   height: min(720px, calc(100svh - 40px));
   width: min(560px, 100%);
   min-height: 0;

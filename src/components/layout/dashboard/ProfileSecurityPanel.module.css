@@ -52,8 +52,7 @@
 }
 
 .profileField input,
-.profileField select,
-.profileDeleteRow input {
+.profileField select {
   width: 100%;
   box-sizing: border-box;
   border: 0;
@@ -70,19 +69,8 @@
 }
 
 .profileField input:focus,
-.profileField select:focus,
-.profileDeleteRow input:focus {
+.profileField select:focus {
   box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.12);
-}
-
-.profileDeleteRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  border-top: 0;
-  margin-top: 6px;
-  padding: 0 20px 20px;
-  background: transparent;
 }
 
 .profileModalActions {
@@ -121,8 +109,7 @@
   opacity: 0.55;
 }
 
-.profilePrimaryButton,
-.profileDangerButton {
+.profilePrimaryButton {
   display: inline-flex;
   flex: 0 1 140px;
   min-width: 0;
@@ -145,18 +132,7 @@
   box-shadow: 0 12px 28px rgba(31, 94, 72, 0.16);
 }
 
-.profileDangerButton {
-  border: 0;
-  background: rgba(186, 28, 28, 0.08);
-  color: var(--sb-warn);
-}
-
-.profileDangerButton:hover {
-  background: rgba(186, 28, 28, 0.14);
-}
-
-.profilePrimaryButton:disabled,
-.profileDangerButton:disabled {
+.profilePrimaryButton:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
@@ -174,21 +150,11 @@
     grid-template-columns: 1fr;
   }
 
-  .profileDeleteRow {
-    grid-template-columns: 1fr;
-    padding: 0 14px 16px;
-  }
-
   .profileModalActions {
     justify-content: stretch;
   }
 
   .profileModalActions .profilePrimaryButton {
-    width: 100%;
-    flex: 1 1 100%;
-  }
-
-  .profileDeleteRow .profileDangerButton {
     width: 100%;
     flex: 1 1 100%;
   }
