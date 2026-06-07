@@ -1,4 +1,4 @@
-.connectionPage {
+.page {
   display: flex;
   flex: 1;
   min-height: 0;
@@ -6,7 +6,38 @@
   gap: 14px;
 }
 
-.connectionTabs {
+/* ── 툴바 ── */
+.toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbarTitle {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.toolbarSub {
+  display: block;
+  margin-top: 3px;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── 탭 ── */
+.tabs {
   display: inline-flex;
   width: fit-content;
   gap: 4px;
@@ -17,8 +48,8 @@
   box-shadow: var(--sb-shadow-sm);
 }
 
-.connectionTabButton {
-  min-width: 132px;
+.tab {
+  min-width: 120px;
   border: 0;
   border-radius: 9px;
   background: transparent;
@@ -26,299 +57,265 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
-  padding: 10px 16px;
+  padding: 9px 16px;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
-.connectionTabButton:hover {
+.tab:hover {
   background: var(--sb-bg-soft);
   color: var(--sb-ink);
 }
 
-.connectionTabButton.active {
-  background: var(--sb-brand);
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(31, 94, 72, 0.16);
-}
-
-:global(.guardianTheme) .connectionTabButton.active {
+.tab.active {
   background: var(--guardian-brand);
-  box-shadow: 0 8px 18px rgba(69, 67, 52, 0.16);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(138, 75, 56, 0.2);
 }
 
-:global(.guardianTheme) .connectionTabButton:not(.active):hover {
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
-}
-
-.connectionTabContent {
+/* ── 콘텐츠 영역 ── */
+.content {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
-.connectionMessage {
+.feedback {
   margin: 0;
-  border: 1px solid var(--sb-line-soft);
   border-radius: 10px;
-  background: #fff;
-  color: var(--sb-ink-soft);
+  background: #dceee3;
+  color: var(--sb-safe);
   font-size: 13px;
-  font-weight: 650;
-  line-height: 1.5;
-  padding: 12px 14px;
+  font-weight: 700;
+  padding: 10px 14px;
 }
 
-.connectionEmptyBox {
+/* ── 빈 상태 ── */
+.emptyBox {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
-  background: #fff;
-  box-shadow: var(--sb-shadow-sm);
+  border: 1px dashed var(--sb-line);
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
+  padding: 18px 20px;
 }
 
-.connectionEmptyBox .connectionEmpty {
-  flex: 1;
-  border: 0;
-  background: transparent;
-  padding: 0;
+.emptyText {
   margin: 0;
-  color: var(--sb-ink-soft);
+  color: var(--sb-ink-mute);
   font-size: 13px;
-  font-weight: 650;
-  line-height: 1.5;
 }
 
-.connectionLinkButton {
-  box-sizing: border-box;
+.primaryButton {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-height: 40px;
   border: 0;
   border-radius: 10px;
-  background: var(--sb-brand);
+  background: var(--guardian-brand);
   color: #fff;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 750;
   padding: 9px 16px;
-  text-decoration: none;
   white-space: nowrap;
 }
 
-.connectionLinkButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-:global(.guardianTheme) .connectionLinkButton {
-  background: var(--guardian-brand);
-}
-
-:global(.guardianTheme) .connectionLinkButton:not(:disabled):hover {
+.primaryButton:hover {
   filter: brightness(0.94);
 }
 
-.wardListPage {
+/* ── 목록 ── */
+.list {
   display: flex;
-  flex: 1;
-  min-height: 0;
   flex-direction: column;
-  gap: 16px;
-}
-
-.wardListToolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.wardListToolbar strong {
-  display: block;
-  color: var(--sb-ink);
-  font-size: 15px;
-  font-weight: 850;
-}
-
-.wardListToolbar span {
-  display: block;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  font-weight: 650;
-  margin-top: 2px;
-}
-
-.wardListToolbarActions {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 8px;
-}
-
-.wardListToolbarActions .connectionLinkButton {
-  min-width: 96px;
-}
-
-.wardListCards {
-  display: grid;
-  gap: 18px;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.wardListCard {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 16px;
+  background: #fff;
   overflow: hidden;
-  border: 1px solid rgba(20, 17, 12, 0.08);
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.9)),
-    var(--sb-bg);
-  box-shadow: 0 18px 42px rgba(20, 17, 12, 0.08);
+  box-shadow: var(--sb-shadow-sm);
 }
 
-.wardListCardHeader {
+/* ── 행 아이템 ── */
+.item {
+  border-bottom: 1px solid var(--sb-line-soft);
+}
+
+.item:last-child {
+  border-bottom: 0;
+}
+
+.item.expanded {
+  background: #fafaf8;
+}
+
+/* ── 행 버튼 ── */
+.itemRow {
   display: flex;
+  width: 100%;
   align-items: center;
-  gap: 18px;
-  background:
-    radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.85), transparent 34%),
-    linear-gradient(135deg, var(--guardian-brand-soft), rgba(255, 255, 255, 0.72));
-  padding: 22px 24px;
+  gap: 14px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 14px 18px;
+  text-align: left;
+  transition: background 0.12s ease;
 }
 
-.wardListProfile {
-  display: flex;
-  min-width: 0;
+.itemRow:hover {
+  background: var(--sb-bg-soft);
+}
+
+.item.expanded .itemRow {
+  background: transparent;
+}
+
+.itemMain {
   flex: 1;
-  flex-direction: column;
-  gap: 3px;
+  min-width: 0;
 }
 
-.wardListNameRow {
+.itemNameRow {
   display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-.wardListNameRow strong {
+.itemName {
   color: var(--sb-ink);
-  font-size: 22px;
-  font-weight: 900;
-  line-height: 1.2;
-}
-
-.wardListProfile > span {
-  color: var(--sb-ink-mute);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  font-weight: 750;
-}
-
-.wardListProfile small {
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.wardListInfoGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 18px;
-  border-top: 1px solid rgba(20, 17, 12, 0.06);
-  background: rgba(255, 255, 255, 0.72);
-  padding: 8px 24px 18px;
-}
-
-.wardListQuickInfo {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  border-top: 1px solid rgba(20, 17, 12, 0.06);
-  background: rgba(255, 255, 255, 0.78);
-  padding: 18px 24px 8px;
-}
-
-.wardListInfoRow {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid rgba(20, 17, 12, 0.07);
-  padding: 11px 0;
-}
-
-.wardListQuickInfo .wardListInfoRow {
-  display: block;
-  min-height: 72px;
-  border: 1px solid rgba(20, 17, 12, 0.06);
-  border-radius: 16px;
-  background: rgba(250, 250, 248, 0.92);
-  padding: 13px 14px;
-}
-
-.wardListInfoRow span {
-  color: var(--sb-ink-mute);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.wardListInfoRow strong {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  margin-top: 4px;
-  overflow-wrap: anywhere;
-  color: var(--sb-ink);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 850;
-  text-align: right;
-  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.itemSub {
+  display: block;
+  margin-top: 3px;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 650;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.wardListQuickInfo .wardListInfoRow strong {
-  margin-top: 8px;
-  font-size: 14px;
-  text-align: left;
-}
-
-.wardListCardFooter {
-  display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid rgba(20, 17, 12, 0.06);
-  background: rgba(255, 255, 255, 0.74);
-  padding: 14px 24px 18px;
-}
-
-.wardListDangerButton {
+/* ── 상태 뱃지 ── */
+.statusBadge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  border: 0;
   border-radius: 999px;
-  background: rgba(251, 229, 224, 0.9);
-  color: #b74432;
-  cursor: pointer;
+  font-size: 11px;
+  font-weight: 750;
+  padding: 2px 8px;
+  background: #fbf1db;
+  color: var(--sb-sun);
+}
+
+.statusBadge.active {
+  background: #dceee3;
+  color: var(--sb-safe);
+}
+
+.statusBadge.cancelled,
+.statusBadge.refused {
+  background: #fbe5e0;
+  color: var(--sb-warn);
+}
+
+.statusBadge.disconnected {
+  background: var(--sb-line-soft);
+  color: var(--sb-ink-mute);
+}
+
+/* ── 화살표 ── */
+.chevron {
+  flex-shrink: 0;
+  color: var(--sb-ink-mute);
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+  color: var(--guardian-brand);
+}
+
+/* ── 펼쳐진 상세 ── */
+.detail {
+  border-top: 1px solid var(--sb-line-soft);
+  padding: 16px 18px 18px;
+  background: #fff;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.detailItem {
+  border-radius: 10px;
+  background: var(--sb-bg-soft);
+  padding: 10px 12px;
+}
+
+.detailItem dt {
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+  font-weight: 750;
+  margin-bottom: 4px;
+}
+
+.detailItem dd {
+  margin: 0;
+  color: var(--sb-ink);
   font-size: 13px;
-  font-weight: 850;
-  min-height: 36px;
-  padding: 0 18px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
 }
 
-.wardListDangerButton:hover {
-  filter: brightness(0.97);
+.detailActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
-.wardListDangerButton:disabled {
+.dangerButton {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #f0c0b5;
+  border-radius: 8px;
+  background: #fbe5e0;
+  color: var(--sb-warn);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+  padding: 7px 14px;
+  transition: filter 0.12s ease;
+}
+
+.dangerButton:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.dangerButton:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+@media (max-width: 640px) {
+  .detailGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .itemRow {
+    padding: 12px 14px;
+  }
 }
