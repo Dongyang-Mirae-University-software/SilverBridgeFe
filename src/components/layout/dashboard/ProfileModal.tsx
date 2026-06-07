@@ -6,7 +6,6 @@ import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user';
 import { ProfileModalControls } from './ProfileModalControls';
 import { getProviderLabel } from '@/lib/dashboard/profile';
-import { formatPhoneNumber } from '@/lib/format/phone';
 import styles from './ProfileModal.module.css';
 
 const cx = classNames.bind(styles);
@@ -24,17 +23,6 @@ interface Props {
   userName: string;
 }
 
-function formatGender(gender: IUserProfile['gender']) {
-  if (gender === 'MALE') return '남성';
-  if (gender === 'FEMALE') return '여성';
-  return '정보 없음';
-}
-
-function formatAddress(profile: IUserProfile | null) {
-  const parts = [profile?.address, profile?.addressDetail].filter(Boolean);
-  return parts.length > 0 ? parts.join(' ') : '정보 없음';
-}
-
 export function ProfileModal({
   isLoggingOut,
   isProfileImageChanging,
@@ -47,13 +35,6 @@ export function ProfileModal({
   userEmail,
   userName,
 }: Props) {
-  const infoItems = [
-    { label: '전화번호', value: formatPhoneNumber(profile?.phone ?? '') || '정보 없음' },
-    { label: '성별', value: formatGender(profile?.gender ?? null) },
-    { label: '생년월일', value: profile?.birthDate ?? '정보 없음' },
-    { label: '주소', value: formatAddress(profile) },
-  ];
-
   return (
     <div className={cx('profileModalOverlay')} role="presentation" onClick={onClose}>
       <section

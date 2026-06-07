@@ -12,37 +12,25 @@ interface PasswordForm {
 }
 
 interface Props {
-  deleteConfirmation: string;
-  deletePassword: string;
-  isDeletePending: boolean;
   isKakaoUser: boolean;
   isPasswordPending: boolean;
-  onDeleteSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onPasswordChange: (form: PasswordForm) => void;
   onPasswordSubmit: (event: FormEvent<HTMLFormElement>) => void;
   passwordForm: PasswordForm;
-  setDeleteConfirmation: (value: string) => void;
-  setDeletePassword: (value: string) => void;
 }
 
 export function ProfileSecurityPanel({
-  deleteConfirmation,
-  deletePassword,
-  isDeletePending,
   isKakaoUser,
   isPasswordPending,
-  onDeleteSubmit,
   onPasswordChange,
   onPasswordSubmit,
   passwordForm,
-  setDeleteConfirmation,
-  setDeletePassword,
 }: Props) {
   return (
     <section className={cx('profileManageCard')}>
       <div className={cx('profileManageHeader')}>
         <h3>보안</h3>
-        <p>비밀번호 변경과 회원 탈퇴를 별도 영역으로 분리했습니다.</p>
+        <p>비밀번호만 변경할 수 있습니다.</p>
       </div>
 
       <form className={cx('profileForm')} onSubmit={onPasswordSubmit}>
@@ -71,18 +59,6 @@ export function ProfileSecurityPanel({
             {isPasswordPending ? '변경 중' : '비밀번호 변경'}
           </button>
         </div>
-      </form>
-
-      <form className={cx('profileDeleteRow')} onSubmit={onDeleteSubmit}>
-        <input
-          type={isKakaoUser ? 'text' : 'password'}
-          placeholder={isKakaoUser ? '탈퇴' : '현재 비밀번호'}
-          value={isKakaoUser ? deleteConfirmation : deletePassword}
-          onChange={event => (isKakaoUser ? setDeleteConfirmation(event.target.value) : setDeletePassword(event.target.value))}
-        />
-        <button className={cx('profileDangerButton')} type="submit" disabled={isDeletePending}>
-          {isDeletePending ? '처리 중' : '회원 탈퇴'}
-        </button>
       </form>
     </section>
   );
