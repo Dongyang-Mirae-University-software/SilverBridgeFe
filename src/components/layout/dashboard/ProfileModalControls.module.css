@@ -1,11 +1,12 @@
 .profileManageStack {
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
-  gap: 12px;
-  padding: 18px 24px 20px;
+  gap: 10px;
+  padding: 16px 20px 18px;
 }
 
 .profileModalMessage {
@@ -22,6 +23,7 @@
 }
 
 .profileManageScroll {
+  flex: 1 1 auto;
   min-height: 0;
   padding-right: 2px;
   overflow-y: auto;
@@ -65,8 +67,10 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: auto;
   border-top: 1px solid var(--sb-line-soft);
-  padding-top: 14px;
+  padding-top: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), #fff 36%);
 }
 
 .logoutButton {
@@ -132,8 +136,8 @@
 
 @media (max-width: 720px) {
   .profileManageStack {
-    gap: 10px;
-    padding: 14px 16px 16px;
+    gap: 8px;
+    padding: 12px 14px 14px;
   }
 
   .profileTabsBar {
@@ -147,12 +151,17 @@
   }
 
   .profileModalMessage {
-    padding: 9px 10px;
+    padding: 8px 10px;
     font-size: 12px;
+  }
+
+  .profileManageScroll {
+    padding-right: 0;
   }
 
   .profileModalFooter {
     justify-content: stretch;
+    padding-top: 10px;
   }
 
   .profileModalFooter .logoutButton,
