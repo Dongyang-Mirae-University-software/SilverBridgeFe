@@ -6,7 +6,6 @@
   gap: 14px;
 }
 
-/* ── 툴바 ── */
 .toolbar {
   display: flex;
   align-items: flex-start;
@@ -29,14 +28,6 @@
   font-weight: 650;
 }
 
-.toolbarActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-/* ── 탭 ── */
 .tabs {
   display: inline-flex;
   width: fit-content;
@@ -49,7 +40,7 @@
 }
 
 .tab {
-  min-width: 120px;
+  min-width: 110px;
   border: 0;
   border-radius: 9px;
   background: transparent;
@@ -57,8 +48,8 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
-  padding: 9px 16px;
-  transition: background 0.12s ease, color 0.12s ease;
+  padding: 8px 14px;
+  transition: background 0.12s, color 0.12s;
 }
 
 .tab:hover {
@@ -69,14 +60,13 @@
 .tab.active {
   background: var(--guardian-brand);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(138, 75, 56, 0.2);
+  box-shadow: 0 4px 10px rgba(138, 75, 56, 0.18);
 }
 
-/* ── 콘텐츠 영역 ── */
 .content {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .feedback {
@@ -86,10 +76,9 @@
   color: var(--sb-safe);
   font-size: 13px;
   font-weight: 700;
-  padding: 10px 14px;
+  padding: 9px 14px;
 }
 
-/* ── 빈 상태 ── */
 .emptyBox {
   display: flex;
   align-items: center;
@@ -98,7 +87,7 @@
   border: 1px dashed var(--sb-line);
   border-radius: 14px;
   background: var(--sb-bg-soft);
-  padding: 18px 20px;
+  padding: 16px 18px;
 }
 
 .emptyText {
@@ -109,8 +98,6 @@
 
 .primaryButton {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
   border: 0;
   border-radius: 10px;
   background: var(--guardian-brand);
@@ -118,187 +105,143 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 750;
-  padding: 9px 16px;
-  white-space: nowrap;
+  padding: 8px 14px;
 }
 
 .primaryButton:hover {
   filter: brightness(0.94);
 }
 
-/* ── 목록 ── */
+/* ── 카드 목록 ── */
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 16px;
+}
+
+/* ── 카드 ── */
+.card {
+  border-radius: 14px;
   background: #fff;
-  overflow: hidden;
+  border: 1px solid var(--sb-line-soft);
   box-shadow: var(--sb-shadow-sm);
-}
-
-/* ── 행 아이템 ── */
-.item {
-  border-bottom: 1px solid var(--sb-line-soft);
-}
-
-.item:last-child {
-  border-bottom: 0;
-}
-
-.item.expanded {
-  background: #fafaf8;
-}
-
-/* ── 행 버튼 ── */
-.itemRow {
+  padding: 14px 16px;
   display: flex;
-  width: 100%;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── 카드 상단: 아바타 + 이름 + 버튼 ── */
+.cardTop {
+  display: flex;
   align-items: center;
-  gap: 14px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  padding: 14px 18px;
-  text-align: left;
-  transition: background 0.12s ease;
+  gap: 10px;
 }
 
-.itemRow:hover {
-  background: var(--sb-bg-soft);
-}
-
-.item.expanded .itemRow {
-  background: transparent;
-}
-
-.itemMain {
+.cardProfile {
   flex: 1;
   min-width: 0;
 }
 
-.itemNameRow {
+.cardNameRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
-.itemName {
+.cardName {
   color: var(--sb-ink);
   font-size: 15px;
   font-weight: 850;
   line-height: 1.3;
 }
 
-.itemSub {
+.cardSub {
   display: block;
-  margin-top: 3px;
+  margin-top: 2px;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 650;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── 상태 뱃지 ── */
-.statusBadge {
+.badge {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 750;
-  padding: 2px 8px;
+  padding: 2px 7px;
   background: #fbf1db;
   color: var(--sb-sun);
+  white-space: nowrap;
 }
 
-.statusBadge.active {
+.badge.active {
   background: #dceee3;
   color: var(--sb-safe);
 }
 
-.statusBadge.cancelled,
-.statusBadge.refused {
+.badge.cancelled,
+.badge.refused {
   background: #fbe5e0;
   color: var(--sb-warn);
 }
 
-.statusBadge.disconnected {
+.badge.disconnected {
   background: var(--sb-line-soft);
   color: var(--sb-ink-mute);
 }
 
-/* ── 화살표 ── */
-.chevron {
-  flex-shrink: 0;
-  color: var(--sb-ink-mute);
-  transition: transform 0.2s ease, color 0.15s ease;
+/* ── 정보 칩 영역 ── */
+.cardInfo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.chevron.open {
-  transform: rotate(180deg);
-  color: var(--guardian-brand);
-}
-
-/* ── 펼쳐진 상세 ── */
-.detail {
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 16px 18px 18px;
-  background: #fff;
-}
-
-.detailGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-}
-
-.detailItem {
-  border-radius: 10px;
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  border-radius: 8px;
   background: var(--sb-bg-soft);
-  padding: 10px 12px;
+  padding: 4px 8px;
 }
 
-.detailItem dt {
+.chipLabel {
   color: var(--sb-ink-mute);
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.chipValue {
+  color: var(--sb-ink);
   font-size: 11px;
   font-weight: 750;
-  margin-bottom: 4px;
+  word-break: break-all;
 }
 
-.detailItem dd {
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: 13px;
-  font-weight: 750;
-  overflow-wrap: anywhere;
-}
-
-.detailActions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-
+/* ── 해제 버튼 ── */
 .dangerButton {
-  display: inline-flex;
-  align-items: center;
+  flex-shrink: 0;
   border: 1px solid #f0c0b5;
   border-radius: 8px;
   background: #fbe5e0;
   color: var(--sb-warn);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 750;
-  padding: 7px 14px;
-  transition: filter 0.12s ease;
+  padding: 5px 10px;
+  white-space: nowrap;
 }
 
 .dangerButton:hover:not(:disabled) {
@@ -311,11 +254,7 @@
 }
 
 @media (max-width: 640px) {
-  .detailGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .itemRow {
-    padding: 12px 14px;
+  .list {
+    grid-template-columns: 1fr;
   }
 }
