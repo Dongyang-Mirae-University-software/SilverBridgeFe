@@ -236,30 +236,6 @@
   line-height: 1;
 }
 
-.logoutButton {
-  display: inline-flex;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--sb-line);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--sb-ink-soft);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 750;
-  padding: 10px 12px;
-}
-
-.logoutButton:hover {
-  background: var(--sb-bg-soft);
-}
-
-.logoutButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
 @media (max-width: 900px) {
   .sidebar {
     position: fixed;
