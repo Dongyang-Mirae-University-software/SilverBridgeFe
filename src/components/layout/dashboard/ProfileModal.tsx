@@ -46,7 +46,7 @@ export function ProfileModal({
   userEmail,
   userName,
 }: Props) {
-  const profileRows = [
+  const profileMetaRows = [
     { label: '성별', value: formatGender(profile?.gender ?? null) },
     { label: '생년월일', value: profile?.birthDate ?? '정보 없음' },
     { label: '전화번호', value: formatPhoneNumber(profile?.phone ?? '') || '정보 없음' },
@@ -65,7 +65,7 @@ export function ProfileModal({
         <div className={cx('profileModalHeader')}>
           <div className={cx('profileModalUser')}>
             <UserAvatar
-              size="w-120"
+              size="w-60"
               imageUrl={profile?.profileImage}
               disabled={isProfileImageChanging}
               onImageChange={onProfileImageChange}
@@ -89,9 +89,9 @@ export function ProfileModal({
           </button>
         </div>
 
-        <div className={cx('profileDetailGrid')}>
-          {profileRows.map(row => (
-            <div key={row.label} className={cx('profileDetailItem')}>
+        <div className={cx('profileModalMeta')}>
+          {profileMetaRows.map(row => (
+            <div key={row.label} className={cx('profileMetaItem')}>
               <span>{row.label}</span>
               <strong>{row.value}</strong>
             </div>
