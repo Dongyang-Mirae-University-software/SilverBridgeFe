@@ -17,10 +17,10 @@
   width: min(860px, 100%);
   min-height: 0;
   overflow: hidden;
-  border: 1px solid rgba(232, 226, 210, 0.95);
-  border-radius: 22px;
+  border: 1px solid rgba(232, 226, 210, 0.9);
+  border-radius: 24px;
   background: #fff;
-  box-shadow: 0 24px 70px rgba(20, 17, 12, 0.2);
+  box-shadow: 0 26px 70px rgba(20, 17, 12, 0.18);
   padding: 0;
 }
 
@@ -29,16 +29,16 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   border-bottom: 1px solid var(--sb-line-soft);
-  background: linear-gradient(135deg, rgba(31, 94, 72, 0.08), rgba(217, 119, 87, 0.08)), #fff;
+  background: linear-gradient(135deg, rgba(31, 94, 72, 0.06), rgba(217, 119, 87, 0.04)), #fff;
   gap: 18px;
-  padding: 24px 62px 22px 24px;
+  padding: 22px 58px 20px 22px;
 }
 
 .profileModalUser {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   text-align: left;
 }
 
@@ -49,12 +49,12 @@
 .profileModal h2 {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 800;
   line-height: 1.25;
 }
 
-.profileModal p {
+.profileUserEmail {
   overflow: hidden;
   margin: 5px 0 0;
   color: var(--sb-ink-mute);
@@ -67,34 +67,18 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 8px;
-}
-
-.profileProviderBadge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 6px;
-}
-
-:global(.guardianTheme) .profileProviderBadge {
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
+  margin-bottom: 6px;
 }
 
 .userRoleBadge {
   display: inline-flex;
   flex-shrink: 0;
   border-radius: 999px;
-  background: #dceee3;
+  background: #edf6ef;
   color: var(--sb-safe);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
-  padding: 2px 6px;
+  padding: 3px 8px;
 }
 
 :global(.guardianTheme) .userRoleBadge {
@@ -104,11 +88,11 @@
 
 .profileModalClose {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 18px;
+  right: 18px;
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   place-items: center;
   border: 1px solid var(--sb-line);
@@ -127,34 +111,51 @@
 
 .profileDetailGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
   border-bottom: 1px solid var(--sb-line-soft);
   background: #fffdf9;
-  padding: 14px 24px;
+  padding: 16px 22px;
 }
 
 .profileDetailItem {
   min-width: 0;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 12px;
+  border-radius: 16px;
   background: #fff;
-  padding: 10px 12px;
+  padding: 12px 14px;
 }
 
 .profileDetailItem span {
   display: block;
   color: var(--sb-ink-mute);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 
 .profileDetailItem strong {
   display: block;
   overflow-wrap: anywhere;
   color: var(--sb-ink);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .profileModalHeader {
+    grid-template-columns: 1fr;
+    padding: 20px 20px 18px;
+  }
+
+  .profileModalClose {
+    top: 16px;
+    right: 16px;
+  }
+
+  .profileDetailGrid {
+    grid-template-columns: 1fr;
+    padding: 16px 18px;
+  }
 }
