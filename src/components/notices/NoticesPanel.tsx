@@ -1,7 +1,7 @@
 'use client';
 import classNames from 'classnames/bind';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { RefreshButton } from '@/components/RefreshButton';
@@ -35,13 +35,14 @@ export function NoticesPanel() {
   const selectedNotice = selectedId !== null ? (detail ?? announcements.find(a => a.id === selectedId) ?? null) : null;
 
   const handleToggle = (id: number) => {
-    setSelectedId(prev => {
-      if (prev === id) return null;
-
-      optimisticIncreaseViewCount(queryClient, id);
-      return id;
-    });
+    setSelectedId(prev => (prev === id ? null : id));
   };
+
+  useEffect(() => {
+    if (selectedId === null || !detail) return;
+
+    syncNoticeViewCount(queryClient, selectedId, detail);
+  }, [detail, queryClient, selectedId]);
 
   return (
     <section className={cx('page')}>
@@ -96,11 +97,11 @@ export function NoticesPanel() {
   );
 }
 
-function optimisticIncreaseViewCount(queryClient: QueryClient, id: number) {
+function syncNoticeViewCount(queryClient: QueryClient, id: number, notice: IAnnouncement) {
   queryClient.setQueryData<IAnnouncement[]>(announcementsQueryKey, current =>
-    current?.map(item => (item.id === id ? { ...item, viewCount: item.viewCount + 1 } : item)),
+    current?.map(item => (item.id === id ? { ...item, viewCount: notice.viewCount } : item)),
   );
   queryClient.setQueryData<IAnnouncement>(announcementDetailQueryKey(id), current =>
-    current ? { ...current, viewCount: current.viewCount + 1 } : current,
+    current ? { ...current, viewCount: notice.viewCount } : notice,
   );
 }
