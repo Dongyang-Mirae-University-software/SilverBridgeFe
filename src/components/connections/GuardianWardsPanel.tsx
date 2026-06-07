@@ -158,6 +158,16 @@ function WardCard({
             <span className={cx('badge', getConnectionStatusClass(connection.status))}>
               {getConnectionStatusLabel(connection.status)}
             </span>
+            {(isActive || isPendingConn) && (
+              <button
+                className={cx('dangerButton')}
+                type="button"
+                disabled={isPending}
+                onClick={isActive ? onDisconnect : onCancel}
+              >
+                {isActive ? '연결 해제' : '요청 취소'}
+              </button>
+            )}
           </div>
 
           <span className={cx('userId')}>{connection.partnerUserId}</span>
@@ -194,18 +204,6 @@ function WardCard({
         </div>
       </div>
 
-      {(isActive || isPendingConn) && (
-        <div className={cx('cardFooter')}>
-          <button
-            className={cx('dangerButton')}
-            type="button"
-            disabled={isPending}
-            onClick={isActive ? onDisconnect : onCancel}
-          >
-            {isActive ? '연결 해제' : '요청 취소'}
-          </button>
-        </div>
-      )}
     </li>
   );
 }
