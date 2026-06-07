@@ -1,7 +1,5 @@
 .sessionPanel {
   display: flex;
-  min-width: 0;
-  max-width: 100%;
   flex-shrink: 0;
   flex-direction: column;
   gap: 12px;
@@ -50,7 +48,6 @@
 
 .sessionList {
   display: flex;
-  width: 100%;
   gap: 10px;
   margin: 0;
   min-height: 0;
@@ -64,13 +61,13 @@
 }
 
 .sessionList > li {
-  flex: 0 0 clamp(180px, 22vw, 240px);
+  flex: 0 0 clamp(220px, 26vw, 320px);
   scroll-snap-align: start;
 }
 
 .sessionCard {
   display: flex;
-  min-height: 98px;
+  min-height: 112px;
   width: 100%;
   flex-direction: column;
   align-items: flex-start;
@@ -81,7 +78,7 @@
   background: #fcfbf8;
   color: inherit;
   cursor: pointer;
-  padding: 12px;
+  padding: 14px;
   text-align: left;
   transition:
     background 0.12s ease,
@@ -112,7 +109,7 @@
 
 .sessionCard strong {
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
 }
 
@@ -131,9 +128,9 @@
 .sessionTime {
   display: flex;
   width: 100%;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
   color: var(--guardian-brand);
   font-size: 12px;
   font-weight: 850;
@@ -143,7 +140,7 @@
   color: var(--sb-ink-mute);
   font-size: 11px;
   font-weight: 650;
-  white-space: normal;
+  white-space: nowrap;
 }
 
 .analyzingBadge {
@@ -162,6 +159,6 @@
   }
 
   .sessionList > li {
-    flex-basis: min(76vw, 240px);
+    flex-basis: min(82vw, 320px);
   }
 }
