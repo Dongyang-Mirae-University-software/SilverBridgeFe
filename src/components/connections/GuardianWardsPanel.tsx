@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
+import { UserAvatar } from '@/components/UserAvatar';
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/connect/guardian';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
@@ -141,7 +142,6 @@ function WardCard({
 }) {
   const isActive = connection.status === 'ACTIVE';
   const isPendingConn = connection.status === 'PENDING';
-  const initial = (connection.partnerName || '?').charAt(0);
   const address = [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
   const dateLabel = isActive ? '연결일' : '요청일';
   const dateValue = formatWardDate(isActive ? connection.connectedAt : connection.createdAt);
@@ -149,7 +149,7 @@ function WardCard({
   return (
     <li className={cx('card')}>
       <div className={cx('cardBody')}>
-        <div className={cx('avatar')}>{initial}</div>
+        <UserAvatar size="w-60" imageUrl={connection.partnerProfileImage} />
 
         <div className={cx('info')}>
           <div className={cx('nameRow')}>
