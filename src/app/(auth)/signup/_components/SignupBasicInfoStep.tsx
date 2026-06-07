@@ -1,9 +1,12 @@
 import { FieldErrors, UseFormRegister, UseFormRegisterReturn } from 'react-hook-form';
+import classNames from 'classnames/bind';
 
 import styles from './SignupBasicInfoStep.module.css';
-const cx = classNames.bind(styles);import SignupRoleSelector from './SignupRoleSelector';
+import SignupRoleSelector from './SignupRoleSelector';
 import TextInput from '@/components/TextInput';
 import { SignupFormValues } from '@/hooks/useSignupForm';
+
+const cx = classNames.bind(styles);
 
 
 interface SignupBasicInfoStepProps {
