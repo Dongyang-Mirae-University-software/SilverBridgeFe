@@ -135,21 +135,6 @@
   padding: 12px 16px;
 }
 
-/* ── 아바타 (이니셜) ── */
-.avatar {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-soft);
-  font-size: 15px;
-  font-weight: 850;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--sb-line-soft);
-}
-
 /* ── 정보 영역 ── */
 .info {
   flex: 1;
