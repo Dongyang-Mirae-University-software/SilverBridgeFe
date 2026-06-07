@@ -34,6 +34,7 @@ export function NoticesPanel() {
   });
 
   const selectedNotice = selectedId !== null ? (detail ?? announcements.find(a => a.id === selectedId) ?? null) : null;
+  const latestNotice = announcements[0] ?? null;
 
   const handleToggle = (id: number) => {
     setSelectedId(prev => {
@@ -56,12 +57,23 @@ export function NoticesPanel() {
 
   return (
     <section className={cx('page')}>
-      <div className={cx('header')}>
-        <div className={cx('headerTop')}>
+      <div className={cx('hero')}>
+        <div className={cx('heroCopy')}>
           <span className={cx('eyebrow')}>공지사항</span>
+          <h2>서비스 운영과 안내를 한눈에 확인하세요.</h2>
+          <p>중요한 공지는 최신순으로 보여드리고, 선택한 공지는 오른쪽 상세 영역에서 바로 읽을 수 있습니다.</p>
+        </div>
+        <div className={cx('heroMeta')}>
+          <div className={cx('heroStat')}>
+            <span className={cx('heroStatLabel')}>전체 공지</span>
+            <strong>{announcements.length.toLocaleString()}</strong>
+          </div>
+          <div className={cx('heroStat')}>
+            <span className={cx('heroStatLabel')}>최신 공지</span>
+            <strong>{latestNotice ? formatDate(latestNotice.createdAt) : '-'}</strong>
+          </div>
           <RefreshButton ariaLabel="공지사항 새로고침" disabled={isLoading} onRefresh={() => refetch()} />
         </div>
-        <h2>서비스 운영 관련 공지를 확인하세요.</h2>
       </div>
 
       {isLoading && <p className={cx('message')}>공지사항을 불러오는 중입니다.</p>}
@@ -71,7 +83,8 @@ export function NoticesPanel() {
       )}
 
       {announcements.length > 0 && (
-        <ul className={cx('list')}>
+        <div className={cx('layout')}>
+          <ul className={cx('list')}>
           {announcements.map(item => {
             const isOpen = selectedId === item.id;
             return (
@@ -89,19 +102,47 @@ export function NoticesPanel() {
                     {isOpen ? '∧' : '∨'}
                   </span>
                 </button>
-
-                {isOpen && (
-                  <div className={cx('itemBody')}>
-                    <p>{selectedNotice?.content ?? item.content}</p>
-                    {item.updatedAt !== item.createdAt && (
-                      <span className={cx('updatedAt')}>수정일: {formatDate(item.updatedAt)}</span>
-                    )}
-                  </div>
-                )}
               </li>
             );
           })}
-        </ul>
+          </ul>
+
+          <aside className={cx('detailPanel')}>
+            {selectedNotice ? (
+              <>
+                <div className={cx('detailHeader')}>
+                  <div className={cx('detailHeaderTop')}>
+                    <span className={cx('detailEyebrow')}>선택한 공지</span>
+                    <span className={cx('detailMeta')}>조회 {selectedNotice.viewCount.toLocaleString()}</span>
+                  </div>
+                  <h3>{selectedNotice.title}</h3>
+                  <div className={cx('detailInfo')}>
+                    <span>{selectedNotice.authorName}</span>
+                    <span>{formatDate(selectedNotice.createdAt)}</span>
+                  </div>
+                </div>
+
+                <div className={cx('detailBody')}>
+                  <p>{selectedNotice.content}</p>
+                </div>
+
+                <div className={cx('detailFooter')}>
+                  {selectedNotice.updatedAt !== selectedNotice.createdAt ? (
+                    <span>수정일 {formatDate(selectedNotice.updatedAt)}</span>
+                  ) : (
+                    <span>최신 게시글입니다.</span>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className={cx('detailEmpty')}>
+                <span className={cx('detailEmptyEyebrow')}>미선택</span>
+                <strong>공지 하나를 선택하면 상세 내용이 표시됩니다.</strong>
+                <p>왼쪽 목록에서 항목을 누르면 여기에서 전체 내용을 읽을 수 있습니다.</p>
+              </div>
+            )}
+          </aside>
+        </div>
       )}
     </section>
   );
