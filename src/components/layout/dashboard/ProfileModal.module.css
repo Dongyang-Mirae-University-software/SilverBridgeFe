@@ -144,18 +144,42 @@
 }
 
 @media (max-width: 720px) {
+  .profileModalOverlay {
+    padding: 8px;
+  }
+
+  .profileModal {
+    height: calc(100svh - 16px);
+    width: min(100%, calc(100vw - 16px));
+    border-radius: 20px;
+  }
+
   .profileModalHeader {
     grid-template-columns: 1fr;
-    padding: 20px 20px 18px;
+    gap: 12px;
+    padding: 16px 16px 14px;
+  }
+
+  .profileModalUser {
+    gap: 10px;
+  }
+
+  .profileModal h2 {
+    font-size: 18px;
+  }
+
+  .profileUserEmail {
+    font-size: 12px;
   }
 
   .profileModalClose {
-    top: 16px;
-    right: 16px;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
   }
 
   .profileDetailGrid {
-    grid-template-columns: 1fr;
-    padding: 16px 18px;
+    display: none;
   }
 }
