@@ -38,6 +38,7 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [passwordModal, setPasswordModal] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isProfileEditing, setIsProfileEditing] = useState(false);
   const isKakaoUser = profile?.provider === 'KAKAO';
   const isPhoneChanged = (profileForm.phone ?? '').trim() !== getPhoneDigits(profile?.phone ?? '');
@@ -80,7 +81,11 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
       setFeedbackMessage('');
       setPasswordModal(null);
     },
-    onSuccess: () => setPasswordModal({ message: '비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.', type: 'success' }),
+    onSuccess: () => {
+      setIsPasswordDialogOpen(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
+      setPasswordModal({ message: '비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.', type: 'success' });
+    },
     onError: error => setPasswordModal({ message: getModalErrorMessage(error, '비밀번호 변경에 실패했습니다.'), type: 'error' }),
   });
   const updateProfileForm = (field: keyof IUserUpdateReq, value: string) => {
@@ -127,6 +132,19 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
     passwordMutation.mutate({ currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword });
   };
 
+  const handlePasswordDialogOpen = () => {
+    if (isKakaoUser || passwordMutation.isPending) return;
+    setFeedbackMessage('');
+    setPasswordForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
+    setIsPasswordDialogOpen(true);
+  };
+
+  const handlePasswordDialogClose = () => {
+    if (passwordMutation.isPending) return;
+    setIsPasswordDialogOpen(false);
+    setPasswordForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
+  };
+
   return (
     <div className={cx('profileManageStack')}>
       {passwordModal && (
@@ -168,11 +186,20 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
         <ProfileSecurityPanel
           isKakaoUser={isKakaoUser}
           isPasswordPending={passwordMutation.isPending}
-          onPasswordChange={setPasswordForm}
-          onPasswordSubmit={handlePasswordSubmit}
-          passwordForm={passwordForm}
+          onOpenPasswordDialog={handlePasswordDialogOpen}
         />
       </div>
+
+      {isPasswordDialogOpen && (
+        <PasswordChangeDialog
+          isKakaoUser={isKakaoUser}
+          isPending={passwordMutation.isPending}
+          onCancel={handlePasswordDialogClose}
+          onChange={setPasswordForm}
+          onSubmit={handlePasswordSubmit}
+          passwordForm={passwordForm}
+        />
+      )}
 
       <div className={cx('profileModalFooter')}>
         <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={onLogout}>
@@ -206,4 +233,87 @@ function redirectToLogin(queryClient: ReturnType<typeof useQueryClient>, router:
   clearAuthTokens();
   queryClient.clear();
   router.replace('/login');
+}
+
+function PasswordChangeDialog({
+  isKakaoUser,
+  isPending,
+  onCancel,
+  onChange,
+  onSubmit,
+  passwordForm,
+}: {
+  isKakaoUser: boolean;
+  isPending: boolean;
+  onCancel: () => void;
+  onChange: (form: { currentPassword: string; newPassword: string; newPasswordConfirm: string }) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  passwordForm: { currentPassword: string; newPassword: string; newPasswordConfirm: string };
+}) {
+  return (
+    <div className={cx('passwordDialogOverlay')} role="presentation" onClick={onCancel}>
+      <section className={cx('passwordDialog')} role="dialog" aria-modal="true" aria-labelledby="password-dialog-title" onClick={event => event.stopPropagation()}>
+        <div className={cx('passwordDialogHeader')}>
+          <div>
+            <h3 id="password-dialog-title">비밀번호 변경</h3>
+            <p>현재 비밀번호와 새 비밀번호를 입력한 뒤 변경을 눌러주세요.</p>
+          </div>
+          <button className={cx('passwordDialogClose')} type="button" aria-label="닫기" onClick={onCancel}>
+            ×
+          </button>
+        </div>
+
+        <form className={cx('passwordDialogForm')} onSubmit={onSubmit}>
+          <div className={cx('passwordDialogGrid')}>
+            <PasswordField
+              disabled={isKakaoUser}
+              label="현재 비밀번호"
+              value={passwordForm.currentPassword}
+              onChange={value => onChange({ ...passwordForm, currentPassword: value })}
+            />
+            <PasswordField
+              disabled={isKakaoUser}
+              label="새 비밀번호"
+              value={passwordForm.newPassword}
+              onChange={value => onChange({ ...passwordForm, newPassword: value })}
+            />
+            <PasswordField
+              disabled={isKakaoUser}
+              label="새 비밀번호 확인"
+              value={passwordForm.newPasswordConfirm}
+              onChange={value => onChange({ ...passwordForm, newPasswordConfirm: value })}
+            />
+          </div>
+
+          <div className={cx('passwordDialogActions')}>
+            <button className={cx('passwordDialogSecondaryButton')} type="button" onClick={onCancel}>
+              취소
+            </button>
+            <button className={cx('passwordDialogPrimaryButton')} type="submit" disabled={isKakaoUser || isPending}>
+              {isPending ? '변경 중' : '변경'}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function PasswordField({
+  disabled,
+  label,
+  onChange,
+  value,
+}: {
+  disabled: boolean;
+  label: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <label className={cx('passwordDialogField')}>
+      <span>{label}</span>
+      <input type="password" disabled={disabled} value={value} onChange={event => onChange(event.target.value)} />
+    </label>
+  );
 }

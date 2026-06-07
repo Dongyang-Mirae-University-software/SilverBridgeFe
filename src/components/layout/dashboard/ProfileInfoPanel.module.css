@@ -1,7 +1,7 @@
 .profileManageCard {
-  border: 0;
+  border: 1px solid rgba(15, 23, 42, 0.06);
   border-radius: 28px;
-  background: #f6f1e5;
+  background: #fff;
   box-shadow: none;
   overflow: hidden;
 }
@@ -16,7 +16,7 @@
 
 .profileManageHeader h3 {
   margin: 0;
-  color: #6b6256;
+  color: var(--sb-ink);
   font-size: 16px;
   font-weight: 750;
   line-height: 1.3;
@@ -24,7 +24,7 @@
 
 .profileManageHeader p {
   margin: 4px 0 0;
-  color: #8f8677;
+  color: var(--sb-ink-mute);
   font-size: 12px;
   line-height: 1.5;
   white-space: normal;
@@ -37,7 +37,7 @@
   justify-content: center;
   border: 0;
   border-radius: 999px;
-  background: rgba(31, 94, 72, 0.12);
+  background: rgba(15, 23, 42, 0.05);
   color: var(--sb-brand);
   cursor: pointer;
   font-size: 12px;
@@ -48,7 +48,7 @@
 }
 
 .profileHeaderAction:hover {
-  background: rgba(31, 94, 72, 0.16);
+  background: rgba(15, 23, 42, 0.08);
 }
 
 .profileForm {
@@ -60,16 +60,16 @@
 .profileRow {
   display: grid;
   gap: 10px;
-  border: 0;
+  border: 1px solid rgba(15, 23, 42, 0.05);
   border-radius: 26px;
-  background: #efe9dc;
+  background: rgba(15, 23, 42, 0.02);
   color: var(--sb-ink-soft);
   min-width: 0;
   padding: 18px 20px;
 }
 
 .profileRowEditing {
-  background: #f1ebdf;
+  background: rgba(31, 94, 72, 0.03);
 }
 
 .profileRowHeader {
@@ -95,7 +95,7 @@
 }
 
 .profileRowLabel {
-  color: #8a7f70;
+  color: var(--sb-ink-mute);
   font-size: 13px;
   font-weight: 700;
   line-height: 1.2;
@@ -128,14 +128,14 @@
 .profilePhoneVerify {
   display: grid;
   gap: 10px;
-  border: 0;
+  border: 1px solid rgba(15, 23, 42, 0.05);
   border-radius: 26px;
-  background: #efe9dc;
+  background: rgba(15, 23, 42, 0.02);
   padding: 18px 20px 20px;
 }
 
 .profilePhoneVerifyTitle {
-  color: #6b6256;
+  color: var(--sb-ink);
   font-size: 13px;
   font-weight: 750;
   white-space: nowrap;
@@ -143,7 +143,7 @@
 
 .profilePhoneVerifyDesc {
   margin: 0;
-  color: #8f8677;
+  color: var(--sb-ink-mute);
   font-size: 12px;
   line-height: 1.5;
   overflow-wrap: anywhere;
