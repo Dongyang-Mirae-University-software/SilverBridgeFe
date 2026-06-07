@@ -42,6 +42,7 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
   const [isDeleteCompleteModalOpen, setIsDeleteCompleteModalOpen] = useState(false);
   const [passwordModal, setPasswordModal] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [activePanel, setActivePanel] = useState<'profile' | 'security'>('profile');
+  const [isEditing, setIsEditing] = useState(false);
   const isKakaoUser = profile?.provider === 'KAKAO';
   const isPhoneChanged = (profileForm.phone ?? '').trim() !== getPhoneDigits(profile?.phone ?? '');
 
@@ -173,45 +174,62 @@ export function ProfileModalControls({ profile, isLoggingOut, onClose, onLogout 
         />
       )}
       {feedbackMessage && <p className={cx('profileModalMessage')}>{feedbackMessage}</p>}
-      <ProfileTabs activePanel={activePanel} onChange={handlePanelChange} />
-      <div className={cx('profileManageScroll')}>
-        {activePanel === 'profile' ? (
-          <ProfileInfoPanel
-            form={profileForm}
-            isPhoneChanged={isPhoneChanged}
-            isProfilePending={profileMutation.isPending}
-            onAddressSearch={handleAddressSearch}
-            onChange={updateProfileForm}
-            onSubmit={handleProfileSubmit}
-            phoneCode={phoneCode}
-            phoneNonce={phoneNonce}
-            setPhoneCode={setPhoneCode}
-            smsSendMutation={smsSendMutation}
-            smsVerifyMutation={smsVerifyMutation}
-          />
-        ) : (
-          <ProfileSecurityPanel
-            deleteConfirmation={deleteConfirmation}
-            deletePassword={deletePassword}
-            isDeletePending={deleteMutation.isPending}
-            isKakaoUser={isKakaoUser}
-            isPasswordPending={passwordMutation.isPending}
-            onDeleteSubmit={handleDeleteSubmit}
-            onPasswordChange={setPasswordForm}
-            onPasswordSubmit={handlePasswordSubmit}
-            passwordForm={passwordForm}
-            setDeleteConfirmation={setDeleteConfirmation}
-            setDeletePassword={setDeletePassword}
-          />
-        )}
-      </div>
+
+      {isEditing && (
+        <>
+          <ProfileTabs activePanel={activePanel} onChange={handlePanelChange} />
+          <div className={cx('profileManageScroll')}>
+            {activePanel === 'profile' ? (
+              <ProfileInfoPanel
+                form={profileForm}
+                isPhoneChanged={isPhoneChanged}
+                isProfilePending={profileMutation.isPending}
+                onAddressSearch={handleAddressSearch}
+                onChange={updateProfileForm}
+                onSubmit={handleProfileSubmit}
+                phoneCode={phoneCode}
+                phoneNonce={phoneNonce}
+                setPhoneCode={setPhoneCode}
+                smsSendMutation={smsSendMutation}
+                smsVerifyMutation={smsVerifyMutation}
+              />
+            ) : (
+              <ProfileSecurityPanel
+                deleteConfirmation={deleteConfirmation}
+                deletePassword={deletePassword}
+                isDeletePending={deleteMutation.isPending}
+                isKakaoUser={isKakaoUser}
+                isPasswordPending={passwordMutation.isPending}
+                onDeleteSubmit={handleDeleteSubmit}
+                onPasswordChange={setPasswordForm}
+                onPasswordSubmit={handlePasswordSubmit}
+                passwordForm={passwordForm}
+                setDeleteConfirmation={setDeleteConfirmation}
+                setDeletePassword={setDeletePassword}
+              />
+            )}
+          </div>
+        </>
+      )}
+
       <div className={cx('profileModalFooter')}>
         <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={onLogout}>
           {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
         </button>
-        <button className={cx('profileModalGhostButton')} type="button" onClick={onClose}>
-          닫기
-        </button>
+        {isEditing ? (
+          <button className={cx('profileModalGhostButton')} type="button" onClick={() => setIsEditing(false)}>
+            취소
+          </button>
+        ) : (
+          <>
+            <button className={cx('profileModalGhostButton')} type="button" onClick={() => setIsEditing(true)}>
+              정보 수정
+            </button>
+            <button className={cx('profileModalGhostButton')} type="button" onClick={onClose}>
+              닫기
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
