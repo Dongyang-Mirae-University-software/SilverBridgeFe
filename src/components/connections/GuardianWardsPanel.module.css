@@ -131,19 +131,19 @@
 .cardBody {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 12px 16px;
 }
 
 /* ── 아바타 (이니셜) ── */
 .avatar {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   background: var(--sb-bg-soft);
   color: var(--sb-ink-soft);
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 850;
   display: grid;
   place-items: center;
@@ -164,11 +164,12 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
+  justify-content: space-between;
 }
 
 .name {
   color: var(--sb-ink);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 850;
   line-height: 1.2;
 }
@@ -205,8 +206,8 @@
 .details {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin: 6px 0 0;
+  gap: 1px;
+  margin: 4px 0 0;
 }
 
 .detailRow {
@@ -225,21 +226,14 @@
 .detailRow dd {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 650;
-  line-height: 1.6;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
-/* ── 카드 하단 (연결 해제 버튼) ── */
-.cardFooter {
-  display: flex;
-  justify-content: flex-end;
-  background: var(--sb-bg-soft);
-  padding: 10px 20px;
-}
-
 .dangerButton {
+  margin-left: auto;
   border: 1px solid #f0c0b5;
   border-radius: 8px;
   background: #fbe5e0;
