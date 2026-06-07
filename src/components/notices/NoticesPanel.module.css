@@ -61,6 +61,67 @@
   flex-shrink: 0;
 }
 
+.featured {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid rgba(31, 94, 72, 0.14);
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+  box-shadow: var(--sb-shadow-sm);
+  padding: 22px 24px;
+}
+
+.featuredTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.featuredEyebrow {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #eef7f2;
+  color: var(--sb-brand);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 11px;
+}
+
+.featuredMeta {
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.featured h3 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.featured p {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.featuredFooter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 650;
+}
+
 .heroStat {
   display: flex;
   min-width: 108px;
@@ -105,19 +166,11 @@
   color: #b91c1c;
 }
 
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
-  align-items: start;
-  gap: 18px;
-  min-height: 0;
-}
-
 .list {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -219,70 +272,32 @@
   color: var(--sb-brand);
 }
 
-.detailPanel {
-  position: sticky;
-  top: 16px;
+.itemBody {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 18px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 26px;
-  background: #fff;
-  box-shadow: var(--sb-shadow-sm);
-  padding: 24px;
-}
-
-.detailHeader {
-  display: flex;
-  flex-direction: column;
   gap: 12px;
+  border-top: 1px solid var(--sb-line-soft);
+  background: #fbfbfb;
+  padding: 18px 20px 20px;
 }
 
-.detailHeaderTop {
+.itemBodyMeta {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.detailMeta {
   color: var(--sb-ink-mute);
   font-size: 12px;
   font-weight: 650;
-}
-
-.detailHeader h3 {
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: 22px;
-  font-weight: 850;
-  letter-spacing: -0.03em;
-  line-height: 1.28;
-}
-
-.detailInfo {
-  display: flex;
   flex-wrap: wrap;
-  gap: 10px 14px;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  font-weight: 650;
+  gap: 8px 12px;
 }
 
-.detailInfo span:not(:last-child)::after {
+.itemBodyMeta span:not(:last-child)::after {
   margin-left: 12px;
   color: var(--sb-line);
   content: '·';
 }
 
-.detailBody {
-  border-radius: 20px;
-  background: #fafafa;
-  padding: 18px 18px 20px;
-}
-
-.detailBody p {
+.itemBody p {
   margin: 0;
   color: var(--sb-ink-soft);
   font-size: 14px;
@@ -290,57 +305,14 @@
   white-space: pre-wrap;
 }
 
-.detailFooter {
+.updatedAt {
+  display: block;
   color: var(--sb-ink-mute);
   font-size: 12px;
   font-weight: 650;
 }
 
-.detailEmpty {
-  display: flex;
-  min-height: 280px;
-  flex-direction: column;
-  justify-content: center;
-  gap: 12px;
-  border-radius: 22px;
-  background: linear-gradient(180deg, #fcfcfc 0%, #f8f8f8 100%);
-  padding: 18px;
-}
-
-.detailEmptyEyebrow {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  border-radius: 999px;
-  background: #eee;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  font-weight: 800;
-  padding: 5px 12px;
-}
-
-.detailEmpty strong {
-  color: var(--sb-ink);
-  font-size: 18px;
-  font-weight: 850;
-  line-height: 1.35;
-}
-
-.detailEmpty p {
-  margin: 0;
-  color: var(--sb-ink-mute);
-  font-size: 14px;
-  line-height: 1.7;
-}
-
 @media (max-width: 1100px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
-  .detailPanel {
-    position: static;
-  }
 }
 
 @media (max-width: 900px) {
@@ -377,12 +349,7 @@
     padding: 16px;
   }
 
-  .detailPanel {
-    border-radius: 22px;
-    padding: 18px;
-  }
-
-  .detailHeader h3 {
-    font-size: 20px;
+  .featured {
+    padding: 18px 20px;
   }
 }

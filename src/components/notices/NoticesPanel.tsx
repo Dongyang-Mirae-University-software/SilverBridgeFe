@@ -61,7 +61,7 @@ export function NoticesPanel() {
         <div className={cx('heroCopy')}>
           <span className={cx('eyebrow')}>공지사항</span>
           <h2>서비스 운영과 안내를 한눈에 확인하세요.</h2>
-          <p>중요한 공지는 최신순으로 보여드리고, 선택한 공지는 오른쪽 상세 영역에서 바로 읽을 수 있습니다.</p>
+          <p>중요한 공지는 최신순으로 보여드리고, 선택한 공지는 카드 안에서 바로 펼쳐 읽을 수 있습니다.</p>
         </div>
         <div className={cx('heroMeta')}>
           <div className={cx('heroStat')}>
@@ -76,6 +76,21 @@ export function NoticesPanel() {
         </div>
       </div>
 
+      {latestNotice && (
+        <article className={cx('featured')}>
+          <div className={cx('featuredTop')}>
+            <span className={cx('featuredEyebrow')}>최신 공지</span>
+            <span className={cx('featuredMeta')}>조회 {latestNotice.viewCount.toLocaleString()}</span>
+          </div>
+          <h3>{latestNotice.title}</h3>
+          <p>{latestNotice.content}</p>
+          <div className={cx('featuredFooter')}>
+            <span>{latestNotice.authorName}</span>
+            <span>{formatDate(latestNotice.createdAt)}</span>
+          </div>
+        </article>
+      )}
+
       {isLoading && <p className={cx('message')}>공지사항을 불러오는 중입니다.</p>}
       {isError && <p className={cx('message', 'error')}>공지사항을 불러오지 못했습니다.</p>}
       {!isLoading && !isError && announcements.length === 0 && (
@@ -83,8 +98,7 @@ export function NoticesPanel() {
       )}
 
       {announcements.length > 0 && (
-        <div className={cx('layout')}>
-          <ul className={cx('list')}>
+        <ul className={cx('list')}>
           {announcements.map(item => {
             const isOpen = selectedId === item.id;
             return (
@@ -102,47 +116,24 @@ export function NoticesPanel() {
                     {isOpen ? '∧' : '∨'}
                   </span>
                 </button>
+
+                {isOpen && selectedNotice && (
+                  <div className={cx('itemBody')}>
+                    <div className={cx('itemBodyMeta')}>
+                      <span>{selectedNotice.authorName}</span>
+                      <span>{formatDate(selectedNotice.createdAt)}</span>
+                      <span aria-label="조회수">조회 {selectedNotice.viewCount.toLocaleString()}</span>
+                    </div>
+                    <p>{selectedNotice.content}</p>
+                    {selectedNotice.updatedAt !== selectedNotice.createdAt && (
+                      <span className={cx('updatedAt')}>수정일 {formatDate(selectedNotice.updatedAt)}</span>
+                    )}
+                  </div>
+                )}
               </li>
             );
           })}
-          </ul>
-
-          <aside className={cx('detailPanel')}>
-            {selectedNotice ? (
-              <>
-                <div className={cx('detailHeader')}>
-                  <div className={cx('detailHeaderTop')}>
-                    <span className={cx('detailEyebrow')}>선택한 공지</span>
-                    <span className={cx('detailMeta')}>조회 {selectedNotice.viewCount.toLocaleString()}</span>
-                  </div>
-                  <h3>{selectedNotice.title}</h3>
-                  <div className={cx('detailInfo')}>
-                    <span>{selectedNotice.authorName}</span>
-                    <span>{formatDate(selectedNotice.createdAt)}</span>
-                  </div>
-                </div>
-
-                <div className={cx('detailBody')}>
-                  <p>{selectedNotice.content}</p>
-                </div>
-
-                <div className={cx('detailFooter')}>
-                  {selectedNotice.updatedAt !== selectedNotice.createdAt ? (
-                    <span>수정일 {formatDate(selectedNotice.updatedAt)}</span>
-                  ) : (
-                    <span>최신 게시글입니다.</span>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className={cx('detailEmpty')}>
-                <span className={cx('detailEmptyEyebrow')}>미선택</span>
-                <strong>공지 하나를 선택하면 상세 내용이 표시됩니다.</strong>
-                <p>왼쪽 목록에서 항목을 누르면 여기에서 전체 내용을 읽을 수 있습니다.</p>
-              </div>
-            )}
-          </aside>
-        </div>
+        </ul>
       )}
     </section>
   );
