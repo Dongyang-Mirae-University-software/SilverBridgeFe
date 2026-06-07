@@ -6,7 +6,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
-import { UserAvatar } from '@/components/UserAvatar';
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/connect/guardian';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
@@ -81,9 +80,7 @@ export function GuardianWardsPanel() {
       <header className={cx('toolbar')}>
         <div>
           <strong className={cx('toolbarTitle')}>피보호자 관리</strong>
-          <span className={cx('toolbarSub')}>
-            연결됨 {activeConnections.length}명 · 대기 {pendingConnections.length}건
-          </span>
+          <span className={cx('toolbarSub')}>연결됨 {activeConnections.length}명 · 대기 {pendingConnections.length}건</span>
         </div>
         <RefreshButton ariaLabel="새로고침" disabled={isLoading} onRefresh={() => refetch()} />
       </header>
@@ -144,22 +141,61 @@ function WardCard({
 }) {
   const isActive = connection.status === 'ACTIVE';
   const isPendingConn = connection.status === 'PENDING';
+  const initial = (connection.partnerName || '?').charAt(0);
   const address = [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
+  const dateLabel = isActive ? '연결일' : '요청일';
+  const dateValue = formatWardDate(isActive ? connection.connectedAt : connection.createdAt);
 
   return (
     <li className={cx('card')}>
-      <div className={cx('cardTop')}>
-        <UserAvatar size="w-60" imageUrl={connection.partnerProfileImage} />
-        <div className={cx('cardProfile')}>
-          <div className={cx('cardNameRow')}>
-            <span className={cx('cardName')}>{connection.partnerName || '이름 확인 전'}</span>
+      <div className={cx('cardBody')}>
+        <div className={cx('avatar')}>{initial}</div>
+
+        <div className={cx('info')}>
+          <div className={cx('nameRow')}>
+            <span className={cx('name')}>{connection.partnerName || '이름 확인 전'}</span>
+            {connection.relation && <span className={cx('relation')}>{connection.relation}</span>}
             <span className={cx('badge', getConnectionStatusClass(connection.status))}>
               {getConnectionStatusLabel(connection.status)}
             </span>
           </div>
-          <span className={cx('cardSub')}>{connection.relation || '관계 미설정'} · {getPartnerPhoneValue(connection)}</span>
+
+          <span className={cx('userId')}>{connection.partnerUserId}</span>
+
+          <dl className={cx('details')}>
+            {address && (
+              <div className={cx('detailRow')}>
+                <dt>📍</dt>
+                <dd>{getActivePartnerValue(connection, address)}</dd>
+              </div>
+            )}
+            <div className={cx('detailRow')}>
+              <dt>📞</dt>
+              <dd>{getPartnerPhoneValue(connection)}</dd>
+            </div>
+            <div className={cx('detailRow')}>
+              <dt>✉</dt>
+              <dd>{getActivePartnerValue(connection, connection.partnerEmail)}</dd>
+            </div>
+            <div className={cx('detailRow')}>
+              <dt>👤</dt>
+              <dd>
+                {[
+                  getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender)),
+                  getActivePartnerValue(connection, connection.partnerBirthDate),
+                ].filter(v => v && v !== '연결 후 공개').join(' · ') || '연결 후 공개'}
+              </dd>
+            </div>
+            <div className={cx('detailRow')}>
+              <dt>{dateLabel}</dt>
+              <dd>{dateValue}</dd>
+            </div>
+          </dl>
         </div>
-        {(isActive || isPendingConn) && (
+      </div>
+
+      {(isActive || isPendingConn) && (
+        <div className={cx('cardFooter')}>
           <button
             className={cx('dangerButton')}
             type="button"
@@ -168,27 +204,9 @@ function WardCard({
           >
             {isActive ? '연결 해제' : '요청 취소'}
           </button>
-        )}
-      </div>
-
-      <div className={cx('cardInfo')}>
-        <Chip label="이메일" value={getActivePartnerValue(connection, connection.partnerEmail)} />
-        <Chip label="연락처" value={getPartnerPhoneValue(connection)} />
-        <Chip label="성별" value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))} />
-        <Chip label="생년월일" value={getActivePartnerValue(connection, connection.partnerBirthDate)} />
-        <Chip label="주소" value={getActivePartnerValue(connection, address)} />
-        <Chip label={isActive ? '연결일' : '요청일'} value={formatWardDate(isActive ? connection.connectedAt : connection.createdAt)} />
-      </div>
+        </div>
+      )}
     </li>
-  );
-}
-
-function Chip({ label, value }: { label: string; value: string }) {
-  return (
-    <span className={cx('chip')}>
-      <span className={cx('chipLabel')}>{label}</span>
-      <span className={cx('chipValue')}>{value}</span>
-    </span>
   );
 }
 

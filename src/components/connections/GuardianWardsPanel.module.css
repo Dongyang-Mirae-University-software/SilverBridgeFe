@@ -108,15 +108,11 @@
   padding: 8px 14px;
 }
 
-.primaryButton:hover {
-  filter: brightness(0.94);
-}
-
-/* ── 카드 목록 ── */
+/* ── 목록 ── */
 .list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -128,50 +124,61 @@
   background: #fff;
   border: 1px solid var(--sb-line-soft);
   box-shadow: var(--sb-shadow-sm);
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  overflow: hidden;
 }
 
-/* ── 카드 상단: 아바타 + 이름 + 버튼 ── */
-.cardTop {
+/* ── 카드 본문 ── */
+.cardBody {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
 }
 
-.cardProfile {
+/* ── 아바타 (이니셜) ── */
+.avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 18px;
+  font-weight: 850;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--sb-line-soft);
+}
+
+/* ── 정보 영역 ── */
+.info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.cardNameRow {
+.nameRow {
   display: flex;
   align-items: center;
-  gap: 6px;
   flex-wrap: wrap;
+  gap: 6px;
 }
 
-.cardName {
+.name {
   color: var(--sb-ink);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 850;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
-.cardSub {
-  display: block;
-  margin-top: 2px;
+.relation {
   color: var(--sb-ink-mute);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-/* ── 상태 뱃지 ── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -181,67 +188,66 @@
   padding: 2px 7px;
   background: #fbf1db;
   color: var(--sb-sun);
-  white-space: nowrap;
 }
 
-.badge.active {
-  background: #dceee3;
-  color: var(--sb-safe);
-}
+.badge.active { background: #dceee3; color: var(--sb-safe); }
+.badge.cancelled, .badge.refused { background: #fbe5e0; color: var(--sb-warn); }
+.badge.disconnected { background: var(--sb-line-soft); color: var(--sb-ink-mute); }
 
-.badge.cancelled,
-.badge.refused {
-  background: #fbe5e0;
-  color: var(--sb-warn);
-}
-
-.badge.disconnected {
-  background: var(--sb-line-soft);
+.userId {
   color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 650;
+  font-family: ui-monospace, monospace;
 }
 
-/* ── 정보 칩 영역 ── */
-.cardInfo {
+/* ── 상세 정보 dl ── */
+.details {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0 0;
+}
+
+.detailRow {
+  display: flex;
+  align-items: baseline;
   gap: 6px;
 }
 
-.chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  border-radius: 8px;
-  background: var(--sb-bg-soft);
-  padding: 4px 8px;
-}
-
-.chipLabel {
-  color: var(--sb-ink-mute);
-  font-size: 10px;
-  font-weight: 750;
-  white-space: nowrap;
-}
-
-.chipValue {
-  color: var(--sb-ink);
-  font-size: 11px;
-  font-weight: 750;
-  word-break: break-all;
-}
-
-/* ── 해제 버튼 ── */
-.dangerButton {
+.detailRow dt {
   flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  min-width: 16px;
+}
+
+.detailRow dd {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* ── 카드 하단 (연결 해제 버튼) ── */
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+  background: var(--sb-bg-soft);
+  padding: 10px 20px;
+}
+
+.dangerButton {
   border: 1px solid #f0c0b5;
   border-radius: 8px;
   background: #fbe5e0;
   color: var(--sb-warn);
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 750;
-  padding: 5px 10px;
-  white-space: nowrap;
+  padding: 6px 14px;
 }
 
 .dangerButton:hover:not(:disabled) {
@@ -251,10 +257,4 @@
 .dangerButton:disabled {
   cursor: not-allowed;
   opacity: 0.55;
-}
-
-@media (max-width: 640px) {
-  .list {
-    grid-template-columns: 1fr;
-  }
 }
