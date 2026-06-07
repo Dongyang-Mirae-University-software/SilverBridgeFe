@@ -39,7 +39,9 @@ export function MobileTopBar({ onOpenSidebar, pageTitle, role }: Pick<Props, 'on
   );
 }
 
-export function DesktopHeader({ onOpenProfile, pageTitle, profile, role, userEmail, userName }: Props) {
+type DesktopHeaderProps = Pick<Props, 'onOpenProfile' | 'pageTitle' | 'profile' | 'role' | 'userEmail' | 'userName'>;
+
+export function DesktopHeader({ onOpenProfile, pageTitle, profile, role, userEmail, userName }: DesktopHeaderProps) {
   return (
     <header className={cx('desktopHeader')}>
       <div className={cx('desktopHeaderTitle')}>

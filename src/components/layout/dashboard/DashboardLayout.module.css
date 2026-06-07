@@ -23,7 +23,27 @@
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-  padding: 28px;
+  padding: 18px;
+}
+
+.contentShell {
+  display: flex;
+  width: 100%;
+  max-width: 1440px;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 auto;
+}
+
+.contentBody {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 900px) {
@@ -36,6 +56,10 @@
   }
 
   .main {
-    padding: 100px 18px 18px;
+    padding: 86px 14px 14px;
+  }
+
+  .contentShell {
+    max-width: none;
   }
 }
