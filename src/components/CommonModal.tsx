@@ -15,6 +15,9 @@ interface CommonModalProps {
   title?: string;
   message: string;
   confirmText?: string;
+  secondaryText?: string;
+  onConfirm?: () => void;
+  onSecondary?: () => void;
   onClose: () => void;
 }
 
@@ -32,9 +35,19 @@ const MODAL_ICONS: Record<CommonModalType, string> = {
   error: '!',
 };
 
-export function CommonModal({ type = 'info', tone = 'default', title, message, confirmText = '확인', onClose }: CommonModalProps) {
+export function CommonModal({
+  type = 'info',
+  tone = 'default',
+  title,
+  message,
+  confirmText = '확인',
+  secondaryText,
+  onConfirm,
+  onSecondary,
+  onClose,
+}: CommonModalProps) {
   return (
-    <div className={cx('overlay')} role="presentation" onClick={onClose}>
+    <div className={cx('overlay')} role="presentation" onClick={secondaryText ? onSecondary ?? onClose : onClose}>
       <section
         className={cx('modal', type, { guardianTone: tone === 'guardian' })}
         role="alertdialog"
@@ -50,9 +63,16 @@ export function CommonModal({ type = 'info', tone = 'default', title, message, c
           <h2 id="common-modal-title">{title || MODAL_LABELS[type]}</h2>
           <p id="common-modal-message">{message}</p>
         </div>
-        <button className={cx('button')} type="button" onClick={onClose}>
-          {confirmText}
-        </button>
+        <div className={cx('actions')}>
+          {secondaryText && onSecondary && (
+            <button className={cx('button', 'secondaryButton')} type="button" onClick={onSecondary}>
+              {secondaryText}
+            </button>
+          )}
+          <button className={cx('button')} type="button" onClick={onConfirm ?? onClose}>
+            {confirmText}
+          </button>
+        </div>
       </section>
     </div>
   );
