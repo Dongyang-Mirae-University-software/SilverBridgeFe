@@ -22,11 +22,14 @@ export async function getWardConnections(): Promise<CommonResponse<IConnectionIt
     getWardPendingConnectionRequests(),
   ]);
 
+  const activeBody = activeResponse.data;
+  const pendingBody = pendingResponse.data;
+
   return {
-    code: activeResponse.code ?? pendingResponse.code ?? 200,
-    success: activeResponse.success ?? pendingResponse.success,
-    message: activeResponse.message || pendingResponse.message,
-    data: mergeWardConnections(activeResponse.data ?? [], pendingResponse.data ?? []),
+    code: activeBody?.code ?? pendingBody?.code ?? 200,
+    success: activeBody?.success ?? pendingBody?.success,
+    message: activeBody?.message || pendingBody?.message,
+    data: mergeWardConnections(activeBody?.data ?? [], pendingBody?.data ?? []),
   };
 }
 
