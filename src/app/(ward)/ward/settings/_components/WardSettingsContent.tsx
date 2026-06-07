@@ -6,11 +6,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
 import {
-  getNormalizedNotificationSettings,
   userNotificationSettingsQueryOptions,
   useNotificationSettingsMutation,
 } from '@/service/query/user';
-import type { NotificationChannelType } from '@/service/interface/user';
+import type { IUserNotificationSetting, NotificationChannelType } from '@/service/interface/user';
 
 import styles from './WardSettingsContent.module.css';
 
@@ -72,22 +71,32 @@ export function WardSettingsContent() {
   const { data: notificationSettingsResponse } = useQuery(userNotificationSettingsQueryOptions);
   const { mutate: updateNotificationSettings, isPending: isUpdatingNotificationSettings } = useNotificationSettingsMutation();
   const [notificationError, setNotificationError] = useState('');
+  const [notificationSettingsDraft, setNotificationSettingsDraft] = useState<IUserNotificationSetting[] | null>(null);
 
   const fontProgress = ((wardSettings.fontSize - MIN_WARD_FONT_SIZE) / (MAX_WARD_FONT_SIZE - MIN_WARD_FONT_SIZE)) * 100;
   const rangeStyle = { '--settings-range-progress': `${fontProgress}%` } as CSSProperties;
-  const notificationSettings = getNormalizedNotificationSettings(notificationSettingsResponse?.data);
+  const querySettings = notificationSettingsResponse?.data?.settings ?? [];
+  const notificationSettings = notificationSettingsDraft ?? querySettings;
   const notificationSettingMap = new Map(notificationSettings.map(item => [item.channelType, item.enabled]));
 
   function handleNotificationToggle(channelType: NotificationChannelType, enabled: boolean) {
     const current = notificationSettingMap.get(channelType);
     if (current === enabled) return;
 
+    const previousSettings = notificationSettings;
+    const nextSettings = notificationSettings.map(item => (item.channelType === channelType ? { ...item, enabled } : item));
+
+    setNotificationSettingsDraft(nextSettings);
     setNotificationError('');
     updateNotificationSettings(
       { settings: [{ channelType, enabled }] },
       {
         onError: error => {
+          setNotificationSettingsDraft(previousSettings);
           setNotificationError(error instanceof Error && error.message ? error.message : '알림 설정 변경에 실패했습니다.');
+        },
+        onSuccess: () => {
+          setNotificationSettingsDraft(null);
         },
       },
     );
