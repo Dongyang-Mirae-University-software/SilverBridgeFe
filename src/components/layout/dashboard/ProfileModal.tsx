@@ -63,7 +63,9 @@ export function ProfileModal({
         aria-labelledby="profile-modal-title"
         onClick={e => e.stopPropagation()}
       >
-        <button className={cx('profileModalClose')} type="button" aria-label="닫기" onClick={onClose}>×</button>
+        <button className={cx('profileModalClose')} type="button" aria-label="닫기" onClick={onClose}>
+          ×
+        </button>
 
         {/* 헤더: 아바타 + 이름 */}
         <div className={cx('profileModalHeader')}>
@@ -84,16 +86,6 @@ export function ProfileModal({
           </div>
         </div>
 
-        {/* 상세 정보 */}
-        <dl className={cx('infoGrid')}>
-          {infoItems.map(({ label, value }) => (
-            <div key={label} className={cx('infoItem')}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
-
         {/* 수정 폼 + 하단 버튼 */}
         <ProfileModalControls
           key={getProfileControlsKey(profile)}
@@ -109,5 +101,14 @@ export function ProfileModal({
 
 function getProfileControlsKey(profile: IUserProfile | null) {
   if (!profile) return 'profile-loading';
-  return [profile.id, profile.name, profile.phone, profile.gender, profile.birthDate, profile.postcode, profile.address, profile.addressDetail].join('|');
+  return [
+    profile.id,
+    profile.name,
+    profile.phone,
+    profile.gender,
+    profile.birthDate,
+    profile.postcode,
+    profile.address,
+    profile.addressDetail,
+  ].join('|');
 }
