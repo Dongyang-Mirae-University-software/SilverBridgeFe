@@ -39,6 +39,11 @@ export function ProfileInfoPanel({
 }: Props) {
   return (
     <section className={cx('profileManageCard')}>
+      <div className={cx('profileManageHeader')}>
+        <h3>기본 정보</h3>
+        <p>필수 정보와 주소를 한 번에 확인하고 수정할 수 있습니다.</p>
+      </div>
+
       <form className={cx('profileForm')} onSubmit={onSubmit}>
         <div className={cx('profileFormGrid')}>
           <ProfileInput label="이름" maxLength={20} value={form.name ?? ''} onValueChange={value => onChange('name', value)} />
@@ -76,6 +81,8 @@ export function ProfileInfoPanel({
 
         {isPhoneChanged && (
           <div className={cx('profilePhoneVerify')}>
+            <span className={cx('profilePhoneVerifyTitle')}>휴대폰 인증</span>
+            <p className={cx('profilePhoneVerifyDesc')}>번호를 바꾼 경우 SMS 인증을 먼저 완료해야 저장할 수 있습니다.</p>
             <button
               className={cx('profileModalGhostButton')}
               type="button"
