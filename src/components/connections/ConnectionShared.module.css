@@ -1,13 +1,13 @@
 .connectionEmpty {
   margin: 0;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 10px;
-  background: #fff;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--sb-ink-soft);
   font-size: 13px;
   font-weight: 650;
   line-height: 1.5;
-  padding: 12px 14px;
+  padding: 0;
 }
 
 .connectionStatGrid {
@@ -48,68 +48,29 @@
   font-weight: 650;
 }
 
-.connectionSection {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 18px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
-  background: #fff;
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.connectionSectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.connectionSectionHeader h3 {
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: 16px;
-  font-weight: 850;
-}
-
-.connectionSectionHeader span {
-  border-radius: 999px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
-}
-
-:global(.guardianTheme) .connectionSectionHeader span {
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
-}
-
 .connectionCard {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 16px;
+  border-radius: 14px;
   background: #fff;
-  box-shadow: 0 8px 24px rgba(20, 17, 12, 0.05);
-  padding: 16px;
+  box-shadow: none;
+  padding: 14px 16px;
 }
 
 .connectionCardMain {
   display: flex;
   min-width: 0;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
 }
 
 .connectionInfo {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
 }
 
@@ -131,7 +92,7 @@
 .connectionTitleRow strong {
   overflow: hidden;
   color: var(--sb-ink);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 850;
   line-height: 1.25;
   text-overflow: ellipsis;
@@ -187,17 +148,17 @@
   align-items: center;
   min-height: 26px;
   border-radius: 999px;
-  background: var(--sb-bg);
+  background: transparent;
   color: var(--sb-ink-mute);
   font-size: 12px;
   font-weight: 750;
-  padding: 4px 10px;
+  padding: 0;
 }
 
 .connectionDetailList {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -206,10 +167,10 @@
 .connectionDetailLine {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   align-items: baseline;
   color: var(--sb-ink-soft);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.5;
 }
 
