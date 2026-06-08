@@ -2,7 +2,6 @@
 
 import classNames from 'classnames/bind';
 
-import { UserAvatar } from '@/components/UserAvatar';
 import { IConnectionItem } from '@/service/interface/connection';
 import {
   formatPartnerGender,
@@ -30,6 +29,10 @@ function getConnectionAddress(connection: IConnectionItem) {
   return [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
 }
 
+function getAvatarText(name?: string | null) {
+  return name?.trim().slice(0, 1) || '·';
+}
+
 function ConnectionDetail({
   icon,
   label,
@@ -41,10 +44,12 @@ function ConnectionDetail({
 }) {
   return (
     <li className={cx('connectionDetailRow')}>
-      <span className={cx('connectionDetailIcon')} aria-hidden="true">
-        {icon}
+      <span className={cx('connectionDetailLabel')}>
+        <span className={cx('connectionDetailIcon')} aria-hidden="true">
+          {icon}
+        </span>
+        {label}
       </span>
-      <span className={cx('connectionDetailLabel')}>{label}</span>
       <strong className={cx('connectionDetailValue')}>{value || '정보 없음'}</strong>
     </li>
   );
@@ -74,12 +79,14 @@ export function ConnectionCard({
   return (
     <li className={cx('connectionCard')} data-role={role}>
       <div className={cx('connectionCardMain')}>
-        <UserAvatar size="w-60" imageUrl={connection.partnerProfileImage} />
+        <div className={cx('connectionAvatar')} aria-hidden="true">
+          {getAvatarText(connection.partnerName)}
+        </div>
         <div className={cx('connectionInfo')}>
           <div className={cx('connectionTitleRow')}>
             <div className={cx('connectionNameBlock')}>
               <strong>{connection.partnerName || '이름 확인 전'}</strong>
-              <span>ID {connection.partnerUserId}</span>
+              <span>{connection.relation || '관계 정보 없음'}</span>
             </div>
             <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>{profileLabel}</span>
           </div>
@@ -90,12 +97,13 @@ export function ConnectionCard({
           </div>
 
           <ul className={cx('connectionDetailList')}>
+            <ConnectionDetail icon="📞" label="전화번호" value={getPartnerPhoneValue(connection)} />
+            <ConnectionDetail icon="🤝" label="관계" value={connection.relation || '정보 없음'} />
+            <ConnectionDetail icon="📍" label="주소" value={getActivePartnerValue(connection, address)} />
             <ConnectionDetail icon="📧" label="이메일" value={getActivePartnerValue(connection, connection.partnerEmail)} />
             <ConnectionDetail icon="👤" label="성별" value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))} />
             <ConnectionDetail icon="🎂" label="생년월일" value={getActivePartnerValue(connection, connection.partnerBirthDate)} />
-            <ConnectionDetail icon="📞" label="연락처" value={getPartnerPhoneValue(connection)} />
             <ConnectionDetail icon="🏷" label="우편번호" value={getActivePartnerValue(connection, connection.partnerPostcode)} />
-            <ConnectionDetail icon="📍" label="주소" value={getActivePartnerValue(connection, address)} />
           </ul>
         </div>
       </div>
