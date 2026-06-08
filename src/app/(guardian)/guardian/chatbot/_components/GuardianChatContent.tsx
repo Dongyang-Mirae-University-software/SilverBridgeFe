@@ -58,7 +58,7 @@ export default function GuardianChatContent() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
-  const [suggestionsOpen, setSuggestionsOpen] = useState(true);
+  const [topTab, setTopTab] = useState<'context' | 'suggestions' | null>('context');
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -226,29 +226,43 @@ export default function GuardianChatContent() {
     <div className={styles.chatPage}>
       <div className={styles.topBar}>
         <div className={styles.topBarLeft}>
-          <ChatContextForm value={context} onChange={setContext} />
-        </div>
-        <div className={styles.topBarActions}>
           <button
             type="button"
-            className={styles.helpBtn}
-            aria-expanded={suggestionsOpen}
-            aria-label="추천 질문 토글"
-            onClick={() => setSuggestionsOpen(prev => !prev)}
+            className={`${styles.tabButton} ${topTab === 'context' ? styles.tabButtonActive : ''}`}
+            onClick={() => setTopTab(prev => (prev === 'context' ? null : 'context'))}
           >
-            ?
+            상담 컨텍스트
           </button>
           <button type="button" className={styles.newBtn} onClick={handleNewSession}>
             새 상담
+          </button>
+          <button
+            type="button"
+            className={`${styles.tabButton} ${topTab === 'suggestions' ? styles.tabButtonActive : ''}`}
+            onClick={() => setTopTab(prev => (prev === 'suggestions' ? null : 'suggestions'))}
+          >
+            추천 질문
           </button>
         </div>
       </div>
 
       {fallback && <div className={styles.fallbackWarning}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
 
-      {suggestionsOpen && (
-        <section className={styles.suggestionPopover} aria-label="추천 질문">
-          <div className={styles.suggestionHeader}>
+      {topTab === 'context' && (
+        <section className={styles.topDock} aria-label="상담 컨텍스트">
+          <div className={styles.dockHeader}>
+            <div className={styles.suggestionTitle}>
+              <strong>상담 컨텍스트</strong>
+              <span>상담 대상 정보를 조정합니다</span>
+            </div>
+          </div>
+          <ChatContextForm value={context} onChange={setContext} />
+        </section>
+      )}
+
+      {topTab === 'suggestions' && (
+        <section className={styles.topDock} aria-label="추천 질문">
+          <div className={styles.dockHeader}>
             <div className={styles.suggestionTitle}>
               <strong>추천 질문</strong>
               <span>선택하면 입력창에 채워집니다</span>
