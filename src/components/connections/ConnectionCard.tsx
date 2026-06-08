@@ -2,6 +2,7 @@
 
 import classNames from 'classnames/bind';
 
+import { UserAvatar } from '@/components/UserAvatar';
 import { IConnectionItem } from '@/service/interface/connection';
 import {
   formatPartnerGender,
@@ -27,10 +28,6 @@ function formatDate(value: string | null) {
 
 function getConnectionAddress(connection: IConnectionItem) {
   return [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
-}
-
-function getAvatarText(name?: string | null) {
-  return name?.trim().slice(0, 1) || '·';
 }
 
 function ConnectionDetail({
@@ -79,9 +76,7 @@ export function ConnectionCard({
   return (
     <li className={cx('connectionCard')} data-role={role}>
       <div className={cx('connectionCardMain')}>
-        <div className={cx('connectionAvatar')} aria-hidden="true">
-          {getAvatarText(connection.partnerName)}
-        </div>
+        <UserAvatar size="w-60" imageUrl={connection.partnerProfileImage} />
         <div className={cx('connectionInfo')}>
           <div className={cx('connectionTitleRow')}>
             <div className={cx('connectionNameBlock')}>

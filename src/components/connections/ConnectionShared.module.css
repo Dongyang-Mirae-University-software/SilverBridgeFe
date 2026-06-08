@@ -67,20 +67,6 @@
   gap: 14px;
 }
 
-.connectionAvatar {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 18px;
-  background: var(--guardian-brand);
-  color: #fff;
-  font-size: 26px;
-  font-weight: 900;
-  line-height: 1;
-}
-
 .connectionInfo {
   display: flex;
   min-width: 0;
