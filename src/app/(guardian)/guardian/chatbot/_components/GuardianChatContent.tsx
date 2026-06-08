@@ -253,8 +253,8 @@ export default function GuardianChatContent() {
         )}
       </div>
 
-      {suggestionsOpen && (
-        <div className={styles.suggestionPanel}>
+      <footer className={styles.chatFooter}>
+        <section className={styles.suggestionRail} aria-label="추천 질문">
           <div className={styles.suggestionHeader}>
             <div className={styles.suggestionTitle}>
               <strong>추천 질문</strong>
@@ -263,41 +263,28 @@ export default function GuardianChatContent() {
             <button
               type="button"
               className={styles.suggestionToggle}
-              aria-expanded={true}
-              onClick={() => setSuggestionsOpen(false)}
+              aria-expanded={suggestionsOpen}
+              onClick={() => setSuggestionsOpen(prev => !prev)}
             >
-              닫기
+              {suggestionsOpen ? '접기' : '펼치기'}
             </button>
           </div>
-          <div className={styles.chips}>
-            {SAMPLE_CHIPS.map(chip => (
-              <button
-                key={chip}
-                type="button"
-                className={styles.chip}
-                disabled={sending}
-                onClick={() => handleChipClick(chip)}
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <footer className={styles.chatFooter}>
-        {!suggestionsOpen && (
-          <div className={styles.footerActions}>
-            <button
-              type="button"
-              className={styles.suggestionToggle}
-              aria-expanded={false}
-              onClick={() => setSuggestionsOpen(true)}
-            >
-              추천 질문 보기
-            </button>
-          </div>
-        )}
+          {suggestionsOpen && (
+            <div className={styles.chips}>
+              {SAMPLE_CHIPS.map(chip => (
+                <button
+                  key={chip}
+                  type="button"
+                  className={styles.chip}
+                  disabled={sending}
+                  onClick={() => handleChipClick(chip)}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
         <div className={styles.inputArea}>
           <textarea
             ref={textareaRef}
