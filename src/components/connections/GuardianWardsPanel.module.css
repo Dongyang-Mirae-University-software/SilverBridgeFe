@@ -110,9 +110,9 @@
 
 /* ── 목록 ── */
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
