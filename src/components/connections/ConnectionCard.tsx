@@ -32,10 +32,10 @@ function getConnectionAddress(connection: IConnectionItem) {
 
 function ConnectionDetail({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div className={cx('connectionDetailItem')}>
+    <li className={cx('connectionDetailLine')}>
       <span>{label}</span>
       <strong>{value || '정보 없음'}</strong>
-    </div>
+    </li>
   );
 }
 
@@ -80,7 +80,7 @@ export function ConnectionCard({
             <span>{dateValue}</span>
           </div>
 
-          <div className={cx('connectionDetailGrid')}>
+          <ul className={cx('connectionDetailList')}>
             <ConnectionDetail label="이메일" value={getActivePartnerValue(connection, connection.partnerEmail)} />
             <ConnectionDetail label="성별" value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))} />
             <ConnectionDetail label="생년월일" value={getActivePartnerValue(connection, connection.partnerBirthDate)} />
@@ -88,7 +88,7 @@ export function ConnectionCard({
             <ConnectionDetail label={dateLabel} value={dateValue} />
             <ConnectionDetail label="우편번호" value={getActivePartnerValue(connection, connection.partnerPostcode)} />
             <ConnectionDetail label="주소" value={getActivePartnerValue(connection, address)} />
-          </div>
+          </ul>
         </div>
       </div>
       {primaryAction && primaryLabel ? (
