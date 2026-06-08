@@ -71,6 +71,7 @@ export function ConnectionCard({
   const dateLabel = connection.status === 'ACTIVE' ? '연결일' : '요청일';
   const dateValue = connection.status === 'ACTIVE' ? formatDate(connection.connectedAt) : formatDate(connection.createdAt);
   const profileLabel = connection.status === 'ACTIVE' ? '연결됨' : getConnectionStatusLabel(connection.status);
+  const summaryBits = [connection.relation, dateValue].filter(Boolean);
 
   return (
     <li className={cx('connectionCard')} data-role={role}>
@@ -84,6 +85,13 @@ export function ConnectionCard({
             </div>
             <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>{profileLabel}</span>
           </div>
+
+          {summaryBits.length > 0 && (
+            <div className={cx('connectionSummaryRow')}>
+              {connection.relation && <span>🤝 {connection.relation}</span>}
+              <span>🗓 {dateValue}</span>
+            </div>
+          )}
 
           <ul className={cx('connectionDetailList')}>
             {connection.relation && <ConnectionDetail icon="🤝" label="관계" value={connection.relation} />}
