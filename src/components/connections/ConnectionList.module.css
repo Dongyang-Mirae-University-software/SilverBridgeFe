@@ -52,7 +52,8 @@
 
 .connectionList {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
+  justify-content: start;
   gap: 10px;
   margin: 0;
   padding: 0;

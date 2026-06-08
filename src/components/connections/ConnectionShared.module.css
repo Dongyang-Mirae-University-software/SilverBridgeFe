@@ -57,6 +57,8 @@
   background: #fff;
   box-shadow: none;
   padding: 14px 16px 12px;
+  width: 100%;
+  max-width: 320px;
 }
 
 .connectionCardMain {
@@ -92,8 +94,8 @@
 .connectionTitleRow strong {
   overflow: hidden;
   color: var(--sb-ink);
-  font-size: 16px;
-  font-weight: 850;
+  font-size: 17px;
+  font-weight: 760;
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -103,8 +105,8 @@
   overflow: hidden;
   color: var(--sb-ink-mute);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -116,8 +118,8 @@
   border-radius: 999px;
   background: #fbf1db;
   color: var(--sb-sun);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 650;
   padding: 3px 10px;
 }
 
@@ -152,7 +154,7 @@
   gap: 6px;
   align-items: start;
   color: var(--sb-ink-soft);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.45;
 }
 
@@ -166,13 +168,13 @@
 
 .connectionDetailLabel {
   color: var(--sb-ink-mute);
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .connectionDetailValue {
   color: var(--sb-ink);
-  font-weight: 800;
+  font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
   word-break: keep-all;
@@ -198,7 +200,7 @@
   color: #fff;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
   padding: 8px 13px;
   text-decoration: none;
   white-space: nowrap;
@@ -216,7 +218,7 @@
   color: var(--sb-ink-soft);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
   padding: 8px 13px;
   text-decoration: none;
   white-space: nowrap;
