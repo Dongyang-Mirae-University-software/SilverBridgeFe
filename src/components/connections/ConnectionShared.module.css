@@ -51,12 +51,12 @@
 .connectionCard {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   border: 1px solid var(--sb-line-soft);
   border-radius: 14px;
   background: #fff;
   box-shadow: none;
-  padding: 14px 16px;
+  padding: 14px 16px 12px;
 }
 
 .connectionCardMain {
@@ -70,7 +70,7 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   flex: 1;
 }
 
@@ -137,51 +137,45 @@
   color: var(--sb-ink-mute);
 }
 
-.connectionSummaryRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.connectionSummaryRow span {
-  display: inline-flex;
-  align-items: center;
-  min-height: 26px;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  font-weight: 750;
-  padding: 0;
-}
-
 .connectionDetailList {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.connectionDetailLine {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: baseline;
+.connectionDetailRow {
+  display: grid;
+  grid-template-columns: 18px 72px minmax(0, 1fr);
+  gap: 6px;
+  align-items: start;
   color: var(--sb-ink-soft);
-  font-size: 11px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
-.connectionDetailLine span {
+.connectionDetailIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  font-size: 13px;
+}
+
+.connectionDetailLabel {
   color: var(--sb-ink-mute);
   font-weight: 700;
+  white-space: nowrap;
 }
 
-.connectionDetailLine strong {
+.connectionDetailValue {
   color: var(--sb-ink);
   font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: keep-all;
 }
 
 .connectionActions {
