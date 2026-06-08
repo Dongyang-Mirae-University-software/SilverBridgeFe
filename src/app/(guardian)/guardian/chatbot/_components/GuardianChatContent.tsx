@@ -228,12 +228,47 @@ export default function GuardianChatContent() {
         <div className={styles.topBarLeft}>
           <ChatContextForm value={context} onChange={setContext} />
         </div>
-        <button type="button" className={styles.newBtn} onClick={handleNewSession}>
-          새 상담
-        </button>
+        <div className={styles.topBarActions}>
+          <button
+            type="button"
+            className={styles.helpBtn}
+            aria-expanded={suggestionsOpen}
+            aria-label="추천 질문 토글"
+            onClick={() => setSuggestionsOpen(prev => !prev)}
+          >
+            ?
+          </button>
+          <button type="button" className={styles.newBtn} onClick={handleNewSession}>
+            새 상담
+          </button>
+        </div>
       </div>
 
       {fallback && <div className={styles.fallbackWarning}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
+
+      {suggestionsOpen && (
+        <section className={styles.suggestionPopover} aria-label="추천 질문">
+          <div className={styles.suggestionHeader}>
+            <div className={styles.suggestionTitle}>
+              <strong>추천 질문</strong>
+              <span>선택하면 입력창에 채워집니다</span>
+            </div>
+          </div>
+          <div className={styles.chips}>
+            {SAMPLE_CHIPS.map(chip => (
+              <button
+                key={chip}
+                type="button"
+                className={styles.chip}
+                disabled={sending}
+                onClick={() => handleChipClick(chip)}
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div ref={listRef} className={styles.messageList}>
         {messages.map(msg => (
@@ -254,37 +289,6 @@ export default function GuardianChatContent() {
       </div>
 
       <footer className={styles.chatFooter}>
-        <section className={styles.suggestionRail} aria-label="추천 질문">
-          <div className={styles.suggestionHeader}>
-            <div className={styles.suggestionTitle}>
-              <strong>추천 질문</strong>
-              <span>선택하면 입력창에 채워집니다</span>
-            </div>
-            <button
-              type="button"
-              className={styles.suggestionToggle}
-              aria-expanded={suggestionsOpen}
-              onClick={() => setSuggestionsOpen(prev => !prev)}
-            >
-              {suggestionsOpen ? '접기' : '펼치기'}
-            </button>
-          </div>
-          {suggestionsOpen && (
-            <div className={styles.chips}>
-              {SAMPLE_CHIPS.map(chip => (
-                <button
-                  key={chip}
-                  type="button"
-                  className={styles.chip}
-                  disabled={sending}
-                  onClick={() => handleChipClick(chip)}
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
         <div className={styles.inputArea}>
           <textarea
             ref={textareaRef}
