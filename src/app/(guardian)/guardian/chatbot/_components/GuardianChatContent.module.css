@@ -65,14 +65,18 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
   background: #fafaf8;
-  padding: 76px 18px 18px;
+  padding: 76px 10px 18px;
+  scrollbar-width: none;
+}
+
+.messageList::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 /* ── 타이핑 인디케이터 ── */
@@ -127,7 +131,6 @@
   box-sizing: border-box;
   width: min(680px, 100%);
   flex-shrink: 0;
-  border: 1px solid rgba(37, 32, 24, 0.08);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 10px 24px rgba(37, 32, 24, 0.04);
@@ -186,26 +189,24 @@
 }
 
 .chip {
-  border: 1px solid rgba(37, 32, 24, 0.1);
+  border: 1px solid rgba(37, 32, 24, 0.08);
   border-radius: 999px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 800;
-  padding: 8px 13px;
+  font-weight: 700;
+  padding: 7px 13px;
   transition:
     background 0.12s ease,
     border-color 0.12s ease,
-    color 0.12s ease,
-    transform 0.12s ease;
+    color 0.12s ease;
 }
 
 .chip:hover:not(:disabled) {
   border-color: var(--guardian-line, #e3c5b8);
   background: var(--guardian-brand-soft);
   color: var(--guardian-brand);
-  transform: translateY(-1px);
 }
 
 .chip:disabled {
@@ -219,11 +220,11 @@
   flex-shrink: 0;
   align-items: flex-end;
   gap: 10px;
-  border: 1px solid rgba(37, 32, 24, 0.12);
-  border-radius: 22px;
+  border: 1px solid rgba(37, 32, 24, 0.08);
+  border-radius: 18px;
   background: #fff;
-  box-shadow: 0 12px 30px rgba(37, 32, 24, 0.06);
-  padding: 12px 12px 12px 16px;
+  box-shadow: 0 8px 18px rgba(37, 32, 24, 0.04);
+  padding: 11px 12px 11px 15px;
   transition:
     border-color 0.12s ease,
     box-shadow 0.12s ease;
@@ -262,9 +263,9 @@
   color: #fff;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 850;
-  min-height: 40px;
-  padding: 0 20px;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 0 18px;
   white-space: nowrap;
 }
 
