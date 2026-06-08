@@ -11,49 +11,18 @@
 
 /* ── 상단 바 ── */
 .topBar {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 5;
   display: flex;
-  width: min(520px, calc(100% - 24px));
   align-items: flex-start;
+  justify-content: space-between;
   gap: 10px;
   flex-shrink: 0;
-  pointer-events: none;
 }
 
 .topBarLeft {
-  flex: 1;
-  min-width: 0;
-  pointer-events: auto;
-}
-
-.topBarActions {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
-  pointer-events: auto;
-}
-
-.helpBtn {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border: 1px solid rgba(37, 32, 24, 0.08);
-  border-radius: 50%;
-  background: #fff;
-  color: var(--sb-ink-soft);
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 800;
-  box-shadow: 0 10px 24px rgba(37, 32, 24, 0.06);
-}
-
-.helpBtn:hover {
-  background: var(--sb-bg-soft);
+  flex-wrap: wrap;
 }
 
 .newBtn {
@@ -73,6 +42,31 @@
 
 .newBtn:hover {
   background: var(--sb-bg-soft);
+}
+
+.tabButton {
+  flex-shrink: 0;
+  border: 1px solid rgba(37, 32, 24, 0.08);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 0 14px;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px rgba(37, 32, 24, 0.04);
+}
+
+.tabButton:hover {
+  background: var(--sb-bg-soft);
+}
+
+.tabButtonActive {
+  border-color: var(--guardian-line, #e3c5b8);
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
 }
 
 /* ── Fallback 경고 ── */
@@ -97,7 +91,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   background: #fafaf8;
-  padding: 76px 10px 18px;
+  padding: 8px 10px 18px;
   scrollbar-width: none;
 }
 
@@ -106,19 +100,21 @@
   height: 0;
 }
 
-.suggestionPopover {
-  position: absolute;
-  top: 64px;
-  right: 12px;
-  z-index: 4;
+.topDock {
   display: flex;
-  width: min(680px, calc(100% - 24px));
   flex-direction: column;
   gap: 10px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.94);
   box-shadow: 0 10px 24px rgba(37, 32, 24, 0.06);
   padding: 12px 14px;
+}
+
+.dockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 /* ── 타이핑 인디케이터 ── */
@@ -304,38 +300,32 @@
   }
 
   .topBar {
-    top: 10px;
-    right: 10px;
-    width: min(440px, calc(100% - 20px));
-  }
-
-  .newBtn {
-    align-self: flex-end;
-  }
-
-  .messageList {
-    min-height: 0;
-  }
-}
-
-@media (max-width: 640px) {
-  .topBar {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .topBarActions {
-    justify-content: flex-end;
+  .topBarLeft {
+    width: 100%;
   }
 
-  .suggestionPopover {
-    top: 116px;
-    right: 10px;
-    width: min(100%, calc(100% - 20px));
+  .topBarLeft .tabButton,
+  .topBarLeft .newBtn {
+    width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .topBarLeft {
+    gap: 6px;
   }
 
-  .messageList {
-    padding-top: 118px;
+  .tabButton,
+  .newBtn {
+    flex: 1 1 auto;
+  }
+
+  .topDock {
+    padding: 11px 12px;
   }
 
   .suggestionHeader {
