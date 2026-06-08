@@ -51,7 +51,7 @@ export function ProfileModal({
         {/* 헤더: 아바타 + 이름 */}
         <div className={cx('profileModalHeader')}>
           <UserAvatar
-            size="w-60"
+            size="w-120"
             imageUrl={profile?.profileImage}
             disabled={isProfileImageChanging}
             onImageChange={onProfileImageChange}
@@ -68,10 +68,7 @@ export function ProfileModal({
         </div>
 
         {/* 수정 폼 + 하단 버튼 */}
-        <ProfileModalControls
-          key={getProfileControlsKey(profile)}
-          profile={profile}
-        />
+        <ProfileModalControls key={getProfileControlsKey(profile)} profile={profile} />
 
         <div className={cx('profileModalFooter')}>
           <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={onLogout}>
