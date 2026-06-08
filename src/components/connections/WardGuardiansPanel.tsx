@@ -20,7 +20,7 @@ import {
 import classNames from 'classnames/bind';
 import { ConnectionCard } from './ConnectionCard';
 import { EmptyState, getConnectionData, getErrorMessage } from './ConnectionShared';
-import styles from './WardGuardiansPanel.module.css';
+import styles from './ConnectionList.module.css';
 
 const cx = classNames.bind(styles);
 const wardActiveConnectionsQueryKey = [...wardConnectionsQueryKey, 'active'] as const;

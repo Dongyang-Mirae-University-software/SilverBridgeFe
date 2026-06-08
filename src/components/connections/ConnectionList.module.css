@@ -1,0 +1,72 @@
+.connectionPage {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.connectionPageActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.connectionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.connectionSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.connectionSectionHeader h3 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.connectionSectionHeader span {
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+}
+
+:global(.guardianTheme) .connectionSectionHeader span {
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+}
+
+.connectionList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.connectionMessage {
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+  padding: 12px 14px;
+}
