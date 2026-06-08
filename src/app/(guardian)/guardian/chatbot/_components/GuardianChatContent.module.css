@@ -92,28 +92,28 @@
   height: 0;
 }
 
-.contextPopover,
-.suggestionPopover {
-  position: absolute;
-  top: 52px;
-  z-index: 4;
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 32, 24, 0.24);
+  padding: 20px;
+}
+
+.modal {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: min(640px, 100%);
+  max-height: min(80vh, 720px);
+  overflow: auto;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 10px 24px rgba(37, 32, 24, 0.06);
-  padding: 12px 14px;
-}
-
-.contextPopover {
-  left: 0;
-  width: min(640px, calc(100% - 180px));
-}
-
-.suggestionPopover {
-  right: 0;
-  width: min(640px, calc(100% - 180px));
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 24px 60px rgba(37, 32, 24, 0.18);
+  padding: 14px 16px 16px;
 }
 
 .popoverHeader {
@@ -342,13 +342,13 @@
     flex: 1 1 auto;
   }
 
-  .contextPopover,
-  .suggestionPopover {
-    top: 48px;
-    left: 10px;
-    right: 10px;
-    width: auto;
-    padding: 11px 12px;
+  .modalOverlay {
+    padding: 12px;
+  }
+
+  .modal {
+    max-height: min(86vh, 720px);
+    padding: 12px 12px 14px;
   }
 
   .popoverHeader {
