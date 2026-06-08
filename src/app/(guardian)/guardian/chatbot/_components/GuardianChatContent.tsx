@@ -58,8 +58,7 @@ export default function GuardianChatContent() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
-  const [contextOpen, setContextOpen] = useState(false);
-  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [popup, setPopup] = useState<'context' | 'suggestions' | null>(null);
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -230,8 +229,8 @@ export default function GuardianChatContent() {
         <div className={styles.topBarActions}>
           <button
             type="button"
-            className={`${styles.actionBtn} ${contextOpen ? styles.actionBtnActive : ''}`}
-            onClick={() => setContextOpen(prev => !prev)}
+            className={`${styles.actionBtn} ${popup === 'context' ? styles.actionBtnActive : ''}`}
+            onClick={() => setPopup(prev => (prev === 'context' ? null : 'context'))}
           >
             상담 컨텍스트
             {contextFilledCount > 0 && <span className={styles.tabBadge}>{contextFilledCount}</span>}
@@ -241,8 +240,8 @@ export default function GuardianChatContent() {
           </button>
           <button
             type="button"
-            className={`${styles.actionBtn} ${suggestionsOpen ? styles.actionBtnActive : ''}`}
-            onClick={() => setSuggestionsOpen(prev => !prev)}
+            className={`${styles.actionBtn} ${popup === 'suggestions' ? styles.actionBtnActive : ''}`}
+            onClick={() => setPopup(prev => (prev === 'suggestions' ? null : 'suggestions'))}
           >
             추천 질문
           </button>
@@ -251,54 +250,78 @@ export default function GuardianChatContent() {
 
       {fallback && <div className={styles.fallbackWarning}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
 
-      {contextOpen && (
-        <section className={styles.contextPopover} aria-label="상담 컨텍스트">
-          <div className={styles.popoverHeader}>
-            <div className={styles.suggestionTitle}>
-              <strong>상담 컨텍스트</strong>
-              <span>상담 대상 정보를 조정합니다</span>
+      {popup === 'context' && (
+        <div
+          className={styles.modalOverlay}
+          role="presentation"
+          onClick={() => setPopup(null)}
+        >
+          <section
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-label="상담 컨텍스트"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className={styles.popoverHeader}>
+              <div className={styles.suggestionTitle}>
+                <strong>상담 컨텍스트</strong>
+                <span>상담 대상 정보를 조정합니다</span>
+              </div>
+              <button
+                type="button"
+                className={styles.popoverClose}
+                onClick={() => setPopup(null)}
+              >
+                닫기
+              </button>
             </div>
-            <button
-              type="button"
-              className={styles.popoverClose}
-              onClick={() => setContextOpen(false)}
-            >
-              닫기
-            </button>
-          </div>
-          <ChatContextForm value={context} onChange={setContext} />
-        </section>
+            <ChatContextForm value={context} onChange={setContext} />
+          </section>
+        </div>
       )}
 
-      {suggestionsOpen && (
-        <section className={styles.suggestionPopover} aria-label="추천 질문">
-          <div className={styles.popoverHeader}>
-            <div className={styles.suggestionTitle}>
-              <strong>추천 질문</strong>
-              <span>선택하면 입력창에 채워집니다</span>
-            </div>
-            <button
-              type="button"
-              className={styles.popoverClose}
-              onClick={() => setSuggestionsOpen(false)}
-            >
-              닫기
-            </button>
-          </div>
-          <div className={styles.chips}>
-            {SAMPLE_CHIPS.map(chip => (
+      {popup === 'suggestions' && (
+        <div
+          className={styles.modalOverlay}
+          role="presentation"
+          onClick={() => setPopup(null)}
+        >
+          <section
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-label="추천 질문"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className={styles.popoverHeader}>
+              <div className={styles.suggestionTitle}>
+                <strong>추천 질문</strong>
+                <span>선택하면 입력창에 채워집니다</span>
+              </div>
               <button
-                key={chip}
                 type="button"
-                className={styles.chip}
-                disabled={sending}
-                onClick={() => handleChipClick(chip)}
+                className={styles.popoverClose}
+                onClick={() => setPopup(null)}
               >
-                {chip}
+                닫기
               </button>
-            ))}
-          </div>
-        </section>
+            </div>
+            <div className={styles.chips}>
+              {SAMPLE_CHIPS.map(chip => (
+                <button
+                  key={chip}
+                  type="button"
+                  className={styles.chip}
+                  disabled={sending}
+                  onClick={() => handleChipClick(chip)}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
       )}
 
       <div ref={listRef} className={styles.messageList}>
