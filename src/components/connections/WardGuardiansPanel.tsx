@@ -18,12 +18,8 @@ import {
   removePendingConnectionRequest,
 } from '@/lib/realtime/pendingConnectionRequests';
 import classNames from 'classnames/bind';
-import {
-  ConnectionCard,
-  EmptyState,
-  getConnectionData,
-  getErrorMessage,
-} from './ConnectionShared';
+import { ConnectionCard } from './ConnectionCard';
+import { EmptyState, getConnectionData, getErrorMessage } from './ConnectionShared';
 import styles from './WardGuardiansPanel.module.css';
 
 const cx = classNames.bind(styles);
