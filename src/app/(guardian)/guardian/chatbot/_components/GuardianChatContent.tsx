@@ -236,15 +236,19 @@ export default function GuardianChatContent() {
             상담 컨텍스트
             {contextFilledCount > 0 && <span className={styles.tabBadge}>{contextFilledCount}</span>}
           </button>
-          <button type="button" className={styles.actionBtn} onClick={handleNewSession}>
-            새 상담
-          </button>
           <button
             type="button"
             className={`${styles.actionBtn} ${popup === 'suggestions' ? styles.actionBtnActive : ''}`}
             onClick={() => setPopup(prev => (prev === 'suggestions' ? null : 'suggestions'))}
           >
             추천 질문
+          </button>
+          <button
+            type="button"
+            className={`${styles.actionBtn} ${styles.newSessionBtn}`}
+            onClick={handleNewSession}
+          >
+            새 상담
           </button>
         </div>
       </div>

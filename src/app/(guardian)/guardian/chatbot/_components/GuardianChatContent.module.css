@@ -23,6 +23,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  width: 100%;
 }
 
 .actionBtn {
@@ -48,6 +49,10 @@
   border-color: var(--guardian-line, #e3c5b8);
   background: var(--guardian-brand-soft);
   color: var(--guardian-brand);
+}
+
+.newSessionBtn {
+  margin-left: auto;
 }
 
 .tabBadge {
@@ -334,6 +339,10 @@
 
   .topBarActions .actionBtn {
     width: auto;
+  }
+
+  .newSessionBtn {
+    margin-left: auto;
   }
 }
 
