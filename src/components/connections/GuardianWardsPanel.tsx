@@ -9,13 +9,8 @@ import { RefreshButton } from '@/components/RefreshButton';
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/connect/guardian';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
-import {
-  ConnectionCard,
-  EmptyState,
-  getConnectionData,
-  getErrorMessage,
-  splitConnections,
-} from './ConnectionShared';
+import { ConnectionCard } from './ConnectionCard';
+import { EmptyState, getConnectionData, getErrorMessage } from './ConnectionShared';
 import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
 import styles from './GuardianWardsPanel.module.css';
 
@@ -138,4 +133,11 @@ function getInitialTab(searchParams: ReturnType<typeof useSearchParams>): Guardi
 function sortGuardianConnections(connections: IConnectionItem[]) {
   const order: Record<IConnectionItem['status'], number> = { ACTIVE: 0, PENDING: 1, REFUSED: 2, CANCELLED: 3, DISCONNECTED: 4 };
   return [...connections].sort((a, b) => order[a.status] - order[b.status]);
+}
+
+function splitConnections(connections: IConnectionItem[]) {
+  return {
+    activeConnections: connections.filter(connection => connection.status === 'ACTIVE'),
+    pendingConnections: connections.filter(connection => connection.status === 'PENDING'),
+  };
 }
