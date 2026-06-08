@@ -119,14 +119,14 @@ button.avatar:disabled {
 }
 
 @media (max-width: 900px) {
-  .w-120 {
+  /* .w-120 {
     width: 64px;
     height: 64px;
     font-size: 24px;
-  }
+  } */
 
-  .editButton {
+  /* .editButton {
     width: 30px;
     height: 30px;
-  }
+  } */
 }
