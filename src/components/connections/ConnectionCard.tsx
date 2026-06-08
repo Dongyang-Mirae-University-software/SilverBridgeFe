@@ -30,15 +30,7 @@ function getConnectionAddress(connection: IConnectionItem) {
   return [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
 }
 
-function ConnectionDetail({
-  icon,
-  label,
-  value,
-}: {
-  icon: string;
-  label: string;
-  value?: string | null;
-}) {
+function ConnectionDetail({ icon, label, value }: { icon: string; label: string; value?: string | null }) {
   return (
     <li className={cx('connectionDetailRow')}>
       <span className={cx('connectionDetailLabel')}>
@@ -71,12 +63,13 @@ export function ConnectionCard({
 }) {
   const address = connection.status === 'ACTIVE' ? getConnectionAddress(connection) : '';
   const dateLabel = connection.status === 'ACTIVE' ? '연결일' : '요청일';
-  const dateValue = connection.status === 'ACTIVE' ? formatDate(connection.connectedAt) : formatDate(connection.createdAt);
+  const dateValue =
+    connection.status === 'ACTIVE' ? formatDate(connection.connectedAt) : formatDate(connection.createdAt);
   const profileLabel = connection.status === 'ACTIVE' ? '연결됨' : getConnectionStatusLabel(connection.status);
   return (
     <li className={cx('connectionCard')} data-role={role}>
       <div className={cx('connectionCardMain')}>
-        <UserAvatar size="w-60" imageUrl={connection.partnerProfileImage} />
+        <UserAvatar size="w-120" imageUrl={connection.partnerProfileImage} />
         <div className={cx('connectionInfo')}>
           <div className={cx('connectionTitleRow')}>
             <div className={cx('connectionNameBlock')}>
@@ -87,18 +80,32 @@ export function ConnectionCard({
           </div>
 
           <div className={cx('connectionSummaryRow')}>
-            {connection.relation && <span>🤝 {connection.relation}</span>}
             <span>🗓 {dateValue}</span>
           </div>
 
           <ul className={cx('connectionDetailList')}>
             <ConnectionDetail icon="📞" label="전화번호" value={getPartnerPhoneValue(connection)} />
-            <ConnectionDetail icon="🤝" label="관계" value={connection.relation || '정보 없음'} />
             <ConnectionDetail icon="📍" label="주소" value={getActivePartnerValue(connection, address)} />
-            <ConnectionDetail icon="📧" label="이메일" value={getActivePartnerValue(connection, connection.partnerEmail)} />
-            <ConnectionDetail icon="👤" label="성별" value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))} />
-            <ConnectionDetail icon="🎂" label="생년월일" value={getActivePartnerValue(connection, connection.partnerBirthDate)} />
-            <ConnectionDetail icon="🏷" label="우편번호" value={getActivePartnerValue(connection, connection.partnerPostcode)} />
+            <ConnectionDetail
+              icon="📧"
+              label="이메일"
+              value={getActivePartnerValue(connection, connection.partnerEmail)}
+            />
+            <ConnectionDetail
+              icon="👤"
+              label="성별"
+              value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))}
+            />
+            <ConnectionDetail
+              icon="🎂"
+              label="생년월일"
+              value={getActivePartnerValue(connection, connection.partnerBirthDate)}
+            />
+            <ConnectionDetail
+              icon="🏷"
+              label="우편번호"
+              value={getActivePartnerValue(connection, connection.partnerPostcode)}
+            />
           </ul>
         </div>
       </div>
@@ -108,7 +115,12 @@ export function ConnectionCard({
             {primaryLabel}
           </button>
           {secondaryAction && secondaryLabel ? (
-            <button className={cx('connectionSecondaryButton')} type="button" disabled={isPending} onClick={secondaryAction}>
+            <button
+              className={cx('connectionSecondaryButton')}
+              type="button"
+              disabled={isPending}
+              onClick={secondaryAction}
+            >
               {secondaryLabel}
             </button>
           ) : null}
