@@ -157,6 +157,7 @@ export function ConnectionSection({
 export function ConnectionCard({
   connection,
   isPending,
+  role,
   primaryAction,
   primaryLabel,
   secondaryAction,
@@ -164,8 +165,9 @@ export function ConnectionCard({
 }: {
   connection: IConnectionItem;
   isPending: boolean;
-  primaryAction: () => void;
-  primaryLabel: string;
+  role: 'guardian' | 'ward';
+  primaryAction?: () => void;
+  primaryLabel?: string;
   secondaryAction?: () => void;
   secondaryLabel?: string;
 }) {
@@ -174,7 +176,7 @@ export function ConnectionCard({
   const dateValue = connection.status === 'ACTIVE' ? formatDate(connection.connectedAt) : formatDate(connection.createdAt);
 
   return (
-    <li className={cx('connectionCard')}>
+    <li className={cx('connectionCard')} data-role={role}>
       <div className={cx('connectionCardMain')}>
         <UserAvatar size="w-60" imageUrl={connection.partnerProfileImage} />
         <div className={cx('connectionInfo')}>
@@ -204,16 +206,18 @@ export function ConnectionCard({
           </div>
         </div>
       </div>
-      <div className={cx('connectionActions')}>
-        <button className={cx('connectionPrimaryButton')} type="button" disabled={isPending} onClick={primaryAction}>
-          {primaryLabel}
-        </button>
-        {secondaryAction && secondaryLabel ? (
-          <button className={cx('connectionSecondaryButton')} type="button" disabled={isPending} onClick={secondaryAction}>
-            {secondaryLabel}
+      {primaryAction && primaryLabel ? (
+        <div className={cx('connectionActions')}>
+          <button className={cx('connectionPrimaryButton')} type="button" disabled={isPending} onClick={primaryAction}>
+            {primaryLabel}
           </button>
-        ) : null}
-      </div>
+          {secondaryAction && secondaryLabel ? (
+            <button className={cx('connectionSecondaryButton')} type="button" disabled={isPending} onClick={secondaryAction}>
+              {secondaryLabel}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </li>
   );
 }
