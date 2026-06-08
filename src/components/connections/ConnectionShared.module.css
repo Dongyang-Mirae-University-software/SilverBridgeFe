@@ -51,12 +51,12 @@
 .connectionCard {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 14px;
+  gap: 18px;
+  border: 1px solid rgba(37, 32, 24, 0.1);
+  border-radius: 18px;
   background: #fff;
-  box-shadow: none;
-  padding: 14px 16px 12px;
+  box-shadow: 0 1px 2px rgba(37, 32, 24, 0.04), 0 4px 14px rgba(37, 32, 24, 0.04);
+  padding: 22px;
   width: 100%;
 }
 
@@ -64,7 +64,21 @@
   display: flex;
   min-width: 0;
   align-items: flex-start;
-  gap: 12px;
+  gap: 14px;
+}
+
+.connectionAvatar {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 18px;
+  background: var(--guardian-brand);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .connectionInfo {
@@ -93,8 +107,8 @@
 .connectionTitleRow strong {
   overflow: hidden;
   color: var(--sb-ink);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -103,8 +117,7 @@
 .connectionNameBlock span {
   overflow: hidden;
   color: var(--sb-ink-mute);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -118,8 +131,8 @@
   background: #fbf1db;
   color: var(--sb-sun);
   font-size: 12px;
-  font-weight: 600;
-  padding: 3px 10px;
+  font-weight: 700;
+  padding: 4px 11px;
 }
 
 .connectionStatus.active {
@@ -141,10 +154,10 @@
 .connectionSummaryRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   color: var(--sb-ink-mute);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .connectionSummaryRow span {
@@ -156,42 +169,51 @@
 .connectionDetailList {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .connectionDetailRow {
-  display: grid;
-  grid-template-columns: 16px 72px minmax(0, 1fr);
-  gap: 6px;
-  align-items: start;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgba(37, 32, 24, 0.14);
   color: var(--sb-ink-soft);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
-.connectionDetailIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 1px;
-  font-size: 13px;
+.connectionDetailRow:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .connectionDetailLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--sb-ink-mute);
-  font-weight: 500;
-  white-space: nowrap;
+  font-weight: 600;
+  min-width: 92px;
+  flex: 0 0 auto;
+}
+
+.connectionDetailIcon {
+  font-size: 13px;
 }
 
 .connectionDetailValue {
   color: var(--sb-ink);
-  font-weight: 600;
+  font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
   word-break: keep-all;
+  text-align: right;
+  max-width: 62%;
 }
 
 .connectionActions {
@@ -207,15 +229,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
+  min-height: 38px;
   border: 0;
   border-radius: 10px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 600;
-  padding: 8px 13px;
+  font-weight: 700;
+  padding: 8px 14px;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -225,15 +247,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
+  min-height: 38px;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 600;
-  padding: 8px 13px;
+  font-weight: 700;
+  padding: 8px 14px;
   text-decoration: none;
   white-space: nowrap;
 }
