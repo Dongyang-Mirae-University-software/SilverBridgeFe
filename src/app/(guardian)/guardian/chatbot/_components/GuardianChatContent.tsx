@@ -210,6 +210,7 @@ export default function GuardianChatContent() {
 
   function handleChipClick(chip: string) {
     setInput(chip);
+    setPopup(null);
     textareaRef.current?.focus();
   }
 
