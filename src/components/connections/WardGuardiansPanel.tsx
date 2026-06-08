@@ -131,6 +131,7 @@ export function WardGuardiansPanel() {
                 key={connection.id}
                 connection={connection}
                 isPending={isPending}
+                role="ward"
                 primaryAction={() => handleDisconnect(connection.id)}
                 primaryLabel="연결 해제"
               />
@@ -155,6 +156,7 @@ export function WardGuardiansPanel() {
                 key={connection.id}
                 connection={connection}
                 isPending={isPending}
+                role="ward"
                 primaryAction={() => acceptMutation.mutate(connection.id)}
                 primaryLabel="수락"
                 secondaryAction={() => refuseMutation.mutate(connection.id)}
