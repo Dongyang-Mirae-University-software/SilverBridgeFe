@@ -30,11 +30,22 @@ function getConnectionAddress(connection: IConnectionItem) {
   return [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
 }
 
-function ConnectionDetail({ label, value }: { label: string; value?: string | null }) {
+function ConnectionDetail({
+  icon,
+  label,
+  value,
+}: {
+  icon: string;
+  label: string;
+  value?: string | null;
+}) {
   return (
-    <li className={cx('connectionDetailLine')}>
-      <span>{label}</span>
-      <strong>{value || '정보 없음'}</strong>
+    <li className={cx('connectionDetailRow')}>
+      <span className={cx('connectionDetailIcon')} aria-hidden="true">
+        {icon}
+      </span>
+      <span className={cx('connectionDetailLabel')}>{label}</span>
+      <strong className={cx('connectionDetailValue')}>{value || '정보 없음'}</strong>
     </li>
   );
 }
@@ -59,6 +70,7 @@ export function ConnectionCard({
   const address = connection.status === 'ACTIVE' ? getConnectionAddress(connection) : '';
   const dateLabel = connection.status === 'ACTIVE' ? '연결일' : '요청일';
   const dateValue = connection.status === 'ACTIVE' ? formatDate(connection.connectedAt) : formatDate(connection.createdAt);
+  const profileLabel = connection.status === 'ACTIVE' ? '연결됨' : getConnectionStatusLabel(connection.status);
 
   return (
     <li className={cx('connectionCard')} data-role={role}>
@@ -70,24 +82,18 @@ export function ConnectionCard({
               <strong>{connection.partnerName || '이름 확인 전'}</strong>
               <span>ID {connection.partnerUserId}</span>
             </div>
-            <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>
-              {getConnectionStatusLabel(connection.status)}
-            </span>
-          </div>
-
-          <div className={cx('connectionSummaryRow')}>
-            {connection.relation && <span>{connection.relation}</span>}
-            <span>{dateValue}</span>
+            <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>{profileLabel}</span>
           </div>
 
           <ul className={cx('connectionDetailList')}>
-            <ConnectionDetail label="이메일" value={getActivePartnerValue(connection, connection.partnerEmail)} />
-            <ConnectionDetail label="성별" value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))} />
-            <ConnectionDetail label="생년월일" value={getActivePartnerValue(connection, connection.partnerBirthDate)} />
-            <ConnectionDetail label="연락처" value={getPartnerPhoneValue(connection)} />
-            <ConnectionDetail label={dateLabel} value={dateValue} />
-            <ConnectionDetail label="우편번호" value={getActivePartnerValue(connection, connection.partnerPostcode)} />
-            <ConnectionDetail label="주소" value={getActivePartnerValue(connection, address)} />
+            {connection.relation && <ConnectionDetail icon="🤝" label="관계" value={connection.relation} />}
+            <ConnectionDetail icon="📧" label="이메일" value={getActivePartnerValue(connection, connection.partnerEmail)} />
+            <ConnectionDetail icon="👤" label="성별" value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))} />
+            <ConnectionDetail icon="🎂" label="생년월일" value={getActivePartnerValue(connection, connection.partnerBirthDate)} />
+            <ConnectionDetail icon="📞" label="연락처" value={getPartnerPhoneValue(connection)} />
+            <ConnectionDetail icon="🗓" label={dateLabel} value={dateValue} />
+            <ConnectionDetail icon="🏷" label="우편번호" value={getActivePartnerValue(connection, connection.partnerPostcode)} />
+            <ConnectionDetail icon="📍" label="주소" value={getActivePartnerValue(connection, address)} />
           </ul>
         </div>
       </div>
