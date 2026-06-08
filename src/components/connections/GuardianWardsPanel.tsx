@@ -12,9 +12,11 @@ import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/
 import { ConnectionCard } from './ConnectionCard';
 import { EmptyState, getConnectionData, getErrorMessage } from './ConnectionShared';
 import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
+import listStyles from './ConnectionList.module.css';
 import styles from './GuardianWardsPanel.module.css';
 
 const cx = classNames.bind(styles);
+const listCx = classNames.bind(listStyles);
 
 type GuardianWardsTab = 'list' | 'register';
 
@@ -99,7 +101,7 @@ export function GuardianWardsPanel() {
             </div>
           )}
           {sortedConnections.length > 0 && (
-            <ul className={cx('list')}>
+            <ul className={listCx('connectionList')}>
               {sortedConnections.map(connection => (
                 <ConnectionCard
                   key={connection.id}
