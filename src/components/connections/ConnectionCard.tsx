@@ -71,8 +71,6 @@ export function ConnectionCard({
   const dateLabel = connection.status === 'ACTIVE' ? '연결일' : '요청일';
   const dateValue = connection.status === 'ACTIVE' ? formatDate(connection.connectedAt) : formatDate(connection.createdAt);
   const profileLabel = connection.status === 'ACTIVE' ? '연결됨' : getConnectionStatusLabel(connection.status);
-  const summaryBits = [connection.relation, dateValue].filter(Boolean);
-
   return (
     <li className={cx('connectionCard')} data-role={role}>
       <div className={cx('connectionCardMain')}>
@@ -86,20 +84,16 @@ export function ConnectionCard({
             <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>{profileLabel}</span>
           </div>
 
-          {summaryBits.length > 0 && (
-            <div className={cx('connectionSummaryRow')}>
-              {connection.relation && <span>🤝 {connection.relation}</span>}
-              <span>🗓 {dateValue}</span>
-            </div>
-          )}
+          <div className={cx('connectionSummaryRow')}>
+            {connection.relation && <span>🤝 {connection.relation}</span>}
+            <span>🗓 {dateValue}</span>
+          </div>
 
           <ul className={cx('connectionDetailList')}>
-            {connection.relation && <ConnectionDetail icon="🤝" label="관계" value={connection.relation} />}
             <ConnectionDetail icon="📧" label="이메일" value={getActivePartnerValue(connection, connection.partnerEmail)} />
             <ConnectionDetail icon="👤" label="성별" value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))} />
             <ConnectionDetail icon="🎂" label="생년월일" value={getActivePartnerValue(connection, connection.partnerBirthDate)} />
             <ConnectionDetail icon="📞" label="연락처" value={getPartnerPhoneValue(connection)} />
-            <ConnectionDetail icon="🗓" label={dateLabel} value={dateValue} />
             <ConnectionDetail icon="🏷" label="우편번호" value={getActivePartnerValue(connection, connection.partnerPostcode)} />
             <ConnectionDetail icon="📍" label="주소" value={getActivePartnerValue(connection, address)} />
           </ul>
