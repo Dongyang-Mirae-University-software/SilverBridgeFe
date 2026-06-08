@@ -58,7 +58,8 @@ export default function GuardianChatContent() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
-  const [topTab, setTopTab] = useState<'context' | 'suggestions' | null>('context');
+  const [contextOpen, setContextOpen] = useState(false);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -221,25 +222,27 @@ export default function GuardianChatContent() {
   }
 
   const lastAssistantId = [...messages].reverse().find(m => m.role === 'assistant')?.id;
+  const contextFilledCount = Object.values(context).filter(Boolean).length;
 
   return (
     <div className={styles.chatPage}>
       <div className={styles.topBar}>
-        <div className={styles.topBarLeft}>
+        <div className={styles.topBarActions}>
           <button
             type="button"
-            className={`${styles.tabButton} ${topTab === 'context' ? styles.tabButtonActive : ''}`}
-            onClick={() => setTopTab(prev => (prev === 'context' ? null : 'context'))}
+            className={`${styles.actionBtn} ${contextOpen ? styles.actionBtnActive : ''}`}
+            onClick={() => setContextOpen(prev => !prev)}
           >
             상담 컨텍스트
+            {contextFilledCount > 0 && <span className={styles.tabBadge}>{contextFilledCount}</span>}
           </button>
-          <button type="button" className={styles.newBtn} onClick={handleNewSession}>
+          <button type="button" className={styles.actionBtn} onClick={handleNewSession}>
             새 상담
           </button>
           <button
             type="button"
-            className={`${styles.tabButton} ${topTab === 'suggestions' ? styles.tabButtonActive : ''}`}
-            onClick={() => setTopTab(prev => (prev === 'suggestions' ? null : 'suggestions'))}
+            className={`${styles.actionBtn} ${suggestionsOpen ? styles.actionBtnActive : ''}`}
+            onClick={() => setSuggestionsOpen(prev => !prev)}
           >
             추천 질문
           </button>
@@ -248,25 +251,39 @@ export default function GuardianChatContent() {
 
       {fallback && <div className={styles.fallbackWarning}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
 
-      {topTab === 'context' && (
-        <section className={styles.topDock} aria-label="상담 컨텍스트">
-          <div className={styles.dockHeader}>
+      {contextOpen && (
+        <section className={styles.contextPopover} aria-label="상담 컨텍스트">
+          <div className={styles.popoverHeader}>
             <div className={styles.suggestionTitle}>
               <strong>상담 컨텍스트</strong>
               <span>상담 대상 정보를 조정합니다</span>
             </div>
+            <button
+              type="button"
+              className={styles.popoverClose}
+              onClick={() => setContextOpen(false)}
+            >
+              닫기
+            </button>
           </div>
           <ChatContextForm value={context} onChange={setContext} />
         </section>
       )}
 
-      {topTab === 'suggestions' && (
-        <section className={styles.topDock} aria-label="추천 질문">
-          <div className={styles.dockHeader}>
+      {suggestionsOpen && (
+        <section className={styles.suggestionPopover} aria-label="추천 질문">
+          <div className={styles.popoverHeader}>
             <div className={styles.suggestionTitle}>
               <strong>추천 질문</strong>
               <span>선택하면 입력창에 채워집니다</span>
             </div>
+            <button
+              type="button"
+              className={styles.popoverClose}
+              onClick={() => setSuggestionsOpen(false)}
+            >
+              닫기
+            </button>
           </div>
           <div className={styles.chips}>
             {SAMPLE_CHIPS.map(chip => (
