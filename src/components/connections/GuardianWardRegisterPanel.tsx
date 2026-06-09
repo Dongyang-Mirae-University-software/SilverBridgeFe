@@ -2,10 +2,10 @@
 
 import { FormEvent, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import classNames from 'classnames/bind';
 
 import { requestWardConnection } from '@/service/api/connect/guardian';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
-import classNames from 'classnames/bind';
 import { getConnectionData, getErrorMessage } from './ConnectionShared';
 import styles from './GuardianWardRegisterPanel.module.css';
 
@@ -21,10 +21,9 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
   const [relation, setRelation] = useState<RelationOption>('');
   const [customRelation, setCustomRelation] = useState('');
   const [message, setMessage] = useState('');
+
   const { data: connectionsResponse, isLoading } = useQuery(guardianConnectionsQueryOptions);
-  const pendingConnections = getConnectionData(connectionsResponse).filter(
-    connection => connection.status === 'PENDING',
-  );
+  const pendingConnections = getConnectionData(connectionsResponse).filter(connection => connection.status === 'PENDING');
   const requestRelation = relation === CUSTOM_RELATION_OPTION ? customRelation.trim() : relation;
 
   const { mutate, isPending } = useMutation({
@@ -49,16 +48,17 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
   };
 
   return (
-    <section className={cx(embedded ? 'connectionTabContent' : 'connectionPage', 'connectionRegisterPage')}>
+    <section className={cx('connectionPage', 'connectionRegisterPage', { embedded })}>
       <form className={cx('connectionRegisterCard')} onSubmit={handleSubmit}>
         <div className={cx('connectionRegisterHeader')}>
           <div>
             <span>새 연결 요청</span>
             <strong>피보호자 등록</strong>
           </div>
-          <small>회원 ID와 관계만 입력하면 요청이 전송됩니다.</small>
+          <small>회원 ID와 관계를 입력하면 연결 요청이 전송됩니다.</small>
         </div>
-        <div className={cx('connectionRegisterFormRow')}>
+
+        <div className={cx('connectionRegisterFormGrid')}>
           <label className={cx('connectionField')}>
             회원 ID
             <input
@@ -69,14 +69,10 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
               autoComplete="off"
             />
           </label>
-        </div>
-        <div className={cx('connectionRegisterFormRow')}>
+
           <label className={cx('connectionField')}>
             관계
-            <select
-              value={relation}
-              onChange={event => setRelation(event.target.value as RelationOption)}
-            >
+            <select value={relation} onChange={event => setRelation(event.target.value as RelationOption)}>
               <option value="" disabled>
                 피보호자와의 관계를 선택하세요.
               </option>
@@ -87,8 +83,9 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
               ))}
             </select>
           </label>
-          {relation === CUSTOM_RELATION_OPTION && (
-            <label className={cx('connectionField')}>
+
+          {relation === CUSTOM_RELATION_OPTION ? (
+            <label className={cx('connectionField', 'connectionFieldWide')}>
               직접입력
               <input
                 value={customRelation}
@@ -98,24 +95,27 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
                 autoComplete="off"
               />
             </label>
-          )}
-          <button
-            className={cx('connectionSubmitButton')}
-            type="submit"
-            disabled={!targetId.trim() || !requestRelation || isPending}
-          >
-            {isPending ? '요청 중...' : '승인 요청'}
+          ) : null}
+        </div>
+
+        <div className={cx('connectionRegisterFooter')}>
+          <p className={cx('connectionRegisterHint')}>
+            피보호자 마이페이지에서 확인할 수 있는 회원 ID와 관계를 입력해 주세요. 입력을 마치면 바로 요청을 보냅니다.
+          </p>
+          <button className={cx('connectionSubmitButton')} type="submit" disabled={!targetId.trim() || !requestRelation || isPending}>
+            {isPending ? '요청 중...' : '연결 요청'}
           </button>
         </div>
-        <p className={cx('connectionRegisterHint')}>
-          피보호자가 본인의 마이페이지에서 확인 가능한 회원 ID와 관계를 입력해 주세요. 요청이 전달되면 피보호자가
-          응답합니다.
-        </p>
+
         {message && <p className={cx('connectionMessage')}>{message}</p>}
       </form>
+
       <div className={cx('connectionHistoryCard')}>
         <div className={cx('connectionHistoryHeader')}>
-          <strong>요청 내역</strong>
+          <div>
+            <strong>요청 내역</strong>
+            <p>수락 대기 중인 연결 요청을 확인합니다.</p>
+          </div>
           <span>{pendingConnections.length}건</span>
         </div>
 
@@ -125,13 +125,13 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
           <ul className={cx('connectionHistoryList')}>
             {pendingConnections.map(connection => (
               <li key={connection.id} className={cx('connectionHistoryItem')}>
-                <div>
-                  <strong>{connection.partnerName || '확인 전'}</strong>
+                <div className={cx('connectionHistoryInfo')}>
+                  <div className={cx('connectionHistoryTitleRow')}>
+                    <strong>{connection.partnerName || '확인 전'}</strong>
+                    <span className={cx('connectionStatus')}>요청중</span>
+                  </div>
                   <span>{connection.partnerUserId}</span>
-                </div>
-                <div>
-                  <small>{formatRegisterDate(connection.createdAt)}</small>
-                  <span className={cx('connectionStatus')}>요청중</span>
+                  <small>요청일 {formatRegisterDate(connection.createdAt)}</small>
                 </div>
               </li>
             ))}

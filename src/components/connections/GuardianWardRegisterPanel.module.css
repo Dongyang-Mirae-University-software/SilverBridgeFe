@@ -1,34 +1,37 @@
 .connectionPage {
   display: flex;
   flex: 1;
+  min-width: 0;
   min-height: 0;
   flex-direction: column;
   gap: 14px;
 }
 
-.connectionRegisterGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+.connectionRegisterPage {
   gap: 14px;
+}
+
+.embedded {
+  min-width: 0;
 }
 
 .connectionRegisterCard,
 .connectionHistoryCard {
-  border: 1px solid rgba(20, 17, 12, 0.08);
-  border-radius: 22px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 20px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.9)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.94)),
     var(--sb-bg);
-  box-shadow: 0 18px 42px rgba(20, 17, 12, 0.08);
+  box-shadow: var(--sb-shadow-sm);
 }
 
 .connectionRegisterCard {
-  padding: 24px;
+  padding: 20px;
 }
 
 .connectionRegisterHeader {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 18px;
@@ -48,98 +51,148 @@
   font-size: 22px;
   font-weight: 900;
   letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .connectionRegisterHeader small {
-  max-width: 260px;
+  max-width: 300px;
   color: var(--sb-ink-mute);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 650;
   line-height: 1.5;
   text-align: right;
 }
 
-.connectionRegisterFormRow {
-  display: flex;
-  align-items: center;
+.connectionRegisterFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 10px;
 }
 
-.connectionRegisterFormRow .connectionField input,
-.connectionRegisterFormRow .connectionField select {
-  min-height: 52px;
-  border-color: rgba(20, 17, 12, 0.08);
-  border-radius: 16px;
-  background: rgba(250, 250, 248, 0.92);
-  font-size: 15px;
-  font-weight: 800;
-  padding-inline: 16px;
+.connectionField {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 750;
 }
 
-.connectionRegisterFormRow .connectionField:first-child input {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+.connectionFieldWide {
+  grid-column: 1 / -1;
 }
 
-.connectionRegisterFormRow .connectionSubmitButton {
-  flex-shrink: 0;
-  min-height: 52px;
-  min-width: 116px;
-  border-radius: 999px;
+.connectionField input,
+.connectionField select {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 1px solid var(--sb-line);
+  border-radius: 14px;
+  background: rgba(250, 250, 248, 0.94);
+  color: var(--sb-ink);
+  font: inherit;
   font-size: 14px;
-  font-weight: 850;
-  padding: 0 24px;
+  font-weight: 650;
+  padding: 0 14px;
+  outline: none;
+}
+
+.connectionField input:focus,
+.connectionField select:focus {
+  border-color: var(--guardian-brand);
+  box-shadow: 0 0 0 3px rgba(138, 75, 56, 0.1);
+}
+
+.connectionRegisterFooter {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
 }
 
 .connectionRegisterHint {
-  margin: 16px 0 0;
-  border-radius: 14px;
-  background: rgba(250, 250, 248, 0.84);
+  margin: 0;
+  max-width: 560px;
   color: var(--sb-ink-mute);
   font-size: 12px;
   font-weight: 650;
   line-height: 1.6;
+}
+
+.connectionSubmitButton {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  min-width: 132px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--guardian-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 0 18px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.connectionSubmitButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.connectionMessage {
+  margin: 14px 0 0;
+  border: 1px solid #dceee3;
+  border-radius: 14px;
+  background: #f6fbf8;
+  color: var(--sb-safe);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
   padding: 12px 14px;
 }
 
-.connectionRegisterCard .connectionMessage {
-  margin-top: 12px;
-  border-color: #dceee3;
-  background: #dceee3;
-  color: var(--sb-safe);
-  font-weight: 800;
-}
-
 .connectionHistoryCard {
-  padding: 18px;
+  padding: 18px 18px 16px;
 }
 
 .connectionHistoryHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
 }
 
 .connectionHistoryHeader strong {
+  display: block;
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 850;
 }
 
-.connectionHistoryHeader span {
-  border-radius: 999px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 11px;
-  font-weight: 800;
-  padding: 3px 10px;
+.connectionHistoryHeader p {
+  margin: 4px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
 }
 
-:global(.guardianTheme) .connectionHistoryHeader span {
+.connectionHistoryHeader span {
+  flex-shrink: 0;
+  border-radius: 999px;
   background: var(--guardian-brand-soft);
   color: var(--guardian-brand);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
 }
 
 .connectionHistoryList {
@@ -152,30 +205,28 @@
 
 .connectionHistoryItem {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  gap: 14px;
-  border: 1px solid rgba(20, 17, 12, 0.06);
+  gap: 12px;
+  border: 1px solid var(--sb-line-soft);
   border-radius: 16px;
   background: rgba(250, 250, 248, 0.9);
-  padding: 14px;
+  padding: 14px 16px;
 }
 
-.connectionHistoryItem > div {
-  min-width: 0;
-}
-
-.connectionHistoryItem > div:last-child {
+.connectionHistoryInfo {
   display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 10px;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.connectionHistoryItem strong,
-.connectionHistoryItem span,
-.connectionHistoryItem small {
-  display: block;
+.connectionHistoryTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .connectionHistoryItem strong {
@@ -187,8 +238,7 @@
   white-space: nowrap;
 }
 
-.connectionHistoryItem > div:first-child span {
-  margin-top: 4px;
+.connectionHistoryInfo > span {
   overflow: hidden;
   color: var(--sb-ink-mute);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -198,98 +248,10 @@
   white-space: nowrap;
 }
 
-.connectionHistoryItem small {
+.connectionHistoryInfo small {
   color: var(--sb-ink-mute);
   font-size: 12px;
-  font-weight: 750;
-}
-
-.connectionField {
-  display: flex;
-  flex: 1;
-  min-width: 0;
-  flex-direction: column;
-  gap: 8px;
-  color: var(--sb-ink-soft);
-  font-size: 13px;
-  font-weight: 750;
-}
-
-.connectionField input,
-.connectionField select {
-  width: 100%;
-  min-height: 46px;
-  box-sizing: border-box;
-  border: 1px solid var(--sb-line);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--sb-ink);
-  font: inherit;
-  font-size: 14px;
   font-weight: 650;
-  padding: 0 14px;
-  outline: none;
-}
-
-.connectionField input:focus,
-.connectionField select:focus {
-  border-color: var(--sb-brand);
-  box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.1);
-}
-
-.connectionSubmitButton {
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--sb-brand);
-  color: #fff;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 650;
-  padding: 9px 16px;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.connectionSubmitButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-:global(.guardianTheme) .connectionSubmitButton {
-  background: var(--guardian-brand);
-}
-
-:global(.guardianTheme) .connectionSubmitButton:not(:disabled):hover {
-  filter: brightness(0.94);
-}
-
-.connectionMessage {
-  margin: 0;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--sb-ink-soft);
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.5;
-  padding: 12px 14px;
-}
-
-.connectionEmpty {
-  margin: 0;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--sb-ink-soft);
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.5;
-  padding: 12px 14px;
 }
 
 .connectionStatus {
@@ -304,18 +266,53 @@
   padding: 3px 10px;
 }
 
-.connectionStatus.active {
-  background: #dceee3;
-  color: var(--sb-safe);
+.connectionEmpty {
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+  padding: 12px 14px;
 }
 
-.connectionStatus.cancelled,
-.connectionStatus.refused {
-  background: #fbe5e0;
-  color: var(--sb-warn);
+@media (max-width: 840px) {
+  .connectionRegisterCard,
+  .connectionHistoryCard {
+    padding: 18px;
+  }
+
+  .connectionRegisterHeader {
+    flex-direction: column;
+  }
+
+  .connectionRegisterHeader small {
+    max-width: none;
+    text-align: left;
+  }
+
+  .connectionRegisterFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .connectionSubmitButton {
+    width: 100%;
+  }
 }
 
-.connectionStatus.disconnected {
-  background: var(--sb-line-soft);
-  color: var(--sb-ink-mute);
+@media (max-width: 640px) {
+  .connectionRegisterFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .connectionHistoryItem {
+    flex-direction: column;
+  }
+
+  .connectionHistoryTitleRow {
+    align-items: flex-start;
+  }
 }
