@@ -11,7 +11,6 @@ import { ISigninResponse } from '@/service/interface/auth';
 import { getRoleHomePath } from '@/lib/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import styles from './LoginContent.module.css';
-
 const cx = classNames.bind(styles);
 
 function getSigninData(response: unknown) {

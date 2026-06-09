@@ -1,0 +1,116 @@
+.roleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldLabel {
+  color: #5c4d3f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.radioGroup {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.roleCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1.5px solid #e5d8c5;
+  border-radius: 12px;
+  background: #fbf6f0;
+  cursor: pointer;
+}
+
+.roleCard.active {
+  border: 2px solid #d97757;
+  background: #fbe7da;
+}
+
+.roleCard.wardRole.active {
+  border-color: #c73e3e;
+  background: #fce4e4;
+}
+
+.roleCard.guardianRole.active {
+  border-color: #d97757;
+  background: #fbe7da;
+}
+
+.roleCard input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.roleEmoji {
+  display: block;
+  min-width: 24px;
+  flex-shrink: 0;
+  font-size: 22px;
+  line-height: 1;
+  text-align: center;
+}
+
+.roleCopy {
+  flex: 1;
+  min-width: 0;
+}
+
+.roleCopy strong,
+.roleCopy small {
+  display: block;
+}
+
+.roleCopy strong {
+  color: #1f1916;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.wardRole.active .roleCopy strong {
+  color: #c73e3e;
+}
+
+.guardianRole.active .roleCopy strong {
+  color: #d97757;
+}
+
+.roleCopy small {
+  margin-top: 1px;
+  color: #8a7868;
+  font-size: 11px;
+}
+
+.checkMark {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #d97757;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.wardRole.active .checkMark {
+  background: #c73e3e;
+}
+
+.guardianRole.active .checkMark {
+  background: #d97757;
+}
+
+@media (max-width: 640px) {
+  .radioGroup {
+    gap: 10px;
+  }
+}

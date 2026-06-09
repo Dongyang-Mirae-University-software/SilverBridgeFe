@@ -2,9 +2,9 @@ import classNames from 'classnames/bind';
 
 import type { DetectState, LiveStreamAnalysis, LiveStreamSession, LiveStreamStatus } from '@/service/interface/liveStream';
 import { formatDateTime, formatNumber, formatRelativeDateTime, normalizeDetectedType } from './monitorUtils';
-import styles from './GuardianMonitorContent.module.css';
-
+import styles from './MonitorViewer.module.css';
 const cx = classNames.bind(styles);
+
 
 interface MonitorViewerProps {
   detectState: DetectState;
@@ -186,9 +186,7 @@ function DetectionResult({ analysis, detectState }: { analysis: LiveStreamAnalys
   const isSafe   = detectState === 'safe';
 
   return (
-    <div className={cx(
-      isSafe ? 'safeCard' : isAlert ? 'detectCard' : 'dangerCard'
-    )}>
+    <div className={cx(isSafe ? 'safeCard' : isAlert ? 'detectCard' : 'dangerCard')}>
       <strong>{label}</strong>
       {!isSafe && <span>{detectedType} · 신뢰도 {Math.round(confidence * 100)}%</span>}
       {isSafe && <span>신뢰도 {Math.round(confidence * 100)}%</span>}

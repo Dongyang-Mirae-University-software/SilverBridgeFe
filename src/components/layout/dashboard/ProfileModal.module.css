@@ -1,0 +1,200 @@
+.profileModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.32);
+  backdrop-filter: blur(8px);
+  padding: 20px;
+}
+
+.profileModal {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: min(720px, calc(100svh - 40px));
+  width: min(560px, 100%);
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 22px 56px rgba(15, 23, 42, 0.12);
+  padding: 0;
+}
+
+/* ── 헤더: 아바타 + 이름 ── */
+.profileModalHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 0;
+  background: transparent;
+  padding: 22px 62px 18px 22px;
+}
+
+.profileHeaderInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.profileModal h2 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 20px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.profileUserEmail {
+  overflow: hidden;
+  margin: 5px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileModalBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.userRoleBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  background: rgba(31, 94, 72, 0.09);
+  color: var(--sb-safe);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 8px;
+}
+
+:global(.guardianTheme) .userRoleBadge {
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+}
+
+.profileProviderBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--sb-brand);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 8px;
+}
+
+:global(.guardianTheme) .profileProviderBadge {
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+}
+
+.profileModalClose {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.profileModalClose:hover {
+  background: #fff;
+}
+
+.profileModalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  background: #fff;
+  padding: 14px 20px 20px;
+}
+
+.logoutButton,
+.profileModalGhostButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.logoutButton {
+  flex: 1 1 120px;
+  min-width: 0;
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--sb-ink-mute);
+}
+
+.profileModalGhostButton {
+  flex: 0 1 120px;
+  min-width: 0;
+  background: rgba(15, 23, 42, 0.05);
+  color: var(--sb-brand);
+}
+
+.logoutButton:hover {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.profileModalGhostButton:hover {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.logoutButton:disabled,
+.profileModalGhostButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 540px) {
+  .profileModalOverlay {
+    padding: 8px;
+  }
+
+  .profileModal {
+    height: calc(100svh - 16px);
+    width: min(100%, calc(100vw - 16px));
+    border-radius: 22px;
+  }
+
+  .profileModalHeader {
+    padding: 16px 48px 14px 16px;
+    gap: 12px;
+  }
+
+  .profileModalFooter {
+    justify-content: stretch;
+    padding: 12px 16px 16px;
+  }
+
+  .logoutButton,
+  .profileModalGhostButton {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
+}

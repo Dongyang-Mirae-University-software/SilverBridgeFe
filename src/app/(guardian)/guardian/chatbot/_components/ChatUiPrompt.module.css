@@ -1,6 +1,5 @@
 .wrap {
-  border-top: 1px solid var(--sb-line-soft);
-  padding-top: 10px;
+  padding-top: 2px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -20,18 +19,19 @@
 }
 
 .chip {
-  border: 1px solid var(--guardian-line, #e3c5b8);
+  border: 1px solid rgba(37, 32, 24, 0.08);
   border-radius: 999px;
   background: var(--guardian-brand-soft);
   color: var(--guardian-brand);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 700;
   padding: 6px 14px;
-  transition: background 0.12s ease;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
 
 .chip:hover:not(:disabled) {
+  border-color: var(--guardian-line, #e3c5b8);
   background: var(--guardian-brand-hover);
 }
 
@@ -51,8 +51,8 @@
   flex: 1;
   min-height: 38px;
   box-sizing: border-box;
-  border: 1px solid var(--sb-line);
-  border-radius: 9px;
+  border: 1px solid rgba(37, 32, 24, 0.08);
+  border-radius: 10px;
   background: #fff;
   color: var(--sb-ink);
   font: inherit;
@@ -76,12 +76,12 @@
 .applyBtn {
   flex-shrink: 0;
   border: 0;
-  border-radius: 9px;
+  border-radius: 10px;
   background: var(--guardian-brand);
   color: #fff;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 750;
   padding: 0 14px;
   min-height: 38px;
 }

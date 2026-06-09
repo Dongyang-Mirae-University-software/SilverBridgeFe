@@ -5,7 +5,7 @@ import classNames from 'classnames/bind';
 import { IFindEmailResponse } from '@/service/interface/auth';
 import FindEmailResultActions from './FindEmailResultActions';
 import FindEmailResultDisplay from './FindEmailResultDisplay';
-import styles from './FindEmailContent.module.css';
+import styles from './FindEmailResultStep.module.css';
 
 const cx = classNames.bind(styles);
 

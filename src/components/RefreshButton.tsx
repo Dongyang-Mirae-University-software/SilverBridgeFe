@@ -27,7 +27,6 @@ export function RefreshButton({
 
   const handleRefresh = async () => {
     if (disabled || isActive) return;
-
     setIsManualRefreshing(true);
     try {
       await onRefresh();

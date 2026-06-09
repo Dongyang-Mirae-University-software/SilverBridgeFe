@@ -1,10 +1,14 @@
+import classNames from 'classnames/bind';
+
+import { UserAvatar } from '@/components/UserAvatar';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user';
-import { UserAvatar } from '@/components/UserAvatar';
 import { ProfileModalControls } from './ProfileModalControls';
-import { formatProfileDate, getProviderLabel } from '@/lib/dashboard/profile';
-import { cx } from './styles';
+import { getProviderLabel } from '@/lib/dashboard/profile';
+import styles from './ProfileModal.module.css';
+
+const cx = classNames.bind(styles);
 
 interface Props {
   isLoggingOut: boolean;
@@ -17,7 +21,6 @@ interface Props {
   role: AuthRole;
   userEmail: string;
   userName: string;
-  userPhone: string;
 }
 
 export function ProfileModal({
@@ -31,15 +34,7 @@ export function ProfileModal({
   role,
   userEmail,
   userName,
-  userPhone,
 }: Props) {
-  const profileRows = [
-    { label: '사용자 ID', value: profile?.id ?? '정보 없음' },
-    { label: '전화번호', value: userPhone },
-    { label: '최근 로그인', value: formatProfileDate(profile?.lastLoginAt) },
-    { label: '가입일', value: formatProfileDate(profile?.createdAt) },
-  ];
-
   return (
     <div className={cx('profileModalOverlay')} role="presentation" onClick={onClose}>
       <section
@@ -47,52 +42,42 @@ export function ProfileModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="profile-modal-title"
-        onClick={event => event.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
+        <button className={cx('profileModalClose')} type="button" aria-label="닫기" onClick={onClose}>
+          ×
+        </button>
+
+        {/* 헤더: 아바타 + 이름 */}
         <div className={cx('profileModalHeader')}>
-          <div className={cx('profileModalUser')}>
-            <UserAvatar
-              size="w-120"
-              imageUrl={profile?.profileImage}
-              disabled={isProfileImageChanging}
-              onImageChange={onProfileImageChange}
-              onImageDelete={onProfileImageDelete}
-            />
-            <div>
-              <div className={cx('profileModalBadges')}>
-                <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
-                <span className={cx('profileProviderBadge')}>{getProviderLabel(profile?.provider)}</span>
-              </div>
-              <h2 id="profile-modal-title">{userName}</h2>
-              <p>{userEmail}</p>
+          <UserAvatar
+            size="w-120"
+            imageUrl={profile?.profileImage}
+            disabled={isProfileImageChanging}
+            onImageChange={onProfileImageChange}
+            onImageDelete={onProfileImageDelete}
+          />
+          <div className={cx('profileHeaderInfo')}>
+            <div className={cx('profileModalBadges')}>
+              <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
+              <span className={cx('profileProviderBadge')}>{getProviderLabel(profile?.provider)}</span>
             </div>
+            <h2 id="profile-modal-title">{userName}</h2>
+            <p className={cx('profileUserEmail')}>{userEmail}</p>
           </div>
-          <button
-            className={cx('profileModalClose')}
-            type="button"
-            aria-label="사용자 상세 정보 닫기"
-            onClick={onClose}
-          >
-            ×
+        </div>
+
+        {/* 수정 폼 + 하단 버튼 */}
+        <ProfileModalControls key={getProfileControlsKey(profile)} profile={profile} />
+
+        <div className={cx('profileModalFooter')}>
+          <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={onLogout}>
+            {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+          </button>
+          <button className={cx('profileModalGhostButton')} type="button" onClick={onClose}>
+            닫기
           </button>
         </div>
-
-        <div className={cx('profileDetailGrid')}>
-          {profileRows.map(row => (
-            <div key={row.label} className={cx('profileDetailItem')}>
-              <span>{row.label}</span>
-              <strong>{row.value}</strong>
-            </div>
-          ))}
-        </div>
-
-        <ProfileModalControls
-          key={getProfileControlsKey(profile)}
-          profile={profile}
-          isLoggingOut={isLoggingOut}
-          onClose={onClose}
-          onLogout={onLogout}
-        />
       </section>
     </div>
   );
@@ -100,7 +85,6 @@ export function ProfileModal({
 
 function getProfileControlsKey(profile: IUserProfile | null) {
   if (!profile) return 'profile-loading';
-
   return [
     profile.id,
     profile.name,

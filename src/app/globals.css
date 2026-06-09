@@ -16,6 +16,22 @@
   --sb-shadow-sm: 0 1px 2px rgba(20, 17, 12, 0.06), 0 1px 3px rgba(20, 17, 12, 0.04);
 }
 
+/* 역할별 테마 — DashboardLayout이 루트 요소에 적용 */
+.guardianTheme {
+  --guardian-brand: #8a4b38;
+  --guardian-brand-soft: #f7ebe6;
+  --guardian-brand-hover: #efd9cf;
+  --guardian-line: #e3c5b8;
+}
+
+.wardHighContrast {
+  --sb-ink: #050505;
+  --sb-ink-soft: #1f1a14;
+  --sb-ink-mute: #544736;
+  --sb-line: #b9a98c;
+  --sb-line-soft: #cabd9e;
+}
+
 html {
   height: 100vh;
 }

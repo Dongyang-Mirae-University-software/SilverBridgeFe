@@ -1,0 +1,133 @@
+.phoneVerification {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.phoneActionRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.fieldGrow {
+  flex: 1;
+  min-width: 0;
+}
+
+.phoneActionRow .inlineButton,
+.phoneActionRow .outlineButton {
+  margin-top: 26px;
+}
+
+.codePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1.5px solid #f0d3c1;
+  border-radius: 12px;
+  background: #fff8f3;
+}
+
+.codePanel.complete {
+  border-color: #b8dfba;
+  background: #f3fbf3;
+}
+
+.codeGuide {
+  color: #5c4d3f;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.stepActions {
+  display: flex;
+  gap: 10px;
+}
+
+.stepActions .button {
+  flex: 1;
+}
+
+.button,
+.inlineButton,
+.outlineButton,
+.prevButton {
+  min-height: 48px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button,
+.inlineButton,
+.outlineButton,
+.prevButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button {
+  width: 100%;
+  padding: 14px;
+  background: #d97757;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.3);
+}
+
+.inlineButton {
+  flex: 0 0 118px;
+  padding: 0 12px;
+  white-space: nowrap;
+  background: #d97757;
+  color: #ffffff;
+}
+
+.outlineButton {
+  flex: 0 0 118px;
+  padding: 0 12px;
+  white-space: nowrap;
+  border: 1.5px solid #e5d8c5;
+  background: #ffffff;
+  color: #5c4d3f;
+}
+
+.prevButton {
+  flex: 0 0 90px;
+  padding: 14px;
+  border: 1.5px solid #e5d8c5;
+  background: #ffffff;
+  color: #5c4d3f;
+}
+
+.button:disabled,
+.inlineButton:disabled,
+.outlineButton:disabled,
+.prevButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .phoneActionRow {
+    flex-direction: column;
+  }
+
+  .phoneActionRow .inlineButton,
+  .phoneActionRow .outlineButton {
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .stepActions {
+    flex-direction: column;
+  }
+
+  .prevButton {
+    flex: auto;
+  }
+}

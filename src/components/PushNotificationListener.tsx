@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import classNames from 'classnames/bind';
 import { MessagePayload } from 'firebase/messaging';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
+import classNames from 'classnames/bind';
 
 import { listenForegroundMessages } from '@/lib/fcm';
 import { getAuthRole } from '@/lib/auth/tokenStore';
@@ -16,6 +16,7 @@ import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/
 import styles from './PushNotificationListener.module.css';
 
 const cx = classNames.bind(styles);
+
 const TOAST_LIFETIME_MS = 6000;
 type ConnectionTargetRole = 'WARD' | 'GUARDIAN';
 
@@ -59,36 +60,17 @@ function isConnectionPush(data?: MessagePayload['data']) {
 function getConnectionPushNotification(data?: MessagePayload['data']) {
   switch (data?.type) {
     case 'CONNECTION_REQUEST':
-      return {
-        body: '보호자가 연결을 요청했습니다.',
-        title: '연결 요청',
-      };
+      return { body: '보호자가 연결을 요청했습니다.', title: '연결 요청' };
     case 'CONNECTION_ACCEPTED':
-      return {
-        body: '연결 요청이 수락되었습니다.',
-        title: '연결 수락',
-      };
+      return { body: '연결 요청이 수락되었습니다.', title: '연결 수락' };
     case 'CONNECTION_REFUSED':
-      return {
-        body: '연결 요청이 거절되었습니다.',
-        title: '연결 거절',
-      };
+      return { body: '연결 요청이 거절되었습니다.', title: '연결 거절' };
     case 'CONNECTION_CANCELLED':
-      return {
-        body: '연결이 해제되었습니다.',
-        title: '연결 해제',
-      };
     case 'DISCONNECTION':
     case 'CONNECTION_DISCONNECTED':
-      return {
-        body: '연결이 해제되었습니다.',
-        title: '연결 해제',
-      };
+      return { body: '연결이 해제되었습니다.', title: '연결 해제' };
     default:
-      return {
-        body: '',
-        title: '알림',
-      };
+      return { body: '', title: '알림' };
   }
 }
 
@@ -100,7 +82,6 @@ function getPushNotificationContent({
   notification?: { body?: string; title?: string };
 }) {
   const fallback = getConnectionPushNotification(data);
-
   return {
     body: notification?.body ?? fallback.body,
     title: notification?.title ?? fallback.title,
@@ -110,7 +91,6 @@ function getPushNotificationContent({
 function getCurrentRole(pathname: string): ConnectionTargetRole | null {
   if (pathname.startsWith('/ward')) return 'WARD';
   if (pathname.startsWith('/guardian')) return 'GUARDIAN';
-
   const role = getAuthRole();
   return role === 'WARD' || role === 'GUARDIAN' ? role : null;
 }
@@ -129,7 +109,10 @@ function getConnectionTargetRole(data?: MessagePayload['data']): ConnectionTarge
   }
 }
 
-function shouldHandleConnectionPush(data: MessagePayload['data'] | undefined, currentRole: ConnectionTargetRole | null) {
+function shouldHandleConnectionPush(
+  data: MessagePayload['data'] | undefined,
+  currentRole: ConnectionTargetRole | null,
+) {
   const targetRole = getConnectionTargetRole(data);
   return !targetRole || !currentRole || targetRole === currentRole;
 }
@@ -166,7 +149,6 @@ function updateConnectionCache(
 ) {
   queryClient.setQueryData<CommonResponse<IConnectionItem[]>>(queryKey, current => {
     if (!Array.isArray(current?.data)) return current;
-
     return {
       ...current,
       data: current.data.map(connection => (connection.id === connectionId ? { ...connection, status } : connection)),
@@ -188,12 +170,10 @@ function applyConnectionPushToCache(
     updateConnectionCache(queryClient, guardianConnectionsQueryKey, connectionId, status);
     return;
   }
-
   if (targetRole === 'WARD') {
     updateConnectionCache(queryClient, wardConnectionsQueryKey, connectionId, status);
     return;
   }
-
   if (currentRole === 'GUARDIAN') {
     updateConnectionCache(queryClient, guardianConnectionsQueryKey, connectionId, status);
   } else if (currentRole === 'WARD') {
@@ -213,36 +193,45 @@ export default function PushNotificationListener() {
   const [toasts, setToasts] = useState<PushToast[]>([]);
   const [processingToastIds, setProcessingToastIds] = useState<number[]>([]);
   const currentRole = getCurrentRole(pathname);
+
   const dismissToast = useCallback((id: number) => {
     setToasts(prev => prev.filter(item => item.id !== id));
   }, []);
-  const addToast = useCallback((toast: PushToast) => {
-    setToasts(prev => [toast, ...prev].slice(0, 3));
 
-    if (isConnectionRequest(toast.data, currentRole)) return;
+  const addToast = useCallback(
+    (toast: PushToast) => {
+      setToasts(prev => [toast, ...prev].slice(0, 3));
+      if (isConnectionRequest(toast.data, currentRole)) return;
+      window.setTimeout(() => {
+        dismissToast(toast.id);
+      }, TOAST_LIFETIME_MS);
+    },
+    [currentRole, dismissToast],
+  );
 
-    window.setTimeout(() => {
-      dismissToast(toast.id);
-    }, TOAST_LIFETIME_MS);
-  }, [currentRole, dismissToast]);
   const updateToastError = (id: number, error: string) => {
     setToasts(prev => prev.map(item => (item.id === id ? { ...item, error } : item)));
   };
+
   const invalidateConnectionQueries = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey }),
       queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
     ]);
   };
-  const refreshConnectionPage = useCallback(async (data?: MessagePayload['data']) => {
-    const targetRole = getConnectionTargetRole(data) ?? currentRole;
-    const queryKey = targetRole === 'GUARDIAN' ? guardianConnectionsQueryKey : wardConnectionsQueryKey;
 
-    applyConnectionPushToCache(queryClient, data, currentRole);
-    await queryClient.invalidateQueries({ queryKey });
-    await queryClient.refetchQueries({ queryKey, type: 'active' });
-    router.refresh();
-  }, [currentRole, queryClient, router]);
+  const refreshConnectionPage = useCallback(
+    async (data?: MessagePayload['data']) => {
+      const targetRole = getConnectionTargetRole(data) ?? currentRole;
+      const queryKey = targetRole === 'GUARDIAN' ? guardianConnectionsQueryKey : wardConnectionsQueryKey;
+      applyConnectionPushToCache(queryClient, data, currentRole);
+      await queryClient.invalidateQueries({ queryKey });
+      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      router.refresh();
+    },
+    [currentRole, queryClient, router],
+  );
+
   const handleConnectionAction = async (toast: PushToast, action: 'accept' | 'refuse') => {
     const connectionId = getConnectionId(toast.data);
     if (!connectionId || processingToastIds.includes(toast.id)) return;
@@ -256,7 +245,6 @@ export default function PushNotificationListener() {
       } else {
         await refuseWardConnectionRequest(connectionId);
       }
-
       removePendingConnectionRequest(connectionId);
       await invalidateConnectionQueries();
       router.refresh();
@@ -264,7 +252,10 @@ export default function PushNotificationListener() {
     } catch (error) {
       updateToastError(
         toast.id,
-        getActionError(error, action === 'accept' ? '연결 요청 수락에 실패했습니다.' : '연결 요청 거절에 실패했습니다.'),
+        getActionError(
+          error,
+          action === 'accept' ? '연결 요청 수락에 실패했습니다.' : '연결 요청 거절에 실패했습니다.',
+        ),
       );
     } finally {
       setProcessingToastIds(prev => prev.filter(id => id !== toast.id));
@@ -279,20 +270,13 @@ export default function PushNotificationListener() {
         data: payload.data,
         notification: payload.notification,
       });
-
-      const toast: PushToast = {
-        id,
-        title: notification.title,
-        body: notification.body,
-        data: payload.data,
-      };
+      const toast: PushToast = { id, title: notification.title, body: notification.body, data: payload.data };
 
       if (isConnectionPush(payload.data)) {
         if (!shouldHandleConnectionPush(payload.data, currentRole)) return;
         if (isConnectionRequest(payload.data, currentRole)) savePendingConnectionRequest(payload.data);
         void refreshConnectionPage(payload.data);
       }
-
       addToast(toast);
     });
   }, [addToast, currentRole, refreshConnectionPage]);
@@ -306,20 +290,13 @@ export default function PushNotificationListener() {
         data: detail.data,
         notification: detail.notification,
       });
-
-      const toast: PushToast = {
-        id,
-        title: notification.title,
-        body: notification.body,
-        data: detail.data,
-      };
+      const toast: PushToast = { id, title: notification.title, body: notification.body, data: detail.data };
 
       if (isConnectionPush(detail.data)) {
         if (!shouldHandleConnectionPush(detail.data, currentRole)) return;
         if (isConnectionRequest(detail.data, currentRole)) savePendingConnectionRequest(detail.data);
         void refreshConnectionPage(detail.data);
       }
-
       addToast(toast);
     };
 
@@ -370,7 +347,12 @@ export default function PushNotificationListener() {
               {toast.body && <span className={cx('body')}>{toast.body}</span>}
             </button>
           )}
-          <button className={cx('dismissButton')} type="button" aria-label="알림 닫기" onClick={() => dismissToast(toast.id)}>
+          <button
+            className={cx('dismissButton')}
+            type="button"
+            aria-label="알림 닫기"
+            onClick={() => dismissToast(toast.id)}
+          >
             ×
           </button>
         </div>

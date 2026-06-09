@@ -7,7 +7,6 @@ import TextInput from '@/components/TextInput';
 import useTimer from '@/hooks/useTimer';
 import AuthTimer from './AuthTimer';
 import styles from './VerificationCodeForm.module.css';
-
 const cx = classNames.bind(styles);
 
 interface Props {
