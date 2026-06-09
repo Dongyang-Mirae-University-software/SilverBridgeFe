@@ -122,20 +122,28 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
         {isLoading ? (
           <p className={cx('connectionEmpty')}>요청 내역을 불러오는 중입니다.</p>
         ) : pendingConnections.length > 0 ? (
-          <ul className={cx('connectionHistoryList')}>
+          <div className={cx('connectionHistoryTable')}>
+            <div className={cx('connectionHistoryHead')}>
+              <span>회원 ID</span>
+              <span>이름</span>
+              <span>관계</span>
+              <span>요청일</span>
+              <span>상태</span>
+            </div>
+            <ul className={cx('connectionHistoryList')}>
             {pendingConnections.map(connection => (
               <li key={connection.id} className={cx('connectionHistoryItem')}>
-                <div className={cx('connectionHistoryInfo')}>
-                  <div className={cx('connectionHistoryTitleRow')}>
-                    <strong>{connection.partnerName || '확인 전'}</strong>
-                    <span className={cx('connectionStatus')}>요청중</span>
-                  </div>
-                  <span>{connection.partnerUserId}</span>
-                  <small>요청일 {formatRegisterDate(connection.createdAt)}</small>
-                </div>
+                <span className={cx('connectionHistoryCell', 'connectionHistoryMono')}>{connection.partnerUserId || '확인 전'}</span>
+                <span className={cx('connectionHistoryCell')}>{connection.partnerName || '확인 전'}</span>
+                <span className={cx('connectionHistoryCell')}>{connection.relation || '정보 없음'}</span>
+                <span className={cx('connectionHistoryCell')}>{formatRegisterDate(connection.createdAt)}</span>
+                <span className={cx('connectionHistoryCell')}>
+                  <span className={cx('connectionStatus')}>요청중</span>
+                </span>
               </li>
             ))}
-          </ul>
+            </ul>
+          </div>
         ) : (
           <p className={cx('connectionEmpty')}>수락 대기 중인 요청이 없습니다.</p>
         )}
