@@ -15,17 +15,6 @@ import styles from './ConnectionShared.module.css';
 
 const cx = classNames.bind(styles);
 
-function formatDate(value: string | null) {
-  if (!value) return '미연결';
-
-  return new Intl.DateTimeFormat('ko-KR', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
-}
-
 function getConnectionAddress(connection: IConnectionItem) {
   return [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
 }
@@ -62,10 +51,7 @@ export function ConnectionCard({
   secondaryLabel?: string;
 }) {
   const address = connection.status === 'ACTIVE' ? getConnectionAddress(connection) : '';
-  const dateLabel = connection.status === 'ACTIVE' ? '연결일' : '요청일';
-  const dateValue =
-    connection.status === 'ACTIVE' ? formatDate(connection.connectedAt) : formatDate(connection.createdAt);
-  const profileLabel = connection.status === 'ACTIVE' ? '연결됨' : getConnectionStatusLabel(connection.status);
+  const profileLabel = getConnectionStatusLabel(connection.status);
   return (
     <li className={cx('connectionCard')} data-role={role}>
       <div className={cx('connectionCardMain')}>
@@ -74,16 +60,14 @@ export function ConnectionCard({
           <div className={cx('connectionTitleRow')}>
             <div className={cx('connectionNameBlock')}>
               <strong>{connection.partnerName || '이름 확인 전'}</strong>
-              <span>{connection.relation || '관계 정보 없음'}</span>
             </div>
-            <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>{profileLabel}</span>
-          </div>
-
-          <div className={cx('connectionSummaryRow')}>
-            <span>🗓 {dateValue}</span>
+            {connection.status !== 'ACTIVE' ? (
+              <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>{profileLabel}</span>
+            ) : null}
           </div>
 
           <ul className={cx('connectionDetailList')}>
+            <ConnectionDetail icon="🤝" label="관계" value={connection.relation || '정보 없음'} />
             <ConnectionDetail icon="📞" label="전화번호" value={getPartnerPhoneValue(connection)} />
             <ConnectionDetail icon="📍" label="주소" value={getActivePartnerValue(connection, address)} />
             <ConnectionDetail
