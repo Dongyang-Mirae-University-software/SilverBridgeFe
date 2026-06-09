@@ -2,9 +2,9 @@ import classNames from 'classnames/bind';
 
 import type { LiveStreamSession } from '@/service/interface/liveStream';
 import { formatDateTime, formatRelativeDateTime } from './monitorUtils';
-import styles from './GuardianMonitorContent.module.css';
-
+import styles from './SessionList.module.css';
 const cx = classNames.bind(styles);
+
 
 interface SessionListProps {
   error: unknown;
@@ -39,7 +39,7 @@ export function SessionList({ error, isError, isLoading, onSelectSession, select
             <li key={session.session_id}>
               <button
                 type="button"
-                className={cx('sessionCard', { active: selectedId === session.session_id })}
+                className={cx('sessionCard', { 'active': selectedId === session.session_id })}
                 onClick={() => onSelectSession(session.session_id)}
               >
                 <span className={cx('sessionCardTop')}>

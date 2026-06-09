@@ -1,8 +1,8 @@
-import classNames from 'classnames/bind';
 import { ChangeEvent } from 'react';
 import { FieldErrors, UseFormRegisterReturn } from 'react-hook-form';
+import classNames from 'classnames/bind';
 
-import styles from './SignupForm.module.css';
+import styles from './SignupPhoneVerificationStep.module.css';
 import SignupSmsCodeFields from './SignupSmsCodeFields';
 import TextInput from '@/components/TextInput';
 import { SignupFormValues } from '@/hooks/useSignupForm';
@@ -88,7 +88,7 @@ export default function SignupPhoneVerificationStep({
         </div>
 
         {isCode && (
-          <div className={cx('codePanel', { complete: isSmsCheck })}>
+          <div className={cx('codePanel', { 'complete': isSmsCheck })}>
             {isSmsCheck ? (
               <p className={cx('codeGuide')}>전화번호 인증이 완료되었습니다.</p>
             ) : (

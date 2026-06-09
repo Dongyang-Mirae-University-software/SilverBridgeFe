@@ -1,9 +1,8 @@
 'use client';
 
 import classNames from 'classnames/bind';
-
 import VerificationCodeForm from '@/app/(auth)/_components/VerificationCodeForm';
-import styles from './FindPasswordContent.module.css';
+import styles from './FindPasswordVerifyStep.module.css';
 
 const cx = classNames.bind(styles);
 

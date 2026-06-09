@@ -1,11 +1,10 @@
 import { ChangeEvent } from 'react';
 import classNames from 'classnames/bind';
 
-import styles from './SignupForm.module.css';
+import styles from './SignupSmsCodeFields.module.css';
 import TextInput from '@/components/TextInput';
 import { SIGNUP_SMS_CODE_EXPIRES_SECONDS } from '@/constants/auth';
 import useTimer from '@/hooks/useTimer';
-import { formatPhoneNumber } from '@/lib/format/phone';
 
 const cx = classNames.bind(styles);
 

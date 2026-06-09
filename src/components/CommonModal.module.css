@@ -79,7 +79,14 @@
   white-space: pre-line;
 }
 
+.actions {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+}
+
 .button {
+  flex: 1 1 0;
   width: 100%;
   min-height: 46px;
   border: 0;
@@ -89,4 +96,15 @@
   cursor: pointer;
   font-size: 15px;
   font-weight: 700;
+}
+
+.secondaryButton {
+  background: rgba(15, 23, 42, 0.06);
+  color: #475569;
+}
+
+@media (max-width: 420px) {
+  .actions {
+    flex-direction: column;
+  }
 }

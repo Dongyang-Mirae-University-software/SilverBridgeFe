@@ -5,7 +5,7 @@ import classNames from 'classnames/bind';
 
 import TextInput from '@/components/TextInput';
 import { PASSWORD_PATTRERN } from '@/constants/pattern';
-import styles from './FindPasswordContent.module.css';
+import styles from './FindPasswordResetStep.module.css';
 
 const cx = classNames.bind(styles);
 

@@ -1,19 +1,20 @@
 import Link from 'next/link';
+import classNames from 'classnames/bind';
 
 import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user';
 import { NavIcon } from './icons';
-import { cx } from './styles';
 import { NavItem } from './types';
 import { UserAvatar } from '@/components/UserAvatar';
+import styles from './DashboardSidebar.module.css';
+
+const cx = classNames.bind(styles);
 
 interface Props {
-  isLoggingOut: boolean;
   isOpen: boolean;
   navItems: NavItem[];
   onClose: () => void;
-  onLogout: () => void;
   onOpenProfile: () => void;
   pathname: string;
   profile?: IUserProfile | null;
@@ -24,11 +25,9 @@ interface Props {
 }
 
 export function DashboardSidebar({
-  isLoggingOut,
   isOpen,
   navItems,
   onClose,
-  onLogout,
   onOpenProfile,
   pathname,
   profile,
@@ -81,10 +80,6 @@ export function DashboardSidebar({
           <span className={cx('userChevron')} aria-hidden="true">
             ›
           </span>
-        </button>
-
-        <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={onLogout}>
-          {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
         </button>
       </div>
     </aside>

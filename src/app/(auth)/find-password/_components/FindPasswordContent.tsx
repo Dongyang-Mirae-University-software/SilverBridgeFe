@@ -109,7 +109,7 @@ export default function FindPasswordContent() {
           phone={flow.phone}
           errorMessage={flow.errorMessage}
           isPending={flow.isSending}
-          onChange={flow.setFormField}
+          onChange={(field, value) => field === 'name' ? flow.setName(value) : flow.setPhone(value)}
           onKakaoLogin={handleKakaoLogin}
           onSignup={() => router.push('/signup')}
           onSubmit={handleSmsSubmit}

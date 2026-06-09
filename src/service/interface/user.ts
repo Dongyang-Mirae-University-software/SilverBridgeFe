@@ -1,6 +1,20 @@
 import { GenderType, RoleType } from './auth';
 
 export type UserProvider = 'LOCAL' | 'KAKAO';
+export type NotificationChannelType = 'FCM' | 'SMS' | 'KAKAO_ALIMTALK' | 'EMAIL';
+
+export interface IUserNotificationSetting {
+  channelType: NotificationChannelType;
+  enabled: boolean;
+}
+
+export interface IUserNotificationSettingsResponse {
+  settings: IUserNotificationSetting[];
+}
+
+export interface IUserNotificationSettingsUpdateReq {
+  settings: IUserNotificationSetting[];
+}
 
 export interface IUserProfile {
   id: string;
@@ -23,7 +37,7 @@ export interface IUserUpdateReq {
   name: string;
   phone: string;
   verificationNonce?: string | null;
-  gender: GenderType;
+  gender: GenderType | '';
   birthDate: string;
   postcode: string;
   address: string;

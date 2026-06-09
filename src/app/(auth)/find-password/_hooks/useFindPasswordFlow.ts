@@ -132,10 +132,8 @@ export default function useFindPasswordFlow() {
     setStep,
     setMethod,
     setEmail,
-    setFormField: (field: 'name' | 'phone', value: string) => {
-      if (field === 'name') setName(value);
-      else setPhone(value);
-    },
+    setName,
+    setPhone,
     setErrorMessage,
     sendEmail: (body: IFindPasswordEmailSendReq) => sendEmailMutation.mutateAsync(body),
     verifyCode: async (body: { email: string; code: string } | { phone: string; code: string }) => {

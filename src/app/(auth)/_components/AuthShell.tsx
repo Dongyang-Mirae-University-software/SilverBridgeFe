@@ -1,8 +1,7 @@
-import { ReactNode } from 'react';
 import classNames from 'classnames/bind';
+import { ReactNode } from 'react';
 
 import styles from './AuthShell.module.css';
-
 const cx = classNames.bind(styles);
 
 function FriendCharacter() {

@@ -1,6 +1,5 @@
 import classNames from 'classnames/bind';
 import styles from './AuthTimer.module.css';
-
 const cx = classNames.bind(styles);
 
 interface Props {

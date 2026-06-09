@@ -27,7 +27,7 @@ export function getProfileFormValue(profile?: IUserProfile | null): IUserUpdateR
     address: profile?.address ?? '',
     addressDetail: profile?.addressDetail ?? '',
     birthDate: profile?.birthDate ?? '',
-    gender: profile?.gender ?? 'FEMALE',
+    gender: profile?.gender ?? '',
     name: profile?.name ?? '',
     phone: getPhoneDigits(profile?.phone ?? ''),
     postcode: profile?.postcode ?? '',

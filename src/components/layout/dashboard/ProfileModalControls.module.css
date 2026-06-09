@@ -1,0 +1,50 @@
+.profileManageStack {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  gap: 12px;
+  padding: 18px 20px 20px;
+}
+
+.profileModalMessage {
+  margin: 0;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.02);
+  color: var(--sb-brand);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.5;
+  padding: 10px 12px;
+  white-space: normal;
+}
+
+.profileManageScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-right: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.profileManageScroll::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .profileManageStack {
+    gap: 10px;
+    padding: 14px 14px 14px;
+  }
+
+  .profileModalMessage {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .profileManageScroll {
+    padding-right: 0;
+  }
+}

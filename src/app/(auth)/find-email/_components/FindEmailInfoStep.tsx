@@ -5,7 +5,7 @@ import classNames from 'classnames/bind';
 
 import { IFindEmailReq } from '@/service/interface/auth';
 import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
-import styles from './FindEmailContent.module.css';
+import styles from './FindEmailInfoStep.module.css';
 
 const cx = classNames.bind(styles);
 

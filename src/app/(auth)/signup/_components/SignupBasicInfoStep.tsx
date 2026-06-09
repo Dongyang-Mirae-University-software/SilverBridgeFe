@@ -1,12 +1,13 @@
-import classNames from 'classnames/bind';
 import { FieldErrors, UseFormRegister, UseFormRegisterReturn } from 'react-hook-form';
+import classNames from 'classnames/bind';
 
-import styles from './SignupForm.module.css';
+import styles from './SignupBasicInfoStep.module.css';
 import SignupRoleSelector from './SignupRoleSelector';
 import TextInput from '@/components/TextInput';
 import { SignupFormValues } from '@/hooks/useSignupForm';
 
 const cx = classNames.bind(styles);
+
 
 interface SignupBasicInfoStepProps {
   allValues: SignupFormValues;

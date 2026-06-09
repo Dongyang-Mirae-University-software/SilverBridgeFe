@@ -1,7 +1,7 @@
 import classNames from 'classnames/bind';
 import { UseFormRegister } from 'react-hook-form';
 
-import styles from './SignupForm.module.css';
+import styles from './SignupRoleSelector.module.css';
 import { SignupFormValues } from '@/hooks/useSignupForm';
 import { RoleType } from '@/service/interface/auth';
 
@@ -19,9 +19,7 @@ export default function SignupRoleSelector({ role, register }: SignupRoleSelecto
       <div className={cx('radioGroup')}>
         <label className={cx('roleCard', 'wardRole', { active: role === 'WARD' })} htmlFor="WARD">
           <input id="WARD" type="radio" value="WARD" {...register('role')} defaultChecked />
-          <span className={cx('roleEmoji')} aria-hidden="true">
-            🌷
-          </span>
+          <span className={cx('roleEmoji')} aria-hidden="true">🌷</span>
           <span className={cx('roleCopy')}>
             <strong>피보호자</strong>
             <small>직접 사용</small>
@@ -30,9 +28,7 @@ export default function SignupRoleSelector({ role, register }: SignupRoleSelecto
         </label>
         <label className={cx('roleCard', 'guardianRole', { active: role === 'GUARDIAN' })} htmlFor="GUARDIAN">
           <input id="GUARDIAN" type="radio" value="GUARDIAN" {...register('role')} />
-          <span className={cx('roleEmoji')} aria-hidden="true">
-            👨‍👩‍👧
-          </span>
+          <span className={cx('roleEmoji')} aria-hidden="true">👨‍👩‍👧</span>
           <span className={cx('roleCopy')}>
             <strong>보호자</strong>
             <small>가족 돌봄</small>

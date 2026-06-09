@@ -2,7 +2,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { cx } from '@/components/layout/dashboard/styles';
+import classNames from 'classnames/bind';
+import styles from './GuardianDashboardContent.module.css';
+
+const cx = classNames.bind(styles);
 import { getLiveStreams } from '@/service/api/liveStream';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryOptions } from '@/service/query/connection';

@@ -58,7 +58,7 @@ export default function GuardianChatContent() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
-  const [suggestionsOpen, setSuggestionsOpen] = useState(true);
+  const [popup, setPopup] = useState<'context' | 'suggestions' | null>(null);
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -210,6 +210,7 @@ export default function GuardianChatContent() {
 
   function handleChipClick(chip: string) {
     setInput(chip);
+    setPopup(null);
     textareaRef.current?.focus();
   }
 
@@ -221,19 +222,112 @@ export default function GuardianChatContent() {
   }
 
   const lastAssistantId = [...messages].reverse().find(m => m.role === 'assistant')?.id;
+  const contextFilledCount = Object.values(context).filter(Boolean).length;
 
   return (
     <div className={styles.chatPage}>
       <div className={styles.topBar}>
-        <div className={styles.topBarLeft}>
-          <ChatContextForm value={context} onChange={setContext} />
+        <div className={styles.topBarActions}>
+          <button
+            type="button"
+            className={`${styles.actionBtn} ${popup === 'context' ? styles.actionBtnActive : ''}`}
+            onClick={() => setPopup(prev => (prev === 'context' ? null : 'context'))}
+          >
+            상담 컨텍스트
+            {contextFilledCount > 0 && <span className={styles.tabBadge}>{contextFilledCount}</span>}
+          </button>
+          <button
+            type="button"
+            className={`${styles.actionBtn} ${popup === 'suggestions' ? styles.actionBtnActive : ''}`}
+            onClick={() => setPopup(prev => (prev === 'suggestions' ? null : 'suggestions'))}
+          >
+            추천 질문
+          </button>
+          <button
+            type="button"
+            className={`${styles.actionBtn} ${styles.newSessionBtn}`}
+            onClick={handleNewSession}
+          >
+            새 상담
+          </button>
         </div>
-        <button type="button" className={styles.newBtn} onClick={handleNewSession}>
-          새 상담
-        </button>
       </div>
 
       {fallback && <div className={styles.fallbackWarning}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
+
+      {popup === 'context' && (
+        <div
+          className={styles.modalOverlay}
+          role="presentation"
+          onClick={() => setPopup(null)}
+        >
+          <section
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-label="상담 컨텍스트"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className={styles.popoverHeader}>
+              <div className={styles.suggestionTitle}>
+                <strong>상담 컨텍스트</strong>
+                <span>상담 대상 정보를 조정합니다</span>
+              </div>
+              <button
+                type="button"
+                className={styles.popoverClose}
+                onClick={() => setPopup(null)}
+              >
+                닫기
+              </button>
+            </div>
+            <ChatContextForm value={context} onChange={setContext} />
+          </section>
+        </div>
+      )}
+
+      {popup === 'suggestions' && (
+        <div
+          className={styles.modalOverlay}
+          role="presentation"
+          onClick={() => setPopup(null)}
+        >
+          <section
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-label="추천 질문"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className={styles.popoverHeader}>
+              <div className={styles.suggestionTitle}>
+                <strong>추천 질문</strong>
+                <span>선택하면 입력창에 채워집니다</span>
+              </div>
+              <button
+                type="button"
+                className={styles.popoverClose}
+                onClick={() => setPopup(null)}
+              >
+                닫기
+              </button>
+            </div>
+            <div className={styles.chips}>
+              {SAMPLE_CHIPS.map(chip => (
+                <button
+                  key={chip}
+                  type="button"
+                  className={styles.chip}
+                  disabled={sending}
+                  onClick={() => handleChipClick(chip)}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
 
       <div ref={listRef} className={styles.messageList}>
         {messages.map(msg => (
@@ -253,51 +347,7 @@ export default function GuardianChatContent() {
         )}
       </div>
 
-      {suggestionsOpen && (
-        <div className={styles.suggestionPanel}>
-          <div className={styles.suggestionHeader}>
-            <div className={styles.suggestionTitle}>
-              <strong>추천 질문</strong>
-              <span>선택하면 입력창에 채워집니다</span>
-            </div>
-            <button
-              type="button"
-              className={styles.suggestionToggle}
-              aria-expanded={true}
-              onClick={() => setSuggestionsOpen(false)}
-            >
-              닫기
-            </button>
-          </div>
-          <div className={styles.chips}>
-            {SAMPLE_CHIPS.map(chip => (
-              <button
-                key={chip}
-                type="button"
-                className={styles.chip}
-                disabled={sending}
-                onClick={() => handleChipClick(chip)}
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       <footer className={styles.chatFooter}>
-        {!suggestionsOpen && (
-          <div className={styles.footerActions}>
-            <button
-              type="button"
-              className={styles.suggestionToggle}
-              aria-expanded={false}
-              onClick={() => setSuggestionsOpen(true)}
-            >
-              추천 질문 보기
-            </button>
-          </div>
-        )}
         <div className={styles.inputArea}>
           <textarea
             ref={textareaRef}
