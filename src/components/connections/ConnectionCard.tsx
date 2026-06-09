@@ -61,9 +61,7 @@ export function ConnectionCard({
             <div className={cx('connectionNameBlock')}>
               <strong>{connection.partnerName || '이름 확인 전'}</strong>
             </div>
-            {connection.status !== 'ACTIVE' ? (
-              <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>{profileLabel}</span>
-            ) : null}
+            <span className={cx('connectionStatus', getConnectionStatusClass(connection.status))}>{profileLabel}</span>
           </div>
 
           <ul className={cx('connectionDetailList')}>
