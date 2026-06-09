@@ -128,20 +128,16 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
               <span>이름</span>
               <span>관계</span>
               <span>요청일</span>
-              <span>상태</span>
             </div>
             <ul className={cx('connectionHistoryList')}>
-            {pendingConnections.map(connection => (
-              <li key={connection.id} className={cx('connectionHistoryItem')}>
-                <span className={cx('connectionHistoryCell', 'connectionHistoryMono')}>{connection.partnerUserId || '확인 전'}</span>
-                <span className={cx('connectionHistoryCell')}>{connection.partnerName || '확인 전'}</span>
-                <span className={cx('connectionHistoryCell')}>{connection.relation || '정보 없음'}</span>
-                <span className={cx('connectionHistoryCell')}>{formatRegisterDate(connection.createdAt)}</span>
-                <span className={cx('connectionHistoryCell')}>
-                  <span className={cx('connectionStatus')}>요청중</span>
-                </span>
-              </li>
-            ))}
+              {pendingConnections.map(connection => (
+                <li key={connection.id} className={cx('connectionHistoryItem')}>
+                  <span className={cx('connectionHistoryCell', 'connectionHistoryMono')}>{connection.partnerUserId || '확인 전'}</span>
+                  <span className={cx('connectionHistoryCell')}>{connection.partnerName || '확인 전'}</span>
+                  <span className={cx('connectionHistoryCell')}>{connection.relation || '정보 없음'}</span>
+                  <span className={cx('connectionHistoryCell')}>{formatRegisterDate(connection.createdAt)}</span>
+                </li>
+              ))}
             </ul>
           </div>
         ) : (
