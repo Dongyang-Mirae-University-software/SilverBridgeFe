@@ -203,55 +203,49 @@
   list-style: none;
 }
 
-.connectionHistoryItem {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 16px;
-  background: rgba(250, 250, 248, 0.9);
-  padding: 14px 16px;
-}
-
-.connectionHistoryInfo {
+.connectionHistoryTable {
   display: flex;
   min-width: 0;
-  flex: 1;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
 }
 
-.connectionHistoryTitleRow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+.connectionHistoryHead {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.9fr 0.9fr 0.7fr;
+  gap: 12px;
+  border-bottom: 1px solid var(--sb-line-soft);
+  background: #f3efe4;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 16px 18px;
 }
 
-.connectionHistoryItem strong {
-  overflow: hidden;
+.connectionHistoryItem {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.9fr 0.9fr 0.7fr;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px 18px;
+}
+
+.connectionHistoryCell {
+  min-width: 0;
   color: var(--sb-ink);
   font-size: 14px;
-  font-weight: 850;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.connectionHistoryInfo > span {
+  font-weight: 700;
+  line-height: 1.45;
   overflow: hidden;
-  color: var(--sb-ink-mute);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.connectionHistoryInfo small {
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  font-weight: 650;
+.connectionHistoryMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .connectionStatus {
@@ -308,11 +302,19 @@
     grid-template-columns: 1fr;
   }
 
-  .connectionHistoryItem {
-    flex-direction: column;
+  .connectionHistoryHead {
+    display: none;
   }
 
-  .connectionHistoryTitleRow {
-    align-items: flex-start;
+  .connectionHistoryItem {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .connectionHistoryCell {
+    overflow: visible;
+    white-space: normal;
   }
 }
