@@ -59,6 +59,25 @@
   padding: 16px 20px 12px;
 }
 
+.itemLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.newBadge {
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+}
+
 .itemTitle {
   overflow: hidden;
   color: var(--sb-ink);

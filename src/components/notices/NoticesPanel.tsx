@@ -15,8 +15,16 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
 
+function getLatestAnnouncementId(announcements: { id: number; createdAt: string }[]) {
+  return announcements.reduce<{ id: number; createdAt: string } | null>((latest, item) => {
+    if (!latest) return item;
+    return new Date(item.createdAt).getTime() > new Date(latest.createdAt).getTime() ? item : latest;
+  }, null)?.id;
+}
+
 export function NoticesPanel() {
   const { data: announcements = [], isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
+  const latestAnnouncementId = getLatestAnnouncementId(announcements);
 
   return (
     <section className={cx('page')}>
@@ -47,7 +55,10 @@ export function NoticesPanel() {
           {announcements.map(item => (
             <li key={item.id} className={cx('item')}>
               <div className={cx('itemHeader')}>
-                <span className={cx('itemTitle')}>{item.title}</span>
+                <div className={cx('itemLeft')}>
+                  {item.id === latestAnnouncementId && <span className={cx('newBadge')}>NEW</span>}
+                  <span className={cx('itemTitle')}>{item.title}</span>
+                </div>
                 <span className={cx('itemDate')}>
                   <time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time>
                 </span>
