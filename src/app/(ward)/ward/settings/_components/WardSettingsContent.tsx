@@ -1,11 +1,12 @@
 'use client';
 
-import { CSSProperties, FormEvent, useRef, useState } from 'react';
+import { CSSProperties, FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
+import { AccountDeleteSection } from '@/components/settings/AccountDeleteSection';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
@@ -100,8 +101,6 @@ export function WardSettingsContent() {
   const [passwordError, setPasswordError] = useState('');
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [passwordModal, setPasswordModal] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const passwordMutation = useMutation({
     mutationFn: changeMyPassword,
     onMutate: () => {
@@ -389,6 +388,7 @@ export function WardSettingsContent() {
                 {passwordMutation.isPending ? '변경 중' : '변경하기'}
               </button>
             </div>
+            <AccountDeleteSection isKakaoUser={isKakaoUser} />
           </section>
 
           {isPasswordDialogOpen && (
