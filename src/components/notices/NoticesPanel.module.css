@@ -37,51 +37,18 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.item {
   border: 1px solid var(--sb-line-soft);
   border-radius: 18px;
   background: #fff;
   overflow: hidden;
   box-shadow: var(--sb-shadow-sm);
-}
-
-/* ── 아이템 ── */
-.item {
-  border-bottom: 1px solid var(--sb-line-soft);
-}
-
-.item:last-child {
-  border-bottom: 0;
-}
-
-.item.open {
-  background: #fafafa;
-}
-
-/* ── 아이템 버튼 (클릭 영역) ── */
-.itemButton {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  padding: 16px 20px;
-  text-align: left;
-  transition: background 0.12s ease;
-}
-
-.itemButton:hover {
-  background: var(--sb-bg-soft);
-}
-
-.item.open .itemButton {
-  background: transparent;
 }
 
 .itemLeft {
@@ -103,53 +70,37 @@
   padding: 2px 6px;
 }
 
+.itemHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px 12px;
+}
+
 .itemTitle {
   overflow: hidden;
   color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 750;
+  font-size: 15px;
+  font-weight: 850;
   line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.item.open .itemTitle {
-  white-space: normal;
-  font-weight: 850;
-}
-
-.itemRight {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 12px;
-}
-
 .itemDate {
+  flex-shrink: 0;
   color: var(--sb-ink-mute);
   font-size: 12px;
   font-weight: 650;
   white-space: nowrap;
 }
 
-.chevron {
-  color: var(--sb-ink-mute);
-  transition: transform 0.2s ease, color 0.15s ease;
-}
-
-.chevron.open {
-  transform: rotate(180deg);
-  color: var(--sb-brand);
-}
-
-/* ── 펼쳐진 본문 ── */
 .itemBody {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 18px 20px 20px;
-  background: #fff;
+  gap: 12px;
+  padding: 0 20px 18px;
 }
 
 .itemMeta {
@@ -187,22 +138,18 @@
 .itemContent {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 14px;
-  line-height: 1.8;
+  font-size: 15px;
+  line-height: 1.85;
   white-space: pre-wrap;
   word-break: keep-all;
 }
 
 @media (max-width: 640px) {
-  .itemButton {
-    padding: 14px 16px;
+  .itemHeader {
+    padding: 14px 16px 10px;
   }
 
   .itemBody {
-    padding: 14px 16px 18px;
-  }
-
-  .itemDate {
-    display: none;
+    padding: 0 16px 16px;
   }
 }
