@@ -51,25 +51,6 @@
   box-shadow: var(--sb-shadow-sm);
 }
 
-.itemLeft {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  flex: 1;
-}
-
-.newBadge {
-  flex-shrink: 0;
-  border-radius: 6px;
-  background: var(--sb-brand);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  padding: 2px 6px;
-}
-
 .itemHeader {
   display: flex;
   align-items: flex-start;
@@ -96,36 +77,9 @@
   white-space: nowrap;
 }
 
-.itemBody {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 0 20px 18px;
-}
-
-.itemMeta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 0;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.itemMeta span {
-  display: inline-flex;
-  align-items: center;
-}
-
-.itemMeta span:not(:last-child)::after {
-  content: '·';
-  margin: 0 8px;
-  color: var(--sb-line);
-}
-
 .itemContent {
   margin: 0;
+  padding: 0 20px 18px;
   color: var(--sb-ink-soft);
   font-size: 15px;
   line-height: 1.85;
@@ -138,7 +92,7 @@
     padding: 14px 16px 10px;
   }
 
-  .itemBody {
+  .itemContent {
     padding: 0 16px 16px;
   }
 }
