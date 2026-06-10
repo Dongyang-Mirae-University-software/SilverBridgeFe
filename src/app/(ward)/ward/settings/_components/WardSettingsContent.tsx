@@ -1,19 +1,15 @@
 'use client';
 
-import { CSSProperties, FormEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CSSProperties, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { CommonModal } from '@/components/CommonModal';
 import { AccountDeleteSection } from '@/components/settings/AccountDeleteSection';
+import { PasswordChangeSection } from '@/components/settings/PasswordChangeSection';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
-import { clearAuthTokens } from '@/lib/auth/tokenStore';
 import { getUserProfileData } from '@/lib/auth/userProfile';
-import { getModalErrorMessage } from '@/lib/dashboard/profile';
-import { changeMyPassword } from '@/service/api/user';
-import type { NotificationChannelType, IUserPasswordChangeReq } from '@/service/interface/user';
+import type { NotificationChannelType } from '@/service/interface/user';
 import { myProfileQueryOptions } from '@/service/query/user';
 import {
   userNotificationSettingsQueryOptions,
@@ -80,8 +76,6 @@ const SOS_OPTIONS = [
 type SettingsTab = 'basic' | 'notifications' | 'security';
 
 export function WardSettingsContent() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const { updateWardSettings, wardSettings } = useDashboard();
 
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
@@ -93,27 +87,6 @@ export function WardSettingsContent() {
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('basic');
   const [notificationError, setNotificationError] = useState('');
-  const [passwordForm, setPasswordForm] = useState<IUserPasswordChangeReq & { newPasswordConfirm: string }>({
-    currentPassword: '',
-    newPassword: '',
-    newPasswordConfirm: '',
-  });
-  const [passwordError, setPasswordError] = useState('');
-  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-  const [passwordModal, setPasswordModal] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
-  const passwordMutation = useMutation({
-    mutationFn: changeMyPassword,
-    onMutate: () => {
-      setPasswordError('');
-      setPasswordModal(null);
-    },
-    onSuccess: () => {
-      setIsPasswordDialogOpen(false);
-      setPasswordForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
-      setPasswordModal({ message: '비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.', type: 'success' });
-    },
-    onError: error => setPasswordModal({ message: getModalErrorMessage(error, '비밀번호 변경에 실패했습니다.'), type: 'error' }),
-  });
 
   const fontProgress = ((wardSettings.fontSize - MIN_WARD_FONT_SIZE) / (MAX_WARD_FONT_SIZE - MIN_WARD_FONT_SIZE)) * 100;
   const rangeStyle = { '--settings-range-progress': `${fontProgress}%` } as CSSProperties;
@@ -134,57 +107,8 @@ export function WardSettingsContent() {
     );
   }
 
-  const openPasswordDialog = () => {
-    if (isKakaoUser || passwordMutation.isPending) return;
-    setPasswordError('');
-    setPasswordForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
-    setIsPasswordDialogOpen(true);
-  };
-
-  const closePasswordDialog = () => {
-    if (passwordMutation.isPending) return;
-    setIsPasswordDialogOpen(false);
-    setPasswordError('');
-    setPasswordForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
-  };
-
-  const handlePasswordSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (isKakaoUser) {
-      setPasswordError('카카오 가입 계정은 비밀번호를 변경할 수 없습니다.');
-      return;
-    }
-    if (passwordForm.newPassword !== passwordForm.newPasswordConfirm) {
-      setPasswordError('새 비밀번호 확인이 일치하지 않습니다.');
-      return;
-    }
-    passwordMutation.mutate({
-      currentPassword: passwordForm.currentPassword,
-      newPassword: passwordForm.newPassword,
-    });
-  };
-
   return (
     <div className={styles.page}>
-      {passwordModal && (
-        <CommonModal
-          type={passwordModal.type}
-          tone={profile?.role === 'GUARDIAN' ? 'guardian' : 'default'}
-          title={passwordModal.type === 'success' ? '비밀번호 변경 완료' : '비밀번호 변경 실패'}
-          message={passwordModal.message}
-          confirmText="확인"
-          onClose={() => {
-            if (passwordModal.type === 'success') {
-              clearAuthTokens();
-              queryClient.clear();
-              router.replace('/login');
-              return;
-            }
-            setPasswordModal(null);
-          }}
-        />
-      )}
-
       <div className={cx('tabBar')} role="tablist" aria-label="환경설정 탭">
         <button
           className={cx('tabButton', { tabButtonActive: activeTab === 'basic' })}
@@ -370,103 +294,10 @@ export function WardSettingsContent() {
 
       {activeTab === 'security' && (
         <>
-          <section className={styles.card} aria-labelledby="s-security">
-            <div className={styles.cardHeader}>
-              <div>
-                <h3 className={styles.cardTitle} id="s-security">
-                  보안
-                </h3>
-                <p className={styles.cardDesc}>비밀번호 변경은 팝업으로 진행합니다.</p>
-              </div>
-            </div>
-            <div className={styles.securityActionRow}>
-              <div className={styles.securityMeta}>
-                <span className={styles.securityLabel}>비밀번호 변경</span>
-                <span className={styles.securityDesc}>현재 비밀번호와 새 비밀번호를 확인한 뒤 변경할 수 있습니다.</span>
-              </div>
-              <button className={styles.securityButton} type="button" disabled={isKakaoUser || passwordMutation.isPending} onClick={openPasswordDialog}>
-                {passwordMutation.isPending ? '변경 중' : '변경하기'}
-              </button>
-            </div>
-            <AccountDeleteSection isKakaoUser={isKakaoUser} />
-          </section>
-
-          {isPasswordDialogOpen && (
-            <div className={styles.passwordOverlay} role="presentation" onClick={closePasswordDialog}>
-              <section
-                className={styles.passwordDialog}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="password-dialog-title"
-                onClick={e => e.stopPropagation()}
-              >
-                <div className={styles.passwordDialogHeader}>
-                  <div>
-                    <h3 id="password-dialog-title">비밀번호 변경</h3>
-                    <p>현재 비밀번호와 새 비밀번호를 입력한 뒤 변경을 눌러주세요.</p>
-                  </div>
-                  <button className={styles.passwordDialogClose} type="button" aria-label="닫기" onClick={closePasswordDialog}>
-                    ×
-                  </button>
-                </div>
-
-                <form className={styles.passwordDialogForm} onSubmit={handlePasswordSubmit}>
-                  <div className={styles.passwordDialogGrid}>
-                    <PasswordField
-                      disabled={isKakaoUser}
-                      label="현재 비밀번호"
-                      value={passwordForm.currentPassword}
-                      onChange={value => setPasswordForm(current => ({ ...current, currentPassword: value }))}
-                    />
-                    <PasswordField
-                      disabled={isKakaoUser}
-                      label="새 비밀번호"
-                      value={passwordForm.newPassword}
-                      onChange={value => setPasswordForm(current => ({ ...current, newPassword: value }))}
-                    />
-                    <PasswordField
-                      disabled={isKakaoUser}
-                      label="새 비밀번호 확인"
-                      value={passwordForm.newPasswordConfirm}
-                      onChange={value => setPasswordForm(current => ({ ...current, newPasswordConfirm: value }))}
-                    />
-                  </div>
-
-                  {passwordError && <p className={styles.passwordError}>{passwordError}</p>}
-
-                  <div className={styles.passwordDialogActions}>
-                    <button className={styles.passwordDialogSecondaryButton} type="button" onClick={closePasswordDialog}>
-                      취소
-                    </button>
-                    <button className={styles.passwordDialogPrimaryButton} type="submit" disabled={isKakaoUser || passwordMutation.isPending}>
-                      {passwordMutation.isPending ? '변경 중' : '변경'}
-                    </button>
-                  </div>
-                </form>
-              </section>
-            </div>
-          )}
+          <PasswordChangeSection isKakaoUser={isKakaoUser} />
+          <AccountDeleteSection isKakaoUser={isKakaoUser} />
         </>
       )}
     </div>
-  );
-}
-
-function PasswordField({
-  disabled,
-  label,
-  onChange,
-  value,
-}: {
-  disabled: boolean;
-  label: string;
-  onChange: (value: string) => void;
-  value: string;
-}) {
-  return (
-    <label className={styles.passwordField}>
-      <span>{label}</span>
-      <input type="password" disabled={disabled} value={value} onChange={event => onChange(event.target.value)} />
-    </label>
   );
 }
