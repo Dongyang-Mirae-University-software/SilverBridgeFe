@@ -48,20 +48,7 @@
 .cardHeader {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-}
-
-.cardNum {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 15px;
-  font-weight: 850;
+  gap: 0;
 }
 
 .cardTitle {
