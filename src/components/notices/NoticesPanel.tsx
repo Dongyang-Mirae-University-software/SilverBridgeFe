@@ -44,23 +44,15 @@ export function NoticesPanel() {
 
       {announcements.length > 0 && (
         <ul className={cx('list')}>
-          {announcements.map((item, index) => (
+          {announcements.map(item => (
             <li key={item.id} className={cx('item')}>
               <div className={cx('itemHeader')}>
-                <div className={cx('itemLeft')}>
-                  {index === 0 && <span className={cx('newBadge')}>NEW</span>}
-                  <span className={cx('itemTitle')}>{item.title}</span>
-                </div>
+                <span className={cx('itemTitle')}>{item.title}</span>
                 <span className={cx('itemDate')}>
                   <time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time>
                 </span>
               </div>
-              <div className={cx('itemBody')}>
-                <div className={cx('itemMeta')}>
-                  <span>{item.authorName}</span>
-                </div>
-                <p className={cx('itemContent')}>{item.content}</p>
-              </div>
+              <p className={cx('itemContent')}>{item.content}</p>
             </li>
           ))}
         </ul>
