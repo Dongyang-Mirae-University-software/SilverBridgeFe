@@ -58,9 +58,6 @@ export function NoticesPanel() {
               <div className={cx('itemBody')}>
                 <div className={cx('itemMeta')}>
                   <span>{item.authorName}</span>
-                  {item.updatedAt !== item.createdAt && (
-                    <span className={cx('updatedTag')}>수정됨 ({formatDate(item.updatedAt)})</span>
-                  )}
                 </div>
                 <p className={cx('itemContent')}>{item.content}</p>
               </div>
