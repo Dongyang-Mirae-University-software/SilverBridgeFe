@@ -220,7 +220,6 @@ export function WardSettingsContent() {
         <>
           <section className={styles.card} aria-labelledby="s-font">
             <div className={styles.cardHeader}>
-              <span className={styles.cardNum}>1</span>
               <div>
                 <h3 className={styles.cardTitle} id="s-font">
                   글자 크기
@@ -258,7 +257,6 @@ export function WardSettingsContent() {
 
           <section className={styles.card} aria-labelledby="s-contrast">
             <div className={styles.cardHeader}>
-              <span className={styles.cardNum}>2</span>
               <div>
                 <h3 className={styles.cardTitle} id="s-contrast">
                   화면 대비
@@ -291,7 +289,6 @@ export function WardSettingsContent() {
 
           <section className={styles.card} aria-labelledby="s-sos">
             <div className={styles.cardHeader}>
-              <span className={styles.cardNum}>3</span>
               <div>
                 <h3 className={styles.cardTitle} id="s-sos">
                   SOS 동작 설정
@@ -329,7 +326,6 @@ export function WardSettingsContent() {
       {activeTab === 'notifications' && (
         <section className={styles.card} aria-labelledby="s-notification">
           <div className={styles.cardHeader}>
-            <span className={styles.cardNum}>4</span>
             <div>
               <h3 className={styles.cardTitle} id="s-notification">
                 연결 알림 채널 설정
@@ -377,7 +373,6 @@ export function WardSettingsContent() {
         <>
           <section className={styles.card} aria-labelledby="s-security">
             <div className={styles.cardHeader}>
-              <span className={styles.cardNum}>5</span>
               <div>
                 <h3 className={styles.cardTitle} id="s-security">
                   보안
