@@ -1,6 +1,7 @@
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { IUserProfile } from '@/service/interface/user';
@@ -27,11 +28,7 @@ export function MobileTopBar({ onOpenSidebar, pageTitle, role }: Pick<Props, 'on
         <span>메뉴</span>
       </button>
       <div className={cx('topBarBrand')}>
-        <div className={cx('brandMark')}>S</div>
-        <div>
-          <strong>SilverBridge</strong>
-          <span>{pageTitle}</span>
-        </div>
+        <SilverBridgeLogo className={cx('topBarLogo')} width={132} />
       </div>
       <span className={cx('topBarRole')}>{getRoleLabel(role)}</span>
     </div>
