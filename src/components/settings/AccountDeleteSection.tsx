@@ -8,6 +8,7 @@ import classNames from 'classnames/bind';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
 import { deleteMyAccount } from '@/service/api/user';
 import type { IUserDeleteReq } from '@/service/interface/user';
+import WarningIcon from '@/assets/icons/warning.svg';
 import styles from './AccountDeleteSection.module.css';
 
 const cx = classNames.bind(styles);
@@ -83,7 +84,7 @@ export function AccountDeleteSection({ isKakaoUser }: { isKakaoUser: boolean }) 
       {deleteStep === 'confirm' && (
         <div className={cx('overlay')} onClick={closeDeleteModal}>
           <div className={cx('modal')} onClick={e => e.stopPropagation()} role="alertdialog" aria-modal="true">
-            <div className={cx('modalIcon')}>⚠</div>
+            <div className={cx('modalIcon')}><WarningIcon /></div>
             <h3 className={cx('modalTitle')}>정말 탈퇴할까요?</h3>
             <p className={cx('modalDesc')}>
               탈퇴 시 모든 데이터가 삭제되며 <strong>복구할 수 없습니다.</strong>
