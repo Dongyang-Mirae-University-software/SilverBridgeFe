@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 
+import { Icon } from '@/components/Icon';
 import TextInput from '@/components/TextInput';
 import { signin } from '@/service/api/auth';
 import { ISigninResponse } from '@/service/interface/auth';
@@ -151,12 +152,7 @@ export default function LoginContent() {
       </div>
 
       <button className={cx('kakaoButton')} type="button" onClick={handleKakaoLogin}>
-        <svg width="20" height="20" viewBox="0 0 36 36" aria-hidden="true">
-          <path
-            fill="#3C1E1E"
-            d="M18 6C10.82 6 5 10.6 5 16.27c0 3.7 2.5 6.93 6.18 8.7-.27.94-.97 3.4-1.11 3.93-.18.66.24.65.51.47.21-.14 3.36-2.28 4.7-3.2.9.13 1.83.2 2.72.2 7.18 0 13-4.6 13-10.27S25.18 6 18 6z"
-          />
-        </svg>
+        <Icon name="kakaoLogo" size={20} color="#3C1E1E" decorative />
         카카오로 로그인
       </button>
 

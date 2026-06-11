@@ -5,10 +5,12 @@ import classNames from 'classnames/bind';
 
 import AlertIcon from '@/assets/icons/alert.svg';
 import BrainIcon from '@/assets/icons/brain.svg';
+import BackIcon from '@/assets/icons/back.svg';
 import CakeIcon from '@/assets/icons/cake.svg';
 import CameraFlipIcon from '@/assets/icons/camera-flip.svg';
 import CameraIcon from '@/assets/icons/camera.svg';
 import GearIcon from '@/assets/icons/gear.svg';
+import KakaoLogoIcon from '@/assets/icons/kakao-logo.svg';
 import HandshakeIcon from '@/assets/icons/handshake.svg';
 import MailIcon from '@/assets/icons/mail.svg';
 import MapPinIcon from '@/assets/icons/map-pin.svg';
@@ -16,7 +18,9 @@ import MessageCircleIcon from '@/assets/icons/message-circle.svg';
 import MonitorIcon from '@/assets/icons/monitor.svg';
 import PhoneIcon from '@/assets/icons/phone.svg';
 import PillIcon from '@/assets/icons/pill.svg';
+import RefreshIcon from '@/assets/icons/refresh.svg';
 import TagIcon from '@/assets/icons/tag.svg';
+import AvatarEditIcon from '@/assets/icons/user-avatar.svg';
 import UserIcon from '@/assets/icons/user.svg';
 import WarningIcon from '@/assets/icons/warning.svg';
 import styles from './Icon.module.css';
@@ -25,11 +29,13 @@ const cx = classNames.bind(styles);
 
 const ICONS = {
   alert: { kind: 'asset', src: AlertIcon },
+  back: { kind: 'asset', src: BackIcon },
   brain: { kind: 'asset', src: BrainIcon },
   cake: { kind: 'asset', src: CakeIcon },
   cameraFlip: { kind: 'asset', src: CameraFlipIcon },
   camera: { kind: 'asset', src: CameraIcon },
   gear: { kind: 'asset', src: GearIcon },
+  kakaoLogo: { kind: 'asset', src: KakaoLogoIcon },
   handshake: { kind: 'asset', src: HandshakeIcon },
   mail: { kind: 'asset', src: MailIcon },
   mapPin: { kind: 'asset', src: MapPinIcon },
@@ -37,7 +43,9 @@ const ICONS = {
   monitor: { kind: 'asset', src: MonitorIcon },
   phone: { kind: 'asset', src: PhoneIcon },
   pill: { kind: 'asset', src: PillIcon },
+  refresh: { kind: 'asset', src: RefreshIcon },
   tag: { kind: 'asset', src: TagIcon },
+  avatarEdit: { kind: 'asset', src: AvatarEditIcon },
   user: { kind: 'asset', src: UserIcon },
   warning: { kind: 'asset', src: WarningIcon },
   menu: { kind: 'path', d: 'M4 7h16M4 12h16M4 17h16' },
