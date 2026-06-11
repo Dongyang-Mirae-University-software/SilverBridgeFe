@@ -45,20 +45,36 @@ export function RefreshButton({
     >
       <svg className={cx('icon', { spinning: isActive })} viewBox="0 0 24 24" aria-hidden="true">
         <path
-          d="M20 12a8 8 0 1 1-2.34-5.66"
+          d="M7 7.5A7 7 0 0 1 17.8 5.8"
           fill="none"
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth="2.2"
+          strokeWidth="2"
         />
         <path
-          d="M20 4v5h-5"
+          d="M17.8 5.8V9h-3.2"
           fill="none"
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth="2.2"
+          strokeWidth="2"
+        />
+        <path
+          d="M17 16.5A7 7 0 0 1 6.2 18.2"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+        />
+        <path
+          d="M6.2 18.2V15h3.2"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
         />
       </svg>
       <span>{isActive ? refreshingLabel : label}</span>
