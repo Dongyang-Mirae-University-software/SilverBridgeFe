@@ -36,7 +36,7 @@ export function SilverBridgeLogo({
       <defs>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Lora:wght@700&display=swap');
       .sb-silver {
-        fill: var(--logo-color, #4A90D9);
+        fill: var(--logo-color, var(--sb-brand));
         font-family: 'Lora', serif;
         font-weight: 700;
         letter-spacing: 4px;
