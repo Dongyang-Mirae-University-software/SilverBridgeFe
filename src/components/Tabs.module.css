@@ -49,6 +49,13 @@
   box-shadow: 0 8px 18px rgba(31, 94, 72, 0.22);
 }
 
+.active:hover {
+  background: var(--sb-brand);
+  border-color: rgba(31, 94, 72, 0.14);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(31, 94, 72, 0.22);
+}
+
 .disabled {
   cursor: not-allowed;
   opacity: 0.55;
