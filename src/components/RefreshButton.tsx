@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import classNames from 'classnames/bind';
 
+import { Icon } from '@/components/Icon';
 import styles from './RefreshButton.module.css';
 
 const cx = classNames.bind(styles);
@@ -43,40 +44,7 @@ export function RefreshButton({
       disabled={disabled || isActive}
       onClick={handleRefresh}
     >
-      <svg className={cx('icon', { spinning: isActive })} viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          d="M7 7.5A7 7 0 0 1 17.8 5.8"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-        />
-        <path
-          d="M17.8 5.8V9h-3.2"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-        />
-        <path
-          d="M17 16.5A7 7 0 0 1 6.2 18.2"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-        />
-        <path
-          d="M6.2 18.2V15h3.2"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-        />
-      </svg>
+      <Icon className={cx('icon', { spinning: isActive })} name="refresh" size={18} decorative />
       <span>{isActive ? refreshingLabel : label}</span>
     </button>
   );
