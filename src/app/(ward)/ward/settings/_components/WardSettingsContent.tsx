@@ -5,52 +5,16 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { AccountDeleteSection } from '@/components/settings/AccountDeleteSection';
+import { NotificationSettingsSection } from '@/components/settings/NotificationSettingsSection';
 import { PasswordChangeSection } from '@/components/settings/PasswordChangeSection';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
 import { getUserProfileData } from '@/lib/auth/userProfile';
-import type { NotificationChannelType } from '@/service/interface/user';
 import { myProfileQueryOptions } from '@/service/query/user';
-import {
-  userNotificationSettingsQueryOptions,
-  useNotificationSettingsMutation,
-} from '@/service/query/user/notification-settings';
 
 import styles from './WardSettingsContent.module.css';
 
 const cx = classNames.bind(styles);
-
-const NOTIFICATION_CHANNEL_OPTIONS: Array<{
-  channelType: NotificationChannelType;
-  description: string;
-  note: string;
-  primaryLabel: string;
-}> = [
-  {
-    channelType: 'FCM',
-    description: '푸시 알림',
-    note: '현재 실제 연결 알림이 가장 먼저 도착하는 채널입니다.',
-    primaryLabel: '기본값',
-  },
-  {
-    channelType: 'SMS',
-    description: '문자 알림',
-    note: '설정은 저장되지만 현재는 실제 발송에 사용되지 않습니다.',
-    primaryLabel: '미지원',
-  },
-  {
-    channelType: 'KAKAO_ALIMTALK',
-    description: '카카오 알림톡',
-    note: '설정은 저장되지만 현재는 실제 발송에 사용되지 않습니다.',
-    primaryLabel: '미지원',
-  },
-  {
-    channelType: 'EMAIL',
-    description: '이메일 알림',
-    note: '설정은 저장되지만 현재는 실제 발송에 사용되지 않습니다.',
-    primaryLabel: '미지원',
-  },
-];
 
 const SOS_OPTIONS = [
   {
@@ -82,30 +46,10 @@ export function WardSettingsContent() {
   const profile = getUserProfileData(profileResponse);
   const isKakaoUser = profile?.provider === 'KAKAO';
 
-  const { data: notificationSettings = [], isLoading: isLoadingSettings } = useQuery(userNotificationSettingsQueryOptions);
-  const notificationMutation = useNotificationSettingsMutation();
-
   const [activeTab, setActiveTab] = useState<SettingsTab>('basic');
-  const [notificationError, setNotificationError] = useState('');
 
   const fontProgress = ((wardSettings.fontSize - MIN_WARD_FONT_SIZE) / (MAX_WARD_FONT_SIZE - MIN_WARD_FONT_SIZE)) * 100;
   const rangeStyle = { '--settings-range-progress': `${fontProgress}%` } as CSSProperties;
-  const notificationSettingMap = new Map(notificationSettings.map(item => [item.channelType, item.enabled]));
-
-  function handleNotificationToggle(channelType: NotificationChannelType, enabled: boolean) {
-    const current = notificationSettingMap.get(channelType);
-    if (current === enabled) return;
-
-    setNotificationError('');
-    notificationMutation.mutate(
-      { settings: [{ channelType, enabled }] },
-      {
-        onError: error => {
-          setNotificationError(error instanceof Error && error.message ? error.message : '알림 설정 변경에 실패했습니다.');
-        },
-      },
-    );
-  }
 
   return (
     <div className={styles.page}>
@@ -246,51 +190,7 @@ export function WardSettingsContent() {
         </>
       )}
 
-      {activeTab === 'notifications' && (
-        <section className={styles.card} aria-labelledby="s-notification">
-          <div className={styles.cardHeader}>
-            <div>
-              <h3 className={styles.cardTitle} id="s-notification">
-                연결 알림 채널 설정
-              </h3>
-              <p className={styles.cardDesc}>연결 요청, 수락, 거절, 해제 알림을 채널별로 켜고 끌 수 있습니다.</p>
-            </div>
-          </div>
-
-          {notificationError && <div className={styles.notificationError}>{notificationError}</div>}
-
-          {isLoadingSettings ? (
-            <p className={styles.loadingText}>불러오는 중…</p>
-          ) : (
-            <div className={styles.notificationList}>
-              {NOTIFICATION_CHANNEL_OPTIONS.map(option => {
-                const enabled = notificationSettingMap.get(option.channelType) ?? (option.channelType === 'FCM');
-
-                return (
-                  <div key={option.channelType} className={styles.notificationRow}>
-                    <div className={styles.notificationMeta}>
-                      <div className={styles.notificationTitleRow}>
-                        <span className={styles.notificationTitle}>{option.description}</span>
-                        <span className={styles.notificationBadge}>{option.primaryLabel}</span>
-                      </div>
-                      <span className={styles.notificationDesc}>{option.note}</span>
-                    </div>
-                    <label className={styles.notificationToggle} aria-label={`${option.description} 설정`}>
-                      <input
-                        type="checkbox"
-                        checked={enabled}
-                        disabled={notificationMutation.isPending}
-                        onChange={e => handleNotificationToggle(option.channelType, e.target.checked)}
-                      />
-                      <span className={styles.notificationToggleThumb} />
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      )}
+      {activeTab === 'notifications' && <NotificationSettingsSection />}
 
       {activeTab === 'security' && (
         <>
