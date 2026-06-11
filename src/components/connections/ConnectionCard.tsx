@@ -1,6 +1,5 @@
 'use client';
 
-import type { FC, SVGProps } from 'react';
 import classNames from 'classnames/bind';
 
 import { UserAvatar } from '@/components/UserAvatar';
@@ -11,6 +10,7 @@ import MapPinIcon from '@/assets/icons/map-pin.svg';
 import PhoneIcon from '@/assets/icons/phone.svg';
 import TagIcon from '@/assets/icons/tag.svg';
 import UserIcon from '@/assets/icons/user.svg';
+import { getSvgSrc } from '@/lib/assets';
 import { IConnectionItem } from '@/service/interface/connection';
 import {
   formatPartnerGender,
@@ -27,11 +27,11 @@ function getConnectionAddress(connection: IConnectionItem) {
   return [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
 }
 
-function ConnectionDetail({ icon: Icon, label, value }: { icon: FC<SVGProps<SVGSVGElement>>; label: string; value?: string | null }) {
+function ConnectionDetail({ icon, label, value }: { icon: string | { src: string }; label: string; value?: string | null }) {
   return (
     <li className={cx('connectionDetailRow')}>
       <span className={cx('connectionDetailLabel')}>
-        <Icon className={cx('connectionDetailIcon')} aria-hidden="true" />
+        <img className={cx('connectionDetailIcon')} src={getSvgSrc(icon)} alt="" aria-hidden="true" />
         {label}
       </span>
       <strong className={cx('connectionDetailValue')}>{value || '정보 없음'}</strong>

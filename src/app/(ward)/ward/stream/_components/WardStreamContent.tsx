@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { FC, SVGProps } from 'react';
 import { createStreamSession, registerCamera, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
 import CameraFlipIcon from '@/assets/icons/camera-flip.svg';
 import CameraIcon from '@/assets/icons/camera.svg';
 import GearIcon from '@/assets/icons/gear.svg';
 import MonitorIcon from '@/assets/icons/monitor.svg';
+import { getSvgSrc } from '@/lib/assets';
 import styles from './WardStreamContent.module.css';
 
 type Tab = 'live' | 'manual';
@@ -16,10 +16,10 @@ type StreamStatus = 'off' | 'ready' | 'streaming';
 const DEFAULT_CAM_ID = 'ipad-room-001';
 const MIN_UPLOAD_INTERVAL_MS = 500; // 최대 초당 2프레임 업로드
 
-const FACING_OPTIONS: { value: CameraFacing; label: string; Icon: FC<SVGProps<SVGSVGElement>> }[] = [
-  { value: 'user',        label: '정면 카메라', Icon: CameraFlipIcon },
-  { value: 'environment', label: '후면 카메라', Icon: CameraIcon },
-  { value: 'screen',      label: '화면 공유',   Icon: MonitorIcon },
+const FACING_OPTIONS: { value: CameraFacing; label: string; icon: string | { src: string } }[] = [
+  { value: 'user', label: '정면 카메라', icon: CameraFlipIcon },
+  { value: 'environment', label: '후면 카메라', icon: CameraIcon },
+  { value: 'screen', label: '화면 공유', icon: MonitorIcon },
 ];
 
 export default function WardStreamContent() {
@@ -247,7 +247,7 @@ export default function WardStreamContent() {
                     disabled={status !== 'off'}
                     onClick={() => handleFacingChange(opt.value)}
                   >
-                    <opt.Icon className={styles.facingIcon} />
+                    <img className={styles.facingIcon} src={getSvgSrc(opt.icon)} alt="" aria-hidden="true" />
                     <span>{opt.label}</span>
                   </button>
                 ))}
@@ -272,7 +272,15 @@ export default function WardStreamContent() {
               <div className={styles.mediaCtrl}>
                 {status === 'off'
                   ? <button type="button" className={styles.btnPrimary} onClick={handleStartMedia}>
-                      {facing === 'screen' ? <><MonitorIcon className={styles.btnIcon} /> 화면 켜기</> : <><CameraIcon className={styles.btnIcon} /> 카메라 켜기</>}
+                      {facing === 'screen' ? (
+                        <>
+                          <img className={styles.btnIcon} src={getSvgSrc(MonitorIcon)} alt="" aria-hidden="true" /> 화면 켜기
+                        </>
+                      ) : (
+                        <>
+                          <img className={styles.btnIcon} src={getSvgSrc(CameraIcon)} alt="" aria-hidden="true" /> 카메라 켜기
+                        </>
+                      )}
                     </button>
                   : <button type="button" className={styles.btnDanger} disabled={isStoppingLive} onClick={handleStopMedia}>
                       {isStoppingLive ? '종료 중' : '송출 종료'}
@@ -365,7 +373,7 @@ export default function WardStreamContent() {
       {/* ── 카메라 등록 (고급) ── */}
       <div className={styles.advancedWrap}>
         <button type="button" className={styles.advancedToggle} onClick={() => setShowCamReg(v => !v)}>
-          <GearIcon className={styles.btnIcon} /> 카메라 등록 (고급) {showCamReg ? '▲' : '▼'}
+          <img className={styles.btnIcon} src={getSvgSrc(GearIcon)} alt="" aria-hidden="true" /> 카메라 등록 (고급) {showCamReg ? '▲' : '▼'}
         </button>
         {showCamReg && (
           <form className={styles.camRegForm} onSubmit={handleCamReg}>

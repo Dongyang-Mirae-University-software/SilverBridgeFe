@@ -40,6 +40,8 @@
 .icon {
   width: 42px;
   height: 42px;
+  display: block;
+  object-fit: contain;
 }
 
 .actionCard strong {

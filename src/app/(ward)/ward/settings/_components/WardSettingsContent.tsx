@@ -9,6 +9,7 @@ import { NotificationSettingsSection } from '@/components/settings/NotificationS
 import { PasswordChangeSection } from '@/components/settings/PasswordChangeSection';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
+import { getSvgSrc } from '@/lib/assets';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import AlertIcon from '@/assets/icons/alert.svg';
 import MessageCircleIcon from '@/assets/icons/message-circle.svg';
@@ -179,7 +180,7 @@ export function WardSettingsContent() {
                       checked={isActive}
                       onChange={() => updateWardSettings({ sosAction: opt.value })}
                     />
-                    <opt.Icon className={styles.sosIcon} />
+                    <img className={styles.sosIcon} src={getSvgSrc(opt.Icon)} alt="" aria-hidden="true" />
                     <span className={styles.sosText}>
                       <span className={styles.sosCardLabel}>{opt.label}</span>
                       <span className={styles.sosCardHint}>{opt.hint}</span>
