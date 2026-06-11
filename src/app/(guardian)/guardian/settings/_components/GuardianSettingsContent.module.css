@@ -4,35 +4,6 @@
   gap: 20px;
 }
 
-.tabBar {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 6px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.tabButton {
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--sb-ink-mute);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 800;
-  min-height: 42px;
-  padding: 0 14px;
-}
-
-.tabButtonActive {
-  background: #fff;
-  color: var(--sb-brand);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-}
-
 /* ── 섹션 ── */
 .section {
   border: 1px solid var(--sb-line-soft);
@@ -349,16 +320,6 @@
 }
 
 @media (max-width: 720px) {
-  .tabBar {
-    gap: 6px;
-    padding: 5px;
-  }
-
-  .tabButton {
-    min-height: 38px;
-    font-size: 12px;
-  }
-
   .securityActionRow {
     flex-direction: column;
     align-items: stretch;

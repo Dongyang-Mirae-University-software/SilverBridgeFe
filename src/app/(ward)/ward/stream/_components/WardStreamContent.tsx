@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createStreamSession, registerCamera, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
 import { Icon } from '@/components/Icon';
+import { Tabs } from '@/components/Tabs';
 import styles from './WardStreamContent.module.css';
 
 type Tab = 'live' | 'manual';
@@ -220,10 +221,16 @@ export default function WardStreamContent() {
   return (
     <div className={styles.page}>
       {/* 탭 */}
-      <div className={styles.tabs}>
-        <button type="button" className={`${styles.tab} ${tab === 'live' ? styles.active : ''}`} onClick={() => setTab('live')}>실시간 송출</button>
-        <button type="button" className={`${styles.tab} ${tab === 'manual' ? styles.active : ''}`} onClick={() => setTab('manual')}>수동 업로드</button>
-      </div>
+      <Tabs
+        ariaLabel="송출 모드 탭"
+        items={[
+          { value: 'live', label: '실시간 송출' },
+          { value: 'manual', label: '수동 업로드' },
+        ]}
+        onChange={setTab}
+        size="sm"
+        value={tab}
+      />
 
       {/* ── 실시간 송출 ── */}
       {tab === 'live' && (
