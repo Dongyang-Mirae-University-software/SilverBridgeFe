@@ -128,7 +128,9 @@
 
 .facingCard:disabled { cursor: default; }
 
-.facingIcon { font-size: 26px; line-height: 1; }
+.facingIcon { width: 26px; height: 26px; }
+
+.btnIcon { width: 16px; height: 16px; vertical-align: middle; margin-right: 6px; }
 
 /* ── 비디오 ── */
 .videoBox {
