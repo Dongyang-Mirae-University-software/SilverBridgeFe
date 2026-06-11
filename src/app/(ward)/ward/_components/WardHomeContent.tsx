@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import classNames from 'classnames/bind';
 
-import BrainIcon from '@/assets/icons/BrainIcon';
-import PhoneIcon from '@/assets/icons/PhoneIcon';
-import PillIcon from '@/assets/icons/PillIcon';
+import BrainIcon from '@/assets/icons/brain.svg';
+import PhoneIcon from '@/assets/icons/phone.svg';
+import PillIcon from '@/assets/icons/pill.svg';
 import styles from './WardHomeContent.module.css';
 
 const cx = classNames.bind(styles);
