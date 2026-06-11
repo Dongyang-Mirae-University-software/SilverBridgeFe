@@ -74,9 +74,12 @@
   width: 28px;
   height: 28px;
   color: var(--sb-warn);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.modalIcon img {
+.modalIcon > * {
   width: 100%;
   height: 100%;
   display: block;
