@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
+import { Tabs } from '@/components/Tabs';
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/connect/guardian';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
@@ -78,14 +79,16 @@ export function GuardianWardsPanel() {
         <RefreshButton ariaLabel="새로고침" disabled={isLoading} onRefresh={() => refetch()} />
       </header>
 
-      <div className={cx('tabs')} role="tablist">
-        <button className={cx('tab', { active: activeTab === 'list' })} type="button" role="tab" aria-selected={activeTab === 'list'} onClick={() => handleTabChange('list')}>
-          피보호자 목록
-        </button>
-        <button className={cx('tab', { active: activeTab === 'register' })} type="button" role="tab" aria-selected={activeTab === 'register'} onClick={() => handleTabChange('register')}>
-          피보호자 등록
-        </button>
-      </div>
+      <Tabs
+        ariaLabel="피보호자 관리 탭"
+        items={[
+          { value: 'list', label: '피보호자 목록' },
+          { value: 'register', label: '피보호자 등록' },
+        ]}
+        onChange={handleTabChange}
+        size="sm"
+        value={activeTab}
+      />
 
       {activeTab === 'list' ? (
         <div className={cx('content')}>

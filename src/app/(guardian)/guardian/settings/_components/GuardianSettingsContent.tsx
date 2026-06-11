@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { Tabs } from '@/components/Tabs';
 import { AccountDeleteSection } from '@/components/settings/AccountDeleteSection';
 import { NotificationSettingsSection } from '@/components/settings/NotificationSettingsSection';
 import { PasswordChangeSection } from '@/components/settings/PasswordChangeSection';
@@ -24,26 +25,17 @@ export default function GuardianSettingsContent() {
 
   return (
     <div className={cx('page')}>
-      <div className={cx('tabBar')} role="tablist" aria-label="환경설정 탭">
-        <button
-          className={cx('tabButton', { tabButtonActive: activeTab === 'notifications' })}
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'notifications'}
-          onClick={() => setActiveTab('notifications')}
-        >
-          알림정보
-        </button>
-        <button
-          className={cx('tabButton', { tabButtonActive: activeTab === 'security' })}
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'security'}
-          onClick={() => setActiveTab('security')}
-        >
-          보안
-        </button>
-      </div>
+      <Tabs
+        ariaLabel="환경설정 탭"
+        items={[
+          { value: 'notifications', label: '알림정보' },
+          { value: 'security', label: '보안' },
+        ]}
+        onChange={setActiveTab}
+        size="md"
+        stretch
+        value={activeTab}
+      />
 
       {activeTab === 'notifications' ? (
         <NotificationSettingsSection />

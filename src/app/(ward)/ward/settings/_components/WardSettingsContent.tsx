@@ -8,6 +8,7 @@ import { AccountDeleteSection } from '@/components/settings/AccountDeleteSection
 import { NotificationSettingsSection } from '@/components/settings/NotificationSettingsSection';
 import { PasswordChangeSection } from '@/components/settings/PasswordChangeSection';
 import { Icon } from '@/components/Icon';
+import { Tabs } from '@/components/Tabs';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
 import { getUserProfileData } from '@/lib/auth/userProfile';
@@ -54,35 +55,18 @@ export function WardSettingsContent() {
 
   return (
     <div className={styles.page}>
-      <div className={cx('tabBar')} role="tablist" aria-label="환경설정 탭">
-        <button
-          className={cx('tabButton', { tabButtonActive: activeTab === 'basic' })}
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'basic'}
-          onClick={() => setActiveTab('basic')}
-        >
-          기본 설정
-        </button>
-        <button
-          className={cx('tabButton', { tabButtonActive: activeTab === 'notifications' })}
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'notifications'}
-          onClick={() => setActiveTab('notifications')}
-        >
-          알림정보
-        </button>
-        <button
-          className={cx('tabButton', { tabButtonActive: activeTab === 'security' })}
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'security'}
-          onClick={() => setActiveTab('security')}
-        >
-          보안
-        </button>
-      </div>
+      <Tabs
+        ariaLabel="환경설정 탭"
+        items={[
+          { value: 'basic', label: '기본 설정' },
+          { value: 'notifications', label: '알림정보' },
+          { value: 'security', label: '보안' },
+        ]}
+        onChange={setActiveTab}
+        size="md"
+        stretch
+        value={activeTab}
+      />
 
       {activeTab === 'basic' && (
         <>
