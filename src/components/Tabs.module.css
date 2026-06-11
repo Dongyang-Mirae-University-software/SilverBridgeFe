@@ -3,12 +3,12 @@
   width: fit-content;
   box-sizing: border-box;
   max-width: 100%;
-  gap: 4px;
+  gap: 6px;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.86);
+  border-radius: 16px;
+  background: rgba(248, 249, 246, 0.96);
   box-shadow: var(--sb-shadow-sm);
-  padding: 6px;
+  padding: 5px;
 }
 
 .stretch {
@@ -20,26 +20,33 @@
 
 .tab {
   min-width: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--sb-ink-mute);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #f3f5f2;
+  color: var(--sb-ink-soft);
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
   min-height: 42px;
-  padding: 0 14px;
+  padding: 0 16px;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease,
+    border-color 0.14s ease,
+    box-shadow 0.14s ease,
+    transform 0.14s ease;
 }
 
 .tab:hover {
-  background: var(--sb-bg-soft);
+  background: #eaf0ea;
   color: var(--sb-ink);
 }
 
 .active {
-  background: #fff;
-  color: var(--sb-brand);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  border-color: rgba(31, 94, 72, 0.14);
+  background: var(--sb-brand);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(31, 94, 72, 0.22);
 }
 
 .disabled {
