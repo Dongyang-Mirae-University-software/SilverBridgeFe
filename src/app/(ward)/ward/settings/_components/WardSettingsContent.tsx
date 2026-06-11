@@ -7,13 +7,10 @@ import classNames from 'classnames/bind';
 import { AccountDeleteSection } from '@/components/settings/AccountDeleteSection';
 import { NotificationSettingsSection } from '@/components/settings/NotificationSettingsSection';
 import { PasswordChangeSection } from '@/components/settings/PasswordChangeSection';
+import { Icon } from '@/components/Icon';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
-import { getSvgSrc } from '@/lib/assets';
 import { getUserProfileData } from '@/lib/auth/userProfile';
-import AlertIcon from '@/assets/icons/alert.svg';
-import MessageCircleIcon from '@/assets/icons/message-circle.svg';
-import PhoneIcon from '@/assets/icons/phone.svg';
 import { myProfileQueryOptions } from '@/service/query/user';
 
 import styles from './WardSettingsContent.module.css';
@@ -23,19 +20,19 @@ const cx = classNames.bind(styles);
 const SOS_OPTIONS = [
   {
     value: 'call119' as const,
-    Icon: AlertIcon,
+    icon: 'alert' as const,
     label: '119에 바로 연결',
     hint: 'SOS 버튼을 누르면 즉시 119에 전화를 겁니다.',
   },
   {
     value: 'call119AndNotify' as const,
-    Icon: PhoneIcon,
+    icon: 'phone' as const,
     label: '119 연결 + 보호자 알림',
     hint: '119 통화와 동시에 보호자에게 알림을 보냅니다.',
   },
   {
     value: 'notifyGuardianFirst' as const,
-    Icon: MessageCircleIcon,
+    icon: 'messageCircle' as const,
     label: '보호자에게 먼저 알림',
     hint: '보호자에게 먼저 알린 뒤 119 연결 방법을 안내합니다.',
   },
@@ -180,7 +177,7 @@ export function WardSettingsContent() {
                       checked={isActive}
                       onChange={() => updateWardSettings({ sosAction: opt.value })}
                     />
-                    <img className={styles.sosIcon} src={getSvgSrc(opt.Icon)} alt="" aria-hidden="true" />
+                    <Icon name={opt.icon} size={24} className={styles.sosIcon} />
                     <span className={styles.sosText}>
                       <span className={styles.sosCardLabel}>{opt.label}</span>
                       <span className={styles.sosCardHint}>{opt.hint}</span>
