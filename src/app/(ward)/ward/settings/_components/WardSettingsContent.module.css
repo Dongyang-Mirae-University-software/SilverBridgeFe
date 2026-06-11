@@ -592,14 +592,13 @@
 }
 
 .sosIcon {
-  display: grid;
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  place-items: center;
+  display: block;
   border-radius: 12px;
   background: #fff;
-  font-size: 20px;
+  object-fit: contain;
   box-shadow: var(--sb-shadow-sm);
 }
 

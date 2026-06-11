@@ -6,6 +6,7 @@ import classNames from 'classnames/bind';
 import BrainIcon from '@/assets/icons/brain.svg';
 import PhoneIcon from '@/assets/icons/phone.svg';
 import PillIcon from '@/assets/icons/pill.svg';
+import { getSvgSrc } from '@/lib/assets';
 import styles from './WardHomeContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -38,11 +39,15 @@ export function WardHomeContent() {
   return (
     <div className={cx('homeGrid')}>
       {HOME_ACTIONS.map(action => {
-        const Icon = action.icon;
         return (
-          <Link key={action.href} className={cx('actionCard', action.tone)} href={action.href} aria-label={action.label}>
+          <Link
+            key={action.href}
+            className={cx('actionCard', action.tone)}
+            href={action.href}
+            aria-label={action.label}
+          >
             <span className={cx('iconWrap')}>
-              <Icon className={cx('icon')} />
+              <img className={cx('icon')} src={getSvgSrc(action.icon)} alt="" aria-hidden="true" />
             </span>
             <strong>{action.label}</strong>
             <span>{action.description}</span>
