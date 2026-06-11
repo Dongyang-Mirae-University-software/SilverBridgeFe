@@ -5,11 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { Icon } from '@/components/Icon';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
-import { getSvgSrc } from '@/lib/assets';
 import { deleteMyAccount } from '@/service/api/user';
 import type { IUserDeleteReq } from '@/service/interface/user';
-import WarningIcon from '@/assets/icons/warning.svg';
 import styles from './AccountDeleteSection.module.css';
 
 const cx = classNames.bind(styles);
@@ -86,7 +85,7 @@ export function AccountDeleteSection({ isKakaoUser }: { isKakaoUser: boolean }) 
         <div className={cx('overlay')} onClick={closeDeleteModal}>
           <div className={cx('modal')} onClick={e => e.stopPropagation()} role="alertdialog" aria-modal="true">
             <div className={cx('modalIcon')}>
-              <img src={getSvgSrc(WarningIcon)} alt="" aria-hidden="true" />
+              <Icon name="warning" size={28} />
             </div>
             <h3 className={cx('modalTitle')}>정말 탈퇴할까요?</h3>
             <p className={cx('modalDesc')}>
