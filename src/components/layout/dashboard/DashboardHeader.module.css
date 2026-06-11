@@ -2,24 +2,6 @@
   display: none;
 }
 
-.brandMark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--sb-brand);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 850;
-  letter-spacing: 0;
-}
-
-:global(.guardianTheme) .brandMark {
-  background: var(--guardian-brand);
-}
-
 .desktopHeader {
   position: sticky;
   top: 0;
@@ -162,31 +144,27 @@
     display: flex;
     min-width: 0;
     flex: 1;
-    align-items: center;
-    gap: 9px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 1px;
   }
 
-  .topBarBrand > div:nth-child(2) {
-    min-width: 0;
+  .topBarLogo {
+    width: 128px;
+    max-width: 100%;
   }
 
-  .topBarBrand strong {
-    display: block;
-    overflow: hidden;
-    color: var(--sb-ink);
-    font-size: 14px;
-    font-weight: 850;
-    line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  :global(.guardianTheme) .topBarLogo {
+    --logo-color: var(--guardian-brand);
   }
 
   .topBarBrand span {
     display: block;
     overflow: hidden;
     color: var(--sb-ink-mute);
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -209,5 +187,13 @@
 
   .desktopHeader {
     display: none;
+  }
+
+  .topBarBrand {
+    gap: 0;
+  }
+
+  .topBarLogo {
+    width: 112px;
   }
 }
