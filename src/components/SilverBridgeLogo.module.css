@@ -1,22 +1,7 @@
 .logo {
   display: block;
   flex-shrink: 0;
-  width: var(--logo-width, 140px);
   height: auto;
   max-width: 100%;
   color: inherit;
-}
-
-.text {
-  font-family: 'Lora', Georgia, serif;
-  font-weight: 700;
-  letter-spacing: 4px;
-}
-
-.silver {
-  fill: var(--logo-color, var(--sb-brand));
-}
-
-.bridge {
-  fill: var(--logo-secondary-color, #1a1a1a);
 }
