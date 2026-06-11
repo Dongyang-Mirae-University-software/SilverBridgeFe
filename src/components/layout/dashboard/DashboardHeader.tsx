@@ -23,14 +23,13 @@ interface Props {
 export function MobileTopBar({ onOpenSidebar, pageTitle, role }: Pick<Props, 'onOpenSidebar' | 'pageTitle' | 'role'>) {
   return (
     <div className={cx('mobileTopBar')}>
+      <div className={cx('topBarBrand')}>
+        <SilverBridgeLogo className={cx('topBarLogo')} width={132} />
+      </div>
       <button className={cx('topBarMenuButton')} type="button" aria-label="메뉴 열기" onClick={onOpenSidebar}>
         <Icon name="menu" size={20} />
         <span>메뉴</span>
       </button>
-      <div className={cx('topBarBrand')}>
-        <SilverBridgeLogo className={cx('topBarLogo')} width={132} />
-      </div>
-      <span className={cx('topBarRole')}>{getRoleLabel(role)}</span>
     </div>
   );
 }

@@ -10,40 +10,48 @@ type SilverBridgeLogoProps = {
   width?: number | string;
   height?: number | string;
   accentColor?: string;
-  secondaryColor?: string;
   ariaLabel?: string;
 };
 
 export function SilverBridgeLogo({
   className,
-  width = 140,
+  width = 210,
   height,
   accentColor,
-  secondaryColor,
   ariaLabel = 'SilverBridge',
 }: SilverBridgeLogoProps) {
   return (
     <svg
       className={cx('logo', className)}
-      viewBox="0 0 300 100"
+      viewBox="0 0 210 100"
       width={width}
       height={height}
       role="img"
       aria-label={ariaLabel}
-      style={
-        {
-          '--logo-color': accentColor,
-          '--logo-secondary-color': secondaryColor,
-        } as CSSProperties
-      }
+      style={{ '--logo-color': accentColor } as CSSProperties}
       xmlns="http://www.w3.org/2000/svg"
     >
       <title>SilverBridge</title>
       <desc>SilverBridge 워드마크 로고 - 테마 자동 대응</desc>
-      <text x="0" y="48" fontSize="44" className={cx('text', 'silver')}>
+      <defs>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Lora:wght@700&display=swap');
+      .sb-silver {
+        fill: var(--logo-color, #4A90D9);
+        font-family: 'Lora', serif;
+        font-weight: 700;
+        letter-spacing: 4px;
+      }
+      .sb-bridge {
+        fill: #1A1A1A;
+        font-family: 'Lora', serif;
+        font-weight: 700;
+        letter-spacing: 4px;
+      }`}</style>
+      </defs>
+      <text x="0" y="48" fontSize="44" className="sb-silver">
         SILVER
       </text>
-      <text x="0" y="92" fontSize="44" className={cx('text', 'bridge')}>
+      <text x="0" y="92" fontSize="44" className="sb-bridge">
         BRIDGE
       </text>
     </svg>
