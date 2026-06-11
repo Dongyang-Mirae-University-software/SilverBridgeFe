@@ -37,9 +37,9 @@
   box-shadow: 0 8px 24px rgba(20, 17, 12, 0.08);
 }
 
-.emoji {
-  font-size: 42px;
-  line-height: 1;
+.icon {
+  width: 42px;
+  height: 42px;
 }
 
 .actionCard strong {
