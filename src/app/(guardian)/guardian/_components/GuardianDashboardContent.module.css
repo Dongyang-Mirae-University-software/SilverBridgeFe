@@ -58,19 +58,6 @@
   cursor: default;
 }
 
-.wardChipInitial {
-  display: inline-grid;
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 50%;
-  background: #efe7d8;
-  color: var(--sb-ink-soft);
-  font-size: 13px;
-  font-weight: 900;
-}
-
 .wardChipName {
   color: var(--sb-ink);
 }
@@ -115,26 +102,6 @@
   min-width: 0;
   align-items: center;
   gap: 14px;
-}
-
-.heroAvatar {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
-  font-size: 24px;
-  font-weight: 900;
-}
-
-.heroAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .heroText {
