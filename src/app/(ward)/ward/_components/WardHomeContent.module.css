@@ -3,7 +3,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   width: 100%;
-  min-height: calc(100vh - 180px);
+  min-height: 0;
 }
 
 .actionCard {
@@ -79,7 +79,6 @@
 @media (max-width: 900px) {
   .homeGrid {
     grid-template-columns: 1fr;
-    min-height: auto;
   }
 
   .actionCard {
