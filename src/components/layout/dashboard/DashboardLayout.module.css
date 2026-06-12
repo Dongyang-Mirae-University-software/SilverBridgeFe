@@ -2,7 +2,8 @@
   display: flex;
   height: 100dvh;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--sb-bg);
   color: var(--sb-ink);
 }
@@ -22,7 +23,7 @@
   flex: 1;
   min-height: 0;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
   padding: 28px 28px 20px;
 }
 
@@ -36,6 +37,6 @@
   }
 
   .main {
-    padding: 100px 18px 18px;
+    padding: 18px 18px 18px;
   }
 }

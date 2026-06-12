@@ -3,8 +3,6 @@
 }
 
 .desktopHeader {
-  position: sticky;
-  top: 0;
   z-index: 35;
   display: flex;
   align-items: center;
@@ -104,9 +102,6 @@
 
 @media (max-width: 900px) {
   .mobileTopBar {
-    position: fixed;
-    inset: 0 0 auto;
-    z-index: 45;
     display: flex;
     min-height: 64px;
     align-items: center;
@@ -116,6 +111,7 @@
     box-shadow: 0 4px 14px rgba(20, 17, 12, 0.08);
     padding: 10px 14px;
     backdrop-filter: blur(10px);
+    margin-bottom: 10px;
   }
 
   .topBarMenuButton {
