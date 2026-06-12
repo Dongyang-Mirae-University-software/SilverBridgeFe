@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import { UserAvatar } from '@/components/UserAvatar';
 import { getLiveStreams } from '@/service/api/liveStream';
 import { guardianConnectionsQueryOptions } from '@/service/query/connection';
 
@@ -132,7 +133,7 @@ export function GuardianDashboardContent() {
                   type="button"
                   onClick={() => setSelectedConnectionId(connection.id)}
                 >
-                  <span className={cx('wardChipInitial')}>{getInitial(connection.partnerName)}</span>
+                  <UserAvatar imageUrl={connection.partnerProfileImage} size="w-32" />
                   <span className={cx('wardChipName')}>{connection.partnerName || EMPTY_VALUE}</span>
                   <span className={cx('wardChipRelation')}>{connection.relation || '관계'}</span>
                 </button>
@@ -140,7 +141,7 @@ export function GuardianDashboardContent() {
             })
           ) : (
             <div className={cx('wardChip', 'wardChipStatic')} aria-hidden="true">
-              <span className={cx('wardChipInitial')}>샘</span>
+              <UserAvatar size="w-32" />
               <span className={cx('wardChipName')}>샘플 피보호자</span>
               <span className={cx('wardChipRelation')}>미리보기</span>
             </div>
@@ -150,13 +151,7 @@ export function GuardianDashboardContent() {
 
       <section className={cx('heroCard')}>
         <div className={cx('heroProfile')}>
-          <div className={cx('heroAvatar')}>
-            {selectedActiveConnection?.partnerProfileImage ? (
-              <img alt="" src={selectedActiveConnection.partnerProfileImage} />
-            ) : (
-              <span>{getInitial(heroName)}</span>
-            )}
-          </div>
+          <UserAvatar imageUrl={selectedActiveConnection?.partnerProfileImage} size="w-60" />
 
           <div className={cx('heroText')}>
             <span className={cx('heroEyebrow')}>{selectedActiveConnection ? `${heroName} 님 오늘 상태` : '샘플 피보호자 님 오늘 상태'}</span>
@@ -220,11 +215,6 @@ export function GuardianDashboardContent() {
       </section>
     </div>
   );
-}
-
-function getInitial(value?: string | null) {
-  const initial = value?.trim()?.[0];
-  return initial ? initial.toUpperCase() : '?';
 }
 
 function getTime(value?: string | null) {

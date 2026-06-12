@@ -7,7 +7,7 @@ const cx = classNames.bind(styles);
 
 interface UserAvatarProps {
   imageUrl?: string | null;
-  size: 'w-60' | 'w-120';
+  size: 'w-32' | 'w-60' | 'w-120';
   disabled?: boolean;
   onClick?: () => void;
   onImageChange?: (file?: File) => void;
