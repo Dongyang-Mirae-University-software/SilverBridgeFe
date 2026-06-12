@@ -20,7 +20,7 @@ import PhoneIcon from '@/assets/icons/phone.svg';
 import PillIcon from '@/assets/icons/pill.svg';
 import RefreshIcon from '@/assets/icons/refresh.svg';
 import TagIcon from '@/assets/icons/tag.svg';
-import AvatarEditIcon from '@/assets/icons/user-avatar.svg';
+import AvatarEditIcon from '@/assets/icons/avatar-edit.svg';
 import UserIcon from '@/assets/icons/user.svg';
 import WarningIcon from '@/assets/icons/warning.svg';
 import styles from './Icon.module.css';
@@ -54,10 +54,19 @@ const ICONS = {
     kind: 'path',
     d: 'M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.5-.9L3 21l1.8-5A8.3 8.3 0 0 1 3 11.5a8.6 8.6 0 0 1 9-8.4 8.6 8.6 0 0 1 9 8.4Z',
   },
-  game: { kind: 'path', d: 'M6 12h4M8 10v4M15 11h.01M18 13h.01M7 17h10a4 4 0 0 0 3.8-5.3l-1.2-3.5A4 4 0 0 0 15.8 5H8.2a4 4 0 0 0-3.8 3.2l-1.2 3.5A4 4 0 0 0 7 17Z' },
+  game: {
+    kind: 'path',
+    d: 'M6 12h4M8 10v4M15 11h.01M18 13h.01M7 17h10a4 4 0 0 0 3.8-5.3l-1.2-3.5A4 4 0 0 0 15.8 5H8.2a4 4 0 0 0-3.8 3.2l-1.2 3.5A4 4 0 0 0 7 17Z',
+  },
   hospital: { kind: 'path', d: 'M4 21V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16M9 21v-6h6v6M9 8h6M12 5v6' },
-  heart: { kind: 'path', d: 'M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z' },
-  users: { kind: 'path', d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8' },
+  heart: {
+    kind: 'path',
+    d: 'M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z',
+  },
+  users: {
+    kind: 'path',
+    d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8',
+  },
   bell: { kind: 'path', d: 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21a2 2 0 0 0 4 0' },
   settings: {
     kind: 'path',
@@ -65,7 +74,10 @@ const ICONS = {
   },
   dashboard: { kind: 'path', d: 'M3 13h8V3H3v10ZM13 21h8V11h-8v10ZM13 9h8V3h-8v6ZM3 21h8v-6H3v6Z' },
   plus: { kind: 'path', d: 'M12 5v14M5 12h14' },
-  inquiry: { kind: 'path', d: 'M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.4 1 1.1 1 1.8V17h6v-.5c0-.7.4-1.4 1-1.8A7 7 0 0 0 12 2Z' },
+  inquiry: {
+    kind: 'path',
+    d: 'M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.4 1 1.1 1 1.8V17h6v-.5c0-.7.4-1.4 1-1.8A7 7 0 0 0 12 2Z',
+  },
 } as const;
 
 export type IconName = keyof typeof ICONS;
