@@ -15,6 +15,14 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
 
+function isNewNotice(createdAt: string) {
+  const created = new Date(createdAt);
+  if (Number.isNaN(created.getTime())) return false;
+
+  const diff = Date.now() - created.getTime();
+  return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
+}
+
 export function NoticesPanel() {
   const { data: announcements = [], isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
   const latestAnnouncement = [...announcements].sort(
@@ -47,7 +55,10 @@ export function NoticesPanel() {
 
       {latestAnnouncement && (
         <article className={cx('featured')}>
-          <h2 className={cx('title')}>{latestAnnouncement.title}</h2>
+          <div className={cx('titleRow')}>
+            <h2 className={cx('title')}>{latestAnnouncement.title}</h2>
+            {isNewNotice(latestAnnouncement.createdAt) && <span className={cx('newBadge')}>NEW</span>}
+          </div>
           <time className={cx('date')} dateTime={latestAnnouncement.createdAt}>
             {formatDate(latestAnnouncement.createdAt)}
           </time>
