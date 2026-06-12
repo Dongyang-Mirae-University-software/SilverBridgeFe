@@ -70,7 +70,6 @@ export function GuardianDashboardContent() {
   const connections = Array.isArray(connectionsResponse?.data) ? connectionsResponse.data : [];
   const activeConnections = connections.filter(connection => connection.status === 'ACTIVE');
   const hasLiveStreamData = !isLiveStreamsLoading && !isLiveStreamsError && Array.isArray(liveStreams);
-  const activeStreamCount = liveStreams?.length ?? 0;
   const analyzingStreamCount = liveStreams?.filter(session => session.is_analyzing).length ?? 0;
 
   const sortedActiveConnections = useMemo(
@@ -84,14 +83,6 @@ export function GuardianDashboardContent() {
   const selectedActiveConnection =
     sortedActiveConnections.find(connection => connection.id === selectedConnectionId) ?? null;
 
-  const trendSeries = useMemo(
-    () => buildTrendSeries(activeStreamCount, analyzingStreamCount, hasLiveStreamData),
-    [activeStreamCount, analyzingStreamCount, hasLiveStreamData],
-  );
-  const distribution = useMemo(
-    () => buildDistribution(activeStreamCount, analyzingStreamCount, hasLiveStreamData),
-    [activeStreamCount, analyzingStreamCount, hasLiveStreamData],
-  );
   const heroName = selectedActiveConnection?.partnerName || '샘플 피보호자';
   const heroLabel = hasLiveStreamData
     ? analyzingStreamCount > 0
@@ -154,7 +145,9 @@ export function GuardianDashboardContent() {
           <UserAvatar imageUrl={selectedActiveConnection?.partnerProfileImage} size="w-60" />
 
           <div className={cx('heroText')}>
-            <span className={cx('heroEyebrow')}>{selectedActiveConnection ? `${heroName} 님 오늘 상태` : '샘플 피보호자 님 오늘 상태'}</span>
+            <span className={cx('heroEyebrow')}>
+              {selectedActiveConnection ? `${heroName} 님 오늘 상태` : '샘플 피보호자 님 오늘 상태'}
+            </span>
             <strong>{heroLabel}</strong>
           </div>
         </div>
@@ -163,42 +156,6 @@ export function GuardianDashboardContent() {
           <span>마지막 업데이트</span>
           <strong>{heroUpdatedAt}</strong>
         </div>
-      </section>
-
-      <section className={cx('insightGrid')}>
-        <article className={cx('panelCard', 'trendCard')}>
-          <div className={cx('cardHeader')}>
-            <h3>이상감지 추이</h3>
-          </div>
-          <Sparkline series={trendSeries} />
-        </article>
-
-        <article className={cx('panelCard', 'distributionCard')}>
-          <div className={cx('cardHeader')}>
-            <h3>카테고리 분포</h3>
-          </div>
-
-          <div className={cx('donutRow')}>
-            <div className={cx('donut')} style={{ background: buildDonutBackground(distribution) }}>
-              <div className={cx('donutInner')}>
-                <strong>{distribution.reduce((sum, item) => sum + item.value, 0).toLocaleString('ko-KR')}</strong>
-                <span>총</span>
-              </div>
-            </div>
-
-            <div className={cx('donutList')}>
-              {distribution.map(item => (
-                <div key={item.label} className={cx('donutItem')}>
-                  <span>
-                    <i className={cx('donutDot', item.tone)} />
-                    {item.label}
-                  </span>
-                  <strong>{item.value}%</strong>
-                </div>
-              ))}
-            </div>
-          </div>
-        </article>
       </section>
 
       <section className={cx('featureGrid')} aria-label="핵심 기능">
@@ -232,80 +189,4 @@ function formatClock(value?: string | null) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date);
-}
-
-function buildTrendSeries(activeCount: number, analyzingCount: number, hasLiveStreamData: boolean) {
-  const base = hasLiveStreamData ? [22, 28, 26, 38, 36, 45, 49, 42, 54, 50, 58, 51] : [18, 24, 22, 30, 28, 37, 39, 35, 42, 38, 44, 40];
-  const lineA = base.map((value, index) => value + Math.min(activeCount * 2, 10) + (index % 4 === 0 ? analyzingCount * 2 : 0));
-  const lineB = base.map((value, index) => value - 4 + Math.min(activeCount, 6) + (index % 3 === 0 ? analyzingCount : 0));
-  const lineC = base.map((value, index) => value - 8 + Math.min(activeCount, 4) + (index % 5 === 0 ? analyzingCount : 0));
-
-  return [
-    { values: lineA, color: '#d84b3f' },
-    { values: lineB, color: '#d59a2a' },
-    { values: lineC, color: '#8d4a7a' },
-  ];
-}
-
-function buildDistribution(activeCount: number, analyzingCount: number, hasLiveStreamData: boolean) {
-  if (!hasLiveStreamData) {
-    return [
-      { label: '낙상', value: 50, tone: 'danger' as const },
-      { label: '화재', value: 30, tone: 'watch' as const },
-      { label: '흉기', value: 20, tone: 'safe' as const },
-    ];
-  }
-
-  const fall = Math.max(30, 50 + analyzingCount * 2 - activeCount * 2);
-  const fire = Math.min(40, 28 + activeCount * 2);
-  const knife = Math.max(10, 100 - fall - fire);
-
-  return [
-    { label: '낙상', value: fall, tone: 'danger' as const },
-    { label: '화재', value: fire, tone: 'watch' as const },
-    { label: '흉기', value: knife, tone: 'safe' as const },
-  ];
-}
-
-function buildDonutBackground(distribution: Array<{ tone: 'danger' | 'watch' | 'safe'; value: number }>) {
-  const colors = {
-    danger: '#c95647',
-    watch: '#cf9831',
-    safe: '#8b4a7b',
-  };
-  let start = 0;
-
-  return `conic-gradient(${distribution
-    .map(item => {
-      const end = start + item.value;
-      const segment = `${colors[item.tone]} ${start}% ${end}%`;
-      start = end;
-      return segment;
-    })
-    .join(', ')})`;
-}
-
-function Sparkline({ series }: { series: Array<{ values: number[]; color: string }> }) {
-  const width = 100;
-  const height = 100;
-
-  return (
-    <svg className={cx('sparkline')} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      {series.map((line, index) => {
-        const max = Math.max(...line.values, 100);
-        const min = Math.min(...line.values, 0);
-        const range = Math.max(max - min, 1);
-        const points = line.values
-          .map((value, pointIndex) => {
-            const x = (pointIndex / Math.max(line.values.length - 1, 1)) * width;
-            const y = height - ((value - min) / range) * height;
-            return `${x.toFixed(2)},${y.toFixed(2)}`;
-          })
-          .join(' ');
-
-        return <polyline key={index} className={cx('sparklineLine')} points={points} style={{ stroke: line.color }} />;
-      })}
-      <polyline className={cx('sparklineGrid')} points={`0,88 100,88`} />
-    </svg>
-  );
 }
