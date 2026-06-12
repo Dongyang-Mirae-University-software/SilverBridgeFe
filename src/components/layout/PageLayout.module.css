@@ -5,7 +5,8 @@
   min-width: 0;
   flex-direction: column;
   gap: 16px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .header {
@@ -40,8 +41,7 @@
   min-width: 0;
   flex-direction: column;
   gap: 12px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: visible;
 }
 
 .emptyContent {
