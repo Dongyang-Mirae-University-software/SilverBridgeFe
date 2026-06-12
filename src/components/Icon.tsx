@@ -18,7 +18,6 @@ import MessageCircleIcon from '@/assets/icons/message-circle.svg';
 import MonitorIcon from '@/assets/icons/monitor.svg';
 import PhoneIcon from '@/assets/icons/phone.svg';
 import PillIcon from '@/assets/icons/pill.svg';
-import RefreshIcon from '@/assets/icons/refresh.svg';
 import TagIcon from '@/assets/icons/tag.svg';
 import AvatarEditIcon from '@/assets/icons/avatar-edit.svg';
 import UserIcon from '@/assets/icons/user.svg';
@@ -43,7 +42,10 @@ const ICONS = {
   monitor: { kind: 'asset', src: MonitorIcon },
   phone: { kind: 'asset', src: PhoneIcon },
   pill: { kind: 'asset', src: PillIcon },
-  refresh: { kind: 'asset', src: RefreshIcon },
+  refresh: {
+    kind: 'path',
+    d: 'M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5',
+  },
   tag: { kind: 'asset', src: TagIcon },
   avatarEdit: { kind: 'asset', src: AvatarEditIcon },
   user: { kind: 'asset', src: UserIcon },
