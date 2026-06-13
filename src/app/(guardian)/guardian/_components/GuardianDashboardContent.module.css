@@ -287,23 +287,24 @@
   min-height: 0;
   padding: 18px;
   text-decoration: none;
+  color: inherit;
 }
 
 .featureCard strong {
-  color: var(--sb-ink);
+  color: inherit;
   font-size: 18px;
   font-weight: 900;
 }
 
 .featureCard b {
-  color: var(--sb-ink);
+  color: inherit;
   font-size: 26px;
   font-weight: 900;
   line-height: 1;
 }
 
 .featureCard span {
-  color: var(--sb-ink-soft);
+  color: inherit;
   font-size: 13px;
   line-height: 1.45;
 }
@@ -319,18 +320,22 @@
 
 .featureCard.rose {
   background: #f9dfdf;
+  color: #cc4648;
 }
 
 .featureCard.sky {
   background: #dce9f4;
+  color: #2f74a8;
 }
 
 .featureCard.mint {
   background: #dfece8;
+  color: #2a6a58;
 }
 
 .featureCard.amber {
   background: #f8eacc;
+  color: #c28a19;
 }
 
 .featureCard.rose .featureIcon {
