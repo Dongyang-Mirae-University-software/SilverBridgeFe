@@ -2,7 +2,7 @@
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import classNames from 'classnames/bind';
@@ -79,6 +79,7 @@ function GuardianCard({ connection, index }: { connection: IConnectionItem; inde
 }
 
 export default function WardSosContent() {
+  const [isMounted, setIsMounted] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [successState, setSuccessState] = useState<{ sosEventId: number; triggeredAt: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -86,6 +87,14 @@ export default function WardSosContent() {
   const { mutate: triggerSos, isPending } = useWardSosMutation();
 
   const activeGuardians = useMemo(() => guardians.filter(connection => connection.status === 'ACTIVE'), [guardians]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
 
   function handleConfirm() {
     setIsConfirmOpen(false);
