@@ -1,8 +1,4 @@
-import dynamic from 'next/dynamic';
-
-const WardSosContent = dynamic(() => import('./_components/WardSosContent'), {
-  ssr: false,
-});
+import WardSosContent from './_components/WardSosContent';
 
 export default function WardSosPage() {
   return <WardSosContent />;
