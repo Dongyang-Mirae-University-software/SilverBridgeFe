@@ -46,7 +46,7 @@ function GuardianCard({ connection, index }: { connection: IConnectionItem; inde
       <div className={cx('guardianHead')}>
         {telHref ? (
           <span className={cx('guardianPhoneIcon')} aria-hidden="true">
-            <Icon name="phone" size={18} decorative />
+            <Icon name="phone" size={30} decorative />
           </span>
         ) : null}
       </div>
@@ -83,7 +83,9 @@ export default function WardSosContent() {
   const { mutate: triggerSos, isPending } = useWardSosMutation();
   const currentGuardians = guardians
     .slice()
-    .sort((a, b) => new Date(b.connectedAt ?? b.createdAt).getTime() - new Date(a.connectedAt ?? a.createdAt).getTime());
+    .sort(
+      (a, b) => new Date(b.connectedAt ?? b.createdAt).getTime() - new Date(a.connectedAt ?? a.createdAt).getTime(),
+    );
 
   useEffect(() => {
     let alive = true;
