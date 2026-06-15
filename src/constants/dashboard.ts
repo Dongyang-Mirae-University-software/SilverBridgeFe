@@ -3,7 +3,6 @@ import { NavItem, PageKey } from '@/components/layout/dashboard/types';
 export const WARD_NAV: NavItem[] = [
   { href: '/ward', icon: 'home', label: '홈', key: 'home' },
   { href: '/ward/sos', icon: 'phone', label: '긴급 전화', key: 'sos' },
-  { href: '/ward/chatbot', icon: 'message', label: 'AI 의료 챗봇', key: 'chatbot' },
   { href: '/ward/game', icon: 'game', label: '치매 예방 게임', key: 'game' },
   { href: '/ward/medication', icon: 'heart', label: '복약 알림', key: 'medication' },
   { href: '/ward/guardians', icon: 'users', label: '내 보호자', key: 'guardians' },

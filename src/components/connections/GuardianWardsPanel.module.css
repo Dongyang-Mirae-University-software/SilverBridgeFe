@@ -28,41 +28,6 @@
   font-weight: 650;
 }
 
-.tabs {
-  display: inline-flex;
-  width: fit-content;
-  gap: 4px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 12px;
-  background: #fff;
-  padding: 4px;
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.tab {
-  min-width: 110px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--sb-ink-mute);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 8px 14px;
-  transition: background 0.12s, color 0.12s;
-}
-
-.tab:hover {
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink);
-}
-
-.tab.active {
-  background: var(--guardian-brand);
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(138, 75, 56, 0.18);
-}
-
 .content {
   display: flex;
   flex-direction: column;

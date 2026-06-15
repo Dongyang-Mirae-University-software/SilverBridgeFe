@@ -1,16 +1,54 @@
 'use client';
 
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-
 import classNames from 'classnames/bind';
+
+import { Icon } from '@/components/Icon';
+import { UserAvatar } from '@/components/UserAvatar';
+import { getLiveStreams } from '@/service/api/liveStream';
+import { guardianConnectionsQueryOptions } from '@/service/query/connection';
+
 import styles from './GuardianDashboardContent.module.css';
 
 const cx = classNames.bind(styles);
-import { getLiveStreams } from '@/service/api/liveStream';
-import { IConnectionItem } from '@/service/interface/connection';
-import { guardianConnectionsQueryOptions } from '@/service/query/connection';
-
 const EMPTY_VALUE = '-';
+
+const FEATURE_CARDS = [
+  {
+    href: '/guardian/detection',
+    icon: 'alert' as const,
+    title: '이상감지',
+    summary: '이상 없음',
+    description: '낙상·화재·흉기 실시간 감지',
+    tone: 'rose',
+  },
+  {
+    href: '/guardian/emotion',
+    icon: 'heart' as const,
+    title: '정서 상태 체크',
+    summary: '기쁨',
+    description: 'AI 말벗 + 표정 분석',
+    tone: 'sky',
+  },
+  {
+    href: '/guardian/chatbot',
+    icon: 'messageCircle' as const,
+    title: 'AI 의료 챗봇',
+    summary: '대기 중',
+    description: '건강 Q&A · 복약',
+    tone: 'mint',
+  },
+  {
+    href: '/guardian/hospital',
+    icon: 'hospital' as const,
+    title: '병원 예약하기',
+    summary: '2건',
+    description: '피보호자 대신 병원 예약',
+    tone: 'amber',
+  },
+] as const;
 
 export function GuardianDashboardContent() {
   const {
@@ -30,76 +68,110 @@ export function GuardianDashboardContent() {
   });
 
   const connections = Array.isArray(connectionsResponse?.data) ? connectionsResponse.data : [];
-  const hasConnectionData = !isConnectionsLoading && !isConnectionsError && Array.isArray(connectionsResponse?.data);
-  const hasLiveStreamData = !isLiveStreamsLoading && !isLiveStreamsError && Array.isArray(liveStreams);
   const activeConnections = connections.filter(connection => connection.status === 'ACTIVE');
-  const pendingConnections = connections.filter(connection => connection.status === 'PENDING');
-  const activeStreamCount = liveStreams?.length ?? 0;
+  const hasLiveStreamData = !isLiveStreamsLoading && !isLiveStreamsError && Array.isArray(liveStreams);
   const analyzingStreamCount = liveStreams?.filter(session => session.is_analyzing).length ?? 0;
-  const recentConnection = getRecentConnection(connections);
 
-  const stats = [
-    {
-      label: '연결된 피보호자',
-      state: hasConnectionData ? 'ACTIVE 상태' : EMPTY_VALUE,
-      value: formatCount(activeConnections.length, hasConnectionData, '명'),
-    },
-    {
-      label: '요청 대기',
-      state: hasConnectionData ? 'PENDING 상태' : EMPTY_VALUE,
-      value: formatCount(pendingConnections.length, hasConnectionData, '건'),
-    },
-    {
-      label: '실시간 송출',
-      state: hasLiveStreamData ? '현재 세션' : EMPTY_VALUE,
-      value: formatCount(activeStreamCount, hasLiveStreamData, '건'),
-    },
-    {
-      label: 'AI 분석 중',
-      state: hasLiveStreamData ? '실시간 감지' : EMPTY_VALUE,
-      value: formatCount(analyzingStreamCount, hasLiveStreamData, '건'),
-    },
-  ];
+  const sortedActiveConnections = useMemo(
+    () =>
+      [...activeConnections].sort(
+        (a, b) => getTime(b.connectedAt ?? b.createdAt) - getTime(a.connectedAt ?? a.createdAt),
+      ),
+    [activeConnections],
+  );
+  const [selectedConnectionId, setSelectedConnectionId] = useState<number | null>(null);
+  const selectedActiveConnection =
+    sortedActiveConnections.find(connection => connection.id === selectedConnectionId) ?? null;
+
+  const heroName = selectedActiveConnection?.partnerName || '샘플 피보호자';
+  const heroLabel = hasLiveStreamData
+    ? analyzingStreamCount > 0
+      ? '주의 · 감지 진행 중'
+      : '안정 · 모니터링 중'
+    : '안정 · 기쁨 표정 감지';
+  const heroUpdatedAt = selectedActiveConnection
+    ? formatClock(selectedActiveConnection.connectedAt ?? selectedActiveConnection.createdAt)
+    : '오후 2:34';
+
+  useEffect(() => {
+    if (sortedActiveConnections.length === 0) {
+      setSelectedConnectionId(null);
+      return;
+    }
+
+    setSelectedConnectionId(currentId => {
+      if (currentId && sortedActiveConnections.some(connection => connection.id === currentId)) {
+        return currentId;
+      }
+
+      return sortedActiveConnections[0]?.id ?? null;
+    });
+  }, [sortedActiveConnections]);
 
   return (
-    <div className={cx('contentGrid')}>
+    <div className={cx('dashboardStack')}>
+      <section className={cx('wardSelectRow')} aria-label="피보호자 목록">
+        <span className={cx('wardSelectLabel')}>피보호자</span>
+        <div className={cx('wardRail')} role="list">
+          {sortedActiveConnections.length > 0 ? (
+            sortedActiveConnections.map(connection => {
+              const isSelected = selectedActiveConnection?.id === connection.id;
+
+              return (
+                <button
+                  key={connection.id}
+                  className={cx('wardChip', { active: isSelected })}
+                  type="button"
+                  onClick={() => setSelectedConnectionId(connection.id)}
+                >
+                  <UserAvatar imageUrl={connection.partnerProfileImage} size="w-32" />
+                  <span className={cx('wardChipName')}>{connection.partnerName || EMPTY_VALUE}</span>
+                  <span className={cx('wardChipRelation')}>{connection.relation || '관계'}</span>
+                </button>
+              );
+            })
+          ) : (
+            <div className={cx('wardChip', 'wardChipStatic')} aria-hidden="true">
+              <UserAvatar size="w-32" />
+              <span className={cx('wardChipName')}>샘플 피보호자</span>
+              <span className={cx('wardChipRelation')}>미리보기</span>
+            </div>
+          )}
+        </div>
+      </section>
+
       <section className={cx('heroCard')}>
-        <span className={cx('eyebrow')}>보호자 대시보드</span>
-        <h2>피보호자 상태와 이상감지 현황을 한눈에 확인하세요.</h2>
-        <p>연결된 피보호자와 실시간 송출 상태를 보호자 기준으로 정리했습니다.</p>
-      </section>
+        <div className={cx('heroProfile')}>
+          <UserAvatar imageUrl={selectedActiveConnection?.partnerProfileImage} size="w-60" />
 
-      <section className={cx('statGrid')}>
-        {stats.map(stat => (
-          <div key={stat.label} className={cx('statCard')}>
-            <span>{stat.label}</span>
-            <strong>{stat.value}</strong>
-            <small>{stat.state}</small>
+          <div className={cx('heroText')}>
+            <span className={cx('heroEyebrow')}>
+              {selectedActiveConnection ? `${heroName} 님 오늘 상태` : '샘플 피보호자 님 오늘 상태'}
+            </span>
+            <strong>{heroLabel}</strong>
           </div>
-        ))}
+        </div>
+
+        <div className={cx('heroMeta')}>
+          <span>마지막 업데이트</span>
+          <strong>{heroUpdatedAt}</strong>
+        </div>
       </section>
 
-      <section className={cx('wideCard')}>
-        <div>
-          <span className={cx('eyebrow')}>최근 연결 현황</span>
-          <h3>{recentConnection ? `${recentConnection.partnerName || EMPTY_VALUE} 님` : EMPTY_VALUE}</h3>
-        </div>
-        <div className={cx('statusList')}>
-          <span>상태 · {recentConnection ? getStatusLabel(recentConnection.status) : EMPTY_VALUE}</span>
-          <span>관계 · {recentConnection?.relation || EMPTY_VALUE}</span>
-          <span>기준일 · {formatDate(recentConnection?.connectedAt ?? recentConnection?.createdAt)}</span>
-        </div>
+      <section className={cx('featureGrid')} aria-label="핵심 기능">
+        {FEATURE_CARDS.map(card => (
+          <Link key={card.href} href={card.href} className={cx('featureCard', card.tone)}>
+            <span className={cx('featureIcon')}>
+              <Icon name={card.icon} size={30} />
+            </span>
+            <strong>{card.title}</strong>
+            <b>{card.summary}</b>
+            <span>{card.description}</span>
+          </Link>
+        ))}
       </section>
     </div>
   );
-}
-
-function formatCount(count: number, hasData: boolean, suffix: string) {
-  return hasData ? `${count}${suffix}` : EMPTY_VALUE;
-}
-
-function getRecentConnection(connections: IConnectionItem[]) {
-  return [...connections].sort((a, b) => getTime(b.connectedAt ?? b.createdAt) - getTime(a.connectedAt ?? a.createdAt))[0] ?? null;
 }
 
 function getTime(value?: string | null) {
@@ -108,30 +180,13 @@ function getTime(value?: string | null) {
   return Number.isNaN(time) ? 0 : time;
 }
 
-function formatDate(value?: string | null) {
+function formatClock(value?: string | null) {
   if (!value) return EMPTY_VALUE;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return EMPTY_VALUE;
 
   return new Intl.DateTimeFormat('ko-KR', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
+    hour: 'numeric',
     minute: '2-digit',
   }).format(date);
-}
-
-function getStatusLabel(status: IConnectionItem['status']) {
-  switch (status) {
-    case 'ACTIVE':
-      return '연결됨';
-    case 'CANCELLED':
-      return '취소됨';
-    case 'REFUSED':
-      return '거절됨';
-    case 'DISCONNECTED':
-      return '연결 해제됨';
-    default:
-      return '수락 대기';
-  }
 }

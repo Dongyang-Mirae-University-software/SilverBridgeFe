@@ -1,0 +1,7 @@
+.logo {
+  display: block;
+  flex-shrink: 0;
+  height: auto;
+  max-width: 100%;
+  color: inherit;
+}

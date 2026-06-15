@@ -1,9 +1,10 @@
 import classNames from 'classnames/bind';
 
+import { Icon } from '@/components/Icon';
+import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { IUserProfile } from '@/service/interface/user';
-import { MenuIcon } from './icons';
 import styles from './DashboardHeader.module.css';
 
 const cx = classNames.bind(styles);
@@ -22,18 +23,13 @@ interface Props {
 export function MobileTopBar({ onOpenSidebar, pageTitle, role }: Pick<Props, 'onOpenSidebar' | 'pageTitle' | 'role'>) {
   return (
     <div className={cx('mobileTopBar')}>
+      <div className={cx('topBarBrand')}>
+        <SilverBridgeLogo className={cx('topBarLogo')} width={132} />
+      </div>
       <button className={cx('topBarMenuButton')} type="button" aria-label="메뉴 열기" onClick={onOpenSidebar}>
-        <MenuIcon />
+        <Icon name="menu" size={20} />
         <span>메뉴</span>
       </button>
-      <div className={cx('topBarBrand')}>
-        <div className={cx('brandMark')}>S</div>
-        <div>
-          <strong>SilverBridge</strong>
-          <span>{pageTitle}</span>
-        </div>
-      </div>
-      <span className={cx('topBarRole')}>{getRoleLabel(role)}</span>
     </div>
   );
 }

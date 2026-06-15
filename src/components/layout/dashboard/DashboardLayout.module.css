@@ -2,7 +2,8 @@
   display: flex;
   height: 100dvh;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--sb-bg);
   color: var(--sb-ink);
 }
@@ -20,10 +21,16 @@
 .main {
   display: flex;
   flex: 1;
+  overflow: visible;
+  padding: 0;
+}
+
+.main > * {
+  flex: 1;
+  display: flex;
   min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-  padding: 28px;
+  padding: 28px 28px 20px;
+  box-sizing: border-box;
 }
 
 @media (max-width: 900px) {
@@ -35,7 +42,7 @@
     display: block;
   }
 
-  .main {
-    padding: 100px 18px 18px;
+  .main > * {
+    padding: 18px 18px calc(28px + env(safe-area-inset-bottom));
   }
 }

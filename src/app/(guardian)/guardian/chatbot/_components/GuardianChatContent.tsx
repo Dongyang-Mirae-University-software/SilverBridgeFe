@@ -1,18 +1,27 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import dayjs from 'dayjs';
+import 'dayjs/locale/ko';
+import classNames from 'classnames/bind';
 
+import { Icon } from '@/components/Icon';
 import { getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import type { ChatContext, ChatMessage } from '@/service/interface/chat';
-import { SAMPLE_CHIPS, calcAge } from '@/service/interface/chat';
+import { calcAge } from '@/service/interface/chat';
 import type { IUserProfile } from '@/service/interface/user';
 
 import ChatContextForm from './ChatContextForm';
 import ChatBubble from './ChatBubble';
 import styles from './GuardianChatContent.module.css';
+
+const cx = classNames.bind(styles);
+
+dayjs.locale('ko');
 
 function makeId() {
   return Math.random().toString(36).slice(2);
@@ -23,68 +32,88 @@ function makeSessionId() {
   return makeId();
 }
 
-function profileToContext(p: IUserProfile): ChatContext {
+function profileToContext(profile: IUserProfile): ChatContext {
   return {
-    name: p.name || undefined,
-    phone: p.phone || undefined,
-    email: p.email || undefined,
-    gender: p.gender?.toLowerCase() || undefined,
-    birthDate: p.birthDate || undefined,
-    age: p.birthDate ? calcAge(p.birthDate) : undefined,
-    postcode: p.postcode || undefined,
-    address: p.address || undefined,
-    addressDetail: p.addressDetail || undefined,
-    location: p.address || undefined,
-    guardianId: Number(p.id) || undefined,
-    role: p.role,
+    name: profile.name || undefined,
+    phone: profile.phone || undefined,
+    email: profile.email || undefined,
+    gender: profile.gender?.toLowerCase() || undefined,
+    birthDate: profile.birthDate || undefined,
+    age: profile.birthDate ? calcAge(profile.birthDate) : undefined,
+    postcode: profile.postcode || undefined,
+    address: profile.address || undefined,
+    addressDetail: profile.addressDetail || undefined,
+    location: profile.address || undefined,
+    guardianId: Number(profile.id) || undefined,
+    role: profile.role,
   };
 }
 
-const WELCOME: ChatMessage = {
-  id: 'welcome',
-  role: 'assistant',
-  content: '안녕하세요. 무엇을 도와드릴까요? 건강 상담, 병원 예약, 응급 안내 등을 도와드릴 수 있습니다.',
-  timestamp: new Date().toISOString(),
-};
+function formatClock(value?: string) {
+  if (!value) return '-';
+  return dayjs(value).format('A h:mm');
+}
+
+function buildWelcomeMessage(name?: string): ChatMessage {
+  const title = name ? `${name}님 안녕하세요 😊` : '안녕하세요 😊';
+
+  return {
+    id: 'welcome',
+    role: 'assistant',
+    content: `${title}\n오늘 컨디션은 어떠세요?\n약 복용·혈압·증상 무엇이든 편하게 물어보세요.`,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+const QUICK_PROMPTS = [
+  '💊 오늘 약 먹어야 해요?',
+  '🩺 혈압이 어떤가요?',
+  '😵 머리가 좀 아파요',
+  '🏥 다음 병원 예약 알려줘',
+];
 
 export default function GuardianChatContent() {
+  const router = useRouter();
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const userId = profile?.id ?? '';
 
-  const [sessionId] = useState(makeSessionId);
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
+  const [sessionId, setSessionId] = useState(makeSessionId);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [buildWelcomeMessage()]);
   const [context, setContext] = useState<ChatContext>({});
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
-  const [popup, setPopup] = useState<'context' | 'suggestions' | null>(null);
+  const [contextOpen, setContextOpen] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 렌더마다 동기 업데이트 — send 호출 시점에 항상 최신값 보장
-  const profileRef = useRef(profile);
   const contextRef = useRef(context);
   const messagesRef = useRef(messages);
   const sendingRef = useRef(sending);
-  profileRef.current = profile;
+
   contextRef.current = context;
   messagesRef.current = messages;
   sendingRef.current = sending;
 
-  // 프로필 로드 시 context 초기값 세팅
   useEffect(() => {
     if (!profile) return;
-    setContext(prev => (Object.values(prev).some(Boolean) ? prev : profileToContext(profile)));
-  }, [profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 과거 대화 복원
+    setContext(prev => (Object.values(prev).some(Boolean) ? prev : profileToContext(profile)));
+    setMessages(prev => {
+      if (prev.length !== 1 || prev[0].id !== 'welcome') return prev;
+      return [buildWelcomeMessage(profile.name)];
+    });
+  }, [profile]);
+
   useEffect(() => {
     if (!userId) return;
+
     getChatLogs(userId)
       .then(logs => {
         if (logs.length === 0) return;
+
         const restored: ChatMessage[] = [];
         logs.forEach(log => {
           if (log.message) {
@@ -95,6 +124,7 @@ export default function GuardianChatContent() {
               timestamp: log.createdAt ?? new Date().toISOString(),
             });
           }
+
           if (log.reply) {
             restored.push({
               id: makeId(),
@@ -110,15 +140,31 @@ export default function GuardianChatContent() {
             });
           }
         });
-        if (restored.length > 0) setMessages([WELCOME, ...restored]);
+
+        if (restored.length > 0) {
+          setMessages([buildWelcomeMessage(profile?.name), ...restored]);
+        }
       })
       .catch(() => {});
-  }, [userId]);
+  }, [profile?.name, userId]);
 
-  // 새 메시지마다 스크롤 최하단
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
+
+  const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
+  const lastUpdatedAt = [...messages].reverse()[0]?.timestamp;
+  const contextFilledCount = Object.values(context).filter(Boolean).length;
+
+  const contextSummary = useMemo(
+    () => [
+      { label: '이름', value: context.name || profile?.name || '-' },
+      { label: '생년월일', value: context.birthDate || profile?.birthDate || '-' },
+      { label: '전화번호', value: context.phone || profile?.phone || '-' },
+      { label: '지역', value: context.location || context.address || profile?.address || '-' },
+    ],
+    [context, profile],
+  );
 
   const send = useCallback(
     async (text: string, uiSelection?: { field: string; value: string }) => {
@@ -128,24 +174,24 @@ export default function GuardianChatContent() {
 
       const currentContext = contextRef.current;
       const history = messagesRef.current
-        .filter(m => m.id !== 'welcome')
+        .filter(message => message.id !== 'welcome')
         .slice(-24)
-        .map(m => ({ role: m.role, content: m.content }));
+        .map(message => ({ role: message.role, content: message.content }));
 
-      const userMsg: ChatMessage = {
+      const userMessage: ChatMessage = {
         id: makeId(),
         role: 'user',
         content: uiSelection ? `[선택] ${uiSelection.field}: ${uiSelection.value}` : trimmed,
         timestamp: new Date().toISOString(),
       };
 
-      setMessages(prev => [...prev, userMsg]);
+      setMessages(prev => [...prev, userMessage]);
       setInput('');
       setSending(true);
       setFallback(false);
 
       try {
-        const res = await sendChatMessage({
+        const result = await sendChatMessage({
           message: uiSelection ? undefined : trimmed,
           userId: 1,
           sessionId,
@@ -159,26 +205,27 @@ export default function GuardianChatContent() {
           {
             id: makeId(),
             role: 'assistant',
-            content: res.reply,
+            content: result.reply,
             timestamp: new Date().toISOString(),
-            engine: res.engine,
-            modelName: res.modelName,
-            riskLevel: res.riskLevel,
-            intent: res.intent,
-            type: res.type,
-            tool: res.tool ?? undefined,
-            toolData: res.toolData,
-            ui: res.ui ?? undefined,
-            summary: res.summary,
-            possibleCauses: res.possibleCauses,
-            homeCare: res.homeCare,
-            visitHospitalIf: res.visitHospitalIf,
-            emergencyWarning: res.emergencyWarning,
-            recommendedAction: res.recommendedAction,
-            reservationRequired: res.reservationRequired,
+            engine: result.engine,
+            modelName: result.modelName,
+            riskLevel: result.riskLevel,
+            intent: result.intent,
+            type: result.type,
+            tool: result.tool ?? undefined,
+            toolData: result.toolData,
+            ui: result.ui ?? undefined,
+            summary: result.summary,
+            possibleCauses: result.possibleCauses,
+            homeCare: result.homeCare,
+            visitHospitalIf: result.visitHospitalIf,
+            emergencyWarning: result.emergencyWarning,
+            recommendedAction: result.recommendedAction,
+            reservationRequired: result.reservationRequired,
           },
         ]);
-        if (res.engine === 'fallback') setFallback(true);
+
+        if (result.engine === 'fallback') setFallback(true);
       } catch {
         setMessages(prev => [
           ...prev,
@@ -197,9 +244,9 @@ export default function GuardianChatContent() {
     [sessionId],
   );
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
       void send(input);
     }
   }
@@ -208,167 +255,148 @@ export default function GuardianChatContent() {
     void send('', { field, value });
   }
 
-  function handleChipClick(chip: string) {
-    setInput(chip);
-    setPopup(null);
+  function handleQuickPrompt(prompt: string) {
+    setInput(prompt);
     textareaRef.current?.focus();
   }
 
   function handleNewSession() {
-    setMessages([WELCOME]);
+    setSessionId(makeSessionId());
+    setMessages([buildWelcomeMessage(profile?.name)]);
     setInput('');
     setFallback(false);
-    window.location.reload();
+    setContext(profile ? profileToContext(profile) : {});
+    setContextOpen(false);
+    textareaRef.current?.focus();
   }
 
-  const lastAssistantId = [...messages].reverse().find(m => m.role === 'assistant')?.id;
-  const contextFilledCount = Object.values(context).filter(Boolean).length;
+  function handleBack() {
+    router.back();
+  }
 
   return (
     <div className={styles.chatPage}>
-      <div className={styles.topBar}>
-        <div className={styles.topBarActions}>
-          <button
-            type="button"
-            className={`${styles.actionBtn} ${popup === 'context' ? styles.actionBtnActive : ''}`}
-            onClick={() => setPopup(prev => (prev === 'context' ? null : 'context'))}
-          >
-            상담 컨텍스트
-            {contextFilledCount > 0 && <span className={styles.tabBadge}>{contextFilledCount}</span>}
-          </button>
-          <button
-            type="button"
-            className={`${styles.actionBtn} ${popup === 'suggestions' ? styles.actionBtnActive : ''}`}
-            onClick={() => setPopup(prev => (prev === 'suggestions' ? null : 'suggestions'))}
-          >
-            추천 질문
-          </button>
-          <button
-            type="button"
-            className={`${styles.actionBtn} ${styles.newSessionBtn}`}
-            onClick={handleNewSession}
-          >
-            새 상담
-          </button>
-        </div>
-      </div>
+      <section className={styles.shell}>
+        <header className={styles.header}>
+          <div className={styles.brand}>
+            <div className={styles.brandMark}>
+              <Icon name="brain" size={28} color="#fff" decorative />
+            </div>
+            <div className={styles.brandCopy}>
+              <h1>AI 의료 챗봇</h1>
+              <p>건강 도우미 · 24시간 답변</p>
+            </div>
+          </div>
 
-      {fallback && <div className={styles.fallbackWarning}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
+          <div className={styles.headerActions}>
+            <button type="button" className={styles.backButton} onClick={handleBack}>
+              <Icon name="back" size={16} decorative />
+              뒤로
+            </button>
+          </div>
+        </header>
 
-      {popup === 'context' && (
-        <div
-          className={styles.modalOverlay}
-          role="presentation"
-          onClick={() => setPopup(null)}
-        >
-          <section
-            className={styles.modal}
-            role="dialog"
-            aria-modal="true"
-            aria-label="상담 컨텍스트"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className={styles.popoverHeader}>
-              <div className={styles.suggestionTitle}>
-                <strong>상담 컨텍스트</strong>
-                <span>상담 대상 정보를 조정합니다</span>
-              </div>
+        <div className={styles.body}>
+          <div className={styles.toolbar}>
+            <div className={styles.toolbarActions}>
               <button
                 type="button"
-                className={styles.popoverClose}
-                onClick={() => setPopup(null)}
+                className={cx('utilityButton', contextOpen && 'utilityButtonActive')}
+                onClick={() => setContextOpen(prev => !prev)}
               >
-                닫기
+                상담 컨텍스트
+              </button>
+              <button type="button" className={styles.utilityButton} onClick={handleNewSession}>
+                새 상담
               </button>
             </div>
-            <ChatContextForm value={context} onChange={setContext} />
+
+            <span className={styles.toolbarMeta}>
+              최근 답변 <strong>{formatClock(lastUpdatedAt)}</strong>
+            </span>
+          </div>
+
+          {contextOpen && (
+            <section className={styles.contextPanel}>
+              <div className={styles.contextSummary}>
+                {contextSummary.map(item => (
+                  <div key={item.label} className={styles.contextItem}>
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+              <ChatContextForm value={context} onChange={setContext} />
+            </section>
+          )}
+
+          <section className={styles.board}>
+            {fallback && (
+              <div className={styles.banner}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>
+            )}
+
+            <div ref={listRef} className={styles.messageList}>
+              {messages.map(message => (
+                <ChatBubble
+                  key={message.id}
+                  message={message}
+                  isLastAssistant={message.id === lastAssistantId}
+                  onUiSelect={handleUiSelect}
+                />
+              ))}
+
+              {sending && (
+                <div className={styles.typing}>
+                  <span className={styles.typingDot} />
+                  <span className={styles.typingDot} />
+                  <span className={styles.typingDot} />
+                </div>
+              )}
+            </div>
           </section>
-        </div>
-      )}
 
-      {popup === 'suggestions' && (
-        <div
-          className={styles.modalOverlay}
-          role="presentation"
-          onClick={() => setPopup(null)}
-        >
-          <section
-            className={styles.modal}
-            role="dialog"
-            aria-modal="true"
-            aria-label="추천 질문"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className={styles.popoverHeader}>
-              <div className={styles.suggestionTitle}>
-                <strong>추천 질문</strong>
-                <span>선택하면 입력창에 채워집니다</span>
-              </div>
-              <button
-                type="button"
-                className={styles.popoverClose}
-                onClick={() => setPopup(null)}
-              >
-                닫기
-              </button>
-            </div>
+          <section className={styles.suggestionPanel}>
+            <p className={styles.suggestionTitle}>이런 걸 물어보세요</p>
             <div className={styles.chips}>
-              {SAMPLE_CHIPS.map(chip => (
+              {QUICK_PROMPTS.map(prompt => (
                 <button
-                  key={chip}
+                  key={prompt}
                   type="button"
                   className={styles.chip}
                   disabled={sending}
-                  onClick={() => handleChipClick(chip)}
+                  onClick={() => handleQuickPrompt(prompt)}
                 >
-                  {chip}
+                  {prompt}
                 </button>
               ))}
             </div>
           </section>
-        </div>
-      )}
 
-      <div ref={listRef} className={styles.messageList}>
-        {messages.map(msg => (
-          <ChatBubble
-            key={msg.id}
-            message={msg}
-            isLastAssistant={msg.id === lastAssistantId}
-            onUiSelect={handleUiSelect}
-          />
-        ))}
-        {sending && (
-          <div className={styles.typing}>
-            <span className={styles.typingDot} />
-            <span className={styles.typingDot} />
-            <span className={styles.typingDot} />
-          </div>
-        )}
-      </div>
-
-      <footer className={styles.chatFooter}>
-        <div className={styles.inputArea}>
-          <textarea
-            ref={textareaRef}
-            className={styles.textarea}
-            rows={2}
-            placeholder="메시지를 입력하세요 (Enter 전송 · Shift+Enter 줄바꿈)"
-            value={input}
-            disabled={sending}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <button
-            type="button"
-            className={styles.sendBtn}
-            disabled={sending || !input.trim()}
-            onClick={() => void send(input)}
-          >
-            전송
-          </button>
+          <footer className={styles.composer}>
+            <div className={styles.inputWrap}>
+              <textarea
+                ref={textareaRef}
+                className={styles.textarea}
+                rows={2}
+                placeholder="궁금한 점을 입력하세요..."
+                value={input}
+                disabled={sending}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <button
+                type="button"
+                className={styles.sendButton}
+                disabled={sending || !input.trim()}
+                onClick={() => void send(input)}
+                aria-label="전송"
+              >
+                <Icon name="back" size={18} className={styles.sendIcon} decorative />
+              </button>
+            </div>
+          </footer>
         </div>
-      </footer>
+      </section>
     </div>
   );
 }

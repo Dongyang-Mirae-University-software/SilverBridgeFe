@@ -111,9 +111,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             userName={userName}
           />
         )}
-        <main className={cx('main')}>
-          {children}
-        </main>
+        <main className={cx('main')}>{children}</main>
       </div>
     </DashboardProvider>
   );

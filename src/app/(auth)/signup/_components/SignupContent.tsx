@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import classNames from 'classnames/bind';
 
+import { Icon } from '@/components/Icon';
 import styles from './SignupContent.module.css';
 import SignupForm from './SignupForm';
 
@@ -59,16 +60,7 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
 
       <div className={cx('header')}>
         <button className={cx('backButton')} type="button" aria-label="이전 페이지로 이동" onClick={handleBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M15 18l-6-6 6-6"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2.4"
-            />
-          </svg>
+          <Icon name="back" size={18} decorative />
         </button>
         <div>
           <h1 className={cx('title')}>회원가입</h1>

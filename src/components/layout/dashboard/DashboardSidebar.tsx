@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import classNames from 'classnames/bind';
 
+import { Icon } from '@/components/Icon';
+import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user';
-import { NavIcon } from './icons';
 import { NavItem } from './types';
 import { UserAvatar } from '@/components/UserAvatar';
 import styles from './DashboardSidebar.module.css';
@@ -39,10 +40,8 @@ export function DashboardSidebar({
   return (
     <aside className={cx('sidebar', { open: isOpen })} aria-label={`${getRoleLabel(role)} 메뉴`}>
       <div className={cx('brand')}>
-        <div className={cx('brandMark')}>S</div>
-        <div>
-          <strong>SilverBridge</strong>
-          <span>{getRoleLabel(role)} 웹</span>
+        <div className={cx('brandInfo')}>
+          <SilverBridgeLogo className={cx('brandLogo')} width={138} />
         </div>
         <button className={cx('closeButton')} type="button" aria-label="메뉴 닫기" onClick={onClose}>
           ×
@@ -60,7 +59,7 @@ export function DashboardSidebar({
             onClick={onClose}
           >
             <span className={cx('navIcon')}>
-              <NavIcon name={item.icon} />
+              <Icon name={item.icon} size={18} />
             </span>
             <span>{item.label}</span>
           </Link>
