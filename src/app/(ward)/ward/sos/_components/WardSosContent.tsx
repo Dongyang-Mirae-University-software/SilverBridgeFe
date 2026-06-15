@@ -43,13 +43,11 @@ function getInitial(name?: string | null) {
 
 function GuardianCard({ connection, index }: { connection: IConnectionItem; index: number }) {
   const telHref = makeTelHref(connection.partnerPhone);
-  const badgeLabel = `${index + 1}순위 보호자`;
   const isMint = index % 2 === 0;
 
   return (
     <article className={cx('guardianCard', isMint ? 'guardianCardMint' : 'guardianCardSky')}>
       <div className={cx('guardianHead')}>
-        <span className={cx('guardianBadge')}>{badgeLabel}</span>
         {telHref ? (
           <span className={cx('guardianPhoneIcon')} aria-hidden="true">
             <Icon name="phone" size={18} decorative />
