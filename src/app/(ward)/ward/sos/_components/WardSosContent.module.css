@@ -107,19 +107,6 @@
   gap: 12px;
 }
 
-.guardianAvatar {
-  display: grid;
-  width: 58px;
-  height: 58px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #275d49;
-  font-size: 24px;
-  font-weight: 900;
-}
-
 .guardianInfo {
   display: grid;
   gap: 2px;
