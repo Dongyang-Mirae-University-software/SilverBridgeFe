@@ -7,7 +7,11 @@ import { myProfileQueryKey } from './profile';
 import { reportNonApiError } from '@/lib/api/reportError';
 import { setMyProfileCache, updateMyProfileCache } from '@/lib/dashboard/profileCache';
 
-export function useProfileImageChangeMutation() {
+interface ProfileImageMutationOptions {
+  onError?: (message: string) => void;
+}
+
+export function useProfileImageChangeMutation(options?: ProfileImageMutationOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -17,11 +21,14 @@ export function useProfileImageChangeMutation() {
       setMyProfileCache(queryClient, response);
       void queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
     },
-    onError: error => reportNonApiError('프로필 이미지 변경 실패:', error),
+    onError: error => {
+      reportNonApiError('프로필 이미지 변경 실패:', error);
+      options?.onError?.(getErrorMessage(error, '프로필 이미지를 변경하지 못했습니다.'));
+    },
   });
 }
 
-export function useProfileImageDeleteMutation() {
+export function useProfileImageDeleteMutation(options?: ProfileImageMutationOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -37,9 +44,14 @@ export function useProfileImageDeleteMutation() {
     onError: (error, _variables, context) => {
       if (context?.previousProfile) queryClient.setQueryData(myProfileQueryKey, context.previousProfile);
       reportNonApiError('프로필 이미지 삭제 실패:', error);
+      options?.onError?.(getErrorMessage(error, '프로필 이미지를 삭제하지 못했습니다.'));
     },
     onSuccess: () => {
       updateMyProfileCache(queryClient, current => ({ ...current, profileImage: null }));
     },
   });
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
 }
