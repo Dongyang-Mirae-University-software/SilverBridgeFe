@@ -70,10 +70,10 @@
 
 .guardianGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(360px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   width: 100%;
-  justify-items: stretch;
+  justify-items: ㅠ stretch;
 }
 
 .guardianCard {
@@ -81,7 +81,6 @@
   display: grid;
   gap: 16px;
   overflow: hidden;
-  width: 100%;
   min-width: 0;
   min-height: 180px;
   border-radius: 22px;
