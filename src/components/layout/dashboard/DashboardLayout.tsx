@@ -29,6 +29,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [profileImageError, setProfileImageError] = useState('');
   const [wardSettings, setWardSettings] = useState<WardSettings>(DEFAULT_WARD_SETTINGS);
   const [isWardSettingsLoaded, setIsWardSettingsLoaded] = useState(false);
   const isWard = role === 'WARD';
@@ -42,8 +43,12 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
   const userEmail = profile?.email ?? '이메일 정보 없음';
   const { mutate: logoutMutate, isPending: isLoggingOut } = useLogoutMutation();
-  const { mutate: profileImageMutate, isPending: isProfileImageChanging } = useProfileImageChangeMutation();
-  const { mutate: profileImageDeleteMutate, isPending: isProfileImageDeleting } = useProfileImageDeleteMutation();
+  const { mutate: profileImageMutate, isPending: isProfileImageChanging } = useProfileImageChangeMutation({
+    onError: message => setProfileImageError(message),
+  });
+  const { mutate: profileImageDeleteMutate, isPending: isProfileImageDeleting } = useProfileImageDeleteMutation({
+    onError: message => setProfileImageError(message),
+  });
 
   useWardSettings(isWard, isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
   useConnectionSocket(realtimeUserId, role);
@@ -59,13 +64,18 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     logoutMutate();
   };
   const handleProfileImageChange = (file?: File) => {
-    if (file && !isProfileImageChanging) profileImageMutate(file);
+    if (file && !isProfileImageChanging) {
+      setProfileImageError('');
+      profileImageMutate(file);
+    }
   };
   const handleProfileImageDelete = () => {
     if (isProfileImageDeleting || !profile?.profileImage) return;
     if (!window.confirm('프로필 이미지를 삭제할까요?')) return;
+    setProfileImageError('');
     profileImageDeleteMutate();
   };
+  const handleProfileImageErrorClose = () => setProfileImageError('');
 
   return (
     <DashboardProvider value={{ wardSettings, updateWardSettings: settings => setWardSettings(current => ({ ...current, ...settings })) }}>
@@ -81,6 +91,16 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             onConfirm={handleLogoutConfirm}
             onSecondary={() => setIsLogoutConfirmOpen(false)}
             onClose={() => setIsLogoutConfirmOpen(false)}
+          />
+        )}
+        {profileImageError && (
+          <CommonModal
+            type="error"
+            title="프로필 이미지 처리 실패"
+            message={profileImageError}
+            confirmText="확인"
+            onConfirm={handleProfileImageErrorClose}
+            onClose={handleProfileImageErrorClose}
           />
         )}
         <MobileTopBar onOpenSidebar={() => setIsSidebarOpen(true)} pageTitle={pageTitle} role={role} />
