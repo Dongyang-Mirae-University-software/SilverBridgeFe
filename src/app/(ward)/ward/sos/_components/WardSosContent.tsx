@@ -52,7 +52,7 @@ function GuardianCard({ connection, index }: { connection: IConnectionItem; inde
       </div>
 
       <div className={cx('guardianBody')}>
-        <UserAvatar imageUrl={connection.partnerProfileImage} size="w-60" />
+        <UserAvatar imageUrl={connection.partnerProfileImage} size="w-120" />
         <div className={cx('guardianInfo')}>
           <strong>{connection.partnerName}</strong>
           <span>{connection.relation || '보호자'}</span>

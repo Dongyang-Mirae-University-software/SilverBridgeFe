@@ -77,12 +77,12 @@
 .guardianCard {
   position: relative;
   display: grid;
-  gap: 14px;
+  gap: 16px;
   overflow: hidden;
   width: 100%;
   min-height: 240px;
   border-radius: 22px;
-  padding: 24px;
+  padding: 24px 26px;
 }
 
 .guardianCardMint {
@@ -97,7 +97,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
 }
 
 .guardianPhoneIcon {
@@ -109,7 +109,7 @@
 .guardianBody {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
   flex: 1;
 }
 
@@ -121,14 +121,14 @@
 
 .guardianInfo strong {
   color: #121212;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 900;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 
 .guardianInfo span {
   color: rgba(18, 18, 18, 0.62);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -147,13 +147,13 @@
 
 .guardianPhone span {
   color: rgba(18, 18, 18, 0.56);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 750;
 }
 
 .guardianPhone strong {
   color: #121212;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 900;
 }
 
@@ -237,6 +237,23 @@
 
   .guardianGrid {
     grid-template-columns: 1fr;
+  }
+
+  .guardianCard {
+    min-height: 220px;
+    padding: 20px;
+  }
+
+  .guardianInfo strong {
+    font-size: 22px;
+  }
+
+  .guardianInfo span {
+    font-size: 14px;
+  }
+
+  .guardianPhone strong {
+    font-size: 20px;
   }
 
   .emptyState {
