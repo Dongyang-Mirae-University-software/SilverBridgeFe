@@ -4,35 +4,6 @@
   gap: 16px;
 }
 
-.tabBar {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 6px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.tabButton {
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--sb-ink-mute);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 800;
-  min-height: 42px;
-  padding: 0 14px;
-}
-
-.tabButtonActive {
-  background: #fff;
-  color: var(--sb-brand);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-}
-
 /* ── 카드 공통 ── */
 .card {
   border: 1px solid var(--sb-line-soft);
@@ -48,20 +19,7 @@
 .cardHeader {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-}
-
-.cardNum {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 15px;
-  font-weight: 850;
+  gap: 0;
 }
 
 .cardTitle {
@@ -605,14 +563,13 @@
 }
 
 .sosIcon {
-  display: grid;
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  place-items: center;
+  display: block;
   border-radius: 12px;
   background: #fff;
-  font-size: 20px;
+  object-fit: contain;
   box-shadow: var(--sb-shadow-sm);
 }
 
@@ -682,15 +639,6 @@
   }
   .card {
     padding: 18px;
-  }
-  .tabBar {
-    gap: 6px;
-    padding: 5px;
-  }
-
-  .tabButton {
-    min-height: 38px;
-    font-size: 12px;
   }
 
   .securityActionRow {

@@ -1,0 +1,160 @@
+.section {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  overflow: hidden;
+}
+
+.sectionHead {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--sb-line-soft);
+}
+
+.sectionTitle {
+  margin: 0 0 4px;
+  color: var(--sb-ink);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.sectionDesc {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.loading {
+  margin: 0;
+  padding: 18px 22px;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.errorBanner {
+  margin: 14px 22px 0;
+  border: 1px solid rgba(192, 75, 58, 0.14);
+  border-radius: 14px;
+  background: #fff7f5;
+  color: var(--sb-warn);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+  padding: 12px 14px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--sb-line-soft);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.badge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-size: 11px;
+  font-weight: 850;
+  padding: 3px 8px;
+}
+
+.desc {
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ── 토글 ── */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleThumb {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--sb-line-soft);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toggleThumb::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  transition: transform 0.2s;
+}
+
+.toggle input:checked + .toggleThumb {
+  background: var(--sb-brand);
+}
+
+.toggle input:checked + .toggleThumb::after {
+  transform: translateX(22px);
+}
+
+.toggle input:disabled + .toggleThumb {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+@media (max-width: 640px) {
+  .row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .toggle {
+    align-self: flex-end;
+  }
+}

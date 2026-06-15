@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createStreamSession, registerCamera, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
+import { Icon } from '@/components/Icon';
+import { Tabs } from '@/components/Tabs';
 import styles from './WardStreamContent.module.css';
 
 type Tab = 'live' | 'manual';
@@ -11,10 +13,10 @@ type StreamStatus = 'off' | 'ready' | 'streaming';
 const DEFAULT_CAM_ID = 'ipad-room-001';
 const MIN_UPLOAD_INTERVAL_MS = 500; // 최대 초당 2프레임 업로드
 
-const FACING_OPTIONS: { value: CameraFacing; label: string; icon: string }[] = [
-  { value: 'user',        label: '정면 카메라', icon: '🤳' },
-  { value: 'environment', label: '후면 카메라', icon: '📷' },
-  { value: 'screen',      label: '화면 공유',   icon: '🖥️' },
+const FACING_OPTIONS: { value: CameraFacing; label: string; icon: 'cameraFlip' | 'camera' | 'monitor' }[] = [
+  { value: 'user', label: '정면 카메라', icon: 'cameraFlip' },
+  { value: 'environment', label: '후면 카메라', icon: 'camera' },
+  { value: 'screen', label: '화면 공유', icon: 'monitor' },
 ];
 
 export default function WardStreamContent() {
@@ -219,10 +221,16 @@ export default function WardStreamContent() {
   return (
     <div className={styles.page}>
       {/* 탭 */}
-      <div className={styles.tabs}>
-        <button type="button" className={`${styles.tab} ${tab === 'live' ? styles.active : ''}`} onClick={() => setTab('live')}>실시간 송출</button>
-        <button type="button" className={`${styles.tab} ${tab === 'manual' ? styles.active : ''}`} onClick={() => setTab('manual')}>수동 업로드</button>
-      </div>
+      <Tabs
+        ariaLabel="송출 모드 탭"
+        items={[
+          { value: 'live', label: '실시간 송출' },
+          { value: 'manual', label: '수동 업로드' },
+        ]}
+        onChange={setTab}
+        size="sm"
+        value={tab}
+      />
 
       {/* ── 실시간 송출 ── */}
       {tab === 'live' && (
@@ -242,7 +250,7 @@ export default function WardStreamContent() {
                     disabled={status !== 'off'}
                     onClick={() => handleFacingChange(opt.value)}
                   >
-                    <span className={styles.facingIcon}>{opt.icon}</span>
+                    <Icon name={opt.icon} size={22} className={styles.facingIcon} />
                     <span>{opt.label}</span>
                   </button>
                 ))}
@@ -267,7 +275,15 @@ export default function WardStreamContent() {
               <div className={styles.mediaCtrl}>
                 {status === 'off'
                   ? <button type="button" className={styles.btnPrimary} onClick={handleStartMedia}>
-                      {facing === 'screen' ? '🖥️  화면 켜기' : '📷  카메라 켜기'}
+                      {facing === 'screen' ? (
+                        <>
+                          <Icon name="monitor" size={18} className={styles.btnIcon} /> 화면 켜기
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="camera" size={18} className={styles.btnIcon} /> 카메라 켜기
+                        </>
+                      )}
                     </button>
                   : <button type="button" className={styles.btnDanger} disabled={isStoppingLive} onClick={handleStopMedia}>
                       {isStoppingLive ? '종료 중' : '송출 종료'}
@@ -360,7 +376,7 @@ export default function WardStreamContent() {
       {/* ── 카메라 등록 (고급) ── */}
       <div className={styles.advancedWrap}>
         <button type="button" className={styles.advancedToggle} onClick={() => setShowCamReg(v => !v)}>
-          ⚙️ 카메라 등록 (고급) {showCamReg ? '▲' : '▼'}
+          <Icon name="gear" size={18} className={styles.btnIcon} /> 카메라 등록 (고급) {showCamReg ? '▲' : '▼'}
         </button>
         {showCamReg && (
           <form className={styles.camRegForm} onSubmit={handleCamReg}>

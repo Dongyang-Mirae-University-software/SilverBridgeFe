@@ -3,6 +3,7 @@
 import classNames from 'classnames/bind';
 
 import { UserAvatar } from '@/components/UserAvatar';
+import { Icon, type IconName } from '@/components/Icon';
 import { IConnectionItem } from '@/service/interface/connection';
 import {
   formatPartnerGender,
@@ -19,13 +20,11 @@ function getConnectionAddress(connection: IConnectionItem) {
   return [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
 }
 
-function ConnectionDetail({ icon, label, value }: { icon: string; label: string; value?: string | null }) {
+function ConnectionDetail({ icon, label, value }: { icon: IconName; label: string; value?: string | null }) {
   return (
     <li className={cx('connectionDetailRow')}>
       <span className={cx('connectionDetailLabel')}>
-        <span className={cx('connectionDetailIcon')} aria-hidden="true">
-          {icon}
-        </span>
+        <Icon name={icon} size={18} className={cx('connectionDetailIcon')} />
         {label}
       </span>
       <strong className={cx('connectionDetailValue')}>{value || '정보 없음'}</strong>
@@ -65,26 +64,26 @@ export function ConnectionCard({
           </div>
 
           <ul className={cx('connectionDetailList')}>
-            <ConnectionDetail icon="🤝" label="관계" value={connection.relation || '정보 없음'} />
-            <ConnectionDetail icon="📞" label="전화번호" value={getPartnerPhoneValue(connection)} />
-            <ConnectionDetail icon="📍" label="주소" value={getActivePartnerValue(connection, address)} />
+            <ConnectionDetail icon="handshake" label="관계" value={connection.relation || '정보 없음'} />
+            <ConnectionDetail icon="phone" label="전화번호" value={getPartnerPhoneValue(connection)} />
+            <ConnectionDetail icon="mapPin" label="주소" value={getActivePartnerValue(connection, address)} />
             <ConnectionDetail
-              icon="📧"
+              icon="mail"
               label="이메일"
               value={getActivePartnerValue(connection, connection.partnerEmail)}
             />
             <ConnectionDetail
-              icon="👤"
+              icon="user"
               label="성별"
               value={getActivePartnerValue(connection, formatPartnerGender(connection.partnerGender))}
             />
             <ConnectionDetail
-              icon="🎂"
+              icon="cake"
               label="생년월일"
               value={getActivePartnerValue(connection, connection.partnerBirthDate)}
             />
             <ConnectionDetail
-              icon="🏷"
+              icon="tag"
               label="우편번호"
               value={getActivePartnerValue(connection, connection.partnerPostcode)}
             />
