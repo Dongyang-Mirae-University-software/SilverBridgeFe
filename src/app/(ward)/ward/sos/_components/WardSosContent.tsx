@@ -8,6 +8,7 @@ import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
+import { UserAvatar } from '@/components/UserAvatar';
 import { getWardActiveConnections } from '@/service/api/connect/ward';
 import { useWardSosMutation } from '@/service/query/ward';
 import { getConnectionData } from '@/components/connections/ConnectionShared';
@@ -36,11 +37,6 @@ function makeTelHref(phone?: string | null) {
   return digits ? `tel:${digits}` : null;
 }
 
-function getInitial(name?: string | null) {
-  const value = name?.trim();
-  return value ? value.charAt(0) : '보';
-}
-
 function GuardianCard({ connection, index }: { connection: IConnectionItem; index: number }) {
   const telHref = makeTelHref(connection.partnerPhone);
   const isMint = index % 2 === 0;
@@ -56,7 +52,7 @@ function GuardianCard({ connection, index }: { connection: IConnectionItem; inde
       </div>
 
       <div className={cx('guardianBody')}>
-        <div className={cx('guardianAvatar')}>{getInitial(connection.partnerName)}</div>
+        <UserAvatar imageUrl={connection.partnerProfileImage} size="w-60" />
         <div className={cx('guardianInfo')}>
           <strong>{connection.partnerName}</strong>
           <span>{connection.relation || '보호자'}</span>
