@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import dayjs from 'dayjs';
@@ -71,6 +71,8 @@ const QUICK_PROMPTS = [
   '😵 머리가 좀 아파요',
   '🏥 다음 병원 예약 알려줘',
 ];
+
+const COMPOSER_MAX_LINES = 2;
 
 export default function GuardianChatContent() {
   const router = useRouter();
@@ -151,6 +153,26 @@ export default function GuardianChatContent() {
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
+
+  const resizeComposer = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = 'auto';
+
+    const computedStyle = window.getComputedStyle(textarea);
+    const lineHeight = Number.parseFloat(computedStyle.lineHeight) || 24;
+    const paddingTop = Number.parseFloat(computedStyle.paddingTop) || 0;
+    const paddingBottom = Number.parseFloat(computedStyle.paddingBottom) || 0;
+    const maxHeight = lineHeight * COMPOSER_MAX_LINES + paddingTop + paddingBottom;
+
+    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+  }, []);
+
+  useLayoutEffect(() => {
+    resizeComposer();
+  }, [input, resizeComposer]);
 
   const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
   const lastUpdatedAt = [...messages].reverse()[0]?.timestamp;
@@ -331,9 +353,7 @@ export default function GuardianChatContent() {
           )}
 
           <section className={styles.board}>
-            {fallback && (
-              <div className={styles.banner}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>
-            )}
+            {fallback && <div className={styles.banner}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
 
             <div ref={listRef} className={styles.messageList}>
               {messages.map(message => (
@@ -377,11 +397,14 @@ export default function GuardianChatContent() {
               <textarea
                 ref={textareaRef}
                 className={styles.textarea}
-                rows={2}
+                rows={1}
                 placeholder="궁금한 점을 입력하세요..."
                 value={input}
                 disabled={sending}
-                onChange={e => setInput(e.target.value)}
+                onChange={e => {
+                  setInput(e.target.value);
+                  resizeComposer();
+                }}
                 onKeyDown={handleKeyDown}
               />
               <button
