@@ -339,13 +339,13 @@
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 16px;
+  border-radius: 8px;
   background: var(--guardian-brand);
   color: #fff;
   cursor: pointer;
   flex-shrink: 0;
-  height: 64px;
-  width: 64px;
+  height: 32px;
+  width: 32px;
   box-shadow: 0 12px 22px rgba(32, 104, 79, 0.18);
 }
 
