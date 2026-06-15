@@ -2,14 +2,15 @@
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
-import { wardActiveConnectionsQueryOptions, useWardSosMutation } from '@/service/query/ward';
+import { getWardActiveConnections } from '@/service/api/connect/ward';
+import { useWardSosMutation } from '@/service/query/ward';
+import { getConnectionData } from '@/components/connections/ConnectionShared';
 import type { IConnectionItem } from '@/service/interface/connection';
 import styles from './WardSosContent.module.css';
 
@@ -79,22 +80,44 @@ function GuardianCard({ connection, index }: { connection: IConnectionItem; inde
 }
 
 export default function WardSosContent() {
-  const [isMounted, setIsMounted] = useState(false);
+  const [guardians, setGuardians] = useState<IConnectionItem[]>([]);
+  const [isLoadingGuardians, setIsLoadingGuardians] = useState(true);
+  const [isGuardiansError, setIsGuardiansError] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [successState, setSuccessState] = useState<{ sosEventId: number; triggeredAt: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const { data: guardians = [] } = useQuery(wardActiveConnectionsQueryOptions);
   const { mutate: triggerSos, isPending } = useWardSosMutation();
-
-  const activeGuardians = useMemo(() => guardians.filter(connection => connection.status === 'ACTIVE'), [guardians]);
+  const currentGuardians = guardians
+    .slice()
+    .sort((a, b) => new Date(b.connectedAt ?? b.createdAt).getTime() - new Date(a.connectedAt ?? a.createdAt).getTime());
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    let alive = true;
 
-  if (!isMounted) {
-    return null;
-  }
+    async function loadGuardians() {
+      setIsLoadingGuardians(true);
+      setIsGuardiansError(false);
+
+      try {
+        const response = await getWardActiveConnections();
+        if (!alive) return;
+        setGuardians(getConnectionData(response));
+      } catch {
+        if (!alive) return;
+        setGuardians([]);
+        setIsGuardiansError(true);
+      } finally {
+        if (!alive) return;
+        setIsLoadingGuardians(false);
+      }
+    }
+
+    void loadGuardians();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   function handleConfirm() {
     setIsConfirmOpen(false);
@@ -140,9 +163,29 @@ export default function WardSosContent() {
           <h3>보호자에게 직접 전화하기</h3>
         </div>
 
-        {activeGuardians.length > 0 ? (
+        {isGuardiansError ? (
+          <div className={cx('emptyState')}>
+            <div className={cx('emptyIcon')}>
+              <Icon name="users" size={20} decorative />
+            </div>
+            <div className={cx('emptyCopy')}>
+              <strong>보호자 목록을 불러오지 못했습니다.</strong>
+              <span>잠시 후 다시 시도해주세요.</span>
+            </div>
+          </div>
+        ) : isLoadingGuardians ? (
+          <div className={cx('emptyState')}>
+            <div className={cx('emptyIcon')}>
+              <Icon name="users" size={20} decorative />
+            </div>
+            <div className={cx('emptyCopy')}>
+              <strong>보호자 리스트를 불러오는 중입니다.</strong>
+              <span>연결된 보호자가 있으면 곧 표시됩니다.</span>
+            </div>
+          </div>
+        ) : currentGuardians.length > 0 ? (
           <div className={cx('guardianGrid')}>
-            {activeGuardians.map((connection, index) => (
+            {currentGuardians.map((connection, index) => (
               <GuardianCard key={connection.id} connection={connection} index={index} />
             ))}
           </div>
@@ -152,8 +195,8 @@ export default function WardSosContent() {
               <Icon name="users" size={20} decorative />
             </div>
             <div className={cx('emptyCopy')}>
-              <strong>활성화된 보호자 연결이 없습니다.</strong>
-              <span>보호자를 연결하면 이곳에 직통 전화 카드가 표시됩니다.</span>
+              <strong>현재 연결된 보호자가 없습니다.</strong>
+              <span>보호자를 연결하면 이곳에 바로 전화할 수 있는 카드가 표시됩니다.</span>
             </div>
             <Link className={cx('emptyButton')} href="/ward/guardians">
               보호자 연결하기
