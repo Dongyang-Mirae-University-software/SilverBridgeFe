@@ -67,7 +67,7 @@
 
 .guardianGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -91,14 +91,8 @@
 .guardianHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
-}
-
-.guardianBadge {
-  color: #2b6a56;
-  font-size: 14px;
-  font-weight: 850;
 }
 
 .guardianPhoneIcon {
@@ -245,10 +239,6 @@
 
   .hero p {
     font-size: 16px;
-  }
-
-  .guardianGrid {
-    grid-template-columns: 1fr;
   }
 
   .emptyState {
