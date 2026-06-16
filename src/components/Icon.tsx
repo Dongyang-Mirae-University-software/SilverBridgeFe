@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import classNames from 'classnames/bind';
 
 import AlertIcon from '@/assets/icons/alert.svg';
@@ -98,20 +98,78 @@ type IconStyle = CSSProperties & {
   '--icon-src'?: string;
 };
 
+const svgMarkupCache = new Map<string, string>();
+
 function resolveSvgSrc(asset: string | { src: string }) {
   return typeof asset === 'string' ? asset : asset.src;
 }
 
 export function Icon({ name, size = 24, color, label, className, decorative = true }: IconProps) {
   const asset = ICONS[name];
+  const assetSrc = asset.kind === 'asset' ? resolveSvgSrc(asset.src) : '';
+  const [inlineMarkup, setInlineMarkup] = useState<string | null>(null);
 
   const style: IconStyle = {
     '--icon-size': typeof size === 'number' ? `${size}px` : size,
     ...(color ? { color } : {}),
   };
 
+  useEffect(() => {
+    if (asset.kind !== 'asset') return;
+
+    let isAlive = true;
+
+    if (svgMarkupCache.has(assetSrc)) {
+      setInlineMarkup(svgMarkupCache.get(assetSrc) ?? null);
+      return () => {
+        isAlive = false;
+      };
+    }
+
+    setInlineMarkup(null);
+
+    fetch(assetSrc)
+      .then(response => response.text())
+      .then(markup => {
+        if (!isAlive) return;
+        svgMarkupCache.set(assetSrc, markup);
+        setInlineMarkup(markup);
+      })
+      .catch(() => {
+        if (!isAlive) return;
+        setInlineMarkup(null);
+      });
+
+    return () => {
+      isAlive = false;
+    };
+  }, [asset.kind, assetSrc]);
+
   if (asset.kind === 'asset') {
     style['--icon-src'] = `url("${resolveSvgSrc(asset.src)}")`;
+
+    if (inlineMarkup) {
+      return (
+        <span
+          className={cx('assetSvg', className)}
+          style={style}
+          aria-hidden={decorative && !label ? true : undefined}
+          aria-label={label}
+          role={label ? 'img' : undefined}
+          dangerouslySetInnerHTML={{ __html: inlineMarkup }}
+        />
+      );
+    }
+
+    return (
+      <span
+        className={cx('icon', 'assetFallback', className)}
+        style={style}
+        aria-hidden={decorative && !label ? true : undefined}
+        aria-label={label}
+        role={label ? 'img' : undefined}
+      />
+    );
   }
 
   if (asset.kind === 'path') {
