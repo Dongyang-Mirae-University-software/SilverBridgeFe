@@ -21,7 +21,7 @@ interface Props {
   profile?: IUserProfile | null;
   role: AuthRole;
   rootPath: string;
-  userEmail: string;
+  userId: string;
   userName: string;
 }
 
@@ -34,7 +34,7 @@ export function DashboardSidebar({
   profile,
   role,
   rootPath,
-  userEmail,
+  userId,
   userName,
 }: Props) {
   return (
@@ -74,7 +74,7 @@ export function DashboardSidebar({
               <strong>{userName}</strong>
               <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
             </div>
-            <span>{userEmail}</span>
+            <span className={cx('userIdText')}>{userId}</span>
           </div>
           <span className={cx('userChevron')} aria-hidden="true">
             ›

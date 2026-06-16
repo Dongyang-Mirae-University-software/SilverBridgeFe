@@ -41,6 +41,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const profile = getUserProfileData(profileResponse);
   const realtimeUserId = profile?.id;
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
+  const userId = profile?.id ?? '아이디 정보 없음';
   const userEmail = profile?.email ?? '이메일 정보 없음';
   const { mutate: logoutMutate, isPending: isLoggingOut } = useLogoutMutation();
   const { mutate: profileImageMutate, isPending: isProfileImageChanging } = useProfileImageChangeMutation({
@@ -114,7 +115,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           profile={profile}
           role={role}
           rootPath={rootPath}
-          userEmail={userEmail}
+          userId={userId}
           userName={userName}
         />
         {isProfileModalOpen && (
@@ -127,6 +128,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             onProfileImageChange={handleProfileImageChange}
             profile={profile}
             role={role}
+            userId={userId}
             userEmail={userEmail}
             userName={userName}
           />

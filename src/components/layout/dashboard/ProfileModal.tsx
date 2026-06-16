@@ -19,6 +19,7 @@ interface Props {
   onProfileImageDelete: () => void;
   profile: IUserProfile | null;
   role: AuthRole;
+  userId: string;
   userEmail: string;
   userName: string;
 }
@@ -32,6 +33,7 @@ export function ProfileModal({
   onProfileImageDelete,
   profile,
   role,
+  userId,
   userEmail,
   userName,
 }: Props) {
@@ -63,7 +65,16 @@ export function ProfileModal({
               <span className={cx('profileProviderBadge')}>{getProviderLabel(profile?.provider)}</span>
             </div>
             <h2 id="profile-modal-title">{userName}</h2>
-            <p className={cx('profileUserEmail')}>{userEmail}</p>
+            <div className={cx('profileIdentity')}>
+              <div className={cx('profileIdentityRow')}>
+                <span>아이디</span>
+                <strong>{userId}</strong>
+              </div>
+              <div className={cx('profileIdentityRow')}>
+                <span>이메일</span>
+                <strong className={cx('profileEmailText')}>{userEmail}</strong>
+              </div>
+            </div>
           </div>
         </div>
 

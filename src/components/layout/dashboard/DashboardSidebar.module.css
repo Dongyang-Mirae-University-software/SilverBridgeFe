@@ -181,6 +181,12 @@
   white-space: nowrap;
 }
 
+.userIdText {
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .userCard:hover {
   background: #fff;
 }
