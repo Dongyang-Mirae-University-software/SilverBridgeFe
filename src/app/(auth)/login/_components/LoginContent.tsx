@@ -47,8 +47,6 @@ export default function LoginContent() {
   const [remember, setRemember] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const isValid = email.trim().length > 0 && password.trim().length > 0;
-
   const { mutate, isPending } = useMutation({
     mutationKey: ['login'],
     mutationFn: signin,
@@ -75,11 +73,20 @@ export default function LoginContent() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!isValid || isPending) return;
+    if (isPending) return;
+
+    const formData = new FormData(event.currentTarget);
+    const formEmail = String(formData.get('email') ?? '').trim();
+    const formPassword = String(formData.get('password') ?? '').trim();
+
+    if (!formEmail || !formPassword) {
+      setErrorMessage('이메일과 비밀번호를 입력해주세요.');
+      return;
+    }
 
     mutate({
-      email: email.trim(),
-      password: password.trim(),
+      email: formEmail,
+      password: formPassword,
     });
   };
 
@@ -140,7 +147,7 @@ export default function LoginContent() {
 
         {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
 
-        <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
+        <button className={cx('submitButton')} disabled={isPending} type="submit">
           {isPending ? '로그인 중...' : '로그인'}
         </button>
       </form>
