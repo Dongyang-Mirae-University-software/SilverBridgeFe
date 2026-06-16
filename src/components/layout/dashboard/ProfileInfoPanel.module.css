@@ -85,6 +85,10 @@
   min-width: 0;
 }
 
+.profileBirthDateSelects {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .profileFieldBody span {
   color: var(--sb-ink);
   font-size: 22px;

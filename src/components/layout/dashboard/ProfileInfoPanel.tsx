@@ -4,6 +4,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import { signupSmsSend, signupSmsVerify } from '@/service/api/auth';
 import { GenderType } from '@/service/interface/auth';
 import { IUserUpdateReq } from '@/service/interface/user';
+import { BirthDateSelects } from '@/components/BirthDateSelects';
 import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
 import classNames from 'classnames/bind';
 import styles from './ProfileInfoPanel.module.css';
@@ -92,12 +93,7 @@ export function ProfileInfoPanel({
 
         <ProfileRow label="생년월일" editing={isEditing}>
           {isEditing ? (
-            <ProfileTextInput
-              inputMode="numeric"
-              placeholder="2000.01.01"
-              value={formatBirthDateInput(form.birthDate)}
-              onValueChange={value => onChange('birthDate', normalizeBirthDateInput(value))}
-            />
+            <BirthDateSelects className={cx('profileBirthDateSelects')} value={form.birthDate ?? ''} onChange={value => onChange('birthDate', value)} />
           ) : (
             <span>{getFieldValue(form.birthDate)}</span>
           )}
@@ -208,13 +204,4 @@ function getGenderLabel(gender: GenderType | '' | null | undefined) {
   if (gender === 'FEMALE') return '여성';
   if (gender === 'MALE') return '남성';
   return '정보 없음';
-}
-
-function formatBirthDateInput(value?: string | null) {
-  if (!value) return '';
-  return value.trim().replaceAll('-', '.');
-}
-
-function normalizeBirthDateInput(value: string) {
-  return value.replace(/[^\d.]/g, '').slice(0, 10);
 }

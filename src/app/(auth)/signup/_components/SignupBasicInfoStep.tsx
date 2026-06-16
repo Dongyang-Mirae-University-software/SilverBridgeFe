@@ -5,6 +5,7 @@ import styles from './SignupBasicInfoStep.module.css';
 import SignupRoleSelector from './SignupRoleSelector';
 import TextInput from '@/components/TextInput';
 import { SignupFormValues } from '@/hooks/useSignupForm';
+import { BirthDateSelects } from '@/components/BirthDateSelects';
 
 const cx = classNames.bind(styles);
 
@@ -24,7 +25,8 @@ interface SignupBasicInfoStepProps {
   genderField: UseFormRegisterReturn;
   addressField: UseFormRegisterReturn;
   addressDetailField: UseFormRegisterReturn;
-  birthDateField: UseFormRegisterReturn;
+  birthDateValue: string;
+  onBirthDateChange: (value: string) => void;
   postcodeField: UseFormRegisterReturn;
   onAddressSearch: () => void;
   onEmailCheck: () => void;
@@ -46,7 +48,8 @@ export default function SignupBasicInfoStep({
   genderField,
   addressField,
   addressDetailField,
-  birthDateField,
+  birthDateValue,
+  onBirthDateChange,
   postcodeField,
   onAddressSearch,
   onEmailCheck,
@@ -109,15 +112,13 @@ export default function SignupBasicInfoStep({
             </select>
           </span>
         </label>
-        <TextInput
-          label="생년월일"
-          placeholder="2000.01.01"
-          required
-          inputMode="numeric"
-          {...birthDateField}
-          error={Boolean(errors.birthDate && allValues.birthDate && allValues.birthDate.trim() !== '')}
-          errorText={errors.birthDate?.message}
-        />
+        <label className={cx('birthDateField')}>
+          <span className={cx('selectLabel')}>생년월일 *</span>
+          <BirthDateSelects className={cx('birthDateSelects')} value={birthDateValue} onChange={onBirthDateChange} />
+          {errors.birthDate?.message && allValues.birthDate && allValues.birthDate.trim() !== '' && (
+            <span className={cx('birthDateError')}>{errors.birthDate.message}</span>
+          )}
+        </label>
       </div>
       <div className={cx('addressSearchRow')}>
         <TextInput
