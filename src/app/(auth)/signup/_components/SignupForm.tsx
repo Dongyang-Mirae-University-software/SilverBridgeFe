@@ -169,6 +169,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
     (isKakaoSignup || allValues.password.trim().length > 0) &&
     (isKakaoSignup || allValues.passwordCheck.trim().length > 0) &&
     allValues.birthDate.trim().length > 0 &&
+    allValues.gender.trim().length > 0 &&
     allValues.postcode.trim().length > 0 &&
     allValues.address.trim().length > 0 &&
     allValues.addressDetail.trim().length > 0 &&
@@ -176,6 +177,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
     (isKakaoSignup || !errors.password) &&
     (isKakaoSignup || !errors.passwordCheck) &&
     !errors.name &&
+    !errors.gender &&
     !errors.birthDate &&
     !errors.postcode &&
     !errors.address;
@@ -226,6 +228,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
             emailField={register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
             passwordField={register('password', isKakaoSignup ? undefined : passwordRules('비밀번호 형식이 올바르지 않습니다.'))}
             passwordCheckField={register('passwordCheck', isKakaoSignup ? undefined : passwordCheckRules('비밀번호가 일치하지 않습니다.'))}
+            genderField={register('gender', { required: '성별을 선택하세요.' })}
             birthDateField={register('birthDate', textRules('생년월일을 입력하세요.', 1))}
             postcodeField={register('postcode', textRules('우편번호를 입력하세요.', 1))}
             addressField={register('address', textRules('주소를 입력하세요.', 1))}

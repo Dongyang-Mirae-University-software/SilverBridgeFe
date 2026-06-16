@@ -22,7 +22,7 @@ export type SignupFormValues = {
   role: RoleType;
   address: string;
   addressDetail: string;
-  gender: GenderType;
+  gender: GenderType | '';
   birthDate: string;
   postcode: string;
 };
@@ -66,7 +66,7 @@ export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) 
       role: 'WARD',
       address: '',
       addressDetail: '',
-      gender: 'FEMALE',
+      gender: '',
       birthDate: '',
       postcode: '',
     },
@@ -118,7 +118,7 @@ export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) 
       role: 'WARD',
       address: '',
       addressDetail: '',
-      gender: 'FEMALE',
+      gender: '',
       birthDate: '',
       postcode: '',
     });
@@ -139,6 +139,8 @@ export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) 
 
   function onSubmit(formData: SignupFormValues) {
     const phone = getPhoneDigits(formData.phone);
+    const birthDate = normalizeBirthDateForApi(formData.birthDate);
+    const gender = formData.gender as GenderType;
 
     if (isKakaoSignup && kakaoData) {
       const form: IKakaoSignupReq = {
@@ -150,8 +152,8 @@ export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) 
         profileImageUrl: kakaoData.profileImageUrl,
         address: formData.address,
         addressDetail: formData.addressDetail,
-        gender: formData.gender,
-        birthDate: formData.birthDate,
+        gender,
+        birthDate,
         postcode: formData.postcode,
       };
 
@@ -190,8 +192,8 @@ export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) 
       role: formData.role,
       address: formData.address,
       addressDetail: formData.addressDetail,
-      gender: formData.gender,
-      birthDate: formData.birthDate,
+      gender,
+      birthDate,
       postcode: formData.postcode,
     };
 
@@ -223,4 +225,10 @@ export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) 
     isKakaoSignup,
     clearSignupError: () => setSignupError(null),
   };
+}
+
+function normalizeBirthDateForApi(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length !== 8) return value.trim();
+  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
 }
