@@ -79,7 +79,9 @@ export function ProfileInfoPanel({
         <ProfileRow label="성별" editing={isEditing}>
           {isEditing ? (
             <select value={form.gender ?? ''} onChange={event => onChange('gender', event.target.value as GenderType | '')}>
-              <option value="">선택 안 함</option>
+              <option value="" disabled>
+                선택
+              </option>
               <option value="FEMALE">여성</option>
               <option value="MALE">남성</option>
             </select>
