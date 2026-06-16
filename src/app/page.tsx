@@ -1,49 +1,35 @@
-'use client';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
-import { getMyProfile } from '@/service/api/user';
 import { getRoleHomePath } from '@/lib/auth/routes';
-import { getUserProfileData } from '@/lib/auth/userProfile';
-import { clearAuthTokens, getAccessToken, getAuthRole, setAuthRole } from '@/lib/auth/tokenStore';
+import type { AuthRole } from '@/lib/auth/tokenStore';
 
-export default function Home() {
-  const router = useRouter();
+const ACCESS_TOKEN_KEY = 'careai_access_token';
 
-  useEffect(() => {
-    const redirectByAuthState = async () => {
-      const accessToken = getAccessToken();
+export default async function Home() {
+  const accessToken = (await cookies()).get(ACCESS_TOKEN_KEY)?.value;
+  const role = getRoleFromAccessToken(accessToken);
 
-      if (!accessToken) {
-        router.replace('/login');
-        return;
-      }
+  redirect(role ? getRoleHomePath(role) : '/login');
+}
 
-      const storedRole = getAuthRole();
+function getRoleFromAccessToken(token?: string): AuthRole | null {
+  const payload = token?.split('.')[1];
+  if (!payload) return null;
 
-      if (storedRole) {
-        router.replace(getRoleHomePath(storedRole));
-        return;
-      }
-
-      try {
-        const profile = getUserProfileData(await getMyProfile());
-
-        if (profile?.role) {
-          setAuthRole(profile.role);
-          router.replace(getRoleHomePath(profile.role));
-          return;
-        }
-      } catch {
-        clearAuthTokens();
-      }
-
-      router.replace('/login');
+  try {
+    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, '=');
+    const decodedPayload = JSON.parse(Buffer.from(paddedPayload, 'base64').toString('utf8')) as {
+      exp?: unknown;
+      role?: unknown;
     };
 
-    void redirectByAuthState();
-  }, [router]);
+    if (typeof decodedPayload.exp === 'number' && decodedPayload.exp * 1000 <= Date.now()) return null;
+    if (decodedPayload.role === 'WARD' || decodedPayload.role === 'GUARDIAN' || decodedPayload.role === 'ADMIN') return decodedPayload.role;
+  } catch {
+    return null;
+  }
 
   return null;
 }
