@@ -87,6 +87,7 @@ export default function GuardianChatContent() {
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -279,7 +280,12 @@ export default function GuardianChatContent() {
 
   function handleQuickPrompt(prompt: string) {
     setInput(prompt);
+    setHelpOpen(false);
     textareaRef.current?.focus();
+  }
+
+  function handleToggleHelp() {
+    setHelpOpen(prev => !prev);
   }
 
   function handleNewSession() {
@@ -289,6 +295,7 @@ export default function GuardianChatContent() {
     setFallback(false);
     setContext(profile ? profileToContext(profile) : {});
     setContextOpen(false);
+    setHelpOpen(false);
     textareaRef.current?.focus();
   }
 
@@ -332,6 +339,9 @@ export default function GuardianChatContent() {
                 <button type="button" className={styles.utilityButton} onClick={handleNewSession}>
                   새 상담
                 </button>
+                <button type="button" className={cx('helpButton', helpOpen && 'helpButtonActive')} onClick={handleToggleHelp}>
+                  도움이 필요하신가요?
+                </button>
               </div>
 
               <span className={styles.toolbarMeta}>
@@ -339,19 +349,24 @@ export default function GuardianChatContent() {
               </span>
             </div>
 
-            <div className={styles.quickPromptRow} aria-label="추천 질문">
-              {QUICK_PROMPTS.map(prompt => (
-                <button
-                  key={prompt}
-                  type="button"
-                  className={styles.quickPromptButton}
-                  disabled={sending}
-                  onClick={() => handleQuickPrompt(prompt)}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
+            {helpOpen && (
+              <div className={styles.quickPromptPopover} aria-label="추천 질문">
+                <p className={styles.quickPromptTitle}>이런 걸 물어보세요</p>
+                <div className={styles.quickPromptRow}>
+                  {QUICK_PROMPTS.map(prompt => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      className={styles.quickPromptButton}
+                      disabled={sending}
+                      onClick={() => handleQuickPrompt(prompt)}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {contextOpen && (
