@@ -51,7 +51,9 @@ export function BirthDateSelects({ value, onChange, className }: Props) {
           updateParts({ year: nextYear, month, day: normalizedDay && nextDays.includes(normalizedDay) ? normalizedDay : '' });
         }}
       >
-        <option value="">{BIRTH_DATE_PLACEHOLDERS.year}</option>
+        <option value="" disabled>
+          {BIRTH_DATE_PLACEHOLDERS.year}
+        </option>
         {getBirthDateYears().map(option => (
           <option key={option} value={option}>
             {option}
@@ -66,15 +68,24 @@ export function BirthDateSelects({ value, onChange, className }: Props) {
           updateParts({ year, month: nextMonth, day: normalizedDay && nextDays.includes(normalizedDay) ? normalizedDay : '' });
         }}
       >
-        <option value="">{BIRTH_DATE_PLACEHOLDERS.month}</option>
+        <option value="" disabled>
+          {BIRTH_DATE_PLACEHOLDERS.month}
+        </option>
         {getBirthDateMonths().map(option => (
           <option key={option} value={option}>
             {option}
           </option>
         ))}
       </select>
-      <select value={normalizedDay} onChange={event => updateParts({ year, month, day: event.target.value })}>
-        <option value="">{BIRTH_DATE_PLACEHOLDERS.day}</option>
+      <select
+        value={normalizedDay}
+        onChange={event => {
+          updateParts({ year, month, day: event.target.value });
+        }}
+      >
+        <option value="" disabled>
+          {BIRTH_DATE_PLACEHOLDERS.day}
+        </option>
         {days.map(option => (
           <option key={option} value={option}>
             {option}
