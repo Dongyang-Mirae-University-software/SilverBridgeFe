@@ -108,6 +108,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .toolbarActions {
@@ -137,6 +138,24 @@
   color: #fff;
 }
 
+.helpButton {
+  display: inline-flex;
+  justify-content: center;
+  border: 1px solid rgba(38, 83, 63, 0.16);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--guardian-brand);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 850;
+  padding: 10px 14px;
+}
+
+.helpButtonActive {
+  background: rgba(32, 104, 79, 0.08);
+  border-color: rgba(32, 104, 79, 0.28);
+}
+
 .toolbarMeta {
   color: var(--sb-ink-soft);
   font-size: 13px;
@@ -149,11 +168,27 @@
   font-weight: 850;
 }
 
+.quickPromptPopover {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(38, 83, 63, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 14px 16px 16px;
+  box-shadow: 0 14px 30px rgba(43, 52, 39, 0.08);
+}
+
+.quickPromptTitle {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 850;
+}
+
 .quickPromptRow {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding-top: 12px;
 }
 
 .quickPromptButton {
@@ -385,12 +420,16 @@
     align-items: flex-start;
   }
 
+  .helpButton {
+    align-self: flex-start;
+  }
+
   .toolbarMeta {
     align-self: flex-end;
   }
 
-  .quickPromptRow {
-    padding-top: 8px;
+  .quickPromptPopover {
+    padding: 12px;
   }
 
   .contextSummary {
