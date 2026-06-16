@@ -79,19 +79,14 @@ export function GuardianDashboardContent() {
       ),
     [activeConnections],
   );
+  const hasActiveConnections = sortedActiveConnections.length > 0;
   const [selectedConnectionId, setSelectedConnectionId] = useState<number | null>(null);
   const selectedActiveConnection =
     sortedActiveConnections.find(connection => connection.id === selectedConnectionId) ?? null;
 
-  const heroName = selectedActiveConnection?.partnerName || '샘플 피보호자';
-  const heroLabel = hasLiveStreamData
-    ? analyzingStreamCount > 0
-      ? '주의 · 감지 진행 중'
-      : '안정 · 모니터링 중'
-    : '안정 · 기쁨 표정 감지';
-  const heroUpdatedAt = selectedActiveConnection
-    ? formatClock(selectedActiveConnection.connectedAt ?? selectedActiveConnection.createdAt)
-    : '오후 2:34';
+  const heroName = selectedActiveConnection?.partnerName ?? '';
+  const heroLabel = hasLiveStreamData ? (analyzingStreamCount > 0 ? '주의 · 감지 진행 중' : '안정 · 모니터링 중') : '안정 · 모니터링 중';
+  const heroUpdatedAt = selectedActiveConnection ? formatClock(selectedActiveConnection.connectedAt ?? selectedActiveConnection.createdAt) : EMPTY_VALUE;
 
   useEffect(() => {
     if (sortedActiveConnections.length === 0) {
@@ -110,53 +105,60 @@ export function GuardianDashboardContent() {
 
   return (
     <div className={cx('dashboardStack')}>
-      <section className={cx('wardSelectRow')} aria-label="피보호자 목록">
-        <span className={cx('wardSelectLabel')}>피보호자</span>
-        <div className={cx('wardRail')} role="list">
-          {sortedActiveConnections.length > 0 ? (
-            sortedActiveConnections.map(connection => {
-              const isSelected = selectedActiveConnection?.id === connection.id;
+      {hasActiveConnections ? (
+        <>
+          <section className={cx('wardSelectRow')} aria-label="피보호자 목록">
+            <span className={cx('wardSelectLabel')}>피보호자</span>
+            <div className={cx('wardRail')} role="list">
+              {sortedActiveConnections.map(connection => {
+                const isSelected = selectedActiveConnection?.id === connection.id;
 
-              return (
-                <button
-                  key={connection.id}
-                  className={cx('wardChip', { active: isSelected })}
-                  type="button"
-                  onClick={() => setSelectedConnectionId(connection.id)}
-                >
-                  <UserAvatar imageUrl={connection.partnerProfileImage} size="w-32" />
-                  <span className={cx('wardChipName')}>{connection.partnerName || EMPTY_VALUE}</span>
-                  <span className={cx('wardChipRelation')}>{connection.relation || '관계'}</span>
-                </button>
-              );
-            })
-          ) : (
-            <div className={cx('wardChip', 'wardChipStatic')} aria-hidden="true">
-              <UserAvatar size="w-32" />
-              <span className={cx('wardChipName')}>샘플 피보호자</span>
-              <span className={cx('wardChipRelation')}>미리보기</span>
+                return (
+                  <button
+                    key={connection.id}
+                    className={cx('wardChip', { active: isSelected })}
+                    type="button"
+                    onClick={() => setSelectedConnectionId(connection.id)}
+                  >
+                    <UserAvatar imageUrl={connection.partnerProfileImage} size="w-32" />
+                    <span className={cx('wardChipName')}>{connection.partnerName || EMPTY_VALUE}</span>
+                    <span className={cx('wardChipRelation')}>{connection.relation || '관계'}</span>
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </div>
-      </section>
+          </section>
 
-      <section className={cx('heroCard')}>
-        <div className={cx('heroProfile')}>
-          <UserAvatar imageUrl={selectedActiveConnection?.partnerProfileImage} size="w-60" />
+          <section className={cx('heroCard')}>
+            <div className={cx('heroProfile')}>
+              <UserAvatar imageUrl={selectedActiveConnection?.partnerProfileImage} size="w-60" />
 
-          <div className={cx('heroText')}>
-            <span className={cx('heroEyebrow')}>
-              {selectedActiveConnection ? `${heroName} 님 오늘 상태` : '샘플 피보호자 님 오늘 상태'}
-            </span>
-            <strong>{heroLabel}</strong>
+              <div className={cx('heroText')}>
+                <span className={cx('heroEyebrow')}>{heroName ? `${heroName} 님 오늘 상태` : '피보호자 오늘 상태'}</span>
+                <strong>{heroLabel}</strong>
+              </div>
+            </div>
+
+            <div className={cx('heroMeta')}>
+              <span>마지막 업데이트</span>
+              <strong>{heroUpdatedAt}</strong>
+            </div>
+          </section>
+        </>
+      ) : (
+        <section className={cx('emptyHero')} aria-label="피보호자 없음">
+          <div className={cx('emptyHeroIcon')}>
+            <Icon name="users" size={28} />
           </div>
-        </div>
-
-        <div className={cx('heroMeta')}>
-          <span>마지막 업데이트</span>
-          <strong>{heroUpdatedAt}</strong>
-        </div>
-      </section>
+          <div className={cx('emptyHeroText')}>
+            <strong>연결된 피보호자가 없습니다</strong>
+            <span>피보호자를 등록하면 상태 확인과 알림 관리가 시작됩니다.</span>
+          </div>
+          <Link className={cx('emptyHeroButton')} href="/guardian/wards?tab=register">
+            피보호자 등록하기
+          </Link>
+        </section>
+      )}
 
       <section className={cx('featureGrid')} aria-label="핵심 기능">
         {FEATURE_CARDS.map(card => (

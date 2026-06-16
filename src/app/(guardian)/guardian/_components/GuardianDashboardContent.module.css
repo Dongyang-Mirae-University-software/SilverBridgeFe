@@ -100,6 +100,64 @@
   padding: 18px 22px;
 }
 
+.emptyHero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px dashed var(--sb-line-soft);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 20px 22px;
+}
+
+.emptyHeroIcon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 18px;
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+}
+
+.emptyHeroText {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.emptyHeroText strong {
+  color: var(--sb-ink);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.emptyHeroText span {
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.emptyHeroButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--guardian-brand);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 850;
+  padding: 12px 16px;
+  text-decoration: none;
+  box-shadow: 0 10px 22px rgba(32, 104, 79, 0.16);
+}
+
 .heroProfile {
   display: flex;
   min-width: 0;
@@ -365,6 +423,15 @@
 }
 
 @media (max-width: 720px) {
+  .emptyHero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .emptyHeroButton {
+    align-self: stretch;
+  }
+
   .heroCard {
     flex-direction: column;
     align-items: flex-start;
