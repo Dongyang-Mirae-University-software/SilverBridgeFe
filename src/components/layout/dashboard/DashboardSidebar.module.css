@@ -101,17 +101,28 @@
     color 0.12s ease;
 }
 
-.navItem:hover,
-.navItem.active {
+.navItem:hover {
   background: var(--sb-brand-50);
   color: var(--sb-brand);
   font-weight: 700;
 }
 
-:global(.guardianTheme) .navItem:hover,
-:global(.guardianTheme) .navItem.active {
+.navItem.active {
+  background: var(--sb-brand);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(31, 94, 72, 0.16);
+}
+
+:global(.guardianTheme) .navItem:hover {
   background: var(--guardian-brand-soft);
   color: var(--guardian-brand);
+}
+
+:global(.guardianTheme) .navItem.active {
+  background: var(--guardian-brand);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(51, 110, 191, 0.16);
 }
 
 .navIcon {
