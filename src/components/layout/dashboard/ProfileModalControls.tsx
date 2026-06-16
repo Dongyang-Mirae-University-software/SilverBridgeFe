@@ -129,7 +129,7 @@ function getValidatedProfile(form: IUserUpdateReq, isPhoneChanged: boolean, phon
   const name = (form.name ?? '').trim();
   const phone = (form.phone ?? '').trim();
   const gender = form.gender;
-  const birthDate = form.birthDate ?? '';
+  const birthDate = normalizeBirthDateForApi(form.birthDate ?? '');
   const postcode = (form.postcode ?? '').trim();
   const address = (form.address ?? '').trim();
   const addressDetail = (form.addressDetail ?? '').trim();
@@ -139,4 +139,10 @@ function getValidatedProfile(form: IUserUpdateReq, isPhoneChanged: boolean, phon
   if (!birthDate || !postcode || !address) return '생년월일, 우편번호, 주소를 모두 입력하세요.';
   if (isPhoneChanged && !phoneNonce) return '전화번호를 변경하려면 SMS 인증을 완료하세요.';
   return { ...form, address, addressDetail, birthDate, gender, name, phone, postcode, verificationNonce: isPhoneChanged ? phoneNonce : null };
+}
+
+function normalizeBirthDateForApi(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length !== 8) return '';
+  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
 }
