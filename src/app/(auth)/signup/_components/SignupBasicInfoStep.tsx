@@ -101,7 +101,9 @@ export default function SignupBasicInfoStep({
       )}
       <div className={cx('fieldGroup')}>
         <label className={cx('selectField')}>
-          <span className={cx('selectLabel')}>성별 *</span>
+          <span className={cx('selectLabel')}>
+            성별 <span className={cx('requiredMark')}>*</span>
+          </span>
           <span className={cx('selectBox')}>
             <select {...genderField}>
               <option value="" disabled>
@@ -113,7 +115,9 @@ export default function SignupBasicInfoStep({
           </span>
         </label>
         <label className={cx('birthDateField')}>
-          <span className={cx('selectLabel')}>생년월일 *</span>
+          <span className={cx('selectLabel')}>
+            생년월일 <span className={cx('requiredMark')}>*</span>
+          </span>
           <BirthDateSelects className={cx('birthDateSelects')} value={birthDateValue} onChange={onBirthDateChange} />
           {errors.birthDate?.message && allValues.birthDate && allValues.birthDate.trim() !== '' && (
             <span className={cx('birthDateError')}>{errors.birthDate.message}</span>
