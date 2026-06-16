@@ -320,22 +320,38 @@ export default function GuardianChatContent() {
 
         <div className={styles.body}>
           <div className={styles.toolbar}>
-            <div className={styles.toolbarActions}>
-              <button
-                type="button"
-                className={cx('utilityButton', contextOpen && 'utilityButtonActive')}
-                onClick={() => setContextOpen(prev => !prev)}
-              >
-                상담 컨텍스트
-              </button>
-              <button type="button" className={styles.utilityButton} onClick={handleNewSession}>
-                새 상담
-              </button>
+            <div className={styles.toolbarTopRow}>
+              <div className={styles.toolbarActions}>
+                <button
+                  type="button"
+                  className={cx('utilityButton', contextOpen && 'utilityButtonActive')}
+                  onClick={() => setContextOpen(prev => !prev)}
+                >
+                  상담 컨텍스트
+                </button>
+                <button type="button" className={styles.utilityButton} onClick={handleNewSession}>
+                  새 상담
+                </button>
+              </div>
+
+              <span className={styles.toolbarMeta}>
+                최근 답변 <strong>{formatClock(lastUpdatedAt)}</strong>
+              </span>
             </div>
 
-            <span className={styles.toolbarMeta}>
-              최근 답변 <strong>{formatClock(lastUpdatedAt)}</strong>
-            </span>
+            <div className={styles.quickPromptRow} aria-label="추천 질문">
+              {QUICK_PROMPTS.map(prompt => (
+                <button
+                  key={prompt}
+                  type="button"
+                  className={styles.quickPromptButton}
+                  disabled={sending}
+                  onClick={() => handleQuickPrompt(prompt)}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
 
           {contextOpen && (
@@ -372,23 +388,6 @@ export default function GuardianChatContent() {
                   <span className={styles.typingDot} />
                 </div>
               )}
-            </div>
-          </section>
-
-          <section className={styles.suggestionPanel}>
-            <p className={styles.suggestionTitle}>이런 걸 물어보세요</p>
-            <div className={styles.chips}>
-              {QUICK_PROMPTS.map(prompt => (
-                <button
-                  key={prompt}
-                  type="button"
-                  className={styles.chip}
-                  disabled={sending}
-                  onClick={() => handleQuickPrompt(prompt)}
-                >
-                  {prompt}
-                </button>
-              ))}
             </div>
           </section>
 
