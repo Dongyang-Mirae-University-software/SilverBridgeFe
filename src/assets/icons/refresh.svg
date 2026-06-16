@@ -4,13 +4,13 @@
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
-    stroke-width="2.4"
+    stroke-width="3.2"
   />
   <path
     d="M20 4v5h-5"
     stroke="currentColor"
     stroke-linecap="round"
     stroke-linejoin="round"
-    stroke-width="2.4"
+    stroke-width="3.2"
   />
 </svg>

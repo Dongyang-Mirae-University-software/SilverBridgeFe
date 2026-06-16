@@ -44,7 +44,7 @@ export function RefreshButton({
       disabled={disabled || isActive}
       onClick={handleRefresh}
     >
-      <Icon className={cx('icon', { spinning: isActive })} name="refresh" size={18} decorative />
+      <Icon className={cx('icon', { spinning: isActive })} name="refresh" size={20} decorative />
       <span>{isActive ? refreshingLabel : label}</span>
     </button>
   );
