@@ -2,9 +2,33 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+  width: 100%;
 }
 
 .birthDateSelects select {
   width: 100%;
   min-width: 0;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 1.5px solid #e5d8c5;
+  border-radius: 12px;
+  background: #fbf6f0;
+  color: #1f1916;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+  padding: 0 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.birthDateSelects select:hover {
+  border-color: #d97757;
+}
+
+.birthDateSelects select:focus {
+  border-color: #d97757;
+  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.12);
 }
