@@ -1,3 +1,5 @@
+import { BIRTH_DATE_MONTHS, BIRTH_DATE_START_YEAR } from '@/constants/birthDate';
+
 export type BirthDateParts = {
   year: string;
   month: string;
@@ -24,13 +26,14 @@ export function composeBirthDate(parts: BirthDateParts) {
   return `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 }
 
-export function getBirthDateYears(startYear = 1900) {
+export function getBirthDateYears(startYear = BIRTH_DATE_START_YEAR) {
+  const normalizedStartYear = Math.max(startYear, BIRTH_DATE_START_YEAR);
   const currentYear = new Date().getFullYear();
-  return Array.from({ length: currentYear - startYear + 1 }, (_, index) => String(currentYear - index));
+  return Array.from({ length: currentYear - normalizedStartYear + 1 }, (_, index) => String(currentYear - index));
 }
 
 export function getBirthDateMonths() {
-  return Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, '0'));
+  return BIRTH_DATE_MONTHS;
 }
 
 export function getBirthDateDays(year: string, month: string) {

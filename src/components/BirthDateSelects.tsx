@@ -2,6 +2,7 @@ import classNames from 'classnames/bind';
 
 import styles from './BirthDateSelects.module.css';
 import { composeBirthDate, getBirthDateDays, getBirthDateMonths, getBirthDateYears, parseBirthDate } from '@/lib/format/birthDate';
+import { BIRTH_DATE_PLACEHOLDERS } from '@/constants/birthDate';
 
 const cx = classNames.bind(styles);
 
@@ -26,7 +27,7 @@ export function BirthDateSelects({ value, onChange, className }: Props) {
           onChange(composeBirthDate({ year: nextYear, month, day: normalizedDay && nextDays.includes(normalizedDay) ? normalizedDay : '' }));
         }}
       >
-        <option value="">[YYYY]</option>
+        <option value="">{BIRTH_DATE_PLACEHOLDERS.year}</option>
         {getBirthDateYears().map(option => (
           <option key={option} value={option}>
             {option}
@@ -41,7 +42,7 @@ export function BirthDateSelects({ value, onChange, className }: Props) {
           onChange(composeBirthDate({ year, month: nextMonth, day: normalizedDay && nextDays.includes(normalizedDay) ? normalizedDay : '' }));
         }}
       >
-        <option value="">[MM]</option>
+        <option value="">{BIRTH_DATE_PLACEHOLDERS.month}</option>
         {getBirthDateMonths().map(option => (
           <option key={option} value={option}>
             {option}
@@ -49,7 +50,7 @@ export function BirthDateSelects({ value, onChange, className }: Props) {
         ))}
       </select>
       <select value={normalizedDay} onChange={event => onChange(composeBirthDate({ year, month, day: event.target.value }))}>
-        <option value="">[DD]</option>
+        <option value="">{BIRTH_DATE_PLACEHOLDERS.day}</option>
         {days.map(option => (
           <option key={option} value={option}>
             {option}
