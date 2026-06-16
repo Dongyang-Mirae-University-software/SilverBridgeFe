@@ -21,6 +21,7 @@ interface SignupBasicInfoStepProps {
   emailField: UseFormRegisterReturn;
   passwordField: UseFormRegisterReturn;
   passwordCheckField: UseFormRegisterReturn;
+  genderField: UseFormRegisterReturn;
   addressField: UseFormRegisterReturn;
   addressDetailField: UseFormRegisterReturn;
   birthDateField: UseFormRegisterReturn;
@@ -42,6 +43,7 @@ export default function SignupBasicInfoStep({
   emailField,
   passwordField,
   passwordCheckField,
+  genderField,
   addressField,
   addressDetailField,
   birthDateField,
@@ -98,7 +100,10 @@ export default function SignupBasicInfoStep({
         <label className={cx('selectField')}>
           <span className={cx('selectLabel')}>성별 *</span>
           <span className={cx('selectBox')}>
-            <select {...register('gender')}>
+            <select {...genderField}>
+              <option value="" disabled>
+                선택
+              </option>
               <option value="FEMALE">여성</option>
               <option value="MALE">남성</option>
             </select>
@@ -106,8 +111,9 @@ export default function SignupBasicInfoStep({
         </label>
         <TextInput
           label="생년월일"
+          placeholder="2000.01.01"
           required
-          type="date"
+          inputMode="numeric"
           {...birthDateField}
           error={Boolean(errors.birthDate && allValues.birthDate && allValues.birthDate.trim() !== '')}
           errorText={errors.birthDate?.message}
