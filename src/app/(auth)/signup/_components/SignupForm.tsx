@@ -229,7 +229,8 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
             passwordField={register('password', isKakaoSignup ? undefined : passwordRules('비밀번호 형식이 올바르지 않습니다.'))}
             passwordCheckField={register('passwordCheck', isKakaoSignup ? undefined : passwordCheckRules('비밀번호가 일치하지 않습니다.'))}
             genderField={register('gender', { required: '성별을 선택하세요.' })}
-            birthDateField={register('birthDate', textRules('생년월일을 입력하세요.', 1))}
+            birthDateValue={allValues.birthDate}
+            onBirthDateChange={value => setValue('birthDate', value, { shouldDirty: true, shouldValidate: true })}
             postcodeField={register('postcode', textRules('우편번호를 입력하세요.', 1))}
             addressField={register('address', textRules('주소를 입력하세요.', 1))}
             addressDetailField={register('addressDetail', textRules('상세주소를 입력하세요.', 1))}

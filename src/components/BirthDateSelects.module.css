@@ -1,0 +1,10 @@
+.birthDateSelects {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.birthDateSelects select {
+  width: 100%;
+  min-width: 0;
+}

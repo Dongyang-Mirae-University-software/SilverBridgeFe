@@ -4,6 +4,13 @@
   gap: 10px;
 }
 
+.birthDateField {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .selectField {
   display: flex;
   min-width: 0;
@@ -36,6 +43,17 @@
   font-size: 15px;
   font-weight: 600;
   outline: none;
+}
+
+.birthDateSelects {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.birthDateError {
+  color: #c94f35;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .addressSearchRow {
