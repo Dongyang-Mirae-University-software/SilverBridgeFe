@@ -18,7 +18,8 @@ export interface IConnectionItem {
   priority?: number;
   connectedAt: string | null;
   createdAt: string;
-  requester: boolean;
+  requester?: boolean;
+  isRequester?: boolean;
 }
 
 export interface IGuardianConnectionRequestReq {
