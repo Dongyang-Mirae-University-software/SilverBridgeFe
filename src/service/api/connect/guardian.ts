@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { CommonResponse } from '../../interface/common';
 import { IConnectionItem, IGuardianConnectionRequestReq } from '../../interface/connection';
+import { getConnectionResponseBody, mergeConnectionItems } from './connectionResponse';
 
 const GUARDIAN_CONNECTION_BASE = '/guardian/connection';
 
@@ -8,12 +9,29 @@ export async function requestWardConnection(body: IGuardianConnectionRequestReq)
   return apiClient.post<CommonResponse<null>>(`${GUARDIAN_CONNECTION_BASE}/request`, body);
 }
 
-export async function getGuardianConnections() {
+export async function getGuardianActiveConnections() {
   return apiClient.get<CommonResponse<IConnectionItem[]>>(`${GUARDIAN_CONNECTION_BASE}/select`);
 }
 
 export async function getGuardianConnectionRequests() {
   return apiClient.get<CommonResponse<IConnectionItem[]>>(`${GUARDIAN_CONNECTION_BASE}/requests`);
+}
+
+export async function getGuardianConnections(): Promise<CommonResponse<IConnectionItem[]>> {
+  const [activeResult, requestResult] = await Promise.allSettled([
+    getGuardianActiveConnections(),
+    getGuardianConnectionRequests(),
+  ]);
+
+  const activeBody = activeResult.status === 'fulfilled' ? getConnectionResponseBody(activeResult.value) : null;
+  const requestBody = requestResult.status === 'fulfilled' ? getConnectionResponseBody(requestResult.value) : null;
+
+  return {
+    code: activeBody?.code ?? requestBody?.code ?? 200,
+    success: activeBody?.success ?? requestBody?.success ?? true,
+    message: activeBody?.message || requestBody?.message,
+    data: mergeConnectionItems(activeBody?.data ?? [], requestBody?.data ?? []),
+  };
 }
 
 export async function disconnectGuardianConnection(connectionId: number) {
