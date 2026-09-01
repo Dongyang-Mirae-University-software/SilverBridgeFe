@@ -16,13 +16,11 @@ import { getConnectionData } from '@/components/connections/ConnectionShared';
 import type { IConnectionItem } from '@/service/interface/connection';
 import styles from './WardSosContent.module.css';
 
-function callEmergencyNumber() {
-  window.location.href = 'tel:119';
-}
-
 dayjs.locale('ko');
 
 const cx = classNames.bind(styles);
+
+const DIAL_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
 
 function formatTriggeredAt(value?: string) {
   if (!value) return '-';
@@ -42,7 +40,61 @@ function makeTelHref(phone?: string | null) {
   return digits ? `tel:${digits}` : null;
 }
 
-function GuardianCard({ connection, index }: { connection: IConnectionItem; index: number }) {
+function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
+  const [digits, setDigits] = useState('119');
+
+  return (
+    <div className={cx('dialOverlay')} role="dialog" aria-modal="true" aria-label="119 신고 키패드">
+      <div className={cx('dialCard')}>
+        <div className={cx('dialHeader')}>
+          <span className={cx('dialNotice')}>학생 프로젝트 화면입니다 · 실제로 신고 전화가 발신되지 않습니다</span>
+          <button className={cx('dialClose')} type="button" onClick={onClose} aria-label="닫기">
+            ×
+          </button>
+        </div>
+
+        <div className={cx('dialDisplay')}>{digits || ' '}</div>
+
+        <div className={cx('dialPad')}>
+          {DIAL_KEYS.map(key => (
+            <button
+              key={key}
+              type="button"
+              className={cx('dialKey')}
+              onClick={() => setDigits(prev => (prev + key).slice(0, 15))}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+
+        <div className={cx('dialActions')}>
+          <button
+            className={cx('dialBackspace')}
+            type="button"
+            onClick={() => setDigits(prev => prev.slice(0, -1))}
+            aria-label="한 글자 지우기"
+          >
+            ⌫
+          </button>
+          <button className={cx('dialCallButton')} type="button" disabled aria-label="발신 불가(테스트 화면)">
+            <Icon name="phone" size={26} decorative />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GuardianCard({
+  connection,
+  index,
+  onCall,
+}: {
+  connection: IConnectionItem;
+  index: number;
+  onCall: () => void;
+}) {
   const telHref = makeTelHref(connection.partnerPhone);
   const isMint = index % 2 === 0;
 
@@ -72,7 +124,12 @@ function GuardianCard({ connection, index }: { connection: IConnectionItem; inde
       </div>
 
       {telHref ? (
-        <a className={cx('cardLink')} href={telHref} aria-label={`${connection.partnerName}에게 전화하기`} />
+        <a
+          className={cx('cardLink')}
+          href={telHref}
+          aria-label={`${connection.partnerName}에게 전화하기`}
+          onClick={onCall}
+        />
       ) : null}
     </article>
   );
@@ -84,6 +141,7 @@ export default function WardSosContent() {
   const [isLoadingGuardians, setIsLoadingGuardians] = useState(true);
   const [isGuardiansError, setIsGuardiansError] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isDialOpen, setIsDialOpen] = useState(false);
   const [successState, setSuccessState] = useState<{ sosEventId: number; triggeredAt: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const { mutate: triggerSos, isPending } = useWardSosMutation();
@@ -123,8 +181,7 @@ export default function WardSosContent() {
 
   function handleHeroPress() {
     if (wardSettings.sosAction === 'call119') {
-      callEmergencyNumber();
-      triggerSos(undefined, { onError: error => reportSosError(error) });
+      setIsDialOpen(true);
       return;
     }
 
@@ -145,7 +202,7 @@ export default function WardSosContent() {
         const data = response.data?.data;
 
         if (wardSettings.sosAction === 'call119AndNotify') {
-          callEmergencyNumber();
+          setIsDialOpen(true);
         }
 
         setSuccessState({
@@ -159,6 +216,10 @@ export default function WardSosContent() {
 
   function handleCloseSuccess() {
     setSuccessState(null);
+  }
+
+  function handleGuardianCall() {
+    triggerSos({ triggerType: 'GUARDIAN_CALL' });
   }
 
   return (
@@ -200,7 +261,7 @@ export default function WardSosContent() {
         ) : currentGuardians.length > 0 ? (
           <div className={cx('guardianGrid')}>
             {currentGuardians.map((connection, index) => (
-              <GuardianCard key={connection.id} connection={connection} index={index} />
+              <GuardianCard key={connection.id} connection={connection} index={index} onCall={handleGuardianCall} />
             ))}
           </div>
         ) : (
@@ -240,15 +301,15 @@ export default function WardSosContent() {
           title="SOS 전송 완료"
           message={
             wardSettings.sosAction === 'notifyGuardianFirst'
-              ? `보호자에게 알림을 보냈습니다.\n필요하면 아래 버튼으로 119에 전화하세요.\n${formatTriggeredAt(successState.triggeredAt)}`
+              ? `보호자에게 알림을 보냈습니다.\n필요하면 아래 버튼으로 119 화면을 여세요.\n${formatTriggeredAt(successState.triggeredAt)}`
               : `SOS 이력이 저장되었습니다.\n이력 ID ${successState.sosEventId} · ${formatTriggeredAt(successState.triggeredAt)}`
           }
-          confirmText={wardSettings.sosAction === 'notifyGuardianFirst' ? '119 전화하기' : '확인'}
+          confirmText={wardSettings.sosAction === 'notifyGuardianFirst' ? '119 화면 열기' : '확인'}
           secondaryText={wardSettings.sosAction === 'notifyGuardianFirst' ? '닫기' : undefined}
           onConfirm={
             wardSettings.sosAction === 'notifyGuardianFirst'
               ? () => {
-                  callEmergencyNumber();
+                  setIsDialOpen(true);
                   handleCloseSuccess();
                 }
               : handleCloseSuccess
@@ -269,6 +330,8 @@ export default function WardSosContent() {
           onClose={() => setErrorMessage('')}
         />
       )}
+
+      {isDialOpen && <Emergency119Dialpad onClose={() => setIsDialOpen(false)} />}
     </div>
   );
 }
