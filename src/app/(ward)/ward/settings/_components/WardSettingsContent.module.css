@@ -4,254 +4,12 @@
   gap: 16px;
 }
 
-/* ── 카드 공통 ── */
-.card {
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: var(--sb-shadow-sm);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.cardHeader {
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-}
-
-.cardTitle {
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: 16px;
-  font-weight: 850;
-  line-height: 1.3;
-}
-
-.cardDesc {
-  margin: 4px 0 0;
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-/* ── 글자 크기 슬라이더 ── */
-.sliderWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sliderTrack {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.sliderLabel {
-  flex-shrink: 0;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  font-weight: 700;
-  width: 30px;
-}
-
-.sliderLabel:last-child {
-  text-align: right;
-}
-
-.slider {
-  flex: 1;
-  height: 10px;
-  appearance: none;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    var(--sb-brand) 0 var(--settings-range-progress, 0%),
-    var(--sb-line-soft) var(--settings-range-progress, 0%) 100%
-  );
-  cursor: pointer;
-  outline: none;
-}
-
-.slider::-webkit-slider-thumb {
-  width: 28px;
-  height: 28px;
-  appearance: none;
-  border: 3px solid #fff;
-  border-radius: 50%;
-  background: var(--sb-brand);
-  box-shadow: 0 2px 8px rgba(31, 94, 72, 0.3);
-  cursor: grab;
-}
-
-.slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border: 3px solid #fff;
-  border-radius: 50%;
-  background: var(--sb-brand);
-  box-shadow: 0 2px 8px rgba(31, 94, 72, 0.3);
-  cursor: grab;
-}
-
-.preview {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  border-radius: 12px;
-  background: var(--sb-bg-soft);
-  padding: 14px 16px;
-}
-
-.previewSample {
-  margin: 0;
-  color: var(--sb-ink);
-  font-weight: 700;
-  line-height: 1.4;
-  flex: 1;
-}
-
-.previewSize {
-  flex-shrink: 0;
-  border-radius: 8px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 13px;
-  font-weight: 850;
-  padding: 4px 10px;
-}
-
-/* ── 고대비 토글 ── */
-.toggleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.toggleInfo {
-  min-width: 0;
-}
-
-.toggleLabel {
-  display: block;
-  color: var(--sb-ink);
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.toggleHint {
-  display: block;
-  margin-top: 3px;
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.toggle {
-  position: relative;
-  display: inline-block;
-  width: 52px;
-  height: 30px;
-  flex-shrink: 0;
-}
-
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggleThumb {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: var(--sb-line-soft);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.toggleThumb::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  transition: transform 0.2s;
-}
-
-.toggle input:checked + .toggleThumb {
-  background: var(--sb-brand);
-}
-.toggle input:checked + .toggleThumb::after {
-  transform: translateX(22px);
-}
-
-.contrastPreview {
-  border-radius: 10px;
-  border: 1px solid var(--sb-line-soft);
-  padding: 12px 14px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--sb-ink-soft);
-  line-height: 1.5;
-  transition:
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.contrastPreviewOn {
-  color: #050505;
-  border-color: #888;
-  font-weight: 800;
-}
-
-/* ── SOS 라디오 카드 ── */
-.sosGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sosCard {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  border: 2px solid var(--sb-line-soft);
-  border-radius: 14px;
-  background: #fafaf8;
-  cursor: pointer;
-  padding: 16px;
-  transition:
-    border-color 0.12s,
-    background 0.12s;
-}
-
-.sosCard:hover {
-  border-color: var(--sb-brand);
-  background: var(--sb-brand-50);
-}
-
-.sosCardActive {
-  border-color: var(--sb-brand);
-  background: var(--sb-brand-50);
-}
-
 .notificationError {
   border: 1px solid #f4c6c6;
   border-radius: 12px;
   background: #fff7f7;
   color: #a63d3d;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1.5;
   padding: 11px 14px;
@@ -289,7 +47,7 @@
 
 .notificationTitle {
   color: var(--sb-ink);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 850;
 }
 
@@ -298,14 +56,14 @@
   border-radius: 999px;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 850;
   padding: 3px 8px;
 }
 
 .notificationDesc {
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
@@ -360,7 +118,7 @@
 .securityLabel {
   display: block;
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 800;
 }
 
@@ -368,7 +126,7 @@
   display: block;
   margin-top: 3px;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 
@@ -379,7 +137,7 @@
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
   min-height: 40px;
   padding: 0 16px;
@@ -420,7 +178,7 @@
 .passwordDialogHeader h3 {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 850;
   line-height: 1.3;
 }
@@ -428,7 +186,7 @@
 .passwordDialogHeader p {
   margin: 4px 0 0;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 
@@ -442,7 +200,7 @@
   background: rgba(15, 23, 42, 0.05);
   color: var(--sb-ink-mute);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -465,7 +223,7 @@
 
 .passwordField span {
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -477,7 +235,7 @@
   background: rgba(15, 23, 42, 0.03);
   color: var(--sb-ink);
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 750;
   min-height: 48px;
   outline: none;
@@ -492,7 +250,7 @@
 .passwordError {
   margin: 0;
   color: var(--sb-warn);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.5;
 }
@@ -511,7 +269,7 @@
   border: 0;
   border-radius: 999px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
   min-height: 40px;
   padding: 0 16px;
@@ -558,87 +316,9 @@
   }
 }
 
-.sosCard input {
-  display: none;
-}
-
-.sosIcon {
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  display: block;
-  border-radius: 12px;
-  background: #fff;
-  object-fit: contain;
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.sosCardActive .sosIcon {
-  background: var(--sb-brand);
-}
-
-.sosText {
-  min-width: 0;
-}
-
-.sosCardLabel {
-  display: block;
-  color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.3;
-}
-
-.sosCardActive .sosCardLabel {
-  color: var(--sb-brand);
-}
-
-.sosCardHint {
-  display: block;
-  margin-top: 2px;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.sosCheck {
-  margin-left: auto;
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--sb-line-soft);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  transition:
-    border-color 0.12s,
-    background 0.12s;
-}
-
-.sosCardActive .sosCheck {
-  border-color: var(--sb-brand);
-  background: var(--sb-brand);
-}
-
-.sosCheck::after {
-  content: '';
-  display: none;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #fff;
-}
-
-.sosCardActive .sosCheck::after {
-  display: block;
-}
-
 @media (max-width: 700px) {
   .page {
     max-width: 100%;
-  }
-  .card {
-    padding: 18px;
   }
 
   .securityActionRow {

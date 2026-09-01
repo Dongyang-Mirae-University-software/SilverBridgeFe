@@ -50,7 +50,7 @@
   overflow: hidden;
   max-width: 150px;
   color: var(--sb-ink-mute);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -67,7 +67,7 @@
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -92,7 +92,7 @@
   gap: 10px;
   border-radius: 10px;
   color: var(--sb-ink-soft);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   padding: 9px 12px;
   text-decoration: none;
@@ -167,7 +167,7 @@
 
 .userCard strong {
   display: block;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 800;
 }
 
@@ -176,14 +176,14 @@
   overflow: hidden;
   max-width: 150px;
   color: var(--sb-ink-mute);
-  font-size: 11px;
+  font-size: 0.6875rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .userIdText {
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
@@ -224,7 +224,7 @@
   border-radius: 999px;
   background: #dceee3;
   color: var(--sb-safe);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 800;
   padding: 2px 6px;
 }
@@ -237,7 +237,7 @@
 .userChevron {
   flex-shrink: 0;
   color: var(--sb-ink-mute);
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
   line-height: 1;
 }
@@ -276,7 +276,7 @@
 
   .navItem {
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 0.875rem;
     padding: 12px 13px;
   }
 

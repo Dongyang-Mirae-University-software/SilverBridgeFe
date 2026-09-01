@@ -34,7 +34,7 @@
   border-radius: 50%;
   background: var(--guardian-brand);
   color: #fff;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 850;
   margin-bottom: 2px;
 }
@@ -60,7 +60,7 @@
 .modelBadge {
   display: inline-flex;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 800;
   padding: 2px 8px;
 }
@@ -107,7 +107,7 @@
 
 .bubbleUser p {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -128,7 +128,7 @@
 .replyText {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.7;
   white-space: pre-wrap;
@@ -147,7 +147,7 @@
 .medTitle {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
 }
 
@@ -165,7 +165,7 @@
 
 .medList li {
   color: var(--sb-ink-soft);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.55;
 }
@@ -184,7 +184,7 @@
 .timeUser,
 .timeAssistant {
   color: var(--sb-ink-mute);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1;
 }

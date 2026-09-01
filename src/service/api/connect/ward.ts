@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { CommonResponse } from '../../interface/common';
 import { IConnectionItem, IWardPendingConnectionRequest } from '../../interface/connection';
+import { getConnectionResponseBody } from './connectionResponse';
 
 const WARD_CONNECTION_BASE = '/ward/connection';
 
@@ -19,15 +20,32 @@ export async function getWardPendingConnectionRequests() {
 export async function getWardConnections(): Promise<CommonResponse<IConnectionItem[]>> {
   const [activeResult, pendingResult] = await Promise.allSettled([getWardActiveConnections(), getWardPendingConnectionRequests()]);
 
-  const activeBody = activeResult.status === 'fulfilled' ? activeResult.value.data : undefined;
-  const pendingBody = pendingResult.status === 'fulfilled' ? pendingResult.value.data : undefined;
+  const activeBody = activeResult.status === 'fulfilled' ? getConnectionResponseBody(activeResult.value) : null;
+  const pendingBody = pendingResult.status === 'fulfilled' ? getWardPendingConnectionBody(pendingResult.value) : null;
 
   return {
     code: activeBody?.code ?? pendingBody?.code ?? 200,
-    success: activeBody?.success ?? pendingBody?.success,
+    success: activeBody?.success ?? pendingBody?.success ?? true,
     message: activeBody?.message || pendingBody?.message,
     data: mergeWardConnections(activeBody?.data ?? [], pendingBody?.data ?? []),
   };
+}
+
+function getWardPendingConnectionBody(response: unknown): CommonResponse<IWardPendingConnectionRequest[]> | null {
+  const body = response as
+    | CommonResponse<IWardPendingConnectionRequest[]>
+    | { data?: CommonResponse<IWardPendingConnectionRequest[]> | IWardPendingConnectionRequest[] }
+    | undefined;
+
+  if (!body) return null;
+  if (Array.isArray(body.data)) return { ...body, data: body.data };
+
+  const nestedBody = body.data;
+  if (nestedBody && typeof nestedBody === 'object' && 'data' in nestedBody) {
+    return nestedBody as CommonResponse<IWardPendingConnectionRequest[]>;
+  }
+
+  return body as CommonResponse<IWardPendingConnectionRequest[]>;
 }
 
 function mergeWardConnections(

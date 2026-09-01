@@ -16,7 +16,7 @@
 .wardSelectLabel {
   flex-shrink: 0;
   color: var(--sb-ink-soft);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 800;
 }
 
@@ -42,7 +42,7 @@
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 850;
   padding: 7px 14px 7px 8px;
   white-space: nowrap;
@@ -71,7 +71,7 @@
   border-radius: 999px;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   padding: 4px 8px;
 }
@@ -131,14 +131,14 @@
 
 .emptyHeroText strong {
   color: var(--sb-ink);
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 900;
   line-height: 1.2;
 }
 
 .emptyHeroText span {
   color: var(--sb-ink-soft);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   line-height: 1.5;
 }
@@ -151,7 +151,7 @@
   border-radius: 999px;
   background: var(--guardian-brand);
   color: #fff;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 850;
   padding: 12px 16px;
   text-decoration: none;
@@ -172,14 +172,14 @@
 }
 
 .heroEyebrow {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   opacity: 0.8;
 }
 
 .heroText strong {
   color: #fff;
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 900;
   line-height: 1.2;
 }
@@ -192,14 +192,14 @@
 }
 
 .heroMeta span {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   opacity: 0.8;
 }
 
 .heroMeta strong {
   color: #fff;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 900;
 }
 
@@ -219,7 +219,7 @@
 .cardHeader h3 {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 900;
 }
 
@@ -275,14 +275,14 @@
 
 .donutInner strong {
   color: var(--sb-ink);
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 900;
   line-height: 1;
 }
 
 .donutInner span {
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -304,13 +304,13 @@
   align-items: center;
   gap: 8px;
   color: var(--sb-ink-soft);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
 .donutItem strong {
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 900;
 }
 
@@ -353,20 +353,20 @@
 
 .featureCard strong {
   color: inherit;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 900;
 }
 
 .featureCard b {
   color: inherit;
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 900;
   line-height: 1;
 }
 
 .featureCard span {
   color: inherit;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.45;
 }
 

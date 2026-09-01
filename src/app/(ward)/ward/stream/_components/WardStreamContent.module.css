@@ -33,7 +33,7 @@
   border-radius: 999px;
   background: var(--sb-brand);
   color: #fff;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 850;
   margin-top: 2px;
 }
@@ -49,7 +49,7 @@
 .stepTitle {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 850;
 }
 
@@ -78,7 +78,7 @@
   cursor: pointer;
   padding: 16px 12px;
   transition: border-color 0.12s, background 0.12s;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 750;
   color: var(--sb-ink-soft);
 }
@@ -138,7 +138,7 @@
   align-items: center;
   justify-content: center;
   color: rgba(255, 255, 255, 0.35);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 650;
   text-align: center;
   padding: 20px;
@@ -160,7 +160,7 @@
   flex-direction: column;
   gap: 6px;
   color: var(--sb-ink-soft);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 750;
 }
 
@@ -172,7 +172,7 @@
   background: #fff;
   color: var(--sb-ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 0.8125rem;
   padding: 0 12px;
   outline: none;
   width: 100%;
@@ -203,7 +203,7 @@
   align-items: center;
   gap: 5px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
   padding: 4px 12px;
 }
@@ -230,7 +230,7 @@
   border-radius: 999px;
   background: #fbf1db;
   color: var(--sb-sun);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 750;
   padding: 4px 12px;
 }
@@ -258,7 +258,7 @@
   flex-direction: column;
   gap: 5px;
   color: var(--sb-ink-soft);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 750;
 }
 
@@ -272,7 +272,7 @@
   background: #fff;
   color: var(--sb-ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 0.8125rem;
   padding: 0 12px;
   outline: none;
 }
@@ -284,7 +284,7 @@
   border-radius: 10px;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   padding: 10px 14px;
 }
@@ -303,7 +303,7 @@
   border: 0;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 800;
   padding: 11px 22px;
   white-space: nowrap;
@@ -313,8 +313,8 @@
 .btnPrimary   { background: var(--sb-brand); color: #fff; }
 .btnSecondary { border: 1px solid var(--sb-line); background: #fff; color: var(--sb-ink-soft); }
 .btnDanger    { background: #fbe5e0; color: var(--sb-warn); }
-.btnStart     { background: var(--sb-brand); color: #fff; font-size: 15px; padding: 12px 28px; }
-.btnStop      { background: #fbe5e0; color: var(--sb-warn); font-size: 15px; padding: 12px 28px; }
+.btnStart     { background: var(--sb-brand); color: #fff; font-size: 0.9375rem; padding: 12px 28px; }
+.btnStop      { background: #fbe5e0; color: var(--sb-warn); font-size: 0.9375rem; padding: 12px 28px; }
 
 .btnPrimary:hover:not(:disabled),
 .btnStart:hover:not(:disabled)   { filter: brightness(0.94); }
@@ -333,7 +333,7 @@
   border-radius: 9px;
   background: var(--sb-bg-soft);
   color: var(--sb-ink-soft);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   padding: 9px 12px;
 }
@@ -354,7 +354,7 @@
   background: transparent;
   color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 750;
   padding: 14px 18px;
   text-align: left;

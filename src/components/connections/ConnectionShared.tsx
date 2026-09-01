@@ -3,19 +3,14 @@
 import classNames from 'classnames/bind';
 
 import { formatPhoneNumber } from '@/lib/format/phone';
+import { getConnectionItems, normalizeConnectionItem } from '@/service/api/connect/connectionResponse';
 import { IConnectionItem } from '@/service/interface/connection';
 import styles from './ConnectionShared.module.css';
 
 const cx = classNames.bind(styles);
 
 export function getConnectionData(response: unknown) {
-  if (Array.isArray(response)) return response as IConnectionItem[];
-
-  const data = (response as { data?: unknown } | undefined)?.data;
-  if (Array.isArray(data)) return data as IConnectionItem[];
-
-  const nestedData = (data as { data?: unknown } | undefined)?.data;
-  return Array.isArray(nestedData) ? (nestedData as IConnectionItem[]) : [];
+  return getConnectionItems(response).map(normalizeConnectionItem);
 }
 
 export function getErrorMessage(error: unknown, fallback: string) {

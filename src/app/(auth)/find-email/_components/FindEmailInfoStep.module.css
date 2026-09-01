@@ -6,7 +6,7 @@
 .description {
   margin: 0 0 20px;
   color: #8a7868;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
@@ -26,7 +26,7 @@
   display: block;
   margin-bottom: 6px;
   color: #5c4d3f;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -38,7 +38,7 @@
   outline: none;
   background: #fbf6f0;
   color: #1f1916;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
   transition: border-color 0.15s;
 }
@@ -54,7 +54,7 @@
 .errorMessage {
   margin: -4px 0 14px;
   color: var(--sb-warn);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.4;
 }
 
@@ -65,7 +65,7 @@
   border-radius: 12px;
   background: #d97757;
   color: #ffffff;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   line-height: 1.4;
   cursor: pointer;

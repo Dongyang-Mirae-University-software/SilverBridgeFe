@@ -21,14 +21,14 @@
 .sectionTitle {
   margin: 0 0 4px;
   color: var(--sb-ink);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 850;
 }
 
 .sectionDesc {
   margin: 0;
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.6;
 }
 
@@ -38,7 +38,7 @@
   border-radius: 14px;
   background: #fff7f5;
   color: var(--sb-warn);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.6;
   padding: 12px 14px;
@@ -52,7 +52,7 @@
   margin: 0;
   padding: 18px 22px;
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* ── 알림 토글 목록 ── */
@@ -78,7 +78,7 @@
 .toggleLabel {
   display: block;
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 750;
 }
 
@@ -86,7 +86,7 @@
   display: block;
   margin-top: 2px;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 
@@ -143,7 +143,7 @@
 .securityLabel {
   display: block;
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 800;
 }
 
@@ -151,7 +151,7 @@
   display: block;
   margin-top: 3px;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 
@@ -162,7 +162,7 @@
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
   min-height: 40px;
   padding: 0 16px;
@@ -203,7 +203,7 @@
 .passwordDialogHeader h3 {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 850;
   line-height: 1.3;
 }
@@ -211,7 +211,7 @@
 .passwordDialogHeader p {
   margin: 4px 0 0;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 
@@ -225,7 +225,7 @@
   background: rgba(15, 23, 42, 0.05);
   color: var(--sb-ink-mute);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -248,7 +248,7 @@
 
 .passwordField span {
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -260,7 +260,7 @@
   background: rgba(15, 23, 42, 0.03);
   color: var(--sb-ink);
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 750;
   min-height: 48px;
   outline: none;
@@ -277,7 +277,7 @@
 .passwordError {
   margin: 0;
   color: var(--sb-warn);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.5;
 }
@@ -296,7 +296,7 @@
   border: 0;
   border-radius: 999px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
   min-height: 40px;
   padding: 0 16px;

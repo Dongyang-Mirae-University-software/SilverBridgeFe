@@ -1,9 +1,3 @@
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 /* ── 카드 공통 ── */
 .card {
   border: 1px solid var(--sb-line-soft);
@@ -19,26 +13,13 @@
 .cardHeader {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-}
-
-.cardNum {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 15px;
-  font-weight: 850;
+  gap: 0;
 }
 
 .cardTitle {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 850;
   line-height: 1.3;
 }
@@ -46,7 +27,7 @@
 .cardDesc {
   margin: 4px 0 0;
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
@@ -67,7 +48,7 @@
 .sliderLabel {
   flex-shrink: 0;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   width: 30px;
 }
@@ -134,7 +115,7 @@
   border-radius: 8px;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 850;
   padding: 4px 10px;
 }
@@ -154,7 +135,7 @@
 .toggleLabel {
   display: block;
   color: var(--sb-ink);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 800;
 }
 
@@ -162,7 +143,7 @@
   display: block;
   margin-top: 3px;
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
@@ -213,7 +194,7 @@
   border-radius: 10px;
   border: 1px solid var(--sb-line-soft);
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   color: var(--sb-ink-soft);
   line-height: 1.5;
@@ -264,14 +245,13 @@
 }
 
 .sosIcon {
-  display: grid;
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  place-items: center;
+  display: block;
   border-radius: 12px;
   background: #fff;
-  font-size: 20px;
+  object-fit: contain;
   box-shadow: var(--sb-shadow-sm);
 }
 
@@ -286,7 +266,7 @@
 .sosCardLabel {
   display: block;
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 800;
   line-height: 1.3;
 }
@@ -299,7 +279,7 @@
   display: block;
   margin-top: 2px;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.4;
 }
 
@@ -336,9 +316,6 @@
 }
 
 @media (max-width: 700px) {
-  .page {
-    max-width: 100%;
-  }
   .card {
     padding: 18px;
   }

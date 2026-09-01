@@ -4,7 +4,7 @@
   border-radius: 0;
   background: transparent;
   color: var(--sb-ink-soft);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   line-height: 1.5;
   padding: 0;
@@ -30,13 +30,13 @@
 
 .connectionStat span {
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 650;
 }
 
 .connectionStat strong {
   color: var(--sb-ink);
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -44,7 +44,7 @@
 
 .connectionStat small {
   color: var(--sb-safe);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 650;
 }
 
@@ -96,7 +96,7 @@
 .connectionTitleRow strong {
   overflow: hidden;
   color: var(--sb-ink);
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
   line-height: 1.25;
   text-overflow: ellipsis;
@@ -106,7 +106,7 @@
 .connectionNameBlock span {
   overflow: hidden;
   color: var(--sb-ink-mute);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -119,7 +119,7 @@
   border-radius: 999px;
   background: #fbf1db;
   color: var(--sb-sun);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   padding: 4px 11px;
 }
@@ -145,7 +145,7 @@
   flex-wrap: wrap;
   gap: 10px;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -172,7 +172,7 @@
   padding: 8px 0;
   border-bottom: 1px dashed rgba(37, 32, 24, 0.14);
   color: var(--sb-ink-soft);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.45;
 }
 
@@ -228,7 +228,7 @@
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   padding: 8px 14px;
   text-decoration: none;
@@ -246,7 +246,7 @@
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   padding: 8px 14px;
   text-decoration: none;
