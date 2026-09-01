@@ -1,29 +1,50 @@
-import { useSyncExternalStore } from 'react';
+import { type ReactElement, useSyncExternalStore } from 'react';
 
-import type { CommonModalTone, CommonModalType } from '@/components/CommonModal';
+export type ModalRootId = 'modal-root' | 'demo-fullscreen-modal-root';
 
-export interface ModalState {
+interface ModalItem {
   id: number;
-  type?: CommonModalType;
-  tone?: CommonModalTone;
-  title?: string;
-  message: string;
-  confirmText?: string;
-  secondaryText?: string;
-  onConfirm?: () => void;
-  onSecondary?: () => void;
+  Component: ReactElement;
+  rootId: ModalRootId;
 }
 
-type ModalInput = Omit<ModalState, 'id'>;
+interface ModalStoreState {
+  modals: ModalItem[];
+  openModal: (Component: ReactElement, rootId?: ModalRootId) => void;
+  onCloseModal: () => void;
+  resetModal: () => void;
+}
+
 type ModalListener = () => void;
 
-let modalState: ModalState[] = [];
-let modalId = 0;
+type ModalSelector<T> = (state: ModalStoreState) => T;
+
 const listeners = new Set<ModalListener>();
+let modalId = 0;
+let storeState: ModalStoreState;
 
 function emitChange() {
   listeners.forEach(listener => listener());
 }
+
+function setModals(modals: ModalItem[]) {
+  storeState = { ...storeState, modals };
+  emitChange();
+}
+
+storeState = {
+  modals: [],
+  openModal: (Component, rootId = 'modal-root') => {
+    modalId += 1;
+    setModals([...storeState.modals, { id: modalId, Component, rootId }]);
+  },
+  onCloseModal: () => {
+    setModals(storeState.modals.slice(0, -1));
+  },
+  resetModal: () => {
+    setModals([]);
+  },
+};
 
 function subscribe(listener: ModalListener) {
   listeners.add(listener);
@@ -31,34 +52,14 @@ function subscribe(listener: ModalListener) {
 }
 
 function getSnapshot() {
-  return modalState;
+  return storeState;
 }
 
 function getServerSnapshot() {
-  return [];
+  return storeState;
 }
 
-export function openModal(modal: ModalInput) {
-  modalId += 1;
-  modalState = [...modalState, { ...modal, id: modalId }];
-  emitChange();
-  return modalId;
-}
-
-export function closeModal(id?: number) {
-  if (id === undefined) {
-    modalState = modalState.slice(0, -1);
-  } else {
-    modalState = modalState.filter(modal => modal.id !== id);
-  }
-  emitChange();
-}
-
-export function closeAllModals() {
-  modalState = [];
-  emitChange();
-}
-
-export function useModalStore() {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+export default function useModalStore<T = ModalStoreState>(selector?: ModalSelector<T>) {
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return selector ? selector(state) : (state as T);
 }
