@@ -198,9 +198,7 @@ export default function WardSosContent() {
     setErrorMessage('');
 
     triggerSos(undefined, {
-      onSuccess: response => {
-        const data = response.data?.data;
-
+      onSuccess: data => {
         if (wardSettings.sosAction === 'call119AndNotify') {
           setIsDialOpen(true);
         }

@@ -15,3 +15,19 @@ export async function getGuardianSosHistory(params: GetGuardianSosHistoryParams 
     params,
   });
 }
+
+export function getGuardianSosHistoryData(response: unknown): PageResponse<IGuardianSosHistoryItem> | null {
+  const body = response as
+    | CommonResponse<PageResponse<IGuardianSosHistoryItem>>
+    | { data?: CommonResponse<PageResponse<IGuardianSosHistoryItem>> | PageResponse<IGuardianSosHistoryItem> }
+    | undefined;
+
+  if (!body) return null;
+
+  const data = body.data;
+  if (data && typeof data === 'object' && 'data' in data) {
+    return (data as CommonResponse<PageResponse<IGuardianSosHistoryItem>>).data ?? null;
+  }
+
+  return (data as PageResponse<IGuardianSosHistoryItem> | undefined) ?? null;
+}
