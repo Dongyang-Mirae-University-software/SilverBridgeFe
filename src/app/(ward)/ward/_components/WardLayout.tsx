@@ -8,15 +8,15 @@ import { myProfileQueryOptions } from '@/service/query/user';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
-import { DashboardProvider } from './DashboardContext';
-import { SidebarLayout } from './SidebarLayout';
+import { DashboardProvider } from '../../../../components/layout/dashboard/DashboardContext';
+import { SidebarLayout } from '../../../../components/layout/dashboard/SidebarLayout';
 import { GUARDIAN_NAV, WARD_NAV } from '@/constants/dashboard';
 import { getRealtimeNotification } from '@/lib/dashboard/realtime';
 import classNames from 'classnames/bind';
-import styles from './DashboardLayout.module.css';
+import styles from './WardLayout.module.css';
 
 const cx = classNames.bind(styles);
-import { WardSettings } from './types';
+import { WardSettings } from '../../../../components/layout/dashboard/types';
 import {
   DEFAULT_WARD_SETTINGS,
   clampFontSize,
@@ -24,7 +24,7 @@ import {
   WARD_SETTINGS_STORAGE_KEY,
 } from '@/constants/wardSettings';
 
-export function DashboardLayout({ children }: { children: ReactNode }) {
+export function WardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const role: AuthRole = pathname.startsWith('/ward') ? 'WARD' : 'GUARDIAN';
   const [wardSettings, setWardSettings] = useState<WardSettings>(DEFAULT_WARD_SETTINGS);
