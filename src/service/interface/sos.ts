@@ -11,8 +11,8 @@ export type SosTriggerType = 'SOS_BUTTON' | 'GUARDIAN_CALL';
 
 export interface IGuardianSosHistoryItem {
   sosEventId: number;
-  wardId: string;
-  wardName: string;
+  wardId: string | null;
+  wardName: string | null;
   triggeredAt: string;
   location: string | null;
   triggerType: SosTriggerType;
