@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import { Tabs } from '@/components/Tabs';
 import { formatDay, formatMonth, formatTime } from '@/lib/format/date';
 import { guardianConnectionsQueryOptions } from '@/service/query/connection';
 import { guardianSosHistoryQueryOptions } from '@/service/query/guardian';
@@ -37,6 +38,8 @@ export default function GuardianSosHistoryContent() {
   const { data, isLoading, isError, isFetching } = useQuery(
     guardianSosHistoryQueryOptions({ wardId: selectedWardId ?? undefined, page, size: PAGE_SIZE }),
   );
+
+  console.log(data);
 
   const items = data?.content ?? [];
   const filteredItems =
@@ -105,29 +108,16 @@ export default function GuardianSosHistoryContent() {
         </div>
       )}
 
-      <div className={cx('filterTabs')} role="tablist" aria-label="발생 경로 필터">
-        <button
-          type="button"
-          className={cx('filterTab', { filterTabActive: triggerTypeFilter === 'ALL' })}
-          onClick={() => setTriggerTypeFilter('ALL')}
-        >
-          전체 {items.length}
-        </button>
-        <button
-          type="button"
-          className={cx('filterTab', { filterTabActive: triggerTypeFilter === 'GUARDIAN_CALL' })}
-          onClick={() => setTriggerTypeFilter('GUARDIAN_CALL')}
-        >
-          보호자에게 연락 {guardianCallCount}
-        </button>
-        <button
-          type="button"
-          className={cx('filterTab', { filterTabActive: triggerTypeFilter === 'SOS_BUTTON' })}
-          onClick={() => setTriggerTypeFilter('SOS_BUTTON')}
-        >
-          긴급 SOS 버튼 {sosButtonCount}
-        </button>
-      </div>
+      <Tabs
+        ariaLabel="발생 경로 필터"
+        items={[
+          { value: 'ALL', label: `전체 ${items.length}` },
+          { value: 'GUARDIAN_CALL', label: `보호자에게 연락 ${guardianCallCount}` },
+          { value: 'SOS_BUTTON', label: `긴급 SOS 버튼 ${sosButtonCount}` },
+        ]}
+        onChange={setTriggerTypeFilter}
+        value={triggerTypeFilter}
+      />
 
       <h2 className={cx('listHeading')}>{listHeading}</h2>
 
