@@ -24,6 +24,8 @@ function getNotificationPath(data) {
     case 'DISCONNECTION':
     case 'CONNECTION_DISCONNECTED':
       return '/';
+    case 'WARD_SOS':
+      return '/guardian/sos';
     default:
       return '/';
   }
@@ -52,6 +54,11 @@ function getNotificationContent(payload) {
         body: payload.notification?.body || '연결이 해제되었습니다.',
         title: payload.notification?.title || '연결 해제',
       };
+    case 'WARD_SOS':
+      return {
+        body: payload.notification?.body || `${payload.data?.wardName || '피보호자'}님이 긴급 도움을 요청했습니다.`,
+        title: payload.notification?.title || '긴급 SOS',
+      };
     default:
       return {
         body: payload.notification?.body || '',
@@ -66,6 +73,7 @@ messaging.onBackgroundMessage(payload => {
   self.registration.showNotification(notification.title, {
     body: notification.body,
     data: payload.data,
+    requireInteraction: payload.data?.type === 'WARD_SOS',
   });
 });
 
