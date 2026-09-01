@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import classNames from 'classnames/bind';
 
@@ -12,6 +11,7 @@ import { IUserProfile } from '@/service/interface/user';
 import { NavItem } from './types';
 import { ProfileModal } from './ProfileModal';
 import { UserAvatar } from '@/components/UserAvatar';
+import useModalStore from '@/store/modalStore';
 import styles from './Sidebar.module.css';
 
 const cx = classNames.bind(styles);
@@ -33,7 +33,8 @@ interface Props {
 }
 
 export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, rootPath }: Props) {
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const openModal = useModalStore(state => state.openModal);
+  const onCloseModal = useModalStore(state => state.onCloseModal);
 
   const userName = profile?.name ?? ROLE_DEFAULT_NAME[role];
   const userId = profile?.id ?? '아이디 정보 없음';
@@ -41,7 +42,16 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
 
   const handleOpenProfile = () => {
     onClose();
-    setIsProfileModalOpen(true);
+    openModal(
+      <ProfileModal
+        onClose={onCloseModal}
+        profile={profile ?? null}
+        role={role}
+        userId={userId}
+        userEmail={userEmail}
+        userName={userName}
+      />,
+    );
   };
 
   return (
@@ -90,17 +100,6 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
           </button>
         </div>
       </aside>
-
-      {isProfileModalOpen && (
-        <ProfileModal
-          onClose={() => setIsProfileModalOpen(false)}
-          profile={profile ?? null}
-          role={role}
-          userId={userId}
-          userEmail={userEmail}
-          userName={userName}
-        />
-      )}
     </>
   );
 }
