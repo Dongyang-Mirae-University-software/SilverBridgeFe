@@ -4,7 +4,7 @@ import { ReactNode, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { Sidebar } from '@/components/layout/dashboard/Sidebar';
+import { SidebarLayout } from '@/components/layout/dashboard/SidebarLayout';
 import { GUARDIAN_NAV } from '@/constants/dashboard';
 import { getAccessTokenSubject } from '@/lib/auth/tokenStore';
 import { getRealtimeNotification } from '@/lib/dashboard/realtime';
@@ -25,7 +25,7 @@ export function GuardianLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className={cx('stage')}>
-      <Sidebar navItems={GUARDIAN_NAV} profile={profile} role={role} rootPath={rootPath} />
+      <SidebarLayout navItems={GUARDIAN_NAV} profile={profile} role={role} rootPath={rootPath} />
       <main className={cx('main')}>{children}</main>
     </div>
   );
