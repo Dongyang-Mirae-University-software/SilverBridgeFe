@@ -1,3 +1,5 @@
+'use client';
+
 import classNames from 'classnames/bind';
 
 import { UserAvatar } from '@/components/UserAvatar';
@@ -7,16 +9,14 @@ import { IUserProfile } from '@/service/interface/user';
 import { ProfileModalControls } from './ProfileModalControls';
 import { getProviderLabel } from '@/lib/dashboard/profile';
 import styles from './ProfileModal.module.css';
+import { useLogoutMutation } from '@/service/query/auth';
+import { useState } from 'react';
+import { CommonModal } from '@/components/CommonModal';
 
 const cx = classNames.bind(styles);
 
 interface Props {
-  isLoggingOut: boolean;
-  isProfileImageChanging: boolean;
   onClose: () => void;
-  onLogout: () => void;
-  onProfileImageChange: (file?: File) => void;
-  onProfileImageDelete: () => void;
   profile: IUserProfile | null;
   role: AuthRole;
   userId: string;
@@ -25,18 +25,27 @@ interface Props {
 }
 
 export function ProfileModal({
-  isLoggingOut,
-  isProfileImageChanging,
   onClose,
-  onLogout,
-  onProfileImageChange,
-  onProfileImageDelete,
   profile,
   role,
   userId,
   userEmail,
   userName,
 }: Props) {
+  const { mutate: logoutMutate, isPending: isLoggingOut } = useLogoutMutation();
+
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+
+  const onLogout = () => {
+    if (isLoggingOut) return;
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    if (isLoggingOut) return;
+    setIsLogoutConfirmOpen(false);
+    logoutMutate();
+  };
   return (
     <div className={cx('profileModalOverlay')} role="presentation" onClick={onClose}>
       <section
@@ -49,16 +58,22 @@ export function ProfileModal({
         <button className={cx('profileModalClose')} type="button" aria-label="닫기" onClick={onClose}>
           ×
         </button>
-
+        {isLogoutConfirmOpen && (
+          <CommonModal
+            type="warning"
+            tone="guardian"
+            title="로그아웃 확인"
+            message="정말 로그아웃할까요?"
+            confirmText={isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+            secondaryText="취소"
+            onConfirm={handleLogoutConfirm}
+            onSecondary={() => setIsLogoutConfirmOpen(false)}
+            onClose={() => setIsLogoutConfirmOpen(false)}
+          />
+        )}
         {/* 헤더: 아바타 + 이름 */}
         <div className={cx('profileModalHeader')}>
-          <UserAvatar
-            size="w-120"
-            imageUrl={profile?.profileImage}
-            disabled={isProfileImageChanging}
-            onImageChange={onProfileImageChange}
-            onImageDelete={onProfileImageDelete}
-          />
+          <UserAvatar size="w-120" imageUrl={profile?.profileImage} isChange isDelete />
           <div className={cx('profileHeaderInfo')}>
             <div className={cx('profileModalBadges')}>
               <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>

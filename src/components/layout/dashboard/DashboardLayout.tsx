@@ -4,9 +4,7 @@ import { CSSProperties, ReactNode, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 
-import { CommonModal } from '@/components/CommonModal';
-import { useLogoutMutation } from '@/service/query/auth';
-import { myProfileQueryOptions, useProfileImageChangeMutation, useProfileImageDeleteMutation } from '@/service/query/user';
+import { myProfileQueryOptions } from '@/service/query/user';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
@@ -28,8 +26,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const role: AuthRole = pathname.startsWith('/ward') ? 'WARD' : 'GUARDIAN';
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
-  const [profileImageError, setProfileImageError] = useState('');
   const [wardSettings, setWardSettings] = useState<WardSettings>(DEFAULT_WARD_SETTINGS);
   const [isWardSettingsLoaded, setIsWardSettingsLoaded] = useState(false);
   const isWard = role === 'WARD';
@@ -43,67 +39,15 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const userName = profile?.name ?? (isWard ? '사용자' : '보호자');
   const userId = profile?.id ?? '아이디 정보 없음';
   const userEmail = profile?.email ?? '이메일 정보 없음';
-  const { mutate: logoutMutate, isPending: isLoggingOut } = useLogoutMutation();
-  const { mutate: profileImageMutate, isPending: isProfileImageChanging } = useProfileImageChangeMutation({
-    onError: message => setProfileImageError(message),
-  });
-  const { mutate: profileImageDeleteMutate, isPending: isProfileImageDeleting } = useProfileImageDeleteMutation({
-    onError: message => setProfileImageError(message),
-  });
+
 
   useWardSettings(isWard, isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
   useConnectionSocket(realtimeUserId, role);
 
   const stageStyle = isWard ? ({ '--ward-preferred-font-size': `${wardSettings.fontSize}px` } as CSSProperties) : undefined;
-  const handleLogoutRequest = () => {
-    if (isLoggingOut) return;
-    setIsLogoutConfirmOpen(true);
-  };
-  const handleLogoutConfirm = () => {
-    if (isLoggingOut) return;
-    setIsLogoutConfirmOpen(false);
-    logoutMutate();
-  };
-  const handleProfileImageChange = (file?: File) => {
-    if (file && !isProfileImageChanging) {
-      setProfileImageError('');
-      profileImageMutate(file);
-    }
-  };
-  const handleProfileImageDelete = () => {
-    if (isProfileImageDeleting || !profile?.profileImage) return;
-    if (!window.confirm('프로필 이미지를 삭제할까요?')) return;
-    setProfileImageError('');
-    profileImageDeleteMutate();
-  };
-  const handleProfileImageErrorClose = () => setProfileImageError('');
-
   return (
     <DashboardProvider value={{ wardSettings, updateWardSettings: settings => setWardSettings(current => ({ ...current, ...settings })) }}>
       <div className={cx('stage', { guardianTheme: !isWard, wardHighContrast: isWard && wardSettings.highContrast, wardReadableText: isWard })} style={stageStyle}>
-        {isLogoutConfirmOpen && (
-          <CommonModal
-            type="warning"
-            tone={role === 'GUARDIAN' ? 'guardian' : 'default'}
-            title="로그아웃 확인"
-            message="정말 로그아웃할까요?"
-            confirmText={isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-            secondaryText="취소"
-            onConfirm={handleLogoutConfirm}
-            onSecondary={() => setIsLogoutConfirmOpen(false)}
-            onClose={() => setIsLogoutConfirmOpen(false)}
-          />
-        )}
-        {profileImageError && (
-          <CommonModal
-            type="error"
-            title="프로필 이미지 처리 실패"
-            message={profileImageError}
-            confirmText="확인"
-            onConfirm={handleProfileImageErrorClose}
-            onClose={handleProfileImageErrorClose}
-          />
-        )}
         <MobileTopBar onOpenSidebar={() => setIsSidebarOpen(true)} pageTitle={pageTitle} role={role} />
         {isSidebarOpen && <button className={cx('scrim')} type="button" aria-label="메뉴 닫기" onClick={() => setIsSidebarOpen(false)} />}
         <DashboardSidebar
@@ -120,12 +64,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         />
         {isProfileModalOpen && (
           <ProfileModal
-            isLoggingOut={isLoggingOut}
-            isProfileImageChanging={isProfileImageChanging || isProfileImageDeleting}
             onClose={() => setIsProfileModalOpen(false)}
-            onLogout={handleLogoutRequest}
-            onProfileImageDelete={handleProfileImageDelete}
-            onProfileImageChange={handleProfileImageChange}
             profile={profile}
             role={role}
             userId={userId}

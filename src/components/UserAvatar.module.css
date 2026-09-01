@@ -117,7 +117,7 @@ button.avatar:disabled {
   background: #fee9e5;
 }
 
-.editButton:disabled,
+.editButton.disabled,
 .deleteButton:disabled {
   cursor: not-allowed;
   opacity: 0.55;
