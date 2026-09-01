@@ -11,6 +11,26 @@
   font-weight: 700;
 }
 
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.backButton {
+  flex-shrink: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  min-height: 36px;
+  padding: 0 16px;
+}
+
 .wardTabs {
   display: flex;
   flex-wrap: wrap;
@@ -117,6 +137,13 @@
   font-size: 0.8125rem;
 }
 
+.listHeading {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 0.9375rem;
+  font-weight: 850;
+}
+
 .list {
   display: flex;
   flex-direction: column;
@@ -128,57 +155,81 @@
 
 .item {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 14px;
   border: 1px solid var(--sb-line-soft);
+  border-left: 4px solid var(--sb-line);
   border-radius: 16px;
   background: #fff;
   padding: 14px 16px;
 }
 
-.itemIcon {
-  display: grid;
+.itemGuardianCall {
+  border-left-color: var(--sb-brand);
+}
+
+.itemSosButton {
+  border-left-color: var(--sb-warn);
+}
+
+.itemDate {
+  display: flex;
   flex-shrink: 0;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  background: #fbe5e0;
-  color: var(--sb-warn);
+  flex-direction: column;
+  align-items: center;
+  width: 44px;
+}
+
+.itemDate strong {
+  color: var(--sb-ink);
+  font-size: 1.125rem;
+  font-weight: 850;
+}
+
+.itemDate span {
+  color: var(--sb-ink-mute);
+  font-size: 0.6875rem;
+  font-weight: 700;
 }
 
 .itemBody {
   display: flex;
   min-width: 0;
+  flex: 1;
   flex-direction: column;
   gap: 4px;
 }
 
-.itemTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.itemTitleRow strong {
+.itemTime {
   color: var(--sb-ink);
-  font-size: 0.9375rem;
-  font-weight: 850;
-}
-
-.itemBadge {
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 0.6875rem;
+  font-size: 0.875rem;
   font-weight: 800;
-  padding: 2px 8px;
 }
 
 .itemMeta {
   color: var(--sb-ink-mute);
   font-size: 0.8125rem;
+}
+
+.itemBadge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.itemBadgeGuardianCall {
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.itemBadgeSosButton {
+  background: #fbe5e0;
+  color: var(--sb-warn);
 }
 
 .pagination {
