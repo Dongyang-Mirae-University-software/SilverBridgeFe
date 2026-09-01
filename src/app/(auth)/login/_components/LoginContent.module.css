@@ -5,7 +5,7 @@
 .title {
   margin: 0;
   color: #1f1916;
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 800;
   line-height: 1.25;
 }
@@ -13,7 +13,7 @@
 .description {
   margin: 8px 0 0;
   color: #8a7868;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
@@ -42,7 +42,7 @@
   align-items: center;
   gap: 8px;
   color: #5c4d3f;
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
 }
 
@@ -69,7 +69,7 @@
 
 .textButton {
   color: #8a7868;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -87,7 +87,7 @@
 .errorMessage {
   margin: -12px 0 16px;
   color: #c73e3e;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -98,7 +98,7 @@
   padding: 14px;
   border: none;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -121,7 +121,7 @@
   gap: 12px;
   margin: 24px 0;
   color: #b8a998;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -139,18 +139,18 @@
   margin-bottom: 24px;
   background: #fee500;
   color: #3c1e1e;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .footer {
   color: #8a7868;
-  font-size: 13px;
+  font-size: 0.8125rem;
   text-align: center;
 }
 
 .signupLink {
   color: #d97757;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 

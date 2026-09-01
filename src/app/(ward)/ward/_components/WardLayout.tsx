@@ -1,6 +1,6 @@
 'use client';
 
-import { CSSProperties, ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -34,8 +34,7 @@ export function WardLayout({ children }: { children: ReactNode }) {
 
   useWardSettings(isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
   useWardConnectionSocket(realtimeUserId);
-
-  const stageStyle = { '--ward-preferred-font-size': `${wardSettings.fontSize}px` } as CSSProperties;
+  useWardRootFontSize(wardSettings.fontSize);
 
   return (
     <DashboardProvider
@@ -44,15 +43,22 @@ export function WardLayout({ children }: { children: ReactNode }) {
         updateWardSettings: settings => setWardSettings(current => ({ ...current, ...settings })),
       }}
     >
-      <div
-        className={cx('stage', { wardHighContrast: wardSettings.highContrast, wardReadableText: true })}
-        style={stageStyle}
-      >
+      <div className={cx('stage', { wardHighContrast: wardSettings.highContrast, wardReadableText: true })}>
         <SidebarLayout navItems={WARD_NAV} profile={profile} role={role} rootPath={rootPath} />
         <main className={cx('main')}>{children}</main>
       </div>
     </DashboardProvider>
   );
+}
+
+function useWardRootFontSize(fontSize: number) {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.fontSize = `${fontSize}px`;
+    return () => {
+      root.style.fontSize = '';
+    };
+  }, [fontSize]);
 }
 
 function useWardSettings(

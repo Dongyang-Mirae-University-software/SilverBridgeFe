@@ -14,14 +14,14 @@
 .sectionTitle {
   margin: 0 0 4px;
   color: var(--sb-warn);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 850;
 }
 
 .sectionDesc {
   margin: 0;
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.6;
 }
 
@@ -36,7 +36,7 @@
   background: #fbe5e0;
   color: var(--sb-warn);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 750;
   padding: 9px 18px;
   transition: filter 0.12s;
@@ -89,7 +89,7 @@
 .modalTitle {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 850;
   line-height: 1.25;
 }
@@ -97,7 +97,7 @@
 .modalDesc {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.7;
 }
 
@@ -115,7 +115,7 @@
   background: #fcfbf8;
   color: var(--sb-ink);
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   min-height: 44px;
   outline: none;
   padding: 0 14px;
@@ -134,7 +134,7 @@
 .modalError {
   margin: 0;
   color: var(--sb-warn);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 650;
 }
 
@@ -151,7 +151,7 @@
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 750;
   padding: 9px 18px;
 }
@@ -171,7 +171,7 @@
   background: var(--sb-warn);
   color: #fff;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 750;
   padding: 9px 18px;
 }

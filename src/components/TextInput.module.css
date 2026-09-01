@@ -12,14 +12,14 @@
 }
 
 .input-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: #5c4d3f;
 }
 
 .dot {
   color: #d97757;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.2;
 }
 
@@ -47,7 +47,7 @@
   border: none;
   background: transparent;
   color: #1f1916;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1.45;
   outline: none;
@@ -66,7 +66,7 @@
 
 .input-helperText {
   color: #c73e3e;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.4;
 }

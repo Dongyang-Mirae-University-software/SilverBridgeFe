@@ -9,14 +9,14 @@
 .resultLabel {
   margin-bottom: 8px;
   color: #8a6850;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .resultEmail {
   color: #1f1916;
   font-family: monospace;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 800;
   line-height: 1.35;
   word-break: break-all;
@@ -25,12 +25,12 @@
 .resultDate {
   margin-top: 8px;
   color: #8a6850;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.4;
 }
 
 @media (max-width: 480px) {
   .resultEmail {
-    font-size: 19px;
+    font-size: 1.1875rem;
   }
 }

@@ -21,7 +21,7 @@
 
 .sessionPanelHeader strong {
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 850;
 }
 
@@ -29,7 +29,7 @@
   border-radius: 999px;
   background: var(--guardian-brand-soft);
   color: var(--guardian-brand);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   padding: 2px 8px;
 }
@@ -40,7 +40,7 @@
   border-radius: 14px;
   background: var(--sb-bg-soft);
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.6;
   padding: 16px;
   text-align: center;
@@ -109,7 +109,7 @@
 
 .sessionCard strong {
   color: var(--sb-ink);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 800;
 }
 
@@ -119,7 +119,7 @@
   overflow: hidden;
   color: var(--sb-ink-mute);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -132,13 +132,13 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--guardian-brand);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 850;
 }
 
 .sessionTime small {
   color: var(--sb-ink-mute);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 650;
   white-space: nowrap;
 }
@@ -148,7 +148,7 @@
   border-radius: 999px;
   background: #dceee3;
   color: var(--sb-safe);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 800;
   padding: 2px 7px;
 }

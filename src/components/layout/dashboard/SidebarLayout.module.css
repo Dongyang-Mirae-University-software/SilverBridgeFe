@@ -35,7 +35,7 @@
   overflow: hidden;
   margin: 7px 0 0;
   color: var(--sb-ink);
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 850;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -47,7 +47,7 @@
   border-radius: 999px;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 800;
   padding: 2px 8px;
 }
@@ -99,13 +99,13 @@
 
 .desktopUserInfo strong {
   color: var(--sb-ink);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 850;
 }
 
 .desktopUserInfo span {
   color: var(--sb-ink-mute);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 650;
   margin-top: 2px;
 }
@@ -140,7 +140,7 @@
     background: #fff;
     color: var(--sb-ink);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 800;
     padding: 0 12px;
   }
@@ -173,7 +173,7 @@
     display: block;
     overflow: hidden;
     color: var(--sb-ink-mute);
-    font-size: 10px;
+    font-size: 0.625rem;
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -185,7 +185,7 @@
     border-radius: 999px;
     background: var(--sb-brand-50);
     color: var(--sb-brand);
-    font-size: 11px;
+    font-size: 0.6875rem;
     font-weight: 800;
     padding: 4px 9px;
   }

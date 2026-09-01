@@ -16,7 +16,7 @@
 .toolbarTitle {
   display: block;
   color: var(--sb-ink);
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 850;
 }
 
@@ -24,7 +24,7 @@
   display: block;
   margin-top: 3px;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 650;
 }
 
@@ -39,7 +39,7 @@
   border-radius: 10px;
   background: #dceee3;
   color: var(--sb-safe);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   padding: 9px 14px;
 }
@@ -58,7 +58,7 @@
 .emptyText {
   margin: 0;
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .primaryButton {
@@ -68,7 +68,7 @@
   background: var(--guardian-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 750;
   padding: 8px 14px;
 }
