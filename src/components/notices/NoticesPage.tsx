@@ -4,16 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
+import { formatDate } from '@/lib/format/date';
 import { announcementsQueryOptions } from '@/service/query/announcement';
-import styles from './NoticesPanel.module.css';
+import styles from './NoticesPage.module.css';
 
 const cx = classNames.bind(styles);
-
-function formatDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
-}
 
 function isNewNotice(createdAt: string) {
   const created = new Date(createdAt);
@@ -23,7 +18,7 @@ function isNewNotice(createdAt: string) {
   return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
 }
 
-export function NoticesPanel() {
+export function NoticesPage() {
   const { data: announcements = [], isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
   const latestAnnouncement = [...announcements].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
