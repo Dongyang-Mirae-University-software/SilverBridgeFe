@@ -1,9 +1,3 @@
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 /* ── 카드 공통 ── */
 .card {
   border: 1px solid var(--sb-line-soft);
@@ -19,20 +13,7 @@
 .cardHeader {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-}
-
-.cardNum {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 15px;
-  font-weight: 850;
+  gap: 0;
 }
 
 .cardTitle {
@@ -264,14 +245,13 @@
 }
 
 .sosIcon {
-  display: grid;
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  place-items: center;
+  display: block;
   border-radius: 12px;
   background: #fff;
-  font-size: 20px;
+  object-fit: contain;
   box-shadow: var(--sb-shadow-sm);
 }
 
@@ -336,9 +316,6 @@
 }
 
 @media (max-width: 700px) {
-  .page {
-    max-width: 100%;
-  }
   .card {
     padding: 18px;
   }
