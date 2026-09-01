@@ -3,7 +3,12 @@ import { Client, IMessage } from '@stomp/stompjs';
 import { AuthRole, getAccessToken } from '@/lib/auth/tokenStore';
 import { savePendingConnectionRequest } from './pendingConnectionRequests';
 
-type ConnectionRealtimeType = 'CONNECTION_REQUEST' | 'CONNECTION_ACCEPTED' | 'CONNECTION_CANCELLED' | 'CONNECTION_REFUSED';
+type ConnectionRealtimeType =
+  | 'CONNECTION_REQUEST'
+  | 'CONNECTION_ACCEPTED'
+  | 'CONNECTION_CANCELLED'
+  | 'CONNECTION_REFUSED'
+  | 'SOS_TRIGGERED';
 
 export interface ConnectionRealtimePayload {
   type: ConnectionRealtimeType;
@@ -11,6 +16,9 @@ export interface ConnectionRealtimePayload {
   body?: string;
   connectionId?: string;
   from?: string;
+  sosEventId?: string;
+  wardId?: string;
+  wardName?: string;
 }
 
 interface ConnectConnectionSocketOptions {
@@ -31,6 +39,7 @@ const GUARDIAN_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionR
   { destination: 'connection-accepted', type: 'CONNECTION_ACCEPTED' },
   { destination: 'connection-refused', type: 'CONNECTION_REFUSED' },
   { destination: 'connection-cancelled', type: 'CONNECTION_CANCELLED' },
+  { destination: 'sos-triggered', type: 'SOS_TRIGGERED' },
 ];
 
 function getSocketUrl(accessToken: string) {
@@ -56,16 +65,22 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
       from?: string;
       message?: string;
       notification?: { body?: string; title?: string };
+      sosEventId?: number | string;
       title?: string;
       type?: ConnectionRealtimeType;
+      wardId?: string;
+      wardName?: string;
     };
 
     return {
       body: parsed.body ?? parsed.message ?? parsed.notification?.body,
       connectionId: parsed.connectionId === undefined ? undefined : String(parsed.connectionId),
       from: parsed.from,
+      sosEventId: parsed.sosEventId === undefined ? undefined : String(parsed.sosEventId),
       title: parsed.title ?? parsed.notification?.title,
       type: parsed.type ?? fallbackType,
+      wardId: parsed.wardId,
+      wardName: parsed.wardName,
     };
   } catch {
     return {

@@ -48,6 +48,8 @@ function getPushRoute(data?: MessagePayload['data'], role?: ConnectionTargetRole
     case 'DISCONNECTION':
     case 'CONNECTION_DISCONNECTED':
       return role === 'WARD' ? '/ward/guardians' : '/guardian/wards';
+    case 'WARD_SOS':
+      return '/guardian/sos';
     default:
       return role === 'WARD' ? '/ward' : '/guardian';
   }
@@ -69,6 +71,11 @@ function getConnectionPushNotification(data?: MessagePayload['data']) {
     case 'DISCONNECTION':
     case 'CONNECTION_DISCONNECTED':
       return { body: '연결이 해제되었습니다.', title: '연결 해제' };
+    case 'WARD_SOS':
+      return {
+        body: `${data?.wardName ?? '피보호자'}님이 긴급 도움을 요청했습니다.`,
+        title: '긴급 SOS',
+      };
     default:
       return { body: '', title: '알림' };
   }
@@ -119,6 +126,10 @@ function shouldHandleConnectionPush(
 
 function isConnectionRequest(data?: MessagePayload['data'], currentRole?: ConnectionTargetRole | null) {
   return currentRole === 'WARD' && data?.type === 'CONNECTION_REQUEST' && Boolean(data.connectionId);
+}
+
+function isSosPush(data?: MessagePayload['data']) {
+  return data?.type === 'WARD_SOS';
 }
 
 function getConnectionId(data?: MessagePayload['data']) {
@@ -201,7 +212,7 @@ export default function PushNotificationListener() {
   const addToast = useCallback(
     (toast: PushToast) => {
       setToasts(prev => [toast, ...prev].slice(0, 3));
-      if (isConnectionRequest(toast.data, currentRole)) return;
+      if (isConnectionRequest(toast.data, currentRole) || isSosPush(toast.data)) return;
       window.setTimeout(() => {
         dismissToast(toast.id);
       }, TOAST_LIFETIME_MS);
@@ -309,7 +320,13 @@ export default function PushNotificationListener() {
   return (
     <div className={cx('toastArea')} aria-live="polite">
       {toasts.map(toast => (
-        <div key={toast.id} className={cx('toast', { actionAlert: isConnectionRequest(toast.data, currentRole) })}>
+        <div
+          key={toast.id}
+          className={cx('toast', {
+            actionAlert: isConnectionRequest(toast.data, currentRole),
+            sosAlert: isSosPush(toast.data),
+          })}
+        >
           {isConnectionRequest(toast.data, currentRole) ? (
             <div className={cx('toastContent')}>
               <span className={cx('title')}>{toast.title}</span>

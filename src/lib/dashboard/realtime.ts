@@ -22,6 +22,11 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload) {
         body: payload.body ?? '연결이 해제되었습니다.',
         title: payload.title ?? '연결 해제',
       };
+    case 'SOS_TRIGGERED':
+      return {
+        body: payload.body ?? `${payload.wardName ?? '피보호자'}님이 긴급 도움을 요청했습니다.`,
+        title: payload.title ?? '긴급 SOS',
+      };
     default:
       return {
         body: payload.body ?? '연결 상태가 변경되었습니다.',
