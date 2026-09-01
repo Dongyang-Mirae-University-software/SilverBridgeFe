@@ -2,6 +2,16 @@
   display: none;
 }
 
+.scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  border: 0;
+  background: rgba(20, 17, 12, 0.38);
+  cursor: pointer;
+}
+
 .desktopHeader {
   z-index: 35;
   display: flex;
@@ -101,6 +111,10 @@
 }
 
 @media (max-width: 900px) {
+  .scrim {
+    display: block;
+  }
+
   .mobileTopBar {
     display: flex;
     min-height: 64px;

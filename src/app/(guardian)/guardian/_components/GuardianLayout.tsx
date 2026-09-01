@@ -1,13 +1,11 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { MobileTopBar } from '@/components/layout/dashboard/DashboardHeader';
-import { DashboardSidebar } from '@/components/layout/dashboard/DashboardSidebar';
-import { ProfileModal } from '@/components/layout/dashboard/ProfileModal';
 import { PageKey } from '@/components/layout/dashboard/types';
 import { GUARDIAN_NAV, PAGE_TITLES } from '@/constants/dashboard';
 import { getAccessTokenSubject } from '@/lib/auth/tokenStore';
@@ -23,8 +21,6 @@ const rootPath = '/guardian';
 
 export function GuardianLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const pageKey = getPageKey(pathname);
   const pageTitle = PAGE_TITLES[pageKey];
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
@@ -37,32 +33,17 @@ export function GuardianLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className={cx('stage')}>
-      <MobileTopBar onOpenSidebar={() => setIsSidebarOpen(true)} pageTitle={pageTitle} role={role} />
-      {isSidebarOpen && (
-        <button className={cx('scrim')} type="button" aria-label="메뉴 닫기" onClick={() => setIsSidebarOpen(false)} />
-      )}
-      <DashboardSidebar
-        isOpen={isSidebarOpen}
+      <MobileTopBar
         navItems={GUARDIAN_NAV}
-        onClose={() => setIsSidebarOpen(false)}
-        onOpenProfile={() => setIsProfileModalOpen(true)}
+        pageTitle={pageTitle}
         pathname={pathname}
         profile={profile}
         role={role}
         rootPath={rootPath}
+        userEmail={userEmail}
         userId={userId}
         userName={userName}
       />
-      {isProfileModalOpen && (
-        <ProfileModal
-          onClose={() => setIsProfileModalOpen(false)}
-          profile={profile}
-          role={role}
-          userId={userId}
-          userEmail={userEmail}
-          userName={userName}
-        />
-      )}
       <main className={cx('main')}>{children}</main>
     </div>
   );
