@@ -13,6 +13,7 @@ export const WARD_NAV: NavItem[] = [
 
 export const GUARDIAN_NAV: NavItem[] = [
   { href: '/guardian', icon: 'dashboard', label: '대시보드', key: 'dashboard' },
+  { href: '/guardian/sos', icon: 'phone', label: 'SOS 이력', key: 'sos-history' },
   { href: '/guardian/detection', icon: 'alert', label: '이상감지', key: 'detection' },
   { href: '/guardian/emotion', icon: 'heart', label: '정서 상태 체크', key: 'emotion' },
   { href: '/guardian/chatbot', icon: 'message', label: 'AI 의료 챗봇', key: 'chatbot' },
@@ -40,6 +41,7 @@ export const PAGE_TITLES: Record<PageKey, string> = {
   'ward-register': '피보호자 등록',
   inquiries: '문의하기',
   stream: '화면 송출',
+  'sos-history': 'SOS 이력',
 };
 
 export const WARD_ACTIONS = [

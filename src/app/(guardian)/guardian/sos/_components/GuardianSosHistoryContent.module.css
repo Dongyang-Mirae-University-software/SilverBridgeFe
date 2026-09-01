@@ -1,0 +1,128 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summary {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.emptyState strong {
+  color: var(--sb-ink);
+  font-size: 0.9375rem;
+}
+
+.emptyState span {
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px 16px;
+}
+
+.itemIcon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #fbe5e0;
+  color: var(--sb-warn);
+}
+
+.itemBody {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.itemTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.itemTitleRow strong {
+  color: var(--sb-ink);
+  font-size: 0.9375rem;
+  font-weight: 850;
+}
+
+.itemBadge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 2px 8px;
+}
+
+.itemMeta {
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.pageButton {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  min-height: 36px;
+  padding: 0 16px;
+}
+
+.pageButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pageIndicator {
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
