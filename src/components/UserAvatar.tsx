@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
+import useModalStore from '@/store/modalStore';
 import { useProfileImageChangeMutation, useProfileImageDeleteMutation } from '@/service/query/user';
 import styles from './UserAvatar.module.css';
 
@@ -19,83 +19,128 @@ interface UserAvatarProps {
   isDelete?: boolean;
 }
 
-export function UserAvatar({ imageUrl, size, disabled, onClick, isChange = false, isDelete = false }: UserAvatarProps) {
-  const [profileImageError, setProfileImageError] = useState('');
-  const { mutate: profileImageMutate, isPending: isProfileImageChanging } = useProfileImageChangeMutation({
-    onError: message => setProfileImageError(message),
-  });
-  const { mutate: profileImageDeleteMutate, isPending: isProfileImageDeleting } = useProfileImageDeleteMutation({
-    onError: message => setProfileImageError(message),
-  });
-  const isControlDisabled = disabled || isProfileImageChanging || isProfileImageDeleting;
-  const hasEditControls = isChange || isDelete;
+interface AvatarProps {
+  imageUrl?: string | null;
+  size: UserAvatarProps['size'];
+  disabled?: boolean;
+  onClick?: () => void;
+}
+
+function Avatar({ imageUrl, size, disabled, onClick }: AvatarProps) {
   const img = <img alt="" src={imageUrl || '/images/avatar.png'} />;
 
-  const handleProfileImageChange = (file?: File) => {
-    if (!file || isControlDisabled) return;
-    setProfileImageError('');
+  if (onClick) {
+    return (
+      <button className={cx('avatar', size)} type="button" disabled={disabled} onClick={onClick}>
+        {img}
+      </button>
+    );
+  }
+
+  return <div className={cx('avatar', size)}>{img}</div>;
+}
+
+interface EditButtonProps {
+  onError: (message: string) => void;
+}
+
+function EditButton({ onError }: EditButtonProps) {
+  const { mutate: profileImageMutate, isPending } = useProfileImageChangeMutation({ onError });
+
+  const handleChange = (file?: File) => {
+    if (!file || isPending) return;
     profileImageMutate(file);
   };
 
-  const handleProfileImageDelete = () => {
-    if (isControlDisabled || !imageUrl) return;
-    if (!window.confirm('프로필 이미지를 삭제할까요?')) return;
-    setProfileImageError('');
-    profileImageDeleteMutate();
+  return (
+    <label className={cx('editButton', { disabled: isPending })} aria-label="프로필 이미지 변경">
+      <Icon name="avatarEdit" size={17} decorative />
+      <input
+        type="file"
+        accept="image/*"
+        disabled={isPending}
+        onChange={event => {
+          handleChange(event.target.files?.[0]);
+          event.currentTarget.value = '';
+        }}
+      />
+    </label>
+  );
+}
+
+interface DeleteButtonProps {
+  imageUrl?: string | null;
+  onError: (message: string) => void;
+}
+
+function DeleteButton({ imageUrl, onError }: DeleteButtonProps) {
+  const openModal = useModalStore(state => state.openModal);
+  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { mutate: profileImageDeleteMutate, isPending } = useProfileImageDeleteMutation({ onError });
+
+  if (!imageUrl) return null;
+
+  const handleDelete = () => {
+    if (isPending) return;
+
+    openModal(
+      <CommonModal
+        type="warning"
+        title="프로필 이미지 삭제"
+        message="프로필 이미지를 삭제할까요?"
+        confirmText="삭제"
+        secondaryText="취소"
+        onConfirm={() => {
+          onCloseModal();
+          profileImageDeleteMutate();
+        }}
+        onSecondary={onCloseModal}
+        onClose={onCloseModal}
+      />,
+    );
   };
 
-  const handleProfileImageErrorClose = () => setProfileImageError('');
-  const avatar = onClick ? (
-    <button className={cx('avatar', size)} type="button" disabled={disabled} onClick={onClick}>
-      {img}
+  return (
+    <button
+      className={cx('deleteButton')}
+      type="button"
+      aria-label="프로필 이미지 삭제"
+      disabled={isPending}
+      onClick={event => {
+        event.stopPropagation();
+        handleDelete();
+      }}
+    >
+      ×
     </button>
-  ) : (
-    <div className={cx('avatar', size)}>{img}</div>
   );
+}
 
-  if (!hasEditControls) return avatar;
+export function UserAvatar({ imageUrl, size, disabled, onClick, isChange = false, isDelete = false }: UserAvatarProps) {
+  const openModal = useModalStore(state => state.openModal);
+  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const hasEditControls = isChange || isDelete;
+
+  const showErrorModal = (message: string) => {
+    openModal(
+      <CommonModal
+        type="error"
+        title="프로필 이미지 처리 실패"
+        message={message}
+        confirmText="확인"
+        onConfirm={onCloseModal}
+        onClose={onCloseModal}
+      />,
+    );
+  };
+
+  if (!hasEditControls) return <Avatar imageUrl={imageUrl} size={size} disabled={disabled} onClick={onClick} />;
 
   return (
     <div className={cx('photoBlock')}>
-      {avatar}
-      {isChange && (
-        <label className={cx('editButton', { disabled: isControlDisabled })} aria-label="프로필 이미지 변경">
-          <Icon name="avatarEdit" size={17} decorative />
-          <input
-            type="file"
-            accept="image/*"
-            disabled={isControlDisabled}
-            onChange={event => {
-              handleProfileImageChange(event.target.files?.[0]);
-              event.currentTarget.value = '';
-            }}
-          />
-        </label>
-      )}
-      {isDelete && imageUrl && (
-        <button
-          className={cx('deleteButton')}
-          type="button"
-          aria-label="프로필 이미지 삭제"
-          disabled={isControlDisabled}
-          onClick={event => {
-            event.stopPropagation();
-            handleProfileImageDelete();
-          }}
-        >
-          ×
-        </button>
-      )}
-      {profileImageError && (
-        <CommonModal
-          type="error"
-          title="프로필 이미지 처리 실패"
-          message={profileImageError}
-          confirmText="확인"
-          onConfirm={handleProfileImageErrorClose}
-          onClose={handleProfileImageErrorClose}
-        />
-      )}
+      <Avatar imageUrl={imageUrl} size={size} disabled={disabled} onClick={onClick} />
+      {isChange && <EditButton onError={showErrorModal} />}
+      {isDelete && <DeleteButton imageUrl={imageUrl} onError={showErrorModal} />}
     </div>
   );
 }
