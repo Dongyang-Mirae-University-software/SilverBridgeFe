@@ -9,11 +9,16 @@ import classNames from 'classnames/bind';
 import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
 import { UserAvatar } from '@/components/UserAvatar';
+import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { getWardActiveConnections } from '@/service/api/connect/ward';
 import { useWardSosMutation } from '@/service/query/ward';
 import { getConnectionData } from '@/components/connections/ConnectionShared';
 import type { IConnectionItem } from '@/service/interface/connection';
 import styles from './WardSosContent.module.css';
+
+function callEmergencyNumber() {
+  window.location.href = 'tel:119';
+}
 
 dayjs.locale('ko');
 
@@ -74,6 +79,7 @@ function GuardianCard({ connection, index }: { connection: IConnectionItem; inde
 }
 
 export default function WardSosContent() {
+  const { wardSettings } = useDashboard();
   const [guardians, setGuardians] = useState<IConnectionItem[]>([]);
   const [isLoadingGuardians, setIsLoadingGuardians] = useState(true);
   const [isGuardiansError, setIsGuardiansError] = useState(false);
@@ -115,27 +121,39 @@ export default function WardSosContent() {
     };
   }, []);
 
+  function handleHeroPress() {
+    if (wardSettings.sosAction === 'call119') {
+      callEmergencyNumber();
+      triggerSos(undefined, { onError: error => reportSosError(error) });
+      return;
+    }
+
+    setIsConfirmOpen(true);
+  }
+
+  function reportSosError(error: unknown) {
+    const message = (error as { message?: string })?.message || 'SOS 전송에 실패했습니다.';
+    setErrorMessage(message);
+  }
+
   function handleConfirm() {
     setIsConfirmOpen(false);
     setErrorMessage('');
 
     triggerSos(undefined, {
       onSuccess: response => {
-        const data = response.data;
-        if (data?.sosEventId && data.triggeredAt) {
-          setSuccessState(data);
-          return;
+        const data = response.data?.data;
+
+        if (wardSettings.sosAction === 'call119AndNotify') {
+          callEmergencyNumber();
         }
 
         setSuccessState({
-          sosEventId: Number(data?.sosEventId ?? Date.now()),
+          sosEventId: data?.sosEventId ?? Date.now(),
           triggeredAt: data?.triggeredAt ?? new Date().toISOString(),
         });
       },
-      onError: error => {
-        const message = (error as { message?: string }).message || 'SOS 전송에 실패했습니다.';
-        setErrorMessage(message);
-      },
+      onError: reportSosError,
     });
   }
 
@@ -145,7 +163,7 @@ export default function WardSosContent() {
 
   return (
     <div className={cx('page')}>
-      <button className={cx('hero')} type="button" onClick={() => setIsConfirmOpen(true)}>
+      <button className={cx('hero')} type="button" onClick={handleHeroPress}>
         <div className={cx('heroIcon')}>
           <Icon name="alert" size={40} decorative />
         </div>
@@ -220,9 +238,22 @@ export default function WardSosContent() {
           type="success"
           tone="guardian"
           title="SOS 전송 완료"
-          message={`SOS 이력이 저장되었습니다.\n이력 ID ${successState.sosEventId} · ${formatTriggeredAt(successState.triggeredAt)}`}
-          confirmText="확인"
-          onConfirm={handleCloseSuccess}
+          message={
+            wardSettings.sosAction === 'notifyGuardianFirst'
+              ? `보호자에게 알림을 보냈습니다.\n필요하면 아래 버튼으로 119에 전화하세요.\n${formatTriggeredAt(successState.triggeredAt)}`
+              : `SOS 이력이 저장되었습니다.\n이력 ID ${successState.sosEventId} · ${formatTriggeredAt(successState.triggeredAt)}`
+          }
+          confirmText={wardSettings.sosAction === 'notifyGuardianFirst' ? '119 전화하기' : '확인'}
+          secondaryText={wardSettings.sosAction === 'notifyGuardianFirst' ? '닫기' : undefined}
+          onConfirm={
+            wardSettings.sosAction === 'notifyGuardianFirst'
+              ? () => {
+                  callEmergencyNumber();
+                  handleCloseSuccess();
+                }
+              : handleCloseSuccess
+          }
+          onSecondary={handleCloseSuccess}
           onClose={handleCloseSuccess}
         />
       )}
