@@ -1,12 +1,12 @@
 import { ReactNode } from 'react';
 
 import RoleRouteGuard from '@/components/RoleRouteGuard';
-import { DashboardLayout } from '@/components/layout/dashboard/DashboardLayout';
+import { GuardianLayout } from './guardian/_components/GuardianLayout';
 
-export default function GuardianLayout({ children }: { children: ReactNode }) {
+export default function GuardianRootLayout({ children }: { children: ReactNode }) {
   return (
     <RoleRouteGuard allowedRole="GUARDIAN">
-      <DashboardLayout>{children}</DashboardLayout>
+      <GuardianLayout>{children}</GuardianLayout>
     </RoleRouteGuard>
   );
 }
