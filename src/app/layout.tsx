@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import ReactQueryProvider from '@/lib/ReactQueryProvider';
 import PushNotificationListener from '@/components/PushNotificationListener';
+import { ModalHost } from '@/components/ModalHost';
 
 export const metadata: Metadata = {
   title: 'silver bridge',
@@ -19,6 +20,7 @@ export default function RootLayout({
         <ReactQueryProvider>
           {children}
           <PushNotificationListener />
+          <ModalHost />
         </ReactQueryProvider>
       </body>
     </html>
