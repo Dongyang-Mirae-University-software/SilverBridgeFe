@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
-import { PAGE_TITLES } from '@/constants/dashboard';
+import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user';
-import { DashboardSidebar } from './DashboardSidebar';
+import { NavItem } from './types';
 import { ProfileModal } from './ProfileModal';
-import { NavItem, PageKey } from './types';
+import { UserAvatar } from '@/components/UserAvatar';
 import styles from './Sidebar.module.css';
 
 const cx = classNames.bind(styles);
@@ -22,67 +22,75 @@ const ROLE_DEFAULT_NAME: Record<AuthRole, string> = {
   WARD: '사용자',
 };
 
-interface SidebarProps {
-  navItems?: NavItem[];
-  onOpenSidebar?: () => void;
-  pageTitle?: string;
+interface Props {
+  isOpen: boolean;
+  navItems: NavItem[];
+  onClose: () => void;
+  pathname: string;
   profile?: IUserProfile | null;
   role: AuthRole;
-  rootPath?: string;
+  rootPath: string;
 }
 
-export function Sidebar({ navItems, onOpenSidebar, pageTitle, profile, role, rootPath }: SidebarProps) {
-  const pathname = usePathname();
+export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, rootPath }: Props) {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const canRenderSidebar = Boolean(navItems && pathname && rootPath);
 
-  const resolvedPageTitle = pageTitle ?? (navItems && pathname ? PAGE_TITLES[getPageKey(pathname, navItems)] : '');
   const userName = profile?.name ?? ROLE_DEFAULT_NAME[role];
   const userId = profile?.id ?? '아이디 정보 없음';
   const userEmail = profile?.email ?? '이메일 정보 없음';
 
-  const handleOpenSidebar = () => {
-    if (canRenderSidebar) {
-      setIsSidebarOpen(true);
-      return;
-    }
-    onOpenSidebar?.();
+  const handleOpenProfile = () => {
+    onClose();
+    setIsProfileModalOpen(true);
   };
 
   return (
     <>
-      <div className={cx('mobileTopBar')}>
-        <div className={cx('topBarBrand')}>
-          <SilverBridgeLogo className={cx('topBarLogo')} width={132} />
-          <span>{resolvedPageTitle}</span>
+      <aside className={cx('sidebar', { open: isOpen })} aria-label={`${getRoleLabel(role)} 메뉴`}>
+        <div className={cx('brand')}>
+          <div className={cx('brandInfo')}>
+            <SilverBridgeLogo className={cx('brandLogo')} width={138} />
+          </div>
+          <button className={cx('closeButton')} type="button" aria-label="메뉴 닫기" onClick={onClose}>
+            ×
+          </button>
         </div>
-        <button className={cx('topBarMenuButton')} type="button" aria-label="메뉴 열기" onClick={handleOpenSidebar}>
-          <Icon name="menu" size={20} />
-          <span>메뉴</span>
-        </button>
-      </div>
 
-      {canRenderSidebar && isSidebarOpen && (
-        <button className={cx('scrim')} type="button" aria-label="메뉴 닫기" onClick={() => setIsSidebarOpen(false)} />
-      )}
-      {canRenderSidebar && (
-        <DashboardSidebar
-          isOpen={isSidebarOpen}
-          navItems={navItems ?? []}
-          onClose={() => setIsSidebarOpen(false)}
-          onOpenProfile={() => {
-            setIsSidebarOpen(false);
-            setIsProfileModalOpen(true);
-          }}
-          pathname={pathname ?? ''}
-          profile={profile}
-          role={role}
-          rootPath={rootPath ?? ''}
-          userId={userId}
-          userName={userName}
-        />
-      )}
+        <nav className={cx('nav')} aria-label={`${getRoleLabel(role)} 메뉴`}>
+          {navItems.map(item => (
+            <Link
+              key={item.href}
+              className={cx('navItem', {
+                active: pathname === item.href || (item.href !== rootPath && pathname.startsWith(`${item.href}/`)),
+              })}
+              href={item.href}
+              onClick={onClose}
+            >
+              <span className={cx('navIcon')}>
+                <Icon name={item.icon} size={18} />
+              </span>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+
+        <div className={cx('sidebarFooter')}>
+          <button className={cx('userCard')} type="button" aria-haspopup="dialog" onClick={handleOpenProfile}>
+            <UserAvatar size="w-60" imageUrl={profile?.profileImage} />
+            <div className={cx('userInfo')}>
+              <div className={cx('userTitleRow')}>
+                <strong>{userName}</strong>
+                <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
+              </div>
+              <span className={cx('userIdText')}>{userId}</span>
+            </div>
+            <span className={cx('userChevron')} aria-hidden="true">
+              ›
+            </span>
+          </button>
+        </div>
+      </aside>
+
       {isProfileModalOpen && (
         <ProfileModal
           onClose={() => setIsProfileModalOpen(false)}
@@ -95,12 +103,4 @@ export function Sidebar({ navItems, onOpenSidebar, pageTitle, profile, role, roo
       )}
     </>
   );
-}
-
-function getPageKey(pathname: string, navItems: NavItem[]): PageKey {
-  const matchedItem = [...navItems]
-    .sort((a, b) => b.href.length - a.href.length)
-    .find(item => pathname === item.href || pathname.startsWith(`${item.href}/`));
-
-  return matchedItem?.key ?? 'home';
 }

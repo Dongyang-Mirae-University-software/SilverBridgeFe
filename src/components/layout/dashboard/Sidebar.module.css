@@ -1,209 +1,297 @@
-.mobileTopBar {
-  display: none;
-}
-
-.scrim {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  border: 0;
-  background: rgba(20, 17, 12, 0.38);
-  cursor: pointer;
-}
-
-.desktopHeader {
-  z-index: 35;
+.sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  box-sizing: border-box;
   display: flex;
-  align-items: center;
+  width: 260px;
+  height: 100vh;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 8px;
+  border-right: 1px solid var(--sb-line);
+  background: #fff;
+  padding: 16px;
+  box-shadow: none;
+}
+
+.brand {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: var(--sb-shadow-sm);
-  margin-bottom: 18px;
-  padding: 14px 16px 14px 18px;
-  backdrop-filter: blur(10px);
+  gap: 12px;
+  border-radius: 12px;
+  padding: 10px;
+  border-bottom: 1px solid var(--sb-line-soft);
+  border-radius: 0;
+  flex-shrink: 0;
+  padding: 0px 10px 10px;
 }
 
-.desktopHeaderTitle {
+.brandInfo {
+  display: flex;
   min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.desktopHeaderTitle h1 {
+.brandLogo {
+  width: 138px;
+  max-width: 100%;
+}
+
+:global(.guardianTheme) .brandLogo {
+  --logo-color: var(--guardian-brand);
+}
+
+.brandInfo span {
+  display: block;
   overflow: hidden;
-  margin: 7px 0 0;
-  color: var(--sb-ink);
-  font-size: 24px;
-  font-weight: 850;
-  line-height: 1.2;
+  max-width: 150px;
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.roleBadge {
-  display: inline-flex;
-  border-radius: 999px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 10px;
+.closeButton {
+  display: none;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 18px;
   font-weight: 800;
-  padding: 2px 8px;
+  line-height: 1;
 }
 
-:global(.guardianTheme) .roleBadge {
+.closeButton:hover {
+  background: var(--sb-bg-soft);
+}
+
+.nav {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 12px;
+  text-decoration: none;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.navItem:hover {
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-weight: 700;
+}
+
+.navItem.active {
+  background: var(--sb-brand);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(31, 94, 72, 0.16);
+}
+
+:global(.guardianTheme) .navItem:hover {
   background: var(--guardian-brand-soft);
   color: var(--guardian-brand);
 }
 
-.desktopUserButton {
+:global(.guardianTheme) .navItem.active {
+  background: var(--guardian-brand);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(51, 110, 191, 0.16);
+}
+
+.navIcon {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  place-items: center;
+}
+
+.navIcon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.sidebarFooter {
+  display: grid;
+  flex-shrink: 0;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.userCard {
   display: flex;
-  min-width: 210px;
-  max-width: 320px;
+  width: 100%;
+  min-width: 0;
   align-items: center;
   gap: 10px;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--sb-bg-soft);
   color: inherit;
   cursor: pointer;
-  padding: 9px 12px;
+  padding: 10px 12px;
   text-align: left;
 }
 
-.desktopUserButton:hover {
+.userCard strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.userCard span {
+  display: block;
+  overflow: hidden;
+  max-width: 150px;
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userIdText {
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.userCard:hover {
   background: #fff;
 }
 
-:global(.guardianTheme) .desktopUserButton {
+:global(.guardianTheme) .userCard {
   border-color: var(--guardian-line);
   background: var(--guardian-brand-soft);
 }
 
-:global(.guardianTheme) .desktopUserButton:hover {
+:global(.guardianTheme) .userCard:hover {
   background: var(--guardian-brand-hover);
 }
 
-.desktopUserInfo {
+.userInfo {
   min-width: 0;
+  flex: 1;
 }
 
-.desktopUserInfo strong,
-.desktopUserInfo span {
-  display: block;
+.userTitleRow {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.userTitleRow strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.desktopUserInfo strong {
-  color: var(--sb-ink);
-  font-size: 13px;
-  font-weight: 850;
+.userRoleBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #dceee3;
+  color: var(--sb-safe);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
 }
 
-.desktopUserInfo span {
+:global(.guardianTheme) .userRoleBadge {
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+}
+
+.userChevron {
+  flex-shrink: 0;
   color: var(--sb-ink-mute);
-  font-size: 11px;
-  font-weight: 650;
-  margin-top: 2px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 @media (max-width: 900px) {
-  .scrim {
-    display: block;
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 70;
+    width: min(78vw, 280px);
+    max-width: 320px;
+    height: 100dvh;
+    border-right: 0;
+    box-shadow:
+      var(--sb-shadow-sm),
+      16px 0 48px rgba(20, 17, 12, 0.16);
+    padding: max(18px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+    transform: translateX(-105%);
+    transition: transform 0.18s ease;
   }
 
-  .mobileTopBar {
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .closeButton {
+    display: grid;
+  }
+
+  .nav {
     display: flex;
-    min-height: 64px;
-    align-items: center;
-    gap: 10px;
-    border-bottom: 1px solid var(--sb-line);
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 4px 14px rgba(20, 17, 12, 0.08);
-    padding: 10px 14px;
-    backdrop-filter: blur(10px);
-    margin-bottom: 10px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 2px;
   }
 
-  .topBarMenuButton {
-    display: inline-flex;
-    width: auto;
-    height: 42px;
-    flex-shrink: 0;
-    align-items: center;
-    gap: 6px;
-    border: 1px solid var(--sb-line);
-    border-radius: 12px;
-    background: #fff;
-    color: var(--sb-ink);
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 800;
-    padding: 0 12px;
+  .navItem {
+    border-radius: 10px;
+    font-size: 14px;
+    padding: 12px 13px;
   }
 
-  .topBarMenuButton svg {
+  .navIcon,
+  .navIcon svg {
     width: 20px;
     height: 20px;
   }
 
-  .topBarBrand {
-    display: flex;
-    min-width: 0;
-    flex: 1;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 1px;
+  .sidebarFooter {
+    border-top: 1px solid var(--sb-line-soft);
+    padding-top: 10px;
   }
 
-  .topBarLogo {
-    width: 128px;
-    max-width: 100%;
-  }
-
-  :global(.guardianTheme) .topBarLogo {
-    --logo-color: var(--guardian-brand);
-  }
-
-  .topBarBrand span {
-    display: block;
-    overflow: hidden;
-    color: var(--sb-ink-mute);
-    font-size: 10px;
-    font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .topBarRole {
-    display: inline-flex;
-    flex-shrink: 0;
-    border-radius: 999px;
-    background: var(--sb-brand-50);
-    color: var(--sb-brand);
-    font-size: 11px;
-    font-weight: 800;
-    padding: 4px 9px;
-  }
-
-  :global(.guardianTheme) .topBarRole {
-    background: var(--guardian-brand-soft);
-    color: var(--guardian-brand);
-  }
-
-  .desktopHeader {
-    display: none;
-  }
-
-  .topBarBrand {
-    gap: 0;
-  }
-
-  .topBarLogo {
-    width: 112px;
+  .brandLogo {
+    width: 124px;
   }
 }

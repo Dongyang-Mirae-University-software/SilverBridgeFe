@@ -1,0 +1,209 @@
+.mobileTopBar {
+  display: none;
+}
+
+.scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  border: 0;
+  background: rgba(20, 17, 12, 0.38);
+  cursor: pointer;
+}
+
+.desktopHeader {
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--sb-shadow-sm);
+  margin-bottom: 18px;
+  padding: 14px 16px 14px 18px;
+  backdrop-filter: blur(10px);
+}
+
+.desktopHeaderTitle {
+  min-width: 0;
+}
+
+.desktopHeaderTitle h1 {
+  overflow: hidden;
+  margin: 7px 0 0;
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 850;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roleBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+}
+
+:global(.guardianTheme) .roleBadge {
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+}
+
+.desktopUserButton {
+  display: flex;
+  min-width: 210px;
+  max-width: 320px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
+  color: inherit;
+  cursor: pointer;
+  padding: 9px 12px;
+  text-align: left;
+}
+
+.desktopUserButton:hover {
+  background: #fff;
+}
+
+:global(.guardianTheme) .desktopUserButton {
+  border-color: var(--guardian-line);
+  background: var(--guardian-brand-soft);
+}
+
+:global(.guardianTheme) .desktopUserButton:hover {
+  background: var(--guardian-brand-hover);
+}
+
+.desktopUserInfo {
+  min-width: 0;
+}
+
+.desktopUserInfo strong,
+.desktopUserInfo span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktopUserInfo strong {
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.desktopUserInfo span {
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+  font-weight: 650;
+  margin-top: 2px;
+}
+
+@media (max-width: 900px) {
+  .scrim {
+    display: block;
+  }
+
+  .mobileTopBar {
+    display: flex;
+    min-height: 64px;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--sb-line);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 4px 14px rgba(20, 17, 12, 0.08);
+    padding: 10px 14px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 10px;
+  }
+
+  .topBarMenuButton {
+    display: inline-flex;
+    width: auto;
+    height: 42px;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--sb-line);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--sb-ink);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 0 12px;
+  }
+
+  .topBarMenuButton svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .topBarBrand {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 1px;
+  }
+
+  .topBarLogo {
+    width: 128px;
+    max-width: 100%;
+  }
+
+  :global(.guardianTheme) .topBarLogo {
+    --logo-color: var(--guardian-brand);
+  }
+
+  .topBarBrand span {
+    display: block;
+    overflow: hidden;
+    color: var(--sb-ink-mute);
+    font-size: 10px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topBarRole {
+    display: inline-flex;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--sb-brand-50);
+    color: var(--sb-brand);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 9px;
+  }
+
+  :global(.guardianTheme) .topBarRole {
+    background: var(--guardian-brand-soft);
+    color: var(--guardian-brand);
+  }
+
+  .desktopHeader {
+    display: none;
+  }
+
+  .topBarBrand {
+    gap: 0;
+  }
+
+  .topBarLogo {
+    width: 112px;
+  }
+}
