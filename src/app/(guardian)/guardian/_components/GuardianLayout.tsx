@@ -1,13 +1,11 @@
 'use client';
 
 import { ReactNode, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { MobileTopBar } from '@/components/layout/dashboard/DashboardHeader';
-import { PageKey } from '@/components/layout/dashboard/types';
-import { GUARDIAN_NAV, PAGE_TITLES } from '@/constants/dashboard';
+import { Sidebar } from '@/components/layout/dashboard/Sidebar';
+import { GUARDIAN_NAV } from '@/constants/dashboard';
 import { getAccessTokenSubject } from '@/lib/auth/tokenStore';
 import { getRealtimeNotification } from '@/lib/dashboard/realtime';
 import { getUserProfileData } from '@/lib/auth/userProfile';
@@ -20,30 +18,14 @@ const role = 'GUARDIAN' as const;
 const rootPath = '/guardian';
 
 export function GuardianLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const pageKey = getPageKey(pathname);
-  const pageTitle = PAGE_TITLES[pageKey];
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const realtimeUserId = profile?.id ?? getAccessTokenSubject() ?? undefined;
-  const userName = profile?.name ?? '보호자';
-  const userId = profile?.id ?? '아이디 정보 없음';
-  const userEmail = profile?.email ?? '이메일 정보 없음';
   useGuardianConnectionSocket(realtimeUserId);
 
   return (
     <div className={cx('stage')}>
-      <MobileTopBar
-        navItems={GUARDIAN_NAV}
-        pageTitle={pageTitle}
-        pathname={pathname}
-        profile={profile}
-        role={role}
-        rootPath={rootPath}
-        userEmail={userEmail}
-        userId={userId}
-        userName={userName}
-      />
+      <Sidebar navItems={GUARDIAN_NAV} profile={profile} role={role} rootPath={rootPath} />
       <main className={cx('main')}>{children}</main>
     </div>
   );
@@ -73,12 +55,4 @@ function useGuardianConnectionSocket(realtimeUserId: string | undefined) {
       },
     });
   }, [realtimeUserId]);
-}
-
-function getPageKey(pathname: string) {
-  const matchedItem = [...GUARDIAN_NAV]
-    .sort((a, b) => b.href.length - a.href.length)
-    .find(item => pathname === item.href || pathname.startsWith(`${item.href}/`));
-
-  return matchedItem?.key ?? ('home' as PageKey);
 }
