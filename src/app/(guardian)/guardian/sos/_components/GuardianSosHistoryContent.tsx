@@ -1,19 +1,16 @@
 'use client';
 
-import dayjs from 'dayjs';
-import 'dayjs/locale/ko';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import { formatDay, formatMonth, formatTime } from '@/lib/format/date';
 import { guardianConnectionsQueryOptions } from '@/service/query/connection';
 import { guardianSosHistoryQueryOptions } from '@/service/query/guardian';
 import type { IGuardianSosHistoryItem, SosTriggerType } from '@/service/interface/sos';
 import styles from './GuardianSosHistoryContent.module.css';
-
-dayjs.locale('ko');
 
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 50;
@@ -26,20 +23,7 @@ const TRIGGER_TYPE_LABEL: Record<SosTriggerType, string> = {
 
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
 
-function formatTime(value: string) {
-  return dayjs(value).format('A h:mm');
-}
-
-function formatDay(value: string) {
-  return dayjs(value).format('DD');
-}
-
-function formatMonth(value: string) {
-  return dayjs(value).format('MM월');
-}
-
 export default function GuardianSosHistoryContent() {
-  const router = useRouter();
   const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
   const [triggerTypeFilter, setTriggerTypeFilter] = useState<TriggerTypeFilter>('ALL');
   const [page, setPage] = useState(0);
@@ -93,10 +77,6 @@ export default function GuardianSosHistoryContent() {
             ))}
           </div>
         )}
-
-        <button className={cx('backButton')} type="button" onClick={() => router.back()}>
-          ← 뒤로
-        </button>
       </div>
 
       {typeof data?.totalElements === 'number' && (
