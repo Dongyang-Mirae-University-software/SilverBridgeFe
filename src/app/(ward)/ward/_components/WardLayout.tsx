@@ -1,47 +1,42 @@
 'use client';
 
 import { CSSProperties, ReactNode, useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-
-import { myProfileQueryOptions } from '@/service/query/user';
-import { AuthRole } from '@/lib/auth/tokenStore';
-import { getUserProfileData } from '@/lib/auth/userProfile';
-import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
-import { DashboardProvider } from '../../../../components/layout/dashboard/DashboardContext';
-import { SidebarLayout } from '../../../../components/layout/dashboard/SidebarLayout';
-import { GUARDIAN_NAV, WARD_NAV } from '@/constants/dashboard';
-import { getRealtimeNotification } from '@/lib/dashboard/realtime';
 import classNames from 'classnames/bind';
+
+import { DashboardProvider } from '@/components/layout/dashboard/DashboardContext';
+import { SidebarLayout } from '@/components/layout/dashboard/SidebarLayout';
+import { WardSettings } from '@/components/layout/dashboard/types';
+import { WARD_NAV } from '@/constants/dashboard';
+import {
+  DEFAULT_WARD_SETTINGS,
+  WARD_SETTINGS_STORAGE_KEY,
+  clampFontSize,
+  getValidSosAction,
+} from '@/constants/wardSettings';
+import { getUserProfileData } from '@/lib/auth/userProfile';
+import { getRealtimeNotification } from '@/lib/dashboard/realtime';
+import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
+import { myProfileQueryOptions } from '@/service/query/user';
 import styles from './WardLayout.module.css';
 
 const cx = classNames.bind(styles);
-import { WardSettings } from '../../../../components/layout/dashboard/types';
-import {
-  DEFAULT_WARD_SETTINGS,
-  clampFontSize,
-  getValidSosAction,
-  WARD_SETTINGS_STORAGE_KEY,
-} from '@/constants/wardSettings';
+
+const role = 'WARD' as const;
+const rootPath = '/ward';
 
 export function WardLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const role: AuthRole = pathname.startsWith('/ward') ? 'WARD' : 'GUARDIAN';
   const [wardSettings, setWardSettings] = useState<WardSettings>(DEFAULT_WARD_SETTINGS);
   const [isWardSettingsLoaded, setIsWardSettingsLoaded] = useState(false);
-  const isWard = role === 'WARD';
-  const navItems = isWard ? WARD_NAV : GUARDIAN_NAV;
-  const rootPath = isWard ? '/ward' : '/guardian';
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const realtimeUserId = profile?.id;
 
-  useWardSettings(isWard, isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
-  useConnectionSocket(realtimeUserId, role);
+  useWardSettings(isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
+  useWardConnectionSocket(realtimeUserId);
 
-  const stageStyle = isWard
-    ? ({ '--ward-preferred-font-size': `${wardSettings.fontSize}px` } as CSSProperties)
-    : undefined;
+  const stageStyle = { '--ward-preferred-font-size': `${wardSettings.fontSize}px` } as CSSProperties;
+
   return (
     <DashboardProvider
       value={{
@@ -50,14 +45,10 @@ export function WardLayout({ children }: { children: ReactNode }) {
       }}
     >
       <div
-        className={cx('stage', {
-          guardianTheme: !isWard,
-          wardHighContrast: isWard && wardSettings.highContrast,
-          wardReadableText: isWard,
-        })}
+        className={cx('stage', { wardHighContrast: wardSettings.highContrast, wardReadableText: true })}
         style={stageStyle}
       >
-        <SidebarLayout navItems={navItems} profile={profile} role={role} rootPath={rootPath} />
+        <SidebarLayout navItems={WARD_NAV} profile={profile} role={role} rootPath={rootPath} />
         <main className={cx('main')}>{children}</main>
       </div>
     </DashboardProvider>
@@ -65,14 +56,12 @@ export function WardLayout({ children }: { children: ReactNode }) {
 }
 
 function useWardSettings(
-  isWard: boolean,
   isLoaded: boolean,
   setIsLoaded: (loaded: boolean) => void,
   setSettings: (settings: WardSettings) => void,
   settings: WardSettings,
 ) {
   useEffect(() => {
-    if (!isWard) return;
     try {
       const rawSettings = window.localStorage.getItem(WARD_SETTINGS_STORAGE_KEY);
       if (rawSettings) {
@@ -87,14 +76,14 @@ function useWardSettings(
     } finally {
       setIsLoaded(true);
     }
-  }, [isWard, setIsLoaded, setSettings]);
+  }, [setIsLoaded, setSettings]);
 
   useEffect(() => {
-    if (isWard && isLoaded) window.localStorage.setItem(WARD_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-  }, [isWard, isLoaded, settings]);
+    if (isLoaded) window.localStorage.setItem(WARD_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  }, [isLoaded, settings]);
 }
 
-function useConnectionSocket(realtimeUserId: string | undefined, role: AuthRole) {
+function useWardConnectionSocket(realtimeUserId: string | undefined) {
   useEffect(() => {
     if (!realtimeUserId) return;
     return connectConnectionSocket({
@@ -111,5 +100,5 @@ function useConnectionSocket(realtimeUserId: string | undefined, role: AuthRole)
         );
       },
     });
-  }, [realtimeUserId, role]);
+  }, [realtimeUserId]);
 }
