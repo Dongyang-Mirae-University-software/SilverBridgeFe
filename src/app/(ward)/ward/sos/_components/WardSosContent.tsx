@@ -3,16 +3,13 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import { useState } from 'react';
-import Link from 'next/link';
 import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
-import { UserAvatar } from '@/components/UserAvatar';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { useWardSosMutation } from '@/service/query/ward';
-import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
-import type { IConnectionItem } from '@/service/interface/connection';
+import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
 
 dayjs.locale('ko');
@@ -24,19 +21,6 @@ const DIAL_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
 function formatTriggeredAt(value?: string) {
   if (!value) return '-';
   return dayjs(value).format('YYYY.MM.DD A h:mm');
-}
-
-function formatTel(phone?: string | null) {
-  if (!phone) return '-';
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
-  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
-  return digits || '-';
-}
-
-function makeTelHref(phone?: string | null) {
-  const digits = phone?.replace(/\D/g, '');
-  return digits ? `tel:${digits}` : null;
 }
 
 function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
@@ -85,68 +69,13 @@ function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
   );
 }
 
-function GuardianCard({
-  connection,
-  index,
-  onCall,
-}: {
-  connection: IConnectionItem;
-  index: number;
-  onCall: () => void;
-}) {
-  const telHref = makeTelHref(connection.partnerPhone);
-  const isMint = index % 2 === 0;
-
-  return (
-    <article className={cx('guardianCard', isMint ? 'guardianCardMint' : 'guardianCardSky')}>
-      <div className={cx('guardianHead')}>
-        {telHref ? (
-          <span className={cx('guardianPhoneIcon')} aria-hidden="true">
-            <Icon name="phone" size={30} decorative />
-          </span>
-        ) : null}
-      </div>
-
-      <div className={cx('guardianBody')}>
-        <UserAvatar imageUrl={connection.partnerProfileImage} size="w-120" />
-        <div className={cx('guardianInfo')}>
-          <strong>{connection.partnerName}</strong>
-          <span>{connection.relation || '보호자'}</span>
-        </div>
-      </div>
-
-      <div className={cx('guardianFooter')}>
-        <div className={cx('guardianPhone')}>
-          <span>전화번호</span>
-          <strong>{formatTel(connection.partnerPhone)}</strong>
-        </div>
-      </div>
-
-      {telHref ? (
-        <a
-          className={cx('cardLink')}
-          href={telHref}
-          aria-label={`${connection.partnerName}에게 전화하기`}
-          onClick={onCall}
-        />
-      ) : null}
-    </article>
-  );
-}
-
 export default function WardSosContent() {
   const { wardSettings } = useDashboard();
-  const { activeGuardians, isLoading: isLoadingGuardians, isError: isGuardiansError } = useWardActiveGuardians();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDialOpen, setIsDialOpen] = useState(false);
   const [successState, setSuccessState] = useState<{ sosEventId: number; triggeredAt: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const { mutate: triggerSos, isPending } = useWardSosMutation();
-  const currentGuardians = activeGuardians
-    .slice()
-    .sort(
-      (a, b) => new Date(b.connectedAt ?? b.createdAt).getTime() - new Date(a.connectedAt ?? a.createdAt).getTime(),
-    );
 
   function handleHeroPress() {
     if (wardSettings.sosAction === 'call119') {
@@ -200,52 +129,7 @@ export default function WardSosContent() {
         <p>탭하여 즉시 도움 요청</p>
       </button>
 
-      <section className={cx('phoneSection')}>
-        <div className={cx('sectionHeader')}>
-          <h3>보호자에게 직접 전화하기</h3>
-        </div>
-
-        {isGuardiansError ? (
-          <div className={cx('emptyState')}>
-            <div className={cx('emptyIcon')}>
-              <Icon name="users" size={20} decorative />
-            </div>
-            <div className={cx('emptyCopy')}>
-              <strong>보호자 목록을 불러오지 못했습니다.</strong>
-              <span>잠시 후 다시 시도해주세요.</span>
-            </div>
-          </div>
-        ) : isLoadingGuardians ? (
-          <div className={cx('emptyState')}>
-            <div className={cx('emptyIcon')}>
-              <Icon name="users" size={20} decorative />
-            </div>
-            <div className={cx('emptyCopy')}>
-              <strong>보호자 리스트를 불러오는 중입니다.</strong>
-              <span>연결된 보호자가 있으면 곧 표시됩니다.</span>
-            </div>
-          </div>
-        ) : currentGuardians.length > 0 ? (
-          <div className={cx('guardianGrid')}>
-            {currentGuardians.map((connection, index) => (
-              <GuardianCard key={connection.id} connection={connection} index={index} onCall={handleGuardianCall} />
-            ))}
-          </div>
-        ) : (
-          <div className={cx('emptyState')}>
-            <div className={cx('emptyIcon')}>
-              <Icon name="users" size={20} decorative />
-            </div>
-            <div className={cx('emptyCopy')}>
-              <strong>현재 연결된 보호자가 없습니다.</strong>
-              <span>보호자를 연결하면 이곳에 바로 전화할 수 있는 카드가 표시됩니다.</span>
-            </div>
-            <Link className={cx('emptyButton')} href="/ward/guardians">
-              보호자 연결하기
-            </Link>
-          </div>
-        )}
-      </section>
+      <WardGuardianCallSection onGuardianCall={handleGuardianCall} />
 
       {isConfirmOpen && (
         <CommonModal
