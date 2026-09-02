@@ -1,3 +1,7 @@
+// 인증 관련 API: 로그인/회원가입/카카오/SMS 인증/비밀번호·이메일 찾기/로그아웃/토큰 재발급
+// Swagger 그룹: "공통 - 인증" (/api/auth/**)
+// signin/signup 계열은 토큰 없이 호출 가능, logout/refresh는 토큰 필요
+
 import { apiClient } from '@/lib/api/apiClient';
 import { CommonResponse } from '../../interface/common';
 import {

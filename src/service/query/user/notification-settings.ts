@@ -2,10 +2,7 @@
 
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {
-  getMyNotificationSettings,
-  updateMyNotificationSettings,
-} from '@/service/api/user/user';
+import { getMyNotificationSettings, updateMyNotificationSettings } from '@/service/api/user/notification';
 import type { CommonResponse } from '@/service/interface/common';
 import type {
   IUserNotificationSetting,
