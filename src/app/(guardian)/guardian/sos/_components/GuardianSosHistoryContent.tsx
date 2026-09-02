@@ -7,7 +7,7 @@ import classNames from 'classnames/bind';
 import { Icon } from '@/components/Icon';
 import { Pagination } from '@/components/Pagination';
 import { Tabs } from '@/components/Tabs';
-import useGuardianActiveWards from '@/hooks/useGuardianActiveWards';
+import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { formatDay, formatMonth, formatTime } from '@/utils/format/date';
 import { guardianSosHistoryQueryOptions } from '@/service/query/guardian';
 import type { IGuardianSosHistoryItem, SosTriggerType } from '@/service/interface/guardian/sosHistory';
