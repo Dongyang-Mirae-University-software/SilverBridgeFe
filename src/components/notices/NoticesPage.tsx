@@ -5,7 +5,7 @@ import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
 import { formatDate } from '@/lib/format/date';
-import { announcementsQueryOptions } from '@/service/query/announcement';
+import { announcementsQueryOptions } from '@/service/query/common/announcement';
 import styles from './NoticesPage.module.css';
 
 const cx = classNames.bind(styles);

@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 
-import { getAnnouncementDetail, getAnnouncements } from '@/service/api/announcement';
+import { getAnnouncementDetail, getAnnouncements } from '@/service/api/common/announcement';
 
 export const announcementsQueryKey = ['announcements'] as const;
 export const announcementDetailQueryKey = (id: number) => ['announcement', id] as const;
