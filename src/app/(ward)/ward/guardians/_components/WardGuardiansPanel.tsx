@@ -1,21 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { RefreshButton } from '@/components/RefreshButton';
 import {
-  acceptWardConnection,
-  disconnectWardConnection,
-  getWardActiveConnections,
-  getWardPendingConnectionRequests,
-  refuseWardConnectionRequest,
-} from '@/service/api/ward/connection';
-import { wardConnectionsQueryKey } from '@/service/query/ward';
+  useWardConnectionAcceptMutation,
+  useWardConnectionDisconnectMutation,
+  useWardConnectionRefuseMutation,
+  useWardGuardianActiveConnectionsQuery,
+  useWardGuardianPendingConnectionsQuery,
+} from '@/service/query/ward';
 import {
   getPendingConnectionRequestItems,
   PENDING_CONNECTION_REQUESTS_EVENT,
-  removePendingConnectionRequest,
 } from '@/lib/realtime/pendingConnectionRequests';
 import classNames from 'classnames/bind';
 import { ConnectionList } from '@/components/connections/ConnectionList';
@@ -23,29 +20,11 @@ import { EmptyState, getConnectionData, getErrorMessage } from '@/components/con
 import styles from './WardGuardiansPanel.module.css';
 
 const cx = classNames.bind(styles);
-const wardActiveConnectionsQueryKey = [...wardConnectionsQueryKey, 'active'] as const;
-const wardPendingConnectionsQueryKey = [...wardConnectionsQueryKey, 'pending'] as const;
-
 export function WardGuardiansPanel() {
-  const queryClient = useQueryClient();
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [storedPendingConnections, setStoredPendingConnections] = useState(() => getPendingConnectionRequestItems());
-  const activeQuery = useQuery({
-    queryKey: wardActiveConnectionsQueryKey,
-    queryFn: getWardActiveConnections,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: 'always',
-    staleTime: 10 * 1000,
-    retry: false,
-  });
-  const pendingQuery = useQuery({
-    queryKey: wardPendingConnectionsQueryKey,
-    queryFn: getWardPendingConnectionRequests,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: 'always',
-    staleTime: 10 * 1000,
-    retry: false,
-  });
+  const activeQuery = useWardGuardianActiveConnectionsQuery();
+  const pendingQuery = useWardGuardianPendingConnectionsQuery();
 
   const activeConnections = getConnectionData(activeQuery.data);
   const apiPendingConnections = getWardPendingConnectionData(pendingQuery.data);
@@ -63,38 +42,21 @@ export function WardGuardiansPanel() {
     return () => window.removeEventListener(PENDING_CONNECTION_REQUESTS_EVENT, syncStoredPendingConnections);
   }, []);
 
-  const acceptMutation = useMutation({
-    mutationKey: ['ward-connection-accept'],
-    mutationFn: acceptWardConnection,
+  const acceptMutation = useWardConnectionAcceptMutation({
     onMutate: () => setFeedbackMessage(''),
-    onSuccess: async (_data, connectionId) => {
-      removePendingConnectionRequest(connectionId);
-      setFeedbackMessage('보호자 연결 요청을 수락했습니다.');
-      await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
-    },
+    onSuccess: () => setFeedbackMessage('보호자 연결 요청을 수락했습니다.'),
     onError: error => setFeedbackMessage(getErrorMessage(error, '보호자 요청 수락에 실패했습니다.')),
   });
 
-  const refuseMutation = useMutation({
-    mutationKey: ['ward-connection-refuse'],
-    mutationFn: refuseWardConnectionRequest,
+  const refuseMutation = useWardConnectionRefuseMutation({
     onMutate: () => setFeedbackMessage(''),
-    onSuccess: async (_data, connectionId) => {
-      removePendingConnectionRequest(connectionId);
-      setFeedbackMessage('보호자 연결 요청을 거절했습니다.');
-      await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
-    },
+    onSuccess: () => setFeedbackMessage('보호자 연결 요청을 거절했습니다.'),
     onError: error => setFeedbackMessage(getErrorMessage(error, '보호자 요청 거절에 실패했습니다.')),
   });
 
-  const disconnectMutation = useMutation({
-    mutationKey: ['ward-connection-disconnect'],
-    mutationFn: disconnectWardConnection,
+  const disconnectMutation = useWardConnectionDisconnectMutation({
     onMutate: () => setFeedbackMessage(''),
-    onSuccess: async () => {
-      setFeedbackMessage('보호자 연결을 해제했습니다.');
-      await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
-    },
+    onSuccess: () => setFeedbackMessage('보호자 연결을 해제했습니다.'),
     onError: error => setFeedbackMessage(getErrorMessage(error, '보호자 연결 해제에 실패했습니다.')),
   });
 
