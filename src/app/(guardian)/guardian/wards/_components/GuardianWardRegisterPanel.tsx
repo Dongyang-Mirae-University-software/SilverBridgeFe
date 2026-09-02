@@ -6,7 +6,7 @@ import classNames from 'classnames/bind';
 
 import { requestWardConnection } from '@/service/api/guardian/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/guardian';
-import { getConnectionData, getErrorMessage } from './ConnectionShared';
+import { getConnectionData, getErrorMessage } from '@/components/connections/ConnectionShared';
 import styles from './GuardianWardRegisterPanel.module.css';
 
 const cx = classNames.bind(styles);

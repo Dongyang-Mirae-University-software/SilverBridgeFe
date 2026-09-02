@@ -10,15 +10,12 @@ import { Tabs } from '@/components/Tabs';
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/guardian/connection';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/guardian';
-import { ConnectionCard } from './ConnectionCard';
-import { EmptyState, getConnectionData, getErrorMessage } from './ConnectionShared';
+import { ConnectionList } from '@/components/connections/ConnectionList';
+import { EmptyState, getConnectionData, getErrorMessage } from '@/components/connections/ConnectionShared';
 import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
-import listStyles from './ConnectionList.module.css';
 import styles from './GuardianWardsPanel.module.css';
 
 const cx = classNames.bind(styles);
-const listCx = classNames.bind(listStyles);
-
 type GuardianWardsTab = 'list' | 'register';
 
 export function GuardianWardsPanel() {
@@ -64,9 +61,17 @@ export function GuardianWardsPanel() {
     if (tab === activeTab) return;
     setActiveTab(tab);
     const params = new URLSearchParams(window.location.search);
-    tab === 'register' ? params.set('tab', 'register') : params.delete('tab');
+    if (tab === 'register') {
+      params.set('tab', 'register');
+    } else {
+      params.delete('tab');
+    }
     const qs = params.toString();
-    window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`);
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`,
+    );
   };
 
   return (
@@ -74,7 +79,9 @@ export function GuardianWardsPanel() {
       <header className={cx('toolbar')}>
         <div>
           <strong className={cx('toolbarTitle')}>피보호자 관리</strong>
-          <span className={cx('toolbarSub')}>연결됨 {activeConnections.length}명 · 대기 {pendingConnections.length}건</span>
+          <span className={cx('toolbarSub')}>
+            연결됨 {activeConnections.length}명 · 대기 {pendingConnections.length}건
+          </span>
         </div>
         <RefreshButton ariaLabel="새로고침" disabled={isLoading} onRefresh={() => refetch()} />
       </header>
@@ -104,24 +111,21 @@ export function GuardianWardsPanel() {
             </div>
           )}
           {sortedConnections.length > 0 && (
-            <ul className={listCx('connectionList')}>
-              {sortedConnections.map(connection => (
-                <ConnectionCard
-                  key={connection.id}
-                  connection={connection}
-                  isPending={isPending}
-                  role="guardian"
-                  primaryAction={
-                    connection.status === 'ACTIVE'
-                      ? () => handleDisconnect(connection.id)
-                      : connection.status === 'PENDING'
-                        ? () => cancelMutation.mutate(connection.id)
-                        : undefined
-                  }
-                  primaryLabel={connection.status === 'ACTIVE' ? '연결 해제' : connection.status === 'PENDING' ? '요청 취소' : undefined}
-                />
-              ))}
-            </ul>
+            <ConnectionList
+              connections={sortedConnections}
+              isPending={isPending}
+              role="guardian"
+              getPrimaryAction={connection =>
+                connection.status === 'ACTIVE'
+                  ? () => handleDisconnect(connection.id)
+                  : connection.status === 'PENDING'
+                    ? () => cancelMutation.mutate(connection.id)
+                    : undefined
+              }
+              getPrimaryLabel={connection =>
+                connection.status === 'ACTIVE' ? '연결 해제' : connection.status === 'PENDING' ? '요청 취소' : undefined
+              }
+            />
           )}
         </div>
       ) : (
@@ -136,7 +140,13 @@ function getInitialTab(searchParams: ReturnType<typeof useSearchParams>): Guardi
 }
 
 function sortGuardianConnections(connections: IConnectionItem[]) {
-  const order: Record<IConnectionItem['status'], number> = { ACTIVE: 0, PENDING: 1, REFUSED: 2, CANCELLED: 3, DISCONNECTED: 4 };
+  const order: Record<IConnectionItem['status'], number> = {
+    ACTIVE: 0,
+    PENDING: 1,
+    REFUSED: 2,
+    CANCELLED: 3,
+    DISCONNECTED: 4,
+  };
   return [...connections].sort((a, b) => order[a.status] - order[b.status]);
 }
 

@@ -1,11 +1,15 @@
 import { CommonResponse } from '@/service/interface/common';
 import { IConnectionItem } from '@/service/interface/connection';
 
+interface ConnectionResponseBodyLike {
+  code?: number;
+  data?: CommonResponse<IConnectionItem[]> | IConnectionItem[];
+  message?: string;
+  success?: boolean;
+}
+
 export function getConnectionResponseBody(response: unknown): CommonResponse<IConnectionItem[]> | null {
-  const body = response as
-    | CommonResponse<IConnectionItem[]>
-    | { data?: CommonResponse<IConnectionItem[]> | IConnectionItem[] }
-    | undefined;
+  const body = response as ConnectionResponseBodyLike | undefined;
 
   if (!body) return null;
 

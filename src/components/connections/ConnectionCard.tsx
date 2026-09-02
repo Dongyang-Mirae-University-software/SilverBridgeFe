@@ -12,7 +12,7 @@ import {
   getConnectionStatusLabel,
   getPartnerPhoneValue,
 } from './ConnectionShared';
-import styles from './ConnectionShared.module.css';
+import styles from './ConnectionCard.module.css';
 
 const cx = classNames.bind(styles);
 

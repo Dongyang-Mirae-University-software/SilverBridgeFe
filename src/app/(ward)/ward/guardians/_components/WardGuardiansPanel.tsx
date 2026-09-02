@@ -18,9 +18,9 @@ import {
   removePendingConnectionRequest,
 } from '@/lib/realtime/pendingConnectionRequests';
 import classNames from 'classnames/bind';
-import { ConnectionCard } from './ConnectionCard';
-import { EmptyState, getConnectionData, getErrorMessage } from './ConnectionShared';
-import styles from './ConnectionList.module.css';
+import { ConnectionList } from '@/components/connections/ConnectionList';
+import { EmptyState, getConnectionData, getErrorMessage } from '@/components/connections/ConnectionShared';
+import styles from './WardGuardiansPanel.module.css';
 
 const cx = classNames.bind(styles);
 const wardActiveConnectionsQueryKey = [...wardConnectionsQueryKey, 'active'] as const;
@@ -107,7 +107,11 @@ export function WardGuardiansPanel() {
   return (
     <section className={cx('connectionPage')}>
       <div className={cx('connectionPageActions')}>
-        <RefreshButton ariaLabel="보호자 목록 새로고침" disabled={isRefreshing} onRefresh={() => Promise.all([activeQuery.refetch(), pendingQuery.refetch()])} />
+        <RefreshButton
+          ariaLabel="보호자 목록 새로고침"
+          disabled={isRefreshing}
+          onRefresh={() => Promise.all([activeQuery.refetch(), pendingQuery.refetch()])}
+        />
       </div>
 
       {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
@@ -121,18 +125,13 @@ export function WardGuardiansPanel() {
         {activeQuery.isError ? (
           <EmptyState message="내 보호자 목록을 불러오지 못했습니다." />
         ) : activeConnections.length > 0 ? (
-          <ul className={cx('connectionList')}>
-            {activeConnections.map(connection => (
-              <ConnectionCard
-                key={connection.id}
-                connection={connection}
-                isPending={isPending}
-                role="ward"
-                primaryAction={() => handleDisconnect(connection.id)}
-                primaryLabel="연결 해제"
-              />
-            ))}
-          </ul>
+          <ConnectionList
+            connections={activeConnections}
+            isPending={isPending}
+            role="ward"
+            getPrimaryAction={connection => () => handleDisconnect(connection.id)}
+            getPrimaryLabel={() => '연결 해제'}
+          />
         ) : (
           !activeQuery.isLoading && <EmptyState message="연결된 보호자가 없습니다." />
         )}
@@ -146,20 +145,15 @@ export function WardGuardiansPanel() {
         {pendingQuery.isError ? (
           <EmptyState message="요청온 목록을 불러오지 못했습니다." />
         ) : pendingConnections.length > 0 ? (
-          <ul className={cx('connectionList')}>
-            {pendingConnections.map(connection => (
-              <ConnectionCard
-                key={connection.id}
-                connection={connection}
-                isPending={isPending}
-                role="ward"
-                primaryAction={() => acceptMutation.mutate(connection.id)}
-                primaryLabel="수락"
-                secondaryAction={() => refuseMutation.mutate(connection.id)}
-                secondaryLabel="거절"
-              />
-            ))}
-          </ul>
+          <ConnectionList
+            connections={pendingConnections}
+            isPending={isPending}
+            role="ward"
+            getPrimaryAction={connection => () => acceptMutation.mutate(connection.id)}
+            getPrimaryLabel={() => '수락'}
+            getSecondaryAction={connection => () => refuseMutation.mutate(connection.id)}
+            getSecondaryLabel={() => '거절'}
+          />
         ) : (
           !pendingQuery.isLoading && <EmptyState message="수락 또는 거절하지 않은 연결 요청이 없습니다." />
         )}
