@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 
-import { getGuardianSosHistory, GetGuardianSosHistoryParams } from '@/service/api/guardian/sos';
+import { getGuardianSosHistory, GetGuardianSosHistoryParams } from '@/service/api/guardian/sosHistory';
 
 export function guardianSosHistoryQueryOptions(params: GetGuardianSosHistoryParams = {}) {
   return queryOptions({

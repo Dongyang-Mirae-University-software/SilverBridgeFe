@@ -1,7 +1,7 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { CommonResponse } from '../../interface/common';
 import { IConnectionItem, IWardPendingConnectionRequest } from '../../interface/connection';
-import { getConnectionResponseBody } from './connectionResponse';
+import { getConnectionResponseBody } from '@/lib/api/connectionResponse';
 
 const WARD_CONNECTION_BASE = '/ward/connection';
 

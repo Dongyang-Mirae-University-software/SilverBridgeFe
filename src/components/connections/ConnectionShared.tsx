@@ -3,7 +3,7 @@
 import classNames from 'classnames/bind';
 
 import { formatPhoneNumber } from '@/lib/format/phone';
-import { getConnectionItems, normalizeConnectionItem } from '@/service/api/connect/connectionResponse';
+import { getConnectionItems, normalizeConnectionItem } from '@/lib/api/connectionResponse';
 import { IConnectionItem } from '@/service/interface/connection';
 import styles from './ConnectionShared.module.css';
 

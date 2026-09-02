@@ -4,8 +4,8 @@ import { FormEvent, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { requestWardConnection } from '@/service/api/connect/guardian';
-import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
+import { requestWardConnection } from '@/service/api/guardian/connection';
+import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/guardian';
 import { getConnectionData, getErrorMessage } from './ConnectionShared';
 import styles from './GuardianWardRegisterPanel.module.css';
 

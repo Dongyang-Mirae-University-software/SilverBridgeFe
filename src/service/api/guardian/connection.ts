@@ -1,7 +1,7 @@
 import { apiClient } from '@/lib/api/apiClient';
+import { getConnectionResponseBody, mergeConnectionItems } from '@/lib/api/connectionResponse';
 import { CommonResponse } from '../../interface/common';
 import { IConnectionItem, IGuardianConnectionRequestReq } from '../../interface/connection';
-import { getConnectionResponseBody, mergeConnectionItems } from './connectionResponse';
 
 const GUARDIAN_CONNECTION_BASE = '/guardian/connection';
 

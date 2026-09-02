@@ -8,7 +8,7 @@ import classNames from 'classnames/bind';
 import { Icon } from '@/components/Icon';
 import { UserAvatar } from '@/components/UserAvatar';
 import { getLiveStreams } from '@/service/api/liveStream';
-import { guardianConnectionsQueryOptions } from '@/service/query/connection';
+import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
 
 import styles from './GuardianDashboardContent.module.css';
 

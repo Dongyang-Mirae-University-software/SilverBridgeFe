@@ -1,1 +1,2 @@
-export * from './sos';
+export * from './connection';
+export * from './sosHistory';

@@ -10,7 +10,7 @@ import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
-import { getWardActiveConnections } from '@/service/api/connect/ward';
+import { getWardActiveConnections } from '@/service/api/ward/connection';
 import { useWardSosMutation } from '@/service/query/ward';
 import { getConnectionData } from '@/components/connections/ConnectionShared';
 import type { IConnectionItem } from '@/service/interface/connection';

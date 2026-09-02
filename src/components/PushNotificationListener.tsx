@@ -8,10 +8,11 @@ import classNames from 'classnames/bind';
 
 import { listenForegroundMessages } from '@/lib/fcm';
 import { getAuthRole } from '@/lib/auth/tokenStore';
-import { guardianConnectionsQueryKey, wardConnectionsQueryKey } from '@/service/query/connection';
+import { guardianConnectionsQueryKey } from '@/service/query/guardian';
+import { wardConnectionsQueryKey } from '@/service/query/ward';
 import { CommonResponse } from '@/service/interface/common';
 import { IConnectionItem } from '@/service/interface/connection';
-import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/connect/ward';
+import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/ward/connection';
 import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import styles from './PushNotificationListener.module.css';
 

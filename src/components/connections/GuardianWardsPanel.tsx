@@ -7,9 +7,9 @@ import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
 import { Tabs } from '@/components/Tabs';
-import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/connect/guardian';
+import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/guardian/connection';
 import { IConnectionItem } from '@/service/interface/connection';
-import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/connection';
+import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/guardian';
 import { ConnectionCard } from './ConnectionCard';
 import { EmptyState, getConnectionData, getErrorMessage } from './ConnectionShared';
 import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';

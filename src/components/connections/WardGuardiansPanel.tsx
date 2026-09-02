@@ -10,8 +10,8 @@ import {
   getWardActiveConnections,
   getWardPendingConnectionRequests,
   refuseWardConnectionRequest,
-} from '@/service/api/connect/ward';
-import { wardConnectionsQueryKey } from '@/service/query/connection';
+} from '@/service/api/ward/connection';
+import { wardConnectionsQueryKey } from '@/service/query/ward';
 import {
   getPendingConnectionRequestItems,
   PENDING_CONNECTION_REQUESTS_EVENT,

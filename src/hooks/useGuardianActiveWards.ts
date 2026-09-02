@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { guardianConnectionsQueryOptions } from '@/service/query/connection';
+import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
 
 export default function useGuardianActiveWards() {
   const { data: connectionsResponse, isLoading, isError } = useQuery(guardianConnectionsQueryOptions);
