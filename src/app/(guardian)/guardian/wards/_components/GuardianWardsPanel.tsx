@@ -10,7 +10,7 @@ import { Tabs } from '@/components/Tabs';
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/guardian/connection';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/guardian';
-import { ConnectionList } from '@/components/connections/ConnectionList';
+import { ConnectionList } from '@/components/connections/ConnectionCard';
 import { EmptyState, getConnectionData, getErrorMessage } from '@/components/connections/ConnectionShared';
 import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
 import styles from './GuardianWardsPanel.module.css';

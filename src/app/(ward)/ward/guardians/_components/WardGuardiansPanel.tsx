@@ -16,15 +16,17 @@ import {
   PENDING_CONNECTION_REQUESTS_EVENT,
 } from '@/lib/realtime/pendingConnectionRequests';
 import classNames from 'classnames/bind';
-import { ConnectionList } from '@/components/connections/ConnectionList';
+import { ConnectionList } from '@/components/connections/ConnectionCard';
 import { EmptyState, getConnectionData } from '@/components/connections/ConnectionShared';
 import useModalStore from '@/store/modalStore';
 import styles from './WardGuardiansPanel.module.css';
 
 const cx = classNames.bind(styles);
+
 export function WardGuardiansPanel() {
   const openModal = useModalStore(state => state.openModal);
   const onCloseModal = useModalStore(state => state.onCloseModal);
+
   const [storedPendingConnections, setStoredPendingConnections] = useState(() => getPendingConnectionRequestItems());
   const activeQuery = useWardGuardianActiveConnectionsQuery();
   const pendingQuery = useWardGuardianPendingConnectionsQuery();
