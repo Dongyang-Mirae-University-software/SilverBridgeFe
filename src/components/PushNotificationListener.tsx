@@ -19,6 +19,7 @@ import styles from './PushNotificationListener.module.css';
 const cx = classNames.bind(styles);
 
 const TOAST_LIFETIME_MS = 6000;
+const NOTIFICATION_DEDUPE_LIFETIME_MS = 8000;
 type ConnectionTargetRole = 'WARD' | 'GUARDIAN';
 
 interface PushToast {
@@ -138,6 +139,13 @@ function getConnectionId(data?: MessagePayload['data']) {
   return Number.isFinite(connectionId) ? connectionId : null;
 }
 
+function getNotificationDedupeKey(data?: MessagePayload['data']) {
+  if (!data?.type) return null;
+  if (data.sosEventId) return `${data.type}:sos:${data.sosEventId}`;
+  if (data.connectionId) return `${data.type}:connection:${data.connectionId}`;
+  return null;
+}
+
 function getConnectionStatusFromPush(data?: MessagePayload['data']): IConnectionItem['status'] | null {
   switch (data?.type) {
     case 'CONNECTION_ACCEPTED':
@@ -202,6 +210,7 @@ export default function PushNotificationListener() {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const idRef = useRef(0);
+  const handledNotificationKeysRef = useRef<Map<string, number>>(new Map());
   const [toasts, setToasts] = useState<PushToast[]>([]);
   const [processingToastIds, setProcessingToastIds] = useState<number[]>([]);
   const currentRole = getCurrentRole(pathname);
@@ -212,6 +221,20 @@ export default function PushNotificationListener() {
 
   const addToast = useCallback(
     (toast: PushToast) => {
+      const dedupeKey = getNotificationDedupeKey(toast.data);
+
+      if (dedupeKey) {
+        const now = Date.now();
+        const handledAt = handledNotificationKeysRef.current.get(dedupeKey);
+
+        if (handledAt && now - handledAt < NOTIFICATION_DEDUPE_LIFETIME_MS) return;
+
+        handledNotificationKeysRef.current.set(dedupeKey, now);
+        handledNotificationKeysRef.current.forEach((timestamp, key) => {
+          if (now - timestamp > NOTIFICATION_DEDUPE_LIFETIME_MS) handledNotificationKeysRef.current.delete(key);
+        });
+      }
+
       setToasts(prev => [toast, ...prev].slice(0, 3));
       if (isConnectionRequest(toast.data, currentRole) || isSosPush(toast.data)) return;
       window.setTimeout(() => {
