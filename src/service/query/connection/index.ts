@@ -1,6 +1,4 @@
-'use client';
-
-import { queryOptions, useQuery } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 
 import { getGuardianConnections } from '@/service/api/connect/guardian';
 import { getWardConnections } from '@/service/api/connect/ward';
@@ -25,10 +23,3 @@ export const wardConnectionsQueryOptions = queryOptions({
   staleTime: 10 * 1000,
   retry: false,
 });
-
-export function useGuardianActiveWards() {
-  const { data: connectionsResponse, isLoading, isError } = useQuery(guardianConnectionsQueryOptions);
-  const activeWards = (connectionsResponse?.data ?? []).filter(connection => connection.status === 'ACTIVE');
-
-  return { activeWards, hasActiveWards: activeWards.length > 0, isLoading, isError };
-}

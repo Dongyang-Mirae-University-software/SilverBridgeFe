@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/apiClient';
+import { getResponseData } from '@/lib/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import { IGuardianSosHistoryItem, PageResponse } from '../../interface/sos';
 
@@ -11,23 +12,9 @@ export interface GetGuardianSosHistoryParams {
 }
 
 export async function getGuardianSosHistory(params: GetGuardianSosHistoryParams = {}) {
-  return apiClient.get<CommonResponse<PageResponse<IGuardianSosHistoryItem>>>(`${GUARDIAN_SOS_BASE}/history`, {
-    params,
-  });
-}
-
-export function getGuardianSosHistoryData(response: unknown): PageResponse<IGuardianSosHistoryItem> | null {
-  const body = response as
-    | CommonResponse<PageResponse<IGuardianSosHistoryItem>>
-    | { data?: CommonResponse<PageResponse<IGuardianSosHistoryItem>> | PageResponse<IGuardianSosHistoryItem> }
-    | undefined;
-
-  if (!body) return null;
-
-  const data = body.data;
-  if (data && typeof data === 'object' && 'data' in data) {
-    return (data as CommonResponse<PageResponse<IGuardianSosHistoryItem>>).data ?? null;
-  }
-
-  return (data as PageResponse<IGuardianSosHistoryItem> | undefined) ?? null;
+  const response = await apiClient.get<CommonResponse<PageResponse<IGuardianSosHistoryItem>>>(
+    `${GUARDIAN_SOS_BASE}/history`,
+    { params },
+  );
+  return getResponseData<PageResponse<IGuardianSosHistoryItem>>(response);
 }
