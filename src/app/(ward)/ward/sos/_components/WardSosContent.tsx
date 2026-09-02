@@ -2,7 +2,7 @@
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import classNames from 'classnames/bind';
 
@@ -10,9 +10,8 @@ import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
-import { getWardActiveConnections } from '@/service/api/ward/connection';
 import { useWardSosMutation } from '@/service/query/ward';
-import { getConnectionData } from '@/components/connections/ConnectionShared';
+import useWardActiveGuardians from '@/hooks/useWardActiveGuardians';
 import type { IConnectionItem } from '@/service/interface/connection';
 import styles from './WardSosContent.module.css';
 
@@ -137,47 +136,17 @@ function GuardianCard({
 
 export default function WardSosContent() {
   const { wardSettings } = useDashboard();
-  const [guardians, setGuardians] = useState<IConnectionItem[]>([]);
-  const [isLoadingGuardians, setIsLoadingGuardians] = useState(true);
-  const [isGuardiansError, setIsGuardiansError] = useState(false);
+  const { activeGuardians, isLoading: isLoadingGuardians, isError: isGuardiansError } = useWardActiveGuardians();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDialOpen, setIsDialOpen] = useState(false);
   const [successState, setSuccessState] = useState<{ sosEventId: number; triggeredAt: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const { mutate: triggerSos, isPending } = useWardSosMutation();
-  const currentGuardians = guardians
+  const currentGuardians = activeGuardians
     .slice()
     .sort(
       (a, b) => new Date(b.connectedAt ?? b.createdAt).getTime() - new Date(a.connectedAt ?? a.createdAt).getTime(),
     );
-
-  useEffect(() => {
-    let alive = true;
-
-    async function loadGuardians() {
-      setIsLoadingGuardians(true);
-      setIsGuardiansError(false);
-
-      try {
-        const response = await getWardActiveConnections();
-        if (!alive) return;
-        setGuardians(getConnectionData(response));
-      } catch {
-        if (!alive) return;
-        setGuardians([]);
-        setIsGuardiansError(true);
-      } finally {
-        if (!alive) return;
-        setIsLoadingGuardians(false);
-      }
-    }
-
-    void loadGuardians();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   function handleHeroPress() {
     if (wardSettings.sosAction === 'call119') {
