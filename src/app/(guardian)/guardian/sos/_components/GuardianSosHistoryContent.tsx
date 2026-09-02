@@ -24,8 +24,42 @@ const TRIGGER_TYPE_LABEL: Record<SosTriggerType, string> = {
 
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
 
+interface GuardianSosHistoryStatsProps {
+  guardianCallCount: number;
+  sosButtonCount: number;
+  totalElements?: number;
+}
+
 function formatCount(count: number) {
   return count > 0 ? `${count}건` : '-';
+}
+
+function GuardianSosHistoryStats({ guardianCallCount, sosButtonCount, totalElements }: GuardianSosHistoryStatsProps) {
+  return (
+    <div className={cx('statRow')}>
+      <div className={cx('statCard')}>
+        <span className={cx('statIcon')} aria-hidden="true">
+          <Icon name="phone" size={18} decorative />
+        </span>
+        <strong>{totalElements ?? '-'} 건</strong>
+        <span>전체 호출</span>
+      </div>
+      <div className={cx('statCard')}>
+        <span className={cx('statIcon')} aria-hidden="true">
+          <Icon name="users" size={18} decorative />
+        </span>
+        <strong>{formatCount(guardianCallCount)}</strong>
+        <span>보호자에게 직접 전화</span>
+      </div>
+      <div className={cx('statCard')}>
+        <span className={cx('statIcon')} aria-hidden="true">
+          <Icon name="alert" size={18} decorative />
+        </span>
+        <strong>{formatCount(sosButtonCount)}</strong>
+        <span>긴급 SOS 버튼</span>
+      </div>
+    </div>
+  );
 }
 
 export default function GuardianSosHistoryContent() {
@@ -95,29 +129,11 @@ export default function GuardianSosHistoryContent() {
         )}
       </div>
 
-      <div className={cx('statRow')}>
-        <div className={cx('statCard')}>
-          <span className={cx('statIcon')} aria-hidden="true">
-            <Icon name="phone" size={18} decorative />
-          </span>
-          <strong>{data?.totalElements ?? '-'} 건</strong>
-          <span>전체 호출</span>
-        </div>
-        <div className={cx('statCard')}>
-          <span className={cx('statIcon')} aria-hidden="true">
-            <Icon name="users" size={18} decorative />
-          </span>
-          <strong>{formatCount(guardianCallCount)}</strong>
-          <span>보호자에게 직접 전화</span>
-        </div>
-        <div className={cx('statCard')}>
-          <span className={cx('statIcon')} aria-hidden="true">
-            <Icon name="alert" size={18} decorative />
-          </span>
-          <strong>{formatCount(sosButtonCount)}</strong>
-          <span>긴급 SOS 버튼</span>
-        </div>
-      </div>
+      <GuardianSosHistoryStats
+        totalElements={data?.totalElements}
+        guardianCallCount={guardianCallCount}
+        sosButtonCount={sosButtonCount}
+      />
 
       <Tabs
         ariaLabel="발생 경로 필터"
