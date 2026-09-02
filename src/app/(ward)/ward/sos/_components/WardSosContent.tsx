@@ -97,7 +97,7 @@ export default function WardSosContent() {
     );
   }
 
-  function openSuccessModal(data?: Partial<WardSosResponse>) {
+  function openSuccessModal(data?: Partial<WardSosResponse> | null) {
     const triggeredAt = data?.triggeredAt ?? new Date().toISOString();
     const sosEventId = data?.sosEventId ?? Date.now();
     const shouldOfferDial = wardSettings.sosAction === 'notifyGuardianFirst';
