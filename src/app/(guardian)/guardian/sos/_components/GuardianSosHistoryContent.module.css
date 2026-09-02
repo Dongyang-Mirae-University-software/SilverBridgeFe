@@ -210,32 +210,3 @@
   color: var(--sb-warn);
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-}
-
-.pageButton {
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--sb-ink);
-  cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 800;
-  min-height: 36px;
-  padding: 0 16px;
-}
-
-.pageButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.pageIndicator {
-  color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-  font-weight: 700;
-}

@@ -1,11 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import { Pagination } from '@/components/Pagination';
 import { Tabs } from '@/components/Tabs';
 import { formatDay, formatMonth, formatTime } from '@/lib/format/date';
 import { guardianConnectionsQueryOptions } from '@/service/query/connection';
@@ -173,27 +173,7 @@ export default function GuardianSosHistoryContent() {
         </ul>
       )}
 
-      {(hasPrevPage || hasNextPage) && (
-        <div className={cx('pagination')}>
-          <button
-            className={cx('pageButton')}
-            type="button"
-            disabled={!hasPrevPage || isFetching}
-            onClick={() => setPage(current => Math.max(0, current - 1))}
-          >
-            이전
-          </button>
-          <span className={cx('pageIndicator')}>{page + 1}</span>
-          <button
-            className={cx('pageButton')}
-            type="button"
-            disabled={!hasNextPage || isFetching}
-            onClick={() => setPage(current => current + 1)}
-          >
-            다음
-          </button>
-        </div>
-      )}
+      <Pagination page={page} hasPrevPage={hasPrevPage} hasNextPage={hasNextPage} disabled={isFetching} onChange={setPage} />
     </div>
   );
 }
