@@ -75,7 +75,6 @@ function LogoutButton() {
         secondaryText="취소"
         onConfirm={() => {
           if (isLoggingOut) return;
-          onCloseModal();
           logoutMutate();
         }}
         onSecondary={onCloseModal}
