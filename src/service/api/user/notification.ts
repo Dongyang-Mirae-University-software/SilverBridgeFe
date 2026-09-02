@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api/apiClient';
-import { CommonResponse } from '../interface/common';
-import { IFcmTokenReq } from '../interface/notification';
+import { CommonResponse } from '../../interface/common';
+import { IFcmTokenReq } from '../../interface/notification';
 
 const BASE = '/notifications';
 

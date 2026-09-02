@@ -3,7 +3,7 @@
 import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import { getMessaging, getToken, isSupported, MessagePayload, Messaging, onMessage } from 'firebase/messaging';
 import { reportNonApiError } from '@/lib/api/reportError';
-import { deleteNotificationFcmToken, registerNotificationFcmToken } from '@/service/api/notification';
+import { deleteNotificationFcmToken, registerNotificationFcmToken } from '@/service/api/user/notification';
 
 const FCM_TOKEN_KEY = 'careai_fcm_token';
 const FCM_REGISTERED_TOKEN_KEY = 'careai_fcm_registered_token';

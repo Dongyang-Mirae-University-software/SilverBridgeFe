@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/apiClient';
-import { CommonResponse } from '../interface/common';
+import { CommonResponse } from '../../interface/common';
 import {
   IUserDeleteReq,
   IUserNotificationSettingsResponse,
@@ -7,7 +7,7 @@ import {
   IUserPasswordChangeReq,
   IUserProfile,
   IUserUpdateReq,
-} from '../interface/user';
+} from '../../interface/user';
 
 const BASE = '/user';
 

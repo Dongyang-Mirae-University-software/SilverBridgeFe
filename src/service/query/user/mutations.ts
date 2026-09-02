@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { changeMyProfileImage, deleteMyProfileImage } from '@/service/api/user';
+import { changeMyProfileImage, deleteMyProfileImage } from '@/service/api/user/user';
 import { myProfileQueryKey } from './profile';
 import { reportNonApiError } from '@/lib/api/reportError';
 import { setMyProfileCache, updateMyProfileCache } from '@/lib/dashboard/profileCache';
