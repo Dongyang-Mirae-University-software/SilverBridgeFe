@@ -24,6 +24,10 @@ const TRIGGER_TYPE_LABEL: Record<SosTriggerType, string> = {
 
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
 
+function formatCount(count: number) {
+  return count > 0 ? `${count}건` : '-';
+}
+
 export default function GuardianSosHistoryContent() {
   const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
   const [triggerTypeFilter, setTriggerTypeFilter] = useState<TriggerTypeFilter>('ALL');
@@ -39,13 +43,13 @@ export default function GuardianSosHistoryContent() {
     guardianSosHistoryQueryOptions({ wardId: selectedWardId ?? undefined, page, size: PAGE_SIZE }),
   );
 
-  console.log(data);
-
   const items = data?.content ?? [];
   const filteredItems =
     triggerTypeFilter === 'ALL' ? items : items.filter(item => item.triggerType === triggerTypeFilter);
+
   const sosButtonCount = items.filter(item => item.triggerType === 'SOS_BUTTON').length;
   const guardianCallCount = items.filter(item => item.triggerType === 'GUARDIAN_CALL').length;
+
   const hasNextPage = data ? !data.last : false;
   const hasPrevPage = page > 0;
   const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId);
@@ -82,31 +86,29 @@ export default function GuardianSosHistoryContent() {
         )}
       </div>
 
-      {typeof data?.totalElements === 'number' && (
-        <div className={cx('statRow')}>
-          <div className={cx('statCard')}>
-            <span className={cx('statIcon')} aria-hidden="true">
-              <Icon name="phone" size={18} decorative />
-            </span>
-            <strong>{data.totalElements}건</strong>
-            <span>전체 호출</span>
-          </div>
-          <div className={cx('statCard')}>
-            <span className={cx('statIcon')} aria-hidden="true">
-              <Icon name="users" size={18} decorative />
-            </span>
-            <strong>{guardianCallCount}건</strong>
-            <span>보호자에게 직접 전화</span>
-          </div>
-          <div className={cx('statCard')}>
-            <span className={cx('statIcon')} aria-hidden="true">
-              <Icon name="alert" size={18} decorative />
-            </span>
-            <strong>{sosButtonCount}건</strong>
-            <span>긴급 SOS 버튼</span>
-          </div>
+      <div className={cx('statRow')}>
+        <div className={cx('statCard')}>
+          <span className={cx('statIcon')} aria-hidden="true">
+            <Icon name="phone" size={18} decorative />
+          </span>
+          <strong>{data?.totalElements ?? '-'} 건</strong>
+          <span>전체 호출</span>
         </div>
-      )}
+        <div className={cx('statCard')}>
+          <span className={cx('statIcon')} aria-hidden="true">
+            <Icon name="users" size={18} decorative />
+          </span>
+          <strong>{formatCount(guardianCallCount)}</strong>
+          <span>보호자에게 직접 전화</span>
+        </div>
+        <div className={cx('statCard')}>
+          <span className={cx('statIcon')} aria-hidden="true">
+            <Icon name="alert" size={18} decorative />
+          </span>
+          <strong>{formatCount(sosButtonCount)}</strong>
+          <span>긴급 SOS 버튼</span>
+        </div>
+      </div>
 
       <Tabs
         ariaLabel="발생 경로 필터"
@@ -173,7 +175,13 @@ export default function GuardianSosHistoryContent() {
         </ul>
       )}
 
-      <Pagination page={page} hasPrevPage={hasPrevPage} hasNextPage={hasNextPage} disabled={isFetching} onChange={setPage} />
+      <Pagination
+        page={page}
+        hasPrevPage={hasPrevPage}
+        hasNextPage={hasNextPage}
+        disabled={isFetching}
+        onChange={setPage}
+      />
     </div>
   );
 }
