@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 
-import { findEmail } from '@/service/api/auth';
+import { findEmail } from '@/service/api/auth/auth';
 import { IFindEmailReq, IFindEmailResponse } from '@/service/interface/auth';
 
 function isFindEmailResponse(value: unknown): value is IFindEmailResponse {

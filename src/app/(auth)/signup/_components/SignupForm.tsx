@@ -9,7 +9,7 @@ import { CommonModal } from '@/components/CommonModal';
 import useSignupForm, { type KakaoSignupData } from '@/hooks/useSignupForm';
 import { getPhoneDigits } from '@/lib/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
-import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth';
+import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth/auth';
 
 const cx = classNames.bind(styles);
 

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { logout } from '@/service/api/auth';
+import { logout } from '@/service/api/auth/auth';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
 import { unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { reportNonApiError } from '@/lib/api/reportError';

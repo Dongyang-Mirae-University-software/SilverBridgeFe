@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/apiClient';
-import { CommonResponse } from '../interface/common';
+import { CommonResponse } from '../../interface/common';
 import {
   IFindEmailReq,
   IFindEmailResponse,
@@ -19,7 +19,7 @@ import {
   ISigninReq,
   ISigninResponse,
   ISignupReq,
-} from '../interface/auth';
+} from '../../interface/auth';
 
 const BASE = '/auth';
 

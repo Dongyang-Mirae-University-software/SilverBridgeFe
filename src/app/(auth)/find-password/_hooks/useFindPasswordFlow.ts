@@ -11,7 +11,7 @@ import {
   findPasswordSmsVerify,
   findPasswordSmsResend,
   passwordReset,
-} from '@/service/api/auth';
+} from '@/service/api/auth/auth';
 import { CommonResponse } from '@/service/interface/common';
 import {
   IFindPasswordEmailSendReq,

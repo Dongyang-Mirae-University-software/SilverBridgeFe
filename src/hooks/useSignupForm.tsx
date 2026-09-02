@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { GenderType, IKakaoSignupReq, ISignupReq, RoleType } from '@/service/interface/auth';
 import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '@/constants/pattern';
 import { useMutation } from '@tanstack/react-query';
-import { signup, signupKakao } from '@/service/api/auth';
+import { signup, signupKakao } from '@/service/api/auth/auth';
 import { useRouter } from 'next/navigation';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import { getRoleHomePath } from '@/lib/auth/routes';
