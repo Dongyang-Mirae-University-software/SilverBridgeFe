@@ -10,6 +10,7 @@ import { Icon } from '@/components/Icon';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import useModalStore from '@/store/modalStore';
 import { useWardSosMutation } from '@/service/query/ward';
+import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
 import type { WardSosResponse } from '@/service/interface/ward/sos';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
@@ -75,6 +76,8 @@ export default function WardSosContent() {
   const { wardSettings } = useDashboard();
   const openModal = useModalStore(state => state.openModal);
   const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { activeGuardians, hasActiveGuardians, isLoading: isLoadingGuardians, isError: isGuardiansError } =
+    useWardActiveGuardians();
   const { mutate: triggerSos, isPending } = useWardSosMutation();
 
   function openDialModal() {
@@ -141,6 +144,12 @@ export default function WardSosContent() {
           if (isPending) return;
 
           onCloseModal();
+
+          if (!hasActiveGuardians) {
+            openDialModal();
+            return;
+          }
+
           triggerSos(undefined, {
             onSuccess: data => {
               openSuccessModal(data);
@@ -159,6 +168,11 @@ export default function WardSosContent() {
   }
 
   function handleHeroPress() {
+    if (!isLoadingGuardians && !hasActiveGuardians) {
+      openDialModal();
+      return;
+    }
+
     if (wardSettings.sosAction === 'call119') {
       openDialModal();
       return;
@@ -182,7 +196,12 @@ export default function WardSosContent() {
         <p>탭하여 즉시 도움 요청</p>
       </button>
 
-      <WardGuardianCallSection onGuardianCall={handleGuardianCall} />
+      <WardGuardianCallSection
+        activeGuardians={activeGuardians}
+        isGuardiansError={isGuardiansError}
+        isLoadingGuardians={isLoadingGuardians}
+        onGuardianCall={handleGuardianCall}
+      />
     </div>
   );
 }

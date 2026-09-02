@@ -5,13 +5,15 @@ import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { UserAvatar } from '@/components/UserAvatar';
-import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
 import type { IConnectionItem } from '@/service/interface/connection';
 import styles from './WardGuardianCallSection.module.css';
 
 const cx = classNames.bind(styles);
 
 interface Props {
+  activeGuardians: IConnectionItem[];
+  isGuardiansError: boolean;
+  isLoadingGuardians: boolean;
   onGuardianCall: () => void;
 }
 
@@ -77,8 +79,12 @@ function GuardianCard({
   );
 }
 
-export function WardGuardianCallSection({ onGuardianCall }: Props) {
-  const { activeGuardians, isLoading: isLoadingGuardians, isError: isGuardiansError } = useWardActiveGuardians();
+export function WardGuardianCallSection({
+  activeGuardians,
+  isGuardiansError,
+  isLoadingGuardians,
+  onGuardianCall,
+}: Props) {
   const currentGuardians = activeGuardians
     .slice()
     .sort(
