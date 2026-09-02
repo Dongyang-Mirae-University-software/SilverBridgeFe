@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-import { getRoleHomePath } from '@/lib/auth/routes';
+import { getRoleHomePath } from '@/utils/auth/routes';
 import type { AuthRole } from '@/lib/auth/tokenStore';
 
 const ACCESS_TOKEN_KEY = 'careai_access_token';

@@ -1,4 +1,4 @@
-import { AuthRole } from './tokenStore';
+import { AuthRole } from '@/lib/auth/tokenStore';
 
 export function getRoleHomePath(role: AuthRole) {
   if (role === 'WARD') return '/ward';

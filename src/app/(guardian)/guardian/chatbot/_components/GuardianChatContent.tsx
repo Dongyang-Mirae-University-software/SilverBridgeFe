@@ -10,7 +10,7 @@ import classNames from 'classnames/bind';
 import { Icon } from '@/components/Icon';
 import { getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
-import { getUserProfileData } from '@/lib/auth/userProfile';
+import { getUserProfileData } from '@/utils/auth/userProfile';
 import type { ChatContext, ChatMessage } from '@/service/interface/chat';
 import { calcAge } from '@/service/interface/chat';
 import type { IUserProfile } from '@/service/interface/user/user';

@@ -5,7 +5,7 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { getWardActiveConnections } from '@/service/api/ward/connection';
 import { triggerWardSos } from '@/service/api/ward/sos';
 import { reportNonApiError } from '@/lib/api/reportError';
-import { getResponseData } from '@/lib/api/responseData';
+import { getResponseData } from '@/utils/api/responseData';
 import type { IConnectionItem } from '@/service/interface/connection';
 
 export const wardActiveConnectionsQueryKey = ['ward-active-connections'] as const;

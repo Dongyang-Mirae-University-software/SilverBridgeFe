@@ -2,7 +2,7 @@
 // Swagger 그룹: "보호자 - 연결" (/api/guardian/connection/**)
 
 import { apiClient } from '@/lib/api/apiClient';
-import { getConnectionResponseBody, mergeConnectionItems } from '@/lib/api/connectionResponse';
+import { getConnectionResponseBody, mergeConnectionItems } from '@/utils/api/connectionResponse';
 import { CommonResponse } from '../../interface/common';
 import { IConnectionItem, IGuardianConnectionRequestReq } from '../../interface/connection';
 

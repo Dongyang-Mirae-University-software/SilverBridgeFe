@@ -3,7 +3,7 @@
 // 공지 작성·수정은 관리자 전용이라 여기 없음
 
 import { apiClient } from '@/lib/api/apiClient';
-import { getResponseData } from '@/lib/api/responseData';
+import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import { IAnnouncement } from '../../interface/common/announcement';
 

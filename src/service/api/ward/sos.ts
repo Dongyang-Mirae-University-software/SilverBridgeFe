@@ -4,7 +4,7 @@
 // { triggerType: 'GUARDIAN_CALL' }을 같이 보내야 그 통화가 이력에 남음
 
 import { apiClient } from '@/lib/api/apiClient';
-import { getResponseData } from '@/lib/api/responseData';
+import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import { WardSosRequest, WardSosResponse } from '../../interface/ward/sos';
 

@@ -3,7 +3,7 @@
 // ACTIVE 연결된 피보호자의 이력만 보임 (연결 해제 시 과거 이력도 비공개)
 
 import { apiClient } from '@/lib/api/apiClient';
-import { getResponseData } from '@/lib/api/responseData';
+import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import { IGuardianSosHistoryItem, PageResponse } from '../../interface/guardian/sosHistory';
 

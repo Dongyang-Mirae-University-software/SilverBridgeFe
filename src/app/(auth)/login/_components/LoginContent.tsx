@@ -9,7 +9,7 @@ import { Icon } from '@/components/Icon';
 import TextInput from '@/components/TextInput';
 import { signin } from '@/service/api/auth/auth';
 import { ISigninResponse } from '@/service/interface/auth/auth';
-import { getRoleHomePath } from '@/lib/auth/routes';
+import { getRoleHomePath } from '@/utils/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import styles from './LoginContent.module.css';
 const cx = classNames.bind(styles);

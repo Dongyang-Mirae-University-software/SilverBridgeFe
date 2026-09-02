@@ -8,7 +8,7 @@ import { Icon } from '@/components/Icon';
 import { Pagination } from '@/components/Pagination';
 import { Tabs } from '@/components/Tabs';
 import useGuardianActiveWards from '@/hooks/useGuardianActiveWards';
-import { formatDay, formatMonth, formatTime } from '@/lib/format/date';
+import { formatDay, formatMonth, formatTime } from '@/utils/format/date';
 import { guardianSosHistoryQueryOptions } from '@/service/query/guardian';
 import type { IGuardianSosHistoryItem, SosTriggerType } from '@/service/interface/guardian/sosHistory';
 import styles from './GuardianSosHistoryContent.module.css';

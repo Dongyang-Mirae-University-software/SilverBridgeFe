@@ -7,7 +7,7 @@ import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
-import { getModalErrorMessage } from '@/lib/dashboard/profile';
+import { getModalErrorMessage } from '@/utils/dashboard/profile';
 import { changeMyPassword } from '@/service/api/user/user';
 import type { IUserPasswordChangeReq } from '@/service/interface/user/user';
 import styles from './PasswordChangeSection.module.css';

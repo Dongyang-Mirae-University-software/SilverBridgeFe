@@ -4,7 +4,7 @@ import { FormEvent } from 'react';
 import classNames from 'classnames/bind';
 
 import { IFindEmailReq } from '@/service/interface/auth/auth';
-import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
+import { formatPhoneNumber, getPhoneDigits } from '@/utils/format/phone';
 import styles from './FindEmailInfoStep.module.css';
 
 const cx = classNames.bind(styles);

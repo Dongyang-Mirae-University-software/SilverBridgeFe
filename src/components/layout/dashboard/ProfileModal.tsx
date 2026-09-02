@@ -3,11 +3,11 @@
 import classNames from 'classnames/bind';
 
 import { UserAvatar } from '@/components/UserAvatar';
-import { getRoleLabel } from '@/lib/auth/routes';
+import { getRoleLabel } from '@/utils/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user/user';
 import { ProfileModalControls } from './ProfileModalControls';
-import { getProviderLabel } from '@/lib/dashboard/profile';
+import { getProviderLabel } from '@/utils/dashboard/profile';
 import styles from './ProfileModal.module.css';
 import { useLogoutMutation } from '@/service/query/auth';
 import { useState } from 'react';

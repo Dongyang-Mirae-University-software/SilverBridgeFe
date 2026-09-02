@@ -1,5 +1,5 @@
 import { IUserProfile, IUserUpdateReq } from '@/service/interface/user/user';
-import { getPhoneDigits } from '@/lib/format/phone';
+import { getPhoneDigits } from '@/utils/format/phone';
 
 export function getProviderLabel(provider?: string) {
   if (provider === 'KAKAO') return '카카오';

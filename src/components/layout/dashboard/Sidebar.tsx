@@ -5,7 +5,7 @@ import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
-import { getRoleLabel } from '@/lib/auth/routes';
+import { getRoleLabel } from '@/utils/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user/user';
 import { NavItem } from './types';

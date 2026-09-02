@@ -5,7 +5,7 @@ import { signupSmsSend, signupSmsVerify } from '@/service/api/auth/auth';
 import { GenderType } from '@/service/interface/auth/auth';
 import { IUserUpdateReq } from '@/service/interface/user/user';
 import { BirthDateSelects } from '@/components/BirthDateSelects';
-import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
+import { formatPhoneNumber, getPhoneDigits } from '@/utils/format/phone';
 import classNames from 'classnames/bind';
 import styles from './ProfileInfoPanel.module.css';
 

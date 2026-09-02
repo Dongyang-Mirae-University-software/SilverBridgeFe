@@ -7,7 +7,7 @@ import SignupBasicInfoStep from './SignupBasicInfoStep';
 import SignupPhoneVerificationStep from './SignupPhoneVerificationStep';
 import { CommonModal } from '@/components/CommonModal';
 import useSignupForm, { type KakaoSignupData } from '@/hooks/useSignupForm';
-import { getPhoneDigits } from '@/lib/format/phone';
+import { getPhoneDigits } from '@/utils/format/phone';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth/auth';
 
