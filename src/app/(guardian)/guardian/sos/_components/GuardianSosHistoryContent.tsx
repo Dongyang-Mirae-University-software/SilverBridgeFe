@@ -33,11 +33,14 @@ export default function GuardianSosHistoryContent() {
   const [triggerTypeFilter, setTriggerTypeFilter] = useState<TriggerTypeFilter>('ALL');
   const [page, setPage] = useState(0);
 
-  const { activeWards } = useGuardianActiveWards();
+  const { activeWards, hasActiveWards } = useGuardianActiveWards();
+  const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId);
+  const effectiveSelectedWardId = selectedWard?.partnerUserId ?? null;
 
-  const { data, isLoading, isError, isFetching } = useQuery(
-    guardianSosHistoryQueryOptions({ wardId: selectedWardId ?? undefined, page, size: PAGE_SIZE }),
-  );
+  const { data, isLoading, isError, isFetching } = useQuery({
+    ...guardianSosHistoryQueryOptions({ wardId: effectiveSelectedWardId ?? undefined, page, size: PAGE_SIZE }),
+    enabled: hasActiveWards,
+  });
 
   const items = data?.content ?? [];
   const filteredItems =
@@ -48,8 +51,18 @@ export default function GuardianSosHistoryContent() {
 
   const hasNextPage = data ? !data.last : false;
   const hasPrevPage = page > 0;
-  const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId);
   const listHeading = selectedWard ? `${selectedWard.partnerName} 님 호출 기록` : '전체 호출 기록';
+
+  if (!hasActiveWards) {
+    return (
+      <div className={cx('page')}>
+        <div className={cx('emptyState')}>
+          <strong>연결된 피보호자가 없습니다.</strong>
+          <span>피보호자와 연결되면 SOS 이력을 확인할 수 있습니다.</span>
+        </div>
+      </div>
+    );
+  }
 
   function handleSelectWard(wardId: string | null) {
     setSelectedWardId(wardId);
@@ -63,7 +76,7 @@ export default function GuardianSosHistoryContent() {
           <div className={cx('wardTabs')} role="tablist" aria-label="피보호자 선택">
             <button
               type="button"
-              className={cx('wardTab', { wardTabActive: selectedWardId === null })}
+              className={cx('wardTab', { wardTabActive: effectiveSelectedWardId === null })}
               onClick={() => handleSelectWard(null)}
             >
               전체
@@ -72,7 +85,7 @@ export default function GuardianSosHistoryContent() {
               <button
                 key={ward.partnerUserId}
                 type="button"
-                className={cx('wardTab', { wardTabActive: selectedWardId === ward.partnerUserId })}
+                className={cx('wardTab', { wardTabActive: effectiveSelectedWardId === ward.partnerUserId })}
                 onClick={() => handleSelectWard(ward.partnerUserId)}
               >
                 {ward.partnerName} 님
