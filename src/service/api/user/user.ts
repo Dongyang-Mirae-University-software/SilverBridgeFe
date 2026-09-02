@@ -7,7 +7,7 @@ import {
   IUserPasswordChangeReq,
   IUserProfile,
   IUserUpdateReq,
-} from '../../interface/user';
+} from '../../interface/user/user';
 
 const BASE = '/user';
 

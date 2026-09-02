@@ -19,7 +19,7 @@ import {
   ISigninReq,
   ISigninResponse,
   ISignupReq,
-} from '../../interface/auth';
+} from '../../interface/auth/auth';
 
 const BASE = '/auth';
 

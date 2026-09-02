@@ -1,4 +1,4 @@
-import { GenderType, RoleType } from './auth';
+import { GenderType, RoleType } from '../auth/auth';
 
 export type UserProvider = 'LOCAL' | 'KAKAO';
 export type NotificationChannelType = 'FCM' | 'SMS' | 'KAKAO_ALIMTALK' | 'EMAIL';

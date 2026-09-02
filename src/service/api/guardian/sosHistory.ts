@@ -1,7 +1,7 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { getResponseData } from '@/lib/api/responseData';
 import { CommonResponse } from '../../interface/common';
-import { IGuardianSosHistoryItem, PageResponse } from '../../interface/sos';
+import { IGuardianSosHistoryItem, PageResponse } from '../../interface/guardian/sosHistory';
 
 const GUARDIAN_SOS_BASE = '/guardian/sos';
 

@@ -12,7 +12,7 @@ import type {
   IUserNotificationSettingsResponse,
   IUserNotificationSettingsUpdateReq,
   NotificationChannelType,
-} from '@/service/interface/user';
+} from '@/service/interface/user/user';
 import { reportNonApiError } from '@/lib/api/reportError';
 
 export const userNotificationSettingsQueryKey = ['user-notification-settings'] as const;

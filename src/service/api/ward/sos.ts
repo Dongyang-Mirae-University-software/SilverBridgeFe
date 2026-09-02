@@ -1,7 +1,7 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { getResponseData } from '@/lib/api/responseData';
 import { CommonResponse } from '../../interface/common';
-import { WardSosRequest, WardSosResponse } from '../../interface/ward';
+import { WardSosRequest, WardSosResponse } from '../../interface/ward/sos';
 
 const WARD_BASE = '/ward';
 

@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { CommonResponse } from '../../interface/common';
-import { IAnnouncement } from '../../interface/announcement';
+import { IAnnouncement } from '../../interface/common/announcement';
 
 const BASE = '/commonness/announcement';
 

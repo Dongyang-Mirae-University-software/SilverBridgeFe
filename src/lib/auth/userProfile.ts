@@ -1,4 +1,4 @@
-import { IUserProfile } from '@/service/interface/user';
+import { IUserProfile } from '@/service/interface/user/user';
 
 export function getUserProfileData(response: unknown) {
   if (!response) return null;
