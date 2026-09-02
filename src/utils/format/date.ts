@@ -20,3 +20,8 @@ export function formatDay(value: string) {
 export function formatMonth(value: string) {
   return dayjs(value).format('MM월');
 }
+
+export function formatDateTime(value?: string | null) {
+  if (!value) return '-';
+  return dayjs(value).format('YYYY.MM.DD A h:mm');
+}

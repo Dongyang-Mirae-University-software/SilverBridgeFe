@@ -1,11 +1,10 @@
 'use client';
 
-import dayjs from 'dayjs';
-import 'dayjs/locale/ko';
 import { useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
+import { formatDateTime } from '@/utils/format/date';
 import { Icon } from '@/components/Icon';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import useModalStore from '@/store/modalStore';
@@ -15,16 +14,9 @@ import type { WardSosResponse } from '@/service/interface/ward/sos';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
 
-dayjs.locale('ko');
-
 const cx = classNames.bind(styles);
 
 const DIAL_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
-
-function formatTriggeredAt(value?: string) {
-  if (!value) return '-';
-  return dayjs(value).format('YYYY.MM.DD A h:mm');
-}
 
 function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
   const [digits, setDigits] = useState('119');
@@ -112,8 +104,8 @@ export default function WardSosContent() {
         title="SOS 전송 완료"
         message={
           shouldOfferDial
-            ? `보호자에게 알림을 보냈습니다.\n필요하면 아래 버튼으로 119 화면을 여세요.\n${formatTriggeredAt(triggeredAt)}`
-            : `SOS 이력이 저장되었습니다.\n이력 ID ${sosEventId} · ${formatTriggeredAt(triggeredAt)}`
+            ? `보호자에게 알림을 보냈습니다.\n필요하면 아래 버튼으로 119 화면을 여세요.\n${formatDateTime(triggeredAt)}`
+            : `SOS 이력이 저장되었습니다.\n이력 ID ${sosEventId} · ${formatDateTime(triggeredAt)}`
         }
         confirmText={shouldOfferDial ? '119 화면 열기' : '확인'}
         secondaryText={shouldOfferDial ? '닫기' : undefined}

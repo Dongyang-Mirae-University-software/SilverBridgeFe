@@ -5,6 +5,7 @@ import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { UserAvatar } from '@/components/UserAvatar';
+import { formatPhoneText, makeTelHref } from '@/utils/format/phone';
 import type { IConnectionItem } from '@/service/interface/connection';
 import styles from './WardGuardianCallSection.module.css';
 
@@ -15,19 +16,6 @@ interface Props {
   isGuardiansError: boolean;
   isLoadingGuardians: boolean;
   onGuardianCall: () => void;
-}
-
-function formatTel(phone?: string | null) {
-  if (!phone) return '-';
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
-  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
-  return digits || '-';
-}
-
-function makeTelHref(phone?: string | null) {
-  const digits = phone?.replace(/\D/g, '');
-  return digits ? `tel:${digits}` : null;
 }
 
 function GuardianCard({
@@ -63,7 +51,7 @@ function GuardianCard({
       <div className={cx('guardianFooter')}>
         <div className={cx('guardianPhone')}>
           <span>전화번호</span>
-          <strong>{formatTel(connection.partnerPhone)}</strong>
+          <strong>{formatPhoneText(connection.partnerPhone)}</strong>
         </div>
       </div>
 
