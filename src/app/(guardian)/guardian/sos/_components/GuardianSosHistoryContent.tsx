@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -8,7 +8,7 @@ import { Icon } from '@/components/Icon';
 import { Pagination } from '@/components/Pagination';
 import { Tabs } from '@/components/Tabs';
 import { formatDay, formatMonth, formatTime } from '@/lib/format/date';
-import { guardianConnectionsQueryOptions } from '@/service/query/connection';
+import { useGuardianActiveWards } from '@/service/query/connection';
 import { guardianSosHistoryQueryOptions } from '@/service/query/guardian';
 import type { IGuardianSosHistoryItem, SosTriggerType } from '@/service/interface/sos';
 import styles from './GuardianSosHistoryContent.module.css';
@@ -33,11 +33,7 @@ export default function GuardianSosHistoryContent() {
   const [triggerTypeFilter, setTriggerTypeFilter] = useState<TriggerTypeFilter>('ALL');
   const [page, setPage] = useState(0);
 
-  const { data: connectionsResponse } = useQuery(guardianConnectionsQueryOptions);
-  const activeWards = useMemo(
-    () => (connectionsResponse?.data ?? []).filter(connection => connection.status === 'ACTIVE'),
-    [connectionsResponse],
-  );
+  const { activeWards } = useGuardianActiveWards();
 
   const { data, isLoading, isError, isFetching } = useQuery(
     guardianSosHistoryQueryOptions({ wardId: selectedWardId ?? undefined, page, size: PAGE_SIZE }),
