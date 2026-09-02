@@ -8,7 +8,7 @@ import {
   userNotificationSettingsQueryOptions,
   useNotificationSettingsMutation,
 } from '@/service/query/user/notification-settings';
-import type { NotificationChannelType } from '@/service/interface/user';
+import type { NotificationChannelType } from '@/service/interface/user/user';
 import styles from './NotificationSettingsSection.module.css';
 
 const cx = classNames.bind(styles);

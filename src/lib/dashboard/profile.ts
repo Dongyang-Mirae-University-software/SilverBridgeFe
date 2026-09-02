@@ -1,4 +1,4 @@
-import { IUserProfile, IUserUpdateReq } from '@/service/interface/user';
+import { IUserProfile, IUserUpdateReq } from '@/service/interface/user/user';
 import { getPhoneDigits } from '@/lib/format/phone';
 
 export function getProviderLabel(provider?: string) {

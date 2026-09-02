@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { signupSmsSend, signupSmsVerify } from '@/service/api/auth/auth';
 import { updateMyProfile } from '@/service/api/user/user';
-import { IUserProfile, IUserUpdateReq } from '@/service/interface/user';
+import { IUserProfile, IUserUpdateReq } from '@/service/interface/user/user';
 import { myProfileQueryKey } from '@/service/query/user';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import { setMyProfileCache } from '@/lib/dashboard/profileCache';

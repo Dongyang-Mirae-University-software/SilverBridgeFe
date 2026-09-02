@@ -18,7 +18,7 @@ import {
   IFindPasswordSmsSendReq,
   IFindPasswordSendResponse,
   IPasswordResetReq,
-} from '@/service/interface/auth';
+} from '@/service/interface/auth/auth';
 
 type Method = 'email' | 'sms';
 const DEFAULT_VERIFICATION_EXPIRES_SECONDS = 300;

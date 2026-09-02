@@ -3,7 +3,7 @@
 import { FormEvent } from 'react';
 import classNames from 'classnames/bind';
 
-import { IFindEmailReq } from '@/service/interface/auth';
+import { IFindEmailReq } from '@/service/interface/auth/auth';
 import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
 import styles from './FindEmailInfoStep.module.css';
 

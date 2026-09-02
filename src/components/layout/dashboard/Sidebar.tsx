@@ -7,7 +7,7 @@ import { Icon } from '@/components/Icon';
 import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
-import { IUserProfile } from '@/service/interface/user';
+import { IUserProfile } from '@/service/interface/user/user';
 import { NavItem } from './types';
 import { ProfileModal } from './ProfileModal';
 import { UserAvatar } from '@/components/UserAvatar';

@@ -8,7 +8,7 @@ import classNames from 'classnames/bind';
 import { Icon } from '@/components/Icon';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
 import { deleteMyAccount } from '@/service/api/user/user';
-import type { IUserDeleteReq } from '@/service/interface/user';
+import type { IUserDeleteReq } from '@/service/interface/user/user';
 import styles from './AccountDeleteSection.module.css';
 
 const cx = classNames.bind(styles);

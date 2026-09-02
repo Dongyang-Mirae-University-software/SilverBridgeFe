@@ -13,7 +13,7 @@ import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/lib/auth/userProfile';
 import type { ChatContext, ChatMessage } from '@/service/interface/chat';
 import { calcAge } from '@/service/interface/chat';
-import type { IUserProfile } from '@/service/interface/user';
+import type { IUserProfile } from '@/service/interface/user/user';
 
 import ChatContextForm from './ChatContextForm';
 import ChatBubble from './ChatBubble';

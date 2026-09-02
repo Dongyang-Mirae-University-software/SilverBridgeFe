@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { GenderType, IKakaoSignupReq, ISignupReq, RoleType } from '@/service/interface/auth';
+import { GenderType, IKakaoSignupReq, ISignupReq, RoleType } from '@/service/interface/auth/auth';
 import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '@/constants/pattern';
 import { useMutation } from '@tanstack/react-query';
 import { signup, signupKakao } from '@/service/api/auth/auth';

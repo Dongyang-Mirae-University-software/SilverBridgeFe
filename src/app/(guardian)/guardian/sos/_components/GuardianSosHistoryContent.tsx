@@ -10,7 +10,7 @@ import { Tabs } from '@/components/Tabs';
 import useGuardianActiveWards from '@/hooks/useGuardianActiveWards';
 import { formatDay, formatMonth, formatTime } from '@/lib/format/date';
 import { guardianSosHistoryQueryOptions } from '@/service/query/guardian';
-import type { IGuardianSosHistoryItem, SosTriggerType } from '@/service/interface/sos';
+import type { IGuardianSosHistoryItem, SosTriggerType } from '@/service/interface/guardian/sosHistory';
 import styles from './GuardianSosHistoryContent.module.css';
 
 const cx = classNames.bind(styles);

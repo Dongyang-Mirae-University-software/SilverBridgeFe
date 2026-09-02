@@ -2,8 +2,8 @@ import { FormEvent, type InputHTMLAttributes, type ReactNode } from 'react';
 import { UseMutationResult } from '@tanstack/react-query';
 
 import { signupSmsSend, signupSmsVerify } from '@/service/api/auth/auth';
-import { GenderType } from '@/service/interface/auth';
-import { IUserUpdateReq } from '@/service/interface/user';
+import { GenderType } from '@/service/interface/auth/auth';
+import { IUserUpdateReq } from '@/service/interface/user/user';
 import { BirthDateSelects } from '@/components/BirthDateSelects';
 import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
 import classNames from 'classnames/bind';

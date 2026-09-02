@@ -5,7 +5,7 @@ import classNames from 'classnames/bind';
 import { UserAvatar } from '@/components/UserAvatar';
 import { getRoleLabel } from '@/lib/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
-import { IUserProfile } from '@/service/interface/user';
+import { IUserProfile } from '@/service/interface/user/user';
 import { ProfileModalControls } from './ProfileModalControls';
 import { getProviderLabel } from '@/lib/dashboard/profile';
 import styles from './ProfileModal.module.css';

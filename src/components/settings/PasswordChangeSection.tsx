@@ -9,7 +9,7 @@ import { CommonModal } from '@/components/CommonModal';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
 import { getModalErrorMessage } from '@/lib/dashboard/profile';
 import { changeMyPassword } from '@/service/api/user/user';
-import type { IUserPasswordChangeReq } from '@/service/interface/user';
+import type { IUserPasswordChangeReq } from '@/service/interface/user/user';
 import styles from './PasswordChangeSection.module.css';
 
 const cx = classNames.bind(styles);
