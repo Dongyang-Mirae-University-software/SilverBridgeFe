@@ -8,7 +8,9 @@ import classNames from 'classnames/bind';
 import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
+import useModalStore from '@/store/modalStore';
 import { useWardSosMutation } from '@/service/query/ward';
+import type { WardSosResponse } from '@/service/interface/ward/sos';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
 
@@ -71,51 +73,102 @@ function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
 
 export default function WardSosContent() {
   const { wardSettings } = useDashboard();
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isDialOpen, setIsDialOpen] = useState(false);
-  const [successState, setSuccessState] = useState<{ sosEventId: number; triggeredAt: string } | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const openModal = useModalStore(state => state.openModal);
+  const onCloseModal = useModalStore(state => state.onCloseModal);
   const { mutate: triggerSos, isPending } = useWardSosMutation();
+
+  function openDialModal() {
+    openModal(<Emergency119Dialpad onClose={onCloseModal} />);
+  }
+
+  function openErrorModal(error: unknown) {
+    const message = (error as { message?: string })?.message || 'SOS 전송에 실패했습니다.';
+
+    openModal(
+      <CommonModal
+        type="error"
+        tone="guardian"
+        title="SOS 전송 실패"
+        message={message}
+        confirmText="확인"
+        onConfirm={onCloseModal}
+        onClose={onCloseModal}
+      />,
+    );
+  }
+
+  function openSuccessModal(data?: Partial<WardSosResponse>) {
+    const triggeredAt = data?.triggeredAt ?? new Date().toISOString();
+    const sosEventId = data?.sosEventId ?? Date.now();
+    const shouldOfferDial = wardSettings.sosAction === 'notifyGuardianFirst';
+
+    openModal(
+      <CommonModal
+        type="success"
+        tone="guardian"
+        title="SOS 전송 완료"
+        message={
+          shouldOfferDial
+            ? `보호자에게 알림을 보냈습니다.\n필요하면 아래 버튼으로 119 화면을 여세요.\n${formatTriggeredAt(triggeredAt)}`
+            : `SOS 이력이 저장되었습니다.\n이력 ID ${sosEventId} · ${formatTriggeredAt(triggeredAt)}`
+        }
+        confirmText={shouldOfferDial ? '119 화면 열기' : '확인'}
+        secondaryText={shouldOfferDial ? '닫기' : undefined}
+        onConfirm={
+          shouldOfferDial
+            ? () => {
+                onCloseModal();
+                openDialModal();
+              }
+            : onCloseModal
+        }
+        onSecondary={onCloseModal}
+        onClose={onCloseModal}
+      />,
+    );
+  }
+
+  function openConfirmModal() {
+    openModal(
+      <CommonModal
+        type="warning"
+        tone="guardian"
+        title="긴급 SOS 전송"
+        message="긴급 SOS를 보내면 연결된 보호자에게 알림이 전달됩니다."
+        confirmText={isPending ? '전송 중...' : '보내기'}
+        secondaryText="취소"
+        onConfirm={() => {
+          if (isPending) return;
+
+          onCloseModal();
+          triggerSos(undefined, {
+            onSuccess: data => {
+              openSuccessModal(data);
+
+              if (wardSettings.sosAction === 'call119AndNotify') {
+                openDialModal();
+              }
+            },
+            onError: openErrorModal,
+          });
+        }}
+        onSecondary={onCloseModal}
+        onClose={onCloseModal}
+      />,
+    );
+  }
 
   function handleHeroPress() {
     if (wardSettings.sosAction === 'call119') {
-      setIsDialOpen(true);
+      openDialModal();
       return;
     }
 
-    setIsConfirmOpen(true);
-  }
-
-  function reportSosError(error: unknown) {
-    const message = (error as { message?: string })?.message || 'SOS 전송에 실패했습니다.';
-    setErrorMessage(message);
-  }
-
-  function handleConfirm() {
-    setIsConfirmOpen(false);
-    setErrorMessage('');
-
-    triggerSos(undefined, {
-      onSuccess: data => {
-        if (wardSettings.sosAction === 'call119AndNotify') {
-          setIsDialOpen(true);
-        }
-
-        setSuccessState({
-          sosEventId: data?.sosEventId ?? Date.now(),
-          triggeredAt: data?.triggeredAt ?? new Date().toISOString(),
-        });
-      },
-      onError: reportSosError,
-    });
-  }
-
-  function handleCloseSuccess() {
-    setSuccessState(null);
+    openConfirmModal();
   }
 
   function handleGuardianCall() {
-    triggerSos({ triggerType: 'GUARDIAN_CALL' });
+    triggerSos({ triggerType: 'GUARDIAN_CALL' }, { onError: openErrorModal });
   }
 
   return (
@@ -130,59 +183,6 @@ export default function WardSosContent() {
       </button>
 
       <WardGuardianCallSection onGuardianCall={handleGuardianCall} />
-
-      {isConfirmOpen && (
-        <CommonModal
-          type="warning"
-          tone="guardian"
-          title="긴급 SOS 전송"
-          message="긴급 SOS를 보내면 연결된 보호자에게 알림이 전달됩니다."
-          confirmText={isPending ? '전송 중...' : '보내기'}
-          secondaryText="취소"
-          onConfirm={handleConfirm}
-          onSecondary={() => setIsConfirmOpen(false)}
-          onClose={() => setIsConfirmOpen(false)}
-        />
-      )}
-
-      {successState && (
-        <CommonModal
-          type="success"
-          tone="guardian"
-          title="SOS 전송 완료"
-          message={
-            wardSettings.sosAction === 'notifyGuardianFirst'
-              ? `보호자에게 알림을 보냈습니다.\n필요하면 아래 버튼으로 119 화면을 여세요.\n${formatTriggeredAt(successState.triggeredAt)}`
-              : `SOS 이력이 저장되었습니다.\n이력 ID ${successState.sosEventId} · ${formatTriggeredAt(successState.triggeredAt)}`
-          }
-          confirmText={wardSettings.sosAction === 'notifyGuardianFirst' ? '119 화면 열기' : '확인'}
-          secondaryText={wardSettings.sosAction === 'notifyGuardianFirst' ? '닫기' : undefined}
-          onConfirm={
-            wardSettings.sosAction === 'notifyGuardianFirst'
-              ? () => {
-                  setIsDialOpen(true);
-                  handleCloseSuccess();
-                }
-              : handleCloseSuccess
-          }
-          onSecondary={handleCloseSuccess}
-          onClose={handleCloseSuccess}
-        />
-      )}
-
-      {!!errorMessage && (
-        <CommonModal
-          type="error"
-          tone="guardian"
-          title="SOS 전송 실패"
-          message={errorMessage}
-          confirmText="확인"
-          onConfirm={() => setErrorMessage('')}
-          onClose={() => setErrorMessage('')}
-        />
-      )}
-
-      {isDialOpen && <Emergency119Dialpad onClose={() => setIsDialOpen(false)} />}
     </div>
   );
 }
