@@ -33,7 +33,7 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
       <div className={cx('mobileTopBar')}>
         <div className={cx('topBarBrand')}>
           <SilverBridgeLogo className={cx('topBarLogo')} width={132} />
-          <span>{pageTitle}</span>
+          {/* <span>{pageTitle}</span> */}
         </div>
         <button
           className={cx('topBarMenuButton')}
