@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { CommonModal } from '@/components/CommonModal';
 import { RefreshButton } from '@/components/RefreshButton';
 import {
   useWardConnectionAcceptMutation,
@@ -16,12 +17,14 @@ import {
 } from '@/lib/realtime/pendingConnectionRequests';
 import classNames from 'classnames/bind';
 import { ConnectionList } from '@/components/connections/ConnectionList';
-import { EmptyState, getConnectionData, getErrorMessage } from '@/components/connections/ConnectionShared';
+import { EmptyState, getConnectionData } from '@/components/connections/ConnectionShared';
+import useModalStore from '@/store/modalStore';
 import styles from './WardGuardiansPanel.module.css';
 
 const cx = classNames.bind(styles);
 export function WardGuardiansPanel() {
-  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const openModal = useModalStore(state => state.openModal);
+  const onCloseModal = useModalStore(state => state.onCloseModal);
   const [storedPendingConnections, setStoredPendingConnections] = useState(() => getPendingConnectionRequestItems());
   const activeQuery = useWardGuardianActiveConnectionsQuery();
   const pendingQuery = useWardGuardianPendingConnectionsQuery();
@@ -42,28 +45,28 @@ export function WardGuardiansPanel() {
     return () => window.removeEventListener(PENDING_CONNECTION_REQUESTS_EVENT, syncStoredPendingConnections);
   }, []);
 
-  const acceptMutation = useWardConnectionAcceptMutation({
-    onMutate: () => setFeedbackMessage(''),
-    onSuccess: () => setFeedbackMessage('보호자 연결 요청을 수락했습니다.'),
-    onError: error => setFeedbackMessage(getErrorMessage(error, '보호자 요청 수락에 실패했습니다.')),
-  });
-
-  const refuseMutation = useWardConnectionRefuseMutation({
-    onMutate: () => setFeedbackMessage(''),
-    onSuccess: () => setFeedbackMessage('보호자 연결 요청을 거절했습니다.'),
-    onError: error => setFeedbackMessage(getErrorMessage(error, '보호자 요청 거절에 실패했습니다.')),
-  });
-
-  const disconnectMutation = useWardConnectionDisconnectMutation({
-    onMutate: () => setFeedbackMessage(''),
-    onSuccess: () => setFeedbackMessage('보호자 연결을 해제했습니다.'),
-    onError: error => setFeedbackMessage(getErrorMessage(error, '보호자 연결 해제에 실패했습니다.')),
-  });
+  const acceptMutation = useWardConnectionAcceptMutation();
+  const refuseMutation = useWardConnectionRefuseMutation();
+  const disconnectMutation = useWardConnectionDisconnectMutation();
 
   const isPending = acceptMutation.isPending || refuseMutation.isPending || disconnectMutation.isPending;
   const handleDisconnect = (connectionId: number) => {
-    if (!window.confirm('이 보호자와의 연결을 해제할까요?')) return;
-    disconnectMutation.mutate(connectionId);
+    openModal(
+      <CommonModal
+        type="warning"
+        tone="guardian"
+        title="보호자 연결 해제"
+        message="이 보호자와의 연결을 해제할까요?"
+        confirmText="해제"
+        secondaryText="취소"
+        onConfirm={() => {
+          onCloseModal();
+          disconnectMutation.mutate(connectionId);
+        }}
+        onSecondary={onCloseModal}
+        onClose={onCloseModal}
+      />,
+    );
   };
 
   return (
@@ -76,7 +79,6 @@ export function WardGuardiansPanel() {
         />
       </div>
 
-      {feedbackMessage && <p className={cx('connectionMessage')}>{feedbackMessage}</p>}
       {isError && <EmptyState message="내 보호자 목록을 불러오지 못했습니다." />}
 
       <section className={cx('connectionSection')}>
