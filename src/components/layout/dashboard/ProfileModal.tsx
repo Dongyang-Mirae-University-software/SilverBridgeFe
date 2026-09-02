@@ -10,8 +10,8 @@ import { ProfileModalControls } from './ProfileModalControls';
 import { getProviderLabel } from '@/utils/dashboard/profile';
 import styles from './ProfileModal.module.css';
 import { useLogoutMutation } from '@/service/query/auth';
-import { useState } from 'react';
 import { CommonModal } from '@/components/CommonModal';
+import useModalStore from '@/store/modalStore';
 
 const cx = classNames.bind(styles);
 
@@ -59,38 +59,35 @@ function ProfileHeader({ profile, role, userId, userEmail, userName }: ProfileHe
 
 function LogoutButton() {
   const { mutate: logoutMutate, isPending: isLoggingOut } = useLogoutMutation();
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const openModal = useModalStore(state => state.openModal);
+  const onCloseModal = useModalStore(state => state.onCloseModal);
 
   const handleLogout = () => {
     if (isLoggingOut) return;
-    setIsConfirmOpen(true);
-  };
 
-  const handleConfirm = () => {
-    if (isLoggingOut) return;
-    setIsConfirmOpen(false);
-    logoutMutate();
+    openModal(
+      <CommonModal
+        type="warning"
+        tone="guardian"
+        title="로그아웃 확인"
+        message="정말 로그아웃할까요?"
+        confirmText={isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+        secondaryText="취소"
+        onConfirm={() => {
+          if (isLoggingOut) return;
+          onCloseModal();
+          logoutMutate();
+        }}
+        onSecondary={onCloseModal}
+        onClose={onCloseModal}
+      />,
+    );
   };
 
   return (
-    <>
-      {isConfirmOpen && (
-        <CommonModal
-          type="warning"
-          tone="guardian"
-          title="로그아웃 확인"
-          message="정말 로그아웃할까요?"
-          confirmText={isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-          secondaryText="취소"
-          onConfirm={handleConfirm}
-          onSecondary={() => setIsConfirmOpen(false)}
-          onClose={() => setIsConfirmOpen(false)}
-        />
-      )}
-      <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
-        {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-      </button>
-    </>
+    <button className={cx('logoutButton')} type="button" disabled={isLoggingOut} onClick={handleLogout}>
+      {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+    </button>
   );
 }
 
