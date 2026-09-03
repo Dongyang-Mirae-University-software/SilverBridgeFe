@@ -59,8 +59,10 @@ function ProfileHeader({ profile, role, userId, userEmail, userName }: ProfileHe
 
 function LogoutButton() {
   const { mutate: logoutMutate, isPending: isLoggingOut } = useLogoutMutation();
-  const openModal = useModalStore(state => state.openModal);
-  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
 
   const handleLogout = () => {
     if (isLoggingOut) return;

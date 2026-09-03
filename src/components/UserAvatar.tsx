@@ -74,8 +74,10 @@ interface DeleteButtonProps {
 }
 
 function DeleteButton({ imageUrl, onError }: DeleteButtonProps) {
-  const openModal = useModalStore(state => state.openModal);
-  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
   const { mutate: profileImageDeleteMutate, isPending } = useProfileImageDeleteMutation({ onError });
 
   if (!imageUrl) return null;
@@ -117,8 +119,10 @@ function DeleteButton({ imageUrl, onError }: DeleteButtonProps) {
 }
 
 export function UserAvatar({ imageUrl, size, disabled, onClick, isChange = false, isDelete = false }: UserAvatarProps) {
-  const openModal = useModalStore(state => state.openModal);
-  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
   const hasEditControls = isChange || isDelete;
 
   const showErrorModal = (message: string) => {

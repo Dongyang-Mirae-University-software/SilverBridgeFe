@@ -127,8 +127,10 @@ export function useWardConnectionDisconnectMutation(options?: WardConnectionMuta
 }
 
 function useWardConnectionFeedbackModal() {
-  const openModal = useModalStore(state => state.openModal);
-  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
 
   return (type: 'success' | 'error', title: string, message: string) => {
     openModal(

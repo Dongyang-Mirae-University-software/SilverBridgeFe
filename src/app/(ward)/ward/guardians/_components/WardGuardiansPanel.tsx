@@ -24,8 +24,10 @@ import styles from './WardGuardiansPanel.module.css';
 const cx = classNames.bind(styles);
 
 export function WardGuardiansPanel() {
-  const openModal = useModalStore(state => state.openModal);
-  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
 
   const [storedPendingConnections, setStoredPendingConnections] = useState(() => getPendingConnectionRequestItems());
   const activeQuery = useWardGuardianActiveConnectionsQuery();

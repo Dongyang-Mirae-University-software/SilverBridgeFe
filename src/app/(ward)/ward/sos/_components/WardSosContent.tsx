@@ -66,8 +66,10 @@ function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
 
 export default function WardSosContent() {
   const { wardSettings } = useDashboard();
-  const openModal = useModalStore(state => state.openModal);
-  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
   const { activeGuardians, hasActiveGuardians, isLoading: isLoadingGuardians, isError: isGuardiansError } =
     useWardActiveGuardians();
   const { mutate: triggerSos, isPending } = useWardSosMutation();
