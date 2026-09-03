@@ -95,8 +95,7 @@ export function WardGuardiansPanel() {
             connections={activeConnections}
             isPending={isPending}
             role="ward"
-            getPrimaryAction={connection => () => handleDisconnect(connection.id)}
-            getPrimaryLabel={() => '연결 해제'}
+            getActions={connection => [{ label: '연결 해제', onClick: () => handleDisconnect(connection.id) }]}
           />
         ) : (
           !activeQuery.isLoading && <EmptyState message="연결된 보호자가 없습니다." />
@@ -115,10 +114,10 @@ export function WardGuardiansPanel() {
             connections={pendingConnections}
             isPending={isPending}
             role="ward"
-            getPrimaryAction={connection => () => acceptMutation.mutate(connection.id)}
-            getPrimaryLabel={() => '수락'}
-            getSecondaryAction={connection => () => refuseMutation.mutate(connection.id)}
-            getSecondaryLabel={() => '거절'}
+            getActions={connection => [
+              { label: '수락', onClick: () => acceptMutation.mutate(connection.id) },
+              { label: '거절', onClick: () => refuseMutation.mutate(connection.id), variant: 'secondary' },
+            ]}
           />
         ) : (
           !pendingQuery.isLoading && <EmptyState message="수락 또는 거절하지 않은 연결 요청이 없습니다." />

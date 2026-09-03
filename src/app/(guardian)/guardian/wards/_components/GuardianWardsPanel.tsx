@@ -115,16 +115,11 @@ export function GuardianWardsPanel() {
               connections={sortedConnections}
               isPending={isPending}
               role="guardian"
-              getPrimaryAction={connection =>
-                connection.status === 'ACTIVE'
-                  ? () => handleDisconnect(connection.id)
-                  : connection.status === 'PENDING'
-                    ? () => cancelMutation.mutate(connection.id)
-                    : undefined
-              }
-              getPrimaryLabel={connection =>
-                connection.status === 'ACTIVE' ? '연결 해제' : connection.status === 'PENDING' ? '요청 취소' : undefined
-              }
+              getActions={connection => {
+                if (connection.status === 'ACTIVE') return [{ label: '연결 해제', onClick: () => handleDisconnect(connection.id) }];
+                if (connection.status === 'PENDING') return [{ label: '요청 취소', onClick: () => cancelMutation.mutate(connection.id) }];
+                return [];
+              }}
             />
           )}
         </div>

@@ -17,6 +17,13 @@ import styles from './ConnectionCard.module.css';
 const cx = classNames.bind(styles);
 
 type ConnectionRole = 'guardian' | 'ward';
+type ConnectionActionVariant = 'primary' | 'secondary';
+
+interface ConnectionAction {
+  label: string;
+  onClick: () => void;
+  variant?: ConnectionActionVariant;
+}
 
 interface ConnectionDetailProps {
   icon: IconName;
@@ -25,21 +32,15 @@ interface ConnectionDetailProps {
 }
 
 interface ConnectionCardProps {
+  actions?: ConnectionAction[];
   connection: IConnectionItem;
   isPending: boolean;
   role: ConnectionRole;
-  primaryAction?: () => void;
-  primaryLabel?: string;
-  secondaryAction?: () => void;
-  secondaryLabel?: string;
 }
 
 interface ConnectionListProps {
   connections: IConnectionItem[];
-  getPrimaryAction?: (connection: IConnectionItem) => (() => void) | undefined;
-  getPrimaryLabel?: (connection: IConnectionItem) => string | undefined;
-  getSecondaryAction?: (connection: IConnectionItem) => (() => void) | undefined;
-  getSecondaryLabel?: (connection: IConnectionItem) => string | undefined;
+  getActions?: (connection: IConnectionItem) => ConnectionAction[];
   isPending: boolean;
   role: ConnectionRole;
 }
@@ -60,17 +61,10 @@ function ConnectionDetail({ icon, label, value }: ConnectionDetailProps) {
   );
 }
 
-export function ConnectionCard({
-  connection,
-  isPending,
-  role,
-  primaryAction,
-  primaryLabel,
-  secondaryAction,
-  secondaryLabel,
-}: ConnectionCardProps) {
+export function ConnectionCard({ actions = [], connection, isPending, role }: ConnectionCardProps) {
   const address = connection.status === 'ACTIVE' ? getConnectionAddress(connection) : '';
   const profileLabel = getConnectionStatusLabel(connection.status);
+  const visibleActions = actions.filter(action => action.label);
 
   return (
     <li className={cx('connectionCard')} data-role={role}>
@@ -111,48 +105,35 @@ export function ConnectionCard({
           </ul>
         </div>
       </div>
-      {primaryAction && primaryLabel ? (
+      {visibleActions.length > 0 ? (
         <div className={cx('connectionActions')}>
-          <button className={cx('connectionPrimaryButton')} type="button" disabled={isPending} onClick={primaryAction}>
-            {primaryLabel}
-          </button>
-          {secondaryAction && secondaryLabel ? (
+          {visibleActions.map(action => (
             <button
-              className={cx('connectionSecondaryButton')}
+              key={action.label}
+              className={cx(action.variant === 'secondary' ? 'connectionSecondaryButton' : 'connectionPrimaryButton')}
               type="button"
               disabled={isPending}
-              onClick={secondaryAction}
+              onClick={action.onClick}
             >
-              {secondaryLabel}
+              {action.label}
             </button>
-          ) : null}
+          ))}
         </div>
       ) : null}
     </li>
   );
 }
 
-export function ConnectionList({
-  connections,
-  getPrimaryAction,
-  getPrimaryLabel,
-  getSecondaryAction,
-  getSecondaryLabel,
-  isPending,
-  role,
-}: ConnectionListProps) {
+export function ConnectionList({ connections, getActions, isPending, role }: ConnectionListProps) {
   return (
     <ul className={cx('connectionList')}>
       {connections.map(connection => (
         <ConnectionCard
           key={connection.id}
+          actions={getActions?.(connection)}
           connection={connection}
           isPending={isPending}
           role={role}
-          primaryAction={getPrimaryAction?.(connection)}
-          primaryLabel={getPrimaryLabel?.(connection)}
-          secondaryAction={getSecondaryAction?.(connection)}
-          secondaryLabel={getSecondaryLabel?.(connection)}
         />
       ))}
     </ul>
