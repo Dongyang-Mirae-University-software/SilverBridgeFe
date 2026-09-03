@@ -9,7 +9,11 @@ import { RefreshButton } from '@/components/RefreshButton';
 import { Tabs } from '@/components/Tabs';
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/guardian/connection';
 import { IConnectionItem } from '@/service/interface/connection';
-import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/guardian';
+import {
+  guardianConnectionRequestsQueryKey,
+  guardianConnectionsQueryKey,
+  guardianConnectionsQueryOptions,
+} from '@/service/query/guardian';
 import { ConnectionList } from '@/components/connections/ConnectionCard';
 import { EmptyState, getConnectionData, getErrorMessage } from '@/components/connections/ConnectionShared';
 import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
@@ -23,7 +27,10 @@ export function GuardianWardsPanel() {
   const queryClient = useQueryClient();
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [activeTab, setActiveTab] = useState<GuardianWardsTab>(() => getInitialTab(searchParams));
-  const { data, isLoading, isError, refetch } = useQuery(guardianConnectionsQueryOptions);
+  const { data, isLoading, isError, refetch } = useQuery({
+    ...guardianConnectionsQueryOptions,
+    enabled: activeTab === 'list',
+  });
   const connections = getConnectionData(data);
   const { activeConnections, pendingConnections } = splitConnections(connections);
   const sortedConnections = sortGuardianConnections(connections);
@@ -34,7 +41,10 @@ export function GuardianWardsPanel() {
     onMutate: () => setFeedbackMessage(''),
     onSuccess: async () => {
       setFeedbackMessage('연결 요청을 취소했습니다.');
-      await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: guardianConnectionRequestsQueryKey }),
+      ]);
     },
     onError: error => setFeedbackMessage(getErrorMessage(error, '연결 요청 취소에 실패했습니다.')),
   });
@@ -45,7 +55,10 @@ export function GuardianWardsPanel() {
     onMutate: () => setFeedbackMessage(''),
     onSuccess: async () => {
       setFeedbackMessage('연결을 해제했습니다.');
-      await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: guardianConnectionRequestsQueryKey }),
+      ]);
     },
     onError: error => setFeedbackMessage(getErrorMessage(error, '연결 해제에 실패했습니다.')),
   });

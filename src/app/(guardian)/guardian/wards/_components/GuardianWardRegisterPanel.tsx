@@ -5,7 +5,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { requestWardConnection } from '@/service/api/guardian/connection';
-import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/guardian';
+import {
+  guardianConnectionRequestsQueryKey,
+  guardianConnectionRequestsQueryOptions,
+  guardianConnectionsQueryKey,
+} from '@/service/query/guardian';
 import { getConnectionData, getErrorMessage } from '@/components/connections/ConnectionShared';
 import styles from './GuardianWardRegisterPanel.module.css';
 
@@ -22,7 +26,7 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
   const [customRelation, setCustomRelation] = useState('');
   const [message, setMessage] = useState('');
 
-  const { data: connectionsResponse, isLoading } = useQuery(guardianConnectionsQueryOptions);
+  const { data: connectionsResponse, isLoading } = useQuery(guardianConnectionRequestsQueryOptions);
   const pendingConnections = getConnectionData(connectionsResponse).filter(connection => connection.status === 'PENDING');
   const requestRelation = relation === CUSTOM_RELATION_OPTION ? customRelation.trim() : relation;
 
@@ -35,7 +39,10 @@ export function GuardianWardRegisterPanel({ embedded = false }: { embedded?: boo
       setRelation('');
       setCustomRelation('');
       setMessage('피보호자에게 연결 요청을 보냈습니다.');
-      await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: guardianConnectionRequestsQueryKey }),
+      ]);
     },
     onError: error => setMessage(getErrorMessage(error, '연결 요청에 실패했습니다.')),
   });

@@ -24,7 +24,7 @@ export async function getWardPendingConnectionRequests() {
 }
 
 // 화면 목록용: ACTIVE 연결 + 수락 대기 요청을 한 번에 합쳐서 반환
-// (guardian/connection.ts의 getGuardianConnections와 동일한 이유로 프론트에서 병합)
+// ward API는 active/pending 응답 형태가 나뉘어 있어 프론트에서 병합
 export async function getWardConnections(): Promise<CommonResponse<IConnectionItem[]>> {
   const [activeResult, pendingResult] = await Promise.allSettled([getWardActiveConnections(), getWardPendingConnectionRequests()]);
 

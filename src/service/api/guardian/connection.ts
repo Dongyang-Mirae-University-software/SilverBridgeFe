@@ -13,9 +13,13 @@ export async function requestWardConnection(body: IGuardianConnectionRequestReq)
   return apiClient.post<CommonResponse<null>>(`${GUARDIAN_CONNECTION_BASE}/request`, body);
 }
 
-// 연결된(ACTIVE) 피보호자 목록만 조회
-export async function getGuardianActiveConnections() {
+// 내 피보호자 목록 조회: ACTIVE + PENDING 상태를 최신 요청순으로 반환
+export async function getGuardianSelectedConnections() {
   return apiClient.get<CommonResponse<IConnectionItem[]>>(`${GUARDIAN_CONNECTION_BASE}/select`);
+}
+
+export async function getGuardianActiveConnections() {
+  return getGuardianSelectedConnections();
 }
 
 // 내가 보낸 연결 요청 이력(수락 대기 PENDING 포함) 조회
@@ -23,22 +27,16 @@ export async function getGuardianConnectionRequests() {
   return apiClient.get<CommonResponse<IConnectionItem[]>>(`${GUARDIAN_CONNECTION_BASE}/requests`);
 }
 
-// 화면 목록용: ACTIVE 연결 + 요청 이력을 한 번에 합쳐서 반환
-// (백엔드에 "전체 목록" API가 따로 없어서 두 API를 병렬 호출 후 프론트에서 병합함)
+// 화면 목록용: /select 응답을 공통 화면 데이터로 정규화
 export async function getGuardianConnections(): Promise<CommonResponse<IConnectionItem[]>> {
-  const [activeResult, requestResult] = await Promise.allSettled([
-    getGuardianActiveConnections(),
-    getGuardianConnectionRequests(),
-  ]);
-
-  const activeBody = activeResult.status === 'fulfilled' ? getConnectionResponseBody(activeResult.value) : null;
-  const requestBody = requestResult.status === 'fulfilled' ? getConnectionResponseBody(requestResult.value) : null;
+  const response = await getGuardianSelectedConnections();
+  const body = getConnectionResponseBody(response);
 
   return {
-    code: activeBody?.code ?? requestBody?.code ?? 200,
-    success: activeBody?.success ?? requestBody?.success ?? true,
-    message: activeBody?.message || requestBody?.message,
-    data: mergeConnectionItems(activeBody?.data ?? [], requestBody?.data ?? []),
+    code: body?.code ?? 200,
+    success: body?.success ?? true,
+    message: body?.message,
+    data: mergeConnectionItems(body?.data ?? []),
   };
 }
 
