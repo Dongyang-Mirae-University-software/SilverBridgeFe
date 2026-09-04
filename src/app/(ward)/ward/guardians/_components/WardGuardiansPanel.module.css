@@ -5,19 +5,3 @@
   flex-direction: column;
   gap: 14px;
 }
-
-.connectionPageActions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.connectionSection {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}

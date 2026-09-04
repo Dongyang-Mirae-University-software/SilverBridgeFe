@@ -1,0 +1,45 @@
+.connectionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sectionHeader > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sectionHeader h3 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.sectionHeader span {
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 3px 10px;
+}
+
+:global(.guardianTheme) .sectionHeader span {
+  background: var(--guardian-brand-soft);
+  color: var(--guardian-brand);
+}
