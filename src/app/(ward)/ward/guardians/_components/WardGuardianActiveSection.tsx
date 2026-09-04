@@ -28,13 +28,14 @@ export function WardGuardianActiveSection() {
         tone="guardian"
         title="보호자 연결 해제"
         message="이 보호자와의 연결을 해제할까요?"
-        confirmText="해제"
-        secondaryText="취소"
-        onConfirm={() => {
-          onCloseModal();
-          disconnectMutation.mutate(connectionId);
+        primaryButton={{
+          text: '해제',
+          onClick: () => {
+            onCloseModal();
+            disconnectMutation.mutate(connectionId);
+          },
         }}
-        onSecondary={onCloseModal}
+        secondaryButton={{ text: '취소', onClick: onCloseModal }}
         onClose={onCloseModal}
       />,
     );

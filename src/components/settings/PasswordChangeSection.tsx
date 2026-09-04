@@ -66,7 +66,13 @@ export function PasswordChangeSection({ isKakaoUser }: { isKakaoUser: boolean })
           type={resultModal.type}
           title={resultModal.type === 'success' ? '비밀번호 변경 완료' : '비밀번호 변경 실패'}
           message={resultModal.message}
-          confirmText="확인"
+          primaryButton={{
+            text: '확인',
+            onClick: () => {
+              if (resultModal.type === 'success') { clearAuthTokens(); queryClient.clear(); router.replace('/login'); return; }
+              setResultModal(null);
+            },
+          }}
           onClose={() => {
             if (resultModal.type === 'success') { clearAuthTokens(); queryClient.clear(); router.replace('/login'); return; }
             setResultModal(null);

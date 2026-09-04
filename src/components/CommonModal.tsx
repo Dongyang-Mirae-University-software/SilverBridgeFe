@@ -9,17 +9,19 @@ const cx = classNames.bind(styles);
 export type CommonModalType = 'info' | 'success' | 'warning' | 'error';
 export type CommonModalTone = 'default' | 'guardian';
 
+interface CommonModalButton {
+  text: string;
+  disabled?: boolean;
+  onClick?: () => void;
+}
+
 interface CommonModalProps {
   type?: CommonModalType;
   tone?: CommonModalTone;
   title?: string;
   message: string;
-  confirmText?: string;
-  confirmDisabled?: boolean;
-  secondaryText?: string;
-  secondaryDisabled?: boolean;
-  onConfirm?: () => void;
-  onSecondary?: () => void;
+  primaryButton?: CommonModalButton;
+  secondaryButton?: CommonModalButton;
   onClose: () => void;
 }
 
@@ -42,16 +44,14 @@ export function CommonModal({
   tone = 'default',
   title,
   message,
-  confirmText = '확인',
-  confirmDisabled = false,
-  secondaryText,
-  secondaryDisabled = false,
-  onConfirm,
-  onSecondary,
+  primaryButton,
+  secondaryButton,
   onClose,
 }: CommonModalProps) {
+  const primary = primaryButton ?? { text: '확인', onClick: onClose };
+
   return (
-    <div className={cx('overlay')} role="presentation" onClick={secondaryText ? onSecondary ?? onClose : onClose}>
+    <div className={cx('overlay')} role="presentation" onClick={onClose}>
       <section
         className={cx('modal', type, { guardianTone: tone === 'guardian' })}
         role="alertdialog"
@@ -68,18 +68,23 @@ export function CommonModal({
           <p id="common-modal-message">{message}</p>
         </div>
         <div className={cx('actions')}>
-          {secondaryText && onSecondary && (
+          {secondaryButton && (
             <button
               className={cx('button', 'secondaryButton')}
               type="button"
-              disabled={secondaryDisabled}
-              onClick={onSecondary}
+              disabled={secondaryButton.disabled}
+              onClick={secondaryButton.onClick ?? onClose}
             >
-              {secondaryText}
+              {secondaryButton.text}
             </button>
           )}
-          <button className={cx('button')} type="button" disabled={confirmDisabled} onClick={onConfirm ?? onClose}>
-            {confirmText}
+          <button
+            className={cx('button')}
+            type="button"
+            disabled={primary.disabled}
+            onClick={primary.onClick ?? onClose}
+          >
+            {primary.text}
           </button>
         </div>
       </section>

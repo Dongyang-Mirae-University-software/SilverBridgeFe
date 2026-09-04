@@ -139,8 +139,7 @@ function useWardConnectionFeedbackModal() {
         tone: 'guardian',
         title,
         message,
-        confirmText: '확인',
-        onConfirm: onCloseModal,
+        primaryButton: { text: '확인', onClick: onCloseModal },
         onClose: onCloseModal,
       }),
     );

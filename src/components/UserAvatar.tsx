@@ -90,13 +90,14 @@ function DeleteButton({ imageUrl, onError }: DeleteButtonProps) {
         type="warning"
         title="프로필 이미지 삭제"
         message="프로필 이미지를 삭제할까요?"
-        confirmText="삭제"
-        secondaryText="취소"
-        onConfirm={() => {
-          onCloseModal();
-          profileImageDeleteMutate();
+        primaryButton={{
+          text: '삭제',
+          onClick: () => {
+            onCloseModal();
+            profileImageDeleteMutate();
+          },
         }}
-        onSecondary={onCloseModal}
+        secondaryButton={{ text: '취소', onClick: onCloseModal }}
         onClose={onCloseModal}
       />,
     );
@@ -131,8 +132,7 @@ export function UserAvatar({ imageUrl, size, disabled, onClick, isChange = false
         type="error"
         title="프로필 이미지 처리 실패"
         message={message}
-        confirmText="확인"
-        onConfirm={onCloseModal}
+        primaryButton={{ text: '확인', onClick: onCloseModal }}
         onClose={onCloseModal}
       />,
     );

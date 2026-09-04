@@ -65,7 +65,7 @@ function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
   );
 }
 
-type TriggerSos = ReturnType<typeof useWardSosMutation>['mutate'];
+type TriggerSos = ReturnType<typeof useWardSosMutation>['mutateAsync'];
 
 function SosConfirmModal({
   hasActiveGuardians,
@@ -98,38 +98,35 @@ function SosConfirmModal({
       message={
         isSending ? '보호자에게 SOS를 전송하고 있습니다.' : '긴급 SOS를 보내면 연결된 보호자에게 알림이 전달됩니다.'
       }
-      confirmText={isSending ? '전송 중...' : '보내기'}
-      confirmDisabled={isSending}
-      secondaryText="취소"
-      secondaryDisabled={isSending}
-      onConfirm={() => {
-        if (isSending) return;
+      primaryButton={{
+        text: isSending ? '전송 중...' : '보내기',
+        disabled: isSending,
+        onClick: () => {
+          if (isSending) return;
 
-        if (!hasActiveGuardians) {
-          onCloseModal();
-          openDialModal();
-          return;
-        }
-
-        setIsSending(true);
-        triggerSos(undefined, {
-          onSuccess: data => {
-            setIsSending(false);
+          if (!hasActiveGuardians) {
             onCloseModal();
-            openSuccessModal(data);
+            openDialModal();
+            return;
+          }
 
-            if (sosAction === 'call119AndNotify') {
-              openDialModal();
-            }
-          },
-          onError: error => {
-            setIsSending(false);
-            onCloseModal();
-            openErrorModal(error);
-          },
-        });
+          setIsSending(true);
+          triggerSos(undefined)
+            .then(data => {
+              onCloseModal();
+              if (sosAction === 'call119AndNotify') {
+                openDialModal();
+                return;
+              }
+              openSuccessModal(data);
+            })
+            .catch(error => {
+              onCloseModal();
+              openErrorModal(error);
+            });
+        },
       }}
-      onSecondary={closeIfIdle}
+      secondaryButton={{ text: '취소', disabled: isSending, onClick: closeIfIdle }}
       onClose={closeIfIdle}
     />
   );
@@ -143,7 +140,7 @@ export default function WardSosContent() {
   }));
   const { activeGuardians, hasActiveGuardians, isLoading: isLoadingGuardians, isError: isGuardiansError } =
     useWardActiveGuardians();
-  const { mutate: triggerSos } = useWardSosMutation();
+  const { mutate: triggerSos, mutateAsync: triggerSosAsync } = useWardSosMutation();
 
   function openDialModal() {
     openModal(<Emergency119Dialpad onClose={onCloseModal} />);
@@ -158,8 +155,7 @@ export default function WardSosContent() {
         tone="guardian"
         title="SOS 전송 실패"
         message={message}
-        confirmText="확인"
-        onConfirm={onCloseModal}
+        primaryButton={{ text: '확인', onClick: onCloseModal }}
         onClose={onCloseModal}
       />,
     );
@@ -180,17 +176,16 @@ export default function WardSosContent() {
             ? `보호자에게 알림을 보냈습니다.\n필요하면 아래 버튼으로 119 화면을 여세요.\n${formatDateTime(triggeredAt)}`
             : `SOS 이력이 저장되었습니다.\n이력 ID ${sosEventId} · ${formatDateTime(triggeredAt)}`
         }
-        confirmText={shouldOfferDial ? '119 화면 열기' : '확인'}
-        secondaryText={shouldOfferDial ? '닫기' : undefined}
-        onConfirm={
-          shouldOfferDial
+        primaryButton={{
+          text: shouldOfferDial ? '119 화면 열기' : '확인',
+          onClick: shouldOfferDial
             ? () => {
                 onCloseModal();
                 openDialModal();
               }
-            : onCloseModal
-        }
-        onSecondary={onCloseModal}
+            : onCloseModal,
+        }}
+        secondaryButton={shouldOfferDial ? { text: '닫기', onClick: onCloseModal } : undefined}
         onClose={onCloseModal}
       />,
     );
@@ -205,7 +200,7 @@ export default function WardSosContent() {
         openErrorModal={openErrorModal}
         openSuccessModal={openSuccessModal}
         sosAction={wardSettings.sosAction}
-        triggerSos={triggerSos}
+        triggerSos={triggerSosAsync}
       />,
     );
   }

@@ -73,13 +73,15 @@ function LogoutButton() {
         tone="guardian"
         title="로그아웃 확인"
         message="정말 로그아웃할까요?"
-        confirmText={isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-        secondaryText="취소"
-        onConfirm={() => {
-          if (isLoggingOut) return;
-          logoutMutate();
+        primaryButton={{
+          text: isLoggingOut ? '로그아웃 중...' : '로그아웃',
+          disabled: isLoggingOut,
+          onClick: () => {
+            if (isLoggingOut) return;
+            logoutMutate();
+          },
         }}
-        onSecondary={onCloseModal}
+        secondaryButton={{ text: '취소', onClick: onCloseModal }}
         onClose={onCloseModal}
       />,
     );
