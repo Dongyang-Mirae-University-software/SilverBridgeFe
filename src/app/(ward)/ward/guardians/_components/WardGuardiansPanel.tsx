@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { CommonModal } from '@/components/CommonModal';
 import { RefreshButton } from '@/components/RefreshButton';
+import { Tabs } from '@/components/Tabs';
 import {
   useWardConnectionAcceptMutation,
   useWardConnectionDisconnectMutation,
@@ -22,6 +23,7 @@ import useModalStore from '@/store/modalStore';
 import styles from './WardGuardiansPanel.module.css';
 
 const cx = classNames.bind(styles);
+type WardGuardiansTab = 'active' | 'pending';
 
 export function WardGuardiansPanel() {
   const { openModal, onCloseModal } = useModalStore(state => ({
@@ -29,6 +31,7 @@ export function WardGuardiansPanel() {
     onCloseModal: state.onCloseModal,
   }));
 
+  const [activeTab, setActiveTab] = useState<WardGuardiansTab>('active');
   const [storedPendingConnections, setStoredPendingConnections] = useState(() => getPendingConnectionRequestItems());
   const activeQuery = useWardGuardianActiveConnectionsQuery();
   const pendingQuery = useWardGuardianPendingConnectionsQuery();
@@ -83,48 +86,54 @@ export function WardGuardiansPanel() {
         />
       </div>
 
+      <Tabs
+        ariaLabel="보호자 목록 탭"
+        items={[
+          { value: 'active', label: `내 보호자 리스트 ${activeConnections.length}건` },
+          { value: 'pending', label: `요청온 목록 ${pendingConnections.length}건` },
+        ]}
+        onChange={setActiveTab}
+        size="sm"
+        stretch
+        value={activeTab}
+      />
+
       {isError && <EmptyState message="내 보호자 목록을 불러오지 못했습니다." />}
 
-      <section className={cx('connectionSection')}>
-        <div className={cx('connectionSectionHeader')}>
-          <h3>내 보호자 리스트</h3>
-          <span>{activeConnections.length}건</span>
-        </div>
-        {activeQuery.isError ? (
-          <EmptyState message="내 보호자 목록을 불러오지 못했습니다." />
-        ) : activeConnections.length > 0 ? (
-          <ConnectionList
-            connections={activeConnections}
-            isPending={isPending}
-            role="ward"
-            getActions={connection => [{ label: '연결 해제', onClick: () => handleDisconnect(connection.id) }]}
-          />
-        ) : (
-          !activeQuery.isLoading && <EmptyState message="연결된 보호자가 없습니다." />
-        )}
-      </section>
-
-      <section className={cx('connectionSection')}>
-        <div className={cx('connectionSectionHeader')}>
-          <h3>요청온 목록</h3>
-          <span>{pendingConnections.length}건</span>
-        </div>
-        {pendingQuery.isError ? (
-          <EmptyState message="요청온 목록을 불러오지 못했습니다." />
-        ) : pendingConnections.length > 0 ? (
-          <ConnectionList
-            connections={pendingConnections}
-            isPending={isPending}
-            role="ward"
-            getActions={connection => [
-              { label: '수락', onClick: () => acceptMutation.mutate(connection.id) },
-              { label: '거절', onClick: () => refuseMutation.mutate(connection.id), variant: 'secondary' },
-            ]}
-          />
-        ) : (
-          !pendingQuery.isLoading && <EmptyState message="수락 또는 거절하지 않은 연결 요청이 없습니다." />
-        )}
-      </section>
+      {activeTab === 'active' ? (
+        <section className={cx('connectionSection')}>
+          {activeQuery.isError ? (
+            <EmptyState message="내 보호자 목록을 불러오지 못했습니다." />
+          ) : activeConnections.length > 0 ? (
+            <ConnectionList
+              connections={activeConnections}
+              isPending={isPending}
+              role="ward"
+              getActions={connection => [{ label: '연결 해제', onClick: () => handleDisconnect(connection.id) }]}
+            />
+          ) : (
+            !activeQuery.isLoading && <EmptyState message="연결된 보호자가 없습니다." />
+          )}
+        </section>
+      ) : (
+        <section className={cx('connectionSection')}>
+          {pendingQuery.isError ? (
+            <EmptyState message="요청온 목록을 불러오지 못했습니다." />
+          ) : pendingConnections.length > 0 ? (
+            <ConnectionList
+              connections={pendingConnections}
+              isPending={isPending}
+              role="ward"
+              getActions={connection => [
+                { label: '수락', onClick: () => acceptMutation.mutate(connection.id) },
+                { label: '거절', onClick: () => refuseMutation.mutate(connection.id), variant: 'secondary' },
+              ]}
+            />
+          ) : (
+            !pendingQuery.isLoading && <EmptyState message="수락 또는 거절하지 않은 연결 요청이 없습니다." />
+          )}
+        </section>
+      )}
     </section>
   );
 }
