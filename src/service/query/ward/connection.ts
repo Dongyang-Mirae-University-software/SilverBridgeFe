@@ -8,7 +8,7 @@ import {
   disconnectWardConnection,
   getWardActiveConnections,
   getWardConnections,
-  getWardPendingConnectionRequests,
+  getWardPendingConnections,
   refuseWardConnectionRequest,
 } from '@/service/api/ward/connection';
 import { CommonModal } from '@/components/CommonModal';
@@ -39,7 +39,7 @@ export const wardGuardianActiveConnectionsQueryOptions = queryOptions({
 
 export const wardGuardianPendingConnectionsQueryOptions = queryOptions({
   queryKey: wardGuardianPendingConnectionsQueryKey,
-  queryFn: getWardPendingConnectionRequests,
+  queryFn: getWardPendingConnections,
   refetchOnMount: 'always',
   refetchOnWindowFocus: 'always',
   staleTime: 10 * 1000,

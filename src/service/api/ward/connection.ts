@@ -23,6 +23,18 @@ export async function getWardPendingConnectionRequests() {
   return apiClient.get<CommonResponse<IWardPendingConnectionRequest[]>>(`${WARD_CONNECTION_BASE}/pending`);
 }
 
+export async function getWardPendingConnections(): Promise<CommonResponse<IConnectionItem[]>> {
+  const response = await getWardPendingConnectionRequests();
+  const body = getWardPendingConnectionBody(response);
+
+  return {
+    code: body?.code ?? 200,
+    success: body?.success ?? true,
+    message: body?.message,
+    data: (body?.data ?? []).map(mapWardPendingRequestToConnection),
+  };
+}
+
 // 화면 목록용: ACTIVE 연결 + 수락 대기 요청을 한 번에 합쳐서 반환
 // ward API는 active/pending 응답 형태가 나뉘어 있어 프론트에서 병합
 export async function getWardConnections(): Promise<CommonResponse<IConnectionItem[]>> {
