@@ -15,7 +15,9 @@ interface CommonModalProps {
   title?: string;
   message: string;
   confirmText?: string;
+  confirmDisabled?: boolean;
   secondaryText?: string;
+  secondaryDisabled?: boolean;
   onConfirm?: () => void;
   onSecondary?: () => void;
   onClose: () => void;
@@ -41,7 +43,9 @@ export function CommonModal({
   title,
   message,
   confirmText = '확인',
+  confirmDisabled = false,
   secondaryText,
+  secondaryDisabled = false,
   onConfirm,
   onSecondary,
   onClose,
@@ -65,11 +69,16 @@ export function CommonModal({
         </div>
         <div className={cx('actions')}>
           {secondaryText && onSecondary && (
-            <button className={cx('button', 'secondaryButton')} type="button" onClick={onSecondary}>
+            <button
+              className={cx('button', 'secondaryButton')}
+              type="button"
+              disabled={secondaryDisabled}
+              onClick={onSecondary}
+            >
               {secondaryText}
             </button>
           )}
-          <button className={cx('button')} type="button" onClick={onConfirm ?? onClose}>
+          <button className={cx('button')} type="button" disabled={confirmDisabled} onClick={onConfirm ?? onClose}>
             {confirmText}
           </button>
         </div>

@@ -10,6 +10,7 @@ import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import useModalStore from '@/store/modalStore';
 import { useWardSosMutation } from '@/service/query/ward';
 import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
+import type { WardSosAction } from '@/components/layout/dashboard/types';
 import type { WardSosResponse } from '@/service/interface/ward/sos';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
@@ -64,6 +65,76 @@ function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
   );
 }
 
+type TriggerSos = ReturnType<typeof useWardSosMutation>['mutate'];
+
+function SosConfirmModal({
+  hasActiveGuardians,
+  onCloseModal,
+  openDialModal,
+  openErrorModal,
+  openSuccessModal,
+  sosAction,
+  triggerSos,
+}: {
+  hasActiveGuardians: boolean;
+  onCloseModal: () => void;
+  openDialModal: () => void;
+  openErrorModal: (error: unknown) => void;
+  openSuccessModal: (data?: Partial<WardSosResponse> | null) => void;
+  sosAction: WardSosAction;
+  triggerSos: TriggerSos;
+}) {
+  const [isSending, setIsSending] = useState(false);
+
+  function closeIfIdle() {
+    if (!isSending) onCloseModal();
+  }
+
+  return (
+    <CommonModal
+      type="warning"
+      tone="guardian"
+      title="긴급 SOS 전송"
+      message={
+        isSending ? '보호자에게 SOS를 전송하고 있습니다.' : '긴급 SOS를 보내면 연결된 보호자에게 알림이 전달됩니다.'
+      }
+      confirmText={isSending ? '전송 중...' : '보내기'}
+      confirmDisabled={isSending}
+      secondaryText="취소"
+      secondaryDisabled={isSending}
+      onConfirm={() => {
+        if (isSending) return;
+
+        if (!hasActiveGuardians) {
+          onCloseModal();
+          openDialModal();
+          return;
+        }
+
+        setIsSending(true);
+        triggerSos(undefined, {
+          onSuccess: data => {
+            setIsSending(false);
+            onCloseModal();
+            openSuccessModal(data);
+
+            if (sosAction === 'call119AndNotify') {
+              openDialModal();
+            }
+          },
+          onError: error => {
+            setIsSending(false);
+            onCloseModal();
+            openErrorModal(error);
+          },
+        });
+      }}
+      onSecondary={closeIfIdle}
+      onClose={closeIfIdle}
+    />
+  );
+}
+
 export default function WardSosContent() {
   const { wardSettings } = useDashboard();
   const { openModal, onCloseModal } = useModalStore(state => ({
@@ -72,7 +143,7 @@ export default function WardSosContent() {
   }));
   const { activeGuardians, hasActiveGuardians, isLoading: isLoadingGuardians, isError: isGuardiansError } =
     useWardActiveGuardians();
-  const { mutate: triggerSos, isPending } = useWardSosMutation();
+  const { mutate: triggerSos } = useWardSosMutation();
 
   function openDialModal() {
     openModal(<Emergency119Dialpad onClose={onCloseModal} />);
@@ -127,36 +198,14 @@ export default function WardSosContent() {
 
   function openConfirmModal() {
     openModal(
-      <CommonModal
-        type="warning"
-        tone="guardian"
-        title="긴급 SOS 전송"
-        message="긴급 SOS를 보내면 연결된 보호자에게 알림이 전달됩니다."
-        confirmText={isPending ? '전송 중...' : '보내기'}
-        secondaryText="취소"
-        onConfirm={() => {
-          if (isPending) return;
-
-          onCloseModal();
-
-          if (!hasActiveGuardians) {
-            openDialModal();
-            return;
-          }
-
-          triggerSos(undefined, {
-            onSuccess: data => {
-              openSuccessModal(data);
-
-              if (wardSettings.sosAction === 'call119AndNotify') {
-                openDialModal();
-              }
-            },
-            onError: openErrorModal,
-          });
-        }}
-        onSecondary={onCloseModal}
-        onClose={onCloseModal}
+      <SosConfirmModal
+        hasActiveGuardians={hasActiveGuardians}
+        onCloseModal={onCloseModal}
+        openDialModal={openDialModal}
+        openErrorModal={openErrorModal}
+        openSuccessModal={openSuccessModal}
+        sosAction={wardSettings.sosAction}
+        triggerSos={triggerSos}
       />,
     );
   }
