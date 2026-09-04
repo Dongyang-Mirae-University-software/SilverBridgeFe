@@ -3,10 +3,12 @@
 import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import { getMessaging, getToken, isSupported, MessagePayload, Messaging, onMessage } from 'firebase/messaging';
 import { reportNonApiError } from '@/lib/api/reportError';
+import { getAccessTokenSubject } from '@/lib/auth/tokenStore';
 import { deleteNotificationFcmToken, registerNotificationFcmToken } from '@/service/api/user/notification';
 
 const FCM_TOKEN_KEY = 'careai_fcm_token';
 const FCM_REGISTERED_TOKEN_KEY = 'careai_fcm_registered_token';
+const FCM_REGISTERED_USER_KEY = 'careai_fcm_registered_user';
 const DEFAULT_FIREBASE_API_KEY = 'AIzaSyB82QGIFGkeSsda2qg3Yg3feYKSAxvqI1Y';
 const DEFAULT_FIREBASE_SENDER_ID = '608365601427';
 const DEFAULT_FIREBASE_APP_ID = '1:608365601427:web:b3ac76ab46895df2fda366';
@@ -71,14 +73,17 @@ export async function registerFcmTokenForCurrentDevice() {
   const storage = getSessionStorage();
   const storedToken = storage?.getItem(FCM_TOKEN_KEY);
   const registeredToken = storage?.getItem(FCM_REGISTERED_TOKEN_KEY);
+  const currentUserId = getAccessTokenSubject();
+  const registeredUserId = storage?.getItem(FCM_REGISTERED_USER_KEY);
 
-  if (storedToken && registeredToken === storedToken) return storedToken;
+  if (storedToken && registeredToken === storedToken && registeredUserId === currentUserId) return storedToken;
   if (registrationPromise) return registrationPromise;
 
   registrationPromise = (async () => {
     if (storedToken) {
       await registerNotificationFcmToken({ token: storedToken, platform: 'WEB' });
       storage?.setItem(FCM_REGISTERED_TOKEN_KEY, storedToken);
+      if (currentUserId) storage?.setItem(FCM_REGISTERED_USER_KEY, currentUserId);
       return storedToken;
     }
 
@@ -91,6 +96,7 @@ export async function registerFcmTokenForCurrentDevice() {
     await registerNotificationFcmToken({ token, platform: 'WEB' });
     storage?.setItem(FCM_TOKEN_KEY, token);
     storage?.setItem(FCM_REGISTERED_TOKEN_KEY, token);
+    if (currentUserId) storage?.setItem(FCM_REGISTERED_USER_KEY, currentUserId);
 
     return token;
   })();
@@ -113,6 +119,7 @@ export async function unregisterFcmTokenForCurrentDevice() {
   } finally {
     getSessionStorage()?.removeItem(FCM_TOKEN_KEY);
     getSessionStorage()?.removeItem(FCM_REGISTERED_TOKEN_KEY);
+    getSessionStorage()?.removeItem(FCM_REGISTERED_USER_KEY);
   }
 }
 
