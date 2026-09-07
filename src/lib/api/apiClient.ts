@@ -8,7 +8,7 @@
 import axios, { AxiosError, AxiosHeaders, InternalAxiosRequestConfig } from 'axios';
 import { resolveError, ServerErrorBody } from './errorHandler';
 import { CommonResponse } from '@/service/interface/common';
-import { IAuthTokenResponse } from '@/service/interface/auth';
+import { IAuthTokenResponse } from '@/service/interface/auth/auth';
 import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthTokens } from '@/lib/auth/tokenStore';
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {

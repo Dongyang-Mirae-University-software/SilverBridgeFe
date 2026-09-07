@@ -74,8 +74,10 @@ interface DeleteButtonProps {
 }
 
 function DeleteButton({ imageUrl, onError }: DeleteButtonProps) {
-  const openModal = useModalStore(state => state.openModal);
-  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
   const { mutate: profileImageDeleteMutate, isPending } = useProfileImageDeleteMutation({ onError });
 
   if (!imageUrl) return null;
@@ -88,13 +90,14 @@ function DeleteButton({ imageUrl, onError }: DeleteButtonProps) {
         type="warning"
         title="프로필 이미지 삭제"
         message="프로필 이미지를 삭제할까요?"
-        confirmText="삭제"
-        secondaryText="취소"
-        onConfirm={() => {
-          onCloseModal();
-          profileImageDeleteMutate();
+        primaryButton={{
+          text: '삭제',
+          onClick: () => {
+            onCloseModal();
+            profileImageDeleteMutate();
+          },
         }}
-        onSecondary={onCloseModal}
+        secondaryButton={{ text: '취소', onClick: onCloseModal }}
         onClose={onCloseModal}
       />,
     );
@@ -117,8 +120,10 @@ function DeleteButton({ imageUrl, onError }: DeleteButtonProps) {
 }
 
 export function UserAvatar({ imageUrl, size, disabled, onClick, isChange = false, isDelete = false }: UserAvatarProps) {
-  const openModal = useModalStore(state => state.openModal);
-  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
   const hasEditControls = isChange || isDelete;
 
   const showErrorModal = (message: string) => {
@@ -127,8 +132,7 @@ export function UserAvatar({ imageUrl, size, disabled, onClick, isChange = false
         type="error"
         title="프로필 이미지 처리 실패"
         message={message}
-        confirmText="확인"
-        onConfirm={onCloseModal}
+        primaryButton={{ text: '확인', onClick: onCloseModal }}
         onClose={onCloseModal}
       />,
     );

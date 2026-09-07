@@ -2,17 +2,14 @@
 
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {
-  getMyNotificationSettings,
-  updateMyNotificationSettings,
-} from '@/service/api/user';
+import { getMyNotificationSettings, updateMyNotificationSettings } from '@/service/api/user/notification';
 import type { CommonResponse } from '@/service/interface/common';
 import type {
   IUserNotificationSetting,
   IUserNotificationSettingsResponse,
   IUserNotificationSettingsUpdateReq,
   NotificationChannelType,
-} from '@/service/interface/user';
+} from '@/service/interface/user/user';
 import { reportNonApiError } from '@/lib/api/reportError';
 
 export const userNotificationSettingsQueryKey = ['user-notification-settings'] as const;

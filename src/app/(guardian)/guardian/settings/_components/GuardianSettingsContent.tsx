@@ -8,7 +8,7 @@ import { Tabs } from '@/components/Tabs';
 import { AccountDeleteSection } from '@/components/settings/AccountDeleteSection';
 import { NotificationSettingsSection } from '@/components/settings/NotificationSettingsSection';
 import { PasswordChangeSection } from '@/components/settings/PasswordChangeSection';
-import { getUserProfileData } from '@/lib/auth/userProfile';
+import { getUserProfileData } from '@/utils/auth/userProfile';
 import { myProfileQueryOptions } from '@/service/query/user';
 import styles from './GuardianSettingsContent.module.css';
 

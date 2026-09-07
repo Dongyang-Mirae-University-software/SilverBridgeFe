@@ -5,8 +5,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 import { myProfileQueryOptions } from '@/service/query/user';
-import { getRoleHomePath } from '@/lib/auth/routes';
-import { getUserProfileData } from '@/lib/auth/userProfile';
+import { getRoleHomePath } from '@/utils/auth/routes';
+import { getUserProfileData } from '@/utils/auth/userProfile';
 import { AuthRole, clearAuthTokens, getAccessToken, setAuthRole } from '@/lib/auth/tokenStore';
 import { registerFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { reportNonApiError } from '@/lib/api/reportError';

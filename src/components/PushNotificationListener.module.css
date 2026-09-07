@@ -26,6 +26,11 @@
   box-shadow: 0 10px 30px rgba(31, 94, 72, 0.14), 0 18px 52px rgba(20, 17, 12, 0.1);
 }
 
+.toast.sosAlert {
+  border-color: rgba(214, 69, 58, 0.4);
+  box-shadow: 0 10px 30px rgba(214, 69, 58, 0.18), 0 18px 52px rgba(20, 17, 12, 0.1);
+}
+
 .toastContent {
   display: grid;
   flex: 1;

@@ -7,9 +7,9 @@ import { useMutation } from '@tanstack/react-query';
 import { CommonModal } from '@/components/CommonModal';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import { getKakaoRedirectUri } from '@/lib/auth/kakao';
-import { getRoleHomePath } from '@/lib/auth/routes';
-import { signinKakao } from '@/service/api/auth';
-import { IKakaoSigninRes } from '@/service/interface/auth';
+import { getRoleHomePath } from '@/utils/auth/routes';
+import { signinKakao } from '@/service/api/auth/auth';
+import { IKakaoSigninRes } from '@/service/interface/auth/auth';
 
 type KakaoSigninData = IKakaoSigninRes['data'];
 

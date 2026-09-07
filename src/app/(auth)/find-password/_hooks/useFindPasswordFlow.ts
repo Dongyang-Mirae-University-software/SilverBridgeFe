@@ -11,14 +11,14 @@ import {
   findPasswordSmsVerify,
   findPasswordSmsResend,
   passwordReset,
-} from '@/service/api/auth';
+} from '@/service/api/auth/auth';
 import { CommonResponse } from '@/service/interface/common';
 import {
   IFindPasswordEmailSendReq,
   IFindPasswordSmsSendReq,
   IFindPasswordSendResponse,
   IPasswordResetReq,
-} from '@/service/interface/auth';
+} from '@/service/interface/auth/auth';
 
 type Method = 'email' | 'sms';
 const DEFAULT_VERIFICATION_EXPIRES_SECONDS = 300;

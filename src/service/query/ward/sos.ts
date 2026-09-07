@@ -2,9 +2,11 @@
 
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { getWardActiveConnections } from '@/service/api/connect/ward';
-import { triggerWardSos } from '@/service/api/ward';
+import { getWardActiveConnections } from '@/service/api/ward/connection';
+import { triggerWardSos } from '@/service/api/ward/sos';
 import { reportNonApiError } from '@/lib/api/reportError';
+import { getResponseData } from '@/utils/api/responseData';
+import type { IConnectionItem } from '@/service/interface/connection';
 
 export const wardActiveConnectionsQueryKey = ['ward-active-connections'] as const;
 export const wardSosMutationKey = ['ward-sos-trigger'] as const;
@@ -13,7 +15,7 @@ export const wardActiveConnectionsQueryOptions = queryOptions({
   queryKey: wardActiveConnectionsQueryKey,
   queryFn: async () => {
     const response = await getWardActiveConnections();
-    return response.data?.data ?? [];
+    return getResponseData<IConnectionItem[]>(response) ?? [];
   },
   refetchOnMount: 'always',
   refetchOnWindowFocus: 'always',

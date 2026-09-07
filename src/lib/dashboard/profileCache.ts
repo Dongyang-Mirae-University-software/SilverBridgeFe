@@ -1,9 +1,9 @@
 import { QueryClient } from '@tanstack/react-query';
 
 import { CommonResponse } from '@/service/interface/common';
-import { IUserProfile } from '@/service/interface/user';
+import { IUserProfile } from '@/service/interface/user/user';
 import { myProfileQueryKey } from '@/service/query/user';
-import { getUserProfileData } from '@/lib/auth/userProfile';
+import { getUserProfileData } from '@/utils/auth/userProfile';
 
 export function setMyProfileCache(queryClient: QueryClient, response: unknown) {
   const profile = getUserProfileData(response);

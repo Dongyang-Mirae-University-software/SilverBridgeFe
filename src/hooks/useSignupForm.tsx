@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { GenderType, IKakaoSignupReq, ISignupReq, RoleType } from '@/service/interface/auth';
+import { GenderType, IKakaoSignupReq, ISignupReq, RoleType } from '@/service/interface/auth/auth';
 import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '@/constants/pattern';
 import { useMutation } from '@tanstack/react-query';
-import { signup, signupKakao } from '@/service/api/auth';
+import { signup, signupKakao } from '@/service/api/auth/auth';
 import { useRouter } from 'next/navigation';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
-import { getRoleHomePath } from '@/lib/auth/routes';
-import { getPhoneDigits } from '@/lib/format/phone';
+import { getRoleHomePath } from '@/utils/auth/routes';
+import { getPhoneDigits } from '@/utils/format/phone';
 
 export type SignupFormValues = {
   name: string;

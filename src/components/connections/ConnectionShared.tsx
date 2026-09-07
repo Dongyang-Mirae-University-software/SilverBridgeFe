@@ -2,8 +2,8 @@
 
 import classNames from 'classnames/bind';
 
-import { formatPhoneNumber } from '@/lib/format/phone';
-import { getConnectionItems, normalizeConnectionItem } from '@/service/api/connect/connectionResponse';
+import { formatPhoneNumber } from '@/utils/format/phone';
+import { getConnectionItems, normalizeConnectionItem } from '@/utils/api/connectionResponse';
 import { IConnectionItem } from '@/service/interface/connection';
 import styles from './ConnectionShared.module.css';
 

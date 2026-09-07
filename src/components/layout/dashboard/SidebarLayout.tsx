@@ -8,7 +8,7 @@ import { Icon } from '@/components/Icon';
 import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
 import { PAGE_TITLES } from '@/constants/dashboard';
 import { AuthRole } from '@/lib/auth/tokenStore';
-import { IUserProfile } from '@/service/interface/user';
+import { IUserProfile } from '@/service/interface/user/user';
 import { Sidebar } from './Sidebar';
 import { NavItem, PageKey } from './types';
 import styles from './SidebarLayout.module.css';
@@ -33,7 +33,7 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
       <div className={cx('mobileTopBar')}>
         <div className={cx('topBarBrand')}>
           <SilverBridgeLogo className={cx('topBarLogo')} width={132} />
-          <span>{pageTitle}</span>
+          {/* <span>{pageTitle}</span> */}
         </div>
         <button
           className={cx('topBarMenuButton')}

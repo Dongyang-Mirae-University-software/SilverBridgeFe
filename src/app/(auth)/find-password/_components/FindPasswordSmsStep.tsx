@@ -4,7 +4,7 @@ import { FormEvent } from 'react';
 import classNames from 'classnames/bind';
 
 import TextInput from '@/components/TextInput';
-import { formatPhoneNumber, getPhoneDigits } from '@/lib/format/phone';
+import { formatPhoneNumber, getPhoneDigits } from '@/utils/format/phone';
 import styles from './FindPasswordSmsStep.module.css';
 
 const cx = classNames.bind(styles);

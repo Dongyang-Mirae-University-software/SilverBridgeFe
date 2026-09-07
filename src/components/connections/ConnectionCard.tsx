@@ -2,9 +2,9 @@
 
 import classNames from 'classnames/bind';
 
-import { UserAvatar } from '@/components/UserAvatar';
 import { Icon, type IconName } from '@/components/Icon';
-import { IConnectionItem } from '@/service/interface/connection';
+import { UserAvatar } from '@/components/UserAvatar';
+import type { IConnectionItem } from '@/service/interface/connection';
 import {
   formatPartnerGender,
   getActivePartnerValue,
@@ -12,15 +12,44 @@ import {
   getConnectionStatusLabel,
   getPartnerPhoneValue,
 } from './ConnectionShared';
-import styles from './ConnectionShared.module.css';
+import styles from './ConnectionCard.module.css';
 
 const cx = classNames.bind(styles);
+
+type ConnectionRole = 'guardian' | 'ward';
+type ConnectionActionVariant = 'primary' | 'secondary';
+
+interface ConnectionAction {
+  label: string;
+  onClick: () => void;
+  variant?: ConnectionActionVariant;
+}
+
+interface ConnectionDetailProps {
+  icon: IconName;
+  label: string;
+  value?: string | null;
+}
+
+interface ConnectionCardProps {
+  actions?: ConnectionAction[];
+  connection: IConnectionItem;
+  isPending: boolean;
+  role: ConnectionRole;
+}
+
+interface ConnectionListProps {
+  connections: IConnectionItem[];
+  getActions?: (connection: IConnectionItem) => ConnectionAction[];
+  isPending: boolean;
+  role: ConnectionRole;
+}
 
 function getConnectionAddress(connection: IConnectionItem) {
   return [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
 }
 
-function ConnectionDetail({ icon, label, value }: { icon: IconName; label: string; value?: string | null }) {
+function ConnectionDetail({ icon, label, value }: ConnectionDetailProps) {
   return (
     <li className={cx('connectionDetailRow')}>
       <span className={cx('connectionDetailLabel')}>
@@ -32,25 +61,11 @@ function ConnectionDetail({ icon, label, value }: { icon: IconName; label: strin
   );
 }
 
-export function ConnectionCard({
-  connection,
-  isPending,
-  role,
-  primaryAction,
-  primaryLabel,
-  secondaryAction,
-  secondaryLabel,
-}: {
-  connection: IConnectionItem;
-  isPending: boolean;
-  role: 'guardian' | 'ward';
-  primaryAction?: () => void;
-  primaryLabel?: string;
-  secondaryAction?: () => void;
-  secondaryLabel?: string;
-}) {
+export function ConnectionCard({ actions = [], connection, isPending, role }: ConnectionCardProps) {
   const address = connection.status === 'ACTIVE' ? getConnectionAddress(connection) : '';
   const profileLabel = getConnectionStatusLabel(connection.status);
+  const visibleActions = actions.filter(action => action.label);
+
   return (
     <li className={cx('connectionCard')} data-role={role}>
       <div className={cx('connectionCardMain')}>
@@ -90,23 +105,37 @@ export function ConnectionCard({
           </ul>
         </div>
       </div>
-      {primaryAction && primaryLabel ? (
+      {visibleActions.length > 0 ? (
         <div className={cx('connectionActions')}>
-          <button className={cx('connectionPrimaryButton')} type="button" disabled={isPending} onClick={primaryAction}>
-            {primaryLabel}
-          </button>
-          {secondaryAction && secondaryLabel ? (
+          {visibleActions.map(action => (
             <button
-              className={cx('connectionSecondaryButton')}
+              key={action.label}
+              className={cx(action.variant === 'secondary' ? 'connectionSecondaryButton' : 'connectionPrimaryButton')}
               type="button"
               disabled={isPending}
-              onClick={secondaryAction}
+              onClick={action.onClick}
             >
-              {secondaryLabel}
+              {action.label}
             </button>
-          ) : null}
+          ))}
         </div>
       ) : null}
     </li>
+  );
+}
+
+export function ConnectionList({ connections, getActions, isPending, role }: ConnectionListProps) {
+  return (
+    <ul className={cx('connectionList')}>
+      {connections.map(connection => (
+        <ConnectionCard
+          key={connection.id}
+          actions={getActions?.(connection)}
+          connection={connection}
+          isPending={isPending}
+          role={role}
+        />
+      ))}
+    </ul>
   );
 }

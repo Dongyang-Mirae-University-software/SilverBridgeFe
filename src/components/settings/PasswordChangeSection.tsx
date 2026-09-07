@@ -7,9 +7,9 @@ import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
-import { getModalErrorMessage } from '@/lib/dashboard/profile';
-import { changeMyPassword } from '@/service/api/user';
-import type { IUserPasswordChangeReq } from '@/service/interface/user';
+import { getModalErrorMessage } from '@/utils/dashboard/profile';
+import { changeMyPassword } from '@/service/api/user/user';
+import type { IUserPasswordChangeReq } from '@/service/interface/user/user';
 import styles from './PasswordChangeSection.module.css';
 
 const cx = classNames.bind(styles);
@@ -66,7 +66,13 @@ export function PasswordChangeSection({ isKakaoUser }: { isKakaoUser: boolean })
           type={resultModal.type}
           title={resultModal.type === 'success' ? '비밀번호 변경 완료' : '비밀번호 변경 실패'}
           message={resultModal.message}
-          confirmText="확인"
+          primaryButton={{
+            text: '확인',
+            onClick: () => {
+              if (resultModal.type === 'success') { clearAuthTokens(); queryClient.clear(); router.replace('/login'); return; }
+              setResultModal(null);
+            },
+          }}
           onClose={() => {
             if (resultModal.type === 'success') { clearAuthTokens(); queryClient.clear(); router.replace('/login'); return; }
             setResultModal(null);

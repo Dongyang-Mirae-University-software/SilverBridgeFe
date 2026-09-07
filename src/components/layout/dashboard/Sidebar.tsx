@@ -5,9 +5,9 @@ import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
-import { getRoleLabel } from '@/lib/auth/routes';
+import { getRoleLabel } from '@/utils/auth/routes';
 import { AuthRole } from '@/lib/auth/tokenStore';
-import { IUserProfile } from '@/service/interface/user';
+import { IUserProfile } from '@/service/interface/user/user';
 import { NavItem } from './types';
 import { ProfileModal } from './ProfileModal';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -33,8 +33,10 @@ interface Props {
 }
 
 export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, rootPath }: Props) {
-  const openModal = useModalStore(state => state.openModal);
-  const onCloseModal = useModalStore(state => state.onCloseModal);
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
 
   const userName = profile?.name ?? ROLE_DEFAULT_NAME[role];
   const userId = profile?.id ?? '아이디 정보 없음';

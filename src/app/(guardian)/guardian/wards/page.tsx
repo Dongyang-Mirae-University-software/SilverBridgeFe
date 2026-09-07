@@ -1,5 +1,5 @@
 import PageLayout from '@/components/layout/PageLayout';
-import { GuardianWardsPanel } from '@/components/connections/GuardianWardsPanel';
+import { GuardianWardsPanel } from './_components/GuardianWardsPanel';
 
 export default function GuardianWardsPage() {
   return (

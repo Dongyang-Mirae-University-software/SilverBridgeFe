@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 
-import { findEmail } from '@/service/api/auth';
-import { IFindEmailReq, IFindEmailResponse } from '@/service/interface/auth';
+import { findEmail } from '@/service/api/auth/auth';
+import { IFindEmailReq, IFindEmailResponse } from '@/service/interface/auth/auth';
 
 function isFindEmailResponse(value: unknown): value is IFindEmailResponse {
   return typeof value === 'object' && value !== null && ('maskedEmail' in value || 'hasKakaoAccount' in value);

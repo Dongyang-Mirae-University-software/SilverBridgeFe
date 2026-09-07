@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import styles from './BirthDateSelects.module.css';
-import { composeBirthDate, getBirthDateDays, getBirthDateMonths, getBirthDateYears, parseBirthDate } from '@/lib/format/birthDate';
+import { composeBirthDate, getBirthDateDays, getBirthDateMonths, getBirthDateYears, parseBirthDate } from '@/utils/format/birthDate';
 import { BIRTH_DATE_PLACEHOLDERS } from '@/constants/birthDate';
 
 const cx = classNames.bind(styles);

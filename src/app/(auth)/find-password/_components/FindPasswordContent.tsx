@@ -78,7 +78,7 @@ export default function FindPasswordContent() {
           type="success"
           title="비밀번호가 변경되었습니다"
           message="새 비밀번호로 다시 로그인해주세요."
-          confirmText="로그인하기"
+          primaryButton={{ text: '로그인하기', onClick: () => router.push('/login') }}
           onClose={() => router.push('/login')}
         />
       )}

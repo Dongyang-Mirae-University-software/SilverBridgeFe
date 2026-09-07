@@ -2,7 +2,7 @@
 
 import classNames from 'classnames/bind';
 
-import { IFindEmailResponse } from '@/service/interface/auth';
+import { IFindEmailResponse } from '@/service/interface/auth/auth';
 import FindEmailResultActions from './FindEmailResultActions';
 import FindEmailResultDisplay from './FindEmailResultDisplay';
 import styles from './FindEmailResultStep.module.css';

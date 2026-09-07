@@ -7,8 +7,8 @@ import classNames from 'classnames/bind';
 import { SidebarLayout } from '@/components/layout/dashboard/SidebarLayout';
 import { GUARDIAN_NAV } from '@/constants/dashboard';
 import { getAccessTokenSubject } from '@/lib/auth/tokenStore';
-import { getRealtimeNotification } from '@/lib/dashboard/realtime';
-import { getUserProfileData } from '@/lib/auth/userProfile';
+import { getRealtimeNotification } from '@/utils/dashboard/realtime';
+import { getUserProfileData } from '@/utils/auth/userProfile';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
 import styles from './GuardianLayout.module.css';
@@ -45,8 +45,11 @@ function useGuardianConnectionSocket(realtimeUserId: string | undefined) {
                 body: payload.body ?? '',
                 connectionId: payload.connectionId ?? '',
                 from: payload.from ?? '',
+                sosEventId: payload.sosEventId ?? '',
                 title: payload.title ?? '',
-                type: payload.type,
+                type: payload.type === 'SOS_TRIGGERED' ? 'WARD_SOS' : payload.type,
+                wardId: payload.wardId ?? '',
+                wardName: payload.wardName ?? '',
               },
               notification: getRealtimeNotification(payload),
             },

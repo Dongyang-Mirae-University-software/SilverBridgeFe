@@ -14,8 +14,8 @@ import {
   clampFontSize,
   getValidSosAction,
 } from '@/constants/wardSettings';
-import { getUserProfileData } from '@/lib/auth/userProfile';
-import { getRealtimeNotification } from '@/lib/dashboard/realtime';
+import { getUserProfileData } from '@/utils/auth/userProfile';
+import { getRealtimeNotification } from '@/utils/dashboard/realtime';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
 import styles from './WardLayout.module.css';

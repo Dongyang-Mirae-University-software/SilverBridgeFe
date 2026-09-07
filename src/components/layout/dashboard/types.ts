@@ -18,7 +18,8 @@ export type PageKey =
   | 'wards'
   | 'ward-register'
   | 'inquiries'
-  | 'stream';
+  | 'stream'
+  | 'sos-history';
 
 export type NavIconName =
   | 'home'

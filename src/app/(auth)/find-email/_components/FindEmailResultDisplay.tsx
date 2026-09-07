@@ -2,7 +2,7 @@
 
 import classNames from 'classnames/bind';
 
-import { IFindEmailResponse } from '@/service/interface/auth';
+import { IFindEmailResponse } from '@/service/interface/auth/auth';
 import styles from './FindEmailResultDisplay.module.css';
 
 const cx = classNames.bind(styles);

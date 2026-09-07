@@ -8,16 +8,19 @@ import classNames from 'classnames/bind';
 
 import { listenForegroundMessages } from '@/lib/fcm';
 import { getAuthRole } from '@/lib/auth/tokenStore';
-import { guardianConnectionsQueryKey, wardConnectionsQueryKey } from '@/service/query/connection';
+import { guardianConnectionRequestsQueryKey, guardianConnectionsQueryKey } from '@/service/query/guardian';
+import { guardianSosHistoryQueryKey } from '@/service/query/guardian/sosHistory';
+import { wardConnectionsQueryKey } from '@/service/query/ward';
 import { CommonResponse } from '@/service/interface/common';
 import { IConnectionItem } from '@/service/interface/connection';
-import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/connect/ward';
+import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/ward/connection';
 import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import styles from './PushNotificationListener.module.css';
 
 const cx = classNames.bind(styles);
 
 const TOAST_LIFETIME_MS = 6000;
+const NOTIFICATION_DEDUPE_LIFETIME_MS = 8000;
 type ConnectionTargetRole = 'WARD' | 'GUARDIAN';
 
 interface PushToast {
@@ -48,6 +51,8 @@ function getPushRoute(data?: MessagePayload['data'], role?: ConnectionTargetRole
     case 'DISCONNECTION':
     case 'CONNECTION_DISCONNECTED':
       return role === 'WARD' ? '/ward/guardians' : '/guardian/wards';
+    case 'WARD_SOS':
+      return '/guardian/sos';
     default:
       return role === 'WARD' ? '/ward' : '/guardian';
   }
@@ -69,6 +74,11 @@ function getConnectionPushNotification(data?: MessagePayload['data']) {
     case 'DISCONNECTION':
     case 'CONNECTION_DISCONNECTED':
       return { body: '연결이 해제되었습니다.', title: '연결 해제' };
+    case 'WARD_SOS':
+      return {
+        body: `${data?.wardName ?? '피보호자'}님이 긴급 도움을 요청했습니다.`,
+        title: '긴급 SOS',
+      };
     default:
       return { body: '', title: '알림' };
   }
@@ -121,9 +131,20 @@ function isConnectionRequest(data?: MessagePayload['data'], currentRole?: Connec
   return currentRole === 'WARD' && data?.type === 'CONNECTION_REQUEST' && Boolean(data.connectionId);
 }
 
+function isSosPush(data?: MessagePayload['data']) {
+  return data?.type === 'WARD_SOS';
+}
+
 function getConnectionId(data?: MessagePayload['data']) {
   const connectionId = Number(data?.connectionId);
   return Number.isFinite(connectionId) ? connectionId : null;
+}
+
+function getNotificationDedupeKey(data?: MessagePayload['data']) {
+  if (!data?.type) return null;
+  if (data.sosEventId) return `${data.type}:sos:${data.sosEventId}`;
+  if (data.connectionId) return `${data.type}:connection:${data.connectionId}`;
+  return null;
 }
 
 function getConnectionStatusFromPush(data?: MessagePayload['data']): IConnectionItem['status'] | null {
@@ -143,7 +164,10 @@ function getConnectionStatusFromPush(data?: MessagePayload['data']): IConnection
 
 function updateConnectionCache(
   queryClient: QueryClient,
-  queryKey: typeof guardianConnectionsQueryKey | typeof wardConnectionsQueryKey,
+  queryKey:
+    | typeof guardianConnectionRequestsQueryKey
+    | typeof guardianConnectionsQueryKey
+    | typeof wardConnectionsQueryKey,
   connectionId: number,
   status: IConnectionItem['status'],
 ) {
@@ -168,6 +192,7 @@ function applyConnectionPushToCache(
   const targetRole = getConnectionTargetRole(data);
   if (targetRole === 'GUARDIAN') {
     updateConnectionCache(queryClient, guardianConnectionsQueryKey, connectionId, status);
+    updateConnectionCache(queryClient, guardianConnectionRequestsQueryKey, connectionId, status);
     return;
   }
   if (targetRole === 'WARD') {
@@ -176,6 +201,7 @@ function applyConnectionPushToCache(
   }
   if (currentRole === 'GUARDIAN') {
     updateConnectionCache(queryClient, guardianConnectionsQueryKey, connectionId, status);
+    updateConnectionCache(queryClient, guardianConnectionRequestsQueryKey, connectionId, status);
   } else if (currentRole === 'WARD') {
     updateConnectionCache(queryClient, wardConnectionsQueryKey, connectionId, status);
   }
@@ -190,6 +216,7 @@ export default function PushNotificationListener() {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const idRef = useRef(0);
+  const handledNotificationKeysRef = useRef<Map<string, number>>(new Map());
   const [toasts, setToasts] = useState<PushToast[]>([]);
   const [processingToastIds, setProcessingToastIds] = useState<number[]>([]);
   const currentRole = getCurrentRole(pathname);
@@ -200,8 +227,22 @@ export default function PushNotificationListener() {
 
   const addToast = useCallback(
     (toast: PushToast) => {
+      const dedupeKey = getNotificationDedupeKey(toast.data);
+
+      if (dedupeKey) {
+        const now = Date.now();
+        const handledAt = handledNotificationKeysRef.current.get(dedupeKey);
+
+        if (handledAt && now - handledAt < NOTIFICATION_DEDUPE_LIFETIME_MS) return;
+
+        handledNotificationKeysRef.current.set(dedupeKey, now);
+        handledNotificationKeysRef.current.forEach((timestamp, key) => {
+          if (now - timestamp > NOTIFICATION_DEDUPE_LIFETIME_MS) handledNotificationKeysRef.current.delete(key);
+        });
+      }
+
       setToasts(prev => [toast, ...prev].slice(0, 3));
-      if (isConnectionRequest(toast.data, currentRole)) return;
+      if (isConnectionRequest(toast.data, currentRole) || isSosPush(toast.data)) return;
       window.setTimeout(() => {
         dismissToast(toast.id);
       }, TOAST_LIFETIME_MS);
@@ -217,20 +258,30 @@ export default function PushNotificationListener() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey }),
       queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
+      queryClient.invalidateQueries({ queryKey: guardianConnectionRequestsQueryKey }),
     ]);
   };
 
   const refreshConnectionPage = useCallback(
     async (data?: MessagePayload['data']) => {
       const targetRole = getConnectionTargetRole(data) ?? currentRole;
-      const queryKey = targetRole === 'GUARDIAN' ? guardianConnectionsQueryKey : wardConnectionsQueryKey;
+      const queryKeys = targetRole === 'GUARDIAN'
+        ? [guardianConnectionsQueryKey, guardianConnectionRequestsQueryKey]
+        : [wardConnectionsQueryKey];
+
       applyConnectionPushToCache(queryClient, data, currentRole);
-      await queryClient.invalidateQueries({ queryKey });
-      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      await Promise.all(queryKeys.map(queryKey => queryClient.invalidateQueries({ queryKey })));
+      await Promise.all(queryKeys.map(queryKey => queryClient.refetchQueries({ queryKey, type: 'active' })));
       router.refresh();
     },
     [currentRole, queryClient, router],
   );
+
+  const refreshSosPage = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: guardianSosHistoryQueryKey });
+    await queryClient.refetchQueries({ queryKey: guardianSosHistoryQueryKey, type: 'active' });
+    router.refresh();
+  }, [queryClient, router]);
 
   const handleConnectionAction = async (toast: PushToast, action: 'accept' | 'refuse') => {
     const connectionId = getConnectionId(toast.data);
@@ -277,9 +328,10 @@ export default function PushNotificationListener() {
         if (isConnectionRequest(payload.data, currentRole)) savePendingConnectionRequest(payload.data);
         void refreshConnectionPage(payload.data);
       }
+      if (isSosPush(payload.data)) void refreshSosPage();
       addToast(toast);
     });
-  }, [addToast, currentRole, refreshConnectionPage]);
+  }, [addToast, currentRole, refreshConnectionPage, refreshSosPage]);
 
   useEffect(() => {
     const handleLocalPush = (event: Event) => {
@@ -297,19 +349,26 @@ export default function PushNotificationListener() {
         if (isConnectionRequest(detail.data, currentRole)) savePendingConnectionRequest(detail.data);
         void refreshConnectionPage(detail.data);
       }
+      if (isSosPush(detail.data)) void refreshSosPage();
       addToast(toast);
     };
 
     window.addEventListener('careai:push', handleLocalPush);
     return () => window.removeEventListener('careai:push', handleLocalPush);
-  }, [addToast, currentRole, refreshConnectionPage]);
+  }, [addToast, currentRole, refreshConnectionPage, refreshSosPage]);
 
   if (toasts.length === 0) return null;
 
   return (
     <div className={cx('toastArea')} aria-live="polite">
       {toasts.map(toast => (
-        <div key={toast.id} className={cx('toast', { actionAlert: isConnectionRequest(toast.data, currentRole) })}>
+        <div
+          key={toast.id}
+          className={cx('toast', {
+            actionAlert: isConnectionRequest(toast.data, currentRole),
+            sosAlert: isSosPush(toast.data),
+          })}
+        >
           {isConnectionRequest(toast.data, currentRole) ? (
             <div className={cx('toastContent')}>
               <span className={cx('title')}>{toast.title}</span>
