@@ -10,7 +10,6 @@ import { Tabs } from '@/components/Tabs';
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/guardian/connection';
 import { IConnectionItem } from '@/service/interface/connection';
 import {
-  guardianConnectionRequestsQueryKey,
   guardianConnectionRequestsQueryOptions,
   guardianConnectionsQueryKey,
   guardianConnectionsQueryOptions,
@@ -56,10 +55,9 @@ export function GuardianWardsPanel() {
     onMutate: () => setFeedbackMessage(''),
     onSuccess: async () => {
       setFeedbackMessage('연결 요청을 취소했습니다.');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
-        queryClient.invalidateQueries({ queryKey: guardianConnectionRequestsQueryKey }),
-      ]);
+      // guardianConnectionRequestsQueryKey는 guardianConnectionsQueryKey를 접두로 가지므로
+      // 상위 키 하나만 무효화해도 탭 두 개(목록/이력) 쿼리가 함께 갱신된다.
+      await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
     },
     onError: error => setFeedbackMessage(getErrorMessage(error, '연결 요청 취소에 실패했습니다.')),
   });
@@ -70,10 +68,7 @@ export function GuardianWardsPanel() {
     onMutate: () => setFeedbackMessage(''),
     onSuccess: async () => {
       setFeedbackMessage('연결을 해제했습니다.');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
-        queryClient.invalidateQueries({ queryKey: guardianConnectionRequestsQueryKey }),
-      ]);
+      await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
     },
     onError: error => setFeedbackMessage(getErrorMessage(error, '연결 해제에 실패했습니다.')),
   });
