@@ -81,3 +81,13 @@
     flex: 1;
   }
 }
+
+/* Tabs polish */
+.tab:focus-visible {
+  outline: 3px solid rgba(31, 94, 72, 0.18);
+  outline-offset: 2px;
+}
+
+.tab:hover:not(.active):not(.disabled) {
+  transform: translateY(-1px);
+}
