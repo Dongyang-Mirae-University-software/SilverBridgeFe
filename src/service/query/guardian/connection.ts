@@ -7,7 +7,7 @@ export const guardianConnectionRequestsQueryKey = [...guardianConnectionsQueryKe
 
 export const guardianConnectionsQueryOptions = queryOptions({
   queryKey: guardianConnectionsQueryKey,
-  queryFn: getGuardianConnections,
+  queryFn: () => getGuardianConnections(),
   refetchOnMount: 'always',
   refetchOnWindowFocus: 'always',
   staleTime: 10 * 1000,
