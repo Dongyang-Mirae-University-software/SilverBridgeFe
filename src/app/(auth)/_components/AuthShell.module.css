@@ -183,3 +183,20 @@
     border-radius: 20px;
   }
 }
+
+/* Refined auth shell depth */
+.shell {
+  background:
+    radial-gradient(circle at 16% 18%, rgba(255, 255, 255, 0.7) 0 18%, transparent 36%),
+    linear-gradient(135deg, #fbf6f0 0%, #f4e5d5 100%);
+}
+
+.card {
+  box-shadow:
+    0 22px 60px rgba(31, 25, 22, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.badge {
+  box-shadow: 0 8px 20px rgba(217, 119, 87, 0.1);
+}

@@ -165,3 +165,26 @@
     justify-content: flex-end;
   }
 }
+
+/* Refined login affordance */
+.submitButton,
+.kakaoButton {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+}
+
+.submitButton:hover:not(:disabled),
+.kakaoButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.submitButton:hover:not(:disabled) {
+  box-shadow: 0 8px 18px rgba(217, 119, 87, 0.26);
+  filter: saturate(1.03);
+}
+
+.kakaoButton:hover:not(:disabled) {
+  box-shadow: 0 8px 18px rgba(60, 30, 30, 0.12);
+}
