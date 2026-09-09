@@ -196,3 +196,12 @@
 .timeAssistant {
   padding-left: 2px;
 }
+
+/* Chat bubble polish */
+.bubble {
+  box-shadow: 0 8px 20px rgba(32, 39, 33, 0.07);
+}
+
+.user .bubble {
+  box-shadow: 0 10px 22px rgba(32, 104, 79, 0.12);
+}

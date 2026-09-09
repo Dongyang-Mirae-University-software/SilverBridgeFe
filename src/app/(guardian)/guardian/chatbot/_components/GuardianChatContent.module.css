@@ -461,3 +461,35 @@
     border-radius: 14px;
   }
 }
+
+/* Chat shell polish */
+.utilityButton,
+.helpButton,
+.quickPromptButton,
+.backButton {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.utilityButton:hover,
+.helpButton:hover,
+.quickPromptButton:hover:not(:disabled),
+.backButton:hover {
+  transform: translateY(-1px);
+}
+
+.utilityButton:hover,
+.helpButton:hover {
+  box-shadow: 0 8px 18px rgba(32, 104, 79, 0.1);
+}
+
+.board {
+  border: 1px solid rgba(190, 161, 107, 0.12);
+}
+
+.quickPromptPopover {
+  backdrop-filter: blur(8px);
+}
