@@ -225,3 +225,32 @@
 :global(.guardianTheme) .connectionSecondaryButton:not(:disabled):hover {
   background: var(--guardian-brand-soft);
 }
+
+/* Connection card polish */
+.connectionCard {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.connectionCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 32, 24, 0.16);
+  box-shadow:
+    0 2px 4px rgba(37, 32, 24, 0.05),
+    0 12px 28px rgba(37, 32, 24, 0.08);
+}
+
+.connectionPrimaryButton,
+.connectionSecondaryButton {
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.connectionPrimaryButton:not(:disabled):hover,
+.connectionSecondaryButton:not(:disabled):hover {
+  transform: translateY(-1px);
+}

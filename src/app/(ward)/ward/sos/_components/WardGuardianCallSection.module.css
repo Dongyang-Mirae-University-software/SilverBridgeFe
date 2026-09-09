@@ -216,3 +216,21 @@
     font-size: 1rem;
   }
 }
+
+/* Guardian call card polish */
+.guardianCard {
+  border: 1px solid rgba(18, 18, 18, 0.04);
+  box-shadow: 0 12px 28px rgba(18, 18, 18, 0.06);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.guardianCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px rgba(18, 18, 18, 0.1);
+}
+
+.guardianPhoneIcon {
+  opacity: 0.86;
+}
