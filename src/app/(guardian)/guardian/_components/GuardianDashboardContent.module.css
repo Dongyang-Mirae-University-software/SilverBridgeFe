@@ -447,3 +447,42 @@
     flex-direction: column;
   }
 }
+
+/* Guardian dashboard polish */
+.wardChip,
+.featureCard,
+.emptyHeroButton {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.wardChip:hover:not(.wardChipStatic),
+.featureCard:hover,
+.emptyHeroButton:hover {
+  transform: translateY(-1px);
+}
+
+.wardChip:hover:not(.wardChipStatic) {
+  border-color: var(--guardian-brand);
+  box-shadow: 0 8px 18px rgba(51, 110, 191, 0.1);
+}
+
+.heroCard {
+  box-shadow:
+    0 16px 34px rgba(32, 104, 79, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.16) inset;
+}
+
+.panelCard,
+.featureCard {
+  box-shadow:
+    var(--sb-shadow-sm),
+    0 1px 0 rgba(255, 255, 255, 0.75) inset;
+}
+
+.featureCard:hover {
+  box-shadow: 0 14px 28px rgba(31, 25, 22, 0.1);
+}
