@@ -121,3 +121,22 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Basic info field polish */
+.selectBox,
+.addressSearchButton {
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.selectBox:focus-within {
+  border-color: #d97757;
+  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.12);
+}
+
+.addressSearchButton:hover:not(:disabled) {
+  border-color: #d97757;
+  background: #fff8f3;
+}
