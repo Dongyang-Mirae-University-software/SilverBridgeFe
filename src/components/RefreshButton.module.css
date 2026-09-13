@@ -55,3 +55,16 @@
     transform: rotate(360deg);
   }
 }
+
+/* Refresh button polish */
+.button {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+}
+
+.button:hover:not(:disabled) {
+  box-shadow: 0 14px 28px rgba(31, 94, 72, 0.28);
+  filter: saturate(1.04);
+}

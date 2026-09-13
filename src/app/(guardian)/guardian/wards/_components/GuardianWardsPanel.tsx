@@ -10,7 +10,7 @@ import { Tabs } from '@/components/Tabs';
 import { cancelGuardianConnectionRequest, disconnectGuardianConnection } from '@/service/api/guardian/connection';
 import { IConnectionItem } from '@/service/interface/connection';
 import {
-  guardianConnectionRequestsQueryKey,
+  guardianConnectionRequestsQueryOptions,
   guardianConnectionsQueryKey,
   guardianConnectionsQueryOptions,
 } from '@/service/query/guardian';
@@ -20,7 +20,8 @@ import { GuardianWardRegisterPanel } from './GuardianWardRegisterPanel';
 import styles from './GuardianWardsPanel.module.css';
 
 const cx = classNames.bind(styles);
-type GuardianWardsTab = 'list' | 'register';
+type GuardianWardsTab = 'list' | 'history' | 'register';
+const HISTORY_STATUSES: IConnectionItem['status'][] = ['REFUSED', 'CANCELLED', 'DISCONNECTED'];
 
 export function GuardianWardsPanel() {
   const searchParams = useSearchParams();
@@ -35,16 +36,28 @@ export function GuardianWardsPanel() {
   const { activeConnections, pendingConnections } = splitConnections(connections);
   const sortedConnections = sortGuardianConnections(connections);
 
+  const {
+    data: historyData,
+    isLoading: isHistoryLoading,
+    isError: isHistoryError,
+    refetch: refetchHistory,
+  } = useQuery({
+    ...guardianConnectionRequestsQueryOptions,
+    enabled: activeTab === 'history',
+  });
+  const historyConnections = getConnectionData(historyData).filter(connection =>
+    HISTORY_STATUSES.includes(connection.status),
+  );
+
   const cancelMutation = useMutation({
     mutationKey: ['guardian-connection-cancel'],
     mutationFn: cancelGuardianConnectionRequest,
     onMutate: () => setFeedbackMessage(''),
     onSuccess: async () => {
       setFeedbackMessage('연결 요청을 취소했습니다.');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
-        queryClient.invalidateQueries({ queryKey: guardianConnectionRequestsQueryKey }),
-      ]);
+      // guardianConnectionRequestsQueryKey는 guardianConnectionsQueryKey를 접두로 가지므로
+      // 상위 키 하나만 무효화해도 탭 두 개(목록/이력) 쿼리가 함께 갱신된다.
+      await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
     },
     onError: error => setFeedbackMessage(getErrorMessage(error, '연결 요청 취소에 실패했습니다.')),
   });
@@ -55,10 +68,7 @@ export function GuardianWardsPanel() {
     onMutate: () => setFeedbackMessage(''),
     onSuccess: async () => {
       setFeedbackMessage('연결을 해제했습니다.');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
-        queryClient.invalidateQueries({ queryKey: guardianConnectionRequestsQueryKey }),
-      ]);
+      await queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
     },
     onError: error => setFeedbackMessage(getErrorMessage(error, '연결 해제에 실패했습니다.')),
   });
@@ -74,10 +84,10 @@ export function GuardianWardsPanel() {
     if (tab === activeTab) return;
     setActiveTab(tab);
     const params = new URLSearchParams(window.location.search);
-    if (tab === 'register') {
-      params.set('tab', 'register');
-    } else {
+    if (tab === 'list') {
       params.delete('tab');
+    } else {
+      params.set('tab', tab);
     }
     const qs = params.toString();
     window.history.replaceState(
@@ -96,13 +106,18 @@ export function GuardianWardsPanel() {
             연결됨 {activeConnections.length}명 · 대기 {pendingConnections.length}건
           </span>
         </div>
-        <RefreshButton ariaLabel="새로고침" disabled={isLoading} onRefresh={() => refetch()} />
+        <RefreshButton
+          ariaLabel="새로고침"
+          disabled={activeTab === 'history' ? isHistoryLoading : isLoading}
+          onRefresh={() => (activeTab === 'history' ? refetchHistory() : refetch())}
+        />
       </header>
 
       <Tabs
         ariaLabel="피보호자 관리 탭"
         items={[
           { value: 'list', label: '피보호자 목록' },
+          { value: 'history', label: '종료 이력' },
           { value: 'register', label: '피보호자 등록' },
         ]}
         onChange={handleTabChange}
@@ -136,6 +151,17 @@ export function GuardianWardsPanel() {
             />
           )}
         </div>
+      ) : activeTab === 'history' ? (
+        <div className={cx('content')}>
+          {isHistoryLoading && <EmptyState message="종료 이력을 불러오는 중입니다." />}
+          {isHistoryError && <EmptyState message="종료 이력을 불러오지 못했습니다." />}
+          {!isHistoryLoading && !isHistoryError && historyConnections.length === 0 && (
+            <EmptyState message="종료된 연결 이력이 없습니다." />
+          )}
+          {historyConnections.length > 0 && (
+            <ConnectionList connections={historyConnections} isPending={false} role="guardian" getActions={() => []} />
+          )}
+        </div>
       ) : (
         <GuardianWardRegisterPanel embedded />
       )}
@@ -144,7 +170,8 @@ export function GuardianWardsPanel() {
 }
 
 function getInitialTab(searchParams: ReturnType<typeof useSearchParams>): GuardianWardsTab {
-  return searchParams.get('tab') === 'register' ? 'register' : 'list';
+  const tab = searchParams.get('tab');
+  return tab === 'register' || tab === 'history' ? tab : 'list';
 }
 
 function sortGuardianConnections(connections: IConnectionItem[]) {

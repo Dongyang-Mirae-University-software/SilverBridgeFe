@@ -114,3 +114,21 @@
     gap: 10px;
   }
 }
+
+/* Role card polish */
+.roleCard {
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.roleCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(31, 25, 22, 0.08);
+}
+
+.roleCard.active {
+  box-shadow: 0 10px 24px rgba(217, 119, 87, 0.14);
+}

@@ -8,14 +8,20 @@ import { IConnectionItem, IGuardianConnectionRequestReq } from '../../interface/
 
 const GUARDIAN_CONNECTION_BASE = '/guardian/connection';
 
+// /select 조회 시 좁힐 수 있는 상태값. ALL은 "전체 상태"가 아니라 ACTIVE + PENDING(진행 중인 연결)과 동일하며,
+// 생략했을 때의 기본 동작과 같다. REFUSED/CANCELLED/DISCONNECTED 같은 종료 이력은 이 API가 다루지 않고 400을 반환한다.
+export type WardListFilter = 'ACTIVE' | 'PENDING' | 'ALL';
+
 // 피보호자에게 페어링(연결) 요청 보내기
 export async function requestWardConnection(body: IGuardianConnectionRequestReq) {
   return apiClient.post<CommonResponse<null>>(`${GUARDIAN_CONNECTION_BASE}/request`, body);
 }
 
-// 내 피보호자 목록 조회: ACTIVE + PENDING 상태를 최신 요청순으로 반환
-export async function getGuardianSelectedConnections() {
-  return apiClient.get<CommonResponse<IConnectionItem[]>>(`${GUARDIAN_CONNECTION_BASE}/select`);
+// 내 피보호자 목록 조회: status 생략 시 ACTIVE + PENDING 상태를 최신 요청순으로 반환
+export async function getGuardianSelectedConnections(status?: WardListFilter) {
+  return apiClient.get<CommonResponse<IConnectionItem[]>>(`${GUARDIAN_CONNECTION_BASE}/select`, {
+    params: status ? { status } : undefined,
+  });
 }
 
 export async function getGuardianActiveConnections() {
@@ -28,8 +34,8 @@ export async function getGuardianConnectionRequests() {
 }
 
 // 화면 목록용: /select 응답을 공통 화면 데이터로 정규화
-export async function getGuardianConnections(): Promise<CommonResponse<IConnectionItem[]>> {
-  const response = await getGuardianSelectedConnections();
+export async function getGuardianConnections(status?: WardListFilter): Promise<CommonResponse<IConnectionItem[]>> {
+  const response = await getGuardianSelectedConnections(status);
   const body = getConnectionResponseBody(response);
 
   return {

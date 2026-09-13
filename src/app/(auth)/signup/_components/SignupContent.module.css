@@ -81,3 +81,18 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* Signup step polish */
+.progress span {
+  overflow: hidden;
+}
+
+.progress span.active {
+  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.1);
+}
+
+.backButton:focus-visible,
+.loginLink:focus-visible {
+  outline: 3px solid rgba(217, 119, 87, 0.2);
+  outline-offset: 3px;
+}

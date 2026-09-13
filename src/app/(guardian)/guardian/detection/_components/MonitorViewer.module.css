@@ -364,3 +364,26 @@
     flex-wrap: wrap;
   }
 }
+
+/* Monitor viewer polish */
+.viewerCard,
+.metaCard {
+  box-shadow:
+    var(--sb-shadow-sm),
+    0 1px 0 rgba(255, 255, 255, 0.75) inset;
+}
+
+.frameWrapper {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.metaList div {
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.metaList div:hover {
+  border-color: var(--guardian-line);
+  background: #fff;
+}

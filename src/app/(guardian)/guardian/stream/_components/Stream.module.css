@@ -377,3 +377,37 @@
   .manualBtns { flex-direction: column; }
   .manualBtns > button { width: 100%; }
 }
+
+/* Stream page polish */
+.step,
+.manualPanel {
+  box-shadow:
+    var(--sb-shadow-sm),
+    0 1px 0 rgba(255, 255, 255, 0.78) inset;
+}
+
+.facingCard,
+.btnPrimary,
+.btnSecondary,
+.btnDanger,
+.btnStart,
+.btnStop {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.facingCard:hover:not(:disabled),
+.btnPrimary:hover:not(:disabled),
+.btnSecondary:hover:not(:disabled),
+.btnDanger:hover:not(:disabled),
+.btnStart:hover:not(:disabled),
+.btnStop:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.videoBox {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}

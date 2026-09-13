@@ -34,3 +34,13 @@
     font-size: 1.1875rem;
   }
 }
+
+/* Result display polish */
+.resultBox {
+  border: 1px solid rgba(217, 119, 87, 0.16);
+  box-shadow: 0 12px 28px rgba(217, 119, 87, 0.1);
+}
+
+.resultEmail {
+  letter-spacing: 0.01em;
+}

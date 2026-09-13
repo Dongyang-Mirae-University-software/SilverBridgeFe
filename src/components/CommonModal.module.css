@@ -120,3 +120,34 @@
     flex-direction: column;
   }
 }
+
+/* Modal polish */
+.overlay {
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  animation: modalEnter 0.16s ease-out;
+}
+
+.button {
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

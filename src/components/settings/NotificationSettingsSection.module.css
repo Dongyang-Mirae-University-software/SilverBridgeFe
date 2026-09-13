@@ -158,3 +158,22 @@
     align-self: flex-end;
   }
 }
+
+/* Settings section polish */
+.section {
+  box-shadow:
+    var(--sb-shadow-sm),
+    0 1px 0 rgba(255, 255, 255, 0.78) inset;
+}
+
+.row {
+  transition: background-color 0.15s ease;
+}
+
+.row:hover {
+  background: #fcfbf8;
+}
+
+.toggleThumb {
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+}
