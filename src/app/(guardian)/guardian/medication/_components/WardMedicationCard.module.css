@@ -1,0 +1,182 @@
+.card {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  padding: 20px 22px;
+  list-style: none;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wardName {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 1.125rem;
+  font-weight: 900;
+}
+
+.age {
+  color: var(--sb-ink-mute);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.countBadge {
+  display: block;
+  margin-top: 4px;
+  color: var(--guardian-brand, var(--sb-brand));
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.addButton {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--guardian-brand, var(--sb-brand));
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  padding: 9px 14px;
+}
+
+.settingRow,
+.alertRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding-top: 12px;
+}
+
+.toggleField {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sb-ink);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.timeInput {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 6px 8px;
+}
+
+.alertHint {
+  margin: -6px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: 0.6875rem;
+}
+
+.alertWarning {
+  margin: 0;
+  border-radius: 10px;
+  background: #fff7f5;
+  color: var(--sb-warn);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 8px 10px;
+}
+
+.emptyText {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+.item.taken {
+  border-color: var(--sb-brand-50);
+  background: var(--sb-brand-50);
+}
+
+.itemMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.itemSlot {
+  color: var(--guardian-brand, var(--sb-brand));
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.itemName {
+  color: var(--sb-ink);
+  font-size: 0.9375rem;
+  font-weight: 850;
+}
+
+.itemDetail {
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+}
+
+.itemActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkBadge {
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--sb-ink-mute);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 3px 8px;
+}
+
+.checkBadge.checked {
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.linkButton {
+  border: 0;
+  background: transparent;
+  color: var(--guardian-brand, var(--sb-brand));
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.linkButton.danger {
+  color: var(--sb-warn);
+}
