@@ -8,7 +8,9 @@ type ConnectionRealtimeType =
   | 'CONNECTION_ACCEPTED'
   | 'CONNECTION_CANCELLED'
   | 'CONNECTION_REFUSED'
-  | 'SOS_TRIGGERED';
+  | 'SOS_TRIGGERED'
+  | 'MEDICATION_TAKEN'
+  | 'MEDICATION_STOPPED';
 
 export interface ConnectionRealtimePayload {
   type: ConnectionRealtimeType;
@@ -19,6 +21,12 @@ export interface ConnectionRealtimePayload {
   sosEventId?: string;
   wardId?: string;
   wardName?: string;
+  medicationId?: string;
+  medicationName?: string;
+  doseDate?: string;
+  taken?: string;
+  takenAt?: string;
+  stoppedCount?: string;
 }
 
 interface ConnectConnectionSocketOptions {
@@ -33,6 +41,7 @@ const RECONNECT_DELAY_MS = 5000;
 const WARD_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
   { destination: 'connection-request', type: 'CONNECTION_REQUEST' },
   { destination: 'connection-cancelled', type: 'CONNECTION_CANCELLED' },
+  { destination: 'medication-taken', type: 'MEDICATION_TAKEN' },
 ];
 
 const GUARDIAN_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
@@ -40,6 +49,8 @@ const GUARDIAN_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionR
   { destination: 'connection-refused', type: 'CONNECTION_REFUSED' },
   { destination: 'connection-cancelled', type: 'CONNECTION_CANCELLED' },
   { destination: 'sos-triggered', type: 'SOS_TRIGGERED' },
+  { destination: 'medication-taken', type: 'MEDICATION_TAKEN' },
+  { destination: 'medication-stopped', type: 'MEDICATION_STOPPED' },
 ];
 
 function getSocketUrl(accessToken: string) {
@@ -70,6 +81,12 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
       type?: ConnectionRealtimeType;
       wardId?: string;
       wardName?: string;
+      medicationId?: number | string;
+      medicationName?: string;
+      doseDate?: string;
+      taken?: boolean | string;
+      takenAt?: string;
+      stoppedCount?: number | string;
     };
 
     return {
@@ -81,6 +98,12 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
       type: parsed.type ?? fallbackType,
       wardId: parsed.wardId,
       wardName: parsed.wardName,
+      medicationId: parsed.medicationId === undefined ? undefined : String(parsed.medicationId),
+      medicationName: parsed.medicationName,
+      doseDate: parsed.doseDate,
+      taken: parsed.taken === undefined ? undefined : String(parsed.taken),
+      takenAt: parsed.takenAt,
+      stoppedCount: parsed.stoppedCount === undefined ? undefined : String(parsed.stoppedCount),
     };
   } catch {
     return {
