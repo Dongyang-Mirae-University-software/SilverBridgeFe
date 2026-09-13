@@ -19,7 +19,8 @@ export type PageKey =
   | 'ward-register'
   | 'inquiries'
   | 'stream'
-  | 'sos-history';
+  | 'sos-history'
+  | 'medication-management';
 
 export type NavIconName =
   | 'home'
