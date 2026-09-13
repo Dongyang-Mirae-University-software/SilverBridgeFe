@@ -27,6 +27,11 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload) {
         body: payload.body ?? `${payload.wardName ?? '피보호자'}님이 긴급 도움을 요청했습니다.`,
         title: payload.title ?? '긴급 SOS',
       };
+    case 'MEDICATION_STOPPED':
+      return {
+        body: payload.body ?? '약을 등록한 보호자가 탈퇴하여 복약 일정이 중지되었습니다. 다시 등록해 주세요.',
+        title: payload.title ?? '복약 일정 중지',
+      };
     default:
       return {
         body: payload.body ?? '연결 상태가 변경되었습니다.',
