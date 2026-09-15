@@ -5,7 +5,14 @@ import classNames from 'classnames/bind';
 import { Icon } from '@/components/Icon';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
-import { formatDoseTime, getMedicationSummaryText, sortMedicationsByDoseTime } from '@/utils/format/medication';
+import {
+  formatDoseTime,
+  formatMedicationAlertTime,
+  getLatestDoseTime,
+  getMedicationSummaryText,
+  sortMedicationsByDoseTime,
+} from '@/utils/format/medication';
+import { getNameInitial } from '@/utils/format/text';
 import {
   useAddWardMedicationMutation,
   useDeleteGuardianMedicationMutation,
@@ -30,24 +37,6 @@ function toUpdateBody(value: MedicationFormValue) {
     doseAmount: value.doseAmount,
     memo: value.memo,
   };
-}
-
-function getLatestDoseTime(medications: MedicationItem[]) {
-  if (medications.length === 0) return null;
-  return medications.reduce((latest, medication) => (medication.doseTime > latest ? medication.doseTime : latest), '00:00:00');
-}
-
-function formatAlertTime(value: string) {
-  const [hourValue = '0', minuteValue = '00'] = value.split(':');
-  const hour = Number(hourValue);
-  if (Number.isNaN(hour)) return value.slice(0, 5);
-  const period = hour < 12 ? '오전' : '오후';
-  const displayHour = hour % 12 || 12;
-  return `${period} ${displayHour}:${minuteValue}`;
-}
-
-function getWardInitial(name?: string | null) {
-  return name?.trim().slice(0, 1) || '피';
 }
 
 type MedicationFormTarget = 'add' | MedicationItem;
@@ -75,7 +64,8 @@ function MedicationFormModalContainer({ wardId, wardName, target, onCloseModal }
   };
 
   const isFormSubmitting = addMutation.isPending || updateMutation.isPending;
-  const formError = addMutation.isError || updateMutation.isError ? '저장에 실패했습니다. 다시 시도해 주세요.' : undefined;
+  const formError =
+    addMutation.isError || updateMutation.isError ? '저장에 실패했습니다. 다시 시도해 주세요.' : undefined;
 
   return (
     <MedicationFormModal
@@ -124,7 +114,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     <li className={cx('card')}>
       <header className={cx('profileHeader')}>
         <div className={cx('profileInfo')}>
-          <span className={cx('avatar')}>{getWardInitial(summary.wardName)}</span>
+          <span className={cx('avatar')}>{getNameInitial(summary.wardName, '피')}</span>
           <div>
             <strong className={cx('wardName')}>
               {summary.wardName ?? '피보호자'}
@@ -153,7 +143,8 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           <div>
             <strong className={cx('sectionTitle')}>복약 일정</strong>
             <span className={cx('sectionMeta')}>
-              오늘 {summary.takenCount}/{summary.totalCount}회 복용 · 복용 체크는 {summary.wardName ?? '피보호자'} 님 본인만 가능
+              오늘 {summary.takenCount}/{summary.totalCount}회 복용 · 복용 체크는 {summary.wardName ?? '피보호자'} 님
+              본인만 가능
             </span>
           </div>
           <button type="button" className={cx('addButton')} onClick={() => openMedicationForm('add')}>
@@ -213,7 +204,9 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             </span>
             <div>
               <strong className={cx('missedTitle')}>미복약 알림</strong>
-              <span className={cx('missedDescription')}>지정한 시각에 복용 확인이 없는 약을 보호자에게 알려 줍니다</span>
+              <span className={cx('missedDescription')}>
+                지정한 시각에 복용 확인이 없는 약을 보호자에게 알려 줍니다
+              </span>
             </div>
           </div>
           <label className={cx('switchField', 'gold')}>
@@ -247,12 +240,12 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
               }
             />
           </div>
-          <em>{formatAlertTime(summary.missedAlertTime)}에 발송</em>
+          <em>{formatMedicationAlertTime(summary.missedAlertTime)}에 발송</em>
         </label>
 
-        <p className={cx('sendText')}>{formatAlertTime(summary.missedAlertTime)} 발송 예정</p>
+        <p className={cx('sendText')}>{formatMedicationAlertTime(summary.missedAlertTime)} 발송 예정</p>
         <div className={cx('summaryNotice')}>
-          {formatAlertTime(summary.missedAlertTime)}에 보호자에게 미복용 {uncheckedMedications.length}건 알림 발송
+          {formatMedicationAlertTime(summary.missedAlertTime)}에 보호자에게 미복용 {uncheckedMedications.length}건 알림 발송
         </div>
 
         {uncheckedMedications.length > 0 && (
@@ -268,11 +261,11 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
 
         {showsLateWarning && (
           <p className={cx('alertWarning')}>
-            가장 늦은 복용 시각({formatDoseTime(latestDoseTime ?? '')})이 선택한 시각 이후라 이 약은 요약에 포함되지 않습니다.
+            가장 늦은 복용 시각({formatDoseTime(latestDoseTime ?? '')})이 선택한 시각 이후라 이 약은 요약에 포함되지
+            않습니다.
           </p>
         )}
       </section>
-
     </li>
   );
 }

@@ -26,3 +26,20 @@ export function getMedicationSummaryText(medication: MedicationItem) {
 export function sortMedicationsByDoseTime(medications: MedicationItem[]) {
   return [...medications].sort((a, b) => a.doseTime.localeCompare(b.doseTime));
 }
+
+export function getLatestDoseTime(medications: MedicationItem[]) {
+  if (medications.length === 0) return null;
+  return medications.reduce(
+    (latest, medication) => (medication.doseTime > latest ? medication.doseTime : latest),
+    '00:00:00',
+  );
+}
+
+export function formatMedicationAlertTime(value: string) {
+  const [hourValue = '0', minuteValue = '00'] = value.split(':');
+  const hour = Number(hourValue);
+  if (Number.isNaN(hour)) return value.slice(0, 5);
+  const period = hour < 12 ? '오전' : '오후';
+  const displayHour = hour % 12 || 12;
+  return `${period} ${displayHour}:${minuteValue}`;
+}
