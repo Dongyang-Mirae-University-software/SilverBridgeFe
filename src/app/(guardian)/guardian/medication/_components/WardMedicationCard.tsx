@@ -122,7 +122,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
               {summary.wardName ?? '피보호자'}
               {summary.age != null && <span className={cx('age')}> 만 {summary.age}세</span>}
             </strong>
-            <span className={cx('wardId')}>IWD-{summary.wardId}</span>
+            <span className={cx('wardId')}>{summary.wardId}</span>
           </div>
         </div>
 
@@ -147,7 +147,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           <div>
             <strong className={cx('sectionTitle')}>복약 일정</strong>
             <span className={cx('sectionMeta')}>
-              오늘 {summary.takenCount} / {summary.totalCount}회 복용
+              오늘 {summary.takenCount} / {summary.totalCount} 회 복용
             </span>
           </div>
           <button type="button" className={cx('addButton')} onClick={() => openMedicationForm('add')}>
