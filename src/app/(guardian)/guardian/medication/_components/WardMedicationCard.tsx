@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import { formatDoseTime, getMedicationSummaryText, sortMedicationsByDoseTime } from '@/utils/format/medication';
 import {
@@ -50,11 +50,50 @@ function getWardInitial(name?: string | null) {
   return name?.trim().slice(0, 1) || '피';
 }
 
-export function WardMedicationCard({ summary }: WardMedicationCardProps) {
-  const [formTarget, setFormTarget] = useState<'add' | MedicationItem | null>(null);
+type MedicationFormTarget = 'add' | MedicationItem;
 
+interface MedicationFormModalContainerProps {
+  wardId: string;
+  wardName: string;
+  target: MedicationFormTarget;
+  onCloseModal: () => void;
+}
+
+function MedicationFormModalContainer({ wardId, wardName, target, onCloseModal }: MedicationFormModalContainerProps) {
   const addMutation = useAddWardMedicationMutation();
   const updateMutation = useUpdateGuardianMedicationMutation();
+
+  const handleSubmitForm = (value: MedicationFormValue) => {
+    const body = toUpdateBody(value);
+
+    if (target === 'add') {
+      addMutation.mutate({ wardId, body }, { onSuccess: onCloseModal });
+      return;
+    }
+
+    updateMutation.mutate({ medicationId: target.medicationId, body }, { onSuccess: onCloseModal });
+  };
+
+  const isFormSubmitting = addMutation.isPending || updateMutation.isPending;
+  const formError = addMutation.isError || updateMutation.isError ? '저장에 실패했습니다. 다시 시도해 주세요.' : undefined;
+
+  return (
+    <MedicationFormModal
+      wardName={wardName}
+      initial={target === 'add' ? undefined : target}
+      isSubmitting={isFormSubmitting}
+      errorMessage={formError}
+      onSubmit={handleSubmitForm}
+      onClose={onCloseModal}
+    />
+  );
+}
+
+export function WardMedicationCard({ summary }: WardMedicationCardProps) {
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
   const deleteMutation = useDeleteGuardianMedicationMutation();
   const settingMutation = useUpdateMedicationSettingMutation();
   const alertSettingMutation = useUpdateMedicationAlertSettingMutation();
@@ -65,32 +104,21 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const showsLateWarning = Boolean(latestDoseTime && `${missedAlertTime}:00` < latestDoseTime);
   const uncheckedMedications = medications.filter(medication => !medication.taken);
 
-  const handleSubmitForm = (value: MedicationFormValue) => {
-    const body = toUpdateBody(value);
-
-    if (formTarget === 'add') {
-      addMutation.mutate(
-        { wardId: summary.wardId, body },
-        { onSuccess: () => setFormTarget(null) },
-      );
-      return;
-    }
-
-    if (formTarget) {
-      updateMutation.mutate(
-        { medicationId: formTarget.medicationId, body },
-        { onSuccess: () => setFormTarget(null) },
-      );
-    }
-  };
-
   const handleDelete = (medication: MedicationItem) => {
     if (!window.confirm(`${medication.name} 일정을 삭제할까요? 지난 복용 이력은 남습니다.`)) return;
     deleteMutation.mutate(medication.medicationId);
   };
 
-  const isFormSubmitting = addMutation.isPending || updateMutation.isPending;
-  const formError = addMutation.isError || updateMutation.isError ? '저장에 실패했습니다. 다시 시도해 주세요.' : undefined;
+  const openMedicationForm = (target: MedicationFormTarget) => {
+    openModal(
+      <MedicationFormModalContainer
+        wardId={summary.wardId}
+        wardName={summary.wardName ?? '피보호자'}
+        target={target}
+        onCloseModal={onCloseModal}
+      />,
+    );
+  };
 
   return (
     <li className={cx('card')}>
@@ -128,7 +156,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
               오늘 {summary.takenCount}/{summary.totalCount}회 복용 · 복용 체크는 {summary.wardName ?? '피보호자'} 님 본인만 가능
             </span>
           </div>
-          <button type="button" className={cx('addButton')} onClick={() => setFormTarget('add')}>
+          <button type="button" className={cx('addButton')} onClick={() => openMedicationForm('add')}>
             + 약 추가
           </button>
         </div>
@@ -154,7 +182,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           <ul className={cx('medicationList')}>
             {medications.map(medication => (
               <li key={medication.medicationId} className={cx('medicationItem', { taken: medication.taken })}>
-                <button type="button" className={cx('medicationInfo')} onClick={() => setFormTarget(medication)}>
+                <button type="button" className={cx('medicationInfo')} onClick={() => openMedicationForm(medication)}>
                   <strong className={cx('medicationName')}>{medication.name}</strong>
                   <span className={cx('medicationDetail')}>{getMedicationSummaryText(medication)}</span>
                 </button>
@@ -245,16 +273,6 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         )}
       </section>
 
-      {formTarget && (
-        <MedicationFormModal
-          wardName={summary.wardName ?? '피보호자'}
-          initial={formTarget === 'add' ? undefined : formTarget}
-          isSubmitting={isFormSubmitting}
-          errorMessage={formError}
-          onSubmit={handleSubmitForm}
-          onClose={() => setFormTarget(null)}
-        />
-      )}
     </li>
   );
 }
