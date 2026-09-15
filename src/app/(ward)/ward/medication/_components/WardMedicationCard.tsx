@@ -4,16 +4,22 @@ import { MedicationItem } from '@/service/interface/medication';
 import { formatDateTime } from '@/utils/format/date';
 import { formatDoseTime, getMedicationTimeSlotLabel } from '@/utils/format/medication';
 import styles from './WardMedicationCard.module.css';
+import { useMedicationIntakeMutation } from '@/service/query/ward';
 
 const cx = classNames.bind(styles);
 
 interface WardMedicationCardProps {
   medication: MedicationItem;
-  disabled: boolean;
-  onToggle: (medication: MedicationItem) => void;
 }
 
-export function WardMedicationCard({ medication, disabled, onToggle }: WardMedicationCardProps) {
+export function WardMedicationCard({ medication }: WardMedicationCardProps) {
+  const intakeMutation = useMedicationIntakeMutation();
+
+  const handleToggle = (medication: MedicationItem) => {
+    if (intakeMutation.isPending) return;
+    intakeMutation.mutate({ medicationId: medication.medicationId, taken: !medication.taken });
+  };
+
   return (
     <li className={cx('card', { taken: medication.taken })}>
       <div className={cx('cardMeta')}>
@@ -31,8 +37,8 @@ export function WardMedicationCard({ medication, disabled, onToggle }: WardMedic
       <button
         type="button"
         className={cx('checkButton', { checked: medication.taken })}
-        disabled={disabled}
-        onClick={() => onToggle(medication)}
+        disabled={intakeMutation.isPending}
+        onClick={() => handleToggle(medication)}
         aria-pressed={medication.taken}
       >
         {medication.taken ? '체크됨' : '복용 체크'}

@@ -5,12 +5,7 @@ import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
 import useKstMidnightRefetch from '@/hooks/useKstMidnightRefetch';
-import { MedicationItem } from '@/service/interface/medication';
-import {
-  wardTodayMedicationQueryKey,
-  wardTodayMedicationQueryOptions,
-  useMedicationIntakeMutation,
-} from '@/service/query/ward/medication';
+import { wardTodayMedicationQueryKey, wardTodayMedicationQueryOptions } from '@/service/query/ward/medication';
 import { sortMedicationsByDoseTime } from '@/utils/format/medication';
 import { WardMedicationCard } from './WardMedicationCard';
 import styles from './WardMedicationContent.module.css';
@@ -19,17 +14,11 @@ const cx = classNames.bind(styles);
 
 export function WardMedicationContent() {
   const { data, isLoading, isError, refetch } = useQuery(wardTodayMedicationQueryOptions);
-  const intakeMutation = useMedicationIntakeMutation();
   useKstMidnightRefetch(wardTodayMedicationQueryKey);
 
   const takenCount = data?.takenCount ?? 0;
   const totalCount = data?.totalCount ?? 0;
   const medications = sortMedicationsByDoseTime(data?.medications ?? []);
-
-  const handleToggle = (medication: MedicationItem) => {
-    if (intakeMutation.isPending) return;
-    intakeMutation.mutate({ medicationId: medication.medicationId, taken: !medication.taken });
-  };
 
   return (
     <section className={cx('page')}>
@@ -51,12 +40,7 @@ export function WardMedicationContent() {
       {!isLoading && !isError && medications.length > 0 && (
         <ul className={cx('list')}>
           {medications.map(medication => (
-            <WardMedicationCard
-              key={medication.medicationId}
-              medication={medication}
-              disabled={intakeMutation.isPending}
-              onToggle={handleToggle}
-            />
+            <WardMedicationCard key={medication.medicationId} medication={medication} />
           ))}
         </ul>
       )}
