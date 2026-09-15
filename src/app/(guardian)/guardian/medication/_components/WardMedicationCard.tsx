@@ -196,76 +196,78 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         )}
       </section>
 
-      <section className={cx('missedSection')}>
-        <div className={cx('missedHeader')}>
-          <div className={cx('missedTitleGroup')}>
-            <span className={cx('missedIcon')}>
-              <Icon name="bell" size={16} decorative />
-            </span>
-            <div>
-              <strong className={cx('missedTitle')}>미복약 알림</strong>
-              <span className={cx('missedDescription')}>
-                지정한 시각에 복용 확인이 없는 약을 보호자에게 알려 줍니다
+      {medications.length > 0 && (
+        <section className={cx('missedSection')}>
+          <div className={cx('missedHeader')}>
+            <div className={cx('missedTitleGroup')}>
+              <span className={cx('missedIcon')}>
+                <Icon name="bell" size={16} decorative />
               </span>
+              <div>
+                <strong className={cx('missedTitle')}>미복약 알림</strong>
+                <span className={cx('missedDescription')}>
+                  지정한 시각에 복용 확인이 없는 약을 보호자에게 알려 줍니다
+                </span>
+              </div>
             </div>
+            <label className={cx('switchField', 'gold')}>
+              <input
+                type="checkbox"
+                checked={summary.missedAlertEnabled}
+                disabled={alertSettingMutation.isPending}
+                onChange={event =>
+                  alertSettingMutation.mutate({
+                    wardId: summary.wardId,
+                    body: { missedAlertEnabled: event.target.checked },
+                  })
+                }
+              />
+              <span className={cx('switchTrack')} aria-hidden="true" />
+            </label>
           </div>
-          <label className={cx('switchField', 'gold')}>
-            <input
-              type="checkbox"
-              checked={summary.missedAlertEnabled}
-              disabled={alertSettingMutation.isPending}
-              onChange={event =>
-                alertSettingMutation.mutate({
-                  wardId: summary.wardId,
-                  body: { missedAlertEnabled: event.target.checked },
-                })
-              }
-            />
-            <span className={cx('switchTrack')} aria-hidden="true" />
+
+          <label className={cx('timeField')}>
+            <span>발송 시각 — 하루 중 원하는 시간</span>
+            <div className={cx('timeControl')}>
+              <input
+                type="time"
+                value={missedAlertTime}
+                disabled={alertSettingMutation.isPending}
+                onChange={event =>
+                  alertSettingMutation.mutate({
+                    wardId: summary.wardId,
+                    body: { missedAlertTime: `${event.target.value}:00` },
+                  })
+                }
+              />
+            </div>
+            <em>{formatMedicationAlertTime(summary.missedAlertTime)}에 발송</em>
           </label>
-        </div>
 
-        <label className={cx('timeField')}>
-          <span>발송 시각 — 하루 중 원하는 시간</span>
-          <div className={cx('timeControl')}>
-            <input
-              type="time"
-              value={missedAlertTime}
-              disabled={alertSettingMutation.isPending}
-              onChange={event =>
-                alertSettingMutation.mutate({
-                  wardId: summary.wardId,
-                  body: { missedAlertTime: `${event.target.value}:00` },
-                })
-              }
-            />
+          <p className={cx('sendText')}>{formatMedicationAlertTime(summary.missedAlertTime)} 발송 예정</p>
+          <div className={cx('summaryNotice')}>
+            {formatMedicationAlertTime(summary.missedAlertTime)}에 보호자에게 미복용 {uncheckedMedications.length}건 알림 발송
           </div>
-          <em>{formatMedicationAlertTime(summary.missedAlertTime)}에 발송</em>
-        </label>
 
-        <p className={cx('sendText')}>{formatMedicationAlertTime(summary.missedAlertTime)} 발송 예정</p>
-        <div className={cx('summaryNotice')}>
-          {formatMedicationAlertTime(summary.missedAlertTime)}에 보호자에게 미복용 {uncheckedMedications.length}건 알림 발송
-        </div>
+          {uncheckedMedications.length > 0 && (
+            <ul className={cx('missedList')}>
+              {uncheckedMedications.map(medication => (
+                <li key={medication.medicationId}>
+                  <span>{medication.name}</span>
+                  <em>예정 {getMedicationSummaryText(medication)}</em>
+                </li>
+              ))}
+            </ul>
+          )}
 
-        {uncheckedMedications.length > 0 && (
-          <ul className={cx('missedList')}>
-            {uncheckedMedications.map(medication => (
-              <li key={medication.medicationId}>
-                <span>{medication.name}</span>
-                <em>예정 {getMedicationSummaryText(medication)}</em>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {showsLateWarning && (
-          <p className={cx('alertWarning')}>
-            가장 늦은 복용 시각({formatDoseTime(latestDoseTime ?? '')})이 선택한 시각 이후라 이 약은 요약에 포함되지
-            않습니다.
-          </p>
-        )}
-      </section>
+          {showsLateWarning && (
+            <p className={cx('alertWarning')}>
+              가장 늦은 복용 시각({formatDoseTime(latestDoseTime ?? '')})이 선택한 시각 이후라 이 약은 요약에 포함되지
+              않습니다.
+            </p>
+          )}
+        </section>
+      )}
     </li>
   );
 }
