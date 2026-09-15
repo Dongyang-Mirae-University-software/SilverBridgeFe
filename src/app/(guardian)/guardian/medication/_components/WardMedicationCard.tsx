@@ -90,6 +90,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
 
   const medications = sortMedicationsByDoseTime(summary.medications);
   const hasMedications = medications.length > 0;
+  const showsNotificationSettings = hasMedications && summary.alarmEnabled;
   const latestDoseTime = getLatestDoseTime(summary.medications);
   const missedAlertTime = summary.missedAlertTime.slice(0, 5);
   const showsLateWarning = Boolean(latestDoseTime && `${missedAlertTime}:00` < latestDoseTime);
@@ -154,7 +155,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           </button>
         </div>
 
-        {hasMedications && (
+        {showsNotificationSettings && (
           <label className={cx('remindField')}>
             <input
               type="checkbox"
@@ -200,7 +201,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         )}
       </section>
 
-      {hasMedications && (
+      {showsNotificationSettings && (
         <section className={cx('missedSection')}>
           <div className={cx('missedHeader')}>
             <div className={cx('missedTitleGroup')}>
