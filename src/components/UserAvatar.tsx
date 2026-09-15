@@ -29,7 +29,7 @@ interface AvatarProps {
   onClick?: () => void;
 }
 
-function Avatar({ imageUrl, userName, size, className, disabled, onClick }: AvatarProps) {
+function Avatar({ imageUrl, userName, size, disabled, onClick }: AvatarProps) {
   const content = imageUrl ? (
     <img alt="" src={imageUrl} />
   ) : userName ? (
@@ -37,7 +37,7 @@ function Avatar({ imageUrl, userName, size, className, disabled, onClick }: Avat
   ) : (
     <img alt="" src="/images/avatar.png" />
   );
-  const classValue = cx('avatar', size, className, { fallback: !imageUrl && userName });
+  const classValue = cx('avatar', size, { fallback: !imageUrl && userName });
 
   if (onClick) {
     return (

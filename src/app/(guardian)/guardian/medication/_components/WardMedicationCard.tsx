@@ -89,6 +89,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const alertSettingMutation = useUpdateMedicationAlertSettingMutation();
 
   const medications = sortMedicationsByDoseTime(summary.medications);
+  const hasMedications = medications.length > 0;
   const latestDoseTime = getLatestDoseTime(summary.medications);
   const missedAlertTime = summary.missedAlertTime.slice(0, 5);
   const showsLateWarning = Boolean(latestDoseTime && `${missedAlertTime}:00` < latestDoseTime);
@@ -114,7 +115,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     <li className={cx('card')}>
       <header className={cx('profileHeader')}>
         <div className={cx('profileInfo')}>
-          <UserAvatar userName={summary.wardName} size="w-60" className={cx('avatar')} />
+          <UserAvatar userName={summary.wardName} size="w-60" />
           <div>
             <strong className={cx('wardName')}>
               {summary.wardName ?? '피보호자'}
@@ -124,18 +125,20 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           </div>
         </div>
 
-        <label className={cx('switchField')}>
-          <span>알림 {summary.alarmEnabled ? '켜짐' : '꺼짐'}</span>
-          <input
-            type="checkbox"
-            checked={summary.alarmEnabled}
-            disabled={settingMutation.isPending}
-            onChange={event =>
-              settingMutation.mutate({ wardId: summary.wardId, body: { alarmEnabled: event.target.checked } })
-            }
-          />
-          <span className={cx('switchTrack')} aria-hidden="true" />
-        </label>
+        {hasMedications && (
+          <label className={cx('switchField')}>
+            <span>알림 {summary.alarmEnabled ? '켜짐' : '꺼짐'}</span>
+            <input
+              type="checkbox"
+              checked={summary.alarmEnabled}
+              disabled={settingMutation.isPending}
+              onChange={event =>
+                settingMutation.mutate({ wardId: summary.wardId, body: { alarmEnabled: event.target.checked } })
+              }
+            />
+            <span className={cx('switchTrack')} aria-hidden="true" />
+          </label>
+        )}
       </header>
 
       <section className={cx('scheduleSection')}>
@@ -143,8 +146,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           <div>
             <strong className={cx('sectionTitle')}>복약 일정</strong>
             <span className={cx('sectionMeta')}>
-              오늘 {summary.takenCount}/{summary.totalCount}회 복용 · 복용 체크는 {summary.wardName ?? '피보호자'} 님
-              본인만 가능
+              오늘 {summary.takenCount} / {summary.totalCount}회 복용
             </span>
           </div>
           <button type="button" className={cx('addButton')} onClick={() => openMedicationForm('add')}>
@@ -152,22 +154,24 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           </button>
         </div>
 
-        <label className={cx('remindField')}>
-          <input
-            type="checkbox"
-            checked={summary.remindAgainEnabled}
-            disabled={settingMutation.isPending}
-            onChange={event =>
-              settingMutation.mutate({
-                wardId: summary.wardId,
-                body: { remindAgainEnabled: event.target.checked },
-              })
-            }
-          />
-          15분 뒤 재알림
-        </label>
+        {hasMedications && (
+          <label className={cx('remindField')}>
+            <input
+              type="checkbox"
+              checked={summary.remindAgainEnabled}
+              disabled={settingMutation.isPending}
+              onChange={event =>
+                settingMutation.mutate({
+                  wardId: summary.wardId,
+                  body: { remindAgainEnabled: event.target.checked },
+                })
+              }
+            />
+            15분 뒤 재알림
+          </label>
+        )}
 
-        {medications.length === 0 ? (
+        {!hasMedications ? (
           <p className={cx('emptyText')}>등록된 약이 없습니다.</p>
         ) : (
           <ul className={cx('medicationList')}>
@@ -196,7 +200,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         )}
       </section>
 
-      {medications.length > 0 && (
+      {hasMedications && (
         <section className={cx('missedSection')}>
           <div className={cx('missedHeader')}>
             <div className={cx('missedTitleGroup')}>
