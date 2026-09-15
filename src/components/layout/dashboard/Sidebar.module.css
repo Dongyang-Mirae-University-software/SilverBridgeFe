@@ -301,16 +301,6 @@
   position: relative;
 }
 
-.navItem.active::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  width: 4px;
-  height: 18px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-}
-
 .userCard {
   transition:
     background-color 0.15s ease,
