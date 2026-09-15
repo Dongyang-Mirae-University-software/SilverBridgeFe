@@ -1,0 +1,80 @@
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  padding: 20px 22px;
+}
+
+.card.taken {
+  border-color: var(--sb-brand-50);
+  background: var(--sb-brand-50);
+}
+
+.cardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.slot {
+  color: var(--sb-brand);
+  font-size: 0.9375rem;
+  font-weight: 850;
+}
+
+.name {
+  color: var(--sb-ink);
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.detail {
+  color: var(--sb-ink-mute);
+  font-size: 1rem;
+}
+
+.takenAt {
+  color: var(--sb-ink-mute);
+  font-size: 0.875rem;
+}
+
+.checkButton {
+  flex-shrink: 0;
+  border: 2px solid var(--sb-brand);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-brand);
+  cursor: pointer;
+  font-size: 1.0625rem;
+  font-weight: 850;
+  padding: 14px 22px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.checkButton.checked {
+  border-color: var(--sb-brand);
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.checkButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+@media (max-width: 640px) {
+  .card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .checkButton {
+    width: 100%;
+  }
+}

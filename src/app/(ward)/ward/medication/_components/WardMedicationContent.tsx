@@ -5,14 +5,14 @@ import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
 import useKstMidnightRefetch from '@/hooks/useKstMidnightRefetch';
-import { formatDateTime } from '@/utils/format/date';
-import { formatDoseTime, getMedicationTimeSlotLabel, sortMedicationsByDoseTime } from '@/utils/format/medication';
+import { MedicationItem } from '@/service/interface/medication';
 import {
   wardTodayMedicationQueryKey,
   wardTodayMedicationQueryOptions,
   useMedicationIntakeMutation,
 } from '@/service/query/ward/medication';
-import { MedicationItem } from '@/service/interface/medication';
+import { sortMedicationsByDoseTime } from '@/utils/format/medication';
+import { WardMedicationCard } from './WardMedicationCard';
 import styles from './WardMedicationContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -22,9 +22,9 @@ export function WardMedicationContent() {
   const intakeMutation = useMedicationIntakeMutation();
   useKstMidnightRefetch(wardTodayMedicationQueryKey);
 
-  const medications = sortMedicationsByDoseTime(data?.medications ?? []);
   const takenCount = data?.takenCount ?? 0;
   const totalCount = data?.totalCount ?? 0;
+  const medications = sortMedicationsByDoseTime(data?.medications ?? []);
 
   const handleToggle = (medication: MedicationItem) => {
     if (intakeMutation.isPending) return;
@@ -48,34 +48,18 @@ export function WardMedicationContent() {
       {!isLoading && !isError && medications.length === 0 && (
         <p className={cx('emptyText')}>오늘 등록된 복약 일정이 없습니다.</p>
       )}
-
-      <ul className={cx('list')}>
-        {medications.map(medication => (
-          <li key={medication.medicationId} className={cx('card', { taken: medication.taken })}>
-            <div className={cx('cardMeta')}>
-              <span className={cx('slot')}>
-                {getMedicationTimeSlotLabel(medication.timeSlot)} {formatDoseTime(medication.doseTime)}
-              </span>
-              <strong className={cx('name')}>{medication.name}</strong>
-              <span className={cx('detail')}>
-                {medication.doseAmount}정{medication.memo ? ` · ${medication.memo}` : ''}
-              </span>
-              {medication.taken && medication.takenAt && (
-                <span className={cx('takenAt')}>{formatDateTime(medication.takenAt)} 복용 체크</span>
-              )}
-            </div>
-            <button
-              type="button"
-              className={cx('checkButton', { checked: medication.taken })}
+      {!isLoading && !isError && medications.length > 0 && (
+        <ul className={cx('list')}>
+          {medications.map(medication => (
+            <WardMedicationCard
+              key={medication.medicationId}
+              medication={medication}
               disabled={intakeMutation.isPending}
-              onClick={() => handleToggle(medication)}
-              aria-pressed={medication.taken}
-            >
-              {medication.taken ? '체크됨' : '복용 체크'}
-            </button>
-          </li>
-        ))}
-      </ul>
+              onToggle={handleToggle}
+            />
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
