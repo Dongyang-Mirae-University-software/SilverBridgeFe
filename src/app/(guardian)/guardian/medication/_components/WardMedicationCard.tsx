@@ -3,6 +3,7 @@
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import { UserAvatar } from '@/components/UserAvatar';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import {
@@ -12,7 +13,6 @@ import {
   getMedicationSummaryText,
   sortMedicationsByDoseTime,
 } from '@/utils/format/medication';
-import { getNameInitial } from '@/utils/format/text';
 import {
   useAddWardMedicationMutation,
   useDeleteGuardianMedicationMutation,
@@ -114,7 +114,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     <li className={cx('card')}>
       <header className={cx('profileHeader')}>
         <div className={cx('profileInfo')}>
-          <span className={cx('avatar')}>{getNameInitial(summary.wardName, '피')}</span>
+          <UserAvatar userName={summary.wardName} size="w-60" className={cx('avatar')} />
           <div>
             <strong className={cx('wardName')}>
               {summary.wardName ?? '피보호자'}
@@ -246,7 +246,8 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
 
           <p className={cx('sendText')}>{formatMedicationAlertTime(summary.missedAlertTime)} 발송 예정</p>
           <div className={cx('summaryNotice')}>
-            {formatMedicationAlertTime(summary.missedAlertTime)}에 보호자에게 미복용 {uncheckedMedications.length}건 알림 발송
+            {formatMedicationAlertTime(summary.missedAlertTime)}에 보호자에게 미복용 {uncheckedMedications.length}건
+            알림 발송
           </div>
 
           {uncheckedMedications.length > 0 && (

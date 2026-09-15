@@ -5,6 +5,7 @@ import classNames from 'classnames/bind';
 import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
 import useModalStore from '@/store/modalStore';
+import { getNameInitial } from '@/utils/format/text';
 import { useProfileImageChangeMutation, useProfileImageDeleteMutation } from '@/service/query/user';
 import styles from './UserAvatar.module.css';
 
@@ -12,6 +13,7 @@ const cx = classNames.bind(styles);
 
 interface UserAvatarProps {
   imageUrl?: string | null;
+  userName?: string | null;
   size: 'w-32' | 'w-60' | 'w-120';
   disabled?: boolean;
   onClick?: () => void;
@@ -21,23 +23,31 @@ interface UserAvatarProps {
 
 interface AvatarProps {
   imageUrl?: string | null;
+  userName?: string | null;
   size: UserAvatarProps['size'];
   disabled?: boolean;
   onClick?: () => void;
 }
 
-function Avatar({ imageUrl, size, disabled, onClick }: AvatarProps) {
-  const img = <img alt="" src={imageUrl || '/images/avatar.png'} />;
+function Avatar({ imageUrl, userName, size, className, disabled, onClick }: AvatarProps) {
+  const content = imageUrl ? (
+    <img alt="" src={imageUrl} />
+  ) : userName ? (
+    getNameInitial(userName)
+  ) : (
+    <img alt="" src="/images/avatar.png" />
+  );
+  const classValue = cx('avatar', size, className, { fallback: !imageUrl && userName });
 
   if (onClick) {
     return (
-      <button className={cx('avatar', size)} type="button" disabled={disabled} onClick={onClick}>
-        {img}
+      <button className={classValue} type="button" disabled={disabled} onClick={onClick}>
+        {content}
       </button>
     );
   }
 
-  return <div className={cx('avatar', size)}>{img}</div>;
+  return <div className={classValue}>{content}</div>;
 }
 
 interface EditButtonProps {
@@ -119,7 +129,15 @@ function DeleteButton({ imageUrl, onError }: DeleteButtonProps) {
   );
 }
 
-export function UserAvatar({ imageUrl, size, disabled, onClick, isChange = false, isDelete = false }: UserAvatarProps) {
+export function UserAvatar({
+  userName,
+  imageUrl,
+  size,
+  disabled,
+  onClick,
+  isChange = false,
+  isDelete = false,
+}: UserAvatarProps) {
   const { openModal, onCloseModal } = useModalStore(state => ({
     openModal: state.openModal,
     onCloseModal: state.onCloseModal,
@@ -138,11 +156,13 @@ export function UserAvatar({ imageUrl, size, disabled, onClick, isChange = false
     );
   };
 
-  if (!hasEditControls) return <Avatar imageUrl={imageUrl} size={size} disabled={disabled} onClick={onClick} />;
+  if (!hasEditControls) {
+    return <Avatar imageUrl={imageUrl} userName={userName} size={size} disabled={disabled} onClick={onClick} />;
+  }
 
   return (
     <div className={cx('photoBlock')}>
-      <Avatar imageUrl={imageUrl} size={size} disabled={disabled} onClick={onClick} />
+      <Avatar imageUrl={imageUrl} userName={userName} size={size} disabled={disabled} onClick={onClick} />
       {isChange && <EditButton onError={showErrorModal} />}
       {isDelete && <DeleteButton imageUrl={imageUrl} onError={showErrorModal} />}
     </div>
