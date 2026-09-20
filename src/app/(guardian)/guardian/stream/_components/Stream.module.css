@@ -4,6 +4,38 @@
   gap: 14px;
 }
 
+.guide {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #cfe2da;
+  border-radius: 12px;
+  background: #edf6f2;
+  padding: 16px 18px;
+}
+
+.guideIcon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.guideCopy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.guideCopy strong { color: var(--sb-ink); font-size: 0.9375rem; }
+.guideCopy span { color: var(--sb-ink-mute); font-size: 0.8125rem; }
+
 /* ── 실시간 패널 ── */
 .livePanel {
   display: flex;

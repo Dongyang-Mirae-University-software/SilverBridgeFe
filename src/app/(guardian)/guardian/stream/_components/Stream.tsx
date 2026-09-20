@@ -259,6 +259,16 @@ export default function Stream() {
 
   return (
     <div className={styles.page}>
+      <section className={styles.guide}>
+        <span className={styles.guideIcon}>
+          <Icon name="camera" size={26} />
+        </span>
+        <div className={styles.guideCopy}>
+          <strong>보여줄 화면을 선택하고 송출을 시작하세요</strong>
+          <span>송출 전 미리보기로 화면을 확인할 수 있습니다.</span>
+        </div>
+        <span className={`${styles.statusDot} ${statusDot}`}>{statusLabel}</span>
+      </section>
       {/* 탭 */}
       <Tabs
         ariaLabel="송출 모드 탭"
