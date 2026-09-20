@@ -226,6 +226,22 @@
 .mediaCtrl > button { min-width: 190px; }
 
 /* ── 송출 설정 ── */
+.streamSettings {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 9px;
+  background: var(--sb-bg-soft);
+  padding: 0 12px;
+}
+
+.streamSettings summary {
+  color: var(--sb-ink-mute);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 750;
+  padding: 10px 0;
+}
+
+.streamSettings .settingsRow { padding: 2px 0 12px; }
 .settingsRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

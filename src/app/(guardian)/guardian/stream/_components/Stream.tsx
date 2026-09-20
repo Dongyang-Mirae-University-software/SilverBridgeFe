@@ -373,6 +373,8 @@ export default function Stream() {
               </div>
 
               <div className={styles.settingsRow}>
+              <details className={styles.streamSettings}>
+                <summary>고급 송출 설정</summary>
                 <label className={styles.settingField}>
                   <span>Session ID</span>
                   <input
@@ -400,6 +402,7 @@ export default function Stream() {
                   />
                 </label>
               </div>
+              </details>
 
               <div className={styles.streamCtrl}>
                 {status !== 'streaming' ? (
