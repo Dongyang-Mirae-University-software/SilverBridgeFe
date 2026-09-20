@@ -276,6 +276,22 @@
 
 .streamCtrl > button { min-width: 180px; }
 
+.stateGuide {
+  margin: 0;
+  border-radius: 8px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.5;
+  padding: 10px 12px;
+}
+
+.stateGuideLive {
+  background: #e5f3ec;
+  color: var(--sb-brand);
+}
+
 /* ── 상태 표시 ── */
 .statusDot {
   display: inline-flex;

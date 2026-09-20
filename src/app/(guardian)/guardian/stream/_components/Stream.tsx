@@ -420,6 +420,12 @@ export default function Stream() {
                   <span className={styles.queueBadge}>대기 {queueCount}장</span>
                 )}
               </div>
+              <p className={`${styles.stateGuide} ${status === 'streaming' ? styles.stateGuideLive : ''}`}>
+                {status === 'off' && '먼저 미리보기를 켜서 화면을 확인하세요.'}
+                {status === 'ready' && '아직 전송되지 않았습니다. 화면 확인 후 송출 시작을 눌러주세요.'}
+                {status === 'streaming' && '현재 화면이 보호자에게 전송되고 있습니다.'}
+              </p>
+
 
               {liveMsg && <p className={styles.errMsg}>{liveMsg}</p>}
             </div>
