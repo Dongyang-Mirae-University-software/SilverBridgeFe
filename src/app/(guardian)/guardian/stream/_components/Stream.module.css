@@ -460,7 +460,10 @@
 }
 
 .advancedToggle {
+  display: flex;
   width: 100%;
+  align-items: center;
+  gap: 8px;
   border: 0;
   background: transparent;
   color: var(--sb-ink-soft);
@@ -471,7 +474,9 @@
   text-align: left;
 }
 
+.advancedToggle::-webkit-details-marker { display: none; }
 .advancedToggle:hover { background: var(--sb-bg-soft); }
+.advancedWrap[open] > .advancedToggle { border-bottom: 1px solid var(--sb-line-soft); }
 
 .camRegForm {
   display: flex;

@@ -3,10 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createStreamSession, registerCamera, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
 import { Icon } from '@/components/Icon';
-import { Tabs } from '@/components/Tabs';
 import styles from './Stream.module.css';
 
-type Tab = 'live' | 'manual';
 type CameraFacing = 'user' | 'environment' | 'screen';
 type StreamStatus = 'off' | 'ready' | 'streaming';
 
@@ -20,8 +18,6 @@ const FACING_OPTIONS: { value: CameraFacing; label: string; icon: 'cameraFlip' |
 ];
 
 export default function Stream() {
-  const [tab, setTab] = useState<Tab>('live');
-
   /* ── 실시간 상태 ── */
   const [facing, setFacing] = useState<CameraFacing>('user');
   const [fps, setFps] = useState(5);
@@ -270,20 +266,6 @@ export default function Stream() {
         </div>
         <span className={`${styles.statusDot} ${statusDot}`}>{statusLabel}</span>
       </section>
-      {/* 탭 */}
-      <Tabs
-        ariaLabel="송출 모드 탭"
-        items={[
-          { value: 'live', label: '실시간 송출' },
-          { value: 'manual', label: '수동 업로드' },
-        ]}
-        onChange={setTab}
-        size="sm"
-        value={tab}
-      />
-
-      {/* ── 실시간 송출 ── */}
-      {tab === 'live' && (
         <div className={styles.livePanel}>
           {/* STEP 1 — 미디어 선택 */}
           <div className={styles.step}>
@@ -434,10 +416,11 @@ export default function Stream() {
             </div>
           </div>
         </div>
-      )}
 
-      {/* ── 수동 업로드 ── */}
-      {tab === 'manual' && (
+      <details className={styles.advancedWrap}>
+        <summary className={styles.advancedToggle}>
+          <Icon name="settings" size={18} /> 관리자 도구
+        </summary>
         <div className={styles.manualPanel}>
           <div className={styles.manualGrid}>
             <label className={styles.field}>
@@ -490,7 +473,7 @@ export default function Stream() {
 
           {manualMsg && <p className={styles.infoMsg}>{manualMsg}</p>}
         </div>
-      )}
+      </details>
 
       {/* ── 카메라 등록 (고급) ── */}
       <div className={styles.advancedWrap}>
