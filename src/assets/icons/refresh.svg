@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
   <path
-    d="M20 12a8 8 0 1 1-2.34-5.66"
-    stroke="currentColor"
+    d="M18.2 9.2a7.2 7.2 0 1 0 .8 5.1"
+    stroke="#000"
     stroke-linecap="round"
     stroke-linejoin="round"
-    stroke-width="3.2"
+    stroke-width="2.6"
   />
   <path
-    d="M20 4v5h-5"
-    stroke="currentColor"
+    d="M19.5 4.8v4.8h-4.8"
+    stroke="#000"
     stroke-linecap="round"
     stroke-linejoin="round"
-    stroke-width="3.2"
+    stroke-width="2.6"
   />
 </svg>
