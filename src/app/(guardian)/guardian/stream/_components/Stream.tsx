@@ -36,8 +36,7 @@ export default function Stream() {
   const [manualMsg, setManualMsg] = useState('');
   const [manualLoading, setManualLoading] = useState(false);
 
-  /* ── 카메라 등록 (접이식) ── */
-  const [showCamReg, setShowCamReg] = useState(false);
+  /* ── 카메라 등록 ── */
   const [camRegForm, setCamRegForm] = useState({
     cameraNo: 'CAM-001',
     identifier: DEFAULT_CAM_ID,
@@ -354,9 +353,9 @@ export default function Stream() {
                 <span className={`${styles.statusDot} ${statusDot}`}>{statusLabel}</span>
               </div>
 
-              <div className={styles.settingsRow}>
               <details className={styles.streamSettings}>
                 <summary>고급 송출 설정</summary>
+                <div className={styles.settingsRow}>
                 <label className={styles.settingField}>
                   <span>Session ID</span>
                   <input
@@ -476,11 +475,10 @@ export default function Stream() {
       </details>
 
       {/* ── 카메라 등록 (고급) ── */}
-      <div className={styles.advancedWrap}>
-        <button type="button" className={styles.advancedToggle} onClick={() => setShowCamReg(v => !v)}>
-          <Icon name="gear" size={18} className={styles.btnIcon} /> 카메라 등록 (고급) {showCamReg ? '▲' : '▼'}
-        </button>
-        {showCamReg && (
+      <details className={styles.advancedWrap}>
+        <summary className={styles.advancedToggle}>
+          <Icon name="gear" size={18} /> 카메라 등록
+        </summary>
           <form className={styles.camRegForm} onSubmit={handleCamReg}>
             <div className={styles.manualGrid}>
               {(
@@ -520,8 +518,7 @@ export default function Stream() {
               등록
             </button>
           </form>
-        )}
-      </div>
+      </details>
     </div>
   );
 }
