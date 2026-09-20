@@ -563,45 +563,124 @@
   color: var(--sb-warn) !important;
 }
 
-/* ── 고급(카메라 등록) ── */
-.advancedWrap {
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 14px;
-  background: #fff;
-  overflow: hidden;
+/* 관리자 전용 설정 */
+.adminSection {
+  align-self: flex-end;
+  width: min(100%, 520px);
+  margin-top: 2px;
+  border-top: 1px solid var(--sb-line-soft);
 }
 
-.advancedToggle {
+.adminSummary {
   display: flex;
-  width: 100%;
   align-items: center;
-  gap: 8px;
-  border: 0;
-  background: transparent;
-  color: var(--sb-ink-soft);
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--sb-ink-mute);
   cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 750;
-  padding: 14px 18px;
-  text-align: left;
+  padding: 12px 4px;
+  list-style: none;
 }
 
-.advancedToggle::-webkit-details-marker {
+.adminSummary::-webkit-details-marker,
+.toolSummary::-webkit-details-marker {
   display: none;
 }
-.advancedToggle:hover {
+
+.adminSummaryTitle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.adminSummaryTitle > span,
+.toolSummary > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adminSummary strong {
+  color: var(--sb-ink-soft);
+  font-size: 0.75rem;
+}
+
+.adminSummary small {
+  color: var(--sb-ink-mute);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.adminSummaryAction {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 750;
+}
+
+.adminSection[open] .adminSummaryAction {
+  font-size: 0;
+}
+
+.adminSection[open] .adminSummaryAction::after {
+  content: '설정 닫기';
+  font-size: 0.6875rem;
+}
+
+.adminContent {
+  display: grid;
+  gap: 8px;
+  padding: 4px 0 12px;
+}
+
+.toolPanel {
+  overflow: hidden;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.toolSummary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  padding: 13px 14px;
+  list-style: none;
+}
+
+.toolSummary:hover {
   background: var(--sb-bg-soft);
 }
-.advancedWrap[open] > .advancedToggle {
+
+.toolSummary strong {
+  color: var(--sb-ink);
+  font-size: 0.8125rem;
+}
+
+.toolSummary small {
+  color: var(--sb-ink-mute);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.toolPanel[open] > .toolSummary {
   border-bottom: 1px solid var(--sb-line-soft);
+  background: var(--sb-bg-soft);
+}
+
+.toolPanel .manualPanel {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 16px;
 }
 
 .camRegForm {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 18px;
+  padding: 16px;
 }
 
 /* ── 반응형 ── */
@@ -647,6 +726,15 @@
   .streamCtrl {
     align-items: stretch;
     flex-direction: column;
+  }
+  .adminSection {
+    width: 100%;
+  }
+  .adminSummary small {
+    display: none;
+  }
+  .toolSummary {
+    align-items: flex-start;
   }
   .settingsRow,
   .manualGrid {

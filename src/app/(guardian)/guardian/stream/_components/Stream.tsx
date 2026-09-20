@@ -359,7 +359,7 @@ export default function Stream() {
               <summary>고급 송출 설정</summary>
               <div className={styles.settingsRow}>
                 <label className={styles.settingField}>
-                  <span>Session ID</span>
+                  <span>송출 이름</span>
                   <input
                     value={liveSessionName}
                     onChange={e => setLiveSessionName(e.target.value)}
@@ -417,108 +417,131 @@ export default function Stream() {
         </div>
       </div>
 
-      <details className={styles.advancedWrap}>
-        <summary className={styles.advancedToggle}>
-          <Icon name="settings" size={18} /> 관리자 도구
+      <details className={styles.adminSection}>
+        <summary className={styles.adminSummary}>
+          <span className={styles.adminSummaryTitle}>
+            <Icon name="settings" size={16} />
+            <span>
+              <strong>관리자 설정</strong>
+              <small>일반적인 화면 송출에는 필요하지 않습니다.</small>
+            </span>
+          </span>
+          <span className={styles.adminSummaryAction}>설정 열기</span>
         </summary>
-        <div className={styles.manualPanel}>
-          <div className={styles.manualGrid}>
-            <label className={styles.field}>
-              <span>Session ID</span>
-              <input value={manualSessionId} onChange={e => setManualSessionId(e.target.value)} />
-            </label>
-            <label className={styles.field}>
-              <span>Camera Identifier</span>
-              <input value={manualCamId} onChange={e => setManualCamId(e.target.value)} />
-            </label>
-          </div>
+        <div className={styles.adminContent}>
+          <details className={styles.toolPanel}>
+            <summary className={styles.toolSummary}>
+              <Icon name="monitor" size={18} />
+              <span>
+                <strong>사진 파일 직접 보내기</strong>
+                <small>카메라 대신 사진으로 송출 상태를 점검합니다.</small>
+              </span>
+            </summary>
+            <div className={styles.manualPanel}>
+              <div className={styles.manualGrid}>
+                <label className={styles.field}>
+                  <span>송출 이름</span>
+                  <input value={manualSessionId} onChange={e => setManualSessionId(e.target.value)} />
+                </label>
+                <label className={styles.field}>
+                  <span>카메라 식별값</span>
+                  <input value={manualCamId} onChange={e => setManualCamId(e.target.value)} />
+                </label>
+              </div>
 
-          {activeSession && (
-            <div className={styles.activeSessionBadge}>
-              세션 활성 중: <strong>{activeSession}</strong>
-            </div>
-          )}
+              {activeSession && (
+                <div className={styles.activeSessionBadge}>
+                  전송 준비 완료: <strong>{activeSession}</strong>
+                </div>
+              )}
 
-          <label className={styles.field}>
-            <span>JPEG 파일 선택</span>
-            <input type="file" accept="image/jpeg" onChange={e => setManualFile(e.target.files?.[0] ?? null)} />
-          </label>
-
-          <div className={styles.manualBtns}>
-            <button
-              type="button"
-              className={styles.btnPrimary}
-              disabled={manualLoading || !!activeSession}
-              onClick={handleCreateSession}
-            >
-              세션 생성
-            </button>
-            <button
-              type="button"
-              className={styles.btnSecondary}
-              disabled={manualLoading || !manualFile || !activeSession}
-              onClick={handleUploadFrame}
-            >
-              프레임 업로드
-            </button>
-            <button
-              type="button"
-              className={styles.btnDanger}
-              disabled={manualLoading || !activeSession}
-              onClick={handleStopSession}
-            >
-              송출 종료
-            </button>
-          </div>
-
-          {manualMsg && <p className={styles.infoMsg}>{manualMsg}</p>}
-        </div>
-      </details>
-
-      {/* ── 카메라 등록 (고급) ── */}
-      <details className={styles.advancedWrap}>
-        <summary className={styles.advancedToggle}>
-          <Icon name="gear" size={18} /> 카메라 등록
-        </summary>
-        <form className={styles.camRegForm} onSubmit={handleCamReg}>
-          <div className={styles.manualGrid}>
-            {(
-              [
-                ['cameraNo', '카메라 번호', 'CAM-001'],
-                ['identifier', 'Identifier', 'ipad-room-001'],
-                ['name', '이름', '거실 카메라'],
-                ['streamUrl', '스트림 URL', 'rtsp://...'],
-                ['targetUserId', '피보호자 ID', ''],
-                ['guardianUserId', '보호자 ID', ''],
-                ['locationName', '위치', '거실'],
-              ] as [keyof typeof camRegForm, string, string][]
-            ).map(([key, label, ph]) => (
-              <label key={key} className={styles.field}>
-                <span>{label}</span>
-                <input
-                  placeholder={ph}
-                  value={String(camRegForm[key])}
-                  onChange={e => setCamRegForm(f => ({ ...f, [key]: e.target.value }))}
-                />
+              <label className={styles.field}>
+                <span>보낼 사진 선택</span>
+                <input type="file" accept="image/jpeg" onChange={e => setManualFile(e.target.files?.[0] ?? null)} />
               </label>
-            ))}
-            <label className={styles.field}>
-              <span>스트림 타입</span>
-              <select
-                value={camRegForm.streamType}
-                onChange={e => setCamRegForm(f => ({ ...f, streamType: e.target.value }))}
-              >
-                <option value="rtsp">RTSP</option>
-                <option value="http">HTTP</option>
-                <option value="webrtc">WebRTC</option>
-              </select>
-            </label>
-          </div>
-          {camRegMsg && <p className={`${styles.infoMsg} ${camRegOk === false ? styles.errMsg : ''}`}>{camRegMsg}</p>}
-          <button type="submit" className={styles.btnPrimary}>
-            등록
-          </button>
-        </form>
+
+              <div className={styles.manualBtns}>
+                <button
+                  type="button"
+                  className={styles.btnPrimary}
+                  disabled={manualLoading || !!activeSession}
+                  onClick={handleCreateSession}
+                >
+                  전송 준비
+                </button>
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  disabled={manualLoading || !manualFile || !activeSession}
+                  onClick={handleUploadFrame}
+                >
+                  선택한 사진 보내기
+                </button>
+                <button
+                  type="button"
+                  className={styles.btnDanger}
+                  disabled={manualLoading || !activeSession}
+                  onClick={handleStopSession}
+                >
+                  전송 종료
+                </button>
+              </div>
+
+              {manualMsg && <p className={styles.infoMsg}>{manualMsg}</p>}
+            </div>
+          </details>
+
+          <details className={styles.toolPanel}>
+            <summary className={styles.toolSummary}>
+              <Icon name="gear" size={18} />
+              <span>
+                <strong>외부 카메라 장치 등록</strong>
+                <small>별도 카메라를 연결할 때만 사용합니다.</small>
+              </span>
+            </summary>
+            <form className={styles.camRegForm} onSubmit={handleCamReg}>
+              <div className={styles.manualGrid}>
+                {(
+                  [
+                    ['cameraNo', '카메라 번호', 'CAM-001'],
+                    ['identifier', '카메라 식별값', 'ipad-room-001'],
+                    ['name', '이름', '거실 카메라'],
+                    ['streamUrl', '카메라 연결 주소', 'rtsp://...'],
+                    ['targetUserId', '피보호자 ID', ''],
+                    ['guardianUserId', '보호자 ID', ''],
+                    ['locationName', '위치', '거실'],
+                  ] as [keyof typeof camRegForm, string, string][]
+                ).map(([key, label, ph]) => (
+                  <label key={key} className={styles.field}>
+                    <span>{label}</span>
+                    <input
+                      placeholder={ph}
+                      value={String(camRegForm[key])}
+                      onChange={e => setCamRegForm(f => ({ ...f, [key]: e.target.value }))}
+                    />
+                  </label>
+                ))}
+                <label className={styles.field}>
+                  <span>연결 방식</span>
+                  <select
+                    value={camRegForm.streamType}
+                    onChange={e => setCamRegForm(f => ({ ...f, streamType: e.target.value }))}
+                  >
+                    <option value="rtsp">RTSP</option>
+                    <option value="http">HTTP</option>
+                    <option value="webrtc">WebRTC</option>
+                  </select>
+                </label>
+              </div>
+              {camRegMsg && (
+                <p className={`${styles.infoMsg} ${camRegOk === false ? styles.errMsg : ''}`}>{camRegMsg}</p>
+              )}
+              <button type="submit" className={styles.btnPrimary}>
+                카메라 등록
+              </button>
+            </form>
+          </details>
+        </div>
       </details>
     </div>
   );
