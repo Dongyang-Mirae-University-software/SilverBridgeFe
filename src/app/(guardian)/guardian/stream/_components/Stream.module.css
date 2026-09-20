@@ -33,8 +33,14 @@
   gap: 3px;
 }
 
-.guideCopy strong { color: var(--sb-ink); font-size: 0.9375rem; }
-.guideCopy span { color: var(--sb-ink-mute); font-size: 0.8125rem; }
+.guideCopy strong {
+  color: var(--sb-ink);
+  font-size: 0.9375rem;
+}
+.guideCopy span {
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+}
 
 /* ── 실시간 패널 ── */
 .livePanel {
@@ -54,7 +60,10 @@
   padding: 20px;
 }
 
-.stepDisabled { opacity: 0.45; pointer-events: none; }
+.stepDisabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
 
 .stepNum {
   display: grid;
@@ -85,8 +94,15 @@
   font-weight: 850;
 }
 
-.stepHeading { display: flex; flex-direction: column; gap: 2px; }
-.stepHeading > span { color: var(--sb-ink-mute); font-size: 0.75rem; }
+.stepHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stepHeading > span {
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+}
 
 .stepTitleRow {
   display: flex;
@@ -115,7 +131,9 @@
   background: #fafaf8;
   cursor: pointer;
   padding: 16px 12px;
-  transition: border-color 0.12s, background 0.12s;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
   font-size: 0.8125rem;
   font-weight: 750;
   color: var(--sb-ink-soft);
@@ -134,7 +152,9 @@
   font-weight: 850;
 }
 
-.facingCard:disabled { cursor: default; }
+.facingCard:disabled {
+  cursor: default;
+}
 
 .facingIconBox {
   display: grid;
@@ -193,7 +213,10 @@
   padding: 20px;
 }
 
-.videoPlaceholder strong { color: #fff; font-size: 0.9375rem; }
+.videoPlaceholder strong {
+  color: #fff;
+  font-size: 0.9375rem;
+}
 
 .placeholderIcon {
   display: grid;
@@ -206,7 +229,8 @@
   color: rgba(255, 255, 255, 0.72);
 }
 
-.previewBadge, .liveBadge {
+.previewBadge,
+.liveBadge {
   position: absolute;
   top: 14px;
   z-index: 1;
@@ -217,13 +241,27 @@
   padding: 6px 9px;
 }
 
-.previewBadge { left: 14px; background: rgba(17, 17, 17, 0.66); }
-.liveBadge { right: 14px; background: #d94343; letter-spacing: 0; }
+.previewBadge {
+  left: 14px;
+  background: rgba(17, 17, 17, 0.66);
+}
+.liveBadge {
+  right: 14px;
+  background: #d94343;
+  letter-spacing: 0;
+}
 
-.hiddenCanvas { display: none; }
+.hiddenCanvas {
+  display: none;
+}
 
-.mediaCtrl { display: flex; gap: 10px; }
-.mediaCtrl > button { min-width: 190px; }
+.mediaCtrl {
+  display: flex;
+  gap: 10px;
+}
+.mediaCtrl > button {
+  min-width: 190px;
+}
 
 /* ── 송출 설정 ── */
 .streamSettings {
@@ -241,7 +279,9 @@
   padding: 10px 0;
 }
 
-.streamSettings .settingsRow { padding: 2px 0 12px; }
+.streamSettings .settingsRow {
+  padding: 2px 0 12px;
+}
 .settingsRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -272,8 +312,14 @@
   box-sizing: border-box;
 }
 
-.settingField input:focus { border-color: var(--sb-brand); box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.1); }
-.settingField input:disabled { background: var(--sb-bg-soft); cursor: not-allowed; }
+.settingField input:focus {
+  border-color: var(--sb-brand);
+  box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.1);
+}
+.settingField input:disabled {
+  background: var(--sb-bg-soft);
+  cursor: not-allowed;
+}
 
 .fpsSlider {
   width: 100%;
@@ -282,7 +328,10 @@
   cursor: pointer;
 }
 
-.fpsSlider:disabled { opacity: 0.5; cursor: not-allowed; }
+.fpsSlider:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .streamCtrl {
   display: flex;
@@ -290,7 +339,9 @@
   gap: 12px;
 }
 
-.streamCtrl > button { min-width: 180px; }
+.streamCtrl > button {
+  min-width: 180px;
+}
 
 .stateGuide {
   margin: 0;
@@ -328,13 +379,28 @@
   background: currentColor;
 }
 
-.dotOff   { background: var(--sb-bg-soft); color: var(--sb-ink-mute); }
-.dotReady { background: #dceee3; color: var(--sb-safe); }
-.dotLive  { background: #fbe5e0; color: var(--sb-warn); animation: pulse 1.6s infinite; }
+.dotOff {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+}
+.dotReady {
+  background: #dceee3;
+  color: var(--sb-safe);
+}
+.dotLive {
+  background: #fbe5e0;
+  color: var(--sb-warn);
+  animation: pulse 1.6s infinite;
+}
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.55; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
 }
 
 .queueBadge {
@@ -388,8 +454,15 @@
   outline: none;
 }
 
-.field input[type='file'] { padding: 8px 12px; min-height: auto; }
-.field input:focus, .field select:focus { border-color: var(--sb-brand); box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.1); }
+.field input[type='file'] {
+  padding: 8px 12px;
+  min-height: auto;
+}
+.field input:focus,
+.field select:focus {
+  border-color: var(--sb-brand);
+  box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.1);
+}
 
 .activeSessionBadge {
   border-radius: 10px;
@@ -407,7 +480,11 @@
 }
 
 /* ── 버튼 공통 ── */
-.btnPrimary, .btnSecondary, .btnDanger, .btnStart, .btnStop {
+.btnPrimary,
+.btnSecondary,
+.btnDanger,
+.btnStart,
+.btnStop {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -418,24 +495,56 @@
   font-weight: 800;
   padding: 11px 22px;
   white-space: nowrap;
-  transition: filter 0.1s, opacity 0.1s;
+  transition:
+    filter 0.1s,
+    opacity 0.1s;
 }
 
-.btnPrimary   { background: var(--sb-brand); color: #fff; }
-.btnSecondary { border: 1px solid var(--sb-line); background: #fff; color: var(--sb-ink-soft); }
-.btnDanger    { background: #fbe5e0; color: var(--sb-warn); }
-.btnStart     { background: var(--sb-brand); color: #fff; font-size: 0.9375rem; padding: 12px 28px; }
-.btnStop      { background: #fbe5e0; color: var(--sb-warn); font-size: 0.9375rem; padding: 12px 28px; }
+.btnPrimary {
+  background: var(--sb-brand);
+  color: #fff;
+}
+.btnSecondary {
+  border: 1px solid var(--sb-line);
+  background: #fff;
+  color: var(--sb-ink-soft);
+}
+.btnDanger {
+  background: #fbe5e0;
+  color: var(--sb-warn);
+}
+.btnStart {
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: 0.9375rem;
+  padding: 12px 28px;
+}
+.btnStop {
+  background: #fbe5e0;
+  color: var(--sb-warn);
+  font-size: 0.9375rem;
+  padding: 12px 28px;
+}
 
 .btnPrimary:hover:not(:disabled),
-.btnStart:hover:not(:disabled)   { filter: brightness(0.94); }
+.btnStart:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
 .btnDanger:hover:not(:disabled),
-.btnStop:hover:not(:disabled)    { filter: brightness(0.96); }
-.btnSecondary:hover:not(:disabled) { background: var(--sb-bg-soft); }
+.btnStop:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+.btnSecondary:hover:not(:disabled) {
+  background: var(--sb-bg-soft);
+}
 
-.btnPrimary:disabled, .btnSecondary:disabled,
-.btnDanger:disabled, .btnStart:disabled, .btnStop:disabled {
-  cursor: not-allowed; opacity: 0.45;
+.btnPrimary:disabled,
+.btnSecondary:disabled,
+.btnDanger:disabled,
+.btnStart:disabled,
+.btnStop:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 /* ── 메시지 ── */
@@ -449,7 +558,10 @@
   padding: 9px 12px;
 }
 
-.errMsg { background: #fbe5e0 !important; color: var(--sb-warn) !important; }
+.errMsg {
+  background: #fbe5e0 !important;
+  color: var(--sb-warn) !important;
+}
 
 /* ── 고급(카메라 등록) ── */
 .advancedWrap {
@@ -474,9 +586,15 @@
   text-align: left;
 }
 
-.advancedToggle::-webkit-details-marker { display: none; }
-.advancedToggle:hover { background: var(--sb-bg-soft); }
-.advancedWrap[open] > .advancedToggle { border-bottom: 1px solid var(--sb-line-soft); }
+.advancedToggle::-webkit-details-marker {
+  display: none;
+}
+.advancedToggle:hover {
+  background: var(--sb-bg-soft);
+}
+.advancedWrap[open] > .advancedToggle {
+  border-bottom: 1px solid var(--sb-line-soft);
+}
 
 .camRegForm {
   display: flex;
@@ -488,10 +606,58 @@
 
 /* ── 반응형 ── */
 @media (max-width: 700px) {
-  .facingGrid { flex-direction: column; }
-  .settingsRow, .manualGrid { grid-template-columns: 1fr; }
-  .manualBtns { flex-direction: column; }
-  .manualBtns > button { width: 100%; }
+  .guide {
+    align-items: flex-start;
+    padding: 14px;
+  }
+  .guideIcon {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+  .guide .statusDot {
+    margin-left: auto;
+  }
+  .step {
+    gap: 10px;
+    padding: 16px;
+  }
+  .stepNum {
+    width: 24px;
+    height: 24px;
+  }
+  .facingGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .facingCard {
+    min-height: 96px;
+    padding: 10px 4px;
+    font-size: 0.75rem;
+  }
+  .facingIconBox {
+    width: 38px;
+    height: 38px;
+  }
+  .mediaCtrl > button,
+  .streamCtrl > button {
+    width: 100%;
+    min-width: 0;
+  }
+  .streamCtrl {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .settingsRow,
+  .manualGrid {
+    grid-template-columns: 1fr;
+  }
+  .manualBtns {
+    flex-direction: column;
+  }
+  .manualBtns > button {
+    width: 100%;
+  }
 }
 
 /* Stream page polish */
