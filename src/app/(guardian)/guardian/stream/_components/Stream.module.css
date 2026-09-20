@@ -565,12 +565,12 @@
 
 /* 관리자 전용 설정 */
 .adminSection {
+  position: relative;
   align-self: flex-end;
-  width: min(100%, 520px);
+  width: min(100%, 420px);
   margin-top: 2px;
   border-top: 1px solid var(--sb-line-soft);
 }
-
 .adminSummary {
   display: flex;
   align-items: center;
@@ -582,8 +582,7 @@
   list-style: none;
 }
 
-.adminSummary::-webkit-details-marker,
-.toolSummary::-webkit-details-marker {
+.adminSummary::-webkit-details-marker {
   display: none;
 }
 
@@ -593,8 +592,7 @@
   gap: 9px;
 }
 
-.adminSummaryTitle > span,
-.toolSummary > span {
+.adminSummaryTitle > span {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -627,46 +625,29 @@
 }
 
 .adminContent {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 20;
   display: grid;
-  gap: 8px;
-  padding: 4px 0 12px;
+  width: min(760px, calc(100vw - 48px));
+  max-height: min(70vh, 640px);
+  gap: 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(31, 48, 42, 0.18);
+  padding: 12px;
 }
 
 .toolPanel {
+  min-width: 0;
   overflow: hidden;
   border: 1px solid var(--sb-line-soft);
   border-radius: 8px;
   background: #fff;
-}
-
-.toolSummary {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--sb-ink-soft);
-  cursor: pointer;
-  padding: 13px 14px;
-  list-style: none;
-}
-
-.toolSummary:hover {
-  background: var(--sb-bg-soft);
-}
-
-.toolSummary strong {
-  color: var(--sb-ink);
-  font-size: 0.8125rem;
-}
-
-.toolSummary small {
-  color: var(--sb-ink-mute);
-  font-size: 0.6875rem;
-  font-weight: 600;
-}
-
-.toolPanel[open] > .toolSummary {
-  border-bottom: 1px solid var(--sb-line-soft);
-  background: var(--sb-bg-soft);
 }
 
 .toolPanel .manualPanel {
@@ -730,11 +711,12 @@
   .adminSection {
     width: 100%;
   }
+  .adminContent {
+    width: calc(100vw - 40px);
+    max-height: 68vh;
+  }
   .adminSummary small {
     display: none;
-  }
-  .toolSummary {
-    align-items: flex-start;
   }
   .settingsRow,
   .manualGrid {
