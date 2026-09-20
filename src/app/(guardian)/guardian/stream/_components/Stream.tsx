@@ -288,7 +288,10 @@ export default function Stream() {
           <div className={styles.step}>
             <span className={styles.stepNum}>1</span>
             <div className={styles.stepBody}>
-              <p className={styles.stepTitle}>카메라 / 화면 선택</p>
+              <div className={styles.stepHeading}>
+                <p className={styles.stepTitle}>무엇을 송출할까요?</p>
+                <span>사용할 카메라나 화면을 선택하세요.</span>
+              </div>
               <div className={styles.facingGrid}>
                 {FACING_OPTIONS.map(opt => (
                   <button
@@ -298,8 +301,11 @@ export default function Stream() {
                     disabled={status !== 'off'}
                     onClick={() => handleFacingChange(opt.value)}
                   >
-                    <Icon name={opt.icon} size={22} className={styles.facingIcon} />
+                    <span className={styles.facingIconBox}>
+                      <Icon name={opt.icon} size={26} />
+                    </span>
                     <span>{opt.label}</span>
+                    {facing === opt.value && <small>선택됨</small>}
                   </button>
                 ))}
               </div>

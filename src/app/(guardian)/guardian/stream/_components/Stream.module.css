@@ -81,9 +81,12 @@
 .stepTitle {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 850;
 }
+
+.stepHeading { display: flex; flex-direction: column; gap: 2px; }
+.stepHeading > span { color: var(--sb-ink-mute); font-size: 0.75rem; }
 
 .stepTitleRow {
   display: flex;
@@ -99,11 +102,14 @@
 }
 
 .facingCard {
+  position: relative;
   display: flex;
   flex: 1;
+  min-height: 112px;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 7px;
   border: 2px solid var(--sb-line-soft);
   border-radius: 14px;
   background: #fafaf8;
@@ -130,11 +136,20 @@
 
 .facingCard:disabled { cursor: default; }
 
-.facingIcon {
-  width: 26px;
-  height: 26px;
-  display: block;
-  object-fit: contain;
+.facingIconBox {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(30, 56, 45, 0.08);
+}
+
+.facingCard small {
+  color: var(--sb-brand);
+  font-size: 0.6875rem;
+  font-weight: 800;
 }
 
 .btnIcon {
