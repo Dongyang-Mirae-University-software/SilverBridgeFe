@@ -421,15 +421,8 @@ export default function Stream() {
       </div>
 
       <details className={styles.adminSection}>
-        <summary className={styles.adminSummary}>
-          <span className={styles.adminSummaryTitle}>
-            <Icon name="settings" size={16} />
-            <span>
-              <strong>관리자 설정</strong>
-              <small>일반적인 화면 송출에는 필요하지 않습니다.</small>
-            </span>
-          </span>
-          <span className={styles.adminSummaryAction}>설정 열기</span>
+        <summary className={styles.adminSummary} aria-label="관리자 설정 열기" title="관리자 설정">
+          <Icon name="settings" size={22} />
         </summary>
         <div className={styles.adminContent}>
           <Tabs
