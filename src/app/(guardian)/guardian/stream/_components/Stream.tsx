@@ -341,11 +341,11 @@ export default function Stream() {
                   <button type="button" className={styles.btnPrimary} onClick={handleStartMedia}>
                     {facing === 'screen' ? (
                       <>
-                        <Icon name="monitor" size={18} className={styles.btnIcon} /> 화면 켜기
+                        <Icon name="monitor" size={18} className={styles.btnIcon} /> 화면 미리보기 켜기
                       </>
                     ) : (
                       <>
-                        <Icon name="camera" size={18} className={styles.btnIcon} /> 카메라 켜기
+                        <Icon name="camera" size={18} className={styles.btnIcon} /> 카메라 미리보기 켜기
                       </>
                     )}
                   </button>
@@ -356,7 +356,7 @@ export default function Stream() {
                     disabled={isStoppingLive}
                     onClick={handleStopMedia}
                   >
-                    {isStoppingLive ? '종료 중' : '송출 종료'}
+                    미리보기 끄기
                   </button>
                 )}
               </div>
@@ -368,7 +368,7 @@ export default function Stream() {
             <span className={styles.stepNum}>3</span>
             <div className={styles.stepBody}>
               <div className={styles.stepTitleRow}>
-                <p className={styles.stepTitle}>송출 설정 및 시작</p>
+                <p className={styles.stepTitle}>보호자에게 송출하기</p>
                 <span className={`${styles.statusDot} ${statusDot}`}>{statusLabel}</span>
               </div>
 
@@ -409,11 +409,11 @@ export default function Stream() {
                     disabled={status === 'off'}
                     onClick={handleStartStreaming}
                   >
-                    ▶ 송출 시작
+                    송출 시작
                   </button>
                 ) : (
                   <button type="button" className={styles.btnStop} disabled={isStoppingLive} onClick={handleStopMedia}>
-                    {isStoppingLive ? '■ 종료 중' : '■ 송출 중지'}
+                    {isStoppingLive ? '송출을 종료하고 있어요' : '송출 종료'}
                   </button>
                 )}
                 {status === 'streaming' && queueCount > 0 && (

@@ -223,6 +223,7 @@
 .hiddenCanvas { display: none; }
 
 .mediaCtrl { display: flex; gap: 10px; }
+.mediaCtrl > button { min-width: 190px; }
 
 /* ── 송출 설정 ── */
 .settingsRow {
@@ -272,6 +273,8 @@
   align-items: center;
   gap: 12px;
 }
+
+.streamCtrl > button { min-width: 180px; }
 
 /* ── 상태 표시 ── */
 .statusDot {
