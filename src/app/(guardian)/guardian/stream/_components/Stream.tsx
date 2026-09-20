@@ -256,6 +256,7 @@ export default function Stream() {
   /* ── 상태 표시 ── */
   const statusLabel = status === 'off' ? '오프라인' : status === 'ready' ? '카메라 켜짐' : '송출 중';
   const statusDot = status === 'off' ? styles.dotOff : status === 'ready' ? styles.dotReady : styles.dotLive;
+  const selectedSource = FACING_OPTIONS.find(option => option.value === facing)?.label ?? '정면 카메라';
 
   return (
     <div className={styles.page}>
@@ -316,13 +317,22 @@ export default function Stream() {
           <div className={styles.step}>
             <span className={styles.stepNum}>2</span>
             <div className={styles.stepBody}>
-              <p className={styles.stepTitle}>미리보기</p>
+              <div className={styles.stepHeading}>
+                <p className={styles.stepTitle}>화면을 확인하세요</p>
+                <span>{status === 'off' ? `${selectedSource} 미리보기를 먼저 켜주세요.` : '아래 화면이 그대로 송출됩니다.'}</span>
+              </div>
               <div className={styles.videoBox}>
                 <video ref={videoRef} autoPlay playsInline muted className={styles.video} />
                 <canvas ref={canvasRef} className={styles.hiddenCanvas} />
+                <span className={styles.previewBadge}>{selectedSource}</span>
+                {status === 'streaming' && <span className={styles.liveBadge}>LIVE</span>}
                 {status === 'off' && (
                   <div className={styles.videoPlaceholder}>
-                    <span>카메라를 켜면 여기에 화면이 표시됩니다</span>
+                    <span className={styles.placeholderIcon}>
+                      <Icon name={facing === 'screen' ? 'monitor' : 'camera'} size={32} />
+                    </span>
+                    <strong>아직 미리보기가 꺼져 있어요</strong>
+                    <span>아래 버튼을 눌러 화면을 확인하세요.</span>
                   </div>
                 )}
               </div>

@@ -184,12 +184,41 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  gap: 7px;
   color: rgba(255, 255, 255, 0.35);
   font-size: 0.875rem;
   font-weight: 650;
   text-align: center;
   padding: 20px;
 }
+
+.videoPlaceholder strong { color: #fff; font-size: 0.9375rem; }
+
+.placeholderIcon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 4px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.previewBadge, .liveBadge {
+  position: absolute;
+  top: 14px;
+  z-index: 1;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 850;
+  padding: 6px 9px;
+}
+
+.previewBadge { left: 14px; background: rgba(17, 17, 17, 0.66); }
+.liveBadge { right: 14px; background: #d94343; letter-spacing: 0; }
 
 .hiddenCanvas { display: none; }
 
