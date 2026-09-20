@@ -17,7 +17,7 @@ const CHANNEL_OPTIONS: Array<{
   channelType: NotificationChannelType;
   label: string;
   desc: string;
-  badge: string;
+  badge?: string;
 }> = [
   {
     channelType: 'FCM',
@@ -29,19 +29,16 @@ const CHANNEL_OPTIONS: Array<{
     channelType: 'SMS',
     label: 'SMS 문자',
     desc: '긴급 알림을 문자로 받습니다.',
-    badge: '미지원',
   },
   {
     channelType: 'KAKAO_ALIMTALK',
     label: '카카오 알림톡',
     desc: '카카오톡으로 서비스 알림을 받습니다.',
-    badge: '미지원',
   },
   {
     channelType: 'EMAIL',
     label: '이메일',
     desc: '공지사항 및 서비스 안내를 이메일로 받습니다.',
-    badge: '미지원',
   },
 ];
 
@@ -80,7 +77,7 @@ export function NotificationSettingsSection() {
                 <div className={cx('meta')}>
                   <div className={cx('titleRow')}>
                     <span className={cx('label')}>{option.label}</span>
-                    <span className={cx('badge')}>{option.badge}</span>
+                    {option.badge && <span className={cx('badge')}>{option.badge}</span>}
                   </div>
                   <span className={cx('desc')}>{option.desc}</span>
                 </div>
