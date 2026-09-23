@@ -25,8 +25,8 @@
 }
 
 .guardianTone {
-  --common-modal-accent: var(--guardian-brand, #8a4b38);
-  --common-modal-accent-soft: var(--guardian-brand-soft, #f7ebe6);
+  --common-modal-accent: var(--sb-brand);
+  --common-modal-accent-soft: var(--sb-brand-50);
 }
 
 .icon {

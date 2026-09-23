@@ -65,7 +65,7 @@
   flex-shrink: 0;
   border: 0;
   border-radius: 10px;
-  background: var(--guardian-brand);
+  background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
   font-size: 0.8125rem;

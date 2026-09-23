@@ -88,7 +88,7 @@
 
 .metaIdentity span {
   display: block;
-  color: var(--guardian-brand);
+  color: var(--sb-brand);
   font-size: 0.6875rem;
   font-weight: 850;
 }
@@ -158,8 +158,8 @@
 .cardHeader span {
   flex-shrink: 0;
   border-radius: 999px;
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
   font-size: 0.6875rem;
   font-weight: 800;
   padding: 3px 9px;
@@ -384,6 +384,6 @@
 }
 
 .metaList div:hover {
-  border-color: var(--guardian-line);
+  border-color: var(--sb-line);
   background: #fff;
 }

@@ -29,7 +29,7 @@
 
 .eyebrow {
   display: block;
-  color: var(--guardian-brand, var(--sb-brand));
+  color: var(--sb-brand);
   font-size: 0.75rem;
   font-weight: 800;
 }
@@ -117,7 +117,7 @@
 }
 
 .submitButton {
-  background: var(--guardian-brand, var(--sb-brand));
+  background: var(--sb-brand);
   color: #fff;
 }
 

@@ -31,9 +31,6 @@ button.avatar:disabled {
   opacity: 0.55;
 }
 
-:global(.guardianTheme) .avatar {
-}
-
 .w-32 {
   width: 32px;
   height: 32px;

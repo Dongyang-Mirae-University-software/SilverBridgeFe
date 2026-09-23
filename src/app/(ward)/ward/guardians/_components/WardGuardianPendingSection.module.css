@@ -38,8 +38,3 @@
   font-weight: 700;
   padding: 3px 10px;
 }
-
-:global(.guardianTheme) .sectionHeader span {
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
-}

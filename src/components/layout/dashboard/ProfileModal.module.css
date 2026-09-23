@@ -108,11 +108,6 @@
   padding: 4px 8px;
 }
 
-:global(.guardianTheme) .userRoleBadge {
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
-}
-
 .profileProviderBadge {
   display: inline-flex;
   border-radius: 999px;
@@ -121,11 +116,6 @@
   font-size: 0.6875rem;
   font-weight: 800;
   padding: 4px 8px;
-}
-
-:global(.guardianTheme) .profileProviderBadge {
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
 }
 
 .profileModalClose {

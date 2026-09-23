@@ -52,11 +52,6 @@
   padding: 2px 8px;
 }
 
-:global(.guardianTheme) .roleBadge {
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
-}
-
 .desktopUserButton {
   display: flex;
   min-width: 210px;
@@ -74,15 +69,6 @@
 
 .desktopUserButton:hover {
   background: #fff;
-}
-
-:global(.guardianTheme) .desktopUserButton {
-  border-color: var(--guardian-line);
-  background: var(--guardian-brand-soft);
-}
-
-:global(.guardianTheme) .desktopUserButton:hover {
-  background: var(--guardian-brand-hover);
 }
 
 .desktopUserInfo {
@@ -165,10 +151,6 @@
     max-width: 100%;
   }
 
-  :global(.guardianTheme) .topBarLogo {
-    --logo-color: var(--guardian-brand);
-  }
-
   .topBarBrand span {
     display: block;
     overflow: hidden;
@@ -188,11 +170,6 @@
     font-size: 0.6875rem;
     font-weight: 800;
     padding: 4px 9px;
-  }
-
-  :global(.guardianTheme) .topBarRole {
-    background: var(--guardian-brand-soft);
-    color: var(--guardian-brand);
   }
 
   .desktopHeader {

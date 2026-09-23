@@ -53,10 +53,6 @@
   box-shadow: 0 8px 18px rgba(31, 94, 72, 0.12);
 }
 
-:global(.guardianTheme) .wardChip.active {
-  border-color: var(--guardian-brand);
-}
-
 .wardChipStatic {
   cursor: default;
 }
@@ -76,11 +72,6 @@
   padding: 4px 8px;
 }
 
-:global(.guardianTheme) .wardChipRelation {
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
-}
-
 .heroCard,
 .panelCard,
 .featureCard {
@@ -95,7 +86,7 @@
   justify-content: space-between;
   gap: 18px;
   border-radius: 24px;
-  background: var(--guardian-brand);
+  background: var(--sb-brand);
   color: #fff;
   padding: 18px 22px;
 }
@@ -118,8 +109,8 @@
   flex-shrink: 0;
   place-items: center;
   border-radius: 18px;
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
 }
 
 .emptyHeroText {
@@ -149,7 +140,7 @@
   justify-content: center;
   flex-shrink: 0;
   border-radius: 999px;
-  background: var(--guardian-brand);
+  background: var(--sb-brand);
   color: #fff;
   font-size: 0.8125rem;
   font-weight: 850;
@@ -466,7 +457,7 @@
 }
 
 .wardChip:hover:not(.wardChipStatic) {
-  border-color: var(--guardian-brand);
+  border-color: var(--sb-brand);
   box-shadow: 0 8px 18px rgba(51, 110, 191, 0.1);
 }
 
