@@ -1,0 +1,131 @@
+.card {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.94)),
+    var(--sb-bg);
+  box-shadow: var(--sb-shadow-sm);
+  padding: 18px 18px 16px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.header strong {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 0.9375rem;
+  font-weight: 850;
+}
+
+.header p {
+  margin: 4px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.header span {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 4px 10px;
+}
+
+.emptyText {
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.5;
+  padding: 12px 14px;
+}
+
+.table {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tableHead {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.9fr 0.9fr;
+  gap: 12px;
+  border-bottom: 1px solid var(--sb-line-soft);
+  background: #f3efe4;
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  padding: 16px 18px;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.9fr 0.9fr;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px 18px;
+}
+
+.cell {
+  min-width: 0;
+  color: var(--sb-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@media (max-width: 840px) {
+  .card {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tableHead {
+    display: none;
+  }
+
+  .item {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .cell {
+    overflow: visible;
+    white-space: normal;
+  }
+}
