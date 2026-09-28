@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { SidebarLayout } from '@/components/layout/dashboard/SidebarLayout';
@@ -11,6 +11,7 @@ import { getRealtimeNotification } from '@/utils/dashboard/realtime';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
+import { applyMedicationTakenToGuardianCache, guardianMedicationQueryKey } from '@/service/query/guardian/medication';
 import styles from './GuardianLayout.module.css';
 
 const cx = classNames.bind(styles);
@@ -32,12 +33,23 @@ export function GuardianLayout({ children }: { children: ReactNode }) {
 }
 
 function useGuardianConnectionSocket(realtimeUserId: string | undefined) {
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     if (!realtimeUserId) return;
     return connectConnectionSocket({
       role,
       userId: realtimeUserId,
       onMessage: payload => {
+        // 복약 체크 실시간 동기화는 소음이 되지 않도록 알림 없이 카드만 조용히 갱신한다
+        if (payload.type === 'MEDICATION_TAKEN') {
+          applyMedicationTakenToGuardianCache(queryClient, payload);
+          return;
+        }
+        if (payload.type === 'MEDICATION_STOPPED') {
+          void queryClient.invalidateQueries({ queryKey: guardianMedicationQueryKey });
+        }
+
         window.dispatchEvent(
           new CustomEvent('careai:push', {
             detail: {
@@ -57,5 +69,5 @@ function useGuardianConnectionSocket(realtimeUserId: string | undefined) {
         );
       },
     });
-  }, [realtimeUserId]);
+  }, [queryClient, realtimeUserId]);
 }

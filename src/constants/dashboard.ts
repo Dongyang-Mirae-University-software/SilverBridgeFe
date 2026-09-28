@@ -17,6 +17,7 @@ export const GUARDIAN_NAV: NavItem[] = [
   { href: '/guardian/emotion', icon: 'heart', label: '정서 상태 체크', key: 'emotion' },
   { href: '/guardian/chatbot', icon: 'message', label: 'AI 의료 챗봇', key: 'chatbot' },
   { href: '/guardian/wards', icon: 'users', label: '피보호자 관리', key: 'wards' },
+  { href: '/guardian/medication', icon: 'heart', label: '복약 관리', key: 'medication-management' },
   { href: '/guardian/hospital', icon: 'hospital', label: '병원 예약', key: 'hospital' },
   { href: '/guardian/stream', icon: 'camera', label: '화면 송출', key: 'stream' },
   { href: '/guardian/notices', icon: 'bell', label: '공지사항', key: 'notices' },
@@ -42,6 +43,7 @@ export const PAGE_TITLES: Record<PageKey, string> = {
   inquiries: '문의하기',
   stream: '화면 송출',
   'sos-history': 'SOS 이력',
+  'medication-management': '복약 관리',
 };
 
 export const WARD_ACTIONS = [

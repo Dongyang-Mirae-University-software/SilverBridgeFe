@@ -104,7 +104,7 @@
 }
 
 .toggle.on {
-  background: var(--guardian-brand);
+  background: var(--sb-brand);
 }
 
 .toggle:disabled {

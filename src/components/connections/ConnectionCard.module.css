@@ -209,23 +209,6 @@
   opacity: 0.55;
 }
 
-:global(.guardianTheme) .connectionPrimaryButton {
-  background: var(--guardian-brand);
-}
-
-:global(.guardianTheme) .connectionPrimaryButton:not(:disabled):hover {
-  filter: brightness(0.94);
-}
-
-:global(.guardianTheme) .connectionSecondaryButton {
-  border-color: var(--guardian-line);
-  color: var(--guardian-brand);
-}
-
-:global(.guardianTheme) .connectionSecondaryButton:not(:disabled):hover {
-  background: var(--guardian-brand-soft);
-}
-
 /* Connection card polish */
 .connectionCard {
   transition:

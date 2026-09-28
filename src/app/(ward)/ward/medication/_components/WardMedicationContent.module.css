@@ -1,0 +1,47 @@
+.page {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  width: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbarTitle {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.toolbarSub {
+  display: block;
+  color: var(--sb-ink-mute);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.emptyText {
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--sb-ink-mute);
+  font-size: 1rem;
+  padding: 24px;
+  text-align: center;
+}
+
+.list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

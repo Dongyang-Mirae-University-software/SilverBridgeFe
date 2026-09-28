@@ -10,7 +10,9 @@ import { listenForegroundMessages } from '@/lib/fcm';
 import { getAuthRole } from '@/lib/auth/tokenStore';
 import { guardianConnectionRequestsQueryKey, guardianConnectionsQueryKey } from '@/service/query/guardian';
 import { guardianSosHistoryQueryKey } from '@/service/query/guardian/sosHistory';
+import { guardianMedicationQueryKey } from '@/service/query/guardian/medication';
 import { wardConnectionsQueryKey } from '@/service/query/ward';
+import { wardTodayMedicationQueryKey } from '@/service/query/ward/medication';
 import { CommonResponse } from '@/service/interface/common';
 import { IConnectionItem } from '@/service/interface/connection';
 import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/ward/connection';
@@ -53,6 +55,11 @@ function getPushRoute(data?: MessagePayload['data'], role?: ConnectionTargetRole
       return role === 'WARD' ? '/ward/guardians' : '/guardian/wards';
     case 'WARD_SOS':
       return '/guardian/sos';
+    case 'MEDICATION_REMINDER':
+      return '/ward/medication';
+    case 'MEDICATION_MISSED':
+    case 'MEDICATION_STOPPED':
+      return '/guardian/medication';
     default:
       return role === 'WARD' ? '/ward' : '/guardian';
   }
@@ -79,6 +86,12 @@ function getConnectionPushNotification(data?: MessagePayload['data']) {
         body: `${data?.wardName ?? '피보호자'}님이 긴급 도움을 요청했습니다.`,
         title: '긴급 SOS',
       };
+    case 'MEDICATION_REMINDER':
+      return { body: '복용 시각이 되었습니다.', title: '복약 알림' };
+    case 'MEDICATION_MISSED':
+      return { body: '체크되지 않은 복약이 있습니다.', title: '복약 확인 요청' };
+    case 'MEDICATION_STOPPED':
+      return { body: '복약 일정이 중지되었습니다. 다시 등록해 주세요.', title: '복약 일정 중지' };
     default:
       return { body: '', title: '알림' };
   }
@@ -144,7 +157,13 @@ function getNotificationDedupeKey(data?: MessagePayload['data']) {
   if (!data?.type) return null;
   if (data.sosEventId) return `${data.type}:sos:${data.sosEventId}`;
   if (data.connectionId) return `${data.type}:connection:${data.connectionId}`;
+  if (data.medicationId) return `${data.type}:medication:${data.medicationId}:${data.attempt ?? ''}`;
+  if (data.wardId && data.doseDate) return `${data.type}:ward:${data.wardId}:${data.doseDate}`;
   return null;
+}
+
+function isMedicationPush(data?: MessagePayload['data']) {
+  return Boolean(data?.type && data.type.startsWith('MEDICATION_'));
 }
 
 function getConnectionStatusFromPush(data?: MessagePayload['data']): IConnectionItem['status'] | null {
@@ -283,6 +302,17 @@ export default function PushNotificationListener() {
     router.refresh();
   }, [queryClient, router]);
 
+  const refreshMedicationPage = useCallback(
+    async (data?: MessagePayload['data']) => {
+      // MEDICATION_REMINDER는 피보호자의 오늘 일정, MISSED/STOPPED는 보호자의 카드 목록에 영향을 준다
+      const queryKey = data?.type === 'MEDICATION_REMINDER' ? wardTodayMedicationQueryKey : guardianMedicationQueryKey;
+      await queryClient.invalidateQueries({ queryKey });
+      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      router.refresh();
+    },
+    [queryClient, router],
+  );
+
   const handleConnectionAction = async (toast: PushToast, action: 'accept' | 'refuse') => {
     const connectionId = getConnectionId(toast.data);
     if (!connectionId || processingToastIds.includes(toast.id)) return;
@@ -329,9 +359,10 @@ export default function PushNotificationListener() {
         void refreshConnectionPage(payload.data);
       }
       if (isSosPush(payload.data)) void refreshSosPage();
+      if (isMedicationPush(payload.data)) void refreshMedicationPage(payload.data);
       addToast(toast);
     });
-  }, [addToast, currentRole, refreshConnectionPage, refreshSosPage]);
+  }, [addToast, currentRole, refreshConnectionPage, refreshMedicationPage, refreshSosPage]);
 
   useEffect(() => {
     const handleLocalPush = (event: Event) => {
@@ -350,12 +381,13 @@ export default function PushNotificationListener() {
         void refreshConnectionPage(detail.data);
       }
       if (isSosPush(detail.data)) void refreshSosPage();
+      if (isMedicationPush(detail.data)) void refreshMedicationPage(detail.data);
       addToast(toast);
     };
 
     window.addEventListener('careai:push', handleLocalPush);
     return () => window.removeEventListener('careai:push', handleLocalPush);
-  }, [addToast, currentRole, refreshConnectionPage, refreshSosPage]);
+  }, [addToast, currentRole, refreshConnectionPage, refreshMedicationPage, refreshSosPage]);
 
   if (toasts.length === 0) return null;
 

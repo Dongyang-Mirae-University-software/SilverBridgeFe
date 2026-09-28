@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { DashboardProvider } from '@/components/layout/dashboard/DashboardContext';
@@ -18,6 +18,7 @@ import { getUserProfileData } from '@/utils/auth/userProfile';
 import { getRealtimeNotification } from '@/utils/dashboard/realtime';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
+import { applyMedicationTakenToWardCache } from '@/service/query/ward/medication';
 import styles from './WardLayout.module.css';
 
 const cx = classNames.bind(styles);
@@ -90,12 +91,20 @@ function useWardSettings(
 }
 
 function useWardConnectionSocket(realtimeUserId: string | undefined) {
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     if (!realtimeUserId) return;
     return connectConnectionSocket({
       role,
       userId: realtimeUserId,
       onMessage: payload => {
+        // 다른 기기·탭에서 체크한 경우의 동기화 — 알림 없이 조용히 갱신
+        if (payload.type === 'MEDICATION_TAKEN') {
+          applyMedicationTakenToWardCache(queryClient, payload);
+          return;
+        }
+
         window.dispatchEvent(
           new CustomEvent('careai:push', {
             detail: {
@@ -106,5 +115,5 @@ function useWardConnectionSocket(realtimeUserId: string | undefined) {
         );
       },
     });
-  }, [realtimeUserId]);
+  }, [queryClient, realtimeUserId]);
 }

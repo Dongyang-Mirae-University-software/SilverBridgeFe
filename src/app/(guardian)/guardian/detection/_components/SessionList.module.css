@@ -27,8 +27,8 @@
 
 .sessionPanelHeader span {
   border-radius: 999px;
-  background: var(--guardian-brand-soft);
-  color: var(--guardian-brand);
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
   font-size: 0.6875rem;
   font-weight: 800;
   padding: 2px 8px;
@@ -88,14 +88,14 @@
 }
 
 .sessionCard:hover {
-  background: var(--guardian-brand-soft);
-  border-color: var(--guardian-line);
+  background: var(--sb-brand-50);
+  border-color: var(--sb-line);
   transform: translateY(-1px);
 }
 
 .sessionCard.active {
-  background: var(--guardian-brand-soft);
-  border-color: var(--guardian-brand);
+  background: var(--sb-brand-50);
+  border-color: var(--sb-brand);
   box-shadow: 0 8px 20px rgba(37, 77, 112, 0.12);
 }
 
@@ -131,7 +131,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 8px;
-  color: var(--guardian-brand);
+  color: var(--sb-brand);
   font-size: 0.75rem;
   font-weight: 850;
 }
