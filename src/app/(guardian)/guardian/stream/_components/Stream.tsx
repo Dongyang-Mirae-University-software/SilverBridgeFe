@@ -6,8 +6,8 @@ import { Icon } from '@/components/Icon';
 import { Tabs } from '@/components/Tabs';
 import styles from './Stream.module.css';
 
-type Tab = 'live' | 'manual';
 type CameraFacing = 'user' | 'environment' | 'screen';
+type AdminTool = 'manual' | 'camera';
 type StreamStatus = 'off' | 'ready' | 'streaming';
 
 const DEFAULT_CAM_ID = 'ipad-room-001';
@@ -20,8 +20,6 @@ const FACING_OPTIONS: { value: CameraFacing; label: string; icon: 'cameraFlip' |
 ];
 
 export default function Stream() {
-  const [tab, setTab] = useState<Tab>('live');
-
   /* ── 실시간 상태 ── */
   const [facing, setFacing] = useState<CameraFacing>('user');
   const [fps, setFps] = useState(5);
@@ -31,6 +29,7 @@ export default function Stream() {
   const [queueCount, setQueueCount] = useState(0);
   const [isStoppingLive, setIsStoppingLive] = useState(false);
   const [liveMsg, setLiveMsg] = useState('');
+  const [adminTool, setAdminTool] = useState<AdminTool>('manual');
 
   /* ── 수동 업로드 상태 ── */
   const [manualSessionId, setManualSessionId] = useState('stream_001');
@@ -40,8 +39,7 @@ export default function Stream() {
   const [manualMsg, setManualMsg] = useState('');
   const [manualLoading, setManualLoading] = useState(false);
 
-  /* ── 카메라 등록 (접이식) ── */
-  const [showCamReg, setShowCamReg] = useState(false);
+  /* ── 카메라 등록 ── */
   const [camRegForm, setCamRegForm] = useState({
     cameraNo: 'CAM-001',
     identifier: DEFAULT_CAM_ID,
@@ -256,99 +254,115 @@ export default function Stream() {
   /* ── 상태 표시 ── */
   const statusLabel = status === 'off' ? '오프라인' : status === 'ready' ? '카메라 켜짐' : '송출 중';
   const statusDot = status === 'off' ? styles.dotOff : status === 'ready' ? styles.dotReady : styles.dotLive;
+  const selectedSource = FACING_OPTIONS.find(option => option.value === facing)?.label ?? '정면 카메라';
 
   return (
     <div className={styles.page}>
-      {/* 탭 */}
-      <Tabs
-        ariaLabel="송출 모드 탭"
-        items={[
-          { value: 'live', label: '실시간 송출' },
-          { value: 'manual', label: '수동 업로드' },
-        ]}
-        onChange={setTab}
-        size="sm"
-        value={tab}
-      />
-
-      {/* ── 실시간 송출 ── */}
-      {tab === 'live' && (
-        <div className={styles.livePanel}>
-          {/* STEP 1 — 미디어 선택 */}
-          <div className={styles.step}>
-            <span className={styles.stepNum}>1</span>
-            <div className={styles.stepBody}>
-              <p className={styles.stepTitle}>카메라 / 화면 선택</p>
-              <div className={styles.facingGrid}>
-                {FACING_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    className={`${styles.facingCard} ${facing === opt.value ? styles.facingActive : ''}`}
-                    disabled={status !== 'off'}
-                    onClick={() => handleFacingChange(opt.value)}
-                  >
-                    <Icon name={opt.icon} size={22} className={styles.facingIcon} />
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
-              </div>
+      <section className={styles.guide}>
+        <span className={styles.guideIcon}>
+          <Icon name="camera" size={26} />
+        </span>
+        <div className={styles.guideCopy}>
+          <strong>보여줄 화면을 선택하고 송출을 시작하세요</strong>
+          <span>송출 전 미리보기로 화면을 확인할 수 있습니다.</span>
+        </div>
+        <span className={`${styles.statusDot} ${statusDot}`} aria-live="polite">
+          {statusLabel}
+        </span>
+      </section>
+      <div className={styles.livePanel}>
+        {/* STEP 1 — 미디어 선택 */}
+        <div className={styles.step}>
+          <span className={styles.stepNum}>1</span>
+          <div className={styles.stepBody}>
+            <div className={styles.stepHeading}>
+              <p className={styles.stepTitle}>무엇을 송출할까요?</p>
+              <span>사용할 카메라나 화면을 선택하세요.</span>
+            </div>
+            <div className={styles.facingGrid}>
+              {FACING_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`${styles.facingCard} ${facing === opt.value ? styles.facingActive : ''}`}
+                  disabled={status !== 'off'}
+                  aria-pressed={facing === opt.value}
+                  onClick={() => handleFacingChange(opt.value)}
+                >
+                  <span className={styles.facingIconBox}>
+                    <Icon name={opt.icon} size={26} />
+                  </span>
+                  <span>{opt.label}</span>
+                  {facing === opt.value && <small>선택됨</small>}
+                </button>
+              ))}
             </div>
           </div>
+        </div>
 
-          {/* STEP 2 — 미리보기 */}
-          <div className={styles.step}>
-            <span className={styles.stepNum}>2</span>
-            <div className={styles.stepBody}>
-              <p className={styles.stepTitle}>미리보기</p>
-              <div className={styles.videoBox}>
-                <video ref={videoRef} autoPlay playsInline muted className={styles.video} />
-                <canvas ref={canvasRef} className={styles.hiddenCanvas} />
-                {status === 'off' && (
-                  <div className={styles.videoPlaceholder}>
-                    <span>카메라를 켜면 여기에 화면이 표시됩니다</span>
-                  </div>
-                )}
-              </div>
-              <div className={styles.mediaCtrl}>
-                {status === 'off' ? (
-                  <button type="button" className={styles.btnPrimary} onClick={handleStartMedia}>
-                    {facing === 'screen' ? (
-                      <>
-                        <Icon name="monitor" size={18} className={styles.btnIcon} /> 화면 켜기
-                      </>
-                    ) : (
-                      <>
-                        <Icon name="camera" size={18} className={styles.btnIcon} /> 카메라 켜기
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={styles.btnDanger}
-                    disabled={isStoppingLive}
-                    onClick={handleStopMedia}
-                  >
-                    {isStoppingLive ? '종료 중' : '송출 종료'}
-                  </button>
-                )}
-              </div>
+        {/* STEP 2 — 미리보기 */}
+        <div className={styles.step}>
+          <span className={styles.stepNum}>2</span>
+          <div className={styles.stepBody}>
+            <div className={styles.stepHeading}>
+              <p className={styles.stepTitle}>화면을 확인하세요</p>
+              <span>
+                {status === 'off' ? `${selectedSource} 미리보기를 먼저 켜주세요.` : '아래 화면이 그대로 송출됩니다.'}
+              </span>
+            </div>
+            <div className={styles.videoBox}>
+              <video ref={videoRef} autoPlay playsInline muted className={styles.video} />
+              <canvas ref={canvasRef} className={styles.hiddenCanvas} />
+              <span className={styles.previewBadge}>{selectedSource}</span>
+              {status === 'streaming' && <span className={styles.liveBadge}>LIVE</span>}
+              {status === 'off' && (
+                <div className={styles.videoPlaceholder}>
+                  <span className={styles.placeholderIcon}>
+                    <Icon name={facing === 'screen' ? 'monitor' : 'camera'} size={32} />
+                  </span>
+                  <strong>아직 미리보기가 꺼져 있어요</strong>
+                  <span>아래 버튼을 눌러 화면을 확인하세요.</span>
+                </div>
+              )}
+            </div>
+            <div className={styles.mediaCtrl}>
+              {status === 'off' ? (
+                <button type="button" className={styles.btnPrimary} onClick={handleStartMedia}>
+                  {facing === 'screen' ? (
+                    <>
+                      <Icon name="monitor" size={18} className={styles.btnIcon} /> 화면 미리보기 켜기
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="camera" size={18} className={styles.btnIcon} /> 카메라 미리보기 켜기
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button type="button" className={styles.btnDanger} disabled={isStoppingLive} onClick={handleStopMedia}>
+                  미리보기 끄기
+                </button>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* STEP 3 — 송출 */}
-          <div className={`${styles.step} ${status === 'off' ? styles.stepDisabled : ''}`}>
-            <span className={styles.stepNum}>3</span>
-            <div className={styles.stepBody}>
-              <div className={styles.stepTitleRow}>
-                <p className={styles.stepTitle}>송출 설정 및 시작</p>
-                <span className={`${styles.statusDot} ${statusDot}`}>{statusLabel}</span>
-              </div>
+        {/* STEP 3 — 송출 */}
+        <div className={`${styles.step} ${status === 'off' ? styles.stepDisabled : ''}`}>
+          <span className={styles.stepNum}>3</span>
+          <div className={styles.stepBody}>
+            <div className={styles.stepTitleRow}>
+              <p className={styles.stepTitle}>보호자에게 송출하기</p>
+              <span className={`${styles.statusDot} ${statusDot}`} aria-live="polite">
+                {statusLabel}
+              </span>
+            </div>
 
+            <details className={styles.streamSettings}>
+              <summary>고급 송출 설정</summary>
               <div className={styles.settingsRow}>
                 <label className={styles.settingField}>
-                  <span>Session ID</span>
+                  <span>송출 이름</span>
                   <input
                     value={liveSessionName}
                     onChange={e => setLiveSessionName(e.target.value)}
@@ -374,136 +388,158 @@ export default function Stream() {
                   />
                 </label>
               </div>
+            </details>
 
-              <div className={styles.streamCtrl}>
-                {status !== 'streaming' ? (
-                  <button
-                    type="button"
-                    className={styles.btnStart}
-                    disabled={status === 'off'}
-                    onClick={handleStartStreaming}
-                  >
-                    ▶ 송출 시작
-                  </button>
-                ) : (
-                  <button type="button" className={styles.btnStop} disabled={isStoppingLive} onClick={handleStopMedia}>
-                    {isStoppingLive ? '■ 종료 중' : '■ 송출 중지'}
-                  </button>
-                )}
-                {status === 'streaming' && queueCount > 0 && (
-                  <span className={styles.queueBadge}>대기 {queueCount}장</span>
-                )}
-              </div>
-
-              {liveMsg && <p className={styles.errMsg}>{liveMsg}</p>}
+            <div className={styles.streamCtrl}>
+              {status !== 'streaming' ? (
+                <button
+                  type="button"
+                  className={styles.btnStart}
+                  disabled={status === 'off'}
+                  onClick={handleStartStreaming}
+                >
+                  송출 시작
+                </button>
+              ) : (
+                <button type="button" className={styles.btnStop} disabled={isStoppingLive} onClick={handleStopMedia}>
+                  {isStoppingLive ? '송출을 종료하고 있어요' : '송출 종료'}
+                </button>
+              )}
+              {status === 'streaming' && queueCount > 0 && (
+                <span className={styles.queueBadge}>대기 {queueCount}장</span>
+              )}
             </div>
+            <p className={`${styles.stateGuide} ${status === 'streaming' ? styles.stateGuideLive : ''}`}>
+              {status === 'off' && '먼저 미리보기를 켜서 화면을 확인하세요.'}
+              {status === 'ready' && '아직 전송되지 않았습니다. 화면 확인 후 송출 시작을 눌러주세요.'}
+              {status === 'streaming' && '현재 화면이 보호자에게 전송되고 있습니다.'}
+            </p>
+
+            {liveMsg && <p className={styles.errMsg}>{liveMsg}</p>}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* ── 수동 업로드 ── */}
-      {tab === 'manual' && (
-        <div className={styles.manualPanel}>
-          <div className={styles.manualGrid}>
-            <label className={styles.field}>
-              <span>Session ID</span>
-              <input value={manualSessionId} onChange={e => setManualSessionId(e.target.value)} />
-            </label>
-            <label className={styles.field}>
-              <span>Camera Identifier</span>
-              <input value={manualCamId} onChange={e => setManualCamId(e.target.value)} />
-            </label>
-          </div>
+      <details className={styles.adminSection}>
+        <summary className={styles.adminSummary} aria-label="관리자 설정 열기" title="관리자 설정">
+          <Icon name="settings" size={22} />
+        </summary>
+        <div className={styles.adminContent}>
+          <Tabs
+            ariaLabel="관리자 설정 종류"
+            items={[
+              { value: 'manual', label: '사진 직접 보내기' },
+              { value: 'camera', label: '카메라 등록' },
+            ]}
+            value={adminTool}
+            onChange={setAdminTool}
+            size="sm"
+            stretch
+          />
+          {adminTool === 'manual' && (
+            <div className={styles.toolPanel}>
+              <div className={styles.manualPanel}>
+                <div className={styles.manualGrid}>
+                  <label className={styles.field}>
+                    <span>송출 이름</span>
+                    <input value={manualSessionId} onChange={e => setManualSessionId(e.target.value)} />
+                  </label>
+                  <label className={styles.field}>
+                    <span>카메라 식별값</span>
+                    <input value={manualCamId} onChange={e => setManualCamId(e.target.value)} />
+                  </label>
+                </div>
 
-          {activeSession && (
-            <div className={styles.activeSessionBadge}>
-              세션 활성 중: <strong>{activeSession}</strong>
+                {activeSession && (
+                  <div className={styles.activeSessionBadge}>
+                    전송 준비 완료: <strong>{activeSession}</strong>
+                  </div>
+                )}
+
+                <label className={styles.field}>
+                  <span>보낼 사진 선택</span>
+                  <input type="file" accept="image/jpeg" onChange={e => setManualFile(e.target.files?.[0] ?? null)} />
+                </label>
+
+                <div className={styles.manualBtns}>
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    disabled={manualLoading || !!activeSession}
+                    onClick={handleCreateSession}
+                  >
+                    전송 준비
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    disabled={manualLoading || !manualFile || !activeSession}
+                    onClick={handleUploadFrame}
+                  >
+                    선택한 사진 보내기
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnDanger}
+                    disabled={manualLoading || !activeSession}
+                    onClick={handleStopSession}
+                  >
+                    전송 종료
+                  </button>
+                </div>
+
+                {manualMsg && <p className={styles.infoMsg}>{manualMsg}</p>}
+              </div>
             </div>
           )}
 
-          <label className={styles.field}>
-            <span>JPEG 파일 선택</span>
-            <input type="file" accept="image/jpeg" onChange={e => setManualFile(e.target.files?.[0] ?? null)} />
-          </label>
-
-          <div className={styles.manualBtns}>
-            <button
-              type="button"
-              className={styles.btnPrimary}
-              disabled={manualLoading || !!activeSession}
-              onClick={handleCreateSession}
-            >
-              세션 생성
-            </button>
-            <button
-              type="button"
-              className={styles.btnSecondary}
-              disabled={manualLoading || !manualFile || !activeSession}
-              onClick={handleUploadFrame}
-            >
-              프레임 업로드
-            </button>
-            <button
-              type="button"
-              className={styles.btnDanger}
-              disabled={manualLoading || !activeSession}
-              onClick={handleStopSession}
-            >
-              송출 종료
-            </button>
-          </div>
-
-          {manualMsg && <p className={styles.infoMsg}>{manualMsg}</p>}
-        </div>
-      )}
-
-      {/* ── 카메라 등록 (고급) ── */}
-      <div className={styles.advancedWrap}>
-        <button type="button" className={styles.advancedToggle} onClick={() => setShowCamReg(v => !v)}>
-          <Icon name="gear" size={18} className={styles.btnIcon} /> 카메라 등록 (고급) {showCamReg ? '▲' : '▼'}
-        </button>
-        {showCamReg && (
-          <form className={styles.camRegForm} onSubmit={handleCamReg}>
-            <div className={styles.manualGrid}>
-              {(
-                [
-                  ['cameraNo', '카메라 번호', 'CAM-001'],
-                  ['identifier', 'Identifier', 'ipad-room-001'],
-                  ['name', '이름', '거실 카메라'],
-                  ['streamUrl', '스트림 URL', 'rtsp://...'],
-                  ['targetUserId', '피보호자 ID', ''],
-                  ['guardianUserId', '보호자 ID', ''],
-                  ['locationName', '위치', '거실'],
-                ] as [keyof typeof camRegForm, string, string][]
-              ).map(([key, label, ph]) => (
-                <label key={key} className={styles.field}>
-                  <span>{label}</span>
-                  <input
-                    placeholder={ph}
-                    value={String(camRegForm[key])}
-                    onChange={e => setCamRegForm(f => ({ ...f, [key]: e.target.value }))}
-                  />
-                </label>
-              ))}
-              <label className={styles.field}>
-                <span>스트림 타입</span>
-                <select
-                  value={camRegForm.streamType}
-                  onChange={e => setCamRegForm(f => ({ ...f, streamType: e.target.value }))}
-                >
-                  <option value="rtsp">RTSP</option>
-                  <option value="http">HTTP</option>
-                  <option value="webrtc">WebRTC</option>
-                </select>
-              </label>
+          {adminTool === 'camera' && (
+            <div className={styles.toolPanel}>
+              <form className={styles.camRegForm} onSubmit={handleCamReg}>
+                <div className={styles.manualGrid}>
+                  {(
+                    [
+                      ['cameraNo', '카메라 번호', 'CAM-001'],
+                      ['identifier', '카메라 식별값', 'ipad-room-001'],
+                      ['name', '이름', '거실 카메라'],
+                      ['streamUrl', '카메라 연결 주소', 'rtsp://...'],
+                      ['targetUserId', '피보호자 ID', ''],
+                      ['guardianUserId', '보호자 ID', ''],
+                      ['locationName', '위치', '거실'],
+                    ] as [keyof typeof camRegForm, string, string][]
+                  ).map(([key, label, ph]) => (
+                    <label key={key} className={styles.field}>
+                      <span>{label}</span>
+                      <input
+                        placeholder={ph}
+                        value={String(camRegForm[key])}
+                        onChange={e => setCamRegForm(f => ({ ...f, [key]: e.target.value }))}
+                      />
+                    </label>
+                  ))}
+                  <label className={styles.field}>
+                    <span>연결 방식</span>
+                    <select
+                      value={camRegForm.streamType}
+                      onChange={e => setCamRegForm(f => ({ ...f, streamType: e.target.value }))}
+                    >
+                      <option value="rtsp">RTSP</option>
+                      <option value="http">HTTP</option>
+                      <option value="webrtc">WebRTC</option>
+                    </select>
+                  </label>
+                </div>
+                {camRegMsg && (
+                  <p className={`${styles.infoMsg} ${camRegOk === false ? styles.errMsg : ''}`}>{camRegMsg}</p>
+                )}
+                <button type="submit" className={styles.btnPrimary}>
+                  카메라 등록
+                </button>
+              </form>
             </div>
-            {camRegMsg && <p className={`${styles.infoMsg} ${camRegOk === false ? styles.errMsg : ''}`}>{camRegMsg}</p>}
-            <button type="submit" className={styles.btnPrimary}>
-              등록
-            </button>
-          </form>
-        )}
-      </div>
+          )}
+        </div>
+      </details>
     </div>
   );
 }
