@@ -220,6 +220,49 @@
   box-shadow: 0 8px 18px rgba(52, 58, 49, 0.06);
 }
 
+.toolbarMetaGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.targetBadge {
+  padding: 6px 12px;
+  border: 1px solid #d9d2c3;
+  border-radius: 999px;
+  background: #f8f5ee;
+  color: #4a4a40;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.targetBadgeWard {
+  border-color: #1f6b4a;
+  background: #e5f2ea;
+  color: #1f6b4a;
+}
+
+.contextTarget {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.contextTarget select {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #d9d2c3;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 14px;
+}
+
 .contextSummary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

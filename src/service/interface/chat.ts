@@ -10,9 +10,14 @@ export type ChatToolName =
 export interface ChatUiPromptData {
   kind: ChatUiKind;
   field: string;
-  options?: string[];
+  options?: Array<string | ChatUiOption>;
   label?: string;
   placeholder?: string;
+}
+
+export interface ChatUiOption {
+  value: string;
+  label: string;
 }
 
 export interface ChatMessage {

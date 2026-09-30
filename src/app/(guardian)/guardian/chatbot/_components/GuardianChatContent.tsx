@@ -10,6 +10,8 @@ import classNames from 'classnames/bind';
 import { Icon } from '@/components/Icon';
 import { getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
+import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
+import type { IConnectionItem } from '@/service/interface/connection';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import type { ChatContext, ChatMessage } from '@/service/interface/chat';
 import { calcAge } from '@/service/interface/chat';
@@ -49,6 +51,23 @@ function profileToContext(profile: IUserProfile): ChatContext {
   };
 }
 
+function wardToContext(ward: IConnectionItem, guardianId?: string): ChatContext {
+  return {
+    name: ward.partnerName || undefined,
+    phone: ward.partnerPhone || undefined,
+    email: ward.partnerEmail || undefined,
+    gender: ward.partnerGender?.toLowerCase() || undefined,
+    birthDate: ward.partnerBirthDate || undefined,
+    age: ward.partnerBirthDate ? calcAge(ward.partnerBirthDate) : undefined,
+    postcode: ward.partnerPostcode || undefined,
+    address: ward.partnerAddress || undefined,
+    addressDetail: ward.partnerAddressDetail || undefined,
+    location: ward.partnerAddress || undefined,
+    guardianId: Number(guardianId) || undefined,
+    role: 'WARD',
+  };
+}
+
 function formatClock(value?: string) {
   if (!value) return '-';
   return dayjs(value).format('A h:mm');
@@ -79,6 +98,12 @@ export default function GuardianChatContent() {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const userId = profile?.id ?? '';
+  const { data: connectionsResponse } = useQuery({ ...guardianConnectionsQueryOptions, enabled: !!userId });
+  const wards = useMemo(
+    () => (connectionsResponse?.data ?? []).filter(item => item.status === 'ACTIVE'),
+    [connectionsResponse],
+  );
+  const [targetId, setTargetId] = useState('');
 
   const [sessionId, setSessionId] = useState(makeSessionId);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [buildWelcomeMessage()]);
@@ -288,12 +313,19 @@ export default function GuardianChatContent() {
     setHelpOpen(prev => !prev);
   }
 
+  function handleTargetChange(nextId: string) {
+    setTargetId(nextId);
+    const ward = wards.find(item => item.partnerUserId === nextId);
+    setContext(ward ? wardToContext(ward, profile?.id) : profile ? profileToContext(profile) : {});
+  }
+
   function handleNewSession() {
     setSessionId(makeSessionId());
     setMessages([buildWelcomeMessage(profile?.name)]);
     setInput('');
     setFallback(false);
     setContext(profile ? profileToContext(profile) : {});
+    setTargetId('');
     setContextOpen(false);
     setHelpOpen(false);
     textareaRef.current?.focus();
@@ -344,9 +376,19 @@ export default function GuardianChatContent() {
                 </button>
               </div>
 
-              <span className={styles.toolbarMeta}>
-                최근 답변 <strong>{formatClock(lastUpdatedAt)}</strong>
-              </span>
+              <div className={styles.toolbarMetaGroup}>
+                <button
+                  type="button"
+                  className={cx('targetBadge', targetId && 'targetBadgeWard')}
+                  title="상담 컨텍스트 열기"
+                  onClick={() => setContextOpen(true)}
+                >
+                  {targetId ? `피보호자 · ${context.name ?? '-'}` : `나 · ${profile?.name ?? '보호자'}`}
+                </button>
+                <span className={styles.toolbarMeta}>
+                  최근 답변 <strong>{formatClock(lastUpdatedAt)}</strong>
+                </span>
+              </div>
             </div>
 
             {helpOpen && (
@@ -371,6 +413,18 @@ export default function GuardianChatContent() {
 
           {contextOpen && (
             <section className={styles.contextPanel}>
+              <label className={styles.contextTarget}>
+                <span>상담 대상</span>
+                <select value={targetId} onChange={e => handleTargetChange(e.target.value)}>
+                  <option value="">나 (보호자{profile?.name ? ` · ${profile.name}` : ''})</option>
+                  {wards.map(ward => (
+                    <option key={ward.partnerUserId} value={ward.partnerUserId}>
+                      {ward.partnerName}
+                      {ward.relation ? ` (${ward.relation})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <div className={styles.contextSummary}>
                 {contextSummary.map(item => (
                   <div key={item.label} className={styles.contextItem}>

@@ -24,17 +24,20 @@ export default function ChatUiPrompt({ ui, active, onSelect }: Props) {
       <div className={styles.wrap}>
         {ui.label && <p className={styles.label}>{ui.label}</p>}
         <div className={styles.chips}>
-          {(ui.options ?? []).map(opt => (
-            <button
-              key={opt}
-              type="button"
-              disabled={!active}
-              className={styles.chip}
-              onClick={() => apply(opt)}
-            >
-              {opt}
-            </button>
-          ))}
+          {(ui.options ?? []).map(raw => {
+            const opt = typeof raw === 'string' ? { value: raw, label: raw } : raw;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={!active}
+                className={styles.chip}
+                onClick={() => apply(opt.value)}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
         {!active && <p className={styles.inactiveNote}>이전 대화의 선택지입니다.</p>}
       </div>
