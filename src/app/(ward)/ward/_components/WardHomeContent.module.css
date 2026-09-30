@@ -26,6 +26,15 @@
   transform: translateY(-2px);
 }
 
+.actionCard.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actionCard.disabled:hover {
+  transform: none;
+}
+
 .iconWrap {
   display: grid;
   place-items: center;

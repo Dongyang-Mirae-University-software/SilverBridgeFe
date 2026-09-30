@@ -28,7 +28,9 @@ const HOME_ACTIONS = [
     icon: 'brain' as const,
     label: '치매 예방 게임',
     tone: 'sand',
-    description: '인지 건강을 위한 활동입니다.',
+    description: '준비 중입니다.',
+    // 임시: 아직 미공개라 카드는 보이되 클릭은 막는다. 공개할 때 이 줄만 지울 것.
+    disabled: true,
   },
 ] as const;
 
@@ -36,18 +38,27 @@ export function WardHomeContent() {
   return (
     <div className={cx('homeGrid')}>
       {HOME_ACTIONS.map(action => {
-        return (
-          <Link
-            key={action.href}
-            className={cx('actionCard', action.tone)}
-            href={action.href}
-            aria-label={action.label}
-          >
+        const content = (
+          <>
             <span className={cx('iconWrap')}>
               <Icon name={action.icon} size={42} className={cx('icon')} />
             </span>
             <strong>{action.label}</strong>
             <span>{action.description}</span>
+          </>
+        );
+
+        if ('disabled' in action && action.disabled) {
+          return (
+            <div key={action.href} className={cx('actionCard', action.tone, 'disabled')} aria-disabled="true">
+              {content}
+            </div>
+          );
+        }
+
+        return (
+          <Link key={action.href} className={cx('actionCard', action.tone)} href={action.href} aria-label={action.label}>
+            {content}
           </Link>
         );
       })}

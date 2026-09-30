@@ -1,0 +1,157 @@
+.page {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  width: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbarTitle {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 1.125rem;
+  font-weight: 900;
+}
+
+.toolbarSub {
+  display: block;
+  margin-top: 4px;
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.emptyText {
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--sb-ink-mute);
+  font-size: 0.875rem;
+  padding: 24px;
+  text-align: center;
+}
+
+.list {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wardName {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 1.125rem;
+  font-weight: 900;
+}
+
+.meta {
+  display: block;
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.total {
+  text-align: right;
+}
+
+.total strong {
+  color: var(--sb-brand);
+  font-size: 1.375rem;
+  font-weight: 900;
+}
+
+.games {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.game {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--sb-line-soft);
+  border-left: 4px solid var(--game-color, var(--sb-brand));
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+}
+
+.gameHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--sb-ink);
+  font-size: 0.9375rem;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--game-color, var(--sb-brand));
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.badge.done {
+  background: var(--game-color, var(--sb-brand));
+  color: #fff;
+}
+
+.badge.idle {
+  color: var(--sb-ink-mute);
+}
+
+.bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--game-color, var(--sb-brand));
+  transition: width 0.3s;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}

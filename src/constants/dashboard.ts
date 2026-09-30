@@ -3,7 +3,8 @@ import { NavItem, PageKey } from '@/components/layout/dashboard/types';
 export const WARD_NAV: NavItem[] = [
   { href: '/ward', icon: 'home', label: '홈', key: 'home' },
   { href: '/ward/sos', icon: 'phone', label: '긴급 전화', key: 'sos' },
-  { href: '/ward/game', icon: 'game', label: '치매 예방 게임', key: 'game' },
+  // 치매 예방 게임: 아직 미공개. 사이드바에서만 숨김(/ward/game 직접 접근은 가능)
+  // { href: '/ward/game', icon: 'game', label: '치매 예방 게임', key: 'game' },
   { href: '/ward/medication', icon: 'heart', label: '복약 알림', key: 'medication' },
   { href: '/ward/guardians', icon: 'users', label: '내 보호자', key: 'guardians' },
   { href: '/ward/notices', icon: 'bell', label: '공지사항', key: 'notices' },
@@ -18,6 +19,8 @@ export const GUARDIAN_NAV: NavItem[] = [
   { href: '/guardian/chatbot', icon: 'message', label: 'AI 의료 챗봇', key: 'chatbot' },
   { href: '/guardian/wards', icon: 'users', label: '피보호자 관리', key: 'wards' },
   { href: '/guardian/medication', icon: 'heart', label: '복약 관리', key: 'medication-management' },
+  // 게임 관리: 아직 미공개. 사이드바에서만 숨김(/guardian/game 직접 접근은 가능)
+  // { href: '/guardian/game', icon: 'brain', label: '게임 관리', key: 'game-management' },
   { href: '/guardian/hospital', icon: 'hospital', label: '병원 예약', key: 'hospital' },
   { href: '/guardian/stream', icon: 'camera', label: '화면 송출', key: 'stream' },
   { href: '/guardian/notices', icon: 'bell', label: '공지사항', key: 'notices' },
@@ -44,10 +47,11 @@ export const PAGE_TITLES: Record<PageKey, string> = {
   stream: '화면 송출',
   'sos-history': 'SOS 이력',
   'medication-management': '복약 관리',
+  'game-management': '게임 관리',
 };
 
 export const WARD_ACTIONS = [
   { href: '/ward/sos', label: '긴급전화' },
   { href: '/ward/medication', label: '복약 알림' },
-  { href: '/ward/game', label: '기억력 게임' },
+  // { href: '/ward/game', label: '기억력 게임' },
 ];

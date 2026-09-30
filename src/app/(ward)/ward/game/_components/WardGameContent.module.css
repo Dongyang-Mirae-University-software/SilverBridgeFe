@@ -1,0 +1,43 @@
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gameButton {
+  padding: 10px 18px;
+  border: 2px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  font-size: 1.0625rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.gameButton.active {
+  border-color: var(--sb-brand);
+  background: var(--sb-bg-soft);
+  color: var(--sb-brand);
+}
+
+.frame {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+}
+
+.emptyText {
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  color: var(--sb-ink-mute);
+  font-size: 1rem;
+  padding: 24px;
+  text-align: center;
+}

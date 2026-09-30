@@ -20,7 +20,8 @@ export type PageKey =
   | 'inquiries'
   | 'stream'
   | 'sos-history'
-  | 'medication-management';
+  | 'medication-management'
+  | 'game-management';
 
 export type NavIconName =
   | 'home'
@@ -36,7 +37,8 @@ export type NavIconName =
   | 'alert'
   | 'plus'
   | 'inquiry'
-  | 'camera';
+  | 'camera'
+  | 'brain';
 
 export interface NavItem {
   href: string;
