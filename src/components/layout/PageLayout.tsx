@@ -9,18 +9,22 @@ interface PageLayoutProps {
   title: string;
   description?: string;
   children?: ReactNode;
+  actions?: ReactNode;
+  // true면 화면 높이에 맞춰 늘어나고(스크롤 없이) children이 남은 공간을 채운다.
+  fill?: boolean;
 }
 
 const DEFAULT_DESCRIPTION = '아직 상세 화면을 준비 중입니다.';
 
-export default function PageLayout({ children, description, title }: PageLayoutProps) {
+export default function PageLayout({ actions, children, description, fill, title }: PageLayoutProps) {
   return (
-    <section className={cx('pageLayout')} aria-labelledby="page-layout-title">
+    <section className={cx('pageLayout', { fill })} aria-labelledby="page-layout-title">
       <header className={cx('header')}>
         <div>
           <h1 id="page-layout-title">{title}</h1>
           {description && <p>{description}</p>}
         </div>
+        {actions}
       </header>
 
       <div className={cx(children ? 'content' : 'emptyContent')}>

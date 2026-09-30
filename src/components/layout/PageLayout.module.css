@@ -8,6 +8,11 @@
   overflow-y: auto;
 }
 
+.fill {
+  height: auto;
+  overflow-y: hidden;
+}
+
 .header {
   display: flex;
   flex-shrink: 0;

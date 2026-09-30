@@ -1,0 +1,254 @@
+.page {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  width: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbarTitle {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 1.125rem;
+  font-weight: 900;
+}
+
+.toolbarSub {
+  display: block;
+  margin-top: 4px;
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.select,
+.input,
+.textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 0.9375rem;
+}
+
+.textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.emptyText {
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--sb-ink-mute);
+  font-size: 0.875rem;
+  padding: 24px;
+  text-align: center;
+}
+
+.notice {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.notice.ok {
+  background: #eef8f1;
+  color: #1f7a3f;
+}
+
+.notice.bad {
+  background: #fdf0ee;
+  color: var(--sb-warn);
+}
+
+.booking {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.hospitalList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.hospitalCard {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  color: var(--sb-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.hospitalCard.active {
+  border-color: var(--sb-brand);
+  background: var(--sb-bg-soft);
+}
+
+.hospitalCard:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hospitalName {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.hospitalMeta {
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.fieldLabel {
+  color: var(--sb-ink);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 8px 14px;
+  border: 2px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.chip.active {
+  border-color: var(--sb-brand);
+  background: var(--sb-bg-soft);
+  color: var(--sb-brand);
+}
+
+.submit {
+  padding: 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reservationCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+}
+
+.reservationCard.canceled {
+  opacity: 0.55;
+}
+
+.reservationMain {
+  display: grid;
+  gap: 4px;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-brand);
+  font-size: 0.75rem;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
+.cancelButton {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-warn);
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .booking {
+    grid-template-columns: 1fr;
+  }
+
+  .hospitalList {
+    max-height: 40vh;
+  }
+}
