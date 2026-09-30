@@ -3,23 +3,51 @@ services:
     image: node:22-alpine
     container_name: silver-bridge-fe-dev-web
     working_dir: /app
+    restart: unless-stopped
     env_file:
       - .env.dev
     environment:
       HOST: 0.0.0.0
       PORT: 3000
       NODE_ENV: development
-    command: sh -c "npm ci --ignore-scripts && npm run dev:docker"
+    # node_modules 볼륨이 이미 채워져 있으면 설치를 건너뛴다.
+    # npm ci는 매번 node_modules를 지우고 새로 받으므로, 무조건 실행하면
+    # 컨테이너 재시작(=서버 재부팅)마다 수 분간 사이트가 뜨지 않는다.
+    command: sh -c "[ -d node_modules/next ] || npm ci --ignore-scripts; npm run dev:docker"
+    # 호스트 루프백에만 publish (BE dmu-dev-api와 동일 정책):
+    # 외부에서 6510 직접 접근을 차단. nginx(같은 호스트)가 localhost:6510으로
+    # 프록시하므로 devdmu.gosky.kr 접근에는 영향 없음.
     ports:
-      - '6510:3000'
+      - '127.0.0.1:6510:3000'
     volumes:
       - .:/app
       - silver-bridge-fe-dev-node-modules:/app/node_modules
       - silver-bridge-fe-dev-next:/app/.next
     networks:
       - silver-bridge-fe-dev-net
+    # sh -c 아래 자식 프로세스의 좀비 회수 및 시그널 처리
+    init: true
     stdin_open: true
     tty: true
+    # next dev 부팅 + 최초 컴파일이 느려 start_period를 길게 잡는다.
+    # 페이지 렌더링 비용이 없는 TCP 연결 확인으로 체크.
+    healthcheck:
+      test: ['CMD-SHELL', 'nc -z localhost 3000 || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
+    # 컨테이너 로그 무한 증가 방지 (10MB × 5개 rotation)
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
+    # next dev는 관측상 RSS 4GB대까지 사용. 호스트 전체를 잠식하지 않도록 상한을 둔다.
+    deploy:
+      resources:
+        limits:
+          memory: 6g
 networks:
   silver-bridge-fe-dev-net:
     name: silver-bridge-fe-dev-net
