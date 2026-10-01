@@ -1,0 +1,148 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 1.375rem;
+  font-weight: 900;
+}
+
+.subtitle {
+  display: block;
+  margin-top: 4px;
+  color: var(--sb-ink-mute);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.liveButton {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sb-warn);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 850;
+  padding: 10px 16px;
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 800;
+  padding: 8px 14px;
+}
+
+.chip span {
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 1px 7px;
+}
+
+.chip.active {
+  border-color: var(--guardian-line, var(--sb-line));
+  background: var(--sb-ink);
+  color: #fff;
+}
+
+.chip.active span {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.filterHint {
+  margin: -6px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+}
+
+.reminderField {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  color: var(--sb-ink-soft);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.emptyText {
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--sb-ink-mute);
+  font-size: 0.875rem;
+  padding: 24px;
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.pagination button {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  padding: 8px 16px;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pagination span {
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
