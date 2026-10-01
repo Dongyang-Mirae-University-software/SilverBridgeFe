@@ -1,0 +1,6 @@
+.page {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  width: 100%;
+}
