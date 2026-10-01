@@ -12,6 +12,7 @@ import { getUserProfileData } from '@/utils/auth/userProfile';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
 import { applyMedicationTakenToGuardianCache, guardianMedicationQueryKey } from '@/service/query/guardian/medication';
+import { guardianAnomalyHistoryQueryKey } from '@/service/query/guardian/anomaly';
 import styles from './GuardianLayout.module.css';
 
 const cx = classNames.bind(styles);
@@ -49,6 +50,9 @@ function useGuardianConnectionSocket(realtimeUserId: string | undefined) {
         if (payload.type === 'MEDICATION_STOPPED') {
           void queryClient.invalidateQueries({ queryKey: guardianMedicationQueryKey });
         }
+        if (payload.type === 'ANOMALY_DETECTED') {
+          void queryClient.invalidateQueries({ queryKey: guardianAnomalyHistoryQueryKey });
+        }
 
         window.dispatchEvent(
           new CustomEvent('careai:push', {
@@ -62,8 +66,14 @@ function useGuardianConnectionSocket(realtimeUserId: string | undefined) {
                 type: payload.type === 'SOS_TRIGGERED' ? 'WARD_SOS' : payload.type,
                 wardId: payload.wardId ?? '',
                 wardName: payload.wardName ?? '',
+                location: payload.location ?? '',
+                detectedType: payload.detectedType ?? '',
+                detectedTypeLabel: payload.detectedTypeLabel ?? '',
+                sessionId: payload.sessionId ?? '',
+                anomalyEventId: payload.anomalyEventId ?? '',
+                detectedAt: payload.detectedAt ?? '',
               },
-              notification: getRealtimeNotification(payload),
+              notification: getRealtimeNotification(payload, role),
             },
           }),
         );
