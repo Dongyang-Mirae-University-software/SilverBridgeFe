@@ -7,6 +7,8 @@ export interface LiveStreamSession {
   viewer_url?: string;
   fps?: number;
   is_analyzing?: boolean;
+  // 허용 목록(GET /api/guardian/camera)과 매칭됐을 때만 채워지는 방 이름
+  label?: string;
 }
 
 export interface LiveStreamStatus {

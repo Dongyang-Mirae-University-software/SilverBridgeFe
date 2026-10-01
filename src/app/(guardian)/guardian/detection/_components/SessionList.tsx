@@ -8,6 +8,7 @@ const cx = classNames.bind(styles);
 
 interface SessionListProps {
   error: unknown;
+  isAllowlistEmpty: boolean;
   isError: boolean;
   isLoading: boolean;
   onSelectSession: (sessionId: string) => void;
@@ -15,7 +16,20 @@ interface SessionListProps {
   sessions: LiveStreamSession[];
 }
 
-export function SessionList({ error, isError, isLoading, onSelectSession, selectedId, sessions }: SessionListProps) {
+function getSessionCardTitle(session: LiveStreamSession) {
+  const wardName = session.ward_name ?? '피보호자';
+  return session.label ? `${wardName} · ${session.label}` : wardName;
+}
+
+export function SessionList({
+  error,
+  isAllowlistEmpty,
+  isError,
+  isLoading,
+  onSelectSession,
+  selectedId,
+  sessions,
+}: SessionListProps) {
   return (
     <aside className={cx('sessionPanel')}>
       <div className={cx('sessionPanelHeader')}>
@@ -31,6 +45,8 @@ export function SessionList({ error, isError, isLoading, onSelectSession, select
           <br />
           <span style={{ fontSize: 11, opacity: 0.7 }}>{(error as Error)?.message}</span>
         </p>
+      ) : isAllowlistEmpty ? (
+        <p className={cx('sessionEmpty')}>연결된 피보호자의 카메라가 없습니다.</p>
       ) : sessions.length === 0 ? (
         <p className={cx('sessionEmpty')}>현재 송출 중인 세션이 없습니다.</p>
       ) : (
@@ -43,10 +59,9 @@ export function SessionList({ error, isError, isLoading, onSelectSession, select
                 onClick={() => onSelectSession(session.session_id)}
               >
                 <span className={cx('sessionCardTop')}>
-                  <strong>{session.ward_name ?? '피보호자'}</strong>
+                  <strong>{getSessionCardTitle(session)}</strong>
                   {session.is_analyzing && <span className={cx('analyzingBadge')}>AI 분석 중</span>}
                 </span>
-                <span className={cx('sessionId')}>{session.session_id}</span>
                 <span className={cx('sessionTime')}>
                   {formatRelativeDateTime(session.started_at)}
                   <small>{formatDateTime(session.started_at)}</small>

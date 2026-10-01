@@ -16,6 +16,7 @@ export default function GuardianMonitorContent() {
     <div className={cx('monitorPage')}>
       <SessionList
         error={monitor.error}
+        isAllowlistEmpty={monitor.isAllowlistEmpty}
         isError={monitor.isError}
         isLoading={monitor.isLoading}
         onSelectSession={monitor.selectSession}
