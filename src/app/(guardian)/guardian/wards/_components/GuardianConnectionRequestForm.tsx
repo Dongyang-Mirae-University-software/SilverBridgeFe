@@ -64,7 +64,7 @@ export function GuardianConnectionRequestForm() {
           <input
             value={targetId}
             onChange={event => setTargetId(event.target.value)}
-            placeholder="예) WD-2026-0188"
+            placeholder="예) abc123"
             maxLength={20}
             autoComplete="off"
           />
@@ -102,7 +102,11 @@ export function GuardianConnectionRequestForm() {
         <p className={cx('hint')}>
           피보호자 마이페이지에서 확인할 수 있는 회원 ID와 관계를 입력해 주세요. 입력을 마치면 바로 요청을 보냅니다.
         </p>
-        <button className={cx('submitButton')} type="submit" disabled={!targetId.trim() || !requestRelation || isPending}>
+        <button
+          className={cx('submitButton')}
+          type="submit"
+          disabled={!targetId.trim() || !requestRelation || isPending}
+        >
           {isPending ? '요청 중...' : '연결 요청'}
         </button>
       </footer>
