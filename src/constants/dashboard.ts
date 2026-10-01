@@ -22,7 +22,6 @@ export const GUARDIAN_NAV: NavItem[] = [
   // 게임 관리: 아직 미공개. 사이드바에서만 숨김(/guardian/game 직접 접근은 가능)
   // { href: '/guardian/game', icon: 'brain', label: '게임 관리', key: 'game-management' },
   { href: '/guardian/hospital', icon: 'hospital', label: '병원 예약', key: 'hospital' },
-  { href: '/guardian/stream', icon: 'camera', label: '화면 송출', key: 'stream' },
   { href: '/guardian/notices', icon: 'bell', label: '공지사항', key: 'notices' },
   { href: '/guardian/inquiries', icon: 'inquiry', label: '문의하기', key: 'inquiries' },
   { href: '/guardian/settings', icon: 'settings', label: '환경설정', key: 'settings' },
