@@ -6,6 +6,7 @@ export const WARD_NAV: NavItem[] = [
   // 치매 예방 게임: 아직 미공개. 사이드바에서만 숨김(/ward/game 직접 접근은 가능)
   // { href: '/ward/game', icon: 'game', label: '치매 예방 게임', key: 'game' },
   { href: '/ward/medication', icon: 'heart', label: '복약 알림', key: 'medication' },
+  { href: '/ward/camera', icon: 'camera', label: '카메라 등록', key: 'camera-register' },
   { href: '/ward/guardians', icon: 'users', label: '내 보호자', key: 'guardians' },
   { href: '/ward/notices', icon: 'bell', label: '공지사항', key: 'notices' },
   { href: '/ward/settings', icon: 'settings', label: '환경설정', key: 'settings' },
@@ -43,10 +44,10 @@ export const PAGE_TITLES: Record<PageKey, string> = {
   wards: '피보호자 관리',
   'ward-register': '피보호자 등록',
   inquiries: '문의하기',
-  stream: '화면 송출',
   'sos-history': 'SOS 이력',
   'medication-management': '복약 관리',
   'game-management': '게임 관리',
+  'camera-register': '카메라 등록',
 };
 
 export const WARD_ACTIONS = [
