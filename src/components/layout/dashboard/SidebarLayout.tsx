@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import classNames from 'classnames/bind';
 
@@ -33,7 +34,9 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
     <>
       <div className={cx('mobileTopBar')}>
         <div className={cx('topBarBrand')}>
-          <SilverBridgeLogo subtitle={`${getRoleLabel(role)} 웹`} />
+          <Link className={cx('topBarBrandLink')} href={rootPath} aria-label="대시보드로 이동">
+            <SilverBridgeLogo subtitle={`${getRoleLabel(role)} 웹`} />
+          </Link>
           {/* <span>{pageTitle}</span> */}
         </div>
         <button
