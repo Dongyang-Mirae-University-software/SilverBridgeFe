@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { formatDateTime } from '@/utils/format/date';
 import { AnomalyIncident, AnomalyVerdict } from '@/service/interface/guardian/anomaly';
 import { useAnomalyFeedbackMutation } from '@/service/query/guardian/anomaly';
+import { AnomalyClipModal } from './AnomalyClipModal';
 import styles from './AnomalyIncidentCard.module.css';
 
 const cx = classNames.bind(styles);
@@ -18,6 +20,7 @@ const REVIEW_STATUS_LABEL: Record<AnomalyIncident['reviewStatus'], string> = {
 
 export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident }) {
   const feedbackMutation = useAnomalyFeedbackMutation();
+  const [isClipModalOpen, setIsClipModalOpen] = useState(false);
 
   const handleFeedback = (verdict: AnomalyVerdict) => {
     if (feedbackMutation.isPending) return;
@@ -39,6 +42,12 @@ export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident })
         <span className={cx('meta')}>
           {incident.eventCount}회 연속 감지 · 최고 신뢰도 {Math.round(incident.maxConfidence * 100)}%
         </span>
+
+        {incident.clip && (
+          <button type="button" className={cx('clipButton')} onClick={() => setIsClipModalOpen(true)}>
+            ▶ 영상 {incident.clipCount}
+          </button>
+        )}
       </div>
 
       <div className={cx('footer')}>
@@ -73,6 +82,10 @@ export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident })
           )
         )}
       </div>
+
+      {isClipModalOpen && (
+        <AnomalyClipModal incidentId={incident.incidentId} onClose={() => setIsClipModalOpen(false)} />
+      )}
     </li>
   );
 }

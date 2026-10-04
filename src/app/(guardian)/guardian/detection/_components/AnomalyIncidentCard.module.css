@@ -57,6 +57,22 @@
   font-size: 0.75rem;
 }
 
+.clipButton {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  border: 1px solid var(--sb-line);
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 6px 12px;
+}
+
 .footer {
   display: flex;
   flex-wrap: wrap;
