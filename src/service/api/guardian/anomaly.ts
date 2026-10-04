@@ -2,9 +2,12 @@
 // Swagger 그룹: "보호자 - 이상감지" (/api/guardian/anomaly/**)
 
 import { apiClient } from '@/lib/api/apiClient';
+import { getAccessToken } from '@/lib/auth/tokenStore';
 import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import {
+  AnomalyClip,
+  AnomalyClipFileError,
   AnomalyFeedbackReq,
   AnomalyFeedbackRes,
   AnomalyHistoryPage,
@@ -46,4 +49,29 @@ export async function updateAnomalyReminderSetting(body: UpdateAnomalyReminderSe
     body,
   );
   return getResponseData<AnomalyReminderSetting>(response);
+}
+
+// 상황(incident)의 클립 목록, 최신순, 없으면 []
+export async function getGuardianAnomalyClips(incidentId: number) {
+  const response = await apiClient.get<CommonResponse<AnomalyClip[]>>(`${GUARDIAN_ANOMALY_BASE}/${incidentId}/clips`);
+  return getResponseData<AnomalyClip[]>(response) ?? [];
+}
+
+// 클립 파일은 Authorization 헤더가 필요해서 <video src>에 직접 넣을 수 없음 —
+// fetch로 받아 blob으로 재생해야 함. 에러 응답은 파일 API도 JSON(ApiResponse)이라
+// 여기서 분기용으로 status/code/message를 추출해서 throw
+export async function fetchGuardianAnomalyClipFile(clipId: number): Promise<Blob> {
+  const token = getAccessToken();
+  const response = await fetch(`/api${GUARDIAN_ANOMALY_BASE}/clips/${clipId}/file`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { code?: string; message?: string } | null;
+    const error: AnomalyClipFileError = { status: response.status, code: body?.code, message: body?.message };
+    throw error;
+  }
+
+  return response.blob();
 }

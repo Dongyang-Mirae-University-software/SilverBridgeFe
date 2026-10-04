@@ -6,6 +6,17 @@ export type AnomalyDetectedType = 'FIRE' | 'SMOKE';
 export type AnomalyReviewStatus = 'PENDING' | 'REAL' | 'FALSE_ALARM' | 'CONFLICTED';
 export type AnomalyVerdict = 'REAL' | 'FALSE_ALARM';
 
+export interface AnomalyClip {
+  clipId: number;
+  incidentId: number;
+  detectedAt: string;
+  durationMs: number | null;
+  width: number | null;
+  height: number | null;
+  sizeBytes: number;
+  createdAt: string;
+}
+
 export interface AnomalyIncident {
   incidentId: number;
   wardId: string;
@@ -19,6 +30,14 @@ export interface AnomalyIncident {
   maxConfidence: number;
   reviewStatus: AnomalyReviewStatus;
   myVerdict: AnomalyVerdict | null; // 내가 아직 응답하지 않았으면 null
+  clip: AnomalyClip | null; // 볼 수 있는 클립 중 최신 1개 (없으면 null)
+  clipCount: number; // 볼 수 있는 클립 수
+}
+
+export interface AnomalyClipFileError {
+  status: number;
+  code?: string;
+  message?: string;
 }
 
 export interface AnomalyHistoryPage {
