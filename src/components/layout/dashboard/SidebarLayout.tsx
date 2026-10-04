@@ -8,6 +8,7 @@ import { Icon } from '@/components/Icon';
 import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
 import { PAGE_TITLES } from '@/constants/dashboard';
 import { AuthRole } from '@/lib/auth/tokenStore';
+import { getRoleLabel } from '@/utils/auth/routes';
 import { IUserProfile } from '@/service/interface/user/user';
 import { Sidebar } from './Sidebar';
 import { NavItem, PageKey } from './types';
@@ -32,7 +33,7 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
     <>
       <div className={cx('mobileTopBar')}>
         <div className={cx('topBarBrand')}>
-          <SilverBridgeLogo className={cx('topBarLogo')} width={132} />
+          <SilverBridgeLogo subtitle={`${getRoleLabel(role)} 웹`} />
           {/* <span>{pageTitle}</span> */}
         </div>
         <button
