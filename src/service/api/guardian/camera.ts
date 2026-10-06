@@ -6,7 +6,6 @@ import { getAccessToken } from '@/lib/auth/tokenStore';
 import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import {
-  GuardianCameraAllowlistItem,
   GuardianCameraFileError,
   GuardianCameraStatus,
   GuardianCameraStreamTicket,
@@ -14,12 +13,6 @@ import {
 } from '../../interface/guardian/camera';
 
 const GUARDIAN_CAMERA_BASE = '/guardian/camera';
-
-/** @deprecated 백엔드 중계(`/live`)로 대체됨 — useGuardianMonitor 재작성 후 삭제 예정 */
-export async function getGuardianCameras() {
-  const response = await apiClient.get<CommonResponse<GuardianCameraAllowlistItem[]>>(GUARDIAN_CAMERA_BASE);
-  return getResponseData<GuardianCameraAllowlistItem[]>(response) ?? [];
-}
 
 // 연결된(ACTIVE) 피보호자의 카메라만 백엔드가 이미 걸러서 내려준다 — 프론트에서 추가 필터 불필요
 export async function getGuardianLiveCameras() {

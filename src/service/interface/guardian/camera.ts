@@ -42,12 +42,3 @@ export interface GuardianCameraFileError {
 }
 
 export type DetectState = 'fire' | 'smoke' | 'knife' | 'fall' | 'person' | 'danger' | 'safe';
-
-/** @deprecated 백엔드 중계(`/live`)로 대체됨 — useGuardianMonitor 재작성 후 삭제 예정 */
-export interface GuardianCameraAllowlistItem {
-  sessionId: string;
-  wardId: string;
-  wardName: string;
-  label: string;
-  isActive: boolean;
-}
