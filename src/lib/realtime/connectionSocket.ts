@@ -10,7 +10,8 @@ type ConnectionRealtimeType =
   | 'CONNECTION_REFUSED'
   | 'SOS_TRIGGERED'
   | 'MEDICATION_TAKEN'
-  | 'MEDICATION_STOPPED';
+  | 'MEDICATION_STOPPED'
+  | 'ANOMALY_DETECTED';
 
 export interface ConnectionRealtimePayload {
   type: ConnectionRealtimeType;
@@ -27,6 +28,12 @@ export interface ConnectionRealtimePayload {
   taken?: string;
   takenAt?: string;
   stoppedCount?: string;
+  location?: string;
+  detectedType?: string;
+  detectedTypeLabel?: string;
+  sessionId?: string;
+  anomalyEventId?: string;
+  detectedAt?: string;
 }
 
 interface ConnectConnectionSocketOptions {
@@ -42,6 +49,7 @@ const WARD_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealt
   { destination: 'connection-request', type: 'CONNECTION_REQUEST' },
   { destination: 'connection-cancelled', type: 'CONNECTION_CANCELLED' },
   { destination: 'medication-taken', type: 'MEDICATION_TAKEN' },
+  { destination: 'anomaly-detected', type: 'ANOMALY_DETECTED' },
 ];
 
 const GUARDIAN_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
@@ -51,6 +59,7 @@ const GUARDIAN_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionR
   { destination: 'sos-triggered', type: 'SOS_TRIGGERED' },
   { destination: 'medication-taken', type: 'MEDICATION_TAKEN' },
   { destination: 'medication-stopped', type: 'MEDICATION_STOPPED' },
+  { destination: 'anomaly-detected', type: 'ANOMALY_DETECTED' },
 ];
 
 function getSocketUrl(accessToken: string) {
@@ -87,6 +96,12 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
       taken?: boolean | string;
       takenAt?: string;
       stoppedCount?: number | string;
+      location?: string;
+      detectedType?: string;
+      detectedTypeLabel?: string;
+      sessionId?: string;
+      anomalyEventId?: number | string;
+      detectedAt?: string;
     };
 
     return {
@@ -104,6 +119,12 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
       taken: parsed.taken === undefined ? undefined : String(parsed.taken),
       takenAt: parsed.takenAt,
       stoppedCount: parsed.stoppedCount === undefined ? undefined : String(parsed.stoppedCount),
+      location: parsed.location,
+      detectedType: parsed.detectedType,
+      detectedTypeLabel: parsed.detectedTypeLabel,
+      sessionId: parsed.sessionId,
+      anomalyEventId: parsed.anomalyEventId === undefined ? undefined : String(parsed.anomalyEventId),
+      detectedAt: parsed.detectedAt,
     };
   } catch {
     return {

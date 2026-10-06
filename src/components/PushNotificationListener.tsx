@@ -11,6 +11,7 @@ import { getAuthRole } from '@/lib/auth/tokenStore';
 import { guardianConnectionRequestsQueryKey, guardianConnectionsQueryKey } from '@/service/query/guardian';
 import { guardianSosHistoryQueryKey } from '@/service/query/guardian/sosHistory';
 import { guardianMedicationQueryKey } from '@/service/query/guardian/medication';
+import { guardianAnomalyHistoryQueryKey } from '@/service/query/guardian/anomaly';
 import { wardConnectionsQueryKey } from '@/service/query/ward';
 import { wardTodayMedicationQueryKey } from '@/service/query/ward/medication';
 import { CommonResponse } from '@/service/interface/common';
@@ -60,6 +61,9 @@ function getPushRoute(data?: MessagePayload['data'], role?: ConnectionTargetRole
     case 'MEDICATION_MISSED':
     case 'MEDICATION_STOPPED':
       return '/guardian/medication';
+    case 'ANOMALY_DETECTED':
+      if (role === 'WARD') return '/ward';
+      return data?.sessionId ? `/guardian/detection?session=${data.sessionId}` : '/guardian/detection';
     default:
       return role === 'WARD' ? '/ward' : '/guardian';
   }
@@ -92,6 +96,11 @@ function getConnectionPushNotification(data?: MessagePayload['data']) {
       return { body: '체크되지 않은 복약이 있습니다.', title: '복약 확인 요청' };
     case 'MEDICATION_STOPPED':
       return { body: '복약 일정이 중지되었습니다. 다시 등록해 주세요.', title: '복약 일정 중지' };
+    case 'ANOMALY_DETECTED':
+      return {
+        body: `${data?.wardName ?? '피보호자'}님 댁 ${data?.location ?? ''}에서 ${data?.detectedTypeLabel ?? '이상 상황'}가 감지되었습니다.`,
+        title: '이상 상황 감지',
+      };
     default:
       return { body: '', title: '알림' };
   }
@@ -148,6 +157,10 @@ function isSosPush(data?: MessagePayload['data']) {
   return data?.type === 'WARD_SOS';
 }
 
+function isAnomalyPush(data?: MessagePayload['data']) {
+  return data?.type === 'ANOMALY_DETECTED';
+}
+
 function getConnectionId(data?: MessagePayload['data']) {
   const connectionId = Number(data?.connectionId);
   return Number.isFinite(connectionId) ? connectionId : null;
@@ -158,6 +171,7 @@ function getNotificationDedupeKey(data?: MessagePayload['data']) {
   if (data.sosEventId) return `${data.type}:sos:${data.sosEventId}`;
   if (data.connectionId) return `${data.type}:connection:${data.connectionId}`;
   if (data.medicationId) return `${data.type}:medication:${data.medicationId}:${data.attempt ?? ''}`;
+  if (data.anomalyEventId) return `${data.type}:anomaly:${data.anomalyEventId}`;
   if (data.wardId && data.doseDate) return `${data.type}:ward:${data.wardId}:${data.doseDate}`;
   return null;
 }
@@ -261,7 +275,7 @@ export default function PushNotificationListener() {
       }
 
       setToasts(prev => [toast, ...prev].slice(0, 3));
-      if (isConnectionRequest(toast.data, currentRole) || isSosPush(toast.data)) return;
+      if (isConnectionRequest(toast.data, currentRole) || isSosPush(toast.data) || isAnomalyPush(toast.data)) return;
       window.setTimeout(() => {
         dismissToast(toast.id);
       }, TOAST_LIFETIME_MS);
@@ -299,6 +313,12 @@ export default function PushNotificationListener() {
   const refreshSosPage = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: guardianSosHistoryQueryKey });
     await queryClient.refetchQueries({ queryKey: guardianSosHistoryQueryKey, type: 'active' });
+    router.refresh();
+  }, [queryClient, router]);
+
+  const refreshAnomalyPage = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: guardianAnomalyHistoryQueryKey });
+    await queryClient.refetchQueries({ queryKey: guardianAnomalyHistoryQueryKey, type: 'active' });
     router.refresh();
   }, [queryClient, router]);
 
@@ -360,9 +380,10 @@ export default function PushNotificationListener() {
       }
       if (isSosPush(payload.data)) void refreshSosPage();
       if (isMedicationPush(payload.data)) void refreshMedicationPage(payload.data);
+      if (isAnomalyPush(payload.data)) void refreshAnomalyPage();
       addToast(toast);
     });
-  }, [addToast, currentRole, refreshConnectionPage, refreshMedicationPage, refreshSosPage]);
+  }, [addToast, currentRole, refreshAnomalyPage, refreshConnectionPage, refreshMedicationPage, refreshSosPage]);
 
   useEffect(() => {
     const handleLocalPush = (event: Event) => {
@@ -382,12 +403,13 @@ export default function PushNotificationListener() {
       }
       if (isSosPush(detail.data)) void refreshSosPage();
       if (isMedicationPush(detail.data)) void refreshMedicationPage(detail.data);
+      if (isAnomalyPush(detail.data)) void refreshAnomalyPage();
       addToast(toast);
     };
 
     window.addEventListener('careai:push', handleLocalPush);
     return () => window.removeEventListener('careai:push', handleLocalPush);
-  }, [addToast, currentRole, refreshConnectionPage, refreshMedicationPage, refreshSosPage]);
+  }, [addToast, currentRole, refreshAnomalyPage, refreshConnectionPage, refreshMedicationPage, refreshSosPage]);
 
   if (toasts.length === 0) return null;
 
@@ -398,7 +420,7 @@ export default function PushNotificationListener() {
           key={toast.id}
           className={cx('toast', {
             actionAlert: isConnectionRequest(toast.data, currentRole),
-            sosAlert: isSosPush(toast.data),
+            sosAlert: isSosPush(toast.data) || isAnomalyPush(toast.data),
           })}
         >
           {isConnectionRequest(toast.data, currentRole) ? (

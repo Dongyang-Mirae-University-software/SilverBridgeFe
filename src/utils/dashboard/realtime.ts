@@ -1,6 +1,6 @@
 import { ConnectionRealtimePayload } from '@/lib/realtime/connectionSocket';
 
-export function getRealtimeNotification(payload: ConnectionRealtimePayload) {
+export function getRealtimeNotification(payload: ConnectionRealtimePayload, role?: 'WARD' | 'GUARDIAN') {
   switch (payload.type) {
     case 'CONNECTION_REQUEST':
       return {
@@ -32,6 +32,20 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload) {
         body: payload.body ?? '약을 등록한 보호자가 탈퇴하여 복약 일정이 중지되었습니다. 다시 등록해 주세요.',
         title: payload.title ?? '복약 일정 중지',
       };
+    case 'ANOMALY_DETECTED': {
+      if (role === 'WARD') {
+        return {
+          body: payload.body ?? `${payload.location ?? '집'}에서 ${payload.detectedTypeLabel ?? '이상 상황'}이 감지되었습니다. 안전한 곳으로 대피해 주세요.`,
+          title: payload.title ?? '이상 상황 감지',
+        };
+      }
+      return {
+        body:
+          payload.body ??
+          `${payload.wardName ?? '피보호자'}님 댁 ${payload.location ?? ''}에서 ${payload.detectedTypeLabel ?? '이상 상황'}가 감지되었습니다.`,
+        title: payload.title ?? '이상 상황 감지',
+      };
+    }
     default:
       return {
         body: payload.body ?? '연결 상태가 변경되었습니다.',

@@ -18,10 +18,10 @@ export type PageKey =
   | 'wards'
   | 'ward-register'
   | 'inquiries'
-  | 'stream'
   | 'sos-history'
   | 'medication-management'
-  | 'game-management';
+  | 'game-management'
+  | 'camera-register';
 
 export type NavIconName =
   | 'home'

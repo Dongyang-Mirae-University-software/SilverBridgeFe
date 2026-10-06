@@ -1,7 +1,47 @@
 .logo {
-  display: block;
+  display: flex;
+  min-width: 0;
   flex-shrink: 0;
-  height: auto;
-  max-width: 100%;
-  color: inherit;
+  align-items: center;
+  gap: 10px;
+}
+
+.mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.name {
+  overflow: hidden;
+  color: var(--sb-ink);
+  font-size: 1.0625rem;
+  font-weight: 850;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subtitle {
+  overflow: hidden;
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

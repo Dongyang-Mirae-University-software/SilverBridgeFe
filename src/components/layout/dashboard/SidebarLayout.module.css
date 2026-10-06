@@ -146,19 +146,11 @@
     gap: 1px;
   }
 
-  .topBarLogo {
-    width: 128px;
-    max-width: 100%;
-  }
-
-  .topBarBrand span {
+  .topBarBrandLink {
     display: block;
-    overflow: hidden;
-    color: var(--sb-ink-mute);
-    font-size: 0.625rem;
-    font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
   }
 
   .topBarRole {
@@ -178,10 +170,6 @@
 
   .topBarBrand {
     gap: 0;
-  }
-
-  .topBarLogo {
-    width: 112px;
   }
 }
 

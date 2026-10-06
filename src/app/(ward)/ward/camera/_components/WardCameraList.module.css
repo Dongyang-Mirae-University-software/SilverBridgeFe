@@ -1,0 +1,90 @@
+.card {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  padding: 22px 24px;
+}
+
+.title {
+  color: var(--sb-ink);
+  font-size: 1.125rem;
+  font-weight: 900;
+}
+
+.emptyText {
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--sb-ink-mute);
+  font-size: 1rem;
+  padding: 20px;
+  text-align: center;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.label {
+  color: var(--sb-ink);
+  font-size: 1.0625rem;
+  font-weight: 850;
+}
+
+.labelInput {
+  min-width: 140px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  font-size: 1rem;
+  padding: 8px 10px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.toggleField {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sb-ink-mute);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.linkButton {
+  border: 0;
+  background: transparent;
+  color: var(--sb-brand);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.linkButton.danger {
+  color: var(--sb-warn);
+}

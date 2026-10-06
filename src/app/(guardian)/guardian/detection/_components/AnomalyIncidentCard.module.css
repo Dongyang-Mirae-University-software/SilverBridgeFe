@@ -1,0 +1,145 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  list-style: none;
+}
+
+.typeBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 850;
+  padding: 14px 18px;
+}
+
+.card.fire .typeBadge {
+  background: linear-gradient(90deg, #d8503f 0%, #c04b3a 100%);
+}
+
+.card.smoke .typeBadge {
+  background: linear-gradient(90deg, #8c8576 0%, #6d665b 100%);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 18px;
+}
+
+.wardName {
+  color: var(--sb-ink);
+  font-size: 1.0625rem;
+  font-weight: 900;
+}
+
+.location {
+  color: var(--sb-ink-soft);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.time {
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+}
+
+.meta {
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+}
+
+.clipButton {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  border: 1px solid var(--sb-line);
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 6px 12px;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding: 14px 18px;
+}
+
+.statusBadge {
+  border-radius: 999px;
+  background: var(--sb-line-soft);
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 5px 10px;
+}
+
+.statusBadge.pending,
+.statusBadge.conflicted {
+  background: #fff3d7;
+  color: #b07b22;
+}
+
+.statusBadge.real {
+  background: #fbe5e0;
+  color: var(--sb-warn);
+}
+
+.statusBadge.false_alarm {
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actionButton {
+  border: 1px solid var(--sb-line);
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 7px 12px;
+}
+
+.actionButton.real {
+  border-color: var(--sb-warn);
+  color: var(--sb-warn);
+}
+
+.actionButton.falseAlarm {
+  border-color: var(--sb-brand);
+  color: var(--sb-brand);
+}
+
+.actionButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.myVerdict {
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+  font-weight: 700;
+}

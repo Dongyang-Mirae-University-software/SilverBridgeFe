@@ -10,15 +10,3 @@ export interface StreamSession {
   status?: 'running' | 'stopped';
   started_at?: string;
 }
-
-export interface RegisterCameraReq {
-  cameraNo: string;
-  identifier: string;
-  name: string;
-  streamUrl: string;
-  streamType: string;
-  targetUserId?: string;
-  guardianUserId?: string;
-  locationName?: string;
-  isActive: boolean;
-}

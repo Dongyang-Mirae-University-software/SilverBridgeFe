@@ -117,7 +117,6 @@ export function GuardianWardsPanel() {
         ariaLabel="피보호자 관리 탭"
         items={[
           { value: 'list', label: '피보호자 목록' },
-          { value: 'history', label: '종료 이력' },
           { value: 'register', label: '피보호자 등록' },
         ]}
         onChange={handleTabChange}
@@ -144,8 +143,10 @@ export function GuardianWardsPanel() {
               isPending={isPending}
               role="guardian"
               getActions={connection => {
-                if (connection.status === 'ACTIVE') return [{ label: '연결 해제', onClick: () => handleDisconnect(connection.id) }];
-                if (connection.status === 'PENDING') return [{ label: '요청 취소', onClick: () => cancelMutation.mutate(connection.id) }];
+                if (connection.status === 'ACTIVE')
+                  return [{ label: '연결 해제', onClick: () => handleDisconnect(connection.id) }];
+                if (connection.status === 'PENDING')
+                  return [{ label: '요청 취소', onClick: () => cancelMutation.mutate(connection.id) }];
                 return [];
               }}
             />

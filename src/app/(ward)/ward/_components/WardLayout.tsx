@@ -108,8 +108,13 @@ function useWardConnectionSocket(realtimeUserId: string | undefined) {
         window.dispatchEvent(
           new CustomEvent('careai:push', {
             detail: {
-              data: { connectionId: payload.connectionId ?? '', type: payload.type },
-              notification: getRealtimeNotification(payload),
+              data: {
+                connectionId: payload.connectionId ?? '',
+                type: payload.type,
+                location: payload.location ?? '',
+                detectedTypeLabel: payload.detectedTypeLabel ?? '',
+              },
+              notification: getRealtimeNotification(payload, role),
             },
           }),
         );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import classNames from 'classnames/bind';
 
@@ -8,6 +9,7 @@ import { Icon } from '@/components/Icon';
 import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
 import { PAGE_TITLES } from '@/constants/dashboard';
 import { AuthRole } from '@/lib/auth/tokenStore';
+import { getRoleLabel } from '@/utils/auth/routes';
 import { IUserProfile } from '@/service/interface/user/user';
 import { Sidebar } from './Sidebar';
 import { NavItem, PageKey } from './types';
@@ -32,7 +34,9 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
     <>
       <div className={cx('mobileTopBar')}>
         <div className={cx('topBarBrand')}>
-          <SilverBridgeLogo className={cx('topBarLogo')} width={132} />
+          <Link className={cx('topBarBrandLink')} href={rootPath} aria-label="대시보드로 이동">
+            <SilverBridgeLogo subtitle={`${getRoleLabel(role)} 웹`} />
+          </Link>
           {/* <span>{pageTitle}</span> */}
         </div>
         <button
