@@ -1,4 +1,10 @@
-import type { LiveStreamAnalysis, LiveStreamSession, LiveStreamStatus } from '@/service/interface/liveStream';
+import type {
+  LiveStreamAnalysis,
+  LiveStreamDetection,
+  LiveStreamDetectionBox,
+  LiveStreamSession,
+  LiveStreamStatus,
+} from '@/service/interface/liveStream';
 
 export function normalizeSessions(data: unknown) {
   if (!Array.isArray(data)) return null;
@@ -51,7 +57,36 @@ export function normalizeAnalysis(data: unknown): LiveStreamAnalysis | null {
     label: getString(raw.label) ?? getString(raw.className),
     latest_frame_url: getString(raw.latest_frame_url),
     latestFrameUrl: getString(raw.latestFrameUrl),
+    detections: getDetections(raw.detections),
   };
+}
+
+function getDetectionBox(value: unknown): LiveStreamDetectionBox | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const raw = value as Record<string, unknown>;
+  const x1 = getNumber(raw.x1);
+  const y1 = getNumber(raw.y1);
+  const x2 = getNumber(raw.x2);
+  const y2 = getNumber(raw.y2);
+
+  if (x1 == null || y1 == null || x2 == null || y2 == null) return undefined;
+  return { x1, y1, x2, y2 };
+}
+
+function getDetections(value: unknown): LiveStreamDetection[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const detections = value.reduce<LiveStreamDetection[]>((acc, item) => {
+    if (!item || typeof item !== 'object') return acc;
+    const raw = item as Record<string, unknown>;
+    const bbox = getDetectionBox(raw.bbox);
+    if (!bbox) return acc;
+
+    acc.push({ detectedType: getString(raw.detectedType), confidence: getNumber(raw.confidence), bbox });
+    return acc;
+  }, []);
+
+  return detections.length > 0 ? detections : undefined;
 }
 
 export function getEventSessionId(data: unknown) {

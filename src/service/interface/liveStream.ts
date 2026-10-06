@@ -24,6 +24,19 @@ export interface LiveStreamStatus {
   started_at?: string;
 }
 
+export interface LiveStreamDetectionBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+export interface LiveStreamDetection {
+  detectedType?: string;
+  confidence?: number;
+  bbox?: LiveStreamDetectionBox;
+}
+
 export interface LiveStreamAnalysis {
   detectedType?: string;
   detected_type?: string;
@@ -38,6 +51,8 @@ export interface LiveStreamAnalysis {
   frame_url?: string;
   imageUrl?: string;
   image_url?: string;
+  // 프레임 안에서 감지된 영역들(픽셀 좌표, 원본 프레임 기준) — 박스 오버레이용
+  detections?: LiveStreamDetection[];
 }
 
 export type DetectState = 'fire' | 'smoke' | 'knife' | 'fall' | 'person' | 'danger' | 'safe';

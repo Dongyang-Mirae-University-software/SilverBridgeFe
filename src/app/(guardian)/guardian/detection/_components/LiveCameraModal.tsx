@@ -1,13 +1,75 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { CSSProperties, RefObject, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
+import type { LiveStreamDetectionBox } from '@/service/interface/liveStream';
 import { formatNumber, normalizeDetectedType } from './monitorUtils';
 import { useGuardianMonitor } from './useGuardianMonitor';
 import styles from './LiveCameraModal.module.css';
 
 const cx = classNames.bind(styles);
+
+interface CoverTransform {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+// object-fit: cover로 표시되는 <img> 위에 bbox를 정확히 겹치려면, 원본(naturalWidth/Height)
+// 기준 좌표를 "꽉 채우며 잘리는" 변환으로 옮겨야 한다 — 그냥 비율만 곱하면 잘린 영역만큼 밀려서 어긋남
+function useCoverTransform(
+  containerRef: RefObject<HTMLElement | null>,
+  imgRef: RefObject<HTMLImageElement | null>,
+  // img가 key 변경으로 다시 마운트될 때(프레임/세션 전환) 새 DOM 노드를 다시 잡기 위한 트리거
+  frameKey: unknown,
+) {
+  const [transform, setTransform] = useState<CoverTransform | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const img = imgRef.current;
+    if (!container || !img) return;
+
+    const recompute = () => {
+      const naturalWidth = img.naturalWidth;
+      const naturalHeight = img.naturalHeight;
+      if (!naturalWidth || !naturalHeight) return;
+
+      const { width: containerWidth, height: containerHeight } = container.getBoundingClientRect();
+      if (!containerWidth || !containerHeight) return;
+
+      const scale = Math.max(containerWidth / naturalWidth, containerHeight / naturalHeight);
+      setTransform({
+        scale,
+        offsetX: (containerWidth - naturalWidth * scale) / 2,
+        offsetY: (containerHeight - naturalHeight * scale) / 2,
+      });
+    };
+
+    recompute();
+
+    const resizeObserver = new ResizeObserver(recompute);
+    resizeObserver.observe(container);
+    img.addEventListener('load', recompute);
+
+    return () => {
+      resizeObserver.disconnect();
+      img.removeEventListener('load', recompute);
+    };
+  }, [containerRef, imgRef, frameKey]);
+
+  return transform;
+}
+
+function getDetectionBoxStyle(bbox: LiveStreamDetectionBox, transform: CoverTransform): CSSProperties {
+  return {
+    left: bbox.x1 * transform.scale + transform.offsetX,
+    top: bbox.y1 * transform.scale + transform.offsetY,
+    width: (bbox.x2 - bbox.x1) * transform.scale,
+    height: (bbox.y2 - bbox.y1) * transform.scale,
+  };
+}
 
 const DETECT_LABEL: Record<string, string> = {
   fire: '화재 감지됨',
@@ -37,7 +99,11 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
   const monitor = useGuardianMonitor();
   const didInitRef = useRef(false);
   const imgRef = useRef<HTMLImageElement>(null);
+  const frameAreaRef = useRef<HTMLDivElement>(null);
   const now = useLiveClock();
+  const frameKey = monitor.latestFrameUrl ?? monitor.selectedId;
+  const coverTransform = useCoverTransform(frameAreaRef, imgRef, frameKey);
+  const detections = monitor.latestAnalysis?.detections ?? [];
 
   useEffect(() => {
     if (didInitRef.current || monitor.isLoading || monitor.sessions.length === 0) return;
@@ -80,14 +146,32 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
           </button>
         </header>
 
-        <div className={cx('frameArea')}>
+        <div className={cx('frameArea')} ref={frameAreaRef}>
           {monitor.isAllowlistEmpty ? (
             <div className={cx('placeholder')}>연결된 피보호자의 카메라가 없습니다.</div>
           ) : !monitor.frameSrc ? (
             <div className={cx('placeholder')}>프레임을 수신하는 중입니다...</div>
           ) : (
-            <img ref={imgRef} key={monitor.latestFrameUrl ?? monitor.selectedId} src={monitor.frameSrc} alt="실시간 영상" className={cx('frameImg')} />
+            <img ref={imgRef} key={frameKey} src={monitor.frameSrc} alt="실시간 영상" className={cx('frameImg')} />
           )}
+
+          {coverTransform &&
+            detections.map((detection, index) => {
+              if (!detection.bbox) return null;
+              const boxStyle = getDetectionBoxStyle(detection.bbox, coverTransform);
+              const labelOnTop = (boxStyle.top as number) >= 24;
+
+              return (
+                <div key={index} className={cx('detectionBox')} style={boxStyle}>
+                  {detection.detectedType && (
+                    <span className={cx('detectionLabel', { labelInside: !labelOnTop })}>
+                      {detection.detectedType.toUpperCase()}
+                      {detection.confidence != null ? ` ${Math.round(detection.confidence * 100)}%` : ''}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
 
           <div className={cx('recBadge')}>
             <span className={cx('recDot')} />
