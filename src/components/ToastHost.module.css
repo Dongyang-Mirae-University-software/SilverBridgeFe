@@ -1,0 +1,60 @@
+.area {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  z-index: 500;
+  display: grid;
+  width: min(360px, calc(100vw - 36px));
+  gap: 8px;
+  transform: translateX(-50%);
+}
+
+.toast {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow:
+    0 8px 24px rgba(20, 17, 12, 0.1),
+    0 16px 48px rgba(20, 17, 12, 0.08);
+  color: var(--sb-ink);
+  padding: 12px 14px;
+}
+
+.toast.error {
+  border-color: rgba(192, 75, 58, 0.32);
+}
+
+.toast.success {
+  border-color: rgba(31, 94, 72, 0.28);
+}
+
+.message {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.toast.error .message {
+  color: var(--sb-warn);
+}
+
+.toast.success .message {
+  color: var(--sb-brand);
+}
+
+.dismissButton {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sb-ink-mute);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+}

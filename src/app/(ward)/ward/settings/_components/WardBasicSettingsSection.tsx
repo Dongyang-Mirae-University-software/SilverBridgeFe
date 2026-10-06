@@ -3,30 +3,28 @@ import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
-import { WardSettings } from '@/components/layout/dashboard/types';
+import { WardSettings, WardSosAction } from '@/components/layout/dashboard/types';
+import { useUpdateWardSosSettingMutation } from '@/service/query/ward/sosSetting';
+import { showToast } from '@/store/toastStore';
 
 import styles from './WardBasicSettingsSection.module.css';
 
 const cx = classNames.bind(styles);
 
+// 2026-10-07 프로토타입: 보호자 알림은 항상 켜져 있어 끌 수 없으므로(선택지가 아님),
+// "119 화면을 언제 보여줄지" 2개만 고르게 한다. CALL_119(알림 없이 119만)는 제거됨
 const SOS_OPTIONS = [
   {
-    value: 'call119' as const,
-    icon: 'alert' as const,
-    label: '119에 바로 연결',
-    hint: 'SOS 버튼을 누르면 즉시 119에 전화를 겁니다.',
+    value: 'CALL_119_AND_NOTIFY' as const,
+    label: '119 화면 바로 열기',
+    hint: '보호자에게 알리고, 119가 입력된 전화 화면을 바로 열어요.',
+    isDefault: true,
   },
   {
-    value: 'call119AndNotify' as const,
-    icon: 'phone' as const,
-    label: '119 연결 + 보호자 알림',
-    hint: '119 통화와 동시에 보호자에게 알림을 보냅니다.',
-  },
-  {
-    value: 'notifyGuardianFirst' as const,
-    icon: 'messageCircle' as const,
-    label: '보호자에게 먼저 알림',
-    hint: '보호자에게 먼저 알린 뒤 119 연결 방법을 안내합니다.',
+    value: 'NOTIFY_GUARDIAN_FIRST' as const,
+    label: '보호자 알림 먼저',
+    hint: '보호자에게 알린 뒤, 119 전화는 화면의 버튼을 눌러서 걸어요.',
+    isDefault: false,
   },
 ];
 
@@ -126,6 +124,27 @@ function HighContrastCard({ updateWardSettings, wardSettings }: Props) {
 }
 
 function SosActionCard({ updateWardSettings, wardSettings }: Props) {
+  const updateSosSettingMutation = useUpdateWardSosSettingMutation();
+
+  const handleSelect = (value: WardSosAction) => {
+    const previous = wardSettings.sosAction;
+    if (previous === value) return;
+
+    updateWardSettings({ sosAction: value }); // 즉시 반영(낙관적 업데이트)
+    updateSosSettingMutation.mutate(
+      { sosAction: value },
+      {
+        onError: error => {
+          updateWardSettings({ sosAction: previous }); // 실패하면 되돌림
+          showToast(
+            (error as { message?: string })?.message ?? 'SOS 설정을 저장하지 못했습니다. 다시 시도해 주세요.',
+            { variant: 'error' },
+          );
+        },
+      },
+    );
+  };
+
   return (
     <section className={cx('card')} aria-labelledby="s-sos">
       <div className={cx('cardHeader')}>
@@ -133,9 +152,19 @@ function SosActionCard({ updateWardSettings, wardSettings }: Props) {
           <h3 className={cx('cardTitle')} id="s-sos">
             SOS 동작 설정
           </h3>
-          <p className={cx('cardDesc')}>긴급 SOS를 눌렀을 때 어떻게 동작할지 선택합니다.</p>
         </div>
       </div>
+
+      <div className={cx('guardianNotice')}>
+        <Icon name="bell" size={20} className={cx('guardianNoticeIcon')} />
+        <div className={cx('guardianNoticeText')}>
+          <strong>보호자 알림</strong>
+          <span>SOS를 누르면 연결된 보호자 모두에게 항상 알림이 가요. 알림 설정에서 푸시·문자를 꺼도 SOS는 보내져요.</span>
+        </div>
+        <span className={cx('guardianNoticeBadge')}>항상 켜짐</span>
+      </div>
+
+      <p className={cx('sosQuestion')}>119 화면은 어떻게 보여드릴까요?</p>
 
       <div className={cx('sosGroup')} role="radiogroup" aria-labelledby="s-sos">
         {SOS_OPTIONS.map(opt => {
@@ -143,21 +172,30 @@ function SosActionCard({ updateWardSettings, wardSettings }: Props) {
           return (
             <label key={opt.value} className={cx('sosCard', { sosCardActive: isActive })}>
               <input
+                className={cx('sosInput')}
                 type="radio"
                 name="ward-sos"
                 value={opt.value}
                 checked={isActive}
-                onChange={() => updateWardSettings({ sosAction: opt.value })}
+                disabled={updateSosSettingMutation.isPending}
+                onChange={() => handleSelect(opt.value)}
               />
-              <Icon name={opt.icon} size={24} className={cx('sosIcon')} />
+              <span className={cx('sosRadio')} aria-hidden="true" />
               <span className={cx('sosText')}>
-                <span className={cx('sosCardLabel')}>{opt.label}</span>
+                <span className={cx('sosCardLabelRow')}>
+                  <span className={cx('sosCardLabel')}>{opt.label}</span>
+                  {opt.isDefault && <span className={cx('sosDefaultTag')}>기본</span>}
+                </span>
                 <span className={cx('sosCardHint')}>{opt.hint}</span>
               </span>
-              <span className={cx('sosCheck')} aria-hidden="true" />
             </label>
           );
         })}
+      </div>
+
+      <div className={cx('sosFootnotes')}>
+        <p>연결된 보호자가 없으면 바로 119 화면이 열려요.</p>
+        <p>학생 프로젝트 화면입니다. 실제로 신고 전화가 발신되지 않습니다.</p>
       </div>
     </section>
   );

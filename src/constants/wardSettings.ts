@@ -7,14 +7,12 @@ export const MAX_WARD_FONT_SIZE = 28;
 export const DEFAULT_WARD_SETTINGS: WardSettings = {
   fontSize: 17,
   highContrast: false,
-  sosAction: 'call119AndNotify',
+  sosAction: 'CALL_119_AND_NOTIFY',
 };
 
-export const WARD_SOS_OPTIONS: Array<{ label: string; value: WardSosAction }> = [
-  { value: 'call119', label: '119에 바로 연결' },
-  { value: 'call119AndNotify', label: '119 연결과 동시에 보호자에게 알림' },
-  { value: 'notifyGuardianFirst', label: '보호자에게 먼저 알림한 뒤 119 연결 안내' },
-];
+// CALL_119는 2026-10-07 프로토타입에서 제거됨 — 예전에 이 값을 저장해 둔 브라우저는
+// 여기서 안 걸러져서 DEFAULT_WARD_SETTINGS.sosAction(기본값)으로 자동 대체된다
+const VALID_SOS_ACTIONS: WardSosAction[] = ['CALL_119_AND_NOTIFY', 'NOTIFY_GUARDIAN_FIRST'];
 
 export function clampFontSize(value?: number) {
   if (typeof value !== 'number' || Number.isNaN(value)) return DEFAULT_WARD_SETTINGS.fontSize;
@@ -23,7 +21,5 @@ export function clampFontSize(value?: number) {
 }
 
 export function getValidSosAction(value: unknown): WardSosAction {
-  return WARD_SOS_OPTIONS.some(option => option.value === value)
-    ? (value as WardSosAction)
-    : DEFAULT_WARD_SETTINGS.sosAction;
+  return VALID_SOS_ACTIONS.includes(value as WardSosAction) ? (value as WardSosAction) : DEFAULT_WARD_SETTINGS.sosAction;
 }

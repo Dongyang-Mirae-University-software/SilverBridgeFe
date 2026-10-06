@@ -6,6 +6,7 @@ import classNames from 'classnames/bind';
 import { formatDateTime } from '@/utils/format/date';
 import { AnomalyIncident, AnomalyVerdict } from '@/service/interface/guardian/anomaly';
 import { useAnomalyFeedbackMutation } from '@/service/query/guardian/anomaly';
+import { showToast } from '@/store/toastStore';
 import { AnomalyClipModal } from './AnomalyClipModal';
 import styles from './AnomalyIncidentCard.module.css';
 
@@ -24,7 +25,15 @@ export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident })
 
   const handleFeedback = (verdict: AnomalyVerdict) => {
     if (feedbackMutation.isPending) return;
-    feedbackMutation.mutate({ incidentId: incident.incidentId, body: { verdict } });
+    feedbackMutation.mutate(
+      { incidentId: incident.incidentId, body: { verdict } },
+      {
+        onError: error => {
+          const message = (error as { message?: string })?.message ?? '응답을 보내지 못했습니다. 다시 시도해 주세요.';
+          showToast(message, { variant: 'error' });
+        },
+      },
+    );
   };
 
   const canRespond = incident.reviewStatus === 'PENDING' || incident.reviewStatus === 'CONFLICTED';

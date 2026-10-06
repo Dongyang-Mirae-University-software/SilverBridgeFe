@@ -209,6 +209,61 @@
   font-weight: 800;
 }
 
+/* ── 보호자 알림 안내(항상 켜짐, 선택 불가) ── */
+.guardianNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
+  padding: 14px 16px;
+}
+
+.guardianNoticeIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--sb-ink-mute);
+}
+
+.guardianNoticeText {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.guardianNoticeText strong {
+  color: var(--sb-ink);
+  font-size: 0.875rem;
+  font-weight: 850;
+}
+
+.guardianNoticeText span {
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.guardianNoticeBadge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--sb-line-soft);
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 5px 11px;
+}
+
+.sosQuestion {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 0.9375rem;
+  font-weight: 850;
+}
+
 /* ── SOS 라디오 카드 ── */
 .sosGroup {
   display: flex;
@@ -218,7 +273,7 @@
 
 .sosCard {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
   border: 2px solid var(--sb-line-soft);
   border-radius: 14px;
@@ -231,40 +286,61 @@
 }
 
 .sosCard:hover {
-  border-color: var(--sb-brand);
-  background: var(--sb-brand-50);
+  border-color: var(--sb-warn);
 }
 
 .sosCardActive {
-  border-color: var(--sb-brand);
-  background: var(--sb-brand-50);
+  border-color: var(--sb-warn);
+  background: #fbe5e0;
 }
 
-.sosCard input {
-  display: none;
+.sosInput {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
 }
 
-.sosIcon {
-  width: 40px;
-  height: 40px;
+.sosRadio {
+  position: relative;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
-  display: block;
-  border-radius: 12px;
+  margin-top: 1px;
+  border: 2px solid var(--sb-line-soft);
+  border-radius: 50%;
   background: #fff;
-  object-fit: contain;
-  box-shadow: var(--sb-shadow-sm);
 }
 
-.sosCardActive .sosIcon {
-  background: var(--sb-brand);
+.sosCardActive .sosRadio {
+  border-color: var(--sb-warn);
+}
+
+.sosRadio::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--sb-warn);
+  opacity: 0;
+}
+
+.sosCardActive .sosRadio::after {
+  opacity: 1;
 }
 
 .sosText {
   min-width: 0;
+  flex: 1;
+}
+
+.sosCardLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .sosCardLabel {
-  display: block;
   color: var(--sb-ink);
   font-size: 0.875rem;
   font-weight: 800;
@@ -272,7 +348,17 @@
 }
 
 .sosCardActive .sosCardLabel {
-  color: var(--sb-brand);
+  color: var(--sb-warn);
+}
+
+.sosDefaultTag {
+  border-radius: 999px;
+  border: 1px solid var(--sb-line-soft);
+  background: #fff;
+  color: var(--sb-ink-mute);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 2px 8px;
 }
 
 .sosCardHint {
@@ -283,36 +369,17 @@
   line-height: 1.4;
 }
 
-.sosCheck {
-  margin-left: auto;
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--sb-line-soft);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  transition:
-    border-color 0.12s,
-    background 0.12s;
+.sosFootnotes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.sosCardActive .sosCheck {
-  border-color: var(--sb-brand);
-  background: var(--sb-brand);
-}
-
-.sosCheck::after {
-  content: '';
-  display: none;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #fff;
-}
-
-.sosCardActive .sosCheck::after {
-  display: block;
+.sosFootnotes p {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 @media (max-width: 700px) {

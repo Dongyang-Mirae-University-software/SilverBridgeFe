@@ -3,6 +3,7 @@ import './globals.css';
 import ReactQueryProvider from '@/lib/ReactQueryProvider';
 import PushNotificationListener from '@/components/PushNotificationListener';
 import { ModalHost } from '@/components/ModalHost';
+import { ToastHost } from '@/components/ToastHost';
 
 export const metadata: Metadata = {
   title: 'silver bridge',
@@ -21,6 +22,7 @@ export default function RootLayout({
           {children}
           <PushNotificationListener />
           <ModalHost />
+          <ToastHost />
         </ReactQueryProvider>
       </body>
     </html>

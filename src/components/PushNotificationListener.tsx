@@ -64,6 +64,10 @@ function getPushRoute(data?: MessagePayload['data'], role?: ConnectionTargetRole
     case 'ANOMALY_DETECTED':
       if (role === 'WARD') return '/ward';
       return data?.sessionId ? `/guardian/detection?session=${data.sessionId}` : '/guardian/detection';
+    case 'ANOMALY_REVIEW_REQUIRED':
+    case 'ANOMALY_REVIEW_SUMMARY':
+    case 'ANOMALY_REVIEW_CONFLICTED':
+      return '/guardian/detection';
     default:
       return role === 'WARD' ? '/ward' : '/guardian';
   }
@@ -73,7 +77,7 @@ function isConnectionPush(data?: MessagePayload['data']) {
   return Boolean(data?.type && data.type.includes('CONNECTION'));
 }
 
-function getConnectionPushNotification(data?: MessagePayload['data']) {
+function getConnectionPushNotification(data?: MessagePayload['data'], role?: ConnectionTargetRole | null) {
   switch (data?.type) {
     case 'CONNECTION_REQUEST':
       return { body: '보호자가 연결을 요청했습니다.', title: '연결 요청' };
@@ -97,9 +101,30 @@ function getConnectionPushNotification(data?: MessagePayload['data']) {
     case 'MEDICATION_STOPPED':
       return { body: '복약 일정이 중지되었습니다. 다시 등록해 주세요.', title: '복약 일정 중지' };
     case 'ANOMALY_DETECTED':
+      if (role === 'WARD') {
+        return {
+          body: `${data?.location ?? '집'}에서 ${data?.detectedTypeLabel ?? '이상 상황'}이 감지되었습니다. 안전한 곳으로 대피해 주세요.`,
+          title: '이상 상황 감지',
+        };
+      }
       return {
         body: `${data?.wardName ?? '피보호자'}님 댁 ${data?.location ?? ''}에서 ${data?.detectedTypeLabel ?? '이상 상황'}가 감지되었습니다.`,
         title: '이상 상황 감지',
+      };
+    case 'ANOMALY_REVIEW_REQUIRED':
+      return {
+        body: `${data?.wardName ?? '피보호자'}님의 ${data?.detectedTypeLabel ?? '이상감지'} 감지가 실제 상황이었는지 확인해 주세요.`,
+        title: '이상감지 확인이 필요해요',
+      };
+    case 'ANOMALY_REVIEW_SUMMARY':
+      return {
+        body: `확인하지 않은 이상감지 ${data?.pendingCount ?? ''}건이 있습니다.`,
+        title: '이상감지 확인이 필요해요',
+      };
+    case 'ANOMALY_REVIEW_CONFLICTED':
+      return {
+        body: `${data?.wardName ?? '피보호자'}님의 ${data?.detectedTypeLabel ?? '이상감지'} 감지에 대해 다른 보호자와 판정이 다릅니다. 다시 확인해 주세요.`,
+        title: '판정 확인 요청',
       };
     default:
       return { body: '', title: '알림' };
@@ -109,11 +134,13 @@ function getConnectionPushNotification(data?: MessagePayload['data']) {
 function getPushNotificationContent({
   data,
   notification,
+  role,
 }: {
   data?: MessagePayload['data'];
   notification?: { body?: string; title?: string };
+  role?: ConnectionTargetRole | null;
 }) {
-  const fallback = getConnectionPushNotification(data);
+  const fallback = getConnectionPushNotification(data, role);
   return {
     body: notification?.body ?? fallback.body,
     title: notification?.title ?? fallback.title,
@@ -161,6 +188,14 @@ function isAnomalyPush(data?: MessagePayload['data']) {
   return data?.type === 'ANOMALY_DETECTED';
 }
 
+function isAnomalyReviewPush(data?: MessagePayload['data']) {
+  return (
+    data?.type === 'ANOMALY_REVIEW_REQUIRED' ||
+    data?.type === 'ANOMALY_REVIEW_SUMMARY' ||
+    data?.type === 'ANOMALY_REVIEW_CONFLICTED'
+  );
+}
+
 function getConnectionId(data?: MessagePayload['data']) {
   const connectionId = Number(data?.connectionId);
   return Number.isFinite(connectionId) ? connectionId : null;
@@ -172,6 +207,8 @@ function getNotificationDedupeKey(data?: MessagePayload['data']) {
   if (data.connectionId) return `${data.type}:connection:${data.connectionId}`;
   if (data.medicationId) return `${data.type}:medication:${data.medicationId}:${data.attempt ?? ''}`;
   if (data.anomalyEventId) return `${data.type}:anomaly:${data.anomalyEventId}`;
+  if (data.incidentId) return `${data.type}:incident:${data.incidentId}`;
+  if (data.summaryDate) return `${data.type}:summary:${data.summaryDate}`;
   if (data.wardId && data.doseDate) return `${data.type}:ward:${data.wardId}:${data.doseDate}`;
   return null;
 }
@@ -370,6 +407,7 @@ export default function PushNotificationListener() {
       const notification = getPushNotificationContent({
         data: payload.data,
         notification: payload.notification,
+        role: currentRole,
       });
       const toast: PushToast = { id, title: notification.title, body: notification.body, data: payload.data };
 
@@ -380,7 +418,7 @@ export default function PushNotificationListener() {
       }
       if (isSosPush(payload.data)) void refreshSosPage();
       if (isMedicationPush(payload.data)) void refreshMedicationPage(payload.data);
-      if (isAnomalyPush(payload.data)) void refreshAnomalyPage();
+      if (isAnomalyPush(payload.data) || isAnomalyReviewPush(payload.data)) void refreshAnomalyPage();
       addToast(toast);
     });
   }, [addToast, currentRole, refreshAnomalyPage, refreshConnectionPage, refreshMedicationPage, refreshSosPage]);
@@ -393,6 +431,7 @@ export default function PushNotificationListener() {
       const notification = getPushNotificationContent({
         data: detail.data,
         notification: detail.notification,
+        role: currentRole,
       });
       const toast: PushToast = { id, title: notification.title, body: notification.body, data: detail.data };
 
@@ -403,7 +442,7 @@ export default function PushNotificationListener() {
       }
       if (isSosPush(detail.data)) void refreshSosPage();
       if (isMedicationPush(detail.data)) void refreshMedicationPage(detail.data);
-      if (isAnomalyPush(detail.data)) void refreshAnomalyPage();
+      if (isAnomalyPush(detail.data) || isAnomalyReviewPush(detail.data)) void refreshAnomalyPage();
       addToast(toast);
     };
 

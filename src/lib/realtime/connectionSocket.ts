@@ -11,7 +11,8 @@ type ConnectionRealtimeType =
   | 'SOS_TRIGGERED'
   | 'MEDICATION_TAKEN'
   | 'MEDICATION_STOPPED'
-  | 'ANOMALY_DETECTED';
+  | 'ANOMALY_DETECTED'
+  | 'CAMERA_ANALYSIS';
 
 export interface ConnectionRealtimePayload {
   type: ConnectionRealtimeType;
@@ -33,7 +34,14 @@ export interface ConnectionRealtimePayload {
   detectedTypeLabel?: string;
   sessionId?: string;
   anomalyEventId?: string;
+  incidentId?: string;
   detectedAt?: string;
+  // camera-analysis 전용(카메라 실시간 분석 상태) — 토스트/알림음 없이 화면 표시에만 쓴다.
+  // status는 null이면 "꺼짐"이 아니라 "지금 확인 불가"라서 undefined와 구분해야 한다
+  status?: string | null;
+  confidence?: string;
+  danger?: string;
+  analyzedAt?: string;
 }
 
 interface ConnectConnectionSocketOptions {
@@ -60,6 +68,7 @@ const GUARDIAN_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionR
   { destination: 'medication-taken', type: 'MEDICATION_TAKEN' },
   { destination: 'medication-stopped', type: 'MEDICATION_STOPPED' },
   { destination: 'anomaly-detected', type: 'ANOMALY_DETECTED' },
+  { destination: 'camera-analysis', type: 'CAMERA_ANALYSIS' },
 ];
 
 function getSocketUrl(accessToken: string) {
@@ -101,7 +110,12 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
       detectedTypeLabel?: string;
       sessionId?: string;
       anomalyEventId?: number | string;
+      incidentId?: number | string;
       detectedAt?: string;
+      status?: string | null;
+      confidence?: number | string;
+      danger?: boolean | string;
+      analyzedAt?: string;
     };
 
     return {
@@ -124,7 +138,12 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
       detectedTypeLabel: parsed.detectedTypeLabel,
       sessionId: parsed.sessionId,
       anomalyEventId: parsed.anomalyEventId === undefined ? undefined : String(parsed.anomalyEventId),
+      incidentId: parsed.incidentId === undefined ? undefined : String(parsed.incidentId),
       detectedAt: parsed.detectedAt,
+      status: parsed.status,
+      confidence: parsed.confidence === undefined ? undefined : String(parsed.confidence),
+      danger: parsed.danger === undefined ? undefined : String(parsed.danger),
+      analyzedAt: parsed.analyzedAt,
     };
   } catch {
     return {

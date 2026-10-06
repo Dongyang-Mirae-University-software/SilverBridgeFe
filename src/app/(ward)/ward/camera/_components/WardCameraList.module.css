@@ -34,14 +34,18 @@
 }
 
 .item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  gap: 8px;
   border: 1px solid var(--sb-line-soft);
   border-radius: 14px;
   padding: 14px 16px;
+}
+
+.itemHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .label {
@@ -50,14 +54,57 @@
   font-weight: 850;
 }
 
-.labelInput {
-  min-width: 140px;
-  border: 1px solid var(--sb-line);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--sb-ink);
-  font-size: 1rem;
-  padding: 8px 10px;
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.statusBadge.connected {
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.statusBadge.disconnected {
+  background: #f1f0ec;
+  color: var(--sb-ink-mute);
+}
+
+.statusBadge.checking {
+  background: #fff3d7;
+  color: #b07b22;
+}
+
+.statusBadge.checking .statusDot {
+  border: 1px dashed currentColor;
+  background: transparent;
+}
+
+.deviceTag {
+  border-radius: 999px;
+  background: var(--sb-ink);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 3px 9px;
+}
+
+.meta {
+  color: var(--sb-ink-mute);
+  font-size: 0.8125rem;
 }
 
 .actions {
@@ -65,15 +112,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 14px;
-}
-
-.toggleField {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--sb-ink-mute);
-  font-size: 0.875rem;
-  font-weight: 700;
 }
 
 .linkButton {

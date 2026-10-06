@@ -1,0 +1,63 @@
+.card {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  cursor: pointer;
+  padding: 18px 20px;
+  text-align: left;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.categoryBadge {
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+}
+
+.statusBadge {
+  border-radius: 999px;
+  background: #fff3d7;
+  color: #b07b22;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+}
+
+.statusBadge.answered {
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.title {
+  color: var(--sb-ink);
+  font-size: 1.0625rem;
+  font-weight: 850;
+}
+
+.preview {
+  overflow: hidden;
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date {
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
+}

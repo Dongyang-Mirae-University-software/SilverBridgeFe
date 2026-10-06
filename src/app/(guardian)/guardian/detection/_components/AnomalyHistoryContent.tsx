@@ -63,17 +63,22 @@ export function AnomalyHistoryContent({ onViewLive }: { onViewLive: () => void }
       </div>
       <p className={cx('filterHint')}>필터·통계는 현재 불러온 {content.length}건 기준입니다.</p>
 
-      <label className={cx('reminderField')}>
-        <input
-          type="checkbox"
-          checked={reminderSetting?.reviewReminderEnabled ?? true}
-          disabled={reminderMutation.isPending}
-          onChange={event =>
-            reminderMutation.mutate({ reviewReminderEnabled: event.target.checked })
-          }
-        />
-        응답하지 않은 이상감지 확인 요청 알림 받기
-      </label>
+      <div className={cx('reminderBlock')}>
+        <label className={cx('reminderField')}>
+          <input
+            type="checkbox"
+            checked={reminderSetting?.reviewReminderEnabled ?? true}
+            disabled={reminderMutation.isPending}
+            onChange={event =>
+              reminderMutation.mutate({ reviewReminderEnabled: event.target.checked })
+            }
+          />
+          확인 요청 알림 받기
+        </label>
+        <p className={cx('reminderHint')}>
+          응답하지 않은 이상감지에 대해 확인을 요청합니다. 이상감지 발생 알림은 이 설정과 무관하게 항상 발송됩니다.
+        </p>
+      </div>
 
       {isLoading && <p className={cx('emptyText')}>감지 이력을 불러오는 중입니다.</p>}
       {isError && <p className={cx('emptyText')}>감지 이력을 불러오지 못했습니다.</p>}

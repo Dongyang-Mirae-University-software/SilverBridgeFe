@@ -88,14 +88,25 @@
   font-size: 0.75rem;
 }
 
+.reminderBlock {
+  display: grid;
+  align-self: flex-start;
+  gap: 4px;
+}
+
 .reminderField {
   display: inline-flex;
-  align-self: flex-start;
   align-items: center;
   gap: 8px;
   color: var(--sb-ink-soft);
   font-size: 0.8125rem;
   font-weight: 700;
+}
+
+.reminderHint {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 0.75rem;
 }
 
 .emptyText {

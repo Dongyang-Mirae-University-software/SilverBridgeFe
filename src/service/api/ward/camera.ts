@@ -6,9 +6,28 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
-import { RegisterWardCameraReq, UpdateWardCameraReq, WardCamera } from '../../interface/ward/camera';
+import {
+  RegisterWardCameraReq,
+  UpdateWardCameraReq,
+  WardCamera,
+  WardCameraRoom,
+  WardLiveCamera,
+} from '../../interface/ward/camera';
 
 const WARD_CAMERA_BASE = '/ward/camera';
+
+// 방 선택지 8개 + 등록 여부. "직접 입력"은 없고 이 목록 안에서만 골라야 한다
+export async function getWardCameraRooms() {
+  const response = await apiClient.get<CommonResponse<WardCameraRoom[]>>(`${WARD_CAMERA_BASE}/rooms`);
+  return getResponseData<WardCameraRoom[]>(response) ?? [];
+}
+
+// 내 카메라 + 연결 상태("내 카메라" 화면용). AI 서버를 직접 부르지 않는 /ward/camera보다
+// 연결 상태(status/lastFrameAt)가 더 붙어 있다
+export async function getWardLiveCameras() {
+  const response = await apiClient.get<CommonResponse<WardLiveCamera[]>>(`${WARD_CAMERA_BASE}/live`);
+  return getResponseData<WardLiveCamera[]>(response) ?? [];
+}
 
 // 카메라 등록(또는 재등록). deviceId를 생략하면 서버가 신규 발급
 export async function registerWardCamera(body: RegisterWardCameraReq) {
