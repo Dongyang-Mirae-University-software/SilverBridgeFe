@@ -32,7 +32,7 @@ function getErrorMessage(error: unknown, fallback: string) {
   return (error as { message?: string })?.message ?? fallback;
 }
 
-export function CameraRegisterModal({ onClose, onRegistered }: { onClose: () => void; onRegistered: () => void }) {
+export function CameraRegisterModal({ onClose }: { onClose: () => void }) {
   const [facing, setFacing] = useState<CameraFacing>('user');
   const [status, setStatus] = useState<StreamStatus>('off');
   const [room, setRoom] = useState('');
@@ -153,7 +153,6 @@ export function CameraRegisterModal({ onClose, onRegistered }: { onClose: () => 
             liveSessionIdRef.current = session.session_id ?? camera.sessionId;
             setStatus('streaming');
             startCaptureLoop(camera.recommendedFps);
-            onRegistered();
           } catch {
             setErrorMessage('카메라 등록은 완료됐지만 송출 시작에 실패했습니다. 다시 시도해 주세요.');
           }

@@ -4,3 +4,32 @@
   align-content: start;
   width: 100%;
 }
+
+.registerRow {
+  display: grid;
+  gap: 8px;
+}
+
+.registerButton {
+  justify-self: start;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 900;
+  padding: 14px 24px;
+}
+
+.registerButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.registerHint {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
