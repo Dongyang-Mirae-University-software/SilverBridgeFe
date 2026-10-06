@@ -10,11 +10,16 @@ import styles from './WardCameraList.module.css';
 
 const cx = classNames.bind(styles);
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return (error as { message?: string })?.message ?? fallback;
+}
+
 export function WardCameraList() {
   const { data, isLoading } = useQuery(wardCamerasQueryOptions);
   const cameras = data ?? [];
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
+  const [rowError, setRowError] = useState<{ id: number; message: string } | null>(null);
 
   const updateMutation = useUpdateWardCameraMutation();
   const deleteMutation = useDeleteWardCameraMutation();
@@ -22,17 +27,40 @@ export function WardCameraList() {
   const startEdit = (camera: WardCamera) => {
     setEditingId(camera.id);
     setEditingLabel(camera.label);
+    setRowError(null);
   };
 
   const saveEdit = (id: number) => {
     const label = editingLabel.trim();
     if (!label) return;
-    updateMutation.mutate({ id, body: { label } }, { onSuccess: () => setEditingId(null) });
+    updateMutation.mutate(
+      { id, body: { label } },
+      {
+        onSuccess: () => {
+          setEditingId(null);
+          setRowError(null);
+        },
+        onError: error => setRowError({ id, message: getErrorMessage(error, '방 이름을 바꾸지 못했습니다.') }),
+      },
+    );
+  };
+
+  const handleToggleActive = (camera: WardCamera, isActive: boolean) => {
+    updateMutation.mutate(
+      { id: camera.id, body: { isActive } },
+      {
+        onSuccess: () => setRowError(null),
+        onError: error => setRowError({ id: camera.id, message: getErrorMessage(error, '설정을 바꾸지 못했습니다.') }),
+      },
+    );
   };
 
   const handleDelete = (camera: WardCamera) => {
     if (!window.confirm(`"${camera.label}" 카메라를 삭제할까요?`)) return;
-    deleteMutation.mutate(camera.id);
+    deleteMutation.mutate(camera.id, {
+      onSuccess: () => setRowError(null),
+      onError: error => setRowError({ id: camera.id, message: getErrorMessage(error, '카메라를 삭제하지 못했습니다.') }),
+    });
   };
 
   if (isLoading) return <p className={cx('emptyText')}>등록된 카메라를 불러오는 중입니다.</p>;
@@ -77,9 +105,7 @@ export function WardCameraList() {
                   type="checkbox"
                   checked={camera.isActive}
                   disabled={updateMutation.isPending}
-                  onChange={event =>
-                    updateMutation.mutate({ id: camera.id, body: { isActive: event.target.checked } })
-                  }
+                  onChange={event => handleToggleActive(camera, event.target.checked)}
                 />
                 사용 중
               </label>
@@ -88,6 +114,12 @@ export function WardCameraList() {
                 삭제
               </button>
             </div>
+
+            {rowError?.id === camera.id && (
+              <p className={cx('rowError')} role="alert">
+                {rowError.message}
+              </p>
+            )}
           </li>
         ))}
       </ul>

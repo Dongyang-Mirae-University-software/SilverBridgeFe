@@ -83,6 +83,12 @@ export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident })
         )}
       </div>
 
+      {feedbackMutation.isError && (
+        <p className={cx('feedbackError')} role="alert">
+          {(feedbackMutation.error as { message?: string })?.message ?? '응답을 보내지 못했습니다. 다시 시도해 주세요.'}
+        </p>
+      )}
+
       {isClipModalOpen && (
         <AnomalyClipModal incidentId={incident.incidentId} onClose={() => setIsClipModalOpen(false)} />
       )}
