@@ -32,10 +32,18 @@ function getErrorMessage(error: unknown, fallback: string) {
   return (error as { message?: string })?.message ?? fallback;
 }
 
-export function CameraRegisterModal({ onClose }: { onClose: () => void }) {
+export function CameraRegisterModal({
+  initialRoom,
+  onClose,
+}: {
+  // 이 기기가 쓰던 카메라가 끊겨서 다시 켤 때 — 원래 쓰던 방을 미리 선택해 둔다.
+  // 같은 기기·같은 방으로 다시 등록하면 백엔드가 기존 sessionId를 그대로 재사용한다
+  initialRoom?: string;
+  onClose: () => void;
+}) {
   const [facing, setFacing] = useState<CameraFacing>('user');
   const [status, setStatus] = useState<StreamStatus>('off');
-  const [room, setRoom] = useState('');
+  const [room, setRoom] = useState(initialRoom ?? '');
   const [errorMessage, setErrorMessage] = useState('');
   const [registeredCamera, setRegisteredCamera] = useState<WardCamera | null>(null);
 
@@ -175,7 +183,7 @@ export function CameraRegisterModal({ onClose }: { onClose: () => void }) {
     <div className={cx('overlay')} role="presentation">
       <div className={cx('modal')} role="dialog" aria-modal="true" aria-label="카메라 등록">
         <header className={cx('header')}>
-          <strong>이 기기를 카메라로 등록</strong>
+          <strong>{initialRoom ? `"${initialRoom}" 카메라 다시 켜기` : '이 기기를 카메라로 등록'}</strong>
           <button type="button" className={cx('closeButton')} onClick={handleClose} aria-label="닫기">
             ×
           </button>
@@ -213,7 +221,13 @@ export function CameraRegisterModal({ onClose }: { onClose: () => void }) {
           {status !== 'off' && (
             <div className={cx('roomSection')}>
               <span className={cx('roomLabel')}>어느 방인가요?</span>
-              <RoomPicker rooms={rooms} selectedLabel={room} disabled={status === 'streaming'} onSelect={setRoom} />
+              <RoomPicker
+                rooms={rooms}
+                selectedLabel={room}
+                currentLabel={initialRoom}
+                disabled={status === 'streaming'}
+                onSelect={setRoom}
+              />
 
               {status === 'ready' && (
                 <button

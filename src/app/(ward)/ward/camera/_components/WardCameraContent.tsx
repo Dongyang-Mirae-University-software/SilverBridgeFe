@@ -21,22 +21,22 @@ export function WardCameraContent() {
   return (
     <section className={cx('page')}>
       <div className={cx('registerRow')}>
-        <button
-          type="button"
-          className={cx('registerButton')}
-          disabled={Boolean(myCamera)}
-          onClick={() => setIsRegisterOpen(true)}
-        >
-          + 이 기기를 카메라로 등록
+        <button type="button" className={cx('registerButton')} onClick={() => setIsRegisterOpen(true)}>
+          {myCamera ? `"${myCamera.label}" 카메라 다시 켜기` : '+ 이 기기를 카메라로 등록'}
         </button>
         {myCamera && (
-          <p className={cx('registerHint')}>이 기기는 이미 &quot;{myCamera.label}&quot; 카메라로 쓰고 있어요.</p>
+          <p className={cx('registerHint')}>
+            이 기기는 이미 &quot;{myCamera.label}&quot; 카메라로 등록돼 있어요. 화면이 꺼졌거나 연결이
+            끊겼다면 다시 켤 수 있어요.
+          </p>
         )}
       </div>
 
       <WardCameraList />
 
-      {isRegisterOpen && <CameraRegisterModal onClose={() => setIsRegisterOpen(false)} />}
+      {isRegisterOpen && (
+        <CameraRegisterModal initialRoom={myCamera?.label} onClose={() => setIsRegisterOpen(false)} />
+      )}
     </section>
   );
 }
