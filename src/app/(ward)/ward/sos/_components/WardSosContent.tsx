@@ -12,6 +12,7 @@ import { useWardSosMutation } from '@/service/query/ward';
 import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
 import type { WardSosAction } from '@/components/layout/dashboard/types';
 import type { WardSosResponse } from '@/service/interface/ward/sos';
+import { showToast } from '@/store/toastStore';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
 
@@ -19,7 +20,7 @@ const cx = classNames.bind(styles);
 
 const DIAL_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
 
-function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
+function Emergency119Dialpad({ guardianNotified, onClose }: { guardianNotified?: boolean; onClose: () => void }) {
   const [digits, setDigits] = useState('119');
 
   return (
@@ -31,6 +32,8 @@ function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
             ×
           </button>
         </div>
+
+        {guardianNotified && <p className={cx('dialGuardianNotice')}>보호자에게도 알렸습니다.</p>}
 
         <div className={cx('dialDisplay')}>{digits || ' '}</div>
 
@@ -78,7 +81,7 @@ function SosConfirmModal({
 }: {
   hasActiveGuardians: boolean;
   onCloseModal: () => void;
-  openDialModal: () => void;
+  openDialModal: (guardianNotified?: boolean) => void;
   openErrorModal: (error: unknown) => void;
   openSuccessModal: (data?: Partial<WardSosResponse> | null) => void;
   sosAction: WardSosAction;
@@ -114,8 +117,8 @@ function SosConfirmModal({
           triggerSos(undefined)
             .then(data => {
               onCloseModal();
-              if (sosAction === 'call119AndNotify') {
-                openDialModal();
+              if (sosAction === 'CALL_119_AND_NOTIFY') {
+                openDialModal(true);
                 return;
               }
               openSuccessModal(data);
@@ -142,8 +145,8 @@ export default function WardSosContent() {
     useWardActiveGuardians();
   const { mutate: triggerSos, mutateAsync: triggerSosAsync } = useWardSosMutation();
 
-  function openDialModal() {
-    openModal(<Emergency119Dialpad onClose={onCloseModal} />);
+  function openDialModal(guardianNotified?: boolean) {
+    openModal(<Emergency119Dialpad guardianNotified={guardianNotified} onClose={onCloseModal} />);
   }
 
   function openErrorModal(error: unknown) {
@@ -164,7 +167,7 @@ export default function WardSosContent() {
   function openSuccessModal(data?: Partial<WardSosResponse> | null) {
     const triggeredAt = data?.triggeredAt ?? new Date().toISOString();
     const sosEventId = data?.sosEventId ?? Date.now();
-    const shouldOfferDial = wardSettings.sosAction === 'notifyGuardianFirst';
+    const shouldOfferDial = wardSettings.sosAction === 'NOTIFY_GUARDIAN_FIRST';
 
     openModal(
       <CommonModal
@@ -211,8 +214,13 @@ export default function WardSosContent() {
       return;
     }
 
-    if (wardSettings.sosAction === 'call119') {
+    if (wardSettings.sosAction === 'CALL_119') {
+      // 119 화면은 바로 띄우고, SOS 기록 저장·보호자 알림은 화면 전환을 막지 않도록 백그라운드로 보낸다
       openDialModal();
+      triggerSos(undefined, {
+        onError: error =>
+          showToast((error as { message?: string })?.message ?? 'SOS 전송에 실패했습니다.', { variant: 'error' }),
+      });
       return;
     }
 

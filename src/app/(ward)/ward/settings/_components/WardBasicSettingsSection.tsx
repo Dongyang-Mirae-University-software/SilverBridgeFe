@@ -9,24 +9,27 @@ import styles from './WardBasicSettingsSection.module.css';
 
 const cx = classNames.bind(styles);
 
+// 세 옵션의 차이는 "보호자 알림 여부"가 아니라 "119 화면을 언제 보여줄지"다 —
+// 세 옵션 모두 보호자 알림은 항상 나간다(2026-08-26 확정). CALL_119는 "전화를 건다"는
+// 뜻이 아니라 "119 번호가 입력된 화면을 띄운다"는 뜻이라 라벨을 정직하게 바꿨다
 const SOS_OPTIONS = [
   {
-    value: 'call119' as const,
+    value: 'CALL_119' as const,
     icon: 'alert' as const,
-    label: '119에 바로 연결',
-    hint: 'SOS 버튼을 누르면 즉시 119에 전화를 겁니다.',
+    label: '119 화면 바로 표시',
+    hint: 'SOS 버튼을 누르면 곧바로 119가 입력된 화면이 뜹니다. 통화 버튼은 직접 눌러야 합니다.',
   },
   {
-    value: 'call119AndNotify' as const,
+    value: 'CALL_119_AND_NOTIFY' as const,
     icon: 'phone' as const,
-    label: '119 연결 + 보호자 알림',
-    hint: '119 통화와 동시에 보호자에게 알림을 보냅니다.',
+    label: '119 화면 + 보호자 알림 안내',
+    hint: '119 화면이 뜨면서 보호자에게도 알림이 전달됩니다.',
   },
   {
-    value: 'notifyGuardianFirst' as const,
+    value: 'NOTIFY_GUARDIAN_FIRST' as const,
     icon: 'messageCircle' as const,
-    label: '보호자에게 먼저 알림',
-    hint: '보호자에게 먼저 알린 뒤 119 연결 방법을 안내합니다.',
+    label: '보호자 먼저 알린 뒤 119 안내',
+    hint: '보호자에게 먼저 알린 뒤, 화면에서 119 화면으로 넘어가는 버튼을 안내합니다.',
   },
 ];
 
