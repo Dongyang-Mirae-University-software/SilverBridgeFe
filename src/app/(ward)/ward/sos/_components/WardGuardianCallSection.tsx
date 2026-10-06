@@ -18,28 +18,11 @@ interface Props {
   onGuardianCall: () => void;
 }
 
-function GuardianCard({
-  connection,
-  index,
-  onCall,
-}: {
-  connection: IConnectionItem;
-  index: number;
-  onCall: () => void;
-}) {
+function GuardianCard({ connection, onCall }: { connection: IConnectionItem; onCall: () => void }) {
   const telHref = makeTelHref(connection.partnerPhone);
-  const isMint = index % 2 === 0;
 
   return (
-    <article className={cx('guardianCard', isMint ? 'guardianCardMint' : 'guardianCardSky')}>
-      <div className={cx('guardianHead')}>
-        {telHref ? (
-          <span className={cx('guardianPhoneIcon')} aria-hidden="true">
-            <Icon name="phone" size={30} decorative />
-          </span>
-        ) : null}
-      </div>
-
+    <article className={cx('guardianCard')}>
       <div className={cx('guardianBody')}>
         <UserAvatar imageUrl={connection.partnerProfileImage} size="w-120" />
         <div className={cx('guardianInfo')}>
@@ -49,10 +32,13 @@ function GuardianCard({
       </div>
 
       <div className={cx('guardianFooter')}>
-        <div className={cx('guardianPhone')}>
-          <span>전화번호</span>
-          <strong>{formatPhoneText(connection.partnerPhone)}</strong>
-        </div>
+        <span className={cx('guardianPhoneNumber')}>{formatPhoneText(connection.partnerPhone)}</span>
+        {telHref && (
+          <span className={cx('callBadge')} aria-hidden="true">
+            <Icon name="phone" size={16} decorative />
+            전화 걸기
+          </span>
+        )}
       </div>
 
       {telHref ? (
@@ -83,6 +69,7 @@ export function WardGuardianCallSection({
     <section className={cx('phoneSection')}>
       <div className={cx('sectionHeader')}>
         <h3>보호자에게 직접 전화하기</h3>
+        <p>아래 보호자 카드를 누르면 바로 전화가 걸립니다.</p>
       </div>
 
       {isGuardiansError ? (
@@ -107,8 +94,8 @@ export function WardGuardianCallSection({
         </div>
       ) : currentGuardians.length > 0 ? (
         <div className={cx('guardianGrid')}>
-          {currentGuardians.map((connection, index) => (
-            <GuardianCard key={connection.id} connection={connection} index={index} onCall={onGuardianCall} />
+          {currentGuardians.map(connection => (
+            <GuardianCard key={connection.id} connection={connection} onCall={onGuardianCall} />
           ))}
         </div>
       ) : (
