@@ -54,6 +54,13 @@ function useGuardianConnectionSocket(realtimeUserId: string | undefined) {
           void queryClient.invalidateQueries({ queryKey: guardianAnomalyHistoryQueryKey });
         }
 
+        // 카메라 분석 상태는 화면 표시용 데이터일 뿐이라 토스트·알림음을 띄우지 않는다 —
+        // 실시간 카메라 화면(useGuardianMonitor)만 듣도록 별도 이벤트로 전달한다
+        if (payload.type === 'CAMERA_ANALYSIS') {
+          window.dispatchEvent(new CustomEvent('careai:camera-analysis', { detail: payload }));
+          return;
+        }
+
         window.dispatchEvent(
           new CustomEvent('careai:push', {
             detail: {
