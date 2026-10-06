@@ -6,6 +6,7 @@ import classNames from 'classnames/bind';
 
 import { wardCamerasQueryOptions, useDeleteWardCameraMutation, useUpdateWardCameraMutation } from '@/service/query/ward/camera';
 import { WardCamera } from '@/service/interface/ward/camera';
+import { showToast } from '@/store/toastStore';
 import styles from './WardCameraList.module.css';
 
 const cx = classNames.bind(styles);
@@ -19,7 +20,6 @@ export function WardCameraList() {
   const cameras = data ?? [];
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
-  const [rowError, setRowError] = useState<{ id: number; message: string } | null>(null);
 
   const updateMutation = useUpdateWardCameraMutation();
   const deleteMutation = useDeleteWardCameraMutation();
@@ -27,7 +27,6 @@ export function WardCameraList() {
   const startEdit = (camera: WardCamera) => {
     setEditingId(camera.id);
     setEditingLabel(camera.label);
-    setRowError(null);
   };
 
   const saveEdit = (id: number) => {
@@ -36,11 +35,8 @@ export function WardCameraList() {
     updateMutation.mutate(
       { id, body: { label } },
       {
-        onSuccess: () => {
-          setEditingId(null);
-          setRowError(null);
-        },
-        onError: error => setRowError({ id, message: getErrorMessage(error, '방 이름을 바꾸지 못했습니다.') }),
+        onSuccess: () => setEditingId(null),
+        onError: error => showToast(getErrorMessage(error, '방 이름을 바꾸지 못했습니다.'), { variant: 'error' }),
       },
     );
   };
@@ -49,8 +45,7 @@ export function WardCameraList() {
     updateMutation.mutate(
       { id: camera.id, body: { isActive } },
       {
-        onSuccess: () => setRowError(null),
-        onError: error => setRowError({ id: camera.id, message: getErrorMessage(error, '설정을 바꾸지 못했습니다.') }),
+        onError: error => showToast(getErrorMessage(error, '설정을 바꾸지 못했습니다.'), { variant: 'error' }),
       },
     );
   };
@@ -58,8 +53,7 @@ export function WardCameraList() {
   const handleDelete = (camera: WardCamera) => {
     if (!window.confirm(`"${camera.label}" 카메라를 삭제할까요?`)) return;
     deleteMutation.mutate(camera.id, {
-      onSuccess: () => setRowError(null),
-      onError: error => setRowError({ id: camera.id, message: getErrorMessage(error, '카메라를 삭제하지 못했습니다.') }),
+      onError: error => showToast(getErrorMessage(error, '카메라를 삭제하지 못했습니다.'), { variant: 'error' }),
     });
   };
 
@@ -114,12 +108,6 @@ export function WardCameraList() {
                 삭제
               </button>
             </div>
-
-            {rowError?.id === camera.id && (
-              <p className={cx('rowError')} role="alert">
-                {rowError.message}
-              </p>
-            )}
           </li>
         ))}
       </ul>

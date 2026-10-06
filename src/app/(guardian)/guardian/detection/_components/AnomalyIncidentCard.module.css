@@ -143,10 +143,3 @@
   font-size: 0.75rem;
   font-weight: 700;
 }
-
-.feedbackError {
-  margin: -4px 18px 14px;
-  color: var(--sb-warn);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
