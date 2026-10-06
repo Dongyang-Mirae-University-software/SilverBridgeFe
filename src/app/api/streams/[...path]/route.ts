@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
@@ -43,17 +43,41 @@ function getProxyResponseHeaders(response: Response) {
   return headers;
 }
 
+// 피보호자 송출(broadcast) 3개 경로만 허용한다. 카메라 목록·영상 보기·분석 상태 같은
+// 조회성 경로는 전부 백엔드 중계 API(/api/guardian/camera/**)로 옮겨갔다 — 여기 경로를
+// 늘리면 인증 없이 AI 서버 전체가 다시 뚫리니(이전의 보안 취약점) 추가하지 말 것
+function isAllowedBroadcastPath(path: string[]) {
+  if (path[0] !== 'v1' || path[1] !== 'stream-sessions') return false;
+  if (path.length === 2) return true; // POST /v1/stream-sessions (세션 생성)
+  if (path.length === 4 && path[2] && (path[3] === 'frame' || path[3] === 'stop')) return true; // 프레임 업로드 · 종료
+  return false;
+}
+
+function forbiddenResponse() {
+  return NextResponse.json({ success: false, message: '허용되지 않는 요청입니다.', data: null }, { status: 404 });
+}
+
 async function proxyStreamRequest(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
+
+  if (request.method.toUpperCase() !== 'POST' || !isAllowedBroadcastPath(path)) {
+    return forbiddenResponse();
+  }
+
+  // 최소한의 로그인 확인 — 역할(WARD)까지는 검증하지 않지만, 로그인 안 된 요청은 막는다
+  const accessToken = request.cookies.get('careai_access_token')?.value;
+  if (!accessToken) {
+    return NextResponse.json({ success: false, message: '로그인이 필요합니다.', data: null }, { status: 401 });
+  }
+
   const targetUrl = getStreamApiUrl(path, request.nextUrl.search);
-  const method = request.method.toUpperCase();
-  const body = method === 'GET' || method === 'HEAD' ? undefined : await request.arrayBuffer();
+  const body = await request.arrayBuffer();
 
   const response = await fetch(targetUrl, {
     body,
     cache: 'no-store',
     headers: getProxyRequestHeaders(request),
-    method,
+    method: 'POST',
     redirect: 'manual',
   });
 
@@ -64,9 +88,4 @@ async function proxyStreamRequest(request: NextRequest, context: RouteContext) {
   });
 }
 
-export const GET = (req: NextRequest, ctx: RouteContext) => proxyStreamRequest(req, ctx);
 export const POST = (req: NextRequest, ctx: RouteContext) => proxyStreamRequest(req, ctx);
-export const PUT = (req: NextRequest, ctx: RouteContext) => proxyStreamRequest(req, ctx);
-export const PATCH = (req: NextRequest, ctx: RouteContext) => proxyStreamRequest(req, ctx);
-export const DELETE = (req: NextRequest, ctx: RouteContext) => proxyStreamRequest(req, ctx);
-export const OPTIONS = (req: NextRequest, ctx: RouteContext) => proxyStreamRequest(req, ctx);
