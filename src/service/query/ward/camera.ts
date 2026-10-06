@@ -4,13 +4,17 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 
 import {
   deleteWardCamera,
+  getWardCameraRooms,
   getWardCameras,
+  getWardLiveCameras,
   registerWardCamera,
   updateWardCamera,
 } from '@/service/api/ward/camera';
 import { RegisterWardCameraReq, UpdateWardCameraReq } from '@/service/interface/ward/camera';
 
 export const wardCamerasQueryKey = ['ward-cameras'] as const;
+export const wardCameraRoomsQueryKey = ['ward-camera-rooms'] as const;
+export const wardLiveCamerasQueryKey = ['ward-live-cameras'] as const;
 
 export const wardCamerasQueryOptions = queryOptions({
   queryKey: wardCamerasQueryKey,
@@ -21,9 +25,30 @@ export const wardCamerasQueryOptions = queryOptions({
   retry: false,
 });
 
+export const wardCameraRoomsQueryOptions = queryOptions({
+  queryKey: wardCameraRoomsQueryKey,
+  queryFn: getWardCameraRooms,
+  staleTime: 5 * 1000,
+  retry: false,
+});
+
+// 연결 상태 폴링은 15초 이상 간격 — 더 자주 부르면 429
+export const wardLiveCamerasQueryOptions = queryOptions({
+  queryKey: wardLiveCamerasQueryKey,
+  queryFn: getWardLiveCameras,
+  refetchInterval: 15 * 1000,
+  staleTime: 10 * 1000,
+  retry: false,
+});
+
 function useInvalidateWardCameras() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: wardCamerasQueryKey });
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: wardCamerasQueryKey }),
+      queryClient.invalidateQueries({ queryKey: wardCameraRoomsQueryKey }),
+      queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey }),
+    ]);
 }
 
 export function useRegisterWardCameraMutation() {
