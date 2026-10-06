@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { formatNumber } from './monitorUtils';
 import { useGuardianMonitor } from './useGuardianMonitor';
+import type { GuardianLiveCamera } from '@/service/interface/guardian/camera';
 import styles from './LiveCameraModal.module.css';
 
 const cx = classNames.bind(styles);
@@ -31,6 +32,31 @@ function useLiveClock() {
 function getCameraLabel(session: { wardName?: string; label?: string }) {
   if (session.label) return session.wardName ? `${session.wardName} · ${session.label}` : session.label;
   return session.wardName ?? '피보호자';
+}
+
+interface WardGroup {
+  wardId: string;
+  wardName: string;
+  cameras: GuardianLiveCamera[];
+}
+
+function groupSessionsByWard(sessions: GuardianLiveCamera[]): WardGroup[] {
+  const groups: WardGroup[] = [];
+  const indexByWardId = new Map<string, number>();
+
+  sessions.forEach(session => {
+    const wardId = session.wardId || session.wardName || session.sessionId;
+    const existingIndex = indexByWardId.get(wardId);
+
+    if (existingIndex === undefined) {
+      indexByWardId.set(wardId, groups.length);
+      groups.push({ wardId, wardName: session.wardName || '피보호자', cameras: [session] });
+    } else {
+      groups[existingIndex].cameras.push(session);
+    }
+  });
+
+  return groups;
 }
 
 export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionId?: string | null; onClose: () => void }) {
@@ -69,6 +95,16 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
   const isAlert = ['fire', 'smoke', 'knife', 'fall', 'danger'].includes(monitor.detectState);
   const cameraStatus = monitor.sessionStatus?.status;
   const cameraStatusLabel = cameraStatus === null ? '확인 불가' : cameraStatus ?? '-';
+
+  const wardGroups = useMemo(() => groupSessionsByWard(monitor.sessions), [monitor.sessions]);
+  const selectedWardId = monitor.selectedSession?.wardId || monitor.selectedSession?.wardName || '';
+  const selectedWardGroup = wardGroups.find(group => group.wardId === selectedWardId);
+
+  const handleSelectWard = (group: WardGroup) => {
+    if (group.wardId === selectedWardId) return;
+    const target = group.cameras[0];
+    if (target) monitor.selectSession(target.sessionId);
+  };
 
   return (
     <div className={cx('overlay')} role="presentation" onClick={onClose}>
@@ -130,18 +166,36 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
           </div>
         </div>
 
-        {monitor.sessions.length > 1 && (
+        {wardGroups.length > 1 && (
           <div className={cx('switchRow')}>
-            <span className={cx('switchLabel')}>카메라 전환</span>
+            <span className={cx('switchLabel')}>피보호자 선택</span>
             <div className={cx('switchChips')}>
-              {monitor.sessions.map(session => (
+              {wardGroups.map(group => (
+                <button
+                  key={group.wardId}
+                  type="button"
+                  className={cx('switchChip', { active: group.wardId === selectedWardId })}
+                  onClick={() => handleSelectWard(group)}
+                >
+                  {group.wardName}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {selectedWardGroup && selectedWardGroup.cameras.length > 1 && (
+          <div className={cx('switchRow')}>
+            <span className={cx('switchLabel')}>방 선택</span>
+            <div className={cx('switchChips')}>
+              {selectedWardGroup.cameras.map(session => (
                 <button
                   key={session.sessionId}
                   type="button"
                   className={cx('switchChip', { active: monitor.selectedId === session.sessionId })}
                   onClick={() => monitor.selectSession(session.sessionId)}
                 >
-                  {getCameraLabel(session)}
+                  {session.label}
                 </button>
               ))}
             </div>
