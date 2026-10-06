@@ -7,7 +7,7 @@ import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { UserAvatar } from '@/components/UserAvatar';
-import { getLiveStreams } from '@/service/api/liveStream';
+import { getGuardianLiveCameras } from '@/service/api/guardian/camera';
 import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
 
 import styles from './GuardianDashboardContent.module.css';
@@ -57,20 +57,20 @@ export function GuardianDashboardContent() {
     isLoading: isConnectionsLoading,
   } = useQuery(guardianConnectionsQueryOptions);
   const {
-    data: liveStreams,
+    data: liveCameras,
     isError: isLiveStreamsError,
     isLoading: isLiveStreamsLoading,
   } = useQuery({
-    queryKey: ['dashboard-live-streams'],
-    queryFn: getLiveStreams,
+    queryKey: ['dashboard-live-cameras'],
+    queryFn: getGuardianLiveCameras,
     retry: false,
     staleTime: 15 * 1000,
   });
 
   const connections = Array.isArray(connectionsResponse?.data) ? connectionsResponse.data : [];
   const activeConnections = connections.filter(connection => connection.status === 'ACTIVE');
-  const hasLiveStreamData = !isLiveStreamsLoading && !isLiveStreamsError && Array.isArray(liveStreams);
-  const analyzingStreamCount = liveStreams?.filter(session => session.is_analyzing).length ?? 0;
+  const hasLiveStreamData = !isLiveStreamsLoading && !isLiveStreamsError && Array.isArray(liveCameras);
+  const analyzingStreamCount = liveCameras?.filter(camera => camera.status === 'running').length ?? 0;
 
   const sortedActiveConnections = useMemo(
     () =>
