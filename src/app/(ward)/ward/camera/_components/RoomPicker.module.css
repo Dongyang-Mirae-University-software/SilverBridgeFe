@@ -1,0 +1,34 @@
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  border: 2px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 12px 20px;
+}
+
+.chip.active {
+  border-color: var(--sb-brand);
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.chip.locked,
+.chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.badge {
+  margin-left: 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
