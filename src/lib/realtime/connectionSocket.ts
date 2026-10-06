@@ -33,6 +33,7 @@ export interface ConnectionRealtimePayload {
   detectedTypeLabel?: string;
   sessionId?: string;
   anomalyEventId?: string;
+  incidentId?: string;
   detectedAt?: string;
 }
 
@@ -101,6 +102,7 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
       detectedTypeLabel?: string;
       sessionId?: string;
       anomalyEventId?: number | string;
+      incidentId?: number | string;
       detectedAt?: string;
     };
 
@@ -124,6 +126,7 @@ function normalizeMessage(message: IMessage, fallbackType: ConnectionRealtimeTyp
       detectedTypeLabel: parsed.detectedTypeLabel,
       sessionId: parsed.sessionId,
       anomalyEventId: parsed.anomalyEventId === undefined ? undefined : String(parsed.anomalyEventId),
+      incidentId: parsed.incidentId === undefined ? undefined : String(parsed.incidentId),
       detectedAt: parsed.detectedAt,
     };
   } catch {

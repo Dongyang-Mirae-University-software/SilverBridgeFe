@@ -71,6 +71,7 @@ function useGuardianConnectionSocket(realtimeUserId: string | undefined) {
                 detectedTypeLabel: payload.detectedTypeLabel ?? '',
                 sessionId: payload.sessionId ?? '',
                 anomalyEventId: payload.anomalyEventId ?? '',
+                incidentId: payload.incidentId ?? '',
                 detectedAt: payload.detectedAt ?? '',
               },
               notification: getRealtimeNotification(payload, role),
