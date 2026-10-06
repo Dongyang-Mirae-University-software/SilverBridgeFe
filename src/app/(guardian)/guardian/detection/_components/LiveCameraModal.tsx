@@ -1,75 +1,13 @@
 'use client';
 
-import { CSSProperties, RefObject, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
-import type { LiveStreamDetectionBox } from '@/service/interface/liveStream';
-import { formatNumber, normalizeDetectedType } from './monitorUtils';
+import { formatNumber } from './monitorUtils';
 import { useGuardianMonitor } from './useGuardianMonitor';
 import styles from './LiveCameraModal.module.css';
 
 const cx = classNames.bind(styles);
-
-interface CoverTransform {
-  scale: number;
-  offsetX: number;
-  offsetY: number;
-}
-
-// object-fit: cover로 표시되는 <img> 위에 bbox를 정확히 겹치려면, 원본(naturalWidth/Height)
-// 기준 좌표를 "꽉 채우며 잘리는" 변환으로 옮겨야 한다 — 그냥 비율만 곱하면 잘린 영역만큼 밀려서 어긋남
-function useCoverTransform(
-  containerRef: RefObject<HTMLElement | null>,
-  imgRef: RefObject<HTMLImageElement | null>,
-  // img가 key 변경으로 다시 마운트될 때(프레임/세션 전환) 새 DOM 노드를 다시 잡기 위한 트리거
-  frameKey: unknown,
-) {
-  const [transform, setTransform] = useState<CoverTransform | null>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    const img = imgRef.current;
-    if (!container || !img) return;
-
-    const recompute = () => {
-      const naturalWidth = img.naturalWidth;
-      const naturalHeight = img.naturalHeight;
-      if (!naturalWidth || !naturalHeight) return;
-
-      const { width: containerWidth, height: containerHeight } = container.getBoundingClientRect();
-      if (!containerWidth || !containerHeight) return;
-
-      const scale = Math.max(containerWidth / naturalWidth, containerHeight / naturalHeight);
-      setTransform({
-        scale,
-        offsetX: (containerWidth - naturalWidth * scale) / 2,
-        offsetY: (containerHeight - naturalHeight * scale) / 2,
-      });
-    };
-
-    recompute();
-
-    const resizeObserver = new ResizeObserver(recompute);
-    resizeObserver.observe(container);
-    img.addEventListener('load', recompute);
-
-    return () => {
-      resizeObserver.disconnect();
-      img.removeEventListener('load', recompute);
-    };
-  }, [containerRef, imgRef, frameKey]);
-
-  return transform;
-}
-
-function getDetectionBoxStyle(bbox: LiveStreamDetectionBox, transform: CoverTransform): CSSProperties {
-  return {
-    left: bbox.x1 * transform.scale + transform.offsetX,
-    top: bbox.y1 * transform.scale + transform.offsetY,
-    width: (bbox.x2 - bbox.x1) * transform.scale,
-    height: (bbox.y2 - bbox.y1) * transform.scale,
-  };
-}
 
 const DETECT_LABEL: Record<string, string> = {
   fire: '화재 감지됨',
@@ -90,27 +28,23 @@ function useLiveClock() {
   return now;
 }
 
-function getCameraLabel(session: { ward_name?: string; label?: string }) {
-  if (session.label) return session.ward_name ? `${session.ward_name} · ${session.label}` : session.label;
-  return session.ward_name ?? '피보호자';
+function getCameraLabel(session: { wardName?: string; label?: string }) {
+  if (session.label) return session.wardName ? `${session.wardName} · ${session.label}` : session.label;
+  return session.wardName ?? '피보호자';
 }
 
 export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionId?: string | null; onClose: () => void }) {
   const monitor = useGuardianMonitor();
   const didInitRef = useRef(false);
   const imgRef = useRef<HTMLImageElement>(null);
-  const frameAreaRef = useRef<HTMLDivElement>(null);
   const now = useLiveClock();
-  const frameKey = monitor.latestFrameUrl ?? monitor.selectedId;
-  const coverTransform = useCoverTransform(frameAreaRef, imgRef, frameKey);
-  const detections = monitor.latestAnalysis?.detections ?? [];
 
   useEffect(() => {
     if (didInitRef.current || monitor.isLoading || monitor.sessions.length === 0) return;
     didInitRef.current = true;
-    const target = initialSessionId && monitor.sessions.some(session => session.session_id === initialSessionId)
+    const target = initialSessionId && monitor.sessions.some(session => session.sessionId === initialSessionId)
       ? initialSessionId
-      : monitor.sessions[0].session_id;
+      : monitor.sessions[0].sessionId;
     monitor.selectSession(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSessionId, monitor.isLoading, monitor.sessions]);
@@ -131,9 +65,10 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
   };
 
   const confidence = monitor.latestAnalysis?.confidence ?? 0;
-  const detectedType = monitor.latestAnalysis ? normalizeDetectedType(monitor.latestAnalysis) : null;
   const detectLabel = DETECT_LABEL[monitor.detectState] ?? '분석 대기 중';
   const isAlert = ['fire', 'smoke', 'knife', 'fall', 'danger'].includes(monitor.detectState);
+  const cameraStatus = monitor.sessionStatus?.status;
+  const cameraStatusLabel = cameraStatus === null ? '확인 불가' : cameraStatus ?? '-';
 
   return (
     <div className={cx('overlay')} role="presentation" onClick={onClose}>
@@ -146,32 +81,23 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
           </button>
         </header>
 
-        <div className={cx('frameArea')} ref={frameAreaRef}>
-          {monitor.isAllowlistEmpty ? (
+        <div className={cx('frameArea')}>
+          {monitor.isEmpty ? (
             <div className={cx('placeholder')}>연결된 피보호자의 카메라가 없습니다.</div>
           ) : !monitor.frameSrc ? (
-            <div className={cx('placeholder')}>프레임을 수신하는 중입니다...</div>
+            <div className={cx('placeholder')}>
+              {monitor.isStreamError ? '영상을 불러오지 못했습니다.' : '프레임을 수신하는 중입니다...'}
+            </div>
           ) : (
-            <img ref={imgRef} key={frameKey} src={monitor.frameSrc} alt="실시간 영상" className={cx('frameImg')} />
+            <img
+              ref={imgRef}
+              key={monitor.frameSrc}
+              src={monitor.frameSrc}
+              alt="실시간 영상"
+              className={cx('frameImg')}
+              onError={monitor.onStreamError}
+            />
           )}
-
-          {coverTransform &&
-            detections.map((detection, index) => {
-              if (!detection.bbox) return null;
-              const boxStyle = getDetectionBoxStyle(detection.bbox, coverTransform);
-              const labelOnTop = (boxStyle.top as number) >= 24;
-
-              return (
-                <div key={index} className={cx('detectionBox')} style={boxStyle}>
-                  {detection.detectedType && (
-                    <span className={cx('detectionLabel', { labelInside: !labelOnTop })}>
-                      {detection.detectedType.toUpperCase()}
-                      {detection.confidence != null ? ` ${Math.round(detection.confidence * 100)}%` : ''}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
 
           <div className={cx('recBadge')}>
             <span className={cx('recDot')} />
@@ -184,7 +110,7 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
 
           {monitor.latestAnalysis && (
             <p className={cx('caption')}>
-              {detectedType?.toUpperCase()} · {detectLabel.toUpperCase()}
+              {monitor.latestAnalysis.detectedTypeLabel} · {detectLabel.toUpperCase()}
             </p>
           )}
         </div>
@@ -200,7 +126,7 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
           </div>
           <div className={cx('infoChip')}>
             <span>상태</span>
-            <strong>{monitor.sessionStatus?.status ?? '-'}</strong>
+            <strong>{cameraStatusLabel}</strong>
           </div>
         </div>
 
@@ -210,10 +136,10 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
             <div className={cx('switchChips')}>
               {monitor.sessions.map(session => (
                 <button
-                  key={session.session_id}
+                  key={session.sessionId}
                   type="button"
-                  className={cx('switchChip', { active: monitor.selectedId === session.session_id })}
-                  onClick={() => monitor.selectSession(session.session_id)}
+                  className={cx('switchChip', { active: monitor.selectedId === session.sessionId })}
+                  onClick={() => monitor.selectSession(session.sessionId)}
                 >
                   {getCameraLabel(session)}
                 </button>
