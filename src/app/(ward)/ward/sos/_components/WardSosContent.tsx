@@ -10,9 +10,7 @@ import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import useModalStore from '@/store/modalStore';
 import { useWardSosMutation } from '@/service/query/ward';
 import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
-import type { WardSosAction } from '@/components/layout/dashboard/types';
 import type { WardSosResponse } from '@/service/interface/ward/sos';
-import { showToast } from '@/store/toastStore';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
 
@@ -68,73 +66,6 @@ function Emergency119Dialpad({ guardianNotified, onClose }: { guardianNotified?:
   );
 }
 
-type TriggerSos = ReturnType<typeof useWardSosMutation>['mutateAsync'];
-
-function SosConfirmModal({
-  hasActiveGuardians,
-  onCloseModal,
-  openDialModal,
-  openErrorModal,
-  openSuccessModal,
-  sosAction,
-  triggerSos,
-}: {
-  hasActiveGuardians: boolean;
-  onCloseModal: () => void;
-  openDialModal: (guardianNotified?: boolean) => void;
-  openErrorModal: (error: unknown) => void;
-  openSuccessModal: (data?: Partial<WardSosResponse> | null) => void;
-  sosAction: WardSosAction;
-  triggerSos: TriggerSos;
-}) {
-  const [isSending, setIsSending] = useState(false);
-
-  function closeIfIdle() {
-    if (!isSending) onCloseModal();
-  }
-
-  return (
-    <CommonModal
-      type="warning"
-      tone="guardian"
-      title="긴급 SOS 전송"
-      message={
-        isSending ? '보호자에게 SOS를 전송하고 있습니다.' : '긴급 SOS를 보내면 연결된 보호자에게 알림이 전달됩니다.'
-      }
-      primaryButton={{
-        text: isSending ? '전송 중...' : '보내기',
-        disabled: isSending,
-        onClick: () => {
-          if (isSending) return;
-
-          if (!hasActiveGuardians) {
-            onCloseModal();
-            openDialModal();
-            return;
-          }
-
-          setIsSending(true);
-          triggerSos(undefined)
-            .then(data => {
-              onCloseModal();
-              if (sosAction === 'CALL_119_AND_NOTIFY') {
-                openDialModal(true);
-                return;
-              }
-              openSuccessModal(data);
-            })
-            .catch(error => {
-              onCloseModal();
-              openErrorModal(error);
-            });
-        },
-      }}
-      secondaryButton={{ text: '취소', disabled: isSending, onClick: closeIfIdle }}
-      onClose={closeIfIdle}
-    />
-  );
-}
-
 export default function WardSosContent() {
   const { wardSettings } = useDashboard();
   const { openModal, onCloseModal } = useModalStore(state => ({
@@ -144,6 +75,7 @@ export default function WardSosContent() {
   const { activeGuardians, hasActiveGuardians, isLoading: isLoadingGuardians, isError: isGuardiansError } =
     useWardActiveGuardians();
   const { mutate: triggerSos, mutateAsync: triggerSosAsync } = useWardSosMutation();
+  const [isSending, setIsSending] = useState(false);
 
   function openDialModal(guardianNotified?: boolean) {
     openModal(<Emergency119Dialpad guardianNotified={guardianNotified} onClose={onCloseModal} />);
@@ -194,37 +126,24 @@ export default function WardSosContent() {
     );
   }
 
-  function openConfirmModal() {
-    openModal(
-      <SosConfirmModal
-        hasActiveGuardians={hasActiveGuardians}
-        onCloseModal={onCloseModal}
-        openDialModal={openDialModal}
-        openErrorModal={openErrorModal}
-        openSuccessModal={openSuccessModal}
-        sosAction={wardSettings.sosAction}
-        triggerSos={triggerSosAsync}
-      />,
-    );
-  }
-
+  // 2026-10-07: 확인 창 없이 탭하면 바로 전송한다. 활성 보호자가 있으면 설정값에 따라
+  // 119 화면을 먼저 열거나(응답을 기다리지 않음) 완료 안내를 보여준다
   function handleHeroPress() {
     if (!isLoadingGuardians && !hasActiveGuardians) {
       openDialModal();
       return;
     }
+    if (isSending) return;
 
-    if (wardSettings.sosAction === 'CALL_119') {
-      // 119 화면은 바로 띄우고, SOS 기록 저장·보호자 알림은 화면 전환을 막지 않도록 백그라운드로 보낸다
-      openDialModal();
-      triggerSos(undefined, {
-        onError: error =>
-          showToast((error as { message?: string })?.message ?? 'SOS 전송에 실패했습니다.', { variant: 'error' }),
-      });
-      return;
-    }
+    setIsSending(true);
+    if (wardSettings.sosAction === 'CALL_119_AND_NOTIFY') openDialModal(true);
 
-    openConfirmModal();
+    triggerSosAsync(undefined)
+      .then(data => {
+        if (wardSettings.sosAction === 'NOTIFY_GUARDIAN_FIRST') openSuccessModal(data);
+      })
+      .catch(openErrorModal)
+      .finally(() => setIsSending(false));
   }
 
   function handleGuardianCall() {
@@ -233,13 +152,13 @@ export default function WardSosContent() {
 
   return (
     <div className={cx('page')}>
-      <button className={cx('hero')} type="button" onClick={handleHeroPress}>
+      <button className={cx('hero')} type="button" disabled={isSending} onClick={handleHeroPress}>
         <div className={cx('heroIcon')}>
           <Icon name="alert" size={40} decorative />
         </div>
         <span className={cx('heroEyebrow')}>SOS</span>
         <h2>긴급 SOS</h2>
-        <p>탭하여 즉시 도움 요청</p>
+        <p>{isSending ? '전송 중...' : '탭하여 즉시 도움 요청'}</p>
       </button>
 
       <WardGuardianCallSection
