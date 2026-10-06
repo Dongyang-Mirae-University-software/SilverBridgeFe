@@ -3,7 +3,9 @@ import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
-import { WardSettings } from '@/components/layout/dashboard/types';
+import { WardSettings, WardSosAction } from '@/components/layout/dashboard/types';
+import { useUpdateWardSosSettingMutation } from '@/service/query/ward/sosSetting';
+import { showToast } from '@/store/toastStore';
 
 import styles from './WardBasicSettingsSection.module.css';
 
@@ -129,6 +131,27 @@ function HighContrastCard({ updateWardSettings, wardSettings }: Props) {
 }
 
 function SosActionCard({ updateWardSettings, wardSettings }: Props) {
+  const updateSosSettingMutation = useUpdateWardSosSettingMutation();
+
+  const handleSelect = (value: WardSosAction) => {
+    const previous = wardSettings.sosAction;
+    if (previous === value) return;
+
+    updateWardSettings({ sosAction: value }); // 즉시 반영(낙관적 업데이트)
+    updateSosSettingMutation.mutate(
+      { sosAction: value },
+      {
+        onError: error => {
+          updateWardSettings({ sosAction: previous }); // 실패하면 되돌림
+          showToast(
+            (error as { message?: string })?.message ?? 'SOS 설정을 저장하지 못했습니다. 다시 시도해 주세요.',
+            { variant: 'error' },
+          );
+        },
+      },
+    );
+  };
+
   return (
     <section className={cx('card')} aria-labelledby="s-sos">
       <div className={cx('cardHeader')}>
@@ -150,7 +173,8 @@ function SosActionCard({ updateWardSettings, wardSettings }: Props) {
                 name="ward-sos"
                 value={opt.value}
                 checked={isActive}
-                onChange={() => updateWardSettings({ sosAction: opt.value })}
+                disabled={updateSosSettingMutation.isPending}
+                onChange={() => handleSelect(opt.value)}
               />
               <Icon name={opt.icon} size={24} className={cx('sosIcon')} />
               <span className={cx('sosText')}>

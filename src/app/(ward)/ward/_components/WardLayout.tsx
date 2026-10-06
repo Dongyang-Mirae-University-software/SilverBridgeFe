@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -19,6 +19,7 @@ import { getRealtimeNotification } from '@/utils/dashboard/realtime';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
 import { applyMedicationTakenToWardCache } from '@/service/query/ward/medication';
+import { wardSosSettingQueryOptions } from '@/service/query/ward/sosSetting';
 import styles from './WardLayout.module.css';
 
 const cx = classNames.bind(styles);
@@ -34,6 +35,7 @@ export function WardLayout({ children }: { children: ReactNode }) {
   const realtimeUserId = profile?.id;
 
   useWardSettings(isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
+  useWardSosSettingSync(setWardSettings);
   useWardConnectionSocket(realtimeUserId);
   useWardRootFontSize(wardSettings.fontSize);
 
@@ -88,6 +90,19 @@ function useWardSettings(
   useEffect(() => {
     if (isLoaded) window.localStorage.setItem(WARD_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
   }, [isLoaded, settings]);
+}
+
+// sosAction은 계정 단위로 동기화된다 — 기기별 localStorage 값은 첫 로딩까지만
+// 임시로 쓰고, 서버 응답이 오면 한 번 덮어쓴다(이후 변경은 PUT 성공 시 로컬에 바로 반영)
+function useWardSosSettingSync(setSettings: (updater: (current: WardSettings) => WardSettings) => void) {
+  const { data } = useQuery(wardSosSettingQueryOptions);
+  const didSyncRef = useRef(false);
+
+  useEffect(() => {
+    if (didSyncRef.current || !data) return;
+    didSyncRef.current = true;
+    setSettings(current => ({ ...current, sosAction: data.sosAction }));
+  }, [data, setSettings]);
 }
 
 function useWardConnectionSocket(realtimeUserId: string | undefined) {
