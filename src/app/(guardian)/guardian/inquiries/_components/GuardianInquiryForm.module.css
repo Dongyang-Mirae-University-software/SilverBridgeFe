@@ -1,0 +1,75 @@
+.form {
+  display: grid;
+  gap: 16px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  padding: 22px 24px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldLabel {
+  color: var(--sb-ink-soft);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  padding: 8px 14px;
+}
+
+.chip.active {
+  border-color: var(--sb-brand);
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.input,
+.textarea {
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink);
+  font-size: 0.9375rem;
+  padding: 10px 12px;
+}
+
+.textarea {
+  min-height: 160px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.submit {
+  border: 0;
+  border-radius: 999px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 850;
+  padding: 13px;
+}
+
+.submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
