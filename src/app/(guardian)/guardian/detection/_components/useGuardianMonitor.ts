@@ -19,6 +19,17 @@ import { resolveCameraDetectState } from './monitorUtils';
 // 티켓 재발급을 너무 자주 시도하면 429(요청 과다)에 걸리므로 재연결 사이에 간격을 둔다
 const TICKET_RETRY_DELAY_MS = 3000;
 
+// 403(CAMERA_NOT_CONNECTED·INACTIVE_USER)·404(CAMERA_NOT_FOUND)는 재시도해도 안 풀리는
+// 에러라서 자동 재연결을 멈춰야 한다 — 끄지 않으면 403 루프를 계속 돌게 된다
+function isPermanentStreamError(error: unknown) {
+  const status = (error as { response?: { status?: number } })?.response?.status;
+  return status === 403 || status === 404;
+}
+
+function getStreamErrorMessage(error: unknown) {
+  return (error as { message?: string })?.message ?? '영상을 불러오지 못했습니다.';
+}
+
 function toAnalysis(payload: ConnectionRealtimePayload): GuardianCameraAnalysis | null {
   if (!payload.detectedType) return null;
 
@@ -37,7 +48,9 @@ export function useGuardianMonitor() {
   const selectedIdRef = useRef<string | null>(null);
   const [socketAnalysis, setSocketAnalysis] = useState<GuardianCameraAnalysis | null>(null);
   const [frameSrc, setFrameSrc] = useState<string | null>(null);
+  const [streamErrorMessage, setStreamErrorMessage] = useState<string | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openStreamRef = useRef<(sessionId: string) => void>(() => {});
 
   const { data: sessions = [], isLoading, isError, error } = useQuery(guardianLiveCamerasQueryOptions);
   const { data: status } = useQuery(guardianCameraStatusQueryOptions(selectedId));
@@ -57,24 +70,40 @@ export function useGuardianMonitor() {
         onSuccess: ticket => {
           // 그 사이 다른 카메라로 전환됐으면 이 응답은 버린다
           if (!ticket || selectedIdRef.current !== sessionId) return;
+          setStreamErrorMessage(null);
           setFrameSrc(getGuardianCameraStreamUrl(sessionId, ticket.ticket));
+        },
+        onError: error => {
+          if (selectedIdRef.current !== sessionId) return;
+          setStreamErrorMessage(getStreamErrorMessage(error));
+
+          // 권한 없음·존재하지 않는 카메라는 다시 시도해도 똑같이 실패하므로 멈춘다
+          if (isPermanentStreamError(error)) return;
+
+          retryTimerRef.current = setTimeout(() => {
+            if (selectedIdRef.current === sessionId) openStreamRef.current(sessionId);
+          }, TICKET_RETRY_DELAY_MS);
         },
       });
     },
     [clearRetryTimer, ticketMutation],
   );
 
-  // <img onError>에서 호출 — 티켓 만료(최대 30분) · 일시적 끊김 때 새 티켓으로 조용히 재연결한다.
-  // 연결 해제·정지 계정이면 재발급이 403이라 ticketMutation.isError로 멈추고 안내만 보여주면 된다
+  useEffect(() => {
+    openStreamRef.current = openStream;
+  }, [openStream]);
+
+  // <img onError> — 티켓 만료(최대 30분)·일시적 끊김이면 새 티켓으로 조용히 재연결한다.
+  // 진짜 원인(연결 해제·정지 계정 등)은 openStream의 티켓 재발급 응답에서 판가름난다
   const handleStreamError = useCallback(() => {
     const sessionId = selectedIdRef.current;
     if (!sessionId) return;
     setFrameSrc(null);
     clearRetryTimer();
     retryTimerRef.current = setTimeout(() => {
-      if (selectedIdRef.current === sessionId) openStream(sessionId);
+      if (selectedIdRef.current === sessionId) openStreamRef.current(sessionId);
     }, TICKET_RETRY_DELAY_MS);
-  }, [clearRetryTimer, openStream]);
+  }, [clearRetryTimer]);
 
   function selectSession(sessionId: string) {
     if (!sessions.some(session => session.sessionId === sessionId)) return;
@@ -82,6 +111,7 @@ export function useGuardianMonitor() {
     clearRetryTimer();
     setFrameSrc(null); // 동시 시청 한도(1인 2개)에 걸리지 않도록 이전 영상 연결부터 끊는다
     setSocketAnalysis(null);
+    setStreamErrorMessage(null);
     setSelectedId(sessionId);
     selectedIdRef.current = sessionId;
     openStream(sessionId);
@@ -127,7 +157,6 @@ export function useGuardianMonitor() {
     isError,
     isLoading,
     isStreamConnecting: ticketMutation.isPending,
-    isStreamError: ticketMutation.isError,
     latestAnalysis,
     onStreamError: handleStreamError,
     selectSession,
@@ -135,5 +164,6 @@ export function useGuardianMonitor() {
     selectedSession,
     sessionStatus: status ?? null,
     sessions,
+    streamErrorMessage,
   };
 }

@@ -86,7 +86,7 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
             <div className={cx('placeholder')}>연결된 피보호자의 카메라가 없습니다.</div>
           ) : !monitor.frameSrc ? (
             <div className={cx('placeholder')}>
-              {monitor.isStreamError ? '영상을 불러오지 못했습니다.' : '프레임을 수신하는 중입니다...'}
+              {monitor.streamErrorMessage ?? '프레임을 수신하는 중입니다...'}
             </div>
           ) : (
             <img
