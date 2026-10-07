@@ -14,7 +14,7 @@ const cx = classNames.bind(styles);
 interface UserAvatarProps {
   imageUrl?: string | null;
   userName?: string | null;
-  size: 'w-32' | 'w-60' | 'w-120';
+  size: 'w-32' | 'w-38' | 'w-60' | 'w-120';
   disabled?: boolean;
   onClick?: () => void;
   isChange?: boolean;

@@ -37,6 +37,12 @@ button.avatar:disabled {
   font-size: 0.75rem;
 }
 
+.w-38 {
+  width: 38px;
+  height: 38px;
+  font-size: 14px;
+}
+
 .w-60 {
   width: 60px;
   height: 60px;

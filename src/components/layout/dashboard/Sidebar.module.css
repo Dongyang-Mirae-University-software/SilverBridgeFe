@@ -149,28 +149,6 @@
   text-align: left;
 }
 
-.userCard strong {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.userCard span {
-  display: block;
-  overflow: hidden;
-  max-width: 150px;
-  color: var(--sb-ink-mute);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.userIdText {
-  color: var(--sb-ink);
-  font-size: 0.875rem;
-  font-weight: 700;
-}
-
 .userCard:hover {
   background: #fff;
 }
@@ -185,36 +163,29 @@
   flex: 1;
 }
 
-.userTitleRow {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 6px;
-}
-
-.userTitleRow strong {
+.userName {
   overflow: hidden;
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.userRoleBadge {
-  display: inline-flex;
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: #dceee3;
-  color: var(--sb-safe);
-  font-size: 0.625rem;
-  font-weight: 800;
-  padding: 2px 6px;
+.userRole {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 1px;
+  color: var(--sb-ink-mute);
+  font-size: 11px;
 }
 
 .userChevron {
+  display: grid;
   flex-shrink: 0;
+  place-items: center;
   color: var(--sb-ink-mute);
-  font-size: 1.125rem;
-  font-weight: 600;
-  line-height: 1;
 }
 
 @media (max-width: 900px) {

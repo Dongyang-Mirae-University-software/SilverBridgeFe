@@ -91,16 +91,15 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
 
         <div className={cx('sidebarFooter')}>
           <button className={cx('userCard')} type="button" aria-haspopup="dialog" onClick={handleOpenProfile}>
-            <UserAvatar size="w-60" imageUrl={profile?.profileImage} />
+            <UserAvatar size="w-38" imageUrl={profile?.profileImage} />
             <div className={cx('userInfo')}>
-              <div className={cx('userTitleRow')}>
-                <strong>{userName}</strong>
-                <span className={cx('userRoleBadge')}>{getRoleLabel(role)}</span>
+              <div className={cx('userName')}>{userName}</div>
+              <div className={cx('userRole')}>
+                <Icon name="user" size={10} />내 프로필
               </div>
-              <span className={cx('userIdText')}>{userId}</span>
             </div>
             <span className={cx('userChevron')} aria-hidden="true">
-              ›
+              <Icon name="chevronRight" size={14} />
             </span>
           </button>
         </div>

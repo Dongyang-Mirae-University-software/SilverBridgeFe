@@ -11,6 +11,7 @@ import BrainIcon from '@/assets/icons/brain.svg';
 import CakeIcon from '@/assets/icons/cake.svg';
 import CameraFlipIcon from '@/assets/icons/camera-flip.svg';
 import CameraIcon from '@/assets/icons/camera.svg';
+import ChevronRightIcon from '@/assets/icons/chevron-right.svg';
 import DashboardIcon from '@/assets/icons/dashboard.svg';
 import GameIcon from '@/assets/icons/game.svg';
 import GearIcon from '@/assets/icons/gear.svg';
@@ -48,6 +49,7 @@ const ICONS = {
   cake: CakeIcon,
   camera: CameraIcon,
   cameraFlip: CameraFlipIcon,
+  chevronRight: ChevronRightIcon,
   dashboard: DashboardIcon,
   game: GameIcon,
   gear: GearIcon,
