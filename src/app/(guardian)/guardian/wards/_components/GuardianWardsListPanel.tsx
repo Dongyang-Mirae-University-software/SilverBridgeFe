@@ -6,7 +6,6 @@ import classNames from 'classnames/bind';
 
 import { Icon, IconName } from '@/components/Icon';
 import { RefreshButton } from '@/components/RefreshButton';
-import { Tabs } from '@/components/Tabs';
 import { disconnectGuardianConnection } from '@/service/api/guardian/connection';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryKey, guardianConnectionsQueryOptions } from '@/service/query/guardian';
@@ -22,9 +21,6 @@ import {
 import styles from './GuardianWardsListPanel.module.css';
 
 const cx = classNames.bind(styles);
-
-type ListTab = 'list' | 'history';
-const HISTORY_STATUSES: IConnectionItem['status'][] = ['REFUSED', 'CANCELLED', 'DISCONNECTED'];
 
 function formatBirthDate(value?: string | null) {
   if (!value) return null;
@@ -45,14 +41,12 @@ function getWardRows(connection: IConnectionItem): Array<[IconName, string, stri
 
 export function GuardianWardsListPanel() {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<ListTab>('list');
   const [confirmTarget, setConfirmTarget] = useState<IConnectionItem | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState('');
 
   const { data, isLoading, isError, refetch } = useQuery(guardianConnectionsQueryOptions);
   const connections = getConnectionData(data);
   const activeConnections = connections.filter(connection => connection.status === 'ACTIVE');
-  const historyConnections = connections.filter(connection => HISTORY_STATUSES.includes(connection.status));
 
   const disconnectMutation = useMutation({
     mutationKey: ['guardian-connection-disconnect'],
@@ -78,77 +72,45 @@ export function GuardianWardsListPanel() {
         <RefreshButton ariaLabel="새로고침" disabled={isLoading} onRefresh={() => refetch()} />
       </div>
 
-      <Tabs
-        ariaLabel="피보호자 리스트 탭"
-        items={[
-          { value: 'list', label: '목록' },
-          { value: 'history', label: '종료 이력' },
-        ]}
-        onChange={setTab}
-        size="sm"
-        value={tab}
-        variant="underline"
-      />
+      {feedbackMessage && <p className={cx('feedback')}>{feedbackMessage}</p>}
+      {isLoading && <EmptyState message="피보호자 목록을 불러오는 중입니다." />}
+      {isError && <EmptyState message="피보호자 목록을 불러오지 못했습니다." />}
+      {!isLoading && !isError && activeConnections.length === 0 && (
+        <EmptyState message="아직 연결된 피보호자가 없습니다." />
+      )}
 
-      {tab === 'list' ? (
-        <>
-          {feedbackMessage && <p className={cx('feedback')}>{feedbackMessage}</p>}
-          {isLoading && <EmptyState message="피보호자 목록을 불러오는 중입니다." />}
-          {isError && <EmptyState message="피보호자 목록을 불러오지 못했습니다." />}
-          {!isLoading && !isError && activeConnections.length === 0 && (
-            <EmptyState message="아직 연결된 피보호자가 없습니다." />
-          )}
-
-          {activeConnections.length > 0 && (
-            <div className={cx('grid')}>
-              {activeConnections.map(connection => (
-                <div key={connection.id} className={cx('card')}>
-                  <div className={cx('avatar')}>
-                    {connection.partnerProfileImage ? (
-                      <img src={connection.partnerProfileImage} alt="" />
-                    ) : (
-                      connection.partnerName.charAt(0)
-                    )}
-                  </div>
-                  <div className={cx('cardHead')}>
-                    <span className={cx('cardName')}>{connection.partnerName}</span>
-                    <span className={cx('statusBadge')}>{getConnectionStatusLabel(connection.status)}</span>
-                  </div>
-                  {getWardRows(connection).map(([icon, label, value]) => (
-                    <div key={label} className={cx('row')}>
-                      <Icon name={icon} size={18} className={cx('rowIcon')} />
-                      <span className={cx('rowLabel')}>{label}</span>
-                      <span className={cx('rowValue')} title={value}>
-                        {value}
-                      </span>
-                    </div>
-                  ))}
-                  <div className={cx('cardFooter')}>
-                    <button className={cx('disconnectButton')} type="button" onClick={() => setConfirmTarget(connection)}>
-                      연결 해제
-                    </button>
-                  </div>
+      {activeConnections.length > 0 && (
+        <div className={cx('grid')}>
+          {activeConnections.map(connection => (
+            <div key={connection.id} className={cx('card')}>
+              <div className={cx('avatar')}>
+                {connection.partnerProfileImage ? (
+                  <img src={connection.partnerProfileImage} alt="" />
+                ) : (
+                  connection.partnerName.charAt(0)
+                )}
+              </div>
+              <div className={cx('cardHead')}>
+                <span className={cx('cardName')}>{connection.partnerName}</span>
+                <span className={cx('statusBadge')}>{getConnectionStatusLabel(connection.status)}</span>
+              </div>
+              {getWardRows(connection).map(([icon, label, value]) => (
+                <div key={label} className={cx('row')}>
+                  <Icon name={icon} size={18} className={cx('rowIcon')} />
+                  <span className={cx('rowLabel')}>{label}</span>
+                  <span className={cx('rowValue')} title={value}>
+                    {value}
+                  </span>
                 </div>
               ))}
+              <div className={cx('cardFooter')}>
+                <button className={cx('disconnectButton')} type="button" onClick={() => setConfirmTarget(connection)}>
+                  연결 해제
+                </button>
+              </div>
             </div>
-          )}
-        </>
-      ) : (
-        <>
-          {historyConnections.length === 0 ? (
-            <EmptyState message="종료된 연결 이력이 없습니다." />
-          ) : (
-            <ul className={cx('historyList')}>
-              {historyConnections.map(connection => (
-                <li key={connection.id} className={cx('historyItem')}>
-                  <span className={cx('historyName')}>{connection.partnerName}</span>
-                  <span className={cx('historyRelation')}>{connection.relation || '정보 없음'}</span>
-                  <span className={cx('historyStatus')}>{getConnectionStatusLabel(connection.status)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+          ))}
+        </div>
       )}
 
       {confirmTarget && (

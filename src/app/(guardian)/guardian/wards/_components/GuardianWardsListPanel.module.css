@@ -155,56 +155,6 @@
   filter: brightness(0.95);
 }
 
-/* ── 종료 이력 ── */
-.historyList {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
-  background: #fff;
-  box-shadow: var(--sb-shadow-sm);
-  overflow: hidden;
-}
-
-.historyItem {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--sb-line-soft);
-}
-
-.historyItem:last-child {
-  border-bottom: 0;
-}
-
-.historyName {
-  flex: 1;
-  min-width: 0;
-  color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.historyRelation {
-  flex-shrink: 0;
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-}
-
-.historyStatus {
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-soft);
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 10px;
-}
-
 /* ── 연결 해제 확인 모달 ── */
 .overlay {
   position: fixed;
