@@ -204,10 +204,7 @@
   flex: 1;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--sb-line);
   border-radius: 10px;
-  background: #fff;
-  color: var(--sb-ink-soft);
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
@@ -215,9 +212,25 @@
   white-space: nowrap;
 }
 
-.logoutButton:hover,
-.profileModalGhostButton:hover {
+.logoutButton {
+  border: 1px solid var(--sb-line);
+  background: #fff;
+  color: var(--sb-ink-soft);
+}
+
+.logoutButton:hover {
   background: var(--sb-bg-soft);
+}
+
+.profileModalGhostButton {
+  border: none;
+  background: var(--sb-brand);
+  color: #fff;
+  transition: filter 0.12s;
+}
+
+.profileModalGhostButton:hover {
+  filter: brightness(0.95);
 }
 
 .logoutButton:disabled,
