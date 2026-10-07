@@ -3,7 +3,7 @@ import GuardianSettingsContent from './_components/GuardianSettingsContent';
 
 export default function GuardianSettingsPage() {
   return (
-    <PageLayout title="환경설정" description="알림 설정과 계정을 관리합니다.">
+    <PageLayout title="환경설정" description="알림 · 계정 설정">
       <GuardianSettingsContent />
     </PageLayout>
   );

@@ -62,11 +62,6 @@ export function AlertTypeSettingsSection() {
 
   return (
     <section className={cx('section')}>
-      <div className={cx('sectionHead')}>
-        <h2 className={cx('sectionTitle')}>알림 종류</h2>
-        <p className={cx('sectionDesc')}>어떤 상황에 알림을 받을지 선택할 수 있습니다.</p>
-      </div>
-
       <div className={cx('list')}>
         {ALERT_OPTIONS.map(option => (
           <div key={option.key} className={cx('row')}>
