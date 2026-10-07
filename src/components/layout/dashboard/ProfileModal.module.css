@@ -191,32 +191,20 @@
   flex: 1;
   align-items: center;
   justify-content: center;
-  border: 0;
+  border: 1px solid var(--sb-line);
   border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 700;
-  min-height: 42px;
-  padding: 10px;
+  font-weight: 600;
+  padding: 9px 16px;
   white-space: nowrap;
 }
 
-.logoutButton {
-  background: rgba(15, 23, 42, 0.04);
-  color: var(--sb-ink-mute);
-}
-
-.profileModalGhostButton {
-  background: rgba(15, 23, 42, 0.05);
-  color: var(--sb-brand);
-}
-
-.logoutButton:hover {
-  background: rgba(15, 23, 42, 0.08);
-}
-
+.logoutButton:hover,
 .profileModalGhostButton:hover {
-  background: rgba(15, 23, 42, 0.08);
+  background: var(--sb-bg-soft);
 }
 
 .logoutButton:disabled,

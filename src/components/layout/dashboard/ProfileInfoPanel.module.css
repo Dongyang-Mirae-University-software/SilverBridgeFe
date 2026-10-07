@@ -1,9 +1,9 @@
 .profileManageCard {
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  border-radius: 28px;
-  background: #fff;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .profileManageHeader {
@@ -11,21 +11,21 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 22px 22px 12px;
+  margin-bottom: 8px;
 }
 
 .profileManageHeader h3 {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 1rem;
-  font-weight: 750;
+  font-size: 14px;
+  font-weight: 800;
   line-height: 1.3;
 }
 
 .profileManageHeader p {
   margin: 4px 0 0;
   color: var(--sb-ink-mute);
-  font-size: 0.75rem;
+  font-size: 12px;
   line-height: 1.5;
   white-space: normal;
 }
@@ -36,40 +36,38 @@
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.05);
+  border-radius: 8px;
+  background: transparent;
   color: var(--sb-brand);
   cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 800;
-  min-height: 34px;
-  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
   white-space: nowrap;
 }
 
 .profileHeaderAction:hover {
-  background: rgba(15, 23, 42, 0.08);
+  background: var(--sb-bg-soft);
 }
 
 .profileForm {
   display: grid;
-  gap: 12px;
-  padding: 8px 20px 20px;
+  gap: 8px;
 }
 
 .profileRow {
   display: grid;
   gap: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  border-radius: 26px;
-  background: rgba(15, 23, 42, 0.02);
+  border: 0;
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
   color: var(--sb-ink-soft);
   min-width: 0;
-  padding: 18px 20px;
+  padding: 12px 14px;
 }
 
 .profileRowEditing {
-  background: rgba(31, 94, 72, 0.03);
+  background: var(--sb-brand-50);
 }
 
 .profileRowHeader {
@@ -91,17 +89,17 @@
 
 .profileFieldBody span {
   color: var(--sb-ink);
-  font-size: 1.375rem;
-  font-weight: 850;
-  line-height: 1.2;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
   overflow-wrap: anywhere;
   text-align: right;
 }
 
 .profileRowLabel {
   color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1.2;
 }
 
@@ -110,32 +108,30 @@
 .profilePhoneVerify input {
   width: 100%;
   box-sizing: border-box;
-  border: 0;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
   color: var(--sb-ink);
   font: inherit;
-  font-size: 1rem;
-  font-weight: 750;
-  min-height: 52px;
+  font-size: 13px;
+  font-weight: 600;
   outline: none;
-  padding: 0 16px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04);
+  padding: 8px 12px;
 }
 
 .profileRow input:focus,
 .profileRow select:focus,
 .profilePhoneVerify input:focus {
-  box-shadow: 0 0 0 3px rgba(31, 94, 72, 0.12);
+  border-color: var(--sb-brand);
 }
 
 .profilePhoneVerify {
   display: grid;
   gap: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  border-radius: 26px;
-  background: rgba(15, 23, 42, 0.02);
-  padding: 18px 20px 20px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  padding: 12px 14px;
 }
 
 .profilePhoneVerifyTitle {
@@ -171,21 +167,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 0;
-  border-radius: 999px;
+  gap: 6px;
+  border: none;
+  border-radius: 10px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 800;
-  min-height: 40px;
-  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
   white-space: nowrap;
-  box-shadow: 0 10px 24px rgba(31, 94, 72, 0.16);
+  transition: filter 0.12s;
 }
 
 .profileInlineAction:hover {
-  background: #2d775a;
+  filter: brightness(0.95);
 }
 
 .profileInlineAction:disabled {
@@ -200,17 +196,21 @@
   max-width: 100%;
   align-items: center;
   justify-content: center;
-  border: 0;
-  border-radius: 999px;
+  gap: 6px;
+  border: none;
+  border-radius: 10px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 800;
-  min-height: 42px;
-  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
   white-space: nowrap;
-  box-shadow: 0 12px 28px rgba(31, 94, 72, 0.16);
+  transition: filter 0.12s;
+}
+
+.profilePrimaryButton:hover {
+  filter: brightness(0.95);
 }
 
 .profilePrimaryButton:disabled {

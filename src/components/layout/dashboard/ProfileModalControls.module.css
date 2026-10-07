@@ -2,9 +2,7 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
-  overflow: hidden;
   gap: 12px;
-  padding: 18px 20px 20px;
 }
 
 .profileModalMessage {
