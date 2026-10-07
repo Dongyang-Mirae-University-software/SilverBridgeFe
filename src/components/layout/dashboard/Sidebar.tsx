@@ -66,7 +66,7 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
             </Link>
           </div>
           <button className={cx('closeButton')} type="button" aria-label="메뉴 닫기" onClick={onClose}>
-            ×
+            ≡
           </button>
         </div>
 
