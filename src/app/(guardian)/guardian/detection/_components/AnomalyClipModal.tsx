@@ -6,7 +6,7 @@ import classNames from 'classnames/bind';
 
 import { fetchGuardianAnomalyClipFile } from '@/service/api/guardian/anomaly';
 import { guardianAnomalyClipsQueryOptions } from '@/service/query/guardian/anomaly';
-import { AnomalyClipFileError } from '@/service/interface/guardian/anomaly';
+import { AnomalyClipFileError, AnomalyIncident } from '@/service/interface/guardian/anomaly';
 import { formatDateTime } from '@/utils/format/date';
 import styles from './AnomalyClipModal.module.css';
 
@@ -17,7 +17,16 @@ interface Playback {
   url: string;
 }
 
-export function AnomalyClipModal({ incidentId, onClose }: { incidentId: number; onClose: () => void }) {
+function formatDuration(durationMs: number | null) {
+  if (!durationMs) return null;
+  const totalSeconds = Math.round(durationMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+export function AnomalyClipModal({ incident, onClose }: { incident: AnomalyIncident; onClose: () => void }) {
+  const incidentId = incident.incidentId;
   const { data: clips = [], isLoading, isError } = useQuery(guardianAnomalyClipsQueryOptions(incidentId));
   const [playback, setPlayback] = useState<Playback | null>(null);
   // 클립을 누른 즉시 "선택됨" 표시를 띄우기 위한 상태 — playback은 fetch가 끝나야 채워지므로
@@ -73,22 +82,45 @@ export function AnomalyClipModal({ incidentId, onClose }: { incidentId: number; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clips]);
 
+  const duration = formatDuration(playback ? (clips.find(clip => clip.clipId === playback.clipId)?.durationMs ?? null) : null);
+
   return (
     <div className={cx('overlay')} role="presentation" onClick={onClose}>
       <div className={cx('modal')} role="dialog" aria-modal="true" aria-label="감지 영상" onClick={event => event.stopPropagation()}>
-        <header className={cx('header')}>
-          <strong>감지 영상</strong>
-          <button type="button" className={cx('closeButton')} onClick={onClose} aria-label="닫기">
-            ×
-          </button>
-        </header>
-
         <div className={cx('videoArea')}>
+          <span className={cx('recBadge')}>● REC · {formatDateTime(incident.startedAt)}</span>
           {playback ? (
             <video key={playback.clipId} src={playback.url} controls playsInline autoPlay className={cx('video')} />
           ) : (
             <div className={cx('placeholder')}>영상을 불러오는 중입니다...</div>
           )}
+        </div>
+
+        <div className={cx('infoRow')}>
+          <strong>
+            {incident.detectedTypeLabel} 감지 · {incident.cameraLabel ?? '삭제된 카메라'}
+          </strong>
+          <span>
+            {formatDateTime(incident.startedAt)}
+            {duration ? ` · 영상 ${duration}` : ''}
+          </span>
+        </div>
+
+        <div className={cx('footerActions')}>
+          <a
+            className={cx('downloadButton', { disabled: !playback })}
+            href={playback?.url}
+            download={playback ? `anomaly-${playback.clipId}.mp4` : undefined}
+            aria-disabled={!playback}
+            onClick={event => {
+              if (!playback) event.preventDefault();
+            }}
+          >
+            다운로드
+          </a>
+          <button type="button" className={cx('closeAction')} onClick={onClose}>
+            닫기
+          </button>
         </div>
 
         {isLoading && <p className={cx('status')}>영상 목록을 불러오는 중입니다.</p>}

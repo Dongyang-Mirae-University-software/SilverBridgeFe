@@ -110,10 +110,13 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
     <div className={cx('overlay')} role="presentation" onClick={onClose}>
       <div className={cx('modal')} role="dialog" aria-modal="true" aria-label="실시간 카메라" onClick={event => event.stopPropagation()}>
         <header className={cx('header')}>
-          <span className={cx('liveBadge')}>● LIVE</span>
+          <span className={cx('liveBadge')}>
+            <span className={cx('liveDot')} />
+            LIVE
+          </span>
           <strong>실시간 카메라{monitor.selectedSession ? ` — ${getCameraLabel(monitor.selectedSession)}` : ''}</strong>
           <button type="button" className={cx('closeButton')} onClick={onClose} aria-label="닫기">
-            ×
+            ✕
           </button>
         </header>
 

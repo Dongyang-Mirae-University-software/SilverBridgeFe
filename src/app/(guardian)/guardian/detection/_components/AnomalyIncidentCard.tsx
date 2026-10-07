@@ -119,7 +119,7 @@ export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident })
       </div>
 
       {isClipModalOpen && (
-        <AnomalyClipModal incidentId={incident.incidentId} onClose={() => setIsClipModalOpen(false)} />
+        <AnomalyClipModal incident={incident} onClose={() => setIsClipModalOpen(false)} />
       )}
     </li>
   );
