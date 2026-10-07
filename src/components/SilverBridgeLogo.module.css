@@ -1,50 +1,34 @@
-.logo {
+.brand {
   display: flex;
   min-width: 0;
   flex-shrink: 0;
   align-items: center;
-  gap: 10px;
 }
 
-.mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--sb-brand);
-  color: #fff;
-  font-size: 1.1875rem;
-  font-weight: 500;
-  letter-spacing: -0.14em;
-  padding-right: 2px;
-  line-height: 1;
-  font-feature-settings: 'kern' on, 'liga' off;
-}
-
-.text {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.name {
+.title {
   overflow: hidden;
-  color: var(--sb-ink);
-  font-size: 0.875rem;
-  font-weight: 800;
-  line-height: 1.2;
+  color: #c25f43;
+  font-size: 1.5625rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .subtitle {
+  display: block;
   overflow: hidden;
+  margin-top: 4px;
   color: var(--sb-ink-mute);
-  font-size: 0.6875rem;
-  font-weight: 500;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
