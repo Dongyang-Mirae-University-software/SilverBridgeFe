@@ -17,8 +17,8 @@
 
 .brand {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
   border-radius: 0;
   flex-shrink: 0;
   padding: 2px 10px 18px;

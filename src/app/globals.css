@@ -39,6 +39,12 @@ html {
   height: 100vh;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 * {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -61,6 +67,9 @@ body {
     BlinkMacSystemFont,
     system-ui,
     sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 .layout {
