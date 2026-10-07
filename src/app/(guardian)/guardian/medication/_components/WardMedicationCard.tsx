@@ -2,7 +2,6 @@
 
 import classNames from 'classnames/bind';
 
-import { Icon } from '@/components/Icon';
 import { UserAvatar } from '@/components/UserAvatar';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
@@ -89,6 +88,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const settingMutation = useUpdateMedicationSettingMutation();
   const alertSettingMutation = useUpdateMedicationAlertSettingMutation();
 
+  const wardName = summary.wardName ?? '피보호자';
   const medications = sortMedicationsByDoseTime(summary.medications);
   const hasMedications = medications.length > 0;
   const showsNotificationSettings = hasMedications && summary.alarmEnabled;
@@ -104,12 +104,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
 
   const openMedicationForm = (target: MedicationFormTarget) => {
     openModal(
-      <MedicationFormModalContainer
-        wardId={summary.wardId}
-        wardName={summary.wardName ?? '피보호자'}
-        target={target}
-        onCloseModal={onCloseModal}
-      />,
+      <MedicationFormModalContainer wardId={summary.wardId} wardName={wardName} target={target} onCloseModal={onCloseModal} />,
     );
   };
 
@@ -120,58 +115,40 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           <UserAvatar userName={summary.wardName} size="w-60" />
           <div>
             <strong className={cx('wardName')}>
-              {summary.wardName ?? '피보호자'}
+              {wardName}
               {summary.age != null && <span className={cx('age')}> 만 {summary.age}세</span>}
             </strong>
             <span className={cx('wardId')}>{summary.wardId}</span>
           </div>
         </div>
-
-        {hasMedications && (
-          <label className={cx('switchField')}>
-            <span>알림 {summary.alarmEnabled ? '켜짐' : '꺼짐'}</span>
-            <input
-              type="checkbox"
-              checked={summary.alarmEnabled}
-              disabled={settingMutation.isPending}
-              onChange={event =>
-                settingMutation.mutate({ wardId: summary.wardId, body: { alarmEnabled: event.target.checked } })
-              }
-            />
-            <span className={cx('switchTrack')} aria-hidden="true" />
-          </label>
-        )}
       </header>
+
+      {hasMedications && (
+        <section className={cx('todaySection')}>
+          <div>
+            <div className={cx('todayLabel')}>오늘</div>
+            <div className={cx('todayCount')}>
+              {summary.totalCount}번 중 <span className={cx('todayTaken')}>{summary.takenCount}번</span> 드셨어요
+            </div>
+          </div>
+          <div className={cx('todayDots')}>
+            {medications.map(medication => (
+              <span key={medication.medicationId} title={medication.name} className={cx('todayDot', { done: medication.taken })} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className={cx('scheduleSection')}>
         <div className={cx('sectionHeader')}>
           <div>
-            <strong className={cx('sectionTitle')}>복약 일정</strong>
-            <span className={cx('sectionMeta')}>
-              오늘 {summary.takenCount} / {summary.totalCount} 회 복용
-            </span>
+            <strong className={cx('sectionTitle')}>오늘 드실 약</strong>
+            <span className={cx('sectionMeta')}>약을 드셨는지는 {wardName} 님이 직접 체크해요</span>
           </div>
           <button type="button" className={cx('addButton')} onClick={() => openMedicationForm('add')}>
             + 약 추가
           </button>
         </div>
-
-        {showsNotificationSettings && (
-          <label className={cx('remindField')}>
-            <input
-              type="checkbox"
-              checked={summary.remindAgainEnabled}
-              disabled={settingMutation.isPending}
-              onChange={event =>
-                settingMutation.mutate({
-                  wardId: summary.wardId,
-                  body: { remindAgainEnabled: event.target.checked },
-                })
-              }
-            />
-            15분 뒤 재알림
-          </label>
-        )}
 
         {!hasMedications ? (
           <p className={cx('emptyText')}>등록된 약이 없습니다.</p>
@@ -206,20 +183,69 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         )}
       </section>
 
-      {showsNotificationSettings && (
-        <section className={cx('missedSection')}>
-          <div className={cx('missedHeader')}>
-            <div className={cx('missedTitleGroup')}>
-              <span className={cx('missedIcon')}>
-                <Icon name="bell" size={16} decorative />
-              </span>
-              <div>
-                <strong className={cx('missedTitle')}>미복약 알림</strong>
-                <span className={cx('missedDescription')}>
-                  지정한 시각에 복용 확인이 없는 약을 보호자에게 알려 줍니다
+      {hasMedications && (
+        <section className={cx('settingsSection')}>
+          <div className={cx('settingsRow')}>
+            <div className={cx('settingsMeta')}>
+              <strong className={cx('settingsTitle')}>복약 시간 알림</strong>
+              <span className={cx('settingsDescription')}>약 드실 시간마다 {wardName} 님께 알려 드려요</span>
+            </div>
+            <label className={cx('switchField')}>
+              <input
+                type="checkbox"
+                checked={summary.alarmEnabled}
+                disabled={settingMutation.isPending}
+                onChange={event =>
+                  settingMutation.mutate({ wardId: summary.wardId, body: { alarmEnabled: event.target.checked } })
+                }
+              />
+              <span className={cx('switchTrack')} aria-hidden="true" />
+            </label>
+          </div>
+
+          {showsNotificationSettings && (
+            <div className={cx('settingsRow')}>
+              <div className={cx('settingsMeta')}>
+                <span className={cx('remindField')}>
+                  <input
+                    type="checkbox"
+                    checked={summary.remindAgainEnabled}
+                    disabled={settingMutation.isPending}
+                    onChange={event =>
+                      settingMutation.mutate({
+                        wardId: summary.wardId,
+                        body: { remindAgainEnabled: event.target.checked },
+                      })
+                    }
+                  />
+                  15분 뒤 재알림
                 </span>
               </div>
             </div>
+          )}
+
+          <div className={cx('settingsRow', 'settingsRowWrap')}>
+            <div className={cx('settingsMeta')}>
+              <strong className={cx('settingsTitle')}>안 드시면 나에게 알림</strong>
+              <span className={cx('settingsDescription')}>정한 시각까지 안 드신 약이 있으면 알려 드려요</span>
+            </div>
+            {summary.missedAlertEnabled && (
+              <label className={cx('timeField')}>
+                매일
+                <input
+                  type="time"
+                  value={missedAlertTime}
+                  disabled={alertSettingMutation.isPending}
+                  onChange={event =>
+                    alertSettingMutation.mutate({
+                      wardId: summary.wardId,
+                      body: { missedAlertTime: `${event.target.value}:00` },
+                    })
+                  }
+                />
+                에 확인
+              </label>
+            )}
             <label className={cx('switchField', 'gold')}>
               <input
                 type="checkbox"
@@ -236,46 +262,31 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             </label>
           </div>
 
-          <label className={cx('timeField')}>
-            <span>발송 시각 — 하루 중 원하는 시간</span>
-            <div className={cx('timeControl')}>
-              <input
-                type="time"
-                value={missedAlertTime}
-                disabled={alertSettingMutation.isPending}
-                onChange={event =>
-                  alertSettingMutation.mutate({
-                    wardId: summary.wardId,
-                    body: { missedAlertTime: `${event.target.value}:00` },
-                  })
-                }
-              />
-            </div>
-            <em>{formatMedicationAlertTime(summary.missedAlertTime)}에 발송</em>
-          </label>
+          {showsNotificationSettings && (
+            <>
+              <div className={cx('summaryNotice')}>
+                {formatMedicationAlertTime(summary.missedAlertTime)}에 보호자에게 미복용 {uncheckedMedications.length}건
+                알림 발송
+              </div>
 
-          <p className={cx('sendText')}>{formatMedicationAlertTime(summary.missedAlertTime)} 발송 예정</p>
-          <div className={cx('summaryNotice')}>
-            {formatMedicationAlertTime(summary.missedAlertTime)}에 보호자에게 미복용 {uncheckedMedications.length}건
-            알림 발송
-          </div>
+              {uncheckedMedications.length > 0 && (
+                <ul className={cx('missedList')}>
+                  {uncheckedMedications.map(medication => (
+                    <li key={medication.medicationId}>
+                      <span>{medication.name}</span>
+                      <em>예정 {getMedicationSummaryText(medication)}</em>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-          {uncheckedMedications.length > 0 && (
-            <ul className={cx('missedList')}>
-              {uncheckedMedications.map(medication => (
-                <li key={medication.medicationId}>
-                  <span>{medication.name}</span>
-                  <em>예정 {getMedicationSummaryText(medication)}</em>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {showsLateWarning && (
-            <p className={cx('alertWarning')}>
-              가장 늦은 복용 시각({formatDoseTime(latestDoseTime ?? '')})이 선택한 시각 이후라 이 약은 요약에 포함되지
-              않습니다.
-            </p>
+              {showsLateWarning && (
+                <p className={cx('alertWarning')}>
+                  가장 늦은 복용 시각({formatDoseTime(latestDoseTime ?? '')})이 선택한 시각 이후라 이 약은 요약에
+                  포함되지 않습니다.
+                </p>
+              )}
+            </>
           )}
         </section>
       )}

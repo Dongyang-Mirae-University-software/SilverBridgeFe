@@ -3,7 +3,7 @@ import { GuardianMedicationContent } from './_components/GuardianMedicationConte
 
 export default function GuardianMedicationPage() {
   return (
-    <PageLayout title="복약 관리" description="연결된 피보호자의 복약 일정과 복용 현황을 관리합니다.">
+    <PageLayout title="복약 관리" description="오늘 약을 드셨는지 확인하고, 안 드시면 알림을 받아요">
       <GuardianMedicationContent />
     </PageLayout>
   );

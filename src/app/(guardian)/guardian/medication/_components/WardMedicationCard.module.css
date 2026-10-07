@@ -281,47 +281,80 @@
   line-height: 1;
 }
 
-.missedSection {
+.todaySection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--sb-line-soft);
+  padding: 16px 20px;
+}
+
+.todayLabel {
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.todayCount {
+  margin-top: 4px;
+  color: var(--sb-ink);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.todayTaken {
+  color: var(--sb-safe);
+}
+
+.todayDots {
+  display: flex;
+  gap: 6px;
+}
+
+.todayDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--sb-line);
+}
+
+.todayDot.done {
+  background: var(--sb-safe);
+}
+
+.settingsSection {
   display: grid;
   gap: 14px;
   border-top: 1px solid var(--sb-line-soft);
   padding: 16px 20px 18px;
 }
 
-.missedHeader {
+.settingsRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
-.missedTitleGroup {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
+.settingsRowWrap {
+  flex-wrap: wrap;
 }
 
-.missedIcon {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: var(--sb-sun-soft);
-  color: #8a5f12;
+.settingsMeta {
+  flex: 1;
+  min-width: 200px;
 }
 
-.missedTitle {
+.settingsTitle {
   display: block;
   color: var(--sb-ink);
   font-size: 14px;
   font-weight: 800;
 }
 
-.missedDescription {
+.settingsDescription {
   display: block;
   margin-top: 2px;
   color: var(--sb-ink-mute);
@@ -329,41 +362,23 @@
 }
 
 .timeField {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  color: var(--sb-ink-mute);
+  gap: 8px;
+  color: var(--sb-ink-soft);
   font-size: 13px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
-.timeControl {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.timeControl input {
-  width: 120px;
+.timeField input {
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
   color: var(--sb-ink);
   font-size: 14px;
   font-weight: 700;
-  padding: 10px 12px;
-}
-
-.timeField em {
-  color: var(--sb-ink-mute);
-  font-style: normal;
-}
-
-.sendText {
-  margin: 0;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
+  padding: 8px 10px;
 }
 
 .summaryNotice {
@@ -423,7 +438,7 @@
 @media (max-width: 720px) {
   .profileHeader,
   .sectionHeader,
-  .missedHeader {
+  .settingsRow {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -431,6 +446,11 @@
   .switchField,
   .addButton {
     align-self: flex-end;
+  }
+
+  .todaySection {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .sectionMeta {
@@ -466,11 +486,11 @@
   }
 
   .timeField {
-    grid-template-columns: 1fr;
+    width: 100%;
   }
 
-  .timeControl input {
-    width: 100%;
+  .timeField input {
+    flex: 1;
   }
 
   .missedList li {
