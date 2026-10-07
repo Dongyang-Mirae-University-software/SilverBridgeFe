@@ -121,16 +121,6 @@
   gap: 6px;
 }
 
-.userRoleBadge {
-  display: inline-flex;
-  border-radius: 999px;
-  background: #dceee3;
-  color: var(--sb-safe);
-  font-size: 0.6875rem;
-  font-weight: 800;
-  padding: 4px 8px;
-}
-
 .profileProviderBadge {
   display: inline-flex;
   border-radius: 999px;
@@ -172,7 +162,29 @@
 }
 
 .profileEmailText {
+  overflow: hidden;
   color: var(--sb-ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileEmailValue {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.profileVerifiedBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  white-space: nowrap;
 }
 
 /* ── 푸터 ── */

@@ -17,9 +17,7 @@ interface Props {
   isPhoneChanged: boolean;
   isProfilePending: boolean;
   onAddressSearch: () => void;
-  onCancelEdit: () => void;
   onChange: (field: keyof IUserUpdateReq, value: string) => void;
-  onEditStart: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   phoneCode: string;
   phoneNonce: string | null;
@@ -34,9 +32,7 @@ export function ProfileInfoPanel({
   isPhoneChanged,
   isProfilePending,
   onAddressSearch,
-  onCancelEdit,
   onChange,
-  onEditStart,
   onSubmit,
   phoneCode,
   phoneNonce,
@@ -49,11 +45,8 @@ export function ProfileInfoPanel({
       <div className={cx('profileManageHeader')}>
         <div>
           <h3>기본 정보</h3>
-          <p>정보 수정 버튼을 누르면 같은 자리가 입력칸으로 바뀝니다.</p>
+          <p>하단의 정보 수정 버튼을 누르면 같은 자리가 입력칸으로 바뀝니다.</p>
         </div>
-        <button className={cx('profileHeaderAction')} type="button" onClick={isEditing ? onCancelEdit : onEditStart}>
-          {isEditing ? '수정 취소' : '정보 수정'}
-        </button>
       </div>
 
       <form className={cx('profileForm')} onSubmit={onSubmit}>
