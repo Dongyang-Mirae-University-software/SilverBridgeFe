@@ -42,13 +42,6 @@ export function ProfileInfoPanel({
 }: Props) {
   return (
     <section className={cx('profileManageCard')}>
-      <div className={cx('profileManageHeader')}>
-        <div>
-          <h3>기본 정보</h3>
-          <p>하단의 정보 수정 버튼을 누르면 같은 자리가 입력칸으로 바뀝니다.</p>
-        </div>
-      </div>
-
       <form className={cx('profileForm')} onSubmit={onSubmit}>
         <ProfileRow label="이름" editing={isEditing}>
           {isEditing ? (
@@ -72,7 +65,10 @@ export function ProfileInfoPanel({
 
         <ProfileRow label="성별" editing={isEditing}>
           {isEditing ? (
-            <select value={form.gender ?? ''} onChange={event => onChange('gender', event.target.value as GenderType | '')}>
+            <select
+              value={form.gender ?? ''}
+              onChange={event => onChange('gender', event.target.value as GenderType | '')}
+            >
               <option value="" disabled>
                 선택
               </option>
@@ -86,7 +82,11 @@ export function ProfileInfoPanel({
 
         <ProfileRow label="생년월일" editing={isEditing}>
           {isEditing ? (
-            <BirthDateSelects className={cx('profileBirthDateSelects')} value={form.birthDate ?? ''} onChange={value => onChange('birthDate', value)} />
+            <BirthDateSelects
+              className={cx('profileBirthDateSelects')}
+              value={form.birthDate ?? ''}
+              onChange={value => onChange('birthDate', value)}
+            />
           ) : (
             <span>{getFieldValue(form.birthDate)}</span>
           )}
@@ -105,8 +105,16 @@ export function ProfileInfoPanel({
         >
           {isEditing ? (
             <>
-              <ProfileTextInput readOnly value={form.postcode ?? ''} onValueChange={value => onChange('postcode', value.replace(/\D/g, ''))} />
-              <ProfileTextInput readOnly value={form.address ?? ''} onValueChange={value => onChange('address', value)} />
+              <ProfileTextInput
+                readOnly
+                value={form.postcode ?? ''}
+                onValueChange={value => onChange('postcode', value.replace(/\D/g, ''))}
+              />
+              <ProfileTextInput
+                readOnly
+                value={form.address ?? ''}
+                onValueChange={value => onChange('address', value)}
+              />
               <ProfileTextInput
                 placeholder="상세 주소"
                 value={form.addressDetail ?? ''}
@@ -124,7 +132,9 @@ export function ProfileInfoPanel({
               <span className={cx('profileRowLabel')}>휴대폰 인증</span>
               <span className={cx('profilePhoneState')}>{phoneNonce ? '인증 완료' : '인증 필요'}</span>
             </div>
-            <p className={cx('profilePhoneVerifyDesc')}>번호를 바꾼 경우 SMS 인증을 먼저 완료해야 저장할 수 있습니다.</p>
+            <p className={cx('profilePhoneVerifyDesc')}>
+              번호를 바꾼 경우 SMS 인증을 먼저 완료해야 저장할 수 있습니다.
+            </p>
             <div className={cx('profilePhoneVerifyActions')}>
               <button
                 className={cx('profileInlineAction')}
@@ -134,7 +144,12 @@ export function ProfileInfoPanel({
               >
                 {smsSendMutation.isPending ? '발송 중' : '인증번호 발송'}
               </button>
-              <input inputMode="numeric" placeholder="인증번호" value={phoneCode} onChange={event => setPhoneCode(event.target.value)} />
+              <input
+                inputMode="numeric"
+                placeholder="인증번호"
+                value={phoneCode}
+                onChange={event => setPhoneCode(event.target.value)}
+              />
               <button
                 className={cx('profileInlineAction')}
                 type="button"

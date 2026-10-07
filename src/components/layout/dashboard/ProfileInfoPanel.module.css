@@ -44,6 +44,8 @@
   color: var(--sb-ink-soft);
   min-width: 0;
   padding: 12px 14px;
+  justify-content: space-between;
+  grid-auto-flow: column;
 }
 
 .profileRowEditing {
@@ -209,7 +211,6 @@
   }
 
   .profileForm {
-    padding: 6px 14px 14px;
   }
 
   .profilePhoneVerify {
