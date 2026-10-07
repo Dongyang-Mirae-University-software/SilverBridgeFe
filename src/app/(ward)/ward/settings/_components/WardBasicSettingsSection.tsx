@@ -101,10 +101,9 @@ function SosSection({ updateWardSettings, wardSettings }: Props) {
       {
         onError: error => {
           updateWardSettings({ sosAction: previous }); // 실패하면 되돌림
-          showToast(
-            (error as { message?: string })?.message ?? 'SOS 설정을 저장하지 못했습니다. 다시 시도해 주세요.',
-            { variant: 'error' },
-          );
+          showToast((error as { message?: string })?.message ?? 'SOS 설정을 저장하지 못했습니다. 다시 시도해 주세요.', {
+            variant: 'error',
+          });
         },
       },
     );
@@ -121,7 +120,8 @@ function SosSection({ updateWardSettings, wardSettings }: Props) {
           <div className={cx('guardianNoticeText')}>
             <div className={cx('guardianNoticeTitle')}>보호자 알림</div>
             <div className={cx('guardianNoticeDesc')}>
-              SOS를 누르면 연결된 보호자 모두에게 항상 알림이 가요. 알림 설정에서 푸시·문자를 꺼도 SOS는 보내져요.
+              SOS를 누르면 연결된 보호자 모두에게 항상 알림이 가요.
+              <br /> 알림 설정에서 푸시·문자를 꺼도 SOS는 보내져요.
             </div>
           </div>
           <span className={cx('guardianNoticeBadge')}>항상 켜짐</span>
