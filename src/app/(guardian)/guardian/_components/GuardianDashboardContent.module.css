@@ -50,7 +50,7 @@
 
 .wardChip.active {
   border-color: var(--sb-brand);
-  box-shadow: 0 8px 18px rgba(31, 94, 72, 0.12);
+  box-shadow: 0 8px 18px rgba(176, 103, 77, 0.12);
 }
 
 .wardChipStatic {
@@ -73,7 +73,6 @@
 }
 
 .heroCard,
-.panelCard,
 .featureCard {
   border: 1px solid var(--sb-line-soft);
   background: #fff;
@@ -85,7 +84,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  border-radius: 24px;
+  border-radius: var(--sb-radius);
   background: var(--sb-brand);
   color: #fff;
   padding: 18px 22px;
@@ -146,7 +145,7 @@
   font-weight: 850;
   padding: 12px 16px;
   text-decoration: none;
-  box-shadow: 0 10px 22px rgba(32, 104, 79, 0.16);
+  box-shadow: 0 10px 22px rgba(176, 103, 77, 0.2);
 }
 
 .heroProfile {
@@ -194,135 +193,6 @@
   font-weight: 900;
 }
 
-.insightGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px;
-}
-
-.panelCard {
-  display: grid;
-  gap: 14px;
-  border-radius: 22px;
-  padding: 18px 18px 16px;
-}
-
-.cardHeader h3 {
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: 1.125rem;
-  font-weight: 900;
-}
-
-.sparkline {
-  width: 100%;
-  height: 190px;
-}
-
-.sparklineGrid {
-  fill: none;
-  stroke: #ece6dc;
-  stroke-dasharray: 3 5;
-  stroke-width: 1;
-}
-
-.sparklineLine {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2.6;
-}
-
-.donutRow {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-
-.donut {
-  position: relative;
-  flex-shrink: 0;
-  width: 130px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-}
-
-.donut::after {
-  content: '';
-  position: absolute;
-  inset: 17px;
-  border-radius: 50%;
-  background: #fff;
-}
-
-.donutInner {
-  position: absolute;
-  inset: 17px;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  text-align: center;
-}
-
-.donutInner strong {
-  color: var(--sb-ink);
-  font-size: 1.75rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.donutInner span {
-  color: var(--sb-ink-mute);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.donutList {
-  display: grid;
-  flex: 1;
-  gap: 10px;
-}
-
-.donutItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.donutItem span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--sb-ink-soft);
-  font-size: 0.8125rem;
-  font-weight: 700;
-}
-
-.donutItem strong {
-  color: var(--sb-ink);
-  font-size: 0.875rem;
-  font-weight: 900;
-}
-
-.donutDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.donutDot.danger {
-  background: #c95647;
-}
-
-.donutDot.watch {
-  background: #cf9831;
-}
-
-.donutDot.safe {
-  background: #8b4a7b;
-}
-
 .featureGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -333,77 +203,44 @@
 }
 
 .featureCard {
+  position: relative;
   display: grid;
-  gap: 12px;
-  border-radius: 22px;
+  align-content: start;
+  gap: 4px;
+  border-radius: var(--sb-radius);
   min-height: 0;
-  padding: 18px;
+  padding: 16px 20px;
   text-decoration: none;
-  color: inherit;
+  color: var(--sb-ink);
 }
 
 .featureCard strong {
-  color: inherit;
-  font-size: 1.125rem;
-  font-weight: 900;
-}
-
-.featureCard b {
-  color: inherit;
-  font-size: 1.625rem;
-  font-weight: 900;
-  line-height: 1;
+  font-size: 15px;
+  font-weight: 800;
 }
 
 .featureCard span {
-  color: inherit;
-  font-size: 0.8125rem;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
   line-height: 1.45;
 }
 
 .featureIcon {
   display: grid;
-  width: 52px;
-  height: 52px;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 8px;
   place-items: center;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
 }
 
-.featureCard.rose {
-  background: #f9dfdf;
-  color: #cc4648;
-}
-
-.featureCard.sky {
-  background: #dce9f4;
-  color: #2f74a8;
-}
-
-.featureCard.mint {
-  background: #dfece8;
-  color: #2a6a58;
-}
-
-.featureCard.amber {
-  background: #f8eacc;
-  color: #c28a19;
-}
-
-.featureCard.rose .featureIcon {
-  color: #cf4f4f;
-}
-
-.featureCard.sky .featureIcon {
-  color: #2f74a8;
-}
-
-.featureCard.mint .featureIcon {
-  color: #2a6a58;
-}
-
-.featureCard.amber .featureIcon {
-  color: #c28a19;
+.featureChevron {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--sb-ink-mute);
 }
 
 @media (max-width: 1100px) {
@@ -458,16 +295,15 @@
 
 .wardChip:hover:not(.wardChipStatic) {
   border-color: var(--sb-brand);
-  box-shadow: 0 8px 18px rgba(51, 110, 191, 0.1);
+  box-shadow: 0 8px 18px rgba(176, 103, 77, 0.1);
 }
 
 .heroCard {
   box-shadow:
-    0 16px 34px rgba(32, 104, 79, 0.16),
+    0 16px 34px rgba(176, 103, 77, 0.2),
     0 1px 0 rgba(255, 255, 255, 0.16) inset;
 }
 
-.panelCard,
 .featureCard {
   box-shadow:
     var(--sb-shadow-sm),

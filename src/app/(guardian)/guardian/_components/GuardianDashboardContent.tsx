@@ -20,33 +20,25 @@ const FEATURE_CARDS = [
     href: '/guardian/detection',
     icon: 'alert' as const,
     title: '이상감지',
-    summary: '이상 없음',
     description: '낙상·화재·흉기 실시간 감지',
-    tone: 'rose',
   },
   {
     href: '/guardian/emotion',
     icon: 'heart' as const,
     title: '정서 상태 체크',
-    summary: '기쁨',
     description: 'AI 말벗 + 표정 분석',
-    tone: 'sky',
   },
   {
     href: '/guardian/chatbot',
     icon: 'messageCircle' as const,
     title: 'AI 의료 챗봇',
-    summary: '대기 중',
     description: '건강 Q&A · 복약',
-    tone: 'mint',
   },
   {
     href: '/guardian/hospital',
     icon: 'hospital' as const,
     title: '병원 예약하기',
-    summary: '2건',
     description: '피보호자 대신 병원 예약',
-    tone: 'amber',
   },
 ] as const;
 
@@ -162,13 +154,13 @@ export function GuardianDashboardContent() {
 
       <section className={cx('featureGrid')} aria-label="핵심 기능">
         {FEATURE_CARDS.map(card => (
-          <Link key={card.href} href={card.href} className={cx('featureCard', card.tone)}>
+          <Link key={card.href} href={card.href} className={cx('featureCard')}>
             <span className={cx('featureIcon')}>
-              <Icon name={card.icon} size={30} />
+              <Icon name={card.icon} size={22} />
             </span>
             <strong>{card.title}</strong>
-            <b>{card.summary}</b>
             <span>{card.description}</span>
+            <Icon name="chevronRight" size={18} className={cx('featureChevron')} />
           </Link>
         ))}
       </section>
