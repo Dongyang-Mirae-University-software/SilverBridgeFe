@@ -51,7 +51,7 @@ export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident })
   };
 
   const canRespond = incident.reviewStatus === 'PENDING' || incident.reviewStatus === 'CONFLICTED';
-  const typeMeta = TYPE_META[incident.detectedType];
+  const typeMeta = TYPE_META[incident.detectedType] ?? { icon: '⚠️' };
   const duration = formatDuration(incident.clip?.durationMs ?? null);
 
   return (
