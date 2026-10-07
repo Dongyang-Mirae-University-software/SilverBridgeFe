@@ -103,24 +103,22 @@ export function ProfileModalControls({ profile }: Props) {
     <div className={cx('profileManageStack')}>
       {feedbackMessage && <p className={cx('profileModalMessage')}>{feedbackMessage}</p>}
 
-      <div className={cx('profileManageScroll')}>
-        <ProfileInfoPanel
-          form={profileForm}
-          isEditing={isProfileEditing}
-          isPhoneChanged={isPhoneChanged}
-          isProfilePending={profileMutation.isPending}
-          onAddressSearch={handleAddressSearch}
-          onCancelEdit={handleProfileEditCancel}
-          onChange={updateProfileForm}
-          onEditStart={handleProfileEditStart}
-          onSubmit={handleProfileSubmit}
-          phoneCode={phoneCode}
-          phoneNonce={phoneNonce}
-          setPhoneCode={setPhoneCode}
-          smsSendMutation={smsSendMutation}
-          smsVerifyMutation={smsVerifyMutation}
-        />
-      </div>
+      <ProfileInfoPanel
+        form={profileForm}
+        isEditing={isProfileEditing}
+        isPhoneChanged={isPhoneChanged}
+        isProfilePending={profileMutation.isPending}
+        onAddressSearch={handleAddressSearch}
+        onCancelEdit={handleProfileEditCancel}
+        onChange={updateProfileForm}
+        onEditStart={handleProfileEditStart}
+        onSubmit={handleProfileSubmit}
+        phoneCode={phoneCode}
+        phoneNonce={phoneNonce}
+        setPhoneCode={setPhoneCode}
+        smsSendMutation={smsSendMutation}
+        smsVerifyMutation={smsVerifyMutation}
+      />
     </div>
   );
 }
