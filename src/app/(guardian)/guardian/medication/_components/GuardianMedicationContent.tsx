@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
+import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import useKstMidnightRefetch from '@/hooks/useKstMidnightRefetch';
 import { guardianMedicationQueryKey, guardianMedicationQueryOptions } from '@/service/query/guardian/medication';
 import { WardMedicationCard } from './WardMedicationCard';
@@ -32,24 +33,7 @@ export function GuardianMedicationContent() {
 
       {wards.length > 0 && (
         <>
-          <div className={cx('wardTabs')} role="tablist" aria-label="피보호자 선택">
-            {wards.map(ward => {
-              const isActive = ward.wardId === selectedWard?.wardId;
-              return (
-                <button
-                  key={ward.wardId}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  className={cx('wardTab', { wardTabActive: isActive })}
-                  onClick={() => setSelectedWardId(ward.wardId)}
-                >
-                  <span className={cx('wardTabAvatar')}>{(ward.wardName ?? '피').charAt(0)}</span>
-                  {ward.wardName ?? '피보호자'} 님
-                </button>
-              );
-            })}
-          </div>
+          <WardSelectorTabs wards={wards} selectedWardId={selectedWard?.wardId} onSelect={setSelectedWardId} />
 
           {selectedWard && <WardMedicationCard key={selectedWard.wardId} summary={selectedWard} />}
         </>
