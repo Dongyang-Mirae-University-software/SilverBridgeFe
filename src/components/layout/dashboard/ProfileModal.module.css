@@ -4,34 +4,83 @@
   z-index: 200;
   display: grid;
   place-items: center;
-  background: rgba(15, 23, 42, 0.32);
-  backdrop-filter: blur(8px);
-  padding: 20px;
+  background: rgba(15, 17, 24, 0.45);
+  padding: 24px;
 }
 
 .profileModal {
   position: relative;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  height: min(720px, calc(100svh - 40px));
-  width: min(560px, 100%);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: min(720px, 92vh);
+  width: min(480px, 100%);
   min-height: 0;
   overflow: hidden;
   border: 0;
-  border-radius: 28px;
+  border-radius: 18px;
   background: #fff;
-  box-shadow: 0 22px 56px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   padding: 0;
 }
 
-/* ── 헤더: 아바타 + 이름 ── */
+.profileModalWard {
+  width: min(560px, 100%);
+}
+
+/* ── 타이틀 바 ── */
+.profileModalTitleBar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--sb-line-soft);
+  padding: 18px 22px;
+}
+
+.profileModalTitleBar span {
+  color: var(--sb-ink);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.profileModalWard .profileModalTitleBar span {
+  font-size: 20px;
+}
+
+.profileModalClose {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: var(--sb-bg);
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.profileModalClose:hover {
+  background: var(--sb-bg-soft);
+}
+
+/* ── 본문 ── */
+.profileModalBody {
+  overflow-y: auto;
+  padding: 20px 22px;
+}
+
+/* ── 아바타 + 이름 ── */
 .profileModalHeader {
   display: flex;
   align-items: center;
   gap: 14px;
-  border-bottom: 0;
-  background: transparent;
-  padding: 22px 62px 18px 22px;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  background: var(--sb-brand-50);
+  padding: 16px 18px;
 }
 
 .profileHeaderInfo {
@@ -41,67 +90,41 @@
 
 .profileModal h2 {
   margin: 0;
-  color: var(--sb-ink);
-  font-size: 1.25rem;
-  font-weight: 850;
-  line-height: 1.2;
-}
-
-.profileUserEmail {
   overflow: hidden;
-  margin: 5px 0 0;
-  color: var(--sb-ink-mute);
-  font-size: 0.75rem;
-  font-weight: 650;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.profileIdentity {
-  display: grid;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.profileIdentityRow {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
-}
-
-.profileIdentityRow span {
-  flex-shrink: 0;
-  color: var(--sb-ink-mute);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.profileIdentityRow strong {
-  overflow: hidden;
-  min-width: 0;
   color: var(--sb-ink);
-  font-size: 0.8125rem;
+  font-size: 17px;
   font-weight: 800;
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.profileEmailText {
-  color: var(--sb-ink-soft);
+.profileModalWard h2 {
+  font-size: 22px;
+}
+
+.profileMemberId {
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--sb-ink-mute);
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profileModalBadges {
   display: flex;
+  flex-shrink: 0;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 8px;
 }
 
 .userRoleBadge {
   display: inline-flex;
   border-radius: 999px;
-  background: rgba(31, 94, 72, 0.09);
+  background: #dceee3;
   color: var(--sb-safe);
   font-size: 0.6875rem;
   font-weight: 800;
@@ -118,64 +141,72 @@
   padding: 4px 8px;
 }
 
-.profileModalClose {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--sb-ink-soft);
-  cursor: pointer;
-  font-size: 1.125rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.profileModalClose:hover {
-  background: #fff;
-}
-
-.profileModalFooter {
+/* ── 이메일 행(Field 패턴) ── */
+.profileIdentityRow {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  padding: 12px 14px;
+}
+
+.profileIdentityRow span {
+  flex-shrink: 0;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.profileIdentityRow strong {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileEmailText {
+  color: var(--sb-ink-soft);
+}
+
+/* ── 푸터 ── */
+.profileModalFooter {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
   gap: 8px;
-  border-top: 1px solid rgba(15, 23, 42, 0.06);
-  background: #fff;
-  padding: 14px 20px 20px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding: 14px 22px;
 }
 
 .logoutButton,
 .profileModalGhostButton {
   display: inline-flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 999px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 700;
   min-height: 42px;
-  padding: 10px 14px;
+  padding: 10px;
   white-space: nowrap;
 }
 
 .logoutButton {
-  flex: 1 1 120px;
-  min-width: 0;
   background: rgba(15, 23, 42, 0.04);
   color: var(--sb-ink-mute);
 }
 
 .profileModalGhostButton {
-  flex: 0 1 120px;
-  min-width: 0;
   background: rgba(15, 23, 42, 0.05);
   color: var(--sb-brand);
 }
@@ -202,23 +233,18 @@
   .profileModal {
     height: calc(100svh - 16px);
     width: min(100%, calc(100vw - 16px));
-    border-radius: 22px;
+    border-radius: 16px;
   }
 
-  .profileModalHeader {
-    padding: 16px 48px 14px 16px;
-    gap: 12px;
+  .profileModalTitleBar {
+    padding: 14px 16px;
+  }
+
+  .profileModalBody {
+    padding: 16px;
   }
 
   .profileModalFooter {
-    justify-content: stretch;
     padding: 12px 16px 16px;
-  }
-
-  .logoutButton,
-  .profileModalGhostButton {
-    flex: 1 1 100%;
-    width: 100%;
-    min-width: 0;
   }
 }
