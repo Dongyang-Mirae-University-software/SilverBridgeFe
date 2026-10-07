@@ -12,7 +12,8 @@
   position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  height: min(720px, 92vh);
+  height: auto;
+  max-height: min(720px, 92vh);
   width: min(480px, 100%);
   min-height: 0;
   overflow: hidden;
@@ -231,7 +232,7 @@
   }
 
   .profileModal {
-    height: calc(100svh - 16px);
+    max-height: calc(100svh - 16px);
     width: min(100%, calc(100vw - 16px));
     border-radius: 16px;
   }
