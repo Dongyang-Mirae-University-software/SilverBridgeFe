@@ -33,8 +33,8 @@ export default function GuardianSettingsContent() {
         ]}
         onChange={setActiveTab}
         size="md"
-        stretch
         value={activeTab}
+        variant="underline"
       />
 
       {activeTab === 'notifications' ? (

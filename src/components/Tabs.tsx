@@ -20,6 +20,7 @@ type TabsProps<T extends string = string> = {
   ariaLabel: string;
   stretch?: boolean;
   size?: 'sm' | 'md';
+  variant?: 'pill' | 'underline';
   className?: string;
 };
 
@@ -30,11 +31,12 @@ export function Tabs<T extends string = string>({
   ariaLabel,
   stretch = false,
   size = 'md',
+  variant = 'pill',
   className,
 }: TabsProps<T>) {
   return (
     <div
-      className={cx('tabs', className, { stretch, sm: size === 'sm', md: size === 'md' })}
+      className={cx('tabs', className, { stretch, sm: size === 'sm', md: size === 'md', underline: variant === 'underline' })}
       role="tablist"
       aria-label={ariaLabel}
       style={{ '--tabs-count': String(items.length) } as CSSProperties}
