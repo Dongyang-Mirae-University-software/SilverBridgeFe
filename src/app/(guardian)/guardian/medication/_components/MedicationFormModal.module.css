@@ -21,21 +21,14 @@
 
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
 }
 
-.eyebrow {
-  display: block;
-  color: var(--sb-brand);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.header h2 {
-  margin: 4px 0 0;
+.header h3 {
+  margin: 0;
   color: var(--sb-ink);
   font-size: 17px;
   font-weight: 800;
@@ -77,6 +70,7 @@
   color: var(--sb-ink);
   font-size: 13px;
   font-weight: 700;
+  height: fit-content;
 }
 
 .field input,
@@ -97,10 +91,42 @@
   outline: none;
 }
 
-.hint {
+.optional {
   color: var(--sb-ink-mute);
-  font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.stepper button {
+  width: 34px;
+  height: 100%;
+  border: none;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.stepper button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.stepper span {
+  flex: 1;
+  text-align: center;
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .error {
@@ -124,10 +150,11 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  padding: 9px 16px;
+  padding: 11px 16px;
 }
 
 .cancelButton {
+  flex: 1;
   border: 1px solid var(--sb-line);
   background: #fff;
   color: var(--sb-ink-soft);
@@ -138,8 +165,10 @@
 }
 
 .submitButton {
+  flex: 2;
   background: var(--sb-brand);
   color: #fff;
+  font-weight: 800;
 }
 
 .submitButton:hover:not(:disabled) {
