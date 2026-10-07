@@ -27,6 +27,52 @@
   font-weight: 700;
 }
 
+.wardTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wardTab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 1px solid var(--sb-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 0 16px 0 6px;
+  white-space: nowrap;
+}
+
+.wardTabActive {
+  border: 1.5px solid var(--sb-brand);
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.wardTabAvatar {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.wardTabActive .wardTabAvatar {
+  background: var(--sb-brand);
+  color: #fff;
+}
+
 .emptyText {
   margin: 0;
   border: 1px solid var(--sb-line-soft);
