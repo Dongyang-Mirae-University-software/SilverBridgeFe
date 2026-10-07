@@ -9,7 +9,10 @@ import {
   guardianAnomalyReminderSettingQueryOptions,
   useUpdateAnomalyReminderSettingMutation,
 } from '@/service/query/guardian/anomaly';
+import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
 import { AnomalyDetectedType } from '@/service/interface/guardian/anomaly';
+import { getConnectionData } from '@/components/connections/ConnectionShared';
+import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { AnomalyIncidentCard } from './AnomalyIncidentCard';
 import styles from './AnomalyHistoryContent.module.css';
 
@@ -21,8 +24,17 @@ type TypeFilter = 'ALL' | AnomalyDetectedType;
 export function AnomalyHistoryContent({ onViewLive }: { onViewLive: () => void }) {
   const [page, setPage] = useState(0);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('ALL');
+  const [selectedWardId, setSelectedWardId] = useState<string | undefined>(undefined);
 
-  const { data, isLoading, isError } = useQuery(guardianAnomalyHistoryQueryOptions({ page, size: PAGE_SIZE }));
+  const { data: connectionsData } = useQuery(guardianConnectionsQueryOptions);
+  const wards = getConnectionData(connectionsData)
+    .filter(connection => connection.status === 'ACTIVE')
+    .map(connection => ({ wardId: connection.partnerUserId, wardName: connection.partnerName }));
+  const activeWardId = selectedWardId ?? wards[0]?.wardId;
+
+  const { data, isLoading, isError } = useQuery(
+    guardianAnomalyHistoryQueryOptions({ page, size: PAGE_SIZE, wardId: activeWardId }),
+  );
   const { data: reminderSetting } = useQuery(guardianAnomalyReminderSettingQueryOptions);
   const reminderMutation = useUpdateAnomalyReminderSettingMutation();
 
@@ -46,9 +58,21 @@ export function AnomalyHistoryContent({ onViewLive }: { onViewLive: () => void }
           </span>
         </div>
         <button type="button" className={cx('liveButton')} onClick={onViewLive}>
-          ● 실시간 카메라 보기
+          <span className={cx('liveDot')} />
+          실시간 카메라 보기
         </button>
       </header>
+
+      {wards.length > 0 && (
+        <WardSelectorTabs
+          wards={wards}
+          selectedWardId={activeWardId}
+          onSelect={wardId => {
+            setSelectedWardId(wardId);
+            setPage(0);
+          }}
+        />
+      )}
 
       <div className={cx('filterRow')}>
         <button type="button" className={cx('chip', { active: typeFilter === 'ALL' })} onClick={() => setTypeFilter('ALL')}>

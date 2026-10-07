@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dayjs from 'dayjs';
 import classNames from 'classnames/bind';
 
 import { formatDateTime } from '@/utils/format/date';
@@ -18,6 +19,19 @@ const REVIEW_STATUS_LABEL: Record<AnomalyIncident['reviewStatus'], string> = {
   FALSE_ALARM: '오탐',
   CONFLICTED: '응답 엇갈림 · 재확인 필요',
 };
+
+const TYPE_META: Record<AnomalyIncident['detectedType'], { icon: string }> = {
+  FIRE: { icon: '🔥' },
+  SMOKE: { icon: '💨' },
+};
+
+function formatDuration(durationMs: number | null) {
+  if (!durationMs) return null;
+  const totalSeconds = Math.round(durationMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
 
 export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident }) {
   const feedbackMutation = useAnomalyFeedbackMutation();
@@ -37,26 +51,40 @@ export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident })
   };
 
   const canRespond = incident.reviewStatus === 'PENDING' || incident.reviewStatus === 'CONFLICTED';
+  const typeMeta = TYPE_META[incident.detectedType];
+  const duration = formatDuration(incident.clip?.durationMs ?? null);
 
   return (
-    <li className={cx('card', incident.detectedType.toLowerCase())}>
-      <div className={cx('typeBadge')}>
-        {incident.detectedType === 'FIRE' ? '🔥' : '💨'} {incident.detectedTypeLabel}
-      </div>
+    <li className={cx('card')}>
+      <button
+        type="button"
+        className={cx('thumbnail', incident.detectedType.toLowerCase())}
+        disabled={!incident.clip}
+        onClick={() => setIsClipModalOpen(true)}
+      >
+        <span className={cx('recBadge')}>● REC · {dayjs(incident.startedAt).format('MM.DD HH:mm')}</span>
+        <span className={cx('typeBadge')}>
+          {typeMeta.icon} {incident.detectedTypeLabel}
+        </span>
+        {incident.clip && (
+          <span className={cx('playButton')}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--sb-brand)">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </span>
+        )}
+        {duration && <span className={cx('durationBadge')}>{duration}</span>}
+      </button>
 
       <div className={cx('body')}>
-        <strong className={cx('wardName')}>{incident.wardName}</strong>
-        <span className={cx('location')}>{incident.cameraLabel ?? '삭제된 카메라'}</span>
+        <div className={cx('bodyHead')}>
+          <strong className={cx('location')}>{incident.cameraLabel ?? '삭제된 카메라'}</strong>
+          {incident.clipCount > 1 && <span className={cx('clipCount')}>영상 {incident.clipCount}개</span>}
+        </div>
         <span className={cx('time')}>{formatDateTime(incident.startedAt)}</span>
         <span className={cx('meta')}>
-          {incident.eventCount}회 연속 감지 · 최고 신뢰도 {Math.round(incident.maxConfidence * 100)}%
+          {incident.wardName} · {incident.eventCount}회 연속 감지 · 최고 신뢰도 {Math.round(incident.maxConfidence * 100)}%
         </span>
-
-        {incident.clip && (
-          <button type="button" className={cx('clipButton')} onClick={() => setIsClipModalOpen(true)}>
-            ▶ 영상 {incident.clipCount}
-          </button>
-        )}
       </div>
 
       <div className={cx('footer')}>
@@ -85,9 +113,7 @@ export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident })
           </div>
         ) : (
           incident.myVerdict && (
-            <span className={cx('myVerdict')}>
-              내 응답: {incident.myVerdict === 'REAL' ? '실제 위험' : '오탐'}
-            </span>
+            <span className={cx('myVerdict')}>내 응답: {incident.myVerdict === 'REAL' ? '실제 위험' : '오탐'}</span>
           )
         )}
       </div>
