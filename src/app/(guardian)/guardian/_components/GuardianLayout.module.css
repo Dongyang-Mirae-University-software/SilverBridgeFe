@@ -1,7 +1,6 @@
 .stage {
   display: flex;
   height: 100dvh;
-  min-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
   background: var(--sb-bg);
