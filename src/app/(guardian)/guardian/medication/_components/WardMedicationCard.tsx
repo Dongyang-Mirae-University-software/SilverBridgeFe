@@ -11,6 +11,7 @@ import {
   formatMedicationAlertTime,
   getLatestDoseTime,
   getMedicationSummaryText,
+  getMedicationTimeSlotLabel,
   sortMedicationsByDoseTime,
 } from '@/utils/format/medication';
 import {
@@ -177,24 +178,28 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         ) : (
           <ul className={cx('medicationList')}>
             {medications.map(medication => (
-              <li key={medication.medicationId} className={cx('medicationItem', { taken: medication.taken })}>
+              <li key={medication.medicationId} className={cx('medicationItem')}>
+                <button type="button" className={cx('medicationTime')} onClick={() => openMedicationForm(medication)}>
+                  <strong>{getMedicationTimeSlotLabel(medication.timeSlot)}</strong>
+                  <span>{formatDoseTime(medication.doseTime)}</span>
+                </button>
                 <button type="button" className={cx('medicationInfo')} onClick={() => openMedicationForm(medication)}>
                   <strong className={cx('medicationName')}>{medication.name}</strong>
-                  <span className={cx('medicationDetail')}>{getMedicationSummaryText(medication)}</span>
-                </button>
-                <div className={cx('medicationActions')}>
-                  <span className={cx('statusBadge', { taken: medication.taken })}>
-                    {medication.taken ? '복용함' : '미복용'}
+                  <span className={cx('medicationDetail')}>
+                    {medication.doseAmount}정{medication.memo ? ` · ${medication.memo}` : ''}
                   </span>
-                  <button
-                    type="button"
-                    className={cx('deleteButton')}
-                    onClick={() => handleDelete(medication)}
-                    aria-label={`${medication.name} 삭제`}
-                  >
-                    ×
-                  </button>
-                </div>
+                </button>
+                <span className={cx('statusBadge', { taken: medication.taken })}>
+                  {medication.taken ? '드셨어요' : '아직 안 드셨어요'}
+                </span>
+                <button
+                  type="button"
+                  className={cx('deleteButton')}
+                  onClick={() => handleDelete(medication)}
+                  aria-label={`${medication.name} 삭제`}
+                >
+                  ×
+                </button>
               </li>
             ))}
           </ul>

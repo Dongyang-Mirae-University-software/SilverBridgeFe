@@ -30,7 +30,7 @@
 .emptyText {
   margin: 0;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 18px;
+  border-radius: var(--sb-radius);
   background: #fff;
   color: var(--sb-ink-mute);
   font-size: 0.875rem;
