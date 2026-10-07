@@ -5,7 +5,7 @@ import styles from './SilverBridgeLogo.module.css';
 
 const cx = classNames.bind(styles);
 
-const playfairDisplay = Playfair_Display({ subsets: ['latin'], weight: ['700', '800'] });
+const playfairDisplay = Playfair_Display({ subsets: ['latin'], weight: ['500'] });
 
 type SilverBridgeLogoProps = {
   className?: string;

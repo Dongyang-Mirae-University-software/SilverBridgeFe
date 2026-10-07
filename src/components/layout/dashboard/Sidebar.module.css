@@ -4,14 +4,14 @@
   z-index: 30;
   box-sizing: border-box;
   display: flex;
-  width: 260px;
+  width: 240px;
   height: 100vh;
   flex-shrink: 0;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   border-right: 1px solid var(--sb-line);
   background: #fff;
-  padding: 16px;
+  padding: 20px 14px;
   box-shadow: none;
 }
 
@@ -20,12 +20,11 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  border-radius: 12px;
-  padding: 10px;
-  border-bottom: 1px solid var(--sb-line-soft);
   border-radius: 0;
   flex-shrink: 0;
-  padding: 0px 10px 10px;
+  padding: 6px 10px 18px;
+  border-bottom: 1px solid var(--sb-line-soft);
+  margin-bottom: 14px;
 }
 
 .brandInfo {
@@ -89,29 +88,26 @@
 }
 
 .navItem:hover {
+  background: var(--sb-bg-soft);
+}
+
+.navItem.active {
   background: var(--sb-brand-50);
   color: var(--sb-brand);
   font-weight: 700;
 }
 
-.navItem.active {
-  background: var(--sb-brand);
-  color: #fff;
-  font-weight: 700;
-  box-shadow: 0 8px 18px rgba(31, 94, 72, 0.16);
-}
-
 .navIcon {
   display: grid;
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   flex-shrink: 0;
   place-items: center;
 }
 
 .navIcon svg {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -143,8 +139,8 @@
 
 .userCard strong {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 800;
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .userCard span {
