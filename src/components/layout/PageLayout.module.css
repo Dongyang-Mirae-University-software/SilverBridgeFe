@@ -24,17 +24,18 @@
 .header h1 {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 2.25rem;
-  font-weight: 850;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   line-height: 1.25;
 }
 
 .header p {
   max-width: 720px;
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-  font-weight: 650;
+  font-size: 13px;
+  font-weight: 400;
   line-height: 1.55;
 }
 
