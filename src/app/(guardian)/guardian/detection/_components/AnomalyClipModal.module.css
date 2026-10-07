@@ -15,8 +15,8 @@
   max-height: calc(100vh - 64px);
   overflow: hidden auto;
   border-radius: 16px;
-  background: #1c1915;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  background: #fff;
+  box-shadow: var(--sb-shadow-lg);
 }
 
 .videoArea {
@@ -57,20 +57,20 @@
 }
 
 .infoRow strong {
-  color: #fff;
+  color: var(--sb-ink);
   font-size: 18px;
   font-weight: 800;
 }
 
 .infoRow span {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--sb-ink-mute);
   font-size: 13px;
 }
 
 .footerActions {
   display: flex;
   gap: 10px;
-  padding: 16px 24px 20px;
+  padding: 16px 24px;
 }
 
 .downloadButton,
@@ -79,7 +79,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: none;
   border-radius: 10px;
+  background: var(--sb-brand);
+  color: #fff;
   cursor: pointer;
   font-size: 14px;
   font-weight: 700;
@@ -87,39 +90,32 @@
   text-decoration: none;
 }
 
-.downloadButton {
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: transparent;
-  color: #fff;
+.downloadButton:hover,
+.closeAction:hover {
+  filter: brightness(0.95);
 }
 
 .downloadButton.disabled {
   cursor: not-allowed;
-  opacity: 0.4;
+  opacity: 0.5;
   pointer-events: none;
-}
-
-.closeAction {
-  border: none;
-  background: var(--sb-brand);
-  color: #fff;
 }
 
 .status {
   margin: 0;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--sb-ink-mute);
   font-size: 0.8125rem;
-  padding: 0 24px;
+  padding: 0 24px 16px;
 }
 
 .list {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  margin: 12px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--sb-line-soft);
 }
 
 .item {
@@ -132,11 +128,11 @@
 }
 
 .item:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--sb-bg-soft);
 }
 
 .item.active {
-  background: rgba(176, 103, 77, 0.16);
+  background: var(--sb-brand-50);
 }
 
 .item.disabled {
@@ -155,23 +151,23 @@
 }
 
 .itemInfo span:first-child {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--sb-ink);
   font-size: 0.8125rem;
   font-weight: 700;
 }
 
 .itemError {
-  color: #ff8a73;
+  color: var(--sb-warn);
   font-size: 0.75rem;
   font-weight: 700;
 }
 
 .playIndicator {
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--sb-line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.72);
+  background: #fff;
+  color: var(--sb-ink-soft);
   font-size: 0.75rem;
   font-weight: 800;
   padding: 7px 14px;
@@ -179,6 +175,6 @@
 
 .item.active .playIndicator {
   border-color: var(--sb-brand);
-  background: rgba(176, 103, 77, 0.3);
+  background: var(--sb-brand);
   color: #fff;
 }
