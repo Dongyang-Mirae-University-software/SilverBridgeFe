@@ -1,61 +1,305 @@
 .card {
-  overflow: hidden;
-  display: grid;
-  gap: 0;
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
-  list-style: none;
 }
 
-.profileHeader {
+/* ── 오늘 요약 카드 ── */
+.todayCard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 24px;
+}
+
+.todayCard > div:first-child {
+  flex: 1;
+  min-width: 220px;
+}
+
+.todayLabel {
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.todayCount {
+  margin-top: 4px;
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.todayTaken {
+  color: var(--sb-safe);
+}
+
+.todayMiss {
+  margin-top: 6px;
+  color: #8a5f12;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.todayAllDone {
+  margin-top: 6px;
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.todayDots {
+  display: flex;
+  gap: 6px;
+}
+
+.todayDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--sb-line);
+}
+
+.todayDot.done {
+  background: var(--sb-safe);
+}
+
+.todayDot.miss {
+  background: #e2b04a;
+}
+
+/* ── 약 목록 카드 ── */
+.listCard {
+  overflow: hidden;
+  padding: 0;
+}
+
+.sectionHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 18px 20px;
+  gap: 12px;
   border-bottom: 1px solid var(--sb-line-soft);
+  padding: 16px 24px;
 }
 
-.profileInfo {
-  display: flex;
+.sectionTitle {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.sectionMeta {
+  display: block;
+  margin-top: 2px;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+}
+
+.addButton {
+  display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
-  gap: 14px;
-  min-width: 0;
+  gap: 6px;
+  border: none;
+  border-radius: 10px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 16px;
+  white-space: nowrap;
 }
 
-.wardName {
+.emptyText {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  padding: 36px 0;
+  text-align: center;
+}
+
+.medicationItem {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) auto 36px;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding: 14px 24px;
+}
+
+.medicationItem:first-child {
+  border-top: 0;
+}
+
+.medicationTime {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px;
+  flex-direction: column;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.medicationTime strong {
   color: var(--sb-ink);
   font-size: 16px;
   font-weight: 800;
 }
 
-.age {
+.medicationTime span {
+  margin-top: 2px;
   color: var(--sb-ink-mute);
   font-size: 13px;
-  font-weight: 600;
+  white-space: nowrap;
 }
 
-.wardId {
+.medicationInfo {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.medicationName {
   display: block;
-  margin-top: 4px;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
+  overflow: hidden;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.medicationDetail {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--sb-line);
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  font-weight: 800;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.statusBadge.done {
+  border-color: var(--sb-safe);
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
+}
+
+.statusBadge.miss {
+  border-color: #e2c48a;
+  background: var(--sb-sun-soft);
+  color: #8a5f12;
+}
+
+.deleteButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-mute);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ── 알림 설정 카드 ── */
+.settingsCard {
+  overflow: hidden;
+  padding: 0;
+}
+
+.settingsRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+}
+
+.settingsRow + .settingsRow {
+  border-top: 1px solid var(--sb-line-soft);
+}
+
+.settingsRowWrap {
+  flex-wrap: wrap;
+}
+
+.settingsMeta {
+  flex: 1;
+  min-width: 220px;
+}
+
+.settingsTitle {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.settingsDescription {
+  display: block;
+  margin-top: 2px;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+}
+
+.timeField {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.timeField input {
+  height: 40px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  font-size: 15px;
+  font-weight: 800;
+  padding: 0 10px;
+}
+
+/* ── 토글 ── */
 .switchField {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  color: var(--sb-ink-soft);
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .switchField input {
@@ -106,356 +350,21 @@
   opacity: 0.65;
 }
 
-.scheduleSection {
-  display: grid;
-  gap: 12px;
-  padding: 16px 20px 18px;
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.sectionTitle {
-  color: var(--sb-ink);
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.sectionMeta {
-  margin-left: 8px;
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-}
-
-.addButton {
-  flex-shrink: 0;
-  border: none;
-  border-radius: 10px;
-  background: var(--sb-brand);
-  color: #fff;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 9px 16px;
-}
-
-.remindField {
-  justify-self: start;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-}
-
-.remindField input {
-  accent-color: var(--sb-brand);
-}
-
-.emptyText {
-  margin: 0;
-  border-radius: 10px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-  padding: 18px;
-  text-align: center;
-}
-
-.medicationList {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.medicationItem {
-  display: grid;
-  grid-template-columns: 90px minmax(0, 1fr) auto 32px;
-  align-items: center;
-  gap: 14px;
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 12px 16px;
-}
-
-.medicationItem:first-child {
-  border-top: 0;
-}
-
-.medicationTime {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-}
-
-.medicationTime strong {
-  color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.medicationTime span {
-  margin-top: 2px;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.medicationInfo {
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-}
-
-.medicationName {
-  display: block;
-  overflow: hidden;
-  color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.medicationDetail {
-  display: block;
-  overflow: hidden;
-  margin-top: 2px;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.statusBadge {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  border: 1px solid var(--sb-line);
-  border-radius: 999px;
-  background: var(--sb-sun-soft);
-  color: #8a5f12;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 6px 12px;
-  white-space: nowrap;
-}
-
-.statusBadge.taken {
-  border-color: var(--sb-safe);
-  background: var(--sb-safe-soft);
-  color: var(--sb-safe);
-}
-
-.deleteButton {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--sb-line);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--sb-ink-mute);
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.todaySection {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--sb-line-soft);
-  padding: 16px 20px;
-}
-
-.todayLabel {
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.todayCount {
-  margin-top: 4px;
-  color: var(--sb-ink);
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.todayTaken {
-  color: var(--sb-safe);
-}
-
-.todayDots {
-  display: flex;
-  gap: 6px;
-}
-
-.todayDot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--sb-line);
-}
-
-.todayDot.done {
-  background: var(--sb-safe);
-}
-
-.settingsSection {
-  display: grid;
-  gap: 14px;
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 16px 20px 18px;
-}
-
-.settingsRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.settingsRowWrap {
-  flex-wrap: wrap;
-}
-
-.settingsMeta {
-  flex: 1;
-  min-width: 200px;
-}
-
-.settingsTitle {
-  display: block;
-  color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.settingsDescription {
-  display: block;
-  margin-top: 2px;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-}
-
-.timeField {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--sb-ink-soft);
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.timeField input {
-  border: 1px solid var(--sb-line);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 700;
-  padding: 8px 10px;
-}
-
-.summaryNotice {
-  border-radius: 9px;
-  background: var(--sb-sun-soft);
-  color: #8a5f12;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 12px 14px;
-}
-
-.missedList {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.missedList li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-radius: 8px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 10px 12px;
-}
-
-.missedList span {
-  flex: 1;
-  min-width: 0;
-}
-
-.missedList em {
-  overflow: hidden;
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  font-style: normal;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.alertWarning {
-  margin: 0;
-  border-radius: 10px;
-  background: var(--sb-danger-soft);
-  color: var(--sb-danger);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 10px 12px;
-}
-
 @media (max-width: 720px) {
-  .profileHeader,
+  .todayCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .sectionHeader,
   .settingsRow {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .switchField,
-  .addButton {
+  .addButton,
+  .settingsRow .switchField {
     align-self: flex-end;
-  }
-
-  .todaySection {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .sectionMeta {
-    display: block;
-    margin: 6px 0 0;
   }
 
   .medicationItem {
@@ -491,10 +400,5 @@
 
   .timeField input {
     flex: 1;
-  }
-
-  .missedList li {
-    align-items: flex-start;
-    flex-direction: column;
   }
 }

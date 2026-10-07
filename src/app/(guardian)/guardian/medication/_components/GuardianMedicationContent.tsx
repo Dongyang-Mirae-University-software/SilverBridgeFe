@@ -51,11 +51,7 @@ export function GuardianMedicationContent() {
             })}
           </div>
 
-          {selectedWard && (
-            <ul className={cx('list')}>
-              <WardMedicationCard key={selectedWard.wardId} summary={selectedWard} />
-            </ul>
-          )}
+          {selectedWard && <WardMedicationCard key={selectedWard.wardId} summary={selectedWard} />}
         </>
       )}
     </section>
