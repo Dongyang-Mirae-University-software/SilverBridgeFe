@@ -188,6 +188,39 @@
   color: var(--sb-ink-mute);
 }
 
+/* 피보호자: 사이드바는 화면 크기와 상관없이 항상 오버레이로만 열린다 */
+.sidebarWard {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 70;
+  width: min(78vw, 280px);
+  max-width: 320px;
+  height: 100dvh;
+  border-right: 0;
+  padding: max(18px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-105%);
+  transition: transform 0.18s ease;
+}
+
+.sidebarWard.open {
+  transform: translateX(0);
+}
+
+.sidebarWard .closeButton {
+  display: grid;
+}
+
+.sidebarWard .navItem {
+  font-size: 15px;
+  padding: 14px 14px;
+}
+
+.sidebarWard .navIcon,
+.sidebarWard .navIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
 @media (max-width: 900px) {
   .sidebar {
     position: fixed;
@@ -230,7 +263,6 @@
   }
 
   .sidebarFooter {
-    border-top: 1px solid var(--sb-line-soft);
     padding-top: 10px;
   }
 }

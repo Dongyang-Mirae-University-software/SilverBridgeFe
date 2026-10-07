@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import classNames from 'classnames/bind';
 
 import AlertIcon from '@/assets/icons/alert.svg';
+import ArrowLeftIcon from '@/assets/icons/arrow-left.svg';
 import AvatarEditIcon from '@/assets/icons/avatar-edit.svg';
 import BackIcon from '@/assets/icons/back.svg';
 import BellIcon from '@/assets/icons/bell.svg';
@@ -42,6 +43,7 @@ const cx = classNames.bind(styles);
 
 const ICONS = {
   alert: AlertIcon,
+  arrowLeft: ArrowLeftIcon,
   avatarEdit: AvatarEditIcon,
   back: BackIcon,
   bell: BellIcon,
