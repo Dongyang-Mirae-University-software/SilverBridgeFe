@@ -18,7 +18,6 @@
 .brand {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 12px;
   border-radius: 0;
   flex-shrink: 0;
@@ -42,6 +41,10 @@
 }
 
 .closeButton {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
   display: none;
   width: 32px;
   height: 32px;

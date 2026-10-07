@@ -59,15 +59,16 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
   return (
     <>
       <aside className={cx('sidebar', { open: isOpen })} aria-label={`${getRoleLabel(role)} 메뉴`}>
+        <button className={cx('closeButton')} type="button" aria-label="메뉴 닫기" onClick={onClose}>
+          ≡
+        </button>
+
         <div className={cx('brand')}>
           <div className={cx('brandInfo')}>
             <Link className={cx('brandLink')} href={rootPath} onClick={onClose} aria-label="대시보드로 이동">
               <SilverBridgeLogo subtitle={`${getRoleLabel(role)} 웹`} />
             </Link>
           </div>
-          <button className={cx('closeButton')} type="button" aria-label="메뉴 닫기" onClick={onClose}>
-            ≡
-          </button>
         </div>
 
         <nav className={cx('nav')} aria-label={`${getRoleLabel(role)} 메뉴`}>
