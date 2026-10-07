@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { TabItem, Tabs } from '@/components/Tabs';
 import { guardianInquiriesQueryOptions } from '@/service/query/guardian/inquiry';
 import { GuardianInquiryForm } from './GuardianInquiryForm';
 import { GuardianInquiryCard } from './GuardianInquiryCard';
@@ -16,13 +15,13 @@ const cx = classNames.bind(styles);
 const PAGE_SIZE = 20;
 type Tab = 'write' | 'history';
 
-const TABS: TabItem<Tab>[] = [
-  { value: 'write', label: '문의하기' },
-  { value: 'history', label: '문의 내역' },
+const TABS: { value: Tab; label: string }[] = [
+  { value: 'history', label: '내 문의 내역' },
+  { value: 'write', label: '새 문의 작성' },
 ];
 
 export function GuardianInquiryContent() {
-  const [tab, setTab] = useState<Tab>('write');
+  const [tab, setTab] = useState<Tab>('history');
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -33,7 +32,20 @@ export function GuardianInquiryContent() {
 
   return (
     <section className={cx('page')}>
-      <Tabs items={TABS} value={tab} onChange={setTab} ariaLabel="문의 메뉴" stretch />
+      <div className={cx('tabRow')} role="tablist" aria-label="문의 메뉴">
+        {TABS.map(item => (
+          <button
+            key={item.value}
+            className={cx('tabButton', { tabButtonActive: tab === item.value })}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.value}
+            onClick={() => setTab(item.value)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
 
       {tab === 'write' ? (
         <GuardianInquiryForm

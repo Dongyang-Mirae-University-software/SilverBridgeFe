@@ -55,7 +55,7 @@ export function GuardianInquiryForm({ onSubmitted }: { onSubmitted?: () => void 
   return (
     <form className={cx('form')} onSubmit={handleSubmit}>
       <div className={cx('field')}>
-        <span className={cx('fieldLabel')}>분류</span>
+        <span className={cx('fieldLabel')}>카테고리</span>
         <div className={cx('chips')}>
           {CATEGORY_OPTIONS.map(option => (
             <button
@@ -94,7 +94,7 @@ export function GuardianInquiryForm({ onSubmitted }: { onSubmitted?: () => void 
       </label>
 
       <button type="submit" className={cx('submit')} disabled={!canSubmit}>
-        {createMutation.isPending ? '보내는 중...' : '문의 보내기'}
+        {createMutation.isPending ? '보내는 중...' : '문의 접수'}
       </button>
     </form>
   );
