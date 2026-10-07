@@ -1,10 +1,10 @@
 import { NavItem, PageKey } from '@/components/layout/dashboard/types';
 
 export const WARD_NAV: NavItem[] = [
-  { href: '/ward', icon: 'home', label: '홈', key: 'home' },
-  { href: '/ward/sos', icon: 'phone', label: '긴급 전화', key: 'sos' },
+  { href: '/ward', icon: 'dashboard', label: '홈', key: 'home' },
+  // { href: '/ward/sos', icon: 'phone', label: '긴급 전화', key: 'sos' },
   { href: '/ward/guardians', icon: 'users', label: '내 보호자', key: 'guardians' },
-  { href: '/ward/camera', icon: 'camera', label: '카메라 등록', key: 'camera-register' },
+  { href: '/ward/camera', icon: 'camera', label: '내 카메라', key: 'camera-register' },
   // 치매 예방 게임: 아직 미공개. 사이드바에서만 숨김(/ward/game 직접 접근은 가능)
   // { href: '/ward/game', icon: 'game', label: '치매 예방 게임', key: 'game' },
   { href: '/ward/medication', icon: 'heart', label: '복약 알림', key: 'medication' },
