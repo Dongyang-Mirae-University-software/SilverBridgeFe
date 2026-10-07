@@ -21,8 +21,9 @@ const REVIEW_STATUS_LABEL: Record<AnomalyIncident['reviewStatus'], string> = {
 };
 
 const TYPE_META: Record<AnomalyIncident['detectedType'], { icon: string }> = {
+  FALL: { icon: '⚠️' },
   FIRE: { icon: '🔥' },
-  SMOKE: { icon: '💨' },
+  WEAPON: { icon: '🔪' },
 };
 
 function formatDuration(durationMs: number | null) {

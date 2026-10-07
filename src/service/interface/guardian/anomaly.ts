@@ -2,7 +2,7 @@
 // Swagger 그룹: "보호자 - 이상감지" (/api/guardian/anomaly/**)
 // 단위는 "상황"(incident) — 같은 카메라의 10분 이내 연속 감지는 한 건으로 묶인다
 
-export type AnomalyDetectedType = 'FIRE' | 'SMOKE';
+export type AnomalyDetectedType = 'FIRE' | 'FALL' | 'WEAPON';
 export type AnomalyReviewStatus = 'PENDING' | 'REAL' | 'FALSE_ALARM' | 'CONFLICTED';
 export type AnomalyVerdict = 'REAL' | 'FALSE_ALARM';
 

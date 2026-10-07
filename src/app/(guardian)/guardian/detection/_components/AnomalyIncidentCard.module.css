@@ -22,12 +22,16 @@
   cursor: default;
 }
 
+.thumbnail.fall {
+  background: var(--sb-danger-soft);
+}
+
 .thumbnail.fire {
   background: #fbe0ce;
 }
 
-.thumbnail.smoke {
-  background: #ece8e3;
+.thumbnail.weapon {
+  background: #e5d6e0;
 }
 
 .recBadge {
@@ -56,14 +60,19 @@
   padding: 4px 10px;
 }
 
+.thumbnail.fall .typeBadge {
+  background: var(--sb-danger-soft);
+  color: var(--sb-danger);
+}
+
 .thumbnail.fire .typeBadge {
   background: #fbe0ce;
   color: #c24a1f;
 }
 
-.thumbnail.smoke .typeBadge {
-  background: #ece8e3;
-  color: var(--sb-ink-soft);
+.thumbnail.weapon .typeBadge {
+  background: #e5d6e0;
+  color: #7a3e68;
 }
 
 .playButton {
