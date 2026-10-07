@@ -38,6 +38,8 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
     onCloseModal: state.onCloseModal,
   }));
 
+  const activeHref = getActiveNavHref(navItems, pathname, rootPath);
+
   const userName = profile?.name ?? ROLE_DEFAULT_NAME[role];
   const userId = profile?.id ?? '아이디 정보 없음';
   const userEmail = profile?.email ?? '이메일 정보 없음';
@@ -75,9 +77,7 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
           {navItems.map(item => (
             <Link
               key={item.href}
-              className={cx('navItem', {
-                active: pathname === item.href || (item.href !== rootPath && pathname.startsWith(`${item.href}/`)),
-              })}
+              className={cx('navItem', { active: item.href === activeHref })}
               href={item.href}
               onClick={onClose}
             >
@@ -106,4 +106,14 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
       </aside>
     </>
   );
+}
+
+// 중첩 경로(예: /guardian/wards와 /guardian/wards/register)가 서로 접두어를 공유할 때
+// 여러 항목이 동시에 활성화되지 않도록, 가장 길게 일치하는 href 하나만 고른다
+function getActiveNavHref(navItems: NavItem[], pathname: string, rootPath: string) {
+  const matched = [...navItems]
+    .sort((a, b) => b.href.length - a.href.length)
+    .find(item => pathname === item.href || (item.href !== rootPath && pathname.startsWith(`${item.href}/`)));
+
+  return matched?.href;
 }
