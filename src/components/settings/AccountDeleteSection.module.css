@@ -1,44 +1,41 @@
-.dangerSection {
-  border: 1px solid #f5c6bb;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: var(--sb-shadow-sm);
-  overflow: hidden;
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--sb-line-soft);
 }
 
-.sectionHead {
-  padding: 20px 22px 16px;
-  background: #fff8f7;
+.meta {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.sectionTitle {
-  margin: 0 0 4px;
-  color: var(--sb-warn);
-  font-size: 0.9375rem;
-  font-weight: 850;
+.label {
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.sectionDesc {
-  margin: 0;
+.desc {
+  margin-top: 3px;
   color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-  line-height: 1.6;
-}
-
-.sectionBody {
-  padding: 16px 22px;
-  border-top: 1px solid #f5c6bb;
+  font-size: 12px;
 }
 
 .deleteButton {
-  border: 1px solid #f0c0b5;
+  flex-shrink: 0;
+  border: none;
   border-radius: 10px;
-  background: #fbe5e0;
+  background: var(--sb-warn-soft);
   color: var(--sb-warn);
   cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 750;
-  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
   transition: filter 0.12s;
 }
 
@@ -61,27 +58,30 @@
 /* ── 모달 박스 ── */
 .modal {
   width: min(400px, 100%);
-  border-radius: 20px;
+  border-radius: 16px;
   background: #fff;
-  box-shadow: 0 24px 60px rgba(20, 17, 12, 0.18);
-  padding: 28px 28px 24px;
+  box-shadow: var(--sb-shadow-lg);
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  text-align: center;
 }
 
 .modalIcon {
-  width: 28px;
-  height: 28px;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 4px;
+  border-radius: 50%;
+  background: var(--sb-warn-soft);
   color: var(--sb-warn);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  place-items: center;
 }
 
 .modalIcon > * {
-  width: 100%;
-  height: 100%;
+  width: 26px;
+  height: 26px;
   display: block;
   object-fit: contain;
 }
@@ -140,7 +140,7 @@
 
 .modalActions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 8px;
   margin-top: 4px;
 }

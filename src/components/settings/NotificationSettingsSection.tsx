@@ -54,24 +54,21 @@ export function NotificationSettingsSection() {
     setError('');
     mutation.mutate(
       { settings: [{ channelType, enabled }] },
-      { onError: err => setError(err instanceof Error && err.message ? err.message : '알림 설정 변경에 실패했습니다.') },
+      {
+        onError: err => setError(err instanceof Error && err.message ? err.message : '알림 설정 변경에 실패했습니다.'),
+      },
     );
   };
 
   return (
     <section className={cx('section')}>
-      <div className={cx('sectionHead')}>
-        <h2 className={cx('sectionTitle')}>알림 채널 설정</h2>
-        <p className={cx('sectionDesc')}>받고 싶은 알림 채널을 켜거나 끌 수 있습니다.</p>
-      </div>
-
       {isLoading ? (
         <p className={cx('loading')}>불러오는 중…</p>
       ) : (
         <div className={cx('list')}>
           {error && <div className={cx('errorBanner')}>{error}</div>}
           {CHANNEL_OPTIONS.map(option => {
-            const enabled = enabledMap.get(option.channelType) ?? (option.channelType === 'FCM');
+            const enabled = enabledMap.get(option.channelType) ?? option.channelType === 'FCM';
             return (
               <div key={option.channelType} className={cx('row')}>
                 <div className={cx('meta')}>

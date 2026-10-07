@@ -69,17 +69,15 @@ export function AccountDeleteSection({ isKakaoUser }: { isKakaoUser: boolean }) 
 
   return (
     <>
-      <section className={cx('dangerSection')}>
-        <div className={cx('sectionHead')}>
-          <h2 className={cx('sectionTitle')}>계정 탈퇴</h2>
-          <p className={cx('sectionDesc')}>탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.</p>
+      <div className={cx('row')}>
+        <div className={cx('meta')}>
+          <span className={cx('label')}>회원 탈퇴</span>
+          <span className={cx('desc')}>탈퇴 시 모든 데이터가 즉시 삭제되며 복구되지 않습니다</span>
         </div>
-        <div className={cx('sectionBody')}>
-          <button className={cx('deleteButton')} type="button" onClick={openConfirm}>
-            회원 탈퇴
-          </button>
-        </div>
-      </section>
+        <button className={cx('deleteButton')} type="button" onClick={openConfirm}>
+          탈퇴
+        </button>
+      </div>
 
       {deleteStep === 'confirm' && (
         <div className={cx('overlay')} onClick={closeDeleteModal}>

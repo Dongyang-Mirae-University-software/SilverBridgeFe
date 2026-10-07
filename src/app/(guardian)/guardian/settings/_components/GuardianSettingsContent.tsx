@@ -44,10 +44,10 @@ export default function GuardianSettingsContent() {
       {activeTab === 'channel' && <NotificationSettingsSection />}
 
       {activeTab === 'account' && (
-        <>
+        <div className={cx('card')}>
           <PasswordChangeSection isKakaoUser={isKakaoUser} />
           <AccountDeleteSection isKakaoUser={isKakaoUser} />
-        </>
+        </div>
       )}
     </div>
   );
