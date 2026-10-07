@@ -60,7 +60,7 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
     <>
       <aside className={cx('sidebar', { open: isOpen })} aria-label={`${getRoleLabel(role)} 메뉴`}>
         <button className={cx('closeButton')} type="button" aria-label="메뉴 닫기" onClick={onClose}>
-          ≡
+          x
         </button>
 
         <div className={cx('brand')}>
