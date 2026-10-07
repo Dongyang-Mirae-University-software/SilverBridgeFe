@@ -24,7 +24,8 @@ export const GUARDIAN_NAV: NavItem[] = [
   { href: '/guardian/hospital', icon: 'hospital', label: '병원 예약', key: 'hospital' },
   { href: '/guardian/notices', icon: 'bell', label: '공지사항', key: 'notices' },
   { href: '/guardian/inquiries', icon: 'inquiry', label: '문의하기', key: 'inquiries' },
-  { href: '/guardian/wards', icon: 'users', label: '피보호자 관리', key: 'wards' },
+  { href: '/guardian/wards', icon: 'users', label: '피보호자 리스트', key: 'wards' },
+  { href: '/guardian/wards/register', icon: 'plus', label: '피보호자 등록', key: 'ward-register' },
   { href: '/guardian/settings', icon: 'settings', label: '환경설정', key: 'settings' },
 ];
 
@@ -41,7 +42,7 @@ export const PAGE_TITLES: Record<PageKey, string> = {
   dashboard: '대시보드',
   detection: '이상감지',
   emotion: '정서 상태 체크',
-  wards: '피보호자 관리',
+  wards: '피보호자 리스트',
   'ward-register': '피보호자 등록',
   inquiries: '문의하기',
   'sos-history': 'SOS 이력',

@@ -154,7 +154,7 @@ export function GuardianDashboardContent() {
             <strong>연결된 피보호자가 없습니다</strong>
             <span>피보호자를 등록하면 상태 확인과 알림 관리가 시작됩니다.</span>
           </div>
-          <Link className={cx('emptyHeroButton')} href="/guardian/wards?tab=register">
+          <Link className={cx('emptyHeroButton')} href="/guardian/wards/register">
             피보호자 등록하기
           </Link>
         </section>
