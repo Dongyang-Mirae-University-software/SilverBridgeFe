@@ -81,7 +81,7 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
               onClick={onClose}
             >
               <span className={cx('navIcon')}>
-                <Icon name={item.icon} size={17} />
+                <Icon name={item.icon} size={18} />
               </span>
               <span>{item.label}</span>
             </Link>
