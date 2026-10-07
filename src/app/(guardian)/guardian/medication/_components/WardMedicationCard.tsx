@@ -1,18 +1,11 @@
 'use client';
 
+import { Fragment } from 'react';
 import classNames from 'classnames/bind';
 
-import { Icon } from '@/components/Icon';
-import { UserAvatar } from '@/components/UserAvatar';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
-import {
-  formatDoseTime,
-  formatMedicationAlertTime,
-  getLatestDoseTime,
-  getMedicationSummaryText,
-  sortMedicationsByDoseTime,
-} from '@/utils/format/medication';
+import { formatDoseTime, getMedicationTimeSlotLabel, sortMedicationsByDoseTime } from '@/utils/format/medication';
 import {
   useAddWardMedicationMutation,
   useDeleteGuardianMedicationMutation,
@@ -27,6 +20,19 @@ const cx = classNames.bind(styles);
 
 interface WardMedicationCardProps {
   summary: WardMedicationSummary;
+}
+
+type DoseStatus = 'done' | 'miss' | 'later';
+
+const STATUS_LABEL: Record<DoseStatus, string> = {
+  done: '드셨어요',
+  miss: '아직 안 드셨어요',
+  later: '드실 시간 전',
+};
+
+function getDoseStatus(medication: MedicationItem, nowHHmm: string): DoseStatus {
+  if (medication.taken) return 'done';
+  return formatDoseTime(medication.doseTime) <= nowHHmm ? 'miss' : 'later';
 }
 
 function toUpdateBody(value: MedicationFormValue) {
@@ -88,13 +94,16 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const settingMutation = useUpdateMedicationSettingMutation();
   const alertSettingMutation = useUpdateMedicationAlertSettingMutation();
 
+  const wardName = summary.wardName ?? '피보호자';
   const medications = sortMedicationsByDoseTime(summary.medications);
   const hasMedications = medications.length > 0;
-  const showsNotificationSettings = hasMedications && summary.alarmEnabled;
-  const latestDoseTime = getLatestDoseTime(summary.medications);
-  const missedAlertTime = summary.missedAlertTime.slice(0, 5);
-  const showsLateWarning = Boolean(latestDoseTime && `${missedAlertTime}:00` < latestDoseTime);
-  const uncheckedMedications = medications.filter(medication => !medication.taken);
+  const nowHHmm = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Seoul',
+  }).format(new Date());
+  const missCount = medications.filter(medication => getDoseStatus(medication, nowHHmm) === 'miss').length;
 
   const handleDelete = (medication: MedicationItem) => {
     if (!window.confirm(`${medication.name} 일정을 삭제할까요? 지난 복용 이력은 남습니다.`)) return;
@@ -103,118 +112,122 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
 
   const openMedicationForm = (target: MedicationFormTarget) => {
     openModal(
-      <MedicationFormModalContainer
-        wardId={summary.wardId}
-        wardName={summary.wardName ?? '피보호자'}
-        target={target}
-        onCloseModal={onCloseModal}
-      />,
+      <MedicationFormModalContainer wardId={summary.wardId} wardName={wardName} target={target} onCloseModal={onCloseModal} />,
     );
   };
 
   return (
-    <li className={cx('card')}>
-      <header className={cx('profileHeader')}>
-        <div className={cx('profileInfo')}>
-          <UserAvatar userName={summary.wardName} size="w-60" />
+    <Fragment>
+      {hasMedications && (
+        <section className={cx('card', 'todayCard')}>
           <div>
-            <strong className={cx('wardName')}>
-              {summary.wardName ?? '피보호자'}
-              {summary.age != null && <span className={cx('age')}> 만 {summary.age}세</span>}
-            </strong>
-            <span className={cx('wardId')}>{summary.wardId}</span>
+            <div className={cx('todayLabel')}>오늘</div>
+            <div className={cx('todayCount')}>
+              {summary.totalCount}번 중 <span className={cx('todayTaken')}>{summary.takenCount}번</span> 드셨어요
+            </div>
+            {missCount > 0 ? (
+              <div className={cx('todayMiss')}>드실 시간이 지난 약 {missCount}개를 아직 안 드셨어요</div>
+            ) : (
+              <div className={cx('todayAllDone')}>지금까지 드실 약은 모두 드셨어요</div>
+            )}
           </div>
-        </div>
+          <div className={cx('todayDots')}>
+            {medications.map(medication => (
+              <span
+                key={medication.medicationId}
+                title={medication.name}
+                className={cx('todayDot', getDoseStatus(medication, nowHHmm))}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
-        {hasMedications && (
-          <label className={cx('switchField')}>
-            <span>알림 {summary.alarmEnabled ? '켜짐' : '꺼짐'}</span>
-            <input
-              type="checkbox"
-              checked={summary.alarmEnabled}
-              disabled={settingMutation.isPending}
-              onChange={event =>
-                settingMutation.mutate({ wardId: summary.wardId, body: { alarmEnabled: event.target.checked } })
-              }
-            />
-            <span className={cx('switchTrack')} aria-hidden="true" />
-          </label>
-        )}
-      </header>
-
-      <section className={cx('scheduleSection')}>
+      <section className={cx('card', 'listCard')}>
         <div className={cx('sectionHeader')}>
           <div>
-            <strong className={cx('sectionTitle')}>복약 일정</strong>
-            <span className={cx('sectionMeta')}>
-              오늘 {summary.takenCount} / {summary.totalCount} 회 복용
-            </span>
+            <strong className={cx('sectionTitle')}>오늘 드실 약</strong>
+            <span className={cx('sectionMeta')}>약을 드셨는지는 {wardName} 님이 직접 체크해요</span>
           </div>
           <button type="button" className={cx('addButton')} onClick={() => openMedicationForm('add')}>
             + 약 추가
           </button>
         </div>
 
-        {showsNotificationSettings && (
-          <label className={cx('remindField')}>
-            <input
-              type="checkbox"
-              checked={summary.remindAgainEnabled}
-              disabled={settingMutation.isPending}
-              onChange={event =>
-                settingMutation.mutate({
-                  wardId: summary.wardId,
-                  body: { remindAgainEnabled: event.target.checked },
-                })
-              }
-            />
-            15분 뒤 재알림
-          </label>
-        )}
-
         {!hasMedications ? (
-          <p className={cx('emptyText')}>등록된 약이 없습니다.</p>
+          <p className={cx('emptyText')}>등록된 약이 없어요. 약을 추가해 주세요.</p>
         ) : (
-          <ul className={cx('medicationList')}>
-            {medications.map(medication => (
-              <li key={medication.medicationId} className={cx('medicationItem', { taken: medication.taken })}>
+          medications.map(medication => {
+            const status = getDoseStatus(medication, nowHHmm);
+            return (
+              <div key={medication.medicationId} className={cx('medicationItem')}>
+                <button type="button" className={cx('medicationTime')} onClick={() => openMedicationForm(medication)}>
+                  <strong>{getMedicationTimeSlotLabel(medication.timeSlot)}</strong>
+                  <span>{formatDoseTime(medication.doseTime)}</span>
+                </button>
                 <button type="button" className={cx('medicationInfo')} onClick={() => openMedicationForm(medication)}>
                   <strong className={cx('medicationName')}>{medication.name}</strong>
-                  <span className={cx('medicationDetail')}>{getMedicationSummaryText(medication)}</span>
-                </button>
-                <div className={cx('medicationActions')}>
-                  <span className={cx('statusBadge', { taken: medication.taken })}>
-                    {medication.taken ? '복용함' : '미복용'}
+                  <span className={cx('medicationDetail')}>
+                    {medication.doseAmount}정{medication.memo ? ` · ${medication.memo}` : ''}
                   </span>
-                  <button
-                    type="button"
-                    className={cx('deleteButton')}
-                    onClick={() => handleDelete(medication)}
-                    aria-label={`${medication.name} 삭제`}
-                  >
-                    ×
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </button>
+                <span className={cx('statusBadge', status)}>{STATUS_LABEL[status]}</span>
+                <button
+                  type="button"
+                  className={cx('deleteButton')}
+                  onClick={() => handleDelete(medication)}
+                  aria-label={`${medication.name} 삭제`}
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })
         )}
       </section>
 
-      {showsNotificationSettings && (
-        <section className={cx('missedSection')}>
-          <div className={cx('missedHeader')}>
-            <div className={cx('missedTitleGroup')}>
-              <span className={cx('missedIcon')}>
-                <Icon name="bell" size={16} decorative />
-              </span>
-              <div>
-                <strong className={cx('missedTitle')}>미복약 알림</strong>
-                <span className={cx('missedDescription')}>
-                  지정한 시각에 복용 확인이 없는 약을 보호자에게 알려 줍니다
-                </span>
-              </div>
+      {hasMedications && (
+        <section className={cx('card', 'settingsCard')}>
+          <div className={cx('settingsRow')}>
+            <div className={cx('settingsMeta')}>
+              <strong className={cx('settingsTitle')}>복약 시간 알림</strong>
+              <span className={cx('settingsDescription')}>약 드실 시간마다 {wardName} 님께 알려 드려요</span>
             </div>
+            <label className={cx('switchField')}>
+              <input
+                type="checkbox"
+                checked={summary.alarmEnabled}
+                disabled={settingMutation.isPending}
+                onChange={event =>
+                  settingMutation.mutate({ wardId: summary.wardId, body: { alarmEnabled: event.target.checked } })
+                }
+              />
+              <span className={cx('switchTrack')} aria-hidden="true" />
+            </label>
+          </div>
+
+          <div className={cx('settingsRow', 'settingsRowWrap')}>
+            <div className={cx('settingsMeta')}>
+              <strong className={cx('settingsTitle')}>안 드시면 나에게 알림</strong>
+              <span className={cx('settingsDescription')}>정한 시각까지 안 드신 약이 있으면 알려 드려요</span>
+            </div>
+            {summary.missedAlertEnabled && (
+              <label className={cx('timeField')}>
+                매일
+                <input
+                  type="time"
+                  value={summary.missedAlertTime.slice(0, 5)}
+                  disabled={alertSettingMutation.isPending}
+                  onChange={event =>
+                    alertSettingMutation.mutate({
+                      wardId: summary.wardId,
+                      body: { missedAlertTime: `${event.target.value}:00` },
+                    })
+                  }
+                />
+                에 확인
+              </label>
+            )}
             <label className={cx('switchField', 'gold')}>
               <input
                 type="checkbox"
@@ -231,49 +244,28 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             </label>
           </div>
 
-          <label className={cx('timeField')}>
-            <span>발송 시각 — 하루 중 원하는 시간</span>
-            <div className={cx('timeControl')}>
+          <div className={cx('settingsRow')}>
+            <div className={cx('settingsMeta')}>
+              <strong className={cx('settingsTitle')}>15분 뒤 재알림</strong>
+              <span className={cx('settingsDescription')}>놓친 복약 알림을 15분 뒤 한 번 더 보내 드려요</span>
+            </div>
+            <label className={cx('switchField')}>
               <input
-                type="time"
-                value={missedAlertTime}
-                disabled={alertSettingMutation.isPending}
+                type="checkbox"
+                checked={summary.remindAgainEnabled}
+                disabled={settingMutation.isPending}
                 onChange={event =>
-                  alertSettingMutation.mutate({
+                  settingMutation.mutate({
                     wardId: summary.wardId,
-                    body: { missedAlertTime: `${event.target.value}:00` },
+                    body: { remindAgainEnabled: event.target.checked },
                   })
                 }
               />
-            </div>
-            <em>{formatMedicationAlertTime(summary.missedAlertTime)}에 발송</em>
-          </label>
-
-          <p className={cx('sendText')}>{formatMedicationAlertTime(summary.missedAlertTime)} 발송 예정</p>
-          <div className={cx('summaryNotice')}>
-            {formatMedicationAlertTime(summary.missedAlertTime)}에 보호자에게 미복용 {uncheckedMedications.length}건
-            알림 발송
+              <span className={cx('switchTrack')} aria-hidden="true" />
+            </label>
           </div>
-
-          {uncheckedMedications.length > 0 && (
-            <ul className={cx('missedList')}>
-              {uncheckedMedications.map(medication => (
-                <li key={medication.medicationId}>
-                  <span>{medication.name}</span>
-                  <em>예정 {getMedicationSummaryText(medication)}</em>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {showsLateWarning && (
-            <p className={cx('alertWarning')}>
-              가장 늦은 복용 시각({formatDoseTime(latestDoseTime ?? '')})이 선택한 시각 이후라 이 약은 요약에 포함되지
-              않습니다.
-            </p>
-          )}
         </section>
       )}
-    </li>
+    </Fragment>
   );
 }

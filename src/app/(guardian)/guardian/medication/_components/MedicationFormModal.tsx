@@ -10,6 +10,8 @@ import styles from './MedicationFormModal.module.css';
 const cx = classNames.bind(styles);
 
 const TIME_SLOTS: MedicationTimeSlot[] = ['MORNING', 'LUNCH', 'DINNER', 'BEDTIME'];
+const MIN_DOSE_AMOUNT = 1;
+const MAX_DOSE_AMOUNT = 10;
 
 interface MedicationFormValue {
   name: string;
@@ -38,14 +40,7 @@ function toFormValue(initial?: MedicationItem): MedicationFormValue {
   };
 }
 
-export function MedicationFormModal({
-  wardName,
-  initial,
-  isSubmitting,
-  errorMessage,
-  onSubmit,
-  onClose,
-}: MedicationFormModalProps) {
+export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSubmit, onClose }: MedicationFormModalProps) {
   const [value, setValue] = useState<MedicationFormValue>(() => toFormValue(initial));
   const isEdit = Boolean(initial);
 
@@ -53,6 +48,13 @@ export function MedicationFormModal({
     event.preventDefault();
     if (!value.name.trim() || isSubmitting) return;
     onSubmit(value);
+  };
+
+  const adjustDoseAmount = (delta: number) => {
+    setValue(current => ({
+      ...current,
+      doseAmount: Math.min(MAX_DOSE_AMOUNT, Math.max(MIN_DOSE_AMOUNT, current.doseAmount + delta)),
+    }));
   };
 
   return (
@@ -66,10 +68,7 @@ export function MedicationFormModal({
         onSubmit={handleSubmit}
       >
         <header className={cx('header')}>
-          <div>
-            <span className={cx('eyebrow')}>{wardName}</span>
-            <h2>{isEdit ? '약 수정' : '약 추가'}</h2>
-          </div>
+          <h3>{isEdit ? '약 수정' : '약 추가'}</h3>
           <button type="button" className={cx('close')} onClick={onClose} aria-label="닫기">
             ×
           </button>
@@ -87,23 +86,23 @@ export function MedicationFormModal({
             />
           </label>
 
-          <label className={cx('field')}>
-            시간대
-            <select
-              value={value.timeSlot}
-              onChange={event =>
-                setValue(current => ({ ...current, timeSlot: event.target.value as MedicationTimeSlot }))
-              }
-            >
-              {TIME_SLOTS.map(slot => (
-                <option key={slot} value={slot}>
-                  {getMedicationTimeSlotLabel(slot)}
-                </option>
-              ))}
-            </select>
-          </label>
-
           <div className={cx('fieldRow')}>
+            <label className={cx('field')}>
+              복용 시간
+              <select
+                value={value.timeSlot}
+                onChange={event =>
+                  setValue(current => ({ ...current, timeSlot: event.target.value as MedicationTimeSlot }))
+                }
+              >
+                {TIME_SLOTS.map(slot => (
+                  <option key={slot} value={slot}>
+                    {getMedicationTimeSlotLabel(slot)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <label className={cx('field')}>
               복용 시각
               <input
@@ -111,30 +110,39 @@ export function MedicationFormModal({
                 value={value.doseTime}
                 onChange={event => setValue(current => ({ ...current, doseTime: event.target.value }))}
               />
-              <span className={cx('hint')}>비워두면 시간대 기본 시각으로 설정됩니다.</span>
-            </label>
-
-            <label className={cx('field')}>
-              용량(정)
-              <input
-                type="number"
-                min={1}
-                max={99}
-                value={value.doseAmount}
-                onChange={event =>
-                  setValue(current => ({ ...current, doseAmount: Number(event.target.value) || 1 }))
-                }
-              />
             </label>
           </div>
 
           <label className={cx('field')}>
-            메모
+            복용량
+            <div className={cx('stepper')}>
+              <button
+                type="button"
+                onClick={() => adjustDoseAmount(-1)}
+                disabled={value.doseAmount <= MIN_DOSE_AMOUNT}
+                aria-label="복용량 줄이기"
+              >
+                −
+              </button>
+              <span>{value.doseAmount}알</span>
+              <button
+                type="button"
+                onClick={() => adjustDoseAmount(1)}
+                disabled={value.doseAmount >= MAX_DOSE_AMOUNT}
+                aria-label="복용량 늘리기"
+              >
+                +
+              </button>
+            </div>
+          </label>
+
+          <label className={cx('field')}>
+            메모 <span className={cx('optional')}>(선택)</span>
             <input
               value={value.memo}
               onChange={event => setValue(current => ({ ...current, memo: event.target.value }))}
               maxLength={100}
-              placeholder="예) 식후 30분"
+              placeholder="예) 식사와 함께"
             />
           </label>
 
@@ -146,7 +154,7 @@ export function MedicationFormModal({
             취소
           </button>
           <button type="submit" className={cx('submitButton')} disabled={!value.name.trim() || isSubmitting}>
-            {isSubmitting ? '저장 중...' : isEdit ? '수정' : '추가'}
+            {isSubmitting ? '저장 중...' : isEdit ? '수정' : '등록'}
           </button>
         </footer>
       </form>

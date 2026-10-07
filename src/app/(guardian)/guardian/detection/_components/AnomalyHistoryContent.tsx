@@ -9,7 +9,10 @@ import {
   guardianAnomalyReminderSettingQueryOptions,
   useUpdateAnomalyReminderSettingMutation,
 } from '@/service/query/guardian/anomaly';
+import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
 import { AnomalyDetectedType } from '@/service/interface/guardian/anomaly';
+import { getConnectionData } from '@/components/connections/ConnectionShared';
+import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { AnomalyIncidentCard } from './AnomalyIncidentCard';
 import styles from './AnomalyHistoryContent.module.css';
 
@@ -21,8 +24,17 @@ type TypeFilter = 'ALL' | AnomalyDetectedType;
 export function AnomalyHistoryContent({ onViewLive }: { onViewLive: () => void }) {
   const [page, setPage] = useState(0);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('ALL');
+  const [selectedWardId, setSelectedWardId] = useState<string | undefined>(undefined);
 
-  const { data, isLoading, isError } = useQuery(guardianAnomalyHistoryQueryOptions({ page, size: PAGE_SIZE }));
+  const { data: connectionsData } = useQuery(guardianConnectionsQueryOptions);
+  const wards = getConnectionData(connectionsData)
+    .filter(connection => connection.status === 'ACTIVE')
+    .map(connection => ({ wardId: connection.partnerUserId, wardName: connection.partnerName }));
+  const activeWardId = selectedWardId ?? wards[0]?.wardId;
+
+  const { data, isLoading, isError } = useQuery(
+    guardianAnomalyHistoryQueryOptions({ page, size: PAGE_SIZE, wardId: activeWardId }),
+  );
   const { data: reminderSetting } = useQuery(guardianAnomalyReminderSettingQueryOptions);
   const reminderMutation = useUpdateAnomalyReminderSettingMutation();
 
@@ -32,33 +44,58 @@ export function AnomalyHistoryContent({ onViewLive }: { onViewLive: () => void }
     [content, typeFilter],
   );
 
+  const fallCount = content.filter(incident => incident.detectedType === 'FALL').length;
   const fireCount = content.filter(incident => incident.detectedType === 'FIRE').length;
-  const smokeCount = content.filter(incident => incident.detectedType === 'SMOKE').length;
-  const pendingCount = content.filter(incident => incident.reviewStatus === 'PENDING' || incident.reviewStatus === 'CONFLICTED').length;
+  const weaponCount = content.filter(incident => incident.detectedType === 'WEAPON').length;
 
   return (
     <section className={cx('page')}>
       <header className={cx('header')}>
-        <div>
-          <strong className={cx('title')}>이상감지 이력</strong>
-          <span className={cx('subtitle')}>
-            화재 · 연기 — 총 {data?.totalElements ?? 0}건{pendingCount > 0 && ` · 확인 필요 ${pendingCount}건`}
-          </span>
-        </div>
         <button type="button" className={cx('liveButton')} onClick={onViewLive}>
-          ● 실시간 카메라 보기
+          <span className={cx('liveDot')} />
+          실시간 카메라 보기
         </button>
       </header>
 
+      {wards.length > 0 && (
+        <WardSelectorTabs
+          wards={wards}
+          selectedWardId={activeWardId}
+          onSelect={wardId => {
+            setSelectedWardId(wardId);
+            setPage(0);
+          }}
+        />
+      )}
+
       <div className={cx('filterRow')}>
-        <button type="button" className={cx('chip', { active: typeFilter === 'ALL' })} onClick={() => setTypeFilter('ALL')}>
+        <button
+          type="button"
+          className={cx('chip', { active: typeFilter === 'ALL' })}
+          onClick={() => setTypeFilter('ALL')}
+        >
           전체 <span>{content.length}</span>
         </button>
-        <button type="button" className={cx('chip', { active: typeFilter === 'FIRE' })} onClick={() => setTypeFilter('FIRE')}>
+        <button
+          type="button"
+          className={cx('chip', { active: typeFilter === 'FALL' })}
+          onClick={() => setTypeFilter('FALL')}
+        >
+          낙상 <span>{fallCount}</span>
+        </button>
+        <button
+          type="button"
+          className={cx('chip', { active: typeFilter === 'FIRE' })}
+          onClick={() => setTypeFilter('FIRE')}
+        >
           화재 <span>{fireCount}</span>
         </button>
-        <button type="button" className={cx('chip', { active: typeFilter === 'SMOKE' })} onClick={() => setTypeFilter('SMOKE')}>
-          연기 <span>{smokeCount}</span>
+        <button
+          type="button"
+          className={cx('chip', { active: typeFilter === 'WEAPON' })}
+          onClick={() => setTypeFilter('WEAPON')}
+        >
+          흉기 <span>{weaponCount}</span>
         </button>
       </div>
       <p className={cx('filterHint')}>필터·통계는 현재 불러온 {content.length}건 기준입니다.</p>
@@ -69,9 +106,7 @@ export function AnomalyHistoryContent({ onViewLive }: { onViewLive: () => void }
             type="checkbox"
             checked={reminderSetting?.reviewReminderEnabled ?? true}
             disabled={reminderMutation.isPending}
-            onChange={event =>
-              reminderMutation.mutate({ reviewReminderEnabled: event.target.checked })
-            }
+            onChange={event => reminderMutation.mutate({ reviewReminderEnabled: event.target.checked })}
           />
           확인 요청 알림 받기
         </label>

@@ -50,17 +50,9 @@ export function GuardianConnectionRequestForm() {
 
   return (
     <form className={cx('card')} onSubmit={handleSubmit}>
-      <header className={cx('header')}>
-        <div>
-          <span>새 연결 요청</span>
-          <strong>피보호자 등록</strong>
-        </div>
-        <small>회원 ID와 관계를 입력하면 연결 요청이 전송됩니다.</small>
-      </header>
-
       <div className={cx('formGrid')}>
         <label className={cx('field')}>
-          회원 ID
+          피보호자 회원 ID
           <input
             value={targetId}
             onChange={event => setTargetId(event.target.value)}
@@ -71,10 +63,10 @@ export function GuardianConnectionRequestForm() {
         </label>
 
         <label className={cx('field')}>
-          관계
+          피보호자와의 관계
           <select value={relation} onChange={event => setRelation(event.target.value as RelationOption)}>
             <option value="" disabled>
-              피보호자와의 관계를 선택하세요.
+              관계 선택
             </option>
             {RELATION_OPTIONS.map(option => (
               <option key={option} value={option}>
@@ -100,14 +92,14 @@ export function GuardianConnectionRequestForm() {
 
       <footer className={cx('footer')}>
         <p className={cx('hint')}>
-          피보호자 마이페이지에서 확인할 수 있는 회원 ID와 관계를 입력해 주세요. 입력을 마치면 바로 요청을 보냅니다.
+          피보호자가 본인의 마이페이지에서 확인 가능한 회원 ID를 입력하고, 피보호자와의 관계를 선택해 주세요.
         </p>
         <button
           className={cx('submitButton')}
           type="submit"
           disabled={!targetId.trim() || !requestRelation || isPending}
         >
-          {isPending ? '요청 중...' : '연결 요청'}
+          {isPending ? '요청 중...' : '승인 요청'}
         </button>
       </footer>
 

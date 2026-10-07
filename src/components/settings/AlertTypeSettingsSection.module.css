@@ -6,28 +6,9 @@
   padding: 4px 24px 16px;
 }
 
-.loading {
-  margin: 0;
-  padding: 18px 0;
-  color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-}
-
 .list {
   display: flex;
   flex-direction: column;
-}
-
-.errorBanner {
-  margin: 14px 0 0;
-  border: 1px solid rgba(192, 75, 58, 0.14);
-  border-radius: 14px;
-  background: #fff7f5;
-  color: var(--sb-warn);
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1.6;
-  padding: 12px 14px;
 }
 
 .row {
@@ -61,8 +42,8 @@
 .badge {
   flex-shrink: 0;
   border-radius: 6px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
+  background: var(--sb-warn-soft);
+  color: var(--sb-warn);
   font-size: 10px;
   font-weight: 800;
   padding: 2px 8px;

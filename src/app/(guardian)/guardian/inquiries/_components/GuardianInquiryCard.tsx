@@ -2,6 +2,7 @@
 
 import classNames from 'classnames/bind';
 
+import { Icon } from '@/components/Icon';
 import { formatDateTime } from '@/utils/format/date';
 import { GuardianInquiry, InquiryCategory, InquiryStatus } from '@/service/interface/guardian/inquiry';
 import styles from './GuardianInquiryCard.module.css';
@@ -25,15 +26,26 @@ export function GuardianInquiryCard({ inquiry, onClick }: { inquiry: GuardianInq
   return (
     <li>
       <button type="button" className={cx('card')} onClick={onClick}>
-        <div className={cx('head')}>
-          <span className={cx('categoryBadge')}>{INQUIRY_CATEGORY_LABEL[inquiry.category]}</span>
-          <span className={cx('statusBadge', inquiry.status.toLowerCase())}>
-            {INQUIRY_STATUS_LABEL[inquiry.status]}
-          </span>
+        <div className={cx('row')}>
+          <div className={cx('main')}>
+            <div className={cx('head')}>
+              <span className={cx('categoryBadge')}>{INQUIRY_CATEGORY_LABEL[inquiry.category]}</span>
+              <span className={cx('statusBadge', inquiry.status.toLowerCase())}>
+                {INQUIRY_STATUS_LABEL[inquiry.status]}
+              </span>
+            </div>
+            <strong className={cx('title')}>{inquiry.title}</strong>
+            <span className={cx('date')}>{formatDateTime(inquiry.createdAt)}</span>
+          </div>
+          <Icon name="chevronRight" size={18} className={cx('chevron')} />
         </div>
-        <strong className={cx('title')}>{inquiry.title}</strong>
-        <p className={cx('preview')}>{inquiry.content}</p>
-        <span className={cx('date')}>{formatDateTime(inquiry.createdAt)}</span>
+
+        {inquiry.status === 'ANSWERED' && inquiry.answer && (
+          <div className={cx('replyBox')}>
+            <div className={cx('replyLabel')}>관리자 답변</div>
+            {inquiry.answer}
+          </div>
+        )}
       </button>
     </li>
   );

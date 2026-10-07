@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import classNames from 'classnames/bind';
 
 import AlertIcon from '@/assets/icons/alert.svg';
+import ArrowLeftIcon from '@/assets/icons/arrow-left.svg';
 import AvatarEditIcon from '@/assets/icons/avatar-edit.svg';
 import BackIcon from '@/assets/icons/back.svg';
 import BellIcon from '@/assets/icons/bell.svg';
@@ -11,6 +12,7 @@ import BrainIcon from '@/assets/icons/brain.svg';
 import CakeIcon from '@/assets/icons/cake.svg';
 import CameraFlipIcon from '@/assets/icons/camera-flip.svg';
 import CameraIcon from '@/assets/icons/camera.svg';
+import ChevronRightIcon from '@/assets/icons/chevron-right.svg';
 import DashboardIcon from '@/assets/icons/dashboard.svg';
 import GameIcon from '@/assets/icons/game.svg';
 import GearIcon from '@/assets/icons/gear.svg';
@@ -41,6 +43,7 @@ const cx = classNames.bind(styles);
 
 const ICONS = {
   alert: AlertIcon,
+  arrowLeft: ArrowLeftIcon,
   avatarEdit: AvatarEditIcon,
   back: BackIcon,
   bell: BellIcon,
@@ -48,6 +51,7 @@ const ICONS = {
   cake: CakeIcon,
   camera: CameraIcon,
   cameraFlip: CameraFlipIcon,
+  chevronRight: ChevronRightIcon,
   dashboard: DashboardIcon,
   game: GameIcon,
   gear: GearIcon,

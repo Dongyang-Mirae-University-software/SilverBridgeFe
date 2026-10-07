@@ -1,389 +1,201 @@
-/* ── 카드 공통 ── */
+.sectionLabel {
+  margin-bottom: 8px;
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
 .card {
   border: 1px solid var(--sb-line-soft);
-  border-radius: 18px;
+  border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  padding: 18px;
 }
 
-.cardHeader {
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-}
-
-.cardTitle {
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: 1rem;
-  font-weight: 850;
-  line-height: 1.3;
-}
-
-.cardDesc {
-  margin: 4px 0 0;
+/* ── 글자 크기 ── */
+.hint {
   color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-  line-height: 1.5;
+  font-size: 13px;
+  margin-bottom: 10px;
 }
 
-/* ── 글자 크기 슬라이더 ── */
-.sliderWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.currentRow {
+  margin-top: 10px;
+  margin-bottom: 0;
 }
 
-.sliderTrack {
-  position: relative;
+.currentValue {
+  color: var(--sb-ink);
+}
+
+.range {
+  width: 100%;
+  accent-color: var(--sb-brand);
+}
+
+/* ── 화면(고대비) ── */
+.checkboxRow {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.sliderLabel {
-  flex-shrink: 0;
-  color: var(--sb-ink-mute);
-  font-size: 0.75rem;
-  font-weight: 700;
-  width: 30px;
-}
-
-.sliderLabel:last-child {
-  text-align: right;
-}
-
-.slider {
-  flex: 1;
-  height: 10px;
-  appearance: none;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    var(--sb-brand) 0 var(--settings-range-progress, 0%),
-    var(--sb-line-soft) var(--settings-range-progress, 0%) 100%
-  );
+  gap: 10px;
   cursor: pointer;
-  outline: none;
 }
 
-.slider::-webkit-slider-thumb {
-  width: 28px;
-  height: 28px;
-  appearance: none;
-  border: 3px solid #fff;
-  border-radius: 50%;
-  background: var(--sb-brand);
-  box-shadow: 0 2px 8px rgba(31, 94, 72, 0.3);
-  cursor: grab;
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--sb-brand);
 }
 
-.slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border: 3px solid #fff;
-  border-radius: 50%;
-  background: var(--sb-brand);
-  box-shadow: 0 2px 8px rgba(31, 94, 72, 0.3);
-  cursor: grab;
+.checkboxLabel {
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.preview {
+.checkboxHint {
+  margin-top: 8px;
+  padding-left: 28px;
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+}
+
+/* ── SOS 동작 설정 ── */
+.sosCard {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+}
+
+.guardianNotice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--sb-line-soft);
   border-radius: 12px;
   background: var(--sb-bg-soft);
   padding: 14px 16px;
 }
 
-.previewSample {
-  margin: 0;
-  color: var(--sb-ink);
-  font-weight: 700;
-  line-height: 1.4;
-  flex: 1;
-}
-
-.previewSize {
+.guardianNoticeIcon {
+  display: grid;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
-  border-radius: 8px;
+  place-items: center;
+  border-radius: 50%;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
-  font-size: 0.8125rem;
-  font-weight: 850;
-  padding: 4px 10px;
-}
-
-/* ── 고대비 토글 ── */
-.toggleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.toggleInfo {
-  min-width: 0;
-}
-
-.toggleLabel {
-  display: block;
-  color: var(--sb-ink);
-  font-size: 0.9375rem;
-  font-weight: 800;
-}
-
-.toggleHint {
-  display: block;
-  margin-top: 3px;
-  color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-  line-height: 1.5;
-}
-
-.toggle {
-  position: relative;
-  display: inline-block;
-  width: 52px;
-  height: 30px;
-  flex-shrink: 0;
-}
-
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggleThumb {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: var(--sb-line-soft);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.toggleThumb::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  transition: transform 0.2s;
-}
-
-.toggle input:checked + .toggleThumb {
-  background: var(--sb-brand);
-}
-.toggle input:checked + .toggleThumb::after {
-  transform: translateX(22px);
-}
-
-.contrastPreview {
-  border-radius: 10px;
-  border: 1px solid var(--sb-line-soft);
-  padding: 12px 14px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--sb-ink-soft);
-  line-height: 1.5;
-  transition:
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.contrastPreviewOn {
-  color: #050505;
-  border-color: #888;
-  font-weight: 800;
-}
-
-/* ── 보호자 알림 안내(항상 켜짐, 선택 불가) ── */
-.guardianNotice {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 14px;
-  background: var(--sb-bg-soft);
-  padding: 14px 16px;
-}
-
-.guardianNoticeIcon {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--sb-ink-mute);
 }
 
 .guardianNoticeText {
   min-width: 0;
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
 }
 
-.guardianNoticeText strong {
+.guardianNoticeTitle {
   color: var(--sb-ink);
-  font-size: 0.875rem;
-  font-weight: 850;
+  font-size: 16px;
+  font-weight: 800;
 }
 
-.guardianNoticeText span {
-  color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
+.guardianNoticeDesc {
+  margin-top: 2px;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
   line-height: 1.5;
+  word-break: keep-all;
 }
 
 .guardianNoticeBadge {
   flex-shrink: 0;
   border-radius: 999px;
   background: #fff;
-  border: 1px solid var(--sb-line-soft);
-  color: var(--sb-ink-mute);
-  font-size: 0.75rem;
+  border: 1px solid var(--sb-line);
+  color: var(--sb-ink-soft);
+  font-size: 13px;
   font-weight: 800;
-  padding: 5px 11px;
+  padding: 6px 12px;
+  white-space: nowrap;
 }
 
 .sosQuestion {
-  margin: 0;
+  margin-top: 4px;
   color: var(--sb-ink);
-  font-size: 0.9375rem;
-  font-weight: 850;
+  font-size: 15px;
+  font-weight: 800;
 }
 
-/* ── SOS 라디오 카드 ── */
-.sosGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sosCard {
+.sosOption {
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  border: 2px solid var(--sb-line-soft);
-  border-radius: 14px;
-  background: #fafaf8;
+  min-height: 56px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
   cursor: pointer;
-  padding: 16px;
-  transition:
-    border-color 0.12s,
-    background 0.12s;
+  padding: 16px 18px;
 }
 
-.sosCard:hover {
-  border-color: var(--sb-warn);
+.sosOption + .sosOption {
+  margin-top: 10px;
 }
 
-.sosCardActive {
-  border-color: var(--sb-warn);
-  background: #fbe5e0;
-}
-
-.sosInput {
-  position: absolute;
-  width: 0;
-  height: 0;
-  opacity: 0;
+.sosOptionActive {
+  border: 2px solid var(--sb-brand);
+  background: var(--sb-brand-50);
 }
 
 .sosRadio {
-  position: relative;
-  width: 20px;
-  height: 20px;
   flex-shrink: 0;
+  width: 22px;
+  height: 22px;
   margin-top: 1px;
-  border: 2px solid var(--sb-line-soft);
-  border-radius: 50%;
-  background: #fff;
+  accent-color: var(--sb-brand);
 }
 
-.sosCardActive .sosRadio {
-  border-color: var(--sb-warn);
-}
-
-.sosRadio::after {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border-radius: 50%;
-  background: var(--sb-warn);
-  opacity: 0;
-}
-
-.sosCardActive .sosRadio::after {
-  opacity: 1;
-}
-
-.sosText {
+.sosOptionBody {
   min-width: 0;
   flex: 1;
 }
 
-.sosCardLabelRow {
+.sosOptionLabelRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
 
-.sosCardLabel {
+.sosOptionLabel {
   color: var(--sb-ink);
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 800;
-  line-height: 1.3;
-}
-
-.sosCardActive .sosCardLabel {
-  color: var(--sb-warn);
 }
 
 .sosDefaultTag {
   border-radius: 999px;
-  border: 1px solid var(--sb-line-soft);
+  border: 1px solid var(--sb-line);
   background: #fff;
   color: var(--sb-ink-mute);
-  font-size: 0.6875rem;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 700;
   padding: 2px 8px;
 }
 
-.sosCardHint {
-  display: block;
-  margin-top: 2px;
-  color: var(--sb-ink-mute);
-  font-size: 0.75rem;
-  line-height: 1.4;
+.sosOptionHint {
+  margin-top: 4px;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: keep-all;
 }
 
 .sosFootnotes {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.sosFootnotes p {
-  margin: 0;
   color: var(--sb-ink-mute);
-  font-size: 0.75rem;
-  line-height: 1.5;
-}
-
-@media (max-width: 700px) {
-  .card {
-    padding: 18px;
-  }
+  font-size: 13px;
+  line-height: 1.6;
+  word-break: keep-all;
 }

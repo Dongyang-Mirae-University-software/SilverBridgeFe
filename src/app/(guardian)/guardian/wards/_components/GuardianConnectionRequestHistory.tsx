@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { guardianConnectionRequestsQueryOptions } from '@/service/query/guardian';
-import { getConnectionData } from '@/components/connections/ConnectionShared';
+import { getConnectionData, getConnectionStatusLabel } from '@/components/connections/ConnectionShared';
 import styles from './GuardianConnectionRequestHistory.module.css';
 
 const cx = classNames.bind(styles);
@@ -24,13 +24,7 @@ export function GuardianConnectionRequestHistory() {
 
   return (
     <section className={cx('card')}>
-      <header className={cx('header')}>
-        <div>
-          <strong>요청 내역</strong>
-          <p>수락 대기 중인 연결 요청을 확인합니다.</p>
-        </div>
-        <span>{pendingConnections.length}건</span>
-      </header>
+      <h2 className={cx('title')}>요청 내역</h2>
 
       {isLoading && <p className={cx('emptyText')}>요청 내역을 불러오는 중입니다.</p>}
       {!isLoading && pendingConnections.length === 0 && (
@@ -38,24 +32,30 @@ export function GuardianConnectionRequestHistory() {
       )}
 
       {pendingConnections.length > 0 && (
-        <div className={cx('table')}>
-          <div className={cx('tableHead')}>
-            <span>회원 ID</span>
-            <span>이름</span>
-            <span>관계</span>
-            <span>요청일</span>
-          </div>
-          <ul className={cx('list')}>
+        <table className={cx('table')}>
+          <thead>
+            <tr>
+              <th>회원 ID</th>
+              <th>이름</th>
+              <th>관계</th>
+              <th>요청일</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody>
             {pendingConnections.map(connection => (
-              <li key={connection.id} className={cx('item')}>
-                <span className={cx('cell', 'mono')}>{connection.partnerUserId || '확인 전'}</span>
-                <span className={cx('cell')}>{connection.partnerName || '확인 전'}</span>
-                <span className={cx('cell')}>{connection.relation || '정보 없음'}</span>
-                <span className={cx('cell')}>{formatRequestDate(connection.createdAt)}</span>
-              </li>
+              <tr key={connection.id}>
+                <td className={cx('mono')}>{connection.partnerUserId || '확인 전'}</td>
+                <td>{connection.partnerName || '확인 전'}</td>
+                <td>{connection.relation || '정보 없음'}</td>
+                <td>{formatRequestDate(connection.createdAt)}</td>
+                <td>
+                  <span className={cx('statusBadge')}>⏳ {getConnectionStatusLabel(connection.status)}</span>
+                </td>
+              </tr>
             ))}
-          </ul>
-        </div>
+          </tbody>
+        </table>
       )}
     </section>
   );

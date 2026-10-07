@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { AccountDeleteSection } from '@/components/settings/AccountDeleteSection';
-import { NotificationSettingsSection } from '@/components/settings/NotificationSettingsSection';
 import { PasswordChangeSection } from '@/components/settings/PasswordChangeSection';
 import { Tabs } from '@/components/Tabs';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
@@ -14,7 +13,7 @@ import { WardBasicSettingsSection } from './WardBasicSettingsSection';
 
 import styles from './WardSettingsContent.module.css';
 
-type SettingsTab = 'basic' | 'notifications' | 'security';
+type SettingsTab = 'basic' | 'security';
 
 export function WardSettingsContent() {
   const { updateWardSettings, wardSettings } = useDashboard();
@@ -31,7 +30,6 @@ export function WardSettingsContent() {
         ariaLabel="환경설정 탭"
         items={[
           { value: 'basic', label: '기본 설정' },
-          { value: 'notifications', label: '알림정보' },
           { value: 'security', label: '보안' },
         ]}
         onChange={setActiveTab}
@@ -43,8 +41,6 @@ export function WardSettingsContent() {
       {activeTab === 'basic' && (
         <WardBasicSettingsSection updateWardSettings={updateWardSettings} wardSettings={wardSettings} />
       )}
-
-      {activeTab === 'notifications' && <NotificationSettingsSection />}
 
       {activeTab === 'security' && (
         <>

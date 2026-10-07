@@ -1,63 +1,89 @@
 .card {
-  display: grid;
+  display: block;
   width: 100%;
-  gap: 8px;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 18px;
+  border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
   cursor: pointer;
-  padding: 18px 20px;
+  padding: 18px;
   text-align: left;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
 .categoryBadge {
   border-radius: 999px;
   background: var(--sb-bg-soft);
   color: var(--sb-ink-soft);
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
 }
 
 .statusBadge {
   border-radius: 999px;
-  background: #fff3d7;
-  color: #b07b22;
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 4px 10px;
+  background: var(--sb-sun-soft);
+  color: #b07f1f;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
 }
 
 .statusBadge.answered {
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
 }
 
 .title {
   color: var(--sb-ink);
-  font-size: 1.0625rem;
-  font-weight: 850;
-}
-
-.preview {
-  overflow: hidden;
-  margin: 0;
-  color: var(--sb-ink-mute);
-  font-size: 0.875rem;
-  line-height: 1.5;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .date {
   color: var(--sb-ink-mute);
-  font-size: 0.75rem;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--sb-ink-mute);
+}
+
+.replyBox {
+  margin-top: 12px;
+  border-left: 3px solid var(--sb-brand);
+  border-radius: 10px;
+  background: var(--sb-brand-50);
+  color: var(--sb-ink);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 10px 14px;
+}
+
+.replyLabel {
+  margin-bottom: 4px;
+  color: var(--sb-brand);
+  font-size: 11px;
+  font-weight: 700;
 }

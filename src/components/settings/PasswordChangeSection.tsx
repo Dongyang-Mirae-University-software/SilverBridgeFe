@@ -23,41 +23,42 @@ export function PasswordChangeSection({ isKakaoUser }: { isKakaoUser: boolean })
     newPassword: '',
     newPasswordConfirm: '',
   });
-  const [formError, setFormError] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [resultModal, setResultModal] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
   const mutation = useMutation({
     mutationFn: changeMyPassword,
-    onMutate: () => { setFormError(''); setResultModal(null); },
+    onMutate: () => setResultModal(null),
     onSuccess: () => {
-      setIsDialogOpen(false);
+      setIsEditing(false);
       setForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
       setResultModal({ message: '비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.', type: 'success' });
     },
     onError: error => setResultModal({ message: getModalErrorMessage(error, '비밀번호 변경에 실패했습니다.'), type: 'error' }),
   });
 
-  const openDialog = () => {
+  const openEdit = () => {
     if (isKakaoUser || mutation.isPending) return;
-    setFormError('');
     setForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
-    setIsDialogOpen(true);
+    setIsEditing(true);
   };
 
-  const closeDialog = () => {
+  const closeEdit = () => {
     if (mutation.isPending) return;
-    setIsDialogOpen(false);
-    setFormError('');
+    setIsEditing(false);
     setForm({ currentPassword: '', newPassword: '', newPasswordConfirm: '' });
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isKakaoUser) { setFormError('카카오 가입 계정은 비밀번호를 변경할 수 없습니다.'); return; }
-    if (form.newPassword !== form.newPasswordConfirm) { setFormError('새 비밀번호 확인이 일치하지 않습니다.'); return; }
+    if (isKakaoUser) return;
+    if (!ok) return;
     mutation.mutate({ currentPassword: form.currentPassword, newPassword: form.newPassword });
   };
+
+  const short = form.newPassword.length > 0 && form.newPassword.length < 8;
+  const mismatch = form.newPasswordConfirm.length > 0 && form.newPasswordConfirm !== form.newPassword;
+  const ok = Boolean(form.currentPassword) && form.newPassword.length >= 8 && form.newPasswordConfirm === form.newPassword;
 
   return (
     <>
@@ -80,72 +81,46 @@ export function PasswordChangeSection({ isKakaoUser }: { isKakaoUser: boolean })
         />
       )}
 
-      <section className={cx('section')}>
-        <div className={cx('sectionHead')}>
-          <h2 className={cx('sectionTitle')}>비밀번호 변경</h2>
-          <p className={cx('sectionDesc')}>
-            {isKakaoUser
-              ? '카카오 가입 계정은 비밀번호를 변경할 수 없습니다.'
-              : '현재 비밀번호와 새 비밀번호를 확인한 뒤 변경할 수 있습니다.'}
-          </p>
+      <div className={cx('row')}>
+        <div className={cx('meta')}>
+          <span className={cx('label')}>비밀번호 변경</span>
+          <span className={cx('desc')}>
+            {isKakaoUser ? '카카오 가입 계정은 비밀번호를 변경할 수 없습니다.' : '로그인할 때 쓰는 비밀번호를 바꿉니다'}
+          </span>
         </div>
-        <div className={cx('sectionBody')}>
-          <button className={cx('changeButton')} type="button" disabled={isKakaoUser || mutation.isPending} onClick={openDialog}>
-            {mutation.isPending ? '변경 중…' : '변경하기'}
+        {!isEditing && (
+          <button className={cx('ghostButton')} type="button" disabled={isKakaoUser || mutation.isPending} onClick={openEdit}>
+            변경
           </button>
-        </div>
-      </section>
+        )}
+      </div>
 
-      {isDialogOpen && (
-        <div className={cx('overlay')} role="presentation" onClick={closeDialog}>
-          <section
-            className={cx('dialog')}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="pwd-dialog-title"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className={cx('dialogHeader')}>
-              <div>
-                <h3 id="pwd-dialog-title">비밀번호 변경</h3>
-                <p>현재 비밀번호와 새 비밀번호를 입력한 뒤 변경을 눌러주세요.</p>
-              </div>
-              <button className={cx('dialogClose')} type="button" aria-label="닫기" onClick={closeDialog}>×</button>
-            </div>
+      {isEditing && (
+        <form className={cx('editPanel')} onSubmit={handleSubmit}>
+          <PasswordField label="현재 비밀번호" value={form.currentPassword} onChange={v => setForm(f => ({ ...f, currentPassword: v }))} />
+          <PasswordField label="새 비밀번호 (8자 이상)" value={form.newPassword} onChange={v => setForm(f => ({ ...f, newPassword: v }))} />
+          <PasswordField label="새 비밀번호 확인" value={form.newPasswordConfirm} onChange={v => setForm(f => ({ ...f, newPasswordConfirm: v }))} />
 
-            <form className={cx('dialogForm')} onSubmit={handleSubmit}>
-              <div className={cx('dialogGrid')}>
-                <PasswordField label="현재 비밀번호" disabled={isKakaoUser} value={form.currentPassword} onChange={v => setForm(f => ({ ...f, currentPassword: v }))} />
-                <PasswordField label="새 비밀번호" disabled={isKakaoUser} value={form.newPassword} onChange={v => setForm(f => ({ ...f, newPassword: v }))} />
-                <PasswordField label="새 비밀번호 확인" disabled={isKakaoUser} value={form.newPasswordConfirm} onChange={v => setForm(f => ({ ...f, newPasswordConfirm: v }))} />
-              </div>
+          {(short || mismatch) && (
+            <p className={cx('formError')}>
+              {short ? '새 비밀번호는 8자 이상이어야 합니다.' : '새 비밀번호가 서로 다릅니다.'}
+            </p>
+          )}
 
-              {formError && <p className={cx('formError')}>{formError}</p>}
-
-              <div className={cx('dialogActions')}>
-                <button className={cx('dialogSecondary')} type="button" onClick={closeDialog}>취소</button>
-                <button className={cx('dialogPrimary')} type="submit" disabled={isKakaoUser || mutation.isPending}>
-                  {mutation.isPending ? '변경 중…' : '변경'}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
+          <div className={cx('editActions')}>
+            <button className={cx('ghostButton')} type="button" onClick={closeEdit}>
+              취소
+            </button>
+            <button className={cx('primaryButton')} type="submit" disabled={!ok || mutation.isPending}>
+              {mutation.isPending ? '변경 중…' : '변경하기'}
+            </button>
+          </div>
+        </form>
       )}
     </>
   );
 }
 
-function PasswordField({ label, disabled, value, onChange }: {
-  label: string;
-  disabled: boolean;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className={cx('field')}>
-      <span>{label}</span>
-      <input type="password" disabled={disabled} value={value} onChange={e => onChange(e.target.value)} />
-    </label>
-  );
+function PasswordField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return <input className={cx('field')} type="password" placeholder={label} value={value} onChange={e => onChange(e.target.value)} />;
 }

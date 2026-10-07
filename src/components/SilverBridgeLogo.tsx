@@ -1,11 +1,11 @@
-import { Playfair_Display } from 'next/font/google';
+import { Fredoka } from 'next/font/google';
 import classNames from 'classnames/bind';
 
 import styles from './SilverBridgeLogo.module.css';
 
 const cx = classNames.bind(styles);
 
-const playfairDisplay = Playfair_Display({ subsets: ['latin'], weight: ['700', '800'] });
+const fredoka = Fredoka({ subsets: ['latin'], weight: ['600'] });
 
 type SilverBridgeLogoProps = {
   className?: string;
@@ -14,14 +14,11 @@ type SilverBridgeLogoProps = {
 
 export function SilverBridgeLogo({ className, subtitle }: SilverBridgeLogoProps) {
   return (
-    <div className={cx('logo', className)}>
-      <span className={cx('mark', playfairDisplay.className)} aria-hidden="true">
-        SB
-      </span>
-      <span className={cx('text')}>
-        <strong className={cx('name')}>SilverBridge</strong>
-        {subtitle && <span className={cx('subtitle')}>{subtitle}</span>}
-      </span>
+    <div className={cx('brand', className)}>
+      <div className={cx('title', fredoka.className)}>
+        SilverBridge
+        {subtitle && <small className={cx('subtitle')}>{subtitle}</small>}
+      </div>
     </div>
   );
 }

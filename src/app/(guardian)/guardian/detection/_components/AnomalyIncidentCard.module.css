@@ -1,76 +1,137 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   overflow: hidden;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: var(--sb-shadow-sm);
+  border-radius: var(--sb-radius);
+  background: var(--sb-bg-soft);
   list-style: none;
 }
 
+/* ── 썸네일 ── */
+.thumbnail {
+  position: relative;
+  display: grid;
+  height: 140px;
+  border: 0;
+  cursor: pointer;
+  place-items: center;
+}
+
+.thumbnail:disabled {
+  cursor: default;
+}
+
+.thumbnail.fall {
+  background: var(--sb-danger-soft);
+}
+
+.thumbnail.fire {
+  background: #fbe0ce;
+}
+
+.thumbnail.weapon {
+  background: #e5d6e0;
+}
+
+.recBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  white-space: nowrap;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  padding: 5px 9px;
+}
+
 .typeBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+.thumbnail.fall .typeBadge {
+  background: var(--sb-danger-soft);
+  color: var(--sb-danger);
+}
+
+.thumbnail.fire .typeBadge {
+  background: #fbe0ce;
+  color: #c24a1f;
+}
+
+.thumbnail.weapon .typeBadge {
+  background: #e5d6e0;
+  color: #7a3e68;
+}
+
+.playButton {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  place-items: center;
+}
+
+.durationBadge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.6);
   color: #fff;
-  font-size: 0.9375rem;
-  font-weight: 850;
-  padding: 14px 18px;
+  font-size: 11px;
+  padding: 3px 8px;
 }
 
-.card.fire .typeBadge {
-  background: linear-gradient(90deg, #d8503f 0%, #c04b3a 100%);
-}
-
-.card.smoke .typeBadge {
-  background: linear-gradient(90deg, #8c8576 0%, #6d665b 100%);
-}
-
+/* ── 본문 ── */
 .body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 0 18px;
+  background: #fff;
+  padding: 12px 14px;
 }
 
-.wardName {
-  color: var(--sb-ink);
-  font-size: 1.0625rem;
-  font-weight: 900;
+.bodyHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .location {
-  color: var(--sb-ink-soft);
-  font-size: 0.875rem;
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.clipCount {
+  flex-shrink: 0;
+  color: var(--sb-ink-mute);
+  font-size: 11px;
   font-weight: 700;
 }
 
 .time {
   color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
+  font-size: 11px;
 }
 
 .meta {
   color: var(--sb-ink-mute);
-  font-size: 0.75rem;
-}
-
-.clipButton {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
-  border: 1px solid var(--sb-line);
-  border-radius: 999px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink);
-  cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 6px 12px;
+  font-size: 11px;
 }
 
 .footer {
@@ -79,8 +140,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  background: #fff;
   border-top: 1px solid var(--sb-line-soft);
-  padding: 14px 18px;
+  padding: 12px 14px;
 }
 
 .statusBadge {

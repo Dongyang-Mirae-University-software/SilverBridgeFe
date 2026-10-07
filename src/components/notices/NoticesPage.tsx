@@ -20,9 +20,9 @@ function isNewNotice(createdAt: string) {
 
 export function NoticesPage() {
   const { data: announcements = [], isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
-  const latestAnnouncement = [...announcements].sort(
+  const sortedAnnouncements = [...announcements].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  )[0];
+  );
 
   return (
     <section className={cx('page')}>
@@ -42,24 +42,24 @@ export function NoticesPage() {
         </div>
       )}
 
-      {!isLoading && !isError && announcements.length === 0 && (
+      {!isLoading && !isError && sortedAnnouncements.length === 0 && (
         <div className={cx('empty')}>
           <span>등록된 공지사항이 없습니다.</span>
         </div>
       )}
 
-      {latestAnnouncement && (
-        <article className={cx('featured')}>
-          <div className={cx('titleRow')}>
-            <h2 className={cx('title')}>{latestAnnouncement.title}</h2>
-            {isNewNotice(latestAnnouncement.createdAt) && <span className={cx('newBadge')}>NEW</span>}
+      {sortedAnnouncements.map(announcement => (
+        <article key={announcement.id} className={cx('card')}>
+          <div className={cx('metaRow')}>
+            {isNewNotice(announcement.createdAt) && <span className={cx('newBadge')}>NEW</span>}
+            <time className={cx('date')} dateTime={announcement.createdAt}>
+              {formatDate(announcement.createdAt)}
+            </time>
           </div>
-          <time className={cx('date')} dateTime={latestAnnouncement.createdAt}>
-            {formatDate(latestAnnouncement.createdAt)}
-          </time>
-          <p className={cx('content')}>{latestAnnouncement.content}</p>
+          <h2 className={cx('title')}>{announcement.title}</h2>
+          <p className={cx('content')}>{announcement.content}</p>
         </article>
-      )}
+      ))}
     </section>
   );
 }

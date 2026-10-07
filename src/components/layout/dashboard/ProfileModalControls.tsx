@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, forwardRef, useImperativeHandle, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { signupSmsSend, signupSmsVerify } from '@/service/api/auth/auth';
@@ -20,15 +20,23 @@ const cx = classNames.bind(styles);
 
 interface Props {
   profile: IUserProfile | null;
+  isEditing: boolean;
+  setIsEditing: (value: boolean) => void;
 }
 
-export function ProfileModalControls({ profile }: Props) {
+export interface ProfileModalControlsHandle {
+  toggleEdit: () => void;
+}
+
+export const ProfileModalControls = forwardRef<ProfileModalControlsHandle, Props>(function ProfileModalControls(
+  { profile, isEditing, setIsEditing },
+  ref,
+) {
   const queryClient = useQueryClient();
   const [profileForm, setProfileForm] = useState<IUserUpdateReq>(getProfileFormValue(profile));
   const [phoneCode, setPhoneCode] = useState('');
   const [phoneNonce, setPhoneNonce] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState('');
-  const [isProfileEditing, setIsProfileEditing] = useState(false);
   const isPhoneChanged = (profileForm.phone ?? '').trim() !== getPhoneDigits(profile?.phone ?? '');
 
   const profileMutation = useMutation({
@@ -41,6 +49,7 @@ export function ProfileModalControls({ profile }: Props) {
       setPhoneCode('');
       setPhoneNonce(null);
       setFeedbackMessage('프로필 정보를 수정했습니다.');
+      setIsEditing(false);
       void queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
     },
     onError: error => setFeedbackMessage(getModalErrorMessage(error, '프로필 수정에 실패했습니다.')),
@@ -72,7 +81,7 @@ export function ProfileModalControls({ profile }: Props) {
 
   const handleProfileEditStart = () => {
     setFeedbackMessage('');
-    setIsProfileEditing(true);
+    setIsEditing(true);
   };
 
   const handleProfileEditCancel = () => {
@@ -80,8 +89,12 @@ export function ProfileModalControls({ profile }: Props) {
     setProfileForm(getProfileFormValue(profile));
     setPhoneCode('');
     setPhoneNonce(null);
-    setIsProfileEditing(false);
+    setIsEditing(false);
   };
+
+  useImperativeHandle(ref, () => ({
+    toggleEdit: () => (isEditing ? handleProfileEditCancel() : handleProfileEditStart()),
+  }));
 
   const handleProfileSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -103,27 +116,23 @@ export function ProfileModalControls({ profile }: Props) {
     <div className={cx('profileManageStack')}>
       {feedbackMessage && <p className={cx('profileModalMessage')}>{feedbackMessage}</p>}
 
-      <div className={cx('profileManageScroll')}>
-        <ProfileInfoPanel
-          form={profileForm}
-          isEditing={isProfileEditing}
-          isPhoneChanged={isPhoneChanged}
-          isProfilePending={profileMutation.isPending}
-          onAddressSearch={handleAddressSearch}
-          onCancelEdit={handleProfileEditCancel}
-          onChange={updateProfileForm}
-          onEditStart={handleProfileEditStart}
-          onSubmit={handleProfileSubmit}
-          phoneCode={phoneCode}
-          phoneNonce={phoneNonce}
-          setPhoneCode={setPhoneCode}
-          smsSendMutation={smsSendMutation}
-          smsVerifyMutation={smsVerifyMutation}
-        />
-      </div>
+      <ProfileInfoPanel
+        form={profileForm}
+        isEditing={isEditing}
+        isPhoneChanged={isPhoneChanged}
+        isProfilePending={profileMutation.isPending}
+        onAddressSearch={handleAddressSearch}
+        onChange={updateProfileForm}
+        onSubmit={handleProfileSubmit}
+        phoneCode={phoneCode}
+        phoneNonce={phoneNonce}
+        setPhoneCode={setPhoneCode}
+        smsSendMutation={smsSendMutation}
+        smsVerifyMutation={smsVerifyMutation}
+      />
     </div>
   );
-}
+});
 
 function getValidatedProfile(form: IUserUpdateReq, isPhoneChanged: boolean, phoneNonce: string | null): IUserUpdateReq | string {
   const name = (form.name ?? '').trim();

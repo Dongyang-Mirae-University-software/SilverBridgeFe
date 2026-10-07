@@ -1,7 +1,6 @@
 .stage {
   display: flex;
   height: 100dvh;
-  min-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
   background: var(--sb-bg);
@@ -29,7 +28,7 @@
   flex: 1;
   display: flex;
   min-height: 0;
-  padding: 28px 28px 20px;
+  padding: 68px 32px 24px;
   box-sizing: border-box;
 }
 

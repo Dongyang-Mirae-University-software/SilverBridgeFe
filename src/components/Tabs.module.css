@@ -68,16 +68,63 @@
 
 .md {}
 
+/* ── underline 변형(v10.0 .sub-tabs) ── */
+.underline {
+  gap: 2px;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.underline .tab {
+  min-height: 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
+  transform: none;
+}
+
+.underline .tab:hover {
+  background: none;
+  color: var(--sb-ink);
+  transform: none;
+}
+
+.underline .active {
+  border-bottom-color: var(--sb-brand);
+  background: none;
+  color: var(--sb-brand);
+  box-shadow: none;
+}
+
+.underline .active:hover {
+  border-bottom-color: var(--sb-brand);
+  background: none;
+  color: var(--sb-brand);
+  box-shadow: none;
+}
+
+.underline.stretch .tab {
+  width: auto;
+}
+
 .stretch .tab {
   width: 100%;
 }
 
 @media (max-width: 900px) {
-  .tabs {
+  .tabs:not(.underline) {
     width: 100%;
   }
 
-  .tabs:not(.stretch) .tab {
+  .tabs:not(.stretch):not(.underline) .tab {
     flex: 1;
   }
 }

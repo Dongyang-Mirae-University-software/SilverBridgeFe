@@ -1,22 +1,23 @@
 .form {
   display: grid;
-  gap: 16px;
+  gap: 14px;
+  max-width: 600px;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 20px;
+  border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
-  padding: 22px 24px;
+  padding: 24px;
 }
 
 .field {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .fieldLabel {
   color: var(--sb-ink-soft);
-  font-size: 0.8125rem;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .chips {
@@ -26,46 +27,52 @@
 }
 
 .chip {
-  border: 1px solid var(--sb-line-soft);
+  border: 1px solid var(--sb-line);
   border-radius: 999px;
   background: #fff;
-  color: var(--sb-ink);
+  color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 800;
-  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 14px;
 }
 
 .chip.active {
-  border-color: var(--sb-brand);
+  border-color: transparent;
   background: var(--sb-brand);
   color: #fff;
 }
 
 .input,
 .textarea {
+  box-sizing: border-box;
+  width: 100%;
   border: 1px solid var(--sb-line);
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fff;
   color: var(--sb-ink);
-  font-size: 0.9375rem;
-  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  padding: 10px 14px;
 }
 
 .textarea {
-  min-height: 160px;
+  min-height: 140px;
+  padding: 12px 14px;
+  line-height: 1.6;
   resize: vertical;
-  line-height: 1.5;
 }
 
 .submit {
-  border: 0;
-  border-radius: 999px;
+  width: 100%;
+  border: none;
+  border-radius: 12px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 0.9375rem;
-  font-weight: 850;
+  font-size: 14px;
+  font-weight: 700;
   padding: 13px;
 }
 

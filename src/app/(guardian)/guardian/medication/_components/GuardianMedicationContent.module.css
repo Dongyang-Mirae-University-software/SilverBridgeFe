@@ -12,36 +12,13 @@
   gap: 12px;
 }
 
-.toolbarTitle {
-  display: block;
-  color: var(--sb-ink);
-  font-size: 1.125rem;
-  font-weight: 900;
-}
-
-.toolbarSub {
-  display: block;
-  margin-top: 4px;
-  color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-  font-weight: 700;
-}
-
 .emptyText {
   margin: 0;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 18px;
+  border-radius: var(--sb-radius);
   background: #fff;
   color: var(--sb-ink-mute);
   font-size: 0.875rem;
   padding: 24px;
   text-align: center;
-}
-
-.list {
-  display: grid;
-  gap: 16px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
 }
