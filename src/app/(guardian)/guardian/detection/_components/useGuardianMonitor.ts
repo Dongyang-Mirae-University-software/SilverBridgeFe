@@ -16,16 +16,6 @@ import type {
 } from '@/service/interface/guardian/camera';
 import { resolveCameraDetectState } from './monitorUtils';
 
-// 티켓 재발급을 너무 자주 시도하면 429(요청 과다)에 걸리므로 재연결 사이에 간격을 둔다
-const TICKET_RETRY_DELAY_MS = 3000;
-
-// 403(CAMERA_NOT_CONNECTED·INACTIVE_USER)·404(CAMERA_NOT_FOUND)는 재시도해도 안 풀리는
-// 에러라서 자동 재연결을 멈춰야 한다 — 끄지 않으면 403 루프를 계속 돌게 된다
-function isPermanentStreamError(error: unknown) {
-  const status = (error as { response?: { status?: number } })?.response?.status;
-  return status === 403 || status === 404;
-}
-
 function getStreamErrorMessage(error: unknown) {
   return (error as { message?: string })?.message ?? '영상을 불러오지 못했습니다.';
 }
@@ -49,23 +39,13 @@ export function useGuardianMonitor() {
   const [socketAnalysis, setSocketAnalysis] = useState<GuardianCameraAnalysis | null>(null);
   const [frameSrc, setFrameSrc] = useState<string | null>(null);
   const [streamErrorMessage, setStreamErrorMessage] = useState<string | null>(null);
-  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const openStreamRef = useRef<(sessionId: string) => void>(() => {});
 
   const { data: sessions = [], isLoading, isError, error } = useQuery(guardianLiveCamerasQueryOptions);
   const { data: status } = useQuery(guardianCameraStatusQueryOptions(selectedId));
   const ticketMutation = useIssueGuardianCameraStreamTicketMutation();
 
-  const clearRetryTimer = useCallback(() => {
-    if (retryTimerRef.current) {
-      clearTimeout(retryTimerRef.current);
-      retryTimerRef.current = null;
-    }
-  }, []);
-
   const openStream = useCallback(
     (sessionId: string) => {
-      clearRetryTimer();
       ticketMutation.mutate(sessionId, {
         onSuccess: ticket => {
           // 그 사이 다른 카메라로 전환됐으면 이 응답은 버린다
@@ -76,39 +56,23 @@ export function useGuardianMonitor() {
         onError: error => {
           if (selectedIdRef.current !== sessionId) return;
           setStreamErrorMessage(getStreamErrorMessage(error));
-
-          // 권한 없음·존재하지 않는 카메라는 다시 시도해도 똑같이 실패하므로 멈춘다
-          if (isPermanentStreamError(error)) return;
-
-          retryTimerRef.current = setTimeout(() => {
-            if (selectedIdRef.current === sessionId) openStreamRef.current(sessionId);
-          }, TICKET_RETRY_DELAY_MS);
         },
       });
     },
-    [clearRetryTimer, ticketMutation],
+    [ticketMutation],
   );
 
-  useEffect(() => {
-    openStreamRef.current = openStream;
-  }, [openStream]);
-
-  // <img onError> — 티켓 만료(최대 30분)·일시적 끊김이면 새 티켓으로 조용히 재연결한다.
-  // 진짜 원인(연결 해제·정지 계정 등)은 openStream의 티켓 재발급 응답에서 판가름난다
+  // 티켓은 카메라를 선택할 때 한 번만 발급한다. MJPEG 연결 오류는 티켓을 재발급하지
+  // 않는다. 자동 재시도는 짧은 오류에도 티켓 요청을 반복하게 만들어 서버 부담과
+  // 요청 한도 초과를 유발한다.
   const handleStreamError = useCallback(() => {
-    const sessionId = selectedIdRef.current;
-    if (!sessionId) return;
     setFrameSrc(null);
-    clearRetryTimer();
-    retryTimerRef.current = setTimeout(() => {
-      if (selectedIdRef.current === sessionId) openStreamRef.current(sessionId);
-    }, TICKET_RETRY_DELAY_MS);
-  }, [clearRetryTimer]);
+    setStreamErrorMessage('영상 연결이 종료됐습니다. 실시간 카메라를 다시 열어 주세요.');
+  }, []);
 
   function selectSession(sessionId: string) {
     if (!sessions.some(session => session.sessionId === sessionId)) return;
 
-    clearRetryTimer();
     setFrameSrc(null); // 동시 시청 한도(1인 2개)에 걸리지 않도록 이전 영상 연결부터 끊는다
     setSocketAnalysis(null);
     setStreamErrorMessage(null);
@@ -142,8 +106,6 @@ export function useGuardianMonitor() {
     window.addEventListener('careai:camera-analysis', handleCameraAnalysis);
     return () => window.removeEventListener('careai:camera-analysis', handleCameraAnalysis);
   }, [queryClient]);
-
-  useEffect(() => clearRetryTimer, [clearRetryTimer]);
 
   const selectedSession = sessions.find(session => session.sessionId === selectedId) ?? null;
   const latestAnalysis = socketAnalysis ?? status?.analysis ?? null;

@@ -9,30 +9,38 @@
   padding: 20px;
 }
 
+.overlay.hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .modal {
   display: flex;
   flex-direction: column;
-  width: min(520px, 100%);
+  width: min(680px, 100%);
   max-height: calc(100svh - 40px);
-  overflow: hidden auto;
-  border-radius: 24px;
+  overflow: hidden;
+  border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: 0 22px 56px rgba(15, 23, 42, 0.12);
 }
 
 .header {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid var(--sb-line-soft);
-  padding: 18px 20px;
+  padding: 28px 28px 0;
 }
 
 .header strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   flex: 1;
   color: var(--sb-ink);
-  font-size: 1.0625rem;
-  font-weight: 850;
+  font-size: 24px;
+  font-weight: 800;
 }
 
 .closeButton {
@@ -41,31 +49,49 @@
   background: transparent;
   color: var(--sb-ink-mute);
   cursor: pointer;
-  font-size: 1.375rem;
+  width: 48px;
+  height: 48px;
+  font-size: 26px;
   line-height: 1;
 }
 
 .body {
   display: grid;
-  gap: 18px;
-  padding: 20px;
+  flex: 1;
+  gap: 22px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px 28px 28px;
+}
+
+.setupSection {
+  display: grid;
+  gap: 12px;
+}
+
+.setupSection h2 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 18px;
+  font-weight: 800;
 }
 
 .facingRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .facingChip {
-  border: 2px solid var(--sb-line-soft);
-  border-radius: 999px;
+  min-height: 52px;
+  border: 2px solid var(--sb-line);
+  border-radius: 12px;
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
-  font-size: 0.9375rem;
-  font-weight: 800;
-  padding: 9px 16px;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 0 18px;
 }
 
 .facingChip.active {
@@ -76,44 +102,158 @@
 
 .facingChip:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  border-color: var(--sb-line-soft);
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  opacity: 1;
 }
 
 .previewBox {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 240px;
-  border-radius: 18px;
+  height: min(320px, 38svh);
+  max-height: 320px;
+  border-radius: 14px;
   background: #14110c;
   overflow: hidden;
 }
 
-.video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.previewRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  gap: 12px;
 }
 
-.hiddenCanvas {
-  display: none;
+.previewControls {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+}
+
+.previewControls > * {
+  flex: 1;
+}
+
+.sentPreview {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #14110c;
+}
+
+.sentPreview > span {
+  display: block;
+  background: rgba(20, 17, 12, 0.82);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 7px;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+
+/* 카메라 스트림은 캔버스에 그리기 위한 원본으로만 사용한다. 화면에는 AI 전송본만 보인다. */
+.sourceVideo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .previewButton {
-  position: absolute;
-  bottom: 16px;
+  display: inline-flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 0.9375rem;
-  font-weight: 850;
-  padding: 12px 22px;
+  font-size: 17px;
+  font-weight: 800;
+  padding: 0 20px;
 }
 
 .previewButton.stop {
   background: var(--sb-warn);
+}
+
+.cameraGuide {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  line-height: 1.55;
+  padding: 16px;
+}
+
+.cameraGuide p {
+  margin: 0;
+}
+
+.cameraGuide p + p {
+  margin-top: 4px;
+}
+
+.guideIllustration {
+  width: 104px;
+  height: 80px;
+  flex: 0 0 auto;
+}
+
+.cameraGuide strong {
+  color: var(--sb-ink);
+  font-weight: 800;
+}
+
+.rotateButton {
+  display: inline-flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  padding: 0 18px;
+}
+
+.previewHint {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.rotateButton strong {
+  color: var(--sb-brand);
 }
 
 .roomSection {
@@ -128,20 +268,21 @@
 }
 
 .registerButton {
-  justify-self: start;
+  width: 100%;
+  min-height: 60px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 900;
-  padding: 14px 24px;
+  font-size: 19px;
+  font-weight: 800;
+  padding: 0 24px;
 }
 
 .registerButton:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.45;
 }
 
 .streamingNotice {
@@ -166,18 +307,48 @@
 
 .footer {
   display: flex;
+  flex-shrink: 0;
   border-top: 1px solid var(--sb-line-soft);
-  padding: 14px 20px;
+  padding: 14px 28px 24px;
 }
 
 .doneButton {
   flex: 1;
   border: 0;
-  border-radius: 999px;
+  min-height: 56px;
+  border-radius: 12px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 0.9375rem;
-  font-weight: 850;
-  padding: 13px;
+  font-size: 17px;
+  font-weight: 800;
+  padding: 0;
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 22px 20px 0;
+  }
+
+  .header strong {
+    font-size: 20px;
+  }
+
+  .body {
+    gap: 18px;
+    padding: 18px 20px 20px;
+  }
+
+  .cameraGuide {
+    align-items: flex-start;
+  }
+
+  .guideIllustration {
+    width: 78px;
+    height: 60px;
+  }
+
+  .footer {
+    padding: 12px 20px 20px;
+  }
 }

@@ -1,7 +1,7 @@
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
-import { MAX_WARD_FONT_SIZE, MIN_WARD_FONT_SIZE, clampFontSize } from '@/constants/wardSettings';
+import { clampFontSize } from '@/constants/wardSettings';
 import { WardSettings, WardSosAction } from '@/components/layout/dashboard/types';
 import { useUpdateWardSosSettingMutation } from '@/service/query/ward/sosSetting';
 import { showToast } from '@/store/toastStore';
@@ -35,60 +35,61 @@ interface Props {
 export function WardBasicSettingsSection({ updateWardSettings, wardSettings }: Props) {
   return (
     <>
-      <FontSizeSection updateWardSettings={updateWardSettings} wardSettings={wardSettings} />
-      <ContrastSection updateWardSettings={updateWardSettings} wardSettings={wardSettings} />
-      <SosSection updateWardSettings={updateWardSettings} wardSettings={wardSettings} />
+      <WardDisplaySettingsSection updateWardSettings={updateWardSettings} wardSettings={wardSettings} />
+      <WardSosSettingsSection updateWardSettings={updateWardSettings} wardSettings={wardSettings} />
     </>
   );
 }
 
-function FontSizeSection({ updateWardSettings, wardSettings }: Props) {
+export function WardDisplaySettingsSection({ updateWardSettings, wardSettings }: Props) {
   return (
-    <div>
-      <div className={cx('sectionLabel')}>글자 크기</div>
-      <div className={cx('card')}>
-        <div className={cx('hint')}>
-          화면 글자 크기 ({MIN_WARD_FONT_SIZE}px ~ {MAX_WARD_FONT_SIZE}px)
+    <section className={cx('settingsCard', 'displayCard')}>
+      <div className={cx('displayContent')}>
+        <h2>글자 크기</h2>
+        <div className={cx('fontChoices')} role="radiogroup" aria-label="화면 글자 크기">
+          {[17, 21, 25].map(size => {
+            const isSelected = wardSettings.fontSize === size;
+            const label = size === 17 ? '보통' : size === 21 ? '크게' : '아주 크게';
+
+            return (
+              <button
+                key={size}
+                className={cx('fontChoice', { fontChoiceActive: isSelected })}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => updateWardSettings({ fontSize: clampFontSize(size) })}
+              >
+                <span style={{ fontSize: size + 2 }}>가</span>
+                <strong>{label}</strong>
+              </button>
+            );
+          })}
         </div>
+        <p className={cx('fontPreview')} style={{ fontSize: wardSettings.fontSize }}>
+          글자가 이렇게 보여요.
+        </p>
+      </div>
+
+      <label className={cx('contrastRow')}>
+        <span>
+          <strong>진한 글자로 보기</strong>
+          <small>글자와 테두리를 더 진하고 또렷하게 보여 드려요</small>
+        </span>
         <input
-          type="range"
-          className={cx('range')}
-          min={MIN_WARD_FONT_SIZE}
-          max={MAX_WARD_FONT_SIZE}
-          value={wardSettings.fontSize}
-          aria-label="화면 글자 크기"
-          onChange={e => updateWardSettings({ fontSize: clampFontSize(Number(e.target.value)) })}
+          type="checkbox"
+          checked={wardSettings.highContrast}
+          onChange={e => updateWardSettings({ highContrast: e.target.checked })}
         />
-        <div className={cx('hint', 'currentRow')}>
-          현재: <strong className={cx('currentValue')}>{wardSettings.fontSize}px</strong> -{' '}
-          <span style={{ fontSize: wardSettings.fontSize }}>글자가 이렇게 보입니다.</span>
-        </div>
-      </div>
-    </div>
+        <span className={cx('bigSwitch')} aria-hidden="true">
+          <span />
+        </span>
+      </label>
+    </section>
   );
 }
 
-function ContrastSection({ updateWardSettings, wardSettings }: Props) {
-  return (
-    <div>
-      <div className={cx('sectionLabel')}>화면</div>
-      <div className={cx('card')}>
-        <label className={cx('checkboxRow')}>
-          <input
-            type="checkbox"
-            className={cx('checkbox')}
-            checked={wardSettings.highContrast}
-            onChange={e => updateWardSettings({ highContrast: e.target.checked })}
-          />
-          <span className={cx('checkboxLabel')}>고대비(진한 글자) 켜기</span>
-        </label>
-        <div className={cx('checkboxHint')}>체크 시 글자와 테두리를 더 또렷하게 표시합니다. (이 기기에만 저장)</div>
-      </div>
-    </div>
-  );
-}
-
-function SosSection({ updateWardSettings, wardSettings }: Props) {
+export function WardSosSettingsSection({ updateWardSettings, wardSettings }: Props) {
   const updateSosSettingMutation = useUpdateWardSosSettingMutation();
 
   const handleSelect = (value: WardSosAction) => {
@@ -110,26 +111,22 @@ function SosSection({ updateWardSettings, wardSettings }: Props) {
   };
 
   return (
-    <div>
-      <div className={cx('sectionLabel')}>SOS 동작 설정</div>
-      <div className={cx('card', 'sosCard')}>
-        <div className={cx('guardianNotice')}>
-          <span className={cx('guardianNoticeIcon')}>
-            <Icon name="bell" size={20} />
-          </span>
-          <div className={cx('guardianNoticeText')}>
-            <div className={cx('guardianNoticeTitle')}>보호자 알림</div>
-            <div className={cx('guardianNoticeDesc')}>
-              SOS를 누르면 연결된 보호자 모두에게 항상 알림이 가요.
-              <br /> 알림 설정에서 푸시·문자를 꺼도 SOS는 보내져요.
-            </div>
-          </div>
-          <span className={cx('guardianNoticeBadge')}>항상 켜짐</span>
+    <section className={cx('settingsCard', 'sosCard')}>
+      <div className={cx('guardianNotice')}>
+        <span className={cx('guardianNoticeIcon')}>
+          <Icon name="bell" size={24} />
+        </span>
+        <div className={cx('guardianNoticeText')}>
+          <div className={cx('guardianNoticeTitle')}>보호자 알림</div>
+          <div className={cx('guardianNoticeDesc')}>SOS를 누르면 연결된 보호자 모두에게 항상 알림이 가요</div>
         </div>
+        <span className={cx('guardianNoticeBadge')}>항상 켜짐</span>
+      </div>
 
+      <div className={cx('sosContent')}>
         <div className={cx('sosQuestion')}>119 화면은 어떻게 보여드릴까요?</div>
 
-        <div role="radiogroup" aria-label="SOS 동작 설정">
+        <div className={cx('sosOptions')} role="radiogroup" aria-label="SOS 동작 설정">
           {SOS_OPTIONS.map(opt => {
             const isActive = wardSettings.sosAction === opt.value;
             return (
@@ -161,6 +158,6 @@ function SosSection({ updateWardSettings, wardSettings }: Props) {
           학생 프로젝트 화면입니다. 실제로 신고 전화가 발신되지 않습니다.
         </div>
       </div>
-    </div>
+    </section>
   );
 }

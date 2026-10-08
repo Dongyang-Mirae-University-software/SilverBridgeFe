@@ -15,7 +15,7 @@ const cx = classNames.bind(styles);
 
 type DeleteStep = 'confirm' | 'input';
 
-export function AccountDeleteSection({ isKakaoUser }: { isKakaoUser: boolean }) {
+export function AccountDeleteSection({ isKakaoUser, variant = 'default' }: { isKakaoUser: boolean; variant?: 'default' | 'ward' }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,7 +69,7 @@ export function AccountDeleteSection({ isKakaoUser }: { isKakaoUser: boolean }) 
 
   return (
     <>
-      <div className={cx('row')}>
+      <div className={cx('row', { ward: variant === 'ward' })}>
         <div className={cx('meta')}>
           <span className={cx('label')}>회원 탈퇴</span>
           <span className={cx('desc')}>탈퇴 시 모든 데이터가 즉시 삭제되며 복구되지 않습니다</span>

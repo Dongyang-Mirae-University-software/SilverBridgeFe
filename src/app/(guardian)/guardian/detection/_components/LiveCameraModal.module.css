@@ -99,9 +99,13 @@
 }
 
 .frameImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  /* 피보호자가 세로 화면으로 회전해도 원본 비율을 유지하며 전체를 표시한다. */
+  object-fit: contain;
 }
 
 .placeholder {
@@ -109,19 +113,54 @@
   font-size: 0.875rem;
 }
 
+.videoUnavailable {
+  display: grid;
+  gap: 6px;
+  place-items: center;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+
+.videoUnavailable strong {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.videoUnavailable span {
+  font-size: 14px;
+}
+
 .recBadge {
   position: absolute;
   top: 14px;
   left: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: grid;
+  gap: 2px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.55);
   color: #fff;
   font-size: 0.75rem;
-  font-weight: 700;
-  padding: 6px 10px;
+  font-family: monospace;
+  letter-spacing: 0.03em;
+  padding: 8px 12px;
+}
+
+.recBadge strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ff6b6b;
+  font-weight: 800;
+}
+
+.recBadge > span {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.recBadge > span:last-child {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .recDot {
@@ -140,21 +179,27 @@
   gap: 6px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.55);
-  color: #6fd69a;
+  color: #fff;
   font-size: 0.75rem;
   font-weight: 700;
   padding: 6px 10px;
 }
 
-.aiBadge.alert {
-  color: #ff8a73;
-}
-
 .aiDot {
   width: 7px;
   height: 7px;
+  box-sizing: border-box;
   border-radius: 50%;
-  background: currentColor;
+  background: #9a928b;
+}
+
+.aiDot.running {
+  background: #4ade80;
+}
+
+.aiDot.checking {
+  border: 1.5px dashed #c9c2ba;
+  background: transparent;
 }
 
 .caption {
@@ -203,15 +248,16 @@
 .switchRow {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 14px 18px;
+  padding: 14px 20px;
 }
 
 .switchLabel {
   color: rgba(255, 255, 255, 0.5);
-  font-size: 0.75rem;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .switchChips {
@@ -223,21 +269,44 @@
 .switchChip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.72);
+  color: #fff;
   cursor: pointer;
-  font-size: 0.8125rem;
+  font-size: 13px;
   font-weight: 700;
-  padding: 7px 14px;
+  padding: 9px 14px;
 }
 
 .switchChip.active {
   border-color: var(--sb-brand);
   background: rgba(176, 103, 77, 0.3);
   color: #fff;
+}
+
+.switchStatusDot {
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: #9a928b;
+}
+
+.switchStatusDot.running {
+  background: #4ade80;
+}
+
+.switchStatusDot.checking {
+  border: 1.5px dashed #c9c2ba;
+  background: transparent;
+}
+
+.switchStatus {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .footer {

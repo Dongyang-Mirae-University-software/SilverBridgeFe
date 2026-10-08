@@ -134,7 +134,7 @@ function WardSidebarLayout({
 
       {isMobileMenuOpen && (
         <button
-          className={cx('scrim')}
+          className={cx('scrim', 'wardScrim')}
           type="button"
           aria-label="메뉴 닫기"
           onClick={() => setIsMobileMenuOpen(false)}

@@ -67,7 +67,12 @@ export function RoomRenameModal({ camera, onClose }: { camera: WardLiveCamera; o
         </header>
 
         <div className={cx('body')}>
-          <RoomPicker rooms={rooms} selectedLabel={selected} currentLabel={camera.label} onSelect={setSelected} />
+          <RoomPicker
+            rooms={rooms}
+            selectedLabel={selected}
+            availableRegisteredLabel={camera.label}
+            onSelect={setSelected}
+          />
           {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
         </div>
 

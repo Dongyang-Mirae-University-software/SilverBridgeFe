@@ -12,8 +12,10 @@ import BrainIcon from '@/assets/icons/brain.svg';
 import CakeIcon from '@/assets/icons/cake.svg';
 import CameraFlipIcon from '@/assets/icons/camera-flip.svg';
 import CameraIcon from '@/assets/icons/camera.svg';
+import CheckIcon from '@/assets/icons/check.svg';
 import ChevronRightIcon from '@/assets/icons/chevron-right.svg';
 import DashboardIcon from '@/assets/icons/dashboard.svg';
+import EyeIcon from '@/assets/icons/eye.svg';
 import GameIcon from '@/assets/icons/game.svg';
 import GearIcon from '@/assets/icons/gear.svg';
 import HandshakeIcon from '@/assets/icons/handshake.svg';
@@ -32,6 +34,7 @@ import PhoneIcon from '@/assets/icons/phone.svg';
 import PillIcon from '@/assets/icons/pill.svg';
 import PlusIcon from '@/assets/icons/plus.svg';
 import RefreshIcon from '@/assets/icons/refresh.svg';
+import RefreshDoubleIcon from '@/assets/icons/refresh-double.svg';
 import SettingsIcon from '@/assets/icons/settings.svg';
 import TagIcon from '@/assets/icons/tag.svg';
 import UserIcon from '@/assets/icons/user.svg';
@@ -51,8 +54,10 @@ const ICONS = {
   cake: CakeIcon,
   camera: CameraIcon,
   cameraFlip: CameraFlipIcon,
+  check: CheckIcon,
   chevronRight: ChevronRightIcon,
   dashboard: DashboardIcon,
+  eye: EyeIcon,
   game: GameIcon,
   gear: GearIcon,
   handshake: HandshakeIcon,
@@ -71,6 +76,7 @@ const ICONS = {
   pill: PillIcon,
   plus: PlusIcon,
   refresh: RefreshIcon,
+  refreshDouble: RefreshDoubleIcon,
   settings: SettingsIcon,
   tag: TagIcon,
   user: UserIcon,

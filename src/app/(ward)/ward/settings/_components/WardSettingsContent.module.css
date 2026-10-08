@@ -1,7 +1,49 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+}
+
+.tabList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tabButton {
+  display: inline-flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1.5px solid var(--sb-line);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 21px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.tabButton svg {
+  flex-shrink: 0;
+}
+
+.activeTab {
+  border: 2.5px solid var(--sb-brand);
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.accountCard {
+  overflow: hidden;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  padding: 0 26px;
 }
 
 .notificationError {
@@ -358,5 +400,31 @@
   .passwordDialogSecondaryButton,
   .passwordDialogPrimaryButton {
     width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    gap: 14px;
+  }
+
+  .tabList {
+    gap: 8px;
+  }
+
+  .tabButton {
+    min-height: 58px;
+    gap: 6px;
+    border-radius: 14px;
+    font-size: 14px;
+  }
+
+  .tabButton svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .accountCard {
+    padding: 0 16px;
   }
 }

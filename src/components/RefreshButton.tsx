@@ -12,6 +12,7 @@ type RefreshButtonProps = {
   disabled?: boolean;
   isRefreshing?: boolean;
   label?: string;
+  placement?: 'floating' | 'inline';
   refreshingLabel?: string;
 };
 
@@ -21,6 +22,7 @@ export function RefreshButton({
   disabled = false,
   isRefreshing,
   label = '새로고침',
+  placement = 'floating',
   refreshingLabel = '새로고침 중',
 }: RefreshButtonProps) {
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
@@ -38,13 +40,18 @@ export function RefreshButton({
 
   return (
     <button
-      className={cx('button')}
+      className={cx('button', placement)}
       type="button"
       aria-label={isActive ? `${ariaLabel} 중` : ariaLabel}
       disabled={disabled || isActive}
       onClick={handleRefresh}
     >
-      <Icon className={cx('icon', { spinning: isActive })} name="refresh" size={20} decorative />
+      <Icon
+        className={cx('icon', { spinning: isActive })}
+        name={placement === 'inline' ? 'refreshDouble' : 'refresh'}
+        size={20}
+        decorative
+      />
       <span className={cx('label')}>{isActive ? refreshingLabel : label}</span>
     </button>
   );

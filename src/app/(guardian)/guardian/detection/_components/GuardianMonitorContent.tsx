@@ -14,13 +14,23 @@ export default function GuardianMonitorContent() {
   const searchParams = useSearchParams();
   const deepLinkSessionId = searchParams.get('session');
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(Boolean(deepLinkSessionId));
+  const [selectedWardId, setSelectedWardId] = useState<string | undefined>(undefined);
 
   return (
     <div className={cx('page')}>
-      <AnomalyHistoryContent onViewLive={() => setIsLiveModalOpen(true)} />
+      <AnomalyHistoryContent
+        onViewLive={wardId => {
+          setSelectedWardId(wardId);
+          setIsLiveModalOpen(true);
+        }}
+      />
 
       {isLiveModalOpen && (
-        <LiveCameraModal initialSessionId={deepLinkSessionId} onClose={() => setIsLiveModalOpen(false)} />
+        <LiveCameraModal
+          initialSessionId={deepLinkSessionId}
+          initialWardId={selectedWardId}
+          onClose={() => setIsLiveModalOpen(false)}
+        />
       )}
     </div>
   );

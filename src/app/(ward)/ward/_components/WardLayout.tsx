@@ -101,7 +101,7 @@ function useWardSosSettingSync(setSettings: (updater: (current: WardSettings) =>
   useEffect(() => {
     if (didSyncRef.current || !data) return;
     didSyncRef.current = true;
-    setSettings(current => ({ ...current, sosAction: data.sosAction }));
+    setSettings(current => ({ ...current, sosAction: getValidSosAction(data.sosAction) }));
   }, [data, setSettings]);
 }
 

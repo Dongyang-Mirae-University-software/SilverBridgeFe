@@ -3,7 +3,7 @@ import { WardMedicationContent } from './_components/WardMedicationContent';
 
 export default function WardMedicationPage() {
   return (
-    <PageLayout title="복약 알림" description="복약 일정과 알림 상태를 확인합니다.">
+    <PageLayout title="오늘 드실 약" description="오늘 약을 드셨는지 확인하고, 안 드시면 알림을 받아요.">
       <WardMedicationContent />
     </PageLayout>
   );

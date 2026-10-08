@@ -14,7 +14,7 @@ import styles from './PasswordChangeSection.module.css';
 
 const cx = classNames.bind(styles);
 
-export function PasswordChangeSection({ isKakaoUser }: { isKakaoUser: boolean }) {
+export function PasswordChangeSection({ isKakaoUser, variant = 'default' }: { isKakaoUser: boolean; variant?: 'default' | 'ward' }) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -81,7 +81,7 @@ export function PasswordChangeSection({ isKakaoUser }: { isKakaoUser: boolean })
         />
       )}
 
-      <div className={cx('row')}>
+      <div className={cx('row', { ward: variant === 'ward' })}>
         <div className={cx('meta')}>
           <span className={cx('label')}>비밀번호 변경</span>
           <span className={cx('desc')}>
@@ -96,7 +96,7 @@ export function PasswordChangeSection({ isKakaoUser }: { isKakaoUser: boolean })
       </div>
 
       {isEditing && (
-        <form className={cx('editPanel')} onSubmit={handleSubmit}>
+        <form className={cx('editPanel', { ward: variant === 'ward' })} onSubmit={handleSubmit}>
           <PasswordField label="현재 비밀번호" value={form.currentPassword} onChange={v => setForm(f => ({ ...f, currentPassword: v }))} />
           <PasswordField label="새 비밀번호 (8자 이상)" value={form.newPassword} onChange={v => setForm(f => ({ ...f, newPassword: v }))} />
           <PasswordField label="새 비밀번호 확인" value={form.newPasswordConfirm} onChange={v => setForm(f => ({ ...f, newPasswordConfirm: v }))} />

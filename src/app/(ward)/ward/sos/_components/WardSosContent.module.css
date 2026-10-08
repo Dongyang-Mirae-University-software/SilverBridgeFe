@@ -1,6 +1,6 @@
 .page {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   align-content: start;
   width: 100%;
 }
@@ -8,12 +8,12 @@
 .hero {
   display: grid;
   place-items: center;
-  gap: 10px;
-  min-height: 340px;
+  gap: 18px;
+  min-height: 0;
   border: 0;
-  border-radius: 32px;
-  background: linear-gradient(180deg, #f04f4f 0%, #d73a3a 100%);
-  box-shadow: 0 20px 38px rgba(194, 58, 58, 0.18);
+  border-radius: 24px;
+  background: var(--sb-danger);
+  box-shadow: 0 12px 32px rgba(199, 62, 62, 0.35);
   color: #fff;
   cursor: pointer;
   padding: 32px 24px;
@@ -22,8 +22,8 @@
 
 .heroIcon {
   display: grid;
-  width: 150px;
-  height: 150px;
+  width: 96px;
+  height: 96px;
   place-items: center;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
@@ -39,7 +39,7 @@
 .hero h2 {
   margin: 0;
   color: #fff;
-  font-size: 3.5rem;
+  font-size: 34px;
   font-weight: 900;
   line-height: 1;
 }
@@ -47,40 +47,24 @@
 .hero p {
   margin: 0;
   color: rgba(255, 255, 255, 0.9);
-  font-size: 1.125rem;
-  font-weight: 650;
+  font-size: 14px;
+  font-weight: 600;
   line-height: 1.5;
 }
 
 
-@media (max-width: 900px) {
-  .hero {
-    min-height: 280px;
-    border-radius: 28px;
-  }
-
-  .hero h2 {
-    font-size: 2.75rem;
-  }
-
-  .hero p {
-    font-size: 1rem;
-  }
-}
-
 @media (max-width: 640px) {
   .hero {
-    min-height: 260px;
     padding: 26px 18px;
   }
 
   .heroIcon {
-    width: 120px;
-    height: 120px;
+    width: 88px;
+    height: 88px;
   }
 
   .hero h2 {
-    font-size: 2.25rem;
+    font-size: 30px;
   }
 }
 

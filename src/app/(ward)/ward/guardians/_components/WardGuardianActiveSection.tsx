@@ -51,22 +51,25 @@ export function WardGuardianActiveSection() {
         <RefreshButton
           ariaLabel="내 보호자 리스트 새로고침"
           disabled={activeQuery.isLoading}
+          placement="inline"
           onRefresh={() => activeQuery.refetch()}
         />
       </header>
 
-      {activeQuery.isError ? (
-        <EmptyState message="내 보호자 목록을 불러오지 못했습니다." />
-      ) : activeConnections.length > 0 ? (
-        <ConnectionList
-          connections={activeConnections}
-          isPending={disconnectMutation.isPending}
-          role="ward"
-          getActions={connection => [{ label: '연결 해제', onClick: () => handleDisconnect(connection.id) }]}
-        />
-      ) : (
-        !activeQuery.isLoading && <EmptyState message="연결된 보호자가 없습니다." />
-      )}
+      <div className={cx('sectionBody')}>
+        {activeQuery.isError ? (
+          <EmptyState message="내 보호자 목록을 불러오지 못했습니다." />
+        ) : activeConnections.length > 0 ? (
+          <ConnectionList
+            connections={activeConnections}
+            isPending={disconnectMutation.isPending}
+            role="ward"
+            getActions={connection => [{ label: '연결 해제', onClick: () => handleDisconnect(connection.id) }]}
+          />
+        ) : (
+          !activeQuery.isLoading && <EmptyState message="연결된 보호자가 없습니다." />
+        )}
+      </div>
     </section>
   );
 }

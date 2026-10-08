@@ -74,6 +74,11 @@
   cursor: pointer;
 }
 
+/* 피보호자 사이드바는 모든 화면 폭에서 오버레이로 열리므로 딤드도 항상 필요하다. */
+.wardScrim {
+  display: block;
+}
+
 .desktopHeader {
   z-index: 35;
   display: flex;
