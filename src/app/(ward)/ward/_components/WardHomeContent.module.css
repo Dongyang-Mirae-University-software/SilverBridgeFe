@@ -1,120 +1,99 @@
 .homeGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
   width: 100%;
   min-height: 0;
+  flex: 1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .actionCard {
   display: flex;
+  min-width: 0;
+  min-height: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  border: 1px solid transparent;
-  border-radius: 28px;
-  text-decoration: none;
-  padding: 28px;
+  gap: 18px;
+  border: 2px solid transparent;
+  border-radius: 24px;
+  cursor: pointer;
+  padding: 24px;
   text-align: center;
-  transition:
-    transform 0.16s ease,
-    box-shadow 0.16s ease;
+  text-decoration: none;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
 
-.actionCard:hover {
-  transform: translateY(-2px);
-}
-
-.actionCard.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.actionCard.disabled:hover {
-  transform: none;
-}
+.actionCard:hover { transform: translateY(-2px); }
 
 .iconWrap {
   display: grid;
+  width: 84px;
+  height: 84px;
+  flex: 0 0 auto;
   place-items: center;
-  width: 96px;
-  height: 96px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 8px 24px rgba(20, 17, 12, 0.08);
-}
-
-.icon {
-  width: 42px;
-  height: 42px;
-  display: block;
-  object-fit: contain;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .actionCard strong {
   color: inherit;
-  font-size: 1.875rem;
-  font-weight: 850;
-  line-height: 1.2;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.15;
+  word-break: keep-all;
 }
 
-.actionCard span:last-child {
-  max-width: 220px;
-  color: inherit;
-  font-size: 0.9375rem;
-  font-weight: 650;
-  line-height: 1.5;
+.sos {
+  border-color: color-mix(in srgb, var(--sb-warn) 15%, transparent);
+  background: #fce4e4;
+  color: var(--sb-warn);
 }
 
-.warm {
-  background: #fde6e8;
-  border-color: #f4c2c8;
-  color: #cc4648;
+.chatbot {
+  border-color: color-mix(in srgb, var(--sb-brand) 15%, transparent);
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
 }
 
-.mint {
-  background: #e8f1ee;
-  border-color: #d3e5dd;
-  color: #1f6653;
+.game {
+  border-color: color-mix(in srgb, #b07f1f 15%, transparent);
+  background: var(--sb-sun-soft);
+  color: #b07f1f;
 }
 
-.sand {
-  background: #fbf1d8;
-  border-color: #ead8ad;
-  color: #b87d15;
+.camera {
+  border-color: color-mix(in srgb, #3f6e8c 15%, transparent);
+  background: #e6eef4;
+  color: #3f6e8c;
 }
+
+.hospital {
+  border-color: color-mix(in srgb, var(--sb-safe) 15%, transparent);
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
+}
+
+.medication {
+  border-color: color-mix(in srgb, #7a5a8c 15%, transparent);
+  background: #f1e8f4;
+  color: #7a5a8c;
+}
+
+.disabled {
+  cursor: not-allowed;
+}
+
+.disabled:hover { transform: none; }
 
 @media (max-width: 900px) {
   .homeGrid {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
   }
 
   .actionCard {
     min-height: 170px;
   }
-}
-
-/* Ward home card polish */
-.actionCard {
-  box-shadow: 0 10px 24px rgba(20, 17, 12, 0.08);
-}
-
-.actionCard:hover {
-  box-shadow: 0 16px 32px rgba(20, 17, 12, 0.12);
-}
-
-.actionCard:focus-visible {
-  outline: 4px solid rgba(31, 102, 83, 0.16);
-  outline-offset: 4px;
-}
-
-.iconWrap {
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.actionCard:hover .iconWrap {
-  transform: scale(1.02);
 }
