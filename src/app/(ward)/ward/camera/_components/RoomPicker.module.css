@@ -1,18 +1,19 @@
 .grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .chip {
-  border: 2px solid var(--sb-line-soft);
-  border-radius: 999px;
+  min-height: 52px;
+  border: 2px solid var(--sb-line);
+  border-radius: 12px;
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 800;
-  padding: 12px 20px;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 0 18px;
 }
 
 .chip.active {

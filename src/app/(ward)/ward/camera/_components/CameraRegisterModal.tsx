@@ -295,21 +295,56 @@ export function CameraRegisterModal({
         </header>
 
         <div className={cx('body')}>
-          <div className={cx('facingRow')}>
-            {FACING_OPTIONS.map(option => (
-              <button
-                key={option.value}
-                type="button"
-                className={cx('facingChip', { active: facing === option.value })}
-                onClick={() => setFacing(option.value)}
-                disabled={status !== 'off'}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          <section className={cx('setupSection')}>
+            <h2>1. 어디에 두셨나요?</h2>
+            <RoomPicker
+              rooms={rooms}
+              selectedLabel={room}
+              currentLabel={initialRoom}
+              disabled={status === 'streaming'}
+              onSelect={setRoom}
+            />
+          </section>
 
-          <div className={cx('previewBox')}>
+          <section className={cx('setupSection')}>
+            <h2>2. 기기를 이렇게 놓아 주세요</h2>
+            <div className={cx('cameraGuide')}>
+              <svg className={cx('guideIllustration')} viewBox="0 0 104 80" fill="none" aria-hidden="true">
+                <path d="M8 74H96" stroke="#cfc6bc" strokeWidth="2.5" strokeLinecap="round" />
+                <rect x="26" y="12" width="40" height="54" rx="6" fill="#fff" stroke="var(--sb-brand)" strokeWidth="2.5" transform="rotate(-8 46 39)" />
+                <circle cx="44" cy="20" r="2.4" fill="var(--sb-brand)" transform="rotate(-8 46 39)" />
+                <path d="m56 66 8 8" stroke="var(--sb-brand)" strokeWidth="2.5" strokeLinecap="round" />
+                <path d="M62 60q16-2 18 10v4" stroke="#8a827b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                <rect x="76" y="66" width="10" height="8" rx="2" fill="#8a827b" />
+                <path d="m8 22 10 6M8 38h10m-10 16 10-6" stroke="#cfc6bc" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
+              <div>
+                <p>방 전체가 보이는 곳에 세워 두고, 화면을 켠 채 충전기를 연결해 주세요.</p>
+                <p>휴대폰을 <strong>가로</strong>로 두고, 방 전체가 보이도록 <strong>위에서 아래로</strong> 비춰 주세요.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className={cx('setupSection')}>
+            <h2>3. 촬영 방식을 골라 주세요</h2>
+            <div className={cx('facingRow')}>
+              {FACING_OPTIONS.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={cx('facingChip', { active: facing === option.value })}
+                  onClick={() => setFacing(option.value)}
+                  disabled={status !== 'off'}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className={cx('setupSection')}>
+            <h2>4. 미리보기를 확인해 주세요</h2>
+            <div className={cx('previewBox')}>
             <video ref={videoRef} className={cx('video')} autoPlay muted playsInline />
             <div className={cx('sentPreview')}>
               <span>AI에 전송되는 화면</span>
@@ -324,47 +359,31 @@ export function CameraRegisterModal({
                 {status === 'streaming' ? '등록 취소하고 끄기' : '미리보기 끄기'}
               </button>
             )}
-          </div>
-
-          <div className={cx('cameraGuide')}>
-            <p>휴대폰을 <strong>가로</strong>로 두고, 방 전체가 보이도록 <strong>위에서 아래로</strong> 비춰 주세요.</p>
-            <p>위 미리보기에서 사람이 똑바로 보이는지 확인해 주세요.</p>
+            </div>
+            <p className={cx('previewHint')}>AI에 전송되는 작은 미리보기에서 사람이 똑바로 보이는지 확인해 주세요.</p>
             {status !== 'off' && (
               <button type="button" className={cx('rotateButton')} onClick={handleRotate}>
                 <span>화면 회전</span>
                 <strong>{rotation}°</strong>
               </button>
             )}
-          </div>
+          </section>
 
-          {status !== 'off' && (
-            <div className={cx('roomSection')}>
-              <span className={cx('roomLabel')}>어느 방인가요?</span>
-              <RoomPicker
-                rooms={rooms}
-                selectedLabel={room}
-                currentLabel={initialRoom}
-                disabled={status === 'streaming'}
-                onSelect={setRoom}
-              />
+          {status === 'ready' && (
+            <button
+              type="button"
+              className={cx('registerButton')}
+              disabled={!room || registerMutation.isPending}
+              onClick={handleRegister}
+            >
+              {registerMutation.isPending ? '등록 중...' : '등록하고 촬영 시작'}
+            </button>
+          )}
 
-              {status === 'ready' && (
-                <button
-                  type="button"
-                  className={cx('registerButton')}
-                  disabled={!room || registerMutation.isPending}
-                  onClick={handleRegister}
-                >
-                  {registerMutation.isPending ? '등록 중...' : '등록하고 촬영 시작'}
-                </button>
-              )}
-
-              {status === 'streaming' && registeredCamera && (
-                <p className={cx('streamingNotice')}>
-                  &quot;{registeredCamera.label}&quot; 카메라가 송출 중입니다. 이 화면을 유지해야 촬영이 계속돼요.
-                </p>
-              )}
-            </div>
+          {status === 'streaming' && registeredCamera && (
+            <p className={cx('streamingNotice')}>
+              &quot;{registeredCamera.label}&quot; 카메라가 송출 중입니다. 이 화면을 유지해야 촬영이 계속돼요.
+            </p>
           )}
 
           {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
