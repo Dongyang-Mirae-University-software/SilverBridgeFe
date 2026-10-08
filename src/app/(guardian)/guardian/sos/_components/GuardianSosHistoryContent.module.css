@@ -4,209 +4,214 @@
   gap: 16px;
 }
 
-.summary {
-  margin: 0;
-  color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-  font-weight: 700;
-}
-
-.topRow {
+.filters {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
-
-.backButton {
-  flex-shrink: 0;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--sb-ink);
-  cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 800;
-  min-height: 36px;
-  padding: 0 16px;
-}
-
-.wardTabs {
-  display: flex;
   flex-wrap: wrap;
-  gap: 8px;
 }
 
-.wardTab {
-  border: 1px solid var(--sb-line-soft);
+.wardTabs,
+.typeFilters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.allWardTab,
+.typeFilter {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  border: 1px solid var(--sb-line);
   border-radius: 999px;
   background: #fff;
-  color: var(--sb-ink-mute);
+  color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 800;
-  min-height: 36px;
+  font-size: 14px;
+  font-weight: 700;
   padding: 0 16px;
+  white-space: nowrap;
 }
 
-.wardTabActive {
-  border-color: var(--sb-brand);
-  background: var(--sb-brand);
-  color: #fff;
+.allWardTab {
+  padding-left: 6px;
 }
 
-.statRow {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+.allWardTabActive,
+.typeFilterActive {
+  border: 1.5px solid var(--sb-brand);
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
 }
 
-.statCard {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 16px;
-  background: #fff;
-  padding: 14px 16px;
-}
-
-.statIcon {
+.wardAvatar {
   display: grid;
   width: 28px;
   height: 28px;
   place-items: center;
-  border-radius: 999px;
+  border-radius: 50%;
   background: var(--sb-bg-soft);
   color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 800;
 }
 
-.statCard strong {
-  color: var(--sb-ink);
-  font-size: 1.375rem;
-  font-weight: 850;
+.allWardTabActive .wardAvatar {
+  background: var(--sb-brand);
+  color: #fff;
 }
 
-.statCard span:last-child {
+.typeFilter strong {
+  font-weight: 800;
+}
+
+.historyCard {
+  overflow: hidden;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.tableHead,
+.item {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.2fr) minmax(110px, 1fr) minmax(150px, 1fr) minmax(120px, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 12px 22px;
+}
+
+.tableHead {
+  border-bottom: 1px solid var(--sb-line-soft);
+  background: var(--sb-bg-soft);
   color: var(--sb-ink-mute);
-  font-size: 0.75rem;
+  font-size: 13px;
   font-weight: 700;
 }
 
-.emptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 18px;
-  background: #fff;
-  padding: 36px 20px;
-  text-align: center;
-}
-
-.emptyState strong {
-  color: var(--sb-ink);
-  font-size: 0.9375rem;
-}
-
-.emptyState span {
-  color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-}
-
-.listHeading {
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: 0.9375rem;
-  font-weight: 850;
-}
-
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  border: 1px solid var(--sb-line-soft);
-  border-left: 4px solid var(--sb-line);
-  border-radius: 16px;
-  background: #fff;
-  padding: 14px 16px;
+  min-height: 76px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding-top: 16px;
+  padding-bottom: 16px;
 }
 
-.itemGuardianCall {
-  border-left-color: var(--sb-brand);
+.item:first-child {
+  border-top: 0;
 }
 
-.itemSosButton {
-  border-left-color: var(--sb-warn);
-}
-
-.itemDate {
-  display: flex;
-  flex-shrink: 0;
-  flex-direction: column;
-  align-items: center;
-  width: 44px;
-}
-
-.itemDate strong {
-  color: var(--sb-ink);
-  font-size: 1.125rem;
-  font-weight: 850;
-}
-
-.itemDate span {
-  color: var(--sb-ink-mute);
-  font-size: 0.6875rem;
-  font-weight: 700;
-}
-
-.itemBody {
+.dateCell {
   display: flex;
   min-width: 0;
-  flex: 1;
   flex-direction: column;
-  gap: 4px;
 }
 
-.itemTime {
+.dateCell strong {
   color: var(--sb-ink);
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
-.itemMeta {
-  color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
+.dateCell span {
+  margin-top: 2px;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  white-space: nowrap;
 }
 
-.itemBadge {
-  flex-shrink: 0;
+.locationCell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--sb-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.locationCell span,
+.wardName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contactBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border-radius: 999px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-mute);
-  font-size: 0.6875rem;
+  font-size: 14px;
   font-weight: 800;
   padding: 6px 12px;
   white-space: nowrap;
 }
 
-.itemBadgeGuardianCall {
+.guardian {
   background: var(--sb-brand-50);
   color: var(--sb-brand);
 }
 
-.itemBadgeSosButton {
-  background: #fbe5e0;
-  color: var(--sb-warn);
+.sos {
+  background: var(--sb-danger-soft);
+  color: var(--sb-danger);
 }
 
+.wardName {
+  color: var(--sb-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.emptyState {
+  padding: 40px 20px;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .filters {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .typeFilters,
+  .wardTabs {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 2px;
+  }
+
+  .tableHead {
+    display: none;
+  }
+
+  .item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 16px;
+    padding: 16px;
+  }
+
+  .locationCell {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .contactBadge {
+    justify-self: end;
+  }
+}
