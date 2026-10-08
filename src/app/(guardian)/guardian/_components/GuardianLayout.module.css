@@ -24,6 +24,16 @@
   padding: 0;
 }
 
+.chatMain {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chatMain > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .main > * {
   flex: 1;
   display: flex;

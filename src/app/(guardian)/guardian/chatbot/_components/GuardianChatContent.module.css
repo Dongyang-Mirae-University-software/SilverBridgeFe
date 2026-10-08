@@ -1,8 +1,8 @@
 .chatPage {
   display: flex;
   flex: 1;
-  height: calc(100dvh - 92px);
-  max-height: calc(100dvh - 92px);
+  height: 100%;
+  max-height: 100%;
   min-height: 0;
   overflow: hidden;
 }
@@ -573,8 +573,8 @@
 
 @media (max-width: 760px) {
   .chatPage {
-    height: calc(100dvh - 46px - env(safe-area-inset-bottom));
-    max-height: calc(100dvh - 46px - env(safe-area-inset-bottom));
+    height: 100%;
+    max-height: 100%;
   }
 
   .header {
