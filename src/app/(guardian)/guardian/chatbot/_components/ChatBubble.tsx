@@ -63,9 +63,10 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect, userI
         )}
 
         {/* 메시지 본문 */}
-        <div className={styles.messageColumnAssistant}>
-          <div className={styles.bubbleAssistant}>
-            <p className={styles.replyText}>{message.content}</p>
+        <div className={styles.assistantMessageRow}>
+          <div className={styles.messageColumnAssistant}>
+            <div className={styles.bubbleAssistant}>
+              <p className={styles.replyText}>{message.content}</p>
 
             {/* 응급 경고 — 최우선 표시 */}
             {message.emergencyWarning && message.emergencyWarning.length > 0 && (
@@ -132,6 +133,7 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect, userI
                 onSelect={onUiSelect}
               />
             )}
+            </div>
           </div>
           <span className={styles.timeAssistant}>{timeText}</span>
         </div>
