@@ -215,6 +215,10 @@
   padding: 14px 14px;
 }
 
+.sidebarWard .nav {
+  gap: 2px;
+}
+
 .sidebarWard .navIcon,
 .sidebarWard .navIcon svg {
   width: 20px;
@@ -264,6 +268,17 @@
 
   .sidebarFooter {
     padding-top: 10px;
+  }
+}
+
+@media (min-width: 1261px) {
+  /* 레퍼런스의 보호자 고정 사이드바: 메뉴가 촘촘하게 이어진다. */
+  .sidebar:not(.sidebarWard) .nav {
+    gap: 0;
+  }
+
+  .sidebar:not(.sidebarWard) .navItem {
+    padding: 8px 12px;
   }
 }
 
