@@ -155,6 +155,8 @@ export default function GuardianSosHistoryContent() {
         hasNextPage={hasNextPage}
         disabled={isFetching}
         onChange={setPage}
+        totalPages={data?.totalPages}
+        variant="numbered"
       />
     </div>
   );
