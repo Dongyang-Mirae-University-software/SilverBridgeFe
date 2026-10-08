@@ -8,6 +8,7 @@ import { getStoredDeviceId } from '@/lib/device/deviceId';
 import { useDeleteWardCameraMutation, wardLiveCamerasQueryOptions } from '@/service/query/ward/camera';
 import { WardCameraConnectionStatus, WardLiveCamera } from '@/service/interface/ward/camera';
 import { formatDateTime } from '@/utils/format/date';
+import { Icon } from '@/components/Icon';
 import { showToast } from '@/store/toastStore';
 import { RoomRenameModal } from './RoomRenameModal';
 import styles from './WardCameraList.module.css';
@@ -24,7 +25,7 @@ function getStatusBadge(status: WardCameraConnectionStatus) {
   return { label: '연결 안 됨', tone: 'disconnected' } as const;
 }
 
-export function WardCameraList() {
+export function WardCameraList({ onRegister }: { onRegister: () => void }) {
   const { data, isLoading } = useQuery(wardLiveCamerasQueryOptions);
   const cameras = data ?? [];
   const myDeviceId = getStoredDeviceId();
@@ -44,11 +45,20 @@ export function WardCameraList() {
   };
 
   if (isLoading) return <p className={cx('emptyText')}>등록된 카메라를 불러오는 중입니다.</p>;
-  if (cameras.length === 0) return <p className={cx('emptyText')}>아직 등록된 카메라가 없습니다.</p>;
+  if (cameras.length === 0) {
+    return (
+      <section className={cx('emptyCard')}>
+        <span className={cx('emptyIllustration')}><Icon name="camera" size={52} decorative /></span>
+        <strong>아직 등록한 카메라가 없어요</strong>
+        <button type="button" className={cx('emptyRegisterButton')} onClick={onRegister}>
+          <Icon name="plus" size={22} decorative />이 기기를 카메라로 등록
+        </button>
+      </section>
+    );
+  }
 
   return (
-    <section className={cx('card')}>
-      <strong className={cx('title')}>내 카메라</strong>
+    <section>
       <ul className={cx('list')}>
         {cameras.map(camera => {
           const badge = getStatusBadge(camera.status);
@@ -57,15 +67,20 @@ export function WardCameraList() {
           return (
             <li key={camera.id} className={cx('item')}>
               <div className={cx('itemHead')}>
-                <span className={cx('label')}>{camera.label}</span>
-                <span className={cx('statusBadge', badge.tone)}>
-                  <span className={cx('statusDot')} />
-                  {badge.label}
-                </span>
-                {isThisDevice && <span className={cx('deviceTag')}>이 기기</span>}
+                <span className={cx('cameraIcon')}><Icon name="camera" size={28} decorative /></span>
+                <div className={cx('cameraInfo')}>
+                  <div className={cx('labelRow')}>
+                    <span className={cx('label')}>{camera.label}</span>
+                    {isThisDevice && <span className={cx('deviceTag')}>이 기기</span>}
+                  </div>
+                  <span className={cx('statusBadge', badge.tone)}><span className={cx('statusDot')} />{badge.label}</span>
+                </div>
               </div>
 
-              <span className={cx('meta')}>{formatDateTime(camera.createdAt)} 등록</span>
+              {camera.status === 'disconnected' && <p className={cx('statusMessage')}>카메라로 쓰는 기기의 화면을 켜 두세요</p>}
+              {camera.status === null && <p className={cx('statusMessage', 'checkingMessage')}>상태를 확인하고 있어요. 잠시 후 다시 보여드려요</p>}
+
+              <div className={cx('meta')}><span>등록일</span><strong>{formatDateTime(camera.createdAt)}</strong></div>
 
               <div className={cx('actions')}>
                 <button type="button" className={cx('linkButton')} onClick={() => setRenamingCamera(camera)}>

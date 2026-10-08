@@ -3,7 +3,7 @@ import { WardCameraContent } from './_components/WardCameraContent';
 
 export default function WardCameraPage() {
   return (
-    <PageLayout title="카메라 등록" description="방을 고르면 그 공간의 카메라가 보호자에게 연결됩니다.">
+    <PageLayout title="내 카메라" description="집 안 카메라를 등록하고 화재·넘어짐 같은 이상 상황을 보호자에게 알려드려요.">
       <WardCameraContent />
     </PageLayout>
   );
