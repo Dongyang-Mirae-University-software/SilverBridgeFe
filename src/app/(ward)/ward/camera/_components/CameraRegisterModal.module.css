@@ -9,6 +9,11 @@
   padding: 20px;
 }
 
+.overlay.hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .modal {
   display: flex;
   flex-direction: column;

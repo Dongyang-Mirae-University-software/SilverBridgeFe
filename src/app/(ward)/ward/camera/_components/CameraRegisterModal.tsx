@@ -55,11 +55,13 @@ function setStoredRotation(rotation: FrameRotation) {
 
 export function CameraRegisterModal({
   initialRoom,
+  isOpen,
   onClose,
 }: {
   // 이 기기가 쓰던 카메라가 끊겨서 다시 켤 때 — 원래 쓰던 방을 미리 선택해 둔다.
   // 같은 기기·같은 방으로 다시 등록하면 백엔드가 기존 sessionId를 그대로 재사용한다
   initialRoom?: string;
+  isOpen: boolean;
   onClose: () => void;
 }) {
   const [facing, setFacing] = useState<CameraFacing>('user');
@@ -168,10 +170,9 @@ export function CameraRegisterModal({
     setRegisteredCamera(null);
   };
 
-  const handleClose = () => {
-    void handleStopMedia();
-    onClose();
-  };
+  // 모달을 닫아도 카메라와 업로드 루프를 유지한다. 이 컴포넌트는 숨긴 채로 남아
+  // video/canvas ref와 송출 세션이 끊기지 않도록 WardCameraContent에서 계속 마운트한다.
+  const handleClose = () => onClose();
 
   const enqueueLatestFrame = (blob: Blob) => {
     if (!liveSessionIdRef.current) return;
@@ -286,8 +287,8 @@ export function CameraRegisterModal({
   };
 
   return (
-    <div className={cx('overlay')} role="presentation">
-      <div className={cx('modal')} role="dialog" aria-modal="true" aria-label="카메라 등록">
+    <div className={cx('overlay', { hidden: !isOpen })} role="presentation" aria-hidden={!isOpen}>
+      <div className={cx('modal')} role="dialog" aria-modal={isOpen || undefined} aria-label="카메라 등록" inert={!isOpen}>
         <header className={cx('header')}>
           <strong>
             <Icon name="camera" size={26} decorative />
@@ -388,7 +389,7 @@ export function CameraRegisterModal({
 
           {status === 'streaming' && registeredCamera && (
             <p className={cx('streamingNotice')}>
-              &quot;{registeredCamera.label}&quot; 카메라가 송출 중입니다. 이 화면을 유지해야 촬영이 계속돼요.
+              &quot;{registeredCamera.label}&quot; 카메라가 송출 중입니다. 완료를 눌러도 백그라운드에서 촬영을 계속해요.
             </p>
           )}
 
@@ -397,7 +398,7 @@ export function CameraRegisterModal({
 
         {status === 'streaming' && (
           <footer className={cx('footer')}>
-            <button type="button" className={cx('doneButton')} onClick={onClose}>
+            <button type="button" className={cx('doneButton')} onClick={handleClose}>
               완료
             </button>
           </footer>

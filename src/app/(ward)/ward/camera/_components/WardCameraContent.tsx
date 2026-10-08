@@ -36,9 +36,11 @@ export function WardCameraContent() {
 
       <WardCameraList onRegister={() => setIsRegisterOpen(true)} />
 
-      {isRegisterOpen && (
-        <CameraRegisterModal initialRoom={myCamera?.label} onClose={() => setIsRegisterOpen(false)} />
-      )}
+      <CameraRegisterModal
+        initialRoom={myCamera?.label}
+        isOpen={isRegisterOpen}
+        onClose={() => setIsRegisterOpen(false)}
+      />
     </section>
   );
 }
