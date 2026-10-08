@@ -1,29 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import dayjs from 'dayjs';
-import 'dayjs/locale/ko';
-import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
-import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
-import type { IConnectionItem } from '@/service/interface/connection';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import type { ChatContext, ChatMessage } from '@/service/interface/chat';
 import { calcAge } from '@/service/interface/chat';
 import type { IUserProfile } from '@/service/interface/user/user';
 
-import ChatContextForm from './ChatContextForm';
 import ChatBubble from './ChatBubble';
 import styles from './GuardianChatContent.module.css';
-
-const cx = classNames.bind(styles);
-
-dayjs.locale('ko');
 
 function makeId() {
   return Math.random().toString(36).slice(2);
@@ -51,28 +40,6 @@ function profileToContext(profile: IUserProfile): ChatContext {
   };
 }
 
-function wardToContext(ward: IConnectionItem, guardianId?: string): ChatContext {
-  return {
-    name: ward.partnerName || undefined,
-    phone: ward.partnerPhone || undefined,
-    email: ward.partnerEmail || undefined,
-    gender: ward.partnerGender?.toLowerCase() || undefined,
-    birthDate: ward.partnerBirthDate || undefined,
-    age: ward.partnerBirthDate ? calcAge(ward.partnerBirthDate) : undefined,
-    postcode: ward.partnerPostcode || undefined,
-    address: ward.partnerAddress || undefined,
-    addressDetail: ward.partnerAddressDetail || undefined,
-    location: ward.partnerAddress || undefined,
-    guardianId: Number(guardianId) || undefined,
-    role: 'WARD',
-  };
-}
-
-function formatClock(value?: string) {
-  if (!value) return '-';
-  return dayjs(value).format('A h:mm');
-}
-
 function buildWelcomeMessage(name?: string): ChatMessage {
   const title = name ? `${name}님 안녕하세요 😊` : '안녕하세요 😊';
 
@@ -94,24 +61,15 @@ const QUICK_PROMPTS = [
 const COMPOSER_MAX_LINES = 2;
 
 export default function GuardianChatContent() {
-  const router = useRouter();
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const userId = profile?.id ?? '';
-  const { data: connectionsResponse } = useQuery({ ...guardianConnectionsQueryOptions, enabled: !!userId });
-  const wards = useMemo(
-    () => (connectionsResponse?.data ?? []).filter(item => item.status === 'ACTIVE'),
-    [connectionsResponse],
-  );
-  const [targetId, setTargetId] = useState('');
-
-  const [sessionId, setSessionId] = useState(makeSessionId);
+  const [sessionId] = useState(makeSessionId);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [buildWelcomeMessage()]);
   const [context, setContext] = useState<ChatContext>({});
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
-  const [contextOpen, setContextOpen] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -200,18 +158,6 @@ export default function GuardianChatContent() {
   }, [input, resizeComposer]);
 
   const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
-  const lastUpdatedAt = [...messages].reverse()[0]?.timestamp;
-
-  const contextSummary = useMemo(
-    () => [
-      { label: '이름', value: context.name || profile?.name || '-' },
-      { label: '생년월일', value: context.birthDate || profile?.birthDate || '-' },
-      { label: '전화번호', value: context.phone || profile?.phone || '-' },
-      { label: '지역', value: context.location || context.address || profile?.address || '-' },
-    ],
-    [context, profile],
-  );
-
   const send = useCallback(
     async (text: string, uiSelection?: { field: string; value: string }) => {
       const trimmed = text.trim();
@@ -305,27 +251,6 @@ export default function GuardianChatContent() {
     textareaRef.current?.focus();
   }
 
-  function handleTargetChange(nextId: string) {
-    setTargetId(nextId);
-    const ward = wards.find(item => item.partnerUserId === nextId);
-    setContext(ward ? wardToContext(ward, profile?.id) : profile ? profileToContext(profile) : {});
-  }
-
-  function handleNewSession() {
-    setSessionId(makeSessionId());
-    setMessages([buildWelcomeMessage(profile?.name)]);
-    setInput('');
-    setFallback(false);
-    setContext(profile ? profileToContext(profile) : {});
-    setTargetId('');
-    setContextOpen(false);
-    textareaRef.current?.focus();
-  }
-
-  function handleBack() {
-    router.back();
-  }
-
   return (
     <div className={styles.chatPage}>
       <section className={styles.shell}>
@@ -336,77 +261,15 @@ export default function GuardianChatContent() {
             </div>
             <div className={styles.brandCopy}>
               <h1>AI 의료 챗봇</h1>
-              <p><span className={styles.statusDot} />건강 도우미 · 24시간 답변</p>
+              <p>
+                <span className={styles.statusDot} />
+                건강 도우미 · 24시간 답변
+              </p>
             </div>
-          </div>
-
-          <div className={styles.headerActions}>
-            <button type="button" className={styles.backButton} onClick={handleBack}>
-              <Icon name="back" size={16} decorative />
-              뒤로
-            </button>
           </div>
         </header>
 
         <div className={styles.body}>
-          <div className={styles.toolbar}>
-            <div className={styles.toolbarTopRow}>
-              <div className={styles.toolbarActions}>
-                <button
-                  type="button"
-                  className={cx('utilityButton', contextOpen && 'utilityButtonActive')}
-                  onClick={() => setContextOpen(prev => !prev)}
-                >
-                  상담 컨텍스트
-                </button>
-                <button type="button" className={styles.utilityButton} onClick={handleNewSession}>
-                  새 상담
-                </button>
-              </div>
-
-              <div className={styles.toolbarMetaGroup}>
-                <button
-                  type="button"
-                  className={cx('targetBadge', targetId && 'targetBadgeWard')}
-                  title="상담 컨텍스트 열기"
-                  onClick={() => setContextOpen(true)}
-                >
-                  {targetId ? `피보호자 · ${context.name ?? '-'}` : `나 · ${profile?.name ?? '보호자'}`}
-                </button>
-                <span className={styles.toolbarMeta}>
-                  최근 답변 <strong>{formatClock(lastUpdatedAt)}</strong>
-                </span>
-              </div>
-            </div>
-
-          </div>
-
-          {contextOpen && (
-            <section className={styles.contextPanel}>
-              <label className={styles.contextTarget}>
-                <span>상담 대상</span>
-                <select value={targetId} onChange={e => handleTargetChange(e.target.value)}>
-                  <option value="">나 (보호자{profile?.name ? ` · ${profile.name}` : ''})</option>
-                  {wards.map(ward => (
-                    <option key={ward.partnerUserId} value={ward.partnerUserId}>
-                      {ward.partnerName}
-                      {ward.relation ? ` (${ward.relation})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className={styles.contextSummary}>
-                {contextSummary.map(item => (
-                  <div key={item.label} className={styles.contextItem}>
-                    <span>{item.label}</span>
-                    <strong>{item.value}</strong>
-                  </div>
-                ))}
-              </div>
-              <ChatContextForm value={context} onChange={setContext} />
-            </section>
-          )}
-
           <section className={styles.board}>
             {fallback && <div className={styles.banner}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
 
