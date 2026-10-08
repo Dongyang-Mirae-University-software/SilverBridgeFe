@@ -34,6 +34,16 @@
   overflow: hidden;
 }
 
+.medicationMain {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.medicationMain > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .main > * {
   flex: 1;
   display: flex;

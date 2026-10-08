@@ -11,6 +11,17 @@
   height: auto;
 }
 
+.scrollContent {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.scrollContent .content {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .header {
   display: flex;
   flex-shrink: 0;
