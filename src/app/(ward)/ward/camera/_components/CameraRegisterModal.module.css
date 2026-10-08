@@ -117,16 +117,20 @@
 
 .previewRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 176px;
+  grid-template-columns: 1fr;
   align-items: stretch;
   gap: 12px;
 }
 
 .previewControls {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
   gap: 10px;
+}
+
+.previewControls > * {
+  flex: 1;
 }
 
 .sentPreview {
@@ -235,20 +239,6 @@
   font-size: 17px;
   font-weight: 800;
   padding: 0 18px;
-}
-
-@media (max-width: 640px) {
-  .previewRow {
-    grid-template-columns: 1fr;
-  }
-
-  .previewControls {
-    flex-direction: row;
-  }
-
-  .previewControls > * {
-    flex: 1;
-  }
 }
 
 .previewHint {
