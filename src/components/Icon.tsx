@@ -33,6 +33,7 @@ import PhoneIcon from '@/assets/icons/phone.svg';
 import PillIcon from '@/assets/icons/pill.svg';
 import PlusIcon from '@/assets/icons/plus.svg';
 import RefreshIcon from '@/assets/icons/refresh.svg';
+import RefreshDoubleIcon from '@/assets/icons/refresh-double.svg';
 import SettingsIcon from '@/assets/icons/settings.svg';
 import TagIcon from '@/assets/icons/tag.svg';
 import UserIcon from '@/assets/icons/user.svg';
@@ -73,6 +74,7 @@ const ICONS = {
   pill: PillIcon,
   plus: PlusIcon,
   refresh: RefreshIcon,
+  refreshDouble: RefreshDoubleIcon,
   settings: SettingsIcon,
   tag: TagIcon,
   user: UserIcon,
