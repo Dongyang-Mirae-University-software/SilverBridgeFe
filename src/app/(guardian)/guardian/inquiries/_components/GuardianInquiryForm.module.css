@@ -1,7 +1,9 @@
 .form {
   display: grid;
+  width: 100%;
   gap: 14px;
   max-width: 600px;
+  margin-inline: auto;
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
   background: #fff;
