@@ -399,32 +399,36 @@ export function CameraRegisterModal({
 
           <section className={cx('setupSection')}>
             <h2>4. 미리보기를 확인해 주세요</h2>
-            <div className={cx('previewBox')}>
-            <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline />
-            <div className={cx('sentPreview')}>
-              <span>AI에 전송되는 화면</span>
-              <canvas ref={canvasRef} className={cx('canvas')} />
+            <div className={cx('previewRow')}>
+              <div className={cx('previewBox')}>
+                <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline />
+                <div className={cx('sentPreview')}>
+                  <span>AI에 전송되는 화면</span>
+                  <canvas ref={canvasRef} className={cx('canvas')} />
+                </div>
+              </div>
+              <div className={cx('previewControls')}>
+                {status === 'off' ? (
+                  <button type="button" className={cx('previewButton')} onClick={handleStartMedia}>
+                    <Icon name="camera" size={20} decorative />
+                    미리보기 시작
+                  </button>
+                ) : (
+                  <button type="button" className={cx('previewButton', 'stop')} onClick={handleStopMedia}>
+                    <Icon name="camera" size={20} decorative />
+                    {status === 'streaming' ? '등록 취소하고 끄기' : '미리보기 끄기'}
+                  </button>
+                )}
+                {status !== 'off' && (
+                  <button type="button" className={cx('rotateButton')} onClick={handleRotate}>
+                    <Icon name="cameraFlip" size={20} decorative />
+                    <span>화면 회전</span>
+                    <strong>{rotation}°</strong>
+                  </button>
+                )}
+              </div>
             </div>
-            </div>
-            {status === 'off' ? (
-              <button type="button" className={cx('previewButton')} onClick={handleStartMedia}>
-                <Icon name="camera" size={20} decorative />
-                미리보기 시작
-              </button>
-            ) : (
-              <button type="button" className={cx('previewButton', 'stop')} onClick={handleStopMedia}>
-                <Icon name="camera" size={20} decorative />
-                {status === 'streaming' ? '등록 취소하고 끄기' : '미리보기 끄기'}
-              </button>
-            )}
             <p className={cx('previewHint')}>AI에 전송되는 작은 미리보기에서 사람이 똑바로 보이는지 확인해 주세요.</p>
-            {status !== 'off' && (
-              <button type="button" className={cx('rotateButton')} onClick={handleRotate}>
-                <Icon name="cameraFlip" size={20} decorative />
-                <span>화면 회전</span>
-                <strong>{rotation}°</strong>
-              </button>
-            )}
           </section>
 
           {status === 'ready' && (
