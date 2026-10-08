@@ -29,7 +29,6 @@ export function RoomPicker({ rooms, selectedLabel, disabled, onSelect }: Props) 
             disabled={disabled || isLocked}
             onClick={() => onSelect(room.label)}
           >
-            <Icon name="camera" size={18} decorative />
             <span>{room.label}</span>
             {isLocked && (
               <span className={cx('badge')}>

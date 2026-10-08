@@ -44,10 +44,6 @@
   font-weight: 700;
 }
 
-.chip.locked > :first-child {
-  color: var(--sb-ink-mute);
-}
-
 @media (max-width: 640px) {
   .chip {
     min-height: 48px;
