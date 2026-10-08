@@ -1,6 +1,7 @@
 import classNames from 'classnames/bind';
 
 import { MedicationItem } from '@/service/interface/medication';
+import { Icon } from '@/components/Icon';
 import { formatDoseTime, getMedicationTimeSlotLabel } from '@/utils/format/medication';
 import styles from './WardMedicationCard.module.css';
 import { useMedicationIntakeMutation } from '@/service/query/ward';
@@ -38,7 +39,7 @@ export function WardMedicationCard({ medication }: WardMedicationCardProps) {
         onClick={() => handleToggle(medication)}
         aria-pressed={medication.taken}
       >
-        {medication.taken ? '✓ 먹었어요' : '안 먹었어요'}
+        {medication.taken ? <><Icon name="check" size={22} decorative />먹었어요</> : '안 먹었어요'}
       </button>
     </li>
   );

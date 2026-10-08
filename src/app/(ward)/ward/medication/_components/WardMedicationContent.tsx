@@ -39,7 +39,7 @@ export function WardMedicationContent() {
         <>
           {isAllTaken ? (
             <section className={cx('summaryCard', 'allTaken')}>
-              <span className={cx('summaryCheck')}>✓</span>
+              <span className={cx('summaryCheck')}><Icon name="check" size={30} decorative /></span>
               <div><strong>오늘 약을 모두 드셨어요</strong><span>보호자에게도 알려 드렸어요</span></div>
             </section>
           ) : nextMedication ? (
@@ -56,7 +56,7 @@ export function WardMedicationContent() {
                 disabled={intakeMutation.isPending}
                 onClick={() => intakeMutation.mutate({ medicationId: nextMedication.medicationId, taken: true })}
               >
-                ✓ 먹었어요
+                <Icon name="check" size={24} decorative />먹었어요
               </button>
             </section>
           ) : null}
