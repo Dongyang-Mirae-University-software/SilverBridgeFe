@@ -1,11 +1,7 @@
 .page {
-  display: flex;
-  min-height: 0;
-  flex: 1;
-  flex-direction: column;
+  display: grid;
   gap: 18px;
   align-content: start;
-  overflow-y: auto;
   width: 100%;
 }
 

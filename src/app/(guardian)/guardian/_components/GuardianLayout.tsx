@@ -30,7 +30,7 @@ export function GuardianLayout({ children }: { children: ReactNode }) {
   return (
     <div className={cx('stage')}>
       <SidebarLayout navItems={GUARDIAN_NAV} profile={profile} role={role} rootPath={rootPath} />
-      <main className={cx('main', { chatMain: pathname === '/guardian/chatbot', medicationMain: pathname === '/guardian/medication' })}>{children}</main>
+      <main className={cx('main', { chatMain: pathname === '/guardian/chatbot' })}>{children}</main>
     </div>
   );
 }
