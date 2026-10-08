@@ -51,22 +51,21 @@ export function AnomalyHistoryContent({ onViewLive }: { onViewLive: () => void }
   return (
     <section className={cx('page')}>
       <header className={cx('header')}>
+        {wards.length > 0 && (
+          <WardSelectorTabs
+            wards={wards}
+            selectedWardId={activeWardId}
+            onSelect={wardId => {
+              setSelectedWardId(wardId);
+              setPage(0);
+            }}
+          />
+        )}
         <button type="button" className={cx('liveButton')} onClick={onViewLive}>
           <span className={cx('liveDot')} />
           실시간 카메라 보기
         </button>
       </header>
-
-      {wards.length > 0 && (
-        <WardSelectorTabs
-          wards={wards}
-          selectedWardId={activeWardId}
-          onSelect={wardId => {
-            setSelectedWardId(wardId);
-            setPage(0);
-          }}
-        />
-      )}
 
       <div className={cx('filterRow')}>
         <button
