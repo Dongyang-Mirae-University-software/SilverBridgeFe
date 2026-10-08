@@ -7,7 +7,7 @@ import type { ChatLogItem, ChatRequest, ChatResponse } from '../interface/chat';
 export async function sendChatMessage(body: ChatRequest): Promise<ChatResponse> {
   const response = await apiClient.post<CommonResponse<ChatResponse>>('/guardian/chat', body, { timeout: 140_000 });
   const data = getResponseData<ChatResponse>(response);
-  if (!data) throw new Error('챗봇 응답을 받지 못했습니다.');
+  if (!data || typeof data.reply !== 'string') throw new Error('챗봇 응답 형식이 올바르지 않습니다.');
   return data;
 }
 

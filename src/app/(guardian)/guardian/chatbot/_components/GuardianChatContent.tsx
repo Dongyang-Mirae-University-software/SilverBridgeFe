@@ -142,7 +142,7 @@ export default function GuardianChatContent() {
       if (sendingRef.current) return;
 
       const history = messagesRef.current
-        .filter(message => message.id !== 'welcome')
+        .filter(message => message.id !== 'welcome' && typeof message.content === 'string' && message.content.trim())
         .slice(-24)
         .map(message => ({ role: message.role, content: message.content }));
 
