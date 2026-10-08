@@ -136,7 +136,7 @@ export default function WardSosContent() {
     if (isSending) return;
 
     setIsSending(true);
-    if (wardSettings.sosAction === 'CALL_119_AND_NOTIFY') openDialModal(true);
+    if (wardSettings.sosAction === 'CALL_119_AND_NOTIFY') openDialModal();
 
     triggerSosAsync(undefined)
       .then(data => {
