@@ -7,9 +7,7 @@ import { Icon } from '@/components/Icon';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
-import type { ChatContext, ChatMessage } from '@/service/interface/chat';
-import { calcAge } from '@/service/interface/chat';
-import type { IUserProfile } from '@/service/interface/user/user';
+import type { ChatMessage } from '@/service/interface/chat';
 
 import ChatBubble from './ChatBubble';
 import styles from './GuardianChatContent.module.css';
@@ -21,23 +19,6 @@ function makeId() {
 function makeSessionId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
   return makeId();
-}
-
-function profileToContext(profile: IUserProfile): ChatContext {
-  return {
-    name: profile.name || undefined,
-    phone: profile.phone || undefined,
-    email: profile.email || undefined,
-    gender: profile.gender?.toLowerCase() || undefined,
-    birthDate: profile.birthDate || undefined,
-    age: profile.birthDate ? calcAge(profile.birthDate) : undefined,
-    postcode: profile.postcode || undefined,
-    address: profile.address || undefined,
-    addressDetail: profile.addressDetail || undefined,
-    location: profile.address || undefined,
-    guardianId: Number(profile.id) || undefined,
-    role: profile.role,
-  };
 }
 
 function buildWelcomeMessage(name?: string): ChatMessage {
@@ -66,7 +47,6 @@ export default function GuardianChatContent() {
   const userId = profile?.id ?? '';
   const [sessionId] = useState(makeSessionId);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [buildWelcomeMessage()]);
-  const [context, setContext] = useState<ChatContext>({});
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
@@ -74,18 +54,15 @@ export default function GuardianChatContent() {
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const contextRef = useRef(context);
   const messagesRef = useRef(messages);
   const sendingRef = useRef(sending);
 
-  contextRef.current = context;
   messagesRef.current = messages;
   sendingRef.current = sending;
 
   useEffect(() => {
     if (!profile) return;
 
-    setContext(prev => (Object.values(prev).some(Boolean) ? prev : profileToContext(profile)));
     setMessages(prev => {
       if (prev.length !== 1 || prev[0].id !== 'welcome') return prev;
       return [buildWelcomeMessage(profile.name)];
@@ -164,7 +141,6 @@ export default function GuardianChatContent() {
       if (!trimmed && !uiSelection) return;
       if (sendingRef.current) return;
 
-      const currentContext = contextRef.current;
       const history = messagesRef.current
         .filter(message => message.id !== 'welcome')
         .slice(-24)
@@ -187,7 +163,6 @@ export default function GuardianChatContent() {
           message: uiSelection ? undefined : trimmed,
           sessionId,
           history,
-          context: Object.keys(currentContext).length > 0 ? currentContext : undefined,
           uiSelection: uiSelection ?? undefined,
         });
 
