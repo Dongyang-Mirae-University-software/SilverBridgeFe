@@ -180,7 +180,7 @@ export function LiveCameraModal({
           </div>
         </div>
 
-        {selectedWardGroup && selectedWardGroup.cameras.length > 1 && (
+        {selectedWardGroup && (
           <div className={cx('switchRow')}>
             <span className={cx('switchLabel')}>카메라 전환</span>
             <div className={cx('switchChips')}>
