@@ -1,12 +1,13 @@
 .rowUser {
   display: flex;
   justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .rowAssistant {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: 10px;
 }
 
 .messageColumnUser,
@@ -27,16 +28,16 @@
 
 .avatar {
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
   place-items: center;
   border-radius: 50%;
   background: var(--sb-brand);
   color: #fff;
-  font-size: 0.625rem;
-  font-weight: 850;
-  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 4px;
 }
 
 .assistantBody {
@@ -97,29 +98,29 @@
 
 /* ── 말풍선 ── */
 .bubbleUser {
-  max-width: min(420px, 74%);
+  max-width: 70%;
   border-radius: 18px 18px 4px 18px;
   background: var(--sb-brand);
   color: #fff;
-  padding: 10px 13px;
-  box-shadow: 0 1px 2px rgba(37, 32, 24, 0.06);
+  padding: 14px 18px;
+  box-shadow: var(--sb-shadow-sm);
 }
 
 .bubbleUser p {
   margin: 0;
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.55;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .bubbleAssistant {
-  max-width: min(600px, 90%);
-  border-radius: 18px 18px 18px 4px;
+  max-width: 70%;
+  border-radius: 4px 18px 18px;
   background: #fff;
   box-shadow: 0 1px 2px rgba(37, 32, 24, 0.08);
-  padding: 11px 13px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -128,9 +129,9 @@
 .replyText {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.7;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -147,7 +148,7 @@
 .medTitle {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 0.6875rem;
+  font-size: 12px;
   font-weight: 800;
 }
 

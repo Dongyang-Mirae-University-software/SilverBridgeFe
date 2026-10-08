@@ -112,7 +112,6 @@ export default function GuardianChatContent() {
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -202,7 +201,6 @@ export default function GuardianChatContent() {
 
   const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
   const lastUpdatedAt = [...messages].reverse()[0]?.timestamp;
-  const contextFilledCount = Object.values(context).filter(Boolean).length;
 
   const contextSummary = useMemo(
     () => [
@@ -305,12 +303,7 @@ export default function GuardianChatContent() {
 
   function handleQuickPrompt(prompt: string) {
     setInput(prompt);
-    setHelpOpen(false);
     textareaRef.current?.focus();
-  }
-
-  function handleToggleHelp() {
-    setHelpOpen(prev => !prev);
   }
 
   function handleTargetChange(nextId: string) {
@@ -327,7 +320,6 @@ export default function GuardianChatContent() {
     setContext(profile ? profileToContext(profile) : {});
     setTargetId('');
     setContextOpen(false);
-    setHelpOpen(false);
     textareaRef.current?.focus();
   }
 
@@ -341,11 +333,11 @@ export default function GuardianChatContent() {
         <header className={styles.header}>
           <div className={styles.brand}>
             <div className={styles.brandMark}>
-              <Icon name="brain" size={28} color="#fff" decorative />
+              <Icon name="brain" size={28} color="var(--sb-brand)" decorative />
             </div>
             <div className={styles.brandCopy}>
               <h1>AI 의료 챗봇</h1>
-              <p>건강 도우미 · 24시간 답변</p>
+              <p><span className={styles.statusDot} />건강 도우미 · 24시간 답변</p>
             </div>
           </div>
 
@@ -371,9 +363,6 @@ export default function GuardianChatContent() {
                 <button type="button" className={styles.utilityButton} onClick={handleNewSession}>
                   새 상담
                 </button>
-                <button type="button" className={cx('helpButton', helpOpen && 'helpButtonActive')} onClick={handleToggleHelp}>
-                  도움이 필요하신가요?
-                </button>
               </div>
 
               <div className={styles.toolbarMetaGroup}>
@@ -391,24 +380,6 @@ export default function GuardianChatContent() {
               </div>
             </div>
 
-            {helpOpen && (
-              <div className={styles.quickPromptPopover} aria-label="추천 질문">
-                <p className={styles.quickPromptTitle}>이런 걸 물어보세요</p>
-                <div className={styles.quickPromptRow}>
-                  {QUICK_PROMPTS.map(prompt => (
-                    <button
-                      key={prompt}
-                      type="button"
-                      className={styles.quickPromptButton}
-                      disabled={sending}
-                      onClick={() => handleQuickPrompt(prompt)}
-                    >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {contextOpen && (
@@ -457,6 +428,23 @@ export default function GuardianChatContent() {
                   <span className={styles.typingDot} />
                 </div>
               )}
+            </div>
+          </section>
+
+          <section className={styles.quickPromptPanel} aria-label="추천 질문">
+            <p className={styles.quickPromptTitle}>이런 걸 물어보세요</p>
+            <div className={styles.quickPromptRow}>
+              {QUICK_PROMPTS.map(prompt => (
+                <button
+                  key={prompt}
+                  type="button"
+                  className={styles.quickPromptButton}
+                  disabled={sending}
+                  onClick={() => handleQuickPrompt(prompt)}
+                >
+                  {prompt}
+                </button>
+              ))}
             </div>
           </section>
 
