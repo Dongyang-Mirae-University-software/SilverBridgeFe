@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { createStreamSession, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
+import { getWardCameras } from '@/service/api/ward/camera';
 import { Icon } from '@/components/Icon';
 import { getStoredDeviceId, setStoredDeviceId } from '@/lib/device/deviceId';
 import { useRegisterWardCameraMutation, wardCameraRoomsQueryOptions } from '@/service/query/ward/camera';
@@ -71,6 +72,7 @@ export function CameraRegisterModal({
   const [room, setRoom] = useState(initialRoom ?? '');
   const [errorMessage, setErrorMessage] = useState('');
   const [registeredCamera, setRegisteredCamera] = useState<WardCamera | null>(null);
+  const [isStartingStream, setIsStartingStream] = useState(false);
   const [rotation, setRotation] = useState<FrameRotation>(getStoredRotation);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -86,6 +88,12 @@ export function CameraRegisterModal({
 
   const { data: rooms = [], refetch: refetchRooms } = useQuery(wardCameraRoomsQueryOptions);
   const registerMutation = useRegisterWardCameraMutation();
+
+  // 모달은 송출을 유지하기 위해 항상 마운트돼 있다. 따라서 카메라 목록이 나중에
+  // 도착한 경우에도, 다시 열 때 기존 카메라의 방을 등록 대상으로 채워야 한다.
+  useEffect(() => {
+    if (isOpen && status === 'off' && initialRoom) setRoom(initialRoom);
+  }, [initialRoom, isOpen, status]);
 
   useEffect(() => {
     return () => {
@@ -240,9 +248,52 @@ export function CameraRegisterModal({
     }, intervalMs);
   };
 
+  const startStreaming = async (camera: WardCamera) => {
+    const session = await createStreamSession({
+      sessionId: camera.sessionId,
+      cameraIdentifier: camera.deviceId,
+      deviceType: 'web',
+    });
+    liveSessionIdRef.current = session.session_id ?? camera.sessionId;
+    setRegisteredCamera(camera);
+    setStatus('streaming');
+    startCaptureLoop(camera.recommendedFps);
+    void requestScreenWakeLock();
+  };
+
+  const restartExistingCamera = async () => {
+    const deviceId = getStoredDeviceId();
+    if (!deviceId) {
+      setErrorMessage('이 기기의 카메라 정보를 찾지 못했습니다. 다시 등록해 주세요.');
+      return;
+    }
+
+    setIsStartingStream(true);
+    try {
+      // 같은 기기는 이미 카메라로 등록돼 있다. 등록 API를 다시 호출하면 방 중복으로
+      // 거절될 수 있으므로, 기존 카메라의 sessionId로 송출만 재개한다.
+      const cameras = await getWardCameras();
+      const camera = cameras.find(item => item.deviceId === deviceId);
+      if (!camera) {
+        setErrorMessage('등록된 카메라 정보를 찾지 못했습니다. 다시 등록해 주세요.');
+        return;
+      }
+      await startStreaming(camera);
+    } catch {
+      setErrorMessage('카메라 송출을 다시 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setIsStartingStream(false);
+    }
+  };
+
   const handleRegister = () => {
-    if (!room || registerMutation.isPending) return;
+    if (!room || registerMutation.isPending || isStartingStream) return;
     setErrorMessage('');
+
+    if (initialRoom && room === initialRoom) {
+      void restartExistingCamera();
+      return;
+    }
 
     registerMutation.mutate(
       { label: room, deviceId: getStoredDeviceId() },
@@ -250,18 +301,8 @@ export function CameraRegisterModal({
         onSuccess: async camera => {
           if (!camera) return;
           setStoredDeviceId(camera.deviceId);
-          setRegisteredCamera(camera);
-
           try {
-            const session = await createStreamSession({
-              sessionId: camera.sessionId,
-              cameraIdentifier: camera.deviceId,
-              deviceType: 'web',
-            });
-            liveSessionIdRef.current = session.session_id ?? camera.sessionId;
-            setStatus('streaming');
-            startCaptureLoop(camera.recommendedFps);
-            void requestScreenWakeLock();
+            await startStreaming(camera);
           } catch {
             setErrorMessage('카메라 등록은 완료됐지만 송출 시작에 실패했습니다. 다시 시도해 주세요.');
           }
@@ -307,6 +348,7 @@ export function CameraRegisterModal({
             <RoomPicker
               rooms={rooms}
               selectedLabel={room}
+              availableRegisteredLabel={initialRoom}
               disabled={status === 'streaming'}
               onSelect={setRoom}
             />
@@ -382,10 +424,14 @@ export function CameraRegisterModal({
             <button
               type="button"
               className={cx('registerButton')}
-              disabled={!room || registerMutation.isPending}
+              disabled={!room || registerMutation.isPending || isStartingStream}
               onClick={handleRegister}
             >
-              {registerMutation.isPending ? '등록 중...' : '등록하고 촬영 시작'}
+              {registerMutation.isPending || isStartingStream
+                ? '송출 시작 중...'
+                : initialRoom && room === initialRoom
+                  ? '촬영 다시 시작'
+                  : '등록하고 촬영 시작'}
             </button>
           )}
 
