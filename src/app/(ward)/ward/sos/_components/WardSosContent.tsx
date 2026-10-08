@@ -154,7 +154,7 @@ export default function WardSosContent() {
     <div className={cx('page')}>
       <button className={cx('hero')} type="button" disabled={isSending} onClick={handleHeroPress}>
         <div className={cx('heroIcon')}>
-          <Icon name="alert" size={40} decorative />
+          <Icon name="alert" size={48} decorative />
         </div>
         <span className={cx('heroEyebrow')}>SOS</span>
         <h2>긴급 SOS</h2>

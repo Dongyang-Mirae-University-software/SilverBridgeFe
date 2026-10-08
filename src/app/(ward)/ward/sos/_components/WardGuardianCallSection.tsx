@@ -18,27 +18,18 @@ interface Props {
   onGuardianCall: () => void;
 }
 
-function GuardianCard({ connection, onCall }: { connection: IConnectionItem; onCall: () => void }) {
+function GuardianCard({ connection, onCall, tone }: { connection: IConnectionItem; onCall: () => void; tone: 'primary' | 'secondary' }) {
   const telHref = makeTelHref(connection.partnerPhone);
 
   return (
-    <article className={cx('guardianCard')}>
+    <article className={cx('guardianCard', tone)}>
       <div className={cx('guardianBody')}>
-        <UserAvatar imageUrl={connection.partnerProfileImage} size="w-120" />
+        <UserAvatar imageUrl={connection.partnerProfileImage} size="w-38" />
         <div className={cx('guardianInfo')}>
           <strong>{connection.partnerName}</strong>
-          <span>{connection.relation || '보호자'}</span>
+          <span className={cx('guardianPhoneNumber')}>{formatPhoneText(connection.partnerPhone)}</span>
         </div>
-      </div>
-
-      <div className={cx('guardianFooter')}>
-        <span className={cx('guardianPhoneNumber')}>{formatPhoneText(connection.partnerPhone)}</span>
-        {telHref && (
-          <span className={cx('callBadge')} aria-hidden="true">
-            <Icon name="phone" size={16} decorative />
-            전화 걸기
-          </span>
-        )}
+        <Icon name="phone" size={18} className={cx('callIcon')} decorative />
       </div>
 
       {telHref ? (
@@ -69,7 +60,6 @@ export function WardGuardianCallSection({
     <section className={cx('phoneSection')}>
       <div className={cx('sectionHeader')}>
         <h3>보호자에게 직접 전화하기</h3>
-        <p>아래 보호자 카드를 누르면 바로 전화가 걸립니다.</p>
       </div>
 
       {isGuardiansError ? (
@@ -94,8 +84,8 @@ export function WardGuardianCallSection({
         </div>
       ) : currentGuardians.length > 0 ? (
         <div className={cx('guardianGrid')}>
-          {currentGuardians.map(connection => (
-            <GuardianCard key={connection.id} connection={connection} onCall={onGuardianCall} />
+          {currentGuardians.map((connection, index) => (
+            <GuardianCard key={connection.id} connection={connection} onCall={onGuardianCall} tone={index % 2 === 0 ? 'primary' : 'secondary'} />
           ))}
         </div>
       ) : (
