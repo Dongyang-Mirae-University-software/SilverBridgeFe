@@ -24,8 +24,8 @@
 .guardianNoticeDesc { margin-top: 6px; color: var(--sb-ink-soft); font-size: 17px; line-height: 1.5; word-break: keep-all; }
 .guardianNoticeBadge { display: inline-flex; min-height: 52px; align-items: center; flex-shrink: 0; border: 1.5px solid var(--sb-line); border-radius: 999px; background: var(--sb-bg-soft); color: var(--sb-ink-soft); font-size: 18px; font-weight: 800; padding: 0 20px; white-space: nowrap; }
 .sosContent { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--sb-line-soft); padding: 22px 26px; }
+.sosOptions { display: flex; flex-direction: column; gap: 12px; }
 .sosOption { display: flex; align-items: center; gap: 18px; border: 1.5px solid var(--sb-line); border-radius: 16px; background: #fff; cursor: pointer; padding: 20px 22px; }
-.sosOption + .sosOption { margin-top: 0; }
 .sosOptionActive { border: 2.5px solid var(--sb-brand); background: var(--sb-brand-50); }
 .sosRadio { width: 32px; height: 32px; flex-shrink: 0; margin: 0; accent-color: var(--sb-brand); }
 .sosOptionBody { min-width: 0; flex: 1; }

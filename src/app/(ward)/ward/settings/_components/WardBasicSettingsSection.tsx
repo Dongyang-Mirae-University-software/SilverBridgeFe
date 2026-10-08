@@ -126,7 +126,7 @@ export function WardSosSettingsSection({ updateWardSettings, wardSettings }: Pro
       <div className={cx('sosContent')}>
         <div className={cx('sosQuestion')}>119 화면은 어떻게 보여드릴까요?</div>
 
-        <div role="radiogroup" aria-label="SOS 동작 설정">
+        <div className={cx('sosOptions')} role="radiogroup" aria-label="SOS 동작 설정">
           {SOS_OPTIONS.map(opt => {
             const isActive = wardSettings.sosAction === opt.value;
             return (
