@@ -5,21 +5,22 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
-import { IGuardianSosHistoryItem, PageResponse } from '../../interface/guardian/sosHistory';
+import { IGuardianSosHistoryPage, SosTriggerType } from '../../interface/guardian/sosHistory';
 
 const GUARDIAN_SOS_BASE = '/guardian/sos';
 
 export interface GetGuardianSosHistoryParams {
   wardId?: string; // 특정 피보호자만 조회. 생략하면 연결된 전원의 이력을 합쳐서 반환
+  triggerType?: SosTriggerType; // 발생 경로. 생략하면 전체 경로 반환
   page?: number; // 0부터 시작
   size?: number; // 서버에서 최대 50으로 제한됨
 }
 
 // 최신순 페이징 이력 조회
 export async function getGuardianSosHistory(params: GetGuardianSosHistoryParams = {}) {
-  const response = await apiClient.get<CommonResponse<PageResponse<IGuardianSosHistoryItem>>>(
+  const response = await apiClient.get<CommonResponse<IGuardianSosHistoryPage>>(
     `${GUARDIAN_SOS_BASE}/history`,
     { params },
   );
-  return getResponseData<PageResponse<IGuardianSosHistoryItem>>(response);
+  return getResponseData<IGuardianSosHistoryPage>(response);
 }

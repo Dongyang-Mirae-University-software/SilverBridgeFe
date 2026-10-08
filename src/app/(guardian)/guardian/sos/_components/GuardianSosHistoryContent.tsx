@@ -34,16 +34,17 @@ export default function GuardianSosHistoryContent() {
   const effectiveSelectedWardId = selectedWard?.partnerUserId ?? null;
 
   const { data, isLoading, isError, isFetching } = useQuery({
-    ...guardianSosHistoryQueryOptions({ wardId: effectiveSelectedWardId ?? undefined, page, size: PAGE_SIZE }),
+    ...guardianSosHistoryQueryOptions({
+      wardId: effectiveSelectedWardId ?? undefined,
+      triggerType: triggerTypeFilter === 'ALL' ? undefined : triggerTypeFilter,
+      page,
+      size: PAGE_SIZE,
+    }),
     enabled: hasActiveWards,
   });
 
   const items = data?.content ?? [];
-  const filteredItems =
-    triggerTypeFilter === 'ALL' ? items : items.filter(item => item.triggerType === triggerTypeFilter);
-
-  const sosButtonCount = items.filter(item => item.triggerType === 'SOS_BUTTON').length;
-  const guardianCallCount = items.filter(item => item.triggerType === 'GUARDIAN_CALL').length;
+  const counts = data?.counts;
 
   const hasNextPage = data ? !data.last : false;
   const hasPrevPage = page > 0;
@@ -85,9 +86,9 @@ export default function GuardianSosHistoryContent() {
         </div>
         <div className={cx('typeFilters')} role="tablist" aria-label="발생 경로 필터">
           {([
-            ['ALL', '전체', items.length],
-            ['GUARDIAN_CALL', '보호자에게 알림', guardianCallCount],
-            ['SOS_BUTTON', '긴급 SOS 버튼', sosButtonCount],
+            ['ALL', '전체', counts?.all ?? 0],
+            ['GUARDIAN_CALL', '보호자에게 알림', counts?.guardianCall ?? 0],
+            ['SOS_BUTTON', '긴급 SOS 버튼', counts?.sosButton ?? 0],
           ] as const).map(([type, label, count]) => (
             <button
               key={type}
@@ -121,11 +122,11 @@ export default function GuardianSosHistoryContent() {
             <span>누구에게 연락</span>
             <span>피보호자</span>
           </div>
-          {filteredItems.length === 0 ? (
+          {items.length === 0 ? (
             <div className={cx('emptyState')}>해당 조건의 호출 기록이 없습니다.</div>
           ) : (
             <ul className={cx('list')}>
-              {filteredItems.map((item: IGuardianSosHistoryItem) => (
+              {items.map((item: IGuardianSosHistoryItem) => (
                 <li key={item.sosEventId} className={cx('item')}>
                   <div className={cx('dateCell')}>
                     <strong>{formatSosDate(item.triggeredAt)}</strong>
