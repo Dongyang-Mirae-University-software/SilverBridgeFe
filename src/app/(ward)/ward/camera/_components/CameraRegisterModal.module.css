@@ -151,6 +151,7 @@
 
 .previewButton {
   position: absolute;
+  z-index: 2;
   bottom: 14px;
   display: inline-flex;
   min-height: 52px;
