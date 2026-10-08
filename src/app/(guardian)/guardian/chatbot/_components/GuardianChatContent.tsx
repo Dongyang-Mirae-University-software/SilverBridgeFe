@@ -8,7 +8,7 @@ import 'dayjs/locale/ko';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
-import { getChatLogs, sendChatMessage } from '@/service/api/chat';
+import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
 import type { IConnectionItem } from '@/service/interface/connection';
@@ -137,7 +137,7 @@ export default function GuardianChatContent() {
   useEffect(() => {
     if (!userId) return;
 
-    getChatLogs(userId)
+    getChatLogs()
       .then(logs => {
         if (logs.length === 0) return;
 
@@ -239,7 +239,6 @@ export default function GuardianChatContent() {
       try {
         const result = await sendChatMessage({
           message: uiSelection ? undefined : trimmed,
-          userId: 1,
           sessionId,
           history,
           context: Object.keys(currentContext).length > 0 ? currentContext : undefined,
@@ -272,13 +271,13 @@ export default function GuardianChatContent() {
         ]);
 
         if (result.engine === 'fallback') setFallback(true);
-      } catch {
+      } catch (error) {
         setMessages(prev => [
           ...prev,
           {
             id: makeId(),
             role: 'assistant',
-            content: '죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+            content: getChatErrorMessage(error),
             timestamp: new Date().toISOString(),
           },
         ]);

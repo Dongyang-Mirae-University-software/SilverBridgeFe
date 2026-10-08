@@ -1,27 +1,40 @@
-import { streamClient } from '@/lib/api/streamClient';
+import axios from 'axios';
+import { apiClient } from '@/lib/api/apiClient';
+import { getResponseData } from '@/utils/api/responseData';
+import type { CommonResponse } from '@/service/interface/common';
 import type { ChatLogItem, ChatRequest, ChatResponse } from '../interface/chat';
 
 export async function sendChatMessage(body: ChatRequest): Promise<ChatResponse> {
-  const res = await streamClient.post<unknown>('/v1/chat', body);
-  const raw = res.data as Record<string, unknown>;
-  // { success, message, data: ChatResponse } 래핑 구조 언래핑
-  if (raw?.data && typeof raw.data === 'object') return raw.data as ChatResponse;
-  return raw as unknown as ChatResponse;
+  const response = await apiClient.post<CommonResponse<ChatResponse>>('/guardian/chat', body, { timeout: 140_000 });
+  const data = getResponseData<ChatResponse>(response);
+  if (!data) throw new Error('챗봇 응답을 받지 못했습니다.');
+  return data;
 }
 
-export async function getChatLogs(userId: string): Promise<ChatLogItem[]> {
-  const res = await streamClient.get<unknown>(`/v1/chat/logs?userId=${encodeURIComponent(userId)}`);
-  const raw = res.data;
-  if (Array.isArray(raw)) return raw as ChatLogItem[];
-  if (raw && typeof raw === 'object') {
-    const obj = raw as Record<string, unknown>;
-    const nested = obj.logs ?? obj.data ?? obj.items;
-    if (Array.isArray(nested)) return nested as ChatLogItem[];
-  }
-  return [];
+export async function getChatLogs(): Promise<ChatLogItem[]> {
+  const response = await apiClient.get<CommonResponse<ChatLogItem[]>>('/guardian/chat/logs', { timeout: 15_000 });
+  return getResponseData<ChatLogItem[]>(response) ?? [];
 }
 
 export async function getChatLogDetail(chatId: string): Promise<ChatLogItem> {
-  const res = await streamClient.get<ChatLogItem>(`/v1/chat/logs/${chatId}`);
-  return res.data;
+  const response = await apiClient.get<CommonResponse<ChatLogItem>>(`/guardian/chat/logs/${chatId}`, { timeout: 15_000 });
+  const data = getResponseData<ChatLogItem>(response);
+  if (!data) throw new Error('상담 기록을 찾을 수 없습니다.');
+  return data;
+}
+
+export function getChatErrorMessage(error: unknown) {
+  if (!axios.isAxiosError<{ code?: string }>(error)) return '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+
+  const code = error.response?.data?.code;
+  if (code === 'CHAT_LIMIT_EXCEEDED') return '이전 상담의 답변을 기다리고 있어요. 잠시 후 다시 시도해 주세요.';
+  if (code === 'CHAT_TIMEOUT') return '답변이 오래 걸리고 있어요. 다시 시도해 주세요.';
+  if (code === 'CHAT_UNAVAILABLE') return 'AI 상담 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.';
+  if (code === 'CHAT_INVALID_REQUEST') return '입력 내용을 확인한 뒤 다시 보내주세요.';
+  if (code === 'TOO_MANY_REQUESTS') {
+    const retryAfter = error.response?.headers?.['retry-after'];
+    return retryAfter ? `요청이 많아요. ${retryAfter}초 후 다시 시도해 주세요.` : '요청이 많아요. 잠시 후 다시 시도해 주세요.';
+  }
+
+  return '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
 }
