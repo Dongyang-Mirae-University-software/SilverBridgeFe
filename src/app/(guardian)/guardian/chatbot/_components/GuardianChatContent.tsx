@@ -97,6 +97,7 @@ export default function GuardianChatContent() {
   }, [input, resizeComposer]);
 
   const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
+  const historyItems = Array.isArray(chatLogs) ? chatLogs : [];
   const send = useCallback(
     async (text: string, uiSelection?: { field: string; value: string }) => {
       const trimmed = text.trim();
@@ -310,7 +311,12 @@ export default function GuardianChatContent() {
                 <h2 id="chat-history-title">내 상담 기록</h2>
                 <p>최근 상담 내용을 확인할 수 있어요.</p>
               </div>
-              <button type="button" className={styles.historyCloseButton} onClick={() => setHistoryOpen(false)} aria-label="상담 기록 닫기">
+              <button
+                type="button"
+                className={styles.historyCloseButton}
+                onClick={() => setHistoryOpen(false)}
+                aria-label="상담 기록 닫기"
+              >
                 ×
               </button>
             </header>
@@ -320,10 +326,10 @@ export default function GuardianChatContent() {
                 <p className={styles.historyState}>상담 기록을 불러오는 중입니다.</p>
               ) : logsError ? (
                 <p className={styles.historyState}>{logsError}</p>
-              ) : chatLogs.length === 0 ? (
+              ) : historyItems.length === 0 ? (
                 <p className={styles.historyState}>아직 상담 기록이 없습니다.</p>
               ) : (
-                chatLogs.map((log, index) => (
+                historyItems.map((log, index) => (
                   <article key={log.id ?? `${log.createdAt ?? 'log'}-${index}`} className={styles.historyItem}>
                     <time>{formatLogDate(log.createdAt)}</time>
                     <strong>{log.message || '선택형 상담'}</strong>

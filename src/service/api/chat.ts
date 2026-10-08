@@ -13,7 +13,8 @@ export async function sendChatMessage(body: ChatRequest): Promise<ChatResponse> 
 
 export async function getChatLogs(): Promise<ChatLogItem[]> {
   const response = await apiClient.get<CommonResponse<ChatLogItem[]>>('/guardian/chat/logs', { timeout: 15_000 });
-  return getResponseData<ChatLogItem[]>(response) ?? [];
+  const data = getResponseData<unknown>(response);
+  return Array.isArray(data) ? (data as ChatLogItem[]) : [];
 }
 
 export async function getChatLogDetail(chatId: string): Promise<ChatLogItem> {
