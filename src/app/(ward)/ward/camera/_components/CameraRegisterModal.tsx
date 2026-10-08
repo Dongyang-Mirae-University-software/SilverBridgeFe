@@ -330,8 +330,15 @@ export function CameraRegisterModal({
   };
 
   return (
-    <div className={cx('overlay', { hidden: !isOpen })} role="presentation" aria-hidden={!isOpen}>
-      <div className={cx('modal')} role="dialog" aria-modal={isOpen || undefined} aria-label="카메라 등록" inert={!isOpen}>
+    <div className={cx('overlay', { hidden: !isOpen })} role="presentation" aria-hidden={!isOpen} onClick={handleClose}>
+      <div
+        className={cx('modal')}
+        role="dialog"
+        aria-modal={isOpen || undefined}
+        aria-label="카메라 등록"
+        inert={!isOpen}
+        onClick={event => event.stopPropagation()}
+      >
         <header className={cx('header')}>
           <strong>
             <Icon name="camera" size={26} decorative />
