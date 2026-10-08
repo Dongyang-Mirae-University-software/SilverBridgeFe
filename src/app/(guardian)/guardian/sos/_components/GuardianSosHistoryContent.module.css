@@ -19,7 +19,6 @@
   flex-wrap: wrap;
 }
 
-.allWardTab,
 .typeFilter {
   display: inline-flex;
   min-height: 40px;
@@ -37,32 +36,10 @@
   white-space: nowrap;
 }
 
-.allWardTab {
-  padding-left: 6px;
-}
-
-.allWardTabActive,
 .typeFilterActive {
   border: 1.5px solid var(--sb-brand);
   background: var(--sb-brand-50);
   color: var(--sb-brand);
-}
-
-.wardAvatar {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.allWardTabActive .wardAvatar {
-  background: var(--sb-brand);
-  color: #fff;
 }
 
 .typeFilter strong {

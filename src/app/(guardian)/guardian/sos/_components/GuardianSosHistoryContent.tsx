@@ -31,7 +31,7 @@ export default function GuardianSosHistoryContent() {
 
   const { activeWards, hasActiveWards } = useGuardianActiveWards();
   const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId);
-  const effectiveSelectedWardId = selectedWard?.partnerUserId ?? null;
+  const effectiveSelectedWardId = selectedWard?.partnerUserId ?? activeWards[0]?.partnerUserId ?? null;
 
   const { data, isLoading, isError, isFetching } = useQuery({
     ...guardianSosHistoryQueryOptions({
@@ -68,16 +68,6 @@ export default function GuardianSosHistoryContent() {
     <div className={cx('page')}>
       <div className={cx('filters')}>
         <div className={cx('wardTabs')} role="tablist" aria-label="피보호자 선택">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={effectiveSelectedWardId === null}
-            className={cx('allWardTab', { allWardTabActive: effectiveSelectedWardId === null })}
-            onClick={() => handleSelectWard(null)}
-          >
-            <span className={cx('wardAvatar')}>전</span>
-            전체
-          </button>
           <WardSelectorTabs
             wards={activeWards.map(ward => ({ wardId: ward.partnerUserId, wardName: ward.partnerName }))}
             selectedWardId={effectiveSelectedWardId ?? undefined}
