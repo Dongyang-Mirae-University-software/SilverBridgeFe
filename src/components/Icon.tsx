@@ -15,6 +15,7 @@ import CameraIcon from '@/assets/icons/camera.svg';
 import CheckIcon from '@/assets/icons/check.svg';
 import ChevronRightIcon from '@/assets/icons/chevron-right.svg';
 import DashboardIcon from '@/assets/icons/dashboard.svg';
+import EyeIcon from '@/assets/icons/eye.svg';
 import GameIcon from '@/assets/icons/game.svg';
 import GearIcon from '@/assets/icons/gear.svg';
 import HandshakeIcon from '@/assets/icons/handshake.svg';
@@ -56,6 +57,7 @@ const ICONS = {
   check: CheckIcon,
   chevronRight: ChevronRightIcon,
   dashboard: DashboardIcon,
+  eye: EyeIcon,
   game: GameIcon,
   gear: GearIcon,
   handshake: HandshakeIcon,
