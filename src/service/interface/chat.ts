@@ -69,7 +69,6 @@ export function calcAge(birthDate: string): number {
 
 export interface ChatRequest {
   message?: string;
-  userId?: number;
   sessionId?: string;
   history?: Array<{ role: ChatRole; content: string }>;
   context?: ChatContext;

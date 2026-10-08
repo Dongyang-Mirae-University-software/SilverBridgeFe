@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 
+import { UserAvatar } from '@/components/UserAvatar';
 import type { ChatMessage } from '@/service/interface/chat';
 import { INTENT_LABEL, RISK_LABEL } from '@/service/interface/chat';
 import ChatToolCard from './ChatToolCard';
@@ -13,21 +14,24 @@ interface Props {
   message: ChatMessage;
   isLastAssistant: boolean;
   onUiSelect: (field: string, value: string) => void;
+  userImageUrl?: string | null;
+  userName?: string | null;
 }
 
-export default function ChatBubble({ message, isLastAssistant, onUiSelect }: Props) {
+export default function ChatBubble({ message, isLastAssistant, onUiSelect, userImageUrl, userName }: Props) {
   const isUser = message.role === 'user';
   const timeText = dayjs(message.timestamp).format('A h:mm');
 
   if (isUser) {
     return (
       <div className={styles.rowUser}>
+        <span className={styles.timeUser}>{timeText}</span>
         <div className={styles.messageColumnUser}>
           <div className={styles.bubbleUser}>
             <p>{message.content}</p>
           </div>
-          <span className={styles.timeUser}>{timeText}</span>
         </div>
+        <UserAvatar imageUrl={userImageUrl} userName={userName} size="w-38" />
       </div>
     );
   }
@@ -59,9 +63,10 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect }: Pro
         )}
 
         {/* 메시지 본문 */}
-        <div className={styles.messageColumnAssistant}>
-          <div className={styles.bubbleAssistant}>
-            <p className={styles.replyText}>{message.content}</p>
+        <div className={styles.assistantMessageRow}>
+          <div className={styles.messageColumnAssistant}>
+            <div className={styles.bubbleAssistant}>
+              <p className={styles.replyText}>{message.content}</p>
 
             {/* 응급 경고 — 최우선 표시 */}
             {message.emergencyWarning && message.emergencyWarning.length > 0 && (
@@ -128,6 +133,7 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect }: Pro
                 onSelect={onUiSelect}
               />
             )}
+            </div>
           </div>
           <span className={styles.timeAssistant}>{timeText}</span>
         </div>

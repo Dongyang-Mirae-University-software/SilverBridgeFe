@@ -6,9 +6,9 @@ import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { Pagination } from '@/components/Pagination';
-import { Tabs } from '@/components/Tabs';
+import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
-import { formatDay, formatMonth, formatTime } from '@/utils/format/date';
+import { formatTime } from '@/utils/format/date';
 import { guardianSosHistoryQueryOptions } from '@/service/query/guardian';
 import type { IGuardianSosHistoryItem, SosTriggerType } from '@/service/interface/guardian/sosHistory';
 import styles from './GuardianSosHistoryContent.module.css';
@@ -17,50 +17,12 @@ const cx = classNames.bind(styles);
 const PAGE_SIZE = 50;
 const UNKNOWN_WARD_NAME = '탈퇴한 사용자';
 
-const TRIGGER_TYPE_LABEL: Record<SosTriggerType, string> = {
-  SOS_BUTTON: '긴급 SOS 버튼',
-  GUARDIAN_CALL: '보호자에게 직접 전화',
+const TRIGGER_TYPE_META: Record<SosTriggerType, { label: string; icon: 'bell' | 'phone'; tone: 'guardian' | 'sos' }> = {
+  SOS_BUTTON: { label: '긴급 SOS 버튼', icon: 'phone', tone: 'sos' },
+  GUARDIAN_CALL: { label: '보호자에게 알림', icon: 'bell', tone: 'guardian' },
 };
 
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
-
-interface GuardianSosHistoryStatsProps {
-  guardianCallCount: number;
-  sosButtonCount: number;
-  totalElements?: number;
-}
-
-function formatCount(count: number) {
-  return count > 0 ? `${count}건` : '-';
-}
-
-function GuardianSosHistoryStats({ guardianCallCount, sosButtonCount, totalElements }: GuardianSosHistoryStatsProps) {
-  return (
-    <div className={cx('statRow')}>
-      <div className={cx('statCard')}>
-        <span className={cx('statIcon')} aria-hidden="true">
-          <Icon name="phone" size={18} decorative />
-        </span>
-        <strong>{totalElements ?? '-'} 건</strong>
-        <span>전체 호출</span>
-      </div>
-      <div className={cx('statCard')}>
-        <span className={cx('statIcon')} aria-hidden="true">
-          <Icon name="users" size={18} decorative />
-        </span>
-        <strong>{formatCount(guardianCallCount)}</strong>
-        <span>보호자에게 직접 전화</span>
-      </div>
-      <div className={cx('statCard')}>
-        <span className={cx('statIcon')} aria-hidden="true">
-          <Icon name="alert" size={18} decorative />
-        </span>
-        <strong>{formatCount(sosButtonCount)}</strong>
-        <span>긴급 SOS 버튼</span>
-      </div>
-    </div>
-  );
-}
 
 export default function GuardianSosHistoryContent() {
   const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
@@ -69,24 +31,23 @@ export default function GuardianSosHistoryContent() {
 
   const { activeWards, hasActiveWards } = useGuardianActiveWards();
   const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId);
-  const effectiveSelectedWardId = selectedWard?.partnerUserId ?? null;
+  const effectiveSelectedWardId = selectedWard?.partnerUserId ?? activeWards[0]?.partnerUserId ?? null;
 
   const { data, isLoading, isError, isFetching } = useQuery({
-    ...guardianSosHistoryQueryOptions({ wardId: effectiveSelectedWardId ?? undefined, page, size: PAGE_SIZE }),
+    ...guardianSosHistoryQueryOptions({
+      wardId: effectiveSelectedWardId ?? undefined,
+      triggerType: triggerTypeFilter === 'ALL' ? undefined : triggerTypeFilter,
+      page,
+      size: PAGE_SIZE,
+    }),
     enabled: hasActiveWards,
   });
 
   const items = data?.content ?? [];
-  const filteredItems =
-    triggerTypeFilter === 'ALL' ? items : items.filter(item => item.triggerType === triggerTypeFilter);
-
-  const sosButtonCount = items.filter(item => item.triggerType === 'SOS_BUTTON').length;
-  const guardianCallCount = items.filter(item => item.triggerType === 'GUARDIAN_CALL').length;
+  const counts = data?.counts;
 
   const hasNextPage = data ? !data.last : false;
   const hasPrevPage = page > 0;
-  const listHeading = selectedWard ? `${selectedWard.partnerName} 님 호출 기록` : '전체 호출 기록';
-
   if (!hasActiveWards) {
     return (
       <div className={cx('page')}>
@@ -105,48 +66,34 @@ export default function GuardianSosHistoryContent() {
 
   return (
     <div className={cx('page')}>
-      <div className={cx('topRow')}>
-        {activeWards.length > 0 && (
-          <div className={cx('wardTabs')} role="tablist" aria-label="피보호자 선택">
+      <div className={cx('filters')}>
+        <div className={cx('wardTabs')} role="tablist" aria-label="피보호자 선택">
+          <WardSelectorTabs
+            wards={activeWards.map(ward => ({ wardId: ward.partnerUserId, wardName: ward.partnerName }))}
+            selectedWardId={effectiveSelectedWardId ?? undefined}
+            onSelect={handleSelectWard}
+          />
+        </div>
+        <div className={cx('typeFilters')} role="tablist" aria-label="발생 경로 필터">
+          {([
+            ['ALL', '전체', counts?.all ?? 0],
+            ['GUARDIAN_CALL', '보호자에게 알림', counts?.guardianCall ?? 0],
+            ['SOS_BUTTON', '긴급 SOS 버튼', counts?.sosButton ?? 0],
+          ] as const).map(([type, label, count]) => (
             <button
+              key={type}
               type="button"
-              className={cx('wardTab', { wardTabActive: effectiveSelectedWardId === null })}
-              onClick={() => handleSelectWard(null)}
+              className={cx('typeFilter', { typeFilterActive: triggerTypeFilter === type })}
+              onClick={() => {
+                setTriggerTypeFilter(type);
+                setPage(0);
+              }}
             >
-              전체
+              {label} <strong>{count}</strong>
             </button>
-            {activeWards.map(ward => (
-              <button
-                key={ward.partnerUserId}
-                type="button"
-                className={cx('wardTab', { wardTabActive: effectiveSelectedWardId === ward.partnerUserId })}
-                onClick={() => handleSelectWard(ward.partnerUserId)}
-              >
-                {ward.partnerName} 님
-              </button>
-            ))}
-          </div>
-        )}
+          ))}
+        </div>
       </div>
-
-      <GuardianSosHistoryStats
-        totalElements={data?.totalElements}
-        guardianCallCount={guardianCallCount}
-        sosButtonCount={sosButtonCount}
-      />
-
-      <Tabs
-        ariaLabel="발생 경로 필터"
-        items={[
-          { value: 'ALL', label: `전체 ${items.length}` },
-          { value: 'GUARDIAN_CALL', label: `보호자에게 연락 ${guardianCallCount}` },
-          { value: 'SOS_BUTTON', label: `긴급 SOS 버튼 ${sosButtonCount}` },
-        ]}
-        onChange={setTriggerTypeFilter}
-        value={triggerTypeFilter}
-      />
-
-      <h2 className={cx('listHeading')}>{listHeading}</h2>
 
       {isError ? (
         <div className={cx('emptyState')}>
@@ -157,47 +104,40 @@ export default function GuardianSosHistoryContent() {
         <div className={cx('emptyState')}>
           <strong>SOS 이력을 불러오는 중입니다.</strong>
         </div>
-      ) : filteredItems.length === 0 ? (
-        <div className={cx('emptyState')}>
-          <strong>표시할 SOS 이력이 없습니다.</strong>
-          <span>연결된 피보호자에게 SOS가 발생하면 이곳에 표시됩니다.</span>
-        </div>
       ) : (
-        <ul className={cx('list')}>
-          {filteredItems.map((item: IGuardianSosHistoryItem) => (
-            <li
-              key={item.sosEventId}
-              className={cx('item', {
-                itemGuardianCall: item.triggerType === 'GUARDIAN_CALL',
-                itemSosButton: item.triggerType === 'SOS_BUTTON',
-              })}
-            >
-              <div className={cx('itemDate')}>
-                <strong>{formatDay(item.triggeredAt)}</strong>
-                <span>{formatMonth(item.triggeredAt)}</span>
-              </div>
-
-              <div className={cx('itemBody')}>
-                <span className={cx('itemTime')}>
-                  {formatTime(item.triggeredAt)}
-                  {item.location ? ` · 📍 ${item.location}` : ''}
-                </span>
-                <span className={cx('itemMeta')}>
-                  {item.wardName ?? UNKNOWN_WARD_NAME} · {TRIGGER_TYPE_LABEL[item.triggerType]}
-                </span>
-              </div>
-
-              <span
-                className={cx('itemBadge', {
-                  itemBadgeGuardianCall: item.triggerType === 'GUARDIAN_CALL',
-                  itemBadgeSosButton: item.triggerType === 'SOS_BUTTON',
-                })}
-              >
-                {TRIGGER_TYPE_LABEL[item.triggerType]}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className={cx('historyCard')}>
+          <div className={cx('tableHead')}>
+            <span>언제</span>
+            <span>어디서</span>
+            <span>누구에게 연락</span>
+            <span>피보호자</span>
+          </div>
+          {items.length === 0 ? (
+            <div className={cx('emptyState')}>해당 조건의 호출 기록이 없습니다.</div>
+          ) : (
+            <ul className={cx('list')}>
+              {items.map((item: IGuardianSosHistoryItem) => (
+                <li key={item.sosEventId} className={cx('item')}>
+                  <div className={cx('dateCell')}>
+                    <strong>{formatSosDate(item.triggeredAt)}</strong>
+                    <span>{formatTime(item.triggeredAt)}</span>
+                  </div>
+                  <div className={cx('locationCell')}>
+                    <Icon name="mapPin" size={16} color="var(--sb-ink-mute)" />
+                    <span>{item.location ?? '-'}</span>
+                  </div>
+                  <div>
+                    <span className={cx('contactBadge', TRIGGER_TYPE_META[item.triggerType].tone)}>
+                      <Icon name={TRIGGER_TYPE_META[item.triggerType].icon} size={15} />
+                      {TRIGGER_TYPE_META[item.triggerType].label}
+                    </span>
+                  </div>
+                  <span className={cx('wardName')}>{item.wardName ?? UNKNOWN_WARD_NAME}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       <Pagination
@@ -206,7 +146,16 @@ export default function GuardianSosHistoryContent() {
         hasNextPage={hasNextPage}
         disabled={isFetching}
         onChange={setPage}
+        totalPages={data?.totalPages}
+        variant="numbered"
       />
     </div>
   );
+}
+
+function formatSosDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  const weekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(date);
+  return new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric' }).format(date) + ` (${weekday})`;
 }

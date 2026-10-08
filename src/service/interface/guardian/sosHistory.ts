@@ -17,3 +17,13 @@ export interface IGuardianSosHistoryItem {
   location: string | null;
   triggerType: SosTriggerType;
 }
+
+export interface ISosHistoryCounts {
+  all: number;
+  sosButton: number;
+  guardianCall: number;
+}
+
+export interface IGuardianSosHistoryPage extends PageResponse<IGuardianSosHistoryItem> {
+  counts: ISosHistoryCounts;
+}

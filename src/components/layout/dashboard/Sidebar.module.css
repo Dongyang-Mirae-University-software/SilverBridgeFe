@@ -198,12 +198,16 @@
   height: 100dvh;
   border-right: 0;
   padding: max(18px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+  pointer-events: none;
   transform: translateX(-105%);
   transition: transform 0.18s ease;
+  visibility: hidden;
 }
 
 .sidebarWard.open {
+  pointer-events: auto;
   transform: translateX(0);
+  visibility: visible;
 }
 
 .sidebarWard .closeButton {
@@ -215,13 +219,17 @@
   padding: 14px 14px;
 }
 
+.sidebarWard .nav {
+  gap: 2px;
+}
+
 .sidebarWard .navIcon,
 .sidebarWard .navIcon svg {
   width: 20px;
   height: 20px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1260px) {
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;
@@ -264,6 +272,17 @@
 
   .sidebarFooter {
     padding-top: 10px;
+  }
+}
+
+@media (min-width: 1261px) {
+  /* 레퍼런스의 보호자 고정 사이드바: 메뉴가 촘촘하게 이어진다. */
+  .sidebar:not(.sidebarWard) .nav {
+    gap: 0;
+  }
+
+  .sidebar:not(.sidebarWard) .navItem {
+    padding: 8px 12px;
   }
 }
 

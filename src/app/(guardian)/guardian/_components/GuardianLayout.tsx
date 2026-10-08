@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { usePathname } from 'next/navigation';
 import classNames from 'classnames/bind';
 
 import { SidebarLayout } from '@/components/layout/dashboard/SidebarLayout';
@@ -20,15 +21,16 @@ const role = 'GUARDIAN' as const;
 const rootPath = '/guardian';
 
 export function GuardianLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const realtimeUserId = profile?.id ?? getAccessTokenSubject() ?? undefined;
   useGuardianConnectionSocket(realtimeUserId);
 
   return (
-    <div className={cx('stage')}>
+    <div className={cx('stage', { medicationStage: pathname === '/guardian/medication' })}>
       <SidebarLayout navItems={GUARDIAN_NAV} profile={profile} role={role} rootPath={rootPath} />
-      <main className={cx('main')}>{children}</main>
+      <main className={cx('main', { chatMain: pathname === '/guardian/chatbot' })}>{children}</main>
     </div>
   );
 }
