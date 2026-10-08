@@ -7,12 +7,6 @@
   color: var(--sb-ink);
 }
 
-.medicationStage {
-  min-height: 100dvh;
-  height: auto;
-  overflow-y: visible;
-}
-
 .scrim {
   display: none;
   position: fixed;
@@ -49,6 +43,12 @@
 }
 
 @media (max-width: 1260px) {
+  .medicationStage {
+    min-height: 100dvh;
+    height: auto;
+    overflow-y: visible;
+  }
+
   .stage {
     flex-direction: column;
   }
