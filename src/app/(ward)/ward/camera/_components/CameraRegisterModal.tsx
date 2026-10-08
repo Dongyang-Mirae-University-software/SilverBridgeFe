@@ -55,12 +55,14 @@ function setStoredRotation(rotation: FrameRotation) {
 
 export function CameraRegisterModal({
   initialRoom,
+  isCameraRunning = false,
   isOpen,
   onClose,
 }: {
   // 이 기기가 쓰던 카메라가 끊겨서 다시 켤 때 — 원래 쓰던 방을 미리 선택해 둔다.
   // 같은 기기·같은 방으로 다시 등록하면 백엔드가 기존 sessionId를 그대로 재사용한다
   initialRoom?: string;
+  isCameraRunning?: boolean;
   isOpen: boolean;
   onClose: () => void;
 }) {
@@ -292,7 +294,7 @@ export function CameraRegisterModal({
         <header className={cx('header')}>
           <strong>
             <Icon name="camera" size={26} decorative />
-            {initialRoom ? `"${initialRoom}" 카메라 다시 켜기` : '이 기기를 카메라로 등록'}
+            {initialRoom ? `"${initialRoom}" 카메라 ${isCameraRunning ? '관리' : '다시 켜기'}` : '이 기기를 카메라로 등록'}
           </strong>
           <button type="button" className={cx('closeButton')} onClick={handleClose} aria-label="닫기">
             ×

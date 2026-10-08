@@ -23,13 +23,16 @@ export function WardCameraContent() {
     <section className={cx('page')}>
       {cameras.length > 0 && <div className={cx('registerRow')}>
         <button type="button" className={cx('registerButton')} onClick={() => setIsRegisterOpen(true)}>
-          <Icon name="plus" size={22} decorative />
-          {myCamera ? `"${myCamera.label}" 카메라 다시 켜기` : '이 기기를 카메라로 등록'}
+          <Icon name={myCamera?.status === 'running' ? 'gear' : 'plus'} size={22} decorative />
+          {myCamera
+            ? `"${myCamera.label}" 카메라 ${myCamera.status === 'running' ? '관리' : '다시 켜기'}`
+            : '이 기기를 카메라로 등록'}
         </button>
         {myCamera && (
           <p className={cx('registerHint')}>
-            이 기기는 이미 &quot;{myCamera.label}&quot; 카메라로 등록돼 있어요. 화면이 꺼졌거나 연결이
-            끊겼다면 다시 켤 수 있어요.
+            {myCamera.status === 'running'
+              ? '카메라가 송출 중입니다. 전송 화면의 방향을 확인하거나 송출을 멈출 수 있어요.'
+              : `이 기기는 이미 "${myCamera.label}" 카메라로 등록돼 있어요. 화면이 꺼졌거나 연결이 끊겼다면 다시 켤 수 있어요.`}
           </p>
         )}
       </div>}
@@ -38,6 +41,7 @@ export function WardCameraContent() {
 
       <CameraRegisterModal
         initialRoom={myCamera?.label}
+        isCameraRunning={myCamera?.status === 'running'}
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
       />
