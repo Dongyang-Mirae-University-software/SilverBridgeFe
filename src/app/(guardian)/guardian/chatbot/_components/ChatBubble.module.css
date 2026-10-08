@@ -2,6 +2,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
+  gap: 10px;
 }
 
 .rowAssistant {
@@ -98,7 +99,6 @@
 
 /* ── 말풍선 ── */
 .bubbleUser {
-  max-width: 70%;
   border-radius: 18px 18px 4px 18px;
   background: var(--sb-brand);
   color: #fff;
@@ -116,7 +116,6 @@
 }
 
 .bubbleAssistant {
-  max-width: 70%;
   border-radius: 4px 18px 18px;
   background: #fff;
   box-shadow: 0 1px 2px rgba(37, 32, 24, 0.08);
@@ -191,7 +190,8 @@
 }
 
 .timeUser {
-  padding-right: 2px;
+  align-self: flex-end;
+  padding-bottom: 4px;
 }
 
 .timeAssistant {

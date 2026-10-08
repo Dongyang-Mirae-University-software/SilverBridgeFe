@@ -252,6 +252,8 @@ export default function GuardianChatContent() {
                   message={message}
                   isLastAssistant={message.id === lastAssistantId}
                   onUiSelect={handleUiSelect}
+                  userImageUrl={profile?.profileImage}
+                  userName={profile?.name}
                 />
               ))}
 

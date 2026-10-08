@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 
+import { UserAvatar } from '@/components/UserAvatar';
 import type { ChatMessage } from '@/service/interface/chat';
 import { INTENT_LABEL, RISK_LABEL } from '@/service/interface/chat';
 import ChatToolCard from './ChatToolCard';
@@ -13,21 +14,24 @@ interface Props {
   message: ChatMessage;
   isLastAssistant: boolean;
   onUiSelect: (field: string, value: string) => void;
+  userImageUrl?: string | null;
+  userName?: string | null;
 }
 
-export default function ChatBubble({ message, isLastAssistant, onUiSelect }: Props) {
+export default function ChatBubble({ message, isLastAssistant, onUiSelect, userImageUrl, userName }: Props) {
   const isUser = message.role === 'user';
   const timeText = dayjs(message.timestamp).format('A h:mm');
 
   if (isUser) {
     return (
       <div className={styles.rowUser}>
+        <span className={styles.timeUser}>{timeText}</span>
         <div className={styles.messageColumnUser}>
           <div className={styles.bubbleUser}>
             <p>{message.content}</p>
           </div>
-          <span className={styles.timeUser}>{timeText}</span>
         </div>
+        <UserAvatar imageUrl={userImageUrl} userName={userName} size="w-38" />
       </div>
     );
   }
