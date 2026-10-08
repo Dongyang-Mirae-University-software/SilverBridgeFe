@@ -29,8 +29,7 @@ function useLiveClock() {
   return now;
 }
 
-function getCameraLabel(session: { wardName?: string; label?: string }) {
-  if (session.label) return session.wardName ? `${session.wardName} · ${session.label}` : session.label;
+function getWardName(session: { wardName?: string }) {
   return session.wardName ?? '피보호자';
 }
 
@@ -94,11 +93,12 @@ export function LiveCameraModal({
   useEffect(() => {
     if (didInitRef.current || monitor.isLoading || monitor.sessions.length === 0) return;
     didInitRef.current = true;
-    const target = initialSessionId && monitor.sessions.some(session => session.sessionId === initialSessionId)
-      ? initialSessionId
-      : initialWardId
-        ? monitor.sessions.find(session => session.wardId === initialWardId)?.sessionId
-        : monitor.sessions[0].sessionId;
+    const target =
+      initialSessionId && monitor.sessions.some(session => session.sessionId === initialSessionId)
+        ? initialSessionId
+        : initialWardId
+          ? monitor.sessions.find(session => session.wardId === initialWardId)?.sessionId
+          : monitor.sessions[0].sessionId;
     if (target) monitor.selectSession(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSessionId, initialWardId, monitor.isLoading, monitor.sessions]);
@@ -121,24 +121,31 @@ export function LiveCameraModal({
   const confidence = monitor.latestAnalysis?.confidence ?? 0;
   const detectLabel = DETECT_LABEL[monitor.detectState] ?? '분석 대기 중';
   const cameraStatus = monitor.sessionStatus?.status;
-  const cameraStatusLabel = cameraStatus === null ? '확인 불가' : cameraStatus ?? '-';
+  const cameraStatusLabel = cameraStatus === null ? '확인 불가' : (cameraStatus ?? '-');
   const cameraStatusMeta = getCameraStatusMeta(cameraStatus ?? null);
 
   const wardGroups = useMemo(() => groupSessionsByWard(monitor.sessions), [monitor.sessions]);
   const selectedWardId = initialWardId || monitor.selectedSession?.wardId || monitor.selectedSession?.wardName || '';
   const selectedWardGroup = wardGroups.find(group => group.wardId === selectedWardId);
   const hasNoCameraForSelectedWard = Boolean(initialWardId) && !selectedWardGroup;
-  const isVideoUnavailable = Boolean(monitor.streamErrorMessage) || cameraStatus === 'disconnected' || cameraStatus === 'offline';
+  const isVideoUnavailable =
+    Boolean(monitor.streamErrorMessage) || cameraStatus === 'disconnected' || cameraStatus === 'offline';
 
   return (
     <div className={cx('overlay')} role="presentation" onClick={onClose}>
-      <div className={cx('modal')} role="dialog" aria-modal="true" aria-label="실시간 카메라" onClick={event => event.stopPropagation()}>
+      <div
+        className={cx('modal')}
+        role="dialog"
+        aria-modal="true"
+        aria-label="실시간 카메라"
+        onClick={event => event.stopPropagation()}
+      >
         <header className={cx('header')}>
           <span className={cx('liveBadge')}>
             <span className={cx('liveDot')} />
             LIVE
           </span>
-          <strong>실시간 카메라{monitor.selectedSession ? ` — ${getCameraLabel(monitor.selectedSession)}` : ''}</strong>
+          <strong>실시간 카메라{monitor.selectedSession ? ` - ${getWardName(monitor.selectedSession)}` : ''}</strong>
           <button type="button" className={cx('closeButton')} onClick={onClose} aria-label="닫기">
             ✕
           </button>
@@ -153,9 +160,7 @@ export function LiveCameraModal({
               <span>카메라로 쓰는 기기의 화면이 켜져 있는지 확인해 주세요</span>
             </div>
           ) : !monitor.frameSrc ? (
-            <div className={cx('placeholder')}>
-              {monitor.streamErrorMessage ?? '프레임을 수신하는 중입니다...'}
-            </div>
+            <div className={cx('placeholder')}>{monitor.streamErrorMessage ?? '프레임을 수신하는 중입니다...'}</div>
           ) : (
             <img
               ref={imgRef}
@@ -168,7 +173,10 @@ export function LiveCameraModal({
           )}
 
           <div className={cx('recBadge')}>
-            <strong><span className={cx('recDot')} />REC</strong>
+            <strong>
+              <span className={cx('recDot')} />
+              REC
+            </strong>
             <span>{formatLiveDateTime(now)}</span>
             <span>CAM · {monitor.selectedSession?.label ?? '-'}</span>
           </div>
