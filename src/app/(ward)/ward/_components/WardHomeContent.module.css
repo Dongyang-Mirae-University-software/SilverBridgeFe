@@ -87,7 +87,7 @@
 
 .disabled:hover { transform: none; }
 
-@media (max-width: 900px) {
+@media (max-width: 425px) {
   .homeGrid {
     grid-template-columns: 1fr;
     grid-template-rows: none;
