@@ -21,7 +21,7 @@ const cx = classNames.bind(styles);
 const PAGE_SIZE = 12;
 type TypeFilter = 'ALL' | AnomalyDetectedType;
 
-export function AnomalyHistoryContent({ onViewLive }: { onViewLive: () => void }) {
+export function AnomalyHistoryContent({ onViewLive }: { onViewLive: (wardId?: string) => void }) {
   const [page, setPage] = useState(0);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('ALL');
   const [selectedWardId, setSelectedWardId] = useState<string | undefined>(undefined);
@@ -61,7 +61,7 @@ export function AnomalyHistoryContent({ onViewLive }: { onViewLive: () => void }
             }}
           />
         )}
-        <button type="button" className={cx('liveButton')} onClick={onViewLive}>
+        <button type="button" className={cx('liveButton')} onClick={() => onViewLive(activeWardId)}>
           <span className={cx('liveDot')} />
           실시간 카메라 보기
         </button>

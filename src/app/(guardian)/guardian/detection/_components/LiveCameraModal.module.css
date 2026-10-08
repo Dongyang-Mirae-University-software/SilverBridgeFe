@@ -204,15 +204,16 @@
 .switchRow {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 14px 18px;
+  padding: 14px 20px;
 }
 
 .switchLabel {
   color: rgba(255, 255, 255, 0.5);
-  font-size: 0.75rem;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .switchChips {
@@ -224,21 +225,44 @@
 .switchChip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.72);
+  color: #fff;
   cursor: pointer;
-  font-size: 0.8125rem;
+  font-size: 13px;
   font-weight: 700;
-  padding: 7px 14px;
+  padding: 9px 14px;
 }
 
 .switchChip.active {
   border-color: var(--sb-brand);
   background: rgba(176, 103, 77, 0.3);
   color: #fff;
+}
+
+.switchStatusDot {
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: #9a928b;
+}
+
+.switchStatusDot.running {
+  background: #4ade80;
+}
+
+.switchStatusDot.checking {
+  border: 1.5px dashed #c9c2ba;
+  background: transparent;
+}
+
+.switchStatus {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .footer {

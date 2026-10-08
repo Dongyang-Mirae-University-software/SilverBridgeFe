@@ -5,7 +5,7 @@ import classNames from 'classnames/bind';
 
 import { formatNumber } from './monitorUtils';
 import { useGuardianMonitor } from './useGuardianMonitor';
-import type { GuardianLiveCamera } from '@/service/interface/guardian/camera';
+import type { GuardianCameraLiveStatus, GuardianLiveCamera } from '@/service/interface/guardian/camera';
 import styles from './LiveCameraModal.module.css';
 
 const cx = classNames.bind(styles);
@@ -34,6 +34,12 @@ function getCameraLabel(session: { wardName?: string; label?: string }) {
   return session.wardName ?? '피보호자';
 }
 
+function getCameraStatusMeta(status: GuardianCameraLiveStatus) {
+  if (status === 'running') return { label: '연결됨', tone: 'running' } as const;
+  if (status === null) return { label: '확인 중', tone: 'checking' } as const;
+  return { label: '연결 안 됨', tone: 'offline' } as const;
+}
+
 interface WardGroup {
   wardId: string;
   wardName: string;
@@ -59,7 +65,15 @@ function groupSessionsByWard(sessions: GuardianLiveCamera[]): WardGroup[] {
   return groups;
 }
 
-export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionId?: string | null; onClose: () => void }) {
+export function LiveCameraModal({
+  initialSessionId,
+  initialWardId,
+  onClose,
+}: {
+  initialSessionId?: string | null;
+  initialWardId?: string;
+  onClose: () => void;
+}) {
   const monitor = useGuardianMonitor();
   const didInitRef = useRef(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -70,10 +84,12 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
     didInitRef.current = true;
     const target = initialSessionId && monitor.sessions.some(session => session.sessionId === initialSessionId)
       ? initialSessionId
-      : monitor.sessions[0].sessionId;
-    monitor.selectSession(target);
+      : initialWardId
+        ? monitor.sessions.find(session => session.wardId === initialWardId)?.sessionId
+        : monitor.sessions[0].sessionId;
+    if (target) monitor.selectSession(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialSessionId, monitor.isLoading, monitor.sessions]);
+  }, [initialSessionId, initialWardId, monitor.isLoading, monitor.sessions]);
 
   const handleSnapshot = () => {
     const img = imgRef.current;
@@ -97,14 +113,9 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
   const cameraStatusLabel = cameraStatus === null ? '확인 불가' : cameraStatus ?? '-';
 
   const wardGroups = useMemo(() => groupSessionsByWard(monitor.sessions), [monitor.sessions]);
-  const selectedWardId = monitor.selectedSession?.wardId || monitor.selectedSession?.wardName || '';
+  const selectedWardId = initialWardId || monitor.selectedSession?.wardId || monitor.selectedSession?.wardName || '';
   const selectedWardGroup = wardGroups.find(group => group.wardId === selectedWardId);
-
-  const handleSelectWard = (group: WardGroup) => {
-    if (group.wardId === selectedWardId) return;
-    const target = group.cameras[0];
-    if (target) monitor.selectSession(target.sessionId);
-  };
+  const hasNoCameraForSelectedWard = Boolean(initialWardId) && !selectedWardGroup;
 
   return (
     <div className={cx('overlay')} role="presentation" onClick={onClose}>
@@ -121,7 +132,7 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
         </header>
 
         <div className={cx('frameArea')}>
-          {monitor.isEmpty ? (
+          {monitor.isEmpty || hasNoCameraForSelectedWard ? (
             <div className={cx('placeholder')}>연결된 피보호자의 카메라가 없습니다.</div>
           ) : !monitor.frameSrc ? (
             <div className={cx('placeholder')}>
@@ -169,38 +180,25 @@ export function LiveCameraModal({ initialSessionId, onClose }: { initialSessionI
           </div>
         </div>
 
-        {wardGroups.length > 1 && (
-          <div className={cx('switchRow')}>
-            <span className={cx('switchLabel')}>피보호자 선택</span>
-            <div className={cx('switchChips')}>
-              {wardGroups.map(group => (
-                <button
-                  key={group.wardId}
-                  type="button"
-                  className={cx('switchChip', { active: group.wardId === selectedWardId })}
-                  onClick={() => handleSelectWard(group)}
-                >
-                  {group.wardName}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {selectedWardGroup && selectedWardGroup.cameras.length > 1 && (
           <div className={cx('switchRow')}>
-            <span className={cx('switchLabel')}>방 선택</span>
+            <span className={cx('switchLabel')}>카메라 전환</span>
             <div className={cx('switchChips')}>
-              {selectedWardGroup.cameras.map(session => (
-                <button
-                  key={session.sessionId}
-                  type="button"
-                  className={cx('switchChip', { active: monitor.selectedId === session.sessionId })}
-                  onClick={() => monitor.selectSession(session.sessionId)}
-                >
-                  {session.label}
-                </button>
-              ))}
+              {selectedWardGroup.cameras.map(session => {
+                const status = getCameraStatusMeta(session.status);
+                return (
+                  <button
+                    key={session.sessionId}
+                    type="button"
+                    className={cx('switchChip', { active: monitor.selectedId === session.sessionId })}
+                    onClick={() => monitor.selectSession(session.sessionId)}
+                  >
+                    <span className={cx('switchStatusDot', status.tone)} />
+                    {session.label}
+                    <span className={cx('switchStatus')}>{status.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
