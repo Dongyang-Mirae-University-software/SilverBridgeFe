@@ -20,10 +20,12 @@
 }
 
 .messageColumnUser {
+  flex: 0 1 auto;
   align-items: flex-end;
 }
 
 .messageColumnAssistant {
+  flex: 0 1 auto;
   align-items: flex-start;
 }
 
@@ -109,7 +111,10 @@
 
 /* ── 말풍선 ── */
 .bubbleUser {
-  max-width: 70%;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: min(700px, calc(100vw - 168px));
+  margin-left: auto;
   border-radius: 18px 18px 4px 18px;
   background: var(--sb-brand);
   color: #fff;
@@ -127,7 +132,9 @@
 }
 
 .bubbleAssistant {
-  max-width: 70%;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: min(700px, calc(100vw - 192px));
   border-radius: 4px 18px 18px;
   background: #fff;
   box-shadow: 0 1px 2px rgba(37, 32, 24, 0.08);
