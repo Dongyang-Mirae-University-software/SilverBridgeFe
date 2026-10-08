@@ -114,23 +114,13 @@
   overflow: hidden;
 }
 
-.video {
+.sentPreview {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-}
-
-.sentPreview {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 1;
-  width: min(42%, 180px);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 10px;
   background: #14110c;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
 }
 
 .sentPreview > span {
@@ -145,9 +135,18 @@
 .canvas {
   display: block;
   width: 100%;
-  height: auto;
-  min-height: 76px;
+  height: calc(100% - 29px);
+  min-height: 191px;
   object-fit: contain;
+}
+
+/* 카메라 스트림은 캔버스에 그리기 위한 원본으로만 사용한다. 화면에는 AI 전송본만 보인다. */
+.sourceVideo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .previewButton {

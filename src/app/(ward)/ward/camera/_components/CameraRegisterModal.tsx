@@ -349,7 +349,7 @@ export function CameraRegisterModal({
           <section className={cx('setupSection')}>
             <h2>4. 미리보기를 확인해 주세요</h2>
             <div className={cx('previewBox')}>
-            <video ref={videoRef} className={cx('video')} autoPlay muted playsInline />
+            <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline />
             <div className={cx('sentPreview')}>
               <span>AI에 전송되는 화면</span>
               <canvas ref={canvasRef} className={cx('canvas')} />
