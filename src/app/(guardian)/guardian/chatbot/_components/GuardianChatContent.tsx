@@ -209,7 +209,20 @@ export default function GuardianChatContent() {
         <header className={styles.header}>
           <div className={styles.brand}>
             <div className={styles.brandMark}>
-              <Icon name="brain" size={28} color="var(--sb-brand)" decorative />
+              <svg width="38" height="38" viewBox="0 0 60 60" aria-hidden="true">
+                <circle cx="14" cy="16" r="8" fill="#C9986A" />
+                <circle cx="46" cy="16" r="8" fill="#C9986A" />
+                <circle cx="14" cy="16" r="4" fill="#F5C9A8" />
+                <circle cx="46" cy="16" r="4" fill="#F5C9A8" />
+                <ellipse cx="30" cy="32" rx="20" ry="18" fill="#F5C9A8" />
+                <ellipse cx="30" cy="38" rx="11" ry="9" fill="#FFE4D0" />
+                <circle cx="22" cy="28" r="2" fill="#3D2A1E" />
+                <circle cx="38" cy="28" r="2" fill="#3D2A1E" />
+                <ellipse cx="30" cy="35" rx="2" ry="1.4" fill="#3D2A1E" />
+                <path d="M28 38 Q30 41 32 38" fill="none" stroke="#3D2A1E" strokeLinecap="round" strokeWidth="1.4" />
+                <circle cx="17" cy="34" r="2.4" fill="#FFB3B8" opacity="0.7" />
+                <circle cx="43" cy="34" r="2.4" fill="#FFB3B8" opacity="0.7" />
+              </svg>
             </div>
             <div className={styles.brandCopy}>
               <h1>AI 의료 챗봇</h1>
