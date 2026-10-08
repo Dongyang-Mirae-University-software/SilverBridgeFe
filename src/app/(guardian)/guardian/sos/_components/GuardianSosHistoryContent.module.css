@@ -21,11 +21,6 @@
   min-height: 40px;
 }
 
-.typeFilters {
-  border-top: 1px solid var(--sb-line-soft);
-  padding-top: 10px;
-}
-
 .typeFilter {
   display: inline-flex;
   min-height: 40px;
