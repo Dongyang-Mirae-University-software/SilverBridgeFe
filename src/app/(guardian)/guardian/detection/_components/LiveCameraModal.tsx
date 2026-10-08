@@ -40,6 +40,18 @@ function getCameraStatusMeta(status: GuardianCameraLiveStatus) {
   return { label: '연결 안 됨', tone: 'offline' } as const;
 }
 
+function formatLiveDateTime(date: Date) {
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(date);
+}
+
 interface WardGroup {
   wardId: string;
   wardName: string;
@@ -108,14 +120,15 @@ export function LiveCameraModal({
 
   const confidence = monitor.latestAnalysis?.confidence ?? 0;
   const detectLabel = DETECT_LABEL[monitor.detectState] ?? '분석 대기 중';
-  const isAlert = ['fire', 'smoke', 'knife', 'fall', 'danger'].includes(monitor.detectState);
   const cameraStatus = monitor.sessionStatus?.status;
   const cameraStatusLabel = cameraStatus === null ? '확인 불가' : cameraStatus ?? '-';
+  const cameraStatusMeta = getCameraStatusMeta(cameraStatus ?? null);
 
   const wardGroups = useMemo(() => groupSessionsByWard(monitor.sessions), [monitor.sessions]);
   const selectedWardId = initialWardId || monitor.selectedSession?.wardId || monitor.selectedSession?.wardName || '';
   const selectedWardGroup = wardGroups.find(group => group.wardId === selectedWardId);
   const hasNoCameraForSelectedWard = Boolean(initialWardId) && !selectedWardGroup;
+  const isVideoUnavailable = Boolean(monitor.streamErrorMessage) || cameraStatus === 'disconnected' || cameraStatus === 'offline';
 
   return (
     <div className={cx('overlay')} role="presentation" onClick={onClose}>
@@ -134,6 +147,11 @@ export function LiveCameraModal({
         <div className={cx('frameArea')}>
           {monitor.isEmpty || hasNoCameraForSelectedWard ? (
             <div className={cx('placeholder')}>연결된 피보호자의 카메라가 없습니다.</div>
+          ) : isVideoUnavailable ? (
+            <div className={cx('videoUnavailable')}>
+              <strong>영상이 오지 않아요</strong>
+              <span>카메라로 쓰는 기기의 화면이 켜져 있는지 확인해 주세요</span>
+            </div>
           ) : !monitor.frameSrc ? (
             <div className={cx('placeholder')}>
               {monitor.streamErrorMessage ?? '프레임을 수신하는 중입니다...'}
@@ -150,12 +168,13 @@ export function LiveCameraModal({
           )}
 
           <div className={cx('recBadge')}>
-            <span className={cx('recDot')} />
-            REC · {now.toLocaleString('ko-KR', { hour12: false })}
+            <strong><span className={cx('recDot')} />REC</strong>
+            <span>{formatLiveDateTime(now)}</span>
+            <span>CAM · {monitor.selectedSession?.label ?? '-'}</span>
           </div>
-          <div className={cx('aiBadge', { alert: isAlert })}>
-            <span className={cx('aiDot')} />
-            {isAlert ? `AI 감지: ${detectLabel}` : 'AI 감지 정상'}
+          <div className={cx('aiBadge')}>
+            <span className={cx('aiDot', cameraStatusMeta.tone)} />
+            {cameraStatusMeta.label}
           </div>
 
           {monitor.latestAnalysis && (
