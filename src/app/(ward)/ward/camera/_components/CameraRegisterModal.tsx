@@ -15,6 +15,11 @@ const cx = classNames.bind(styles);
 
 type CameraFacing = 'user' | 'environment' | 'screen';
 type StreamStatus = 'off' | 'ready' | 'streaming';
+type FrameRotation = 0 | 90 | 180 | 270;
+type WakeLockSentinelLike = { released: boolean; release: () => Promise<void> };
+
+const CAMERA_ROTATION_STORAGE_KEY = 'silverbridge_ward_camera_rotation';
+const MAX_IN_FLIGHT = 2;
 
 const FACING_OPTIONS: Array<{ value: CameraFacing; label: string }> = [
   { value: 'user', label: '전면 카메라' },
@@ -22,14 +27,29 @@ const FACING_OPTIONS: Array<{ value: CameraFacing; label: string }> = [
   { value: 'screen', label: '화면 공유' },
 ];
 
-const MIN_UPLOAD_INTERVAL_MS = 500;
-
 function getErrorCode(error: unknown) {
   return (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
   return (error as { message?: string })?.message ?? fallback;
+}
+
+function getStoredRotation(): FrameRotation {
+  try {
+    const value = Number(window.localStorage.getItem(CAMERA_ROTATION_STORAGE_KEY));
+    return value === 90 || value === 180 || value === 270 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function setStoredRotation(rotation: FrameRotation) {
+  try {
+    window.localStorage.setItem(CAMERA_ROTATION_STORAGE_KEY, String(rotation));
+  } catch {
+    // 저장을 지원하지 않는 환경에서는 이번 실행 중 선택값만 사용한다.
+  }
 }
 
 export function CameraRegisterModal({
@@ -46,14 +66,18 @@ export function CameraRegisterModal({
   const [room, setRoom] = useState(initialRoom ?? '');
   const [errorMessage, setErrorMessage] = useState('');
   const [registeredCamera, setRegisteredCamera] = useState<WardCamera | null>(null);
+  const [rotation, setRotation] = useState<FrameRotation>(getStoredRotation);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const captureTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const previewTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const liveSessionIdRef = useRef<string | null>(null);
   const frameQueueRef = useRef<Blob[]>([]);
-  const isUploadingRef = useRef(false);
+  const inFlightRef = useRef(0);
+  const rotationRef = useRef<FrameRotation>(rotation);
+  const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
 
   const { data: rooms = [], refetch: refetchRooms } = useQuery(wardCameraRoomsQueryOptions);
   const registerMutation = useRegisterWardCameraMutation();
@@ -61,8 +85,40 @@ export function CameraRegisterModal({
   useEffect(() => {
     return () => {
       if (captureTimerRef.current) clearInterval(captureTimerRef.current);
+      if (previewTimerRef.current) clearInterval(previewTimerRef.current);
       mediaStreamRef.current?.getTracks().forEach(track => track.stop());
+      void wakeLockRef.current?.release().catch(() => {});
     };
+  }, []);
+
+  useEffect(() => {
+    rotationRef.current = rotation;
+  }, [rotation]);
+
+  async function requestScreenWakeLock() {
+    const wakeLock = (navigator as Navigator & { wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinelLike> } }).wakeLock;
+    if (!wakeLock || wakeLockRef.current && !wakeLockRef.current.released) return;
+
+    try {
+      wakeLockRef.current = await wakeLock.request('screen');
+    } catch {
+      // 지원하지 않거나 권한이 거부된 브라우저는 송출을 계속한다.
+    }
+  }
+
+  async function releaseScreenWakeLock() {
+    const wakeLock = wakeLockRef.current;
+    wakeLockRef.current = null;
+    if (wakeLock && !wakeLock.released) await wakeLock.release().catch(() => {});
+  }
+
+  useEffect(() => {
+    const requestWakeLockWhenVisible = () => {
+      if (document.visibilityState === 'visible' && liveSessionIdRef.current) void requestScreenWakeLock();
+    };
+
+    document.addEventListener('visibilitychange', requestWakeLockWhenVisible);
+    return () => document.removeEventListener('visibilitychange', requestWakeLockWhenVisible);
   }, []);
 
   const handleStartMedia = async () => {
@@ -71,26 +127,39 @@ export function CameraRegisterModal({
       const stream =
         facing === 'screen'
           ? await navigator.mediaDevices.getDisplayMedia({ video: true })
-          : await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false });
+          : await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: facing,
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                frameRate: { ideal: 15 },
+              },
+              audio: false,
+            });
 
       mediaStreamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       setStatus('ready');
+      startPreviewLoop();
     } catch {
       setErrorMessage('카메라·화면 접근 권한이 필요합니다.');
     }
   };
 
   const handleStopMedia = async () => {
-    if (liveSessionIdRef.current) {
-      await stopStreamSession(liveSessionIdRef.current).catch(() => {});
-      liveSessionIdRef.current = null;
-    }
+    const sessionId = liveSessionIdRef.current;
+    liveSessionIdRef.current = null;
+    if (sessionId) await stopStreamSession(sessionId).catch(() => {});
     if (captureTimerRef.current) {
       clearInterval(captureTimerRef.current);
       captureTimerRef.current = null;
     }
+    if (previewTimerRef.current) {
+      clearInterval(previewTimerRef.current);
+      previewTimerRef.current = null;
+    }
     frameQueueRef.current = [];
+    await releaseScreenWakeLock();
     mediaStreamRef.current?.getTracks().forEach(track => track.stop());
     mediaStreamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
@@ -104,39 +173,66 @@ export function CameraRegisterModal({
   };
 
   const enqueueLatestFrame = (blob: Blob) => {
+    if (!liveSessionIdRef.current) return;
     frameQueueRef.current = [blob];
     void drainQueue();
   };
 
-  const drainQueue = async () => {
-    if (isUploadingRef.current) return;
-    isUploadingRef.current = true;
-    try {
-      while (frameQueueRef.current.length > 0 && liveSessionIdRef.current) {
-        const blob = frameQueueRef.current.pop();
-        frameQueueRef.current = [];
-        if (!blob) break;
-        await uploadFrame(liveSessionIdRef.current, blob).catch(() => {});
-        await new Promise(resolve => setTimeout(resolve, MIN_UPLOAD_INTERVAL_MS));
-      }
-    } finally {
-      isUploadingRef.current = false;
+  const drainQueue = () => {
+    while (inFlightRef.current < MAX_IN_FLIGHT && frameQueueRef.current.length > 0 && liveSessionIdRef.current) {
+      const blob = frameQueueRef.current.pop();
+      const sessionId = liveSessionIdRef.current;
+      frameQueueRef.current = [];
+      if (!blob || !sessionId) return;
+
+      inFlightRef.current += 1;
+      void uploadFrame(sessionId, blob)
+        .catch(() => {})
+        .finally(() => {
+          inFlightRef.current -= 1;
+          void drainQueue();
+        });
     }
   };
 
-  const startCaptureLoop = (recommendedFps: number) => {
+  const drawFrameToCanvas = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas) return;
+    if (!video || !canvas || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return false;
 
-    const intervalMs = Math.max(Math.floor(1000 / recommendedFps), 1);
+    const width = video.videoWidth || 1280;
+    const height = video.videoHeight || 720;
+    const currentRotation = rotationRef.current;
+    const shouldSwapDimensions = currentRotation === 90 || currentRotation === 270;
+    const context = canvas.getContext('2d');
+    if (!context) return false;
+
+    canvas.width = shouldSwapDimensions ? height : width;
+    canvas.height = shouldSwapDimensions ? width : height;
+    context.save();
+    context.translate(canvas.width / 2, canvas.height / 2);
+    context.rotate((currentRotation * Math.PI) / 180);
+    context.drawImage(video, -width / 2, -height / 2, width, height);
+    context.restore();
+    return true;
+  };
+
+  const startPreviewLoop = () => {
+    if (previewTimerRef.current) clearInterval(previewTimerRef.current);
+    previewTimerRef.current = setInterval(drawFrameToCanvas, Math.floor(1000 / 15));
+  };
+
+  const startCaptureLoop = (recommendedFps: number) => {
+    if (previewTimerRef.current) {
+      clearInterval(previewTimerRef.current);
+      previewTimerRef.current = null;
+    }
+    if (captureTimerRef.current) clearInterval(captureTimerRef.current);
+
+    const intervalMs = Math.max(Math.floor(1000 / Math.max(recommendedFps, 1)), 1);
     captureTimerRef.current = setInterval(() => {
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(blob => blob && enqueueLatestFrame(blob), 'image/jpeg', 0.8);
+      if (!drawFrameToCanvas()) return;
+      canvasRef.current?.toBlob(blob => blob && enqueueLatestFrame(blob), 'image/jpeg', 0.8);
     }, intervalMs);
   };
 
@@ -161,6 +257,7 @@ export function CameraRegisterModal({
             liveSessionIdRef.current = session.session_id ?? camera.sessionId;
             setStatus('streaming');
             startCaptureLoop(camera.recommendedFps);
+            void requestScreenWakeLock();
           } catch {
             setErrorMessage('카메라 등록은 완료됐지만 송출 시작에 실패했습니다. 다시 시도해 주세요.');
           }
@@ -177,6 +274,14 @@ export function CameraRegisterModal({
         },
       },
     );
+  };
+
+  const handleRotate = () => {
+    setRotation(current => {
+      const next = ((current + 90) % 360) as FrameRotation;
+      setStoredRotation(next);
+      return next;
+    });
   };
 
   return (
@@ -206,7 +311,10 @@ export function CameraRegisterModal({
 
           <div className={cx('previewBox')}>
             <video ref={videoRef} className={cx('video')} autoPlay muted playsInline />
-            <canvas ref={canvasRef} className={cx('hiddenCanvas')} />
+            <div className={cx('sentPreview')}>
+              <span>AI에 전송되는 화면</span>
+              <canvas ref={canvasRef} className={cx('canvas')} />
+            </div>
             {status === 'off' ? (
               <button type="button" className={cx('previewButton')} onClick={handleStartMedia}>
                 미리보기 시작
@@ -214,6 +322,17 @@ export function CameraRegisterModal({
             ) : (
               <button type="button" className={cx('previewButton', 'stop')} onClick={handleStopMedia}>
                 {status === 'streaming' ? '등록 취소하고 끄기' : '미리보기 끄기'}
+              </button>
+            )}
+          </div>
+
+          <div className={cx('cameraGuide')}>
+            <p>휴대폰을 <strong>가로</strong>로 두고, 방 전체가 보이도록 <strong>위에서 아래로</strong> 비춰 주세요.</p>
+            <p>위 미리보기에서 사람이 똑바로 보이는지 확인해 주세요.</p>
+            {status !== 'off' && (
+              <button type="button" className={cx('rotateButton')} onClick={handleRotate}>
+                <span>화면 회전</span>
+                <strong>{rotation}°</strong>
               </button>
             )}
           </div>
