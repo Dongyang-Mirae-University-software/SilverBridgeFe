@@ -221,7 +221,7 @@
   height: 20px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1260px) {
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;

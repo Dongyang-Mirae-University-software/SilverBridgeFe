@@ -42,7 +42,7 @@
   box-sizing: border-box;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1260px) {
   .stage {
     flex-direction: column;
   }
