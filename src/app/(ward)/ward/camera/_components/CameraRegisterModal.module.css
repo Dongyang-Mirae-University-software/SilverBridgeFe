@@ -28,6 +28,9 @@
 }
 
 .header strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   flex: 1;
   color: var(--sb-ink);
   font-size: 24px;
@@ -90,7 +93,10 @@
 
 .facingChip:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  border-color: var(--sb-line-soft);
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  opacity: 1;
 }
 
 .previewBox {
@@ -141,15 +147,20 @@
 
 .previewButton {
   position: absolute;
-  bottom: 16px;
+  bottom: 14px;
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 0.9375rem;
-  font-weight: 850;
-  padding: 12px 22px;
+  font-size: 17px;
+  font-weight: 800;
+  padding: 0 20px;
 }
 
 .previewButton.stop {
@@ -190,20 +201,21 @@
 
 .rotateButton {
   display: inline-flex;
-  width: fit-content;
-  min-height: 38px;
+  width: 100%;
+  min-height: 52px;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin-top: 0;
-  border: 1px solid var(--sb-line);
-  border-radius: 10px;
+  border: 2px solid var(--sb-line);
+  border-radius: 12px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 0 12px;
+  font-size: 17px;
+  font-weight: 800;
+  padding: 0 18px;
 }
 
 .previewHint {
@@ -243,7 +255,7 @@
 
 .registerButton:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.45;
 }
 
 .streamingNotice {

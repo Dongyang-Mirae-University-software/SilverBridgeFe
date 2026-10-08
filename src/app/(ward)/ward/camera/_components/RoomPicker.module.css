@@ -5,9 +5,13 @@
 }
 
 .chip {
+  display: inline-flex;
+  min-width: 0;
   min-height: 52px;
+  align-items: center;
+  gap: 8px;
   border: 2px solid var(--sb-line);
-  border-radius: 12px;
+  border-radius: 8px;
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
@@ -25,11 +29,30 @@
 .chip.locked,
 .chip:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  border-color: var(--sb-line-soft);
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  opacity: 1;
 }
 
 .badge {
-  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
   font-size: 0.8125rem;
   font-weight: 700;
+}
+
+.chip.locked > :first-child {
+  color: var(--sb-ink-mute);
+}
+
+@media (max-width: 640px) {
+  .chip {
+    min-height: 48px;
+    gap: 6px;
+    font-size: 15px;
+    padding: 0 14px;
+  }
 }

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { createStreamSession, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
+import { Icon } from '@/components/Icon';
 import { getStoredDeviceId, setStoredDeviceId } from '@/lib/device/deviceId';
 import { useRegisterWardCameraMutation, wardCameraRoomsQueryOptions } from '@/service/query/ward/camera';
 import { WardCamera } from '@/service/interface/ward/camera';
@@ -288,7 +289,10 @@ export function CameraRegisterModal({
     <div className={cx('overlay')} role="presentation">
       <div className={cx('modal')} role="dialog" aria-modal="true" aria-label="카메라 등록">
         <header className={cx('header')}>
-          <strong>{initialRoom ? `"${initialRoom}" 카메라 다시 켜기` : '이 기기를 카메라로 등록'}</strong>
+          <strong>
+            <Icon name="camera" size={26} decorative />
+            {initialRoom ? `"${initialRoom}" 카메라 다시 켜기` : '이 기기를 카메라로 등록'}
+          </strong>
           <button type="button" className={cx('closeButton')} onClick={handleClose} aria-label="닫기">
             ×
           </button>
@@ -300,7 +304,6 @@ export function CameraRegisterModal({
             <RoomPicker
               rooms={rooms}
               selectedLabel={room}
-              currentLabel={initialRoom}
               disabled={status === 'streaming'}
               onSelect={setRoom}
             />
@@ -352,10 +355,12 @@ export function CameraRegisterModal({
             </div>
             {status === 'off' ? (
               <button type="button" className={cx('previewButton')} onClick={handleStartMedia}>
+                <Icon name="camera" size={20} decorative />
                 미리보기 시작
               </button>
             ) : (
               <button type="button" className={cx('previewButton', 'stop')} onClick={handleStopMedia}>
+                <Icon name="camera" size={20} decorative />
                 {status === 'streaming' ? '등록 취소하고 끄기' : '미리보기 끄기'}
               </button>
             )}
@@ -363,6 +368,7 @@ export function CameraRegisterModal({
             <p className={cx('previewHint')}>AI에 전송되는 작은 미리보기에서 사람이 똑바로 보이는지 확인해 주세요.</p>
             {status !== 'off' && (
               <button type="button" className={cx('rotateButton')} onClick={handleRotate}>
+                <Icon name="cameraFlip" size={20} decorative />
                 <span>화면 회전</span>
                 <strong>{rotation}°</strong>
               </button>
