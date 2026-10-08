@@ -398,6 +398,7 @@ export function CameraRegisterModal({
               <span>AI에 전송되는 화면</span>
               <canvas ref={canvasRef} className={cx('canvas')} />
             </div>
+            </div>
             {status === 'off' ? (
               <button type="button" className={cx('previewButton')} onClick={handleStartMedia}>
                 <Icon name="camera" size={20} decorative />
@@ -409,7 +410,6 @@ export function CameraRegisterModal({
                 {status === 'streaming' ? '등록 취소하고 끄기' : '미리보기 끄기'}
               </button>
             )}
-            </div>
             <p className={cx('previewHint')}>AI에 전송되는 작은 미리보기에서 사람이 똑바로 보이는지 확인해 주세요.</p>
             {status !== 'off' && (
               <button type="button" className={cx('rotateButton')} onClick={handleRotate}>
