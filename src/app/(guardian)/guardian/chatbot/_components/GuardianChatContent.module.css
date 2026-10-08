@@ -181,12 +181,13 @@
 }
 
 .quickPromptPanel {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-shrink: 0;
   border-top: 1px solid var(--sb-line);
   background: #fff;
-  padding: 12px 22px 0;
+  padding: 10px 22px;
 }
 
 .quickPromptTitle {
@@ -194,12 +195,16 @@
   color: var(--sb-ink-mute);
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .quickPromptRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 1px 0;
 }
 
 .quickPromptButton {
@@ -208,9 +213,11 @@
   background: var(--sb-brand-50);
   color: var(--sb-brand);
   cursor: pointer;
-  font-size: 14px;
+  flex-shrink: 0;
+  font-size: 12px;
   font-weight: 600;
-  padding: 10px 14px;
+  padding: 7px 11px;
+  white-space: nowrap;
 }
 
 .quickPromptButton:hover:not(:disabled) {
@@ -634,6 +641,11 @@
   .historyList {
     padding-right: 16px;
     padding-left: 16px;
+  }
+
+  .quickPromptPanel {
+    gap: 10px;
+    padding: 9px 14px;
   }
 }
 
