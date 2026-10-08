@@ -198,12 +198,16 @@
   height: 100dvh;
   border-right: 0;
   padding: max(18px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+  pointer-events: none;
   transform: translateX(-105%);
   transition: transform 0.18s ease;
+  visibility: hidden;
 }
 
 .sidebarWard.open {
+  pointer-events: auto;
   transform: translateX(0);
+  visibility: visible;
 }
 
 .sidebarWard .closeButton {
