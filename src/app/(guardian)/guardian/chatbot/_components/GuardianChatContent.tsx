@@ -49,6 +49,7 @@ export default function GuardianChatContent() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
+  const [quickPromptsOpen, setQuickPromptsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [chatLogs, setChatLogs] = useState<ChatLogItem[]>([]);
   const [isLogsLoading, setIsLogsLoading] = useState(false);
@@ -264,9 +265,18 @@ export default function GuardianChatContent() {
             </div>
           </section>
 
-          <section className={styles.quickPromptPanel} aria-label="추천 질문">
-            <p className={styles.quickPromptTitle}>이런 걸 물어보세요</p>
-            <div className={styles.quickPromptRow}>
+          <section className={`${styles.quickPromptPanel} ${quickPromptsOpen ? styles.quickPromptPanelOpen : ''}`} aria-label="추천 질문">
+            <button
+              type="button"
+              className={styles.quickPromptToggle}
+              aria-expanded={quickPromptsOpen}
+              aria-controls="chat-quick-prompts"
+              onClick={() => setQuickPromptsOpen(open => !open)}
+            >
+              이런 걸 물어보세요
+              <Icon name="chevronRight" size={14} className={`${styles.quickPromptChevron} ${quickPromptsOpen ? styles.quickPromptChevronOpen : ''}`} decorative />
+            </button>
+            <div id="chat-quick-prompts" className={styles.quickPromptRow} hidden={!quickPromptsOpen}>
               {QUICK_PROMPTS.map(prompt => (
                 <button
                   key={prompt}
