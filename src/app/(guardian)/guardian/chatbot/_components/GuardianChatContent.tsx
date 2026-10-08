@@ -7,7 +7,7 @@ import { Icon } from '@/components/Icon';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
-import type { ChatMessage } from '@/service/interface/chat';
+import type { ChatLogItem, ChatMessage } from '@/service/interface/chat';
 
 import ChatBubble from './ChatBubble';
 import styles from './GuardianChatContent.module.css';
@@ -44,12 +44,15 @@ const COMPOSER_MAX_LINES = 2;
 export default function GuardianChatContent() {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
-  const userId = profile?.id ?? '';
   const [sessionId] = useState(makeSessionId);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [buildWelcomeMessage()]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [chatLogs, setChatLogs] = useState<ChatLogItem[]>([]);
+  const [isLogsLoading, setIsLogsLoading] = useState(false);
+  const [logsError, setLogsError] = useState<string | null>(null);
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -68,47 +71,6 @@ export default function GuardianChatContent() {
       return [buildWelcomeMessage(profile.name)];
     });
   }, [profile]);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    getChatLogs()
-      .then(logs => {
-        if (logs.length === 0) return;
-
-        const restored: ChatMessage[] = [];
-        logs.forEach(log => {
-          if (log.message) {
-            restored.push({
-              id: makeId(),
-              role: 'user',
-              content: log.message,
-              timestamp: log.createdAt ?? new Date().toISOString(),
-            });
-          }
-
-          if (log.reply) {
-            restored.push({
-              id: makeId(),
-              role: 'assistant',
-              content: log.reply,
-              timestamp: log.createdAt ?? new Date().toISOString(),
-              engine: log.engine,
-              intent: log.intent,
-              tool: log.tool as ChatMessage['tool'],
-              toolData: log.toolData,
-              type: log.type as ChatMessage['type'],
-              ui: log.ui,
-            });
-          }
-        });
-
-        if (restored.length > 0) {
-          setMessages([buildWelcomeMessage(profile?.name), ...restored]);
-        }
-      })
-      .catch(() => {});
-  }, [profile?.name, userId]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
@@ -226,6 +188,20 @@ export default function GuardianChatContent() {
     textareaRef.current?.focus();
   }
 
+  async function handleOpenHistory() {
+    setHistoryOpen(true);
+    setIsLogsLoading(true);
+    setLogsError(null);
+
+    try {
+      setChatLogs(await getChatLogs());
+    } catch (error) {
+      setLogsError(getChatErrorMessage(error));
+    } finally {
+      setIsLogsLoading(false);
+    }
+  }
+
   return (
     <div className={styles.chatPage}>
       <section className={styles.shell}>
@@ -241,6 +217,12 @@ export default function GuardianChatContent() {
                 건강 도우미 · 24시간 답변
               </p>
             </div>
+          </div>
+          <div className={styles.headerActions}>
+            <button type="button" className={styles.historyButton} onClick={() => void handleOpenHistory()}>
+              <Icon name="message" size={16} decorative />
+              상담 기록
+            </button>
           </div>
         </header>
 
@@ -313,6 +295,53 @@ export default function GuardianChatContent() {
           </footer>
         </div>
       </section>
+
+      {historyOpen && (
+        <div className={styles.historyOverlay} role="presentation" onClick={() => setHistoryOpen(false)}>
+          <section
+            className={styles.historyDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="chat-history-title"
+            onClick={event => event.stopPropagation()}
+          >
+            <header className={styles.historyHeader}>
+              <div>
+                <h2 id="chat-history-title">내 상담 기록</h2>
+                <p>최근 상담 내용을 확인할 수 있어요.</p>
+              </div>
+              <button type="button" className={styles.historyCloseButton} onClick={() => setHistoryOpen(false)} aria-label="상담 기록 닫기">
+                ×
+              </button>
+            </header>
+
+            <div className={styles.historyList}>
+              {isLogsLoading ? (
+                <p className={styles.historyState}>상담 기록을 불러오는 중입니다.</p>
+              ) : logsError ? (
+                <p className={styles.historyState}>{logsError}</p>
+              ) : chatLogs.length === 0 ? (
+                <p className={styles.historyState}>아직 상담 기록이 없습니다.</p>
+              ) : (
+                chatLogs.map((log, index) => (
+                  <article key={log.id ?? `${log.createdAt ?? 'log'}-${index}`} className={styles.historyItem}>
+                    <time>{formatLogDate(log.createdAt)}</time>
+                    <strong>{log.message || '선택형 상담'}</strong>
+                    {log.reply && <p>{log.reply}</p>}
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
+}
+
+function formatLogDate(value?: string) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
