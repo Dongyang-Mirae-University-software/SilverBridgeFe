@@ -7,6 +7,12 @@
   color: var(--sb-ink);
 }
 
+.medicationStage {
+  min-height: 100dvh;
+  height: auto;
+  overflow-y: visible;
+}
+
 .scrim {
   display: none;
   position: fixed;
