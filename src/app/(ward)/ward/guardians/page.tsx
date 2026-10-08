@@ -3,7 +3,7 @@ import { WardGuardiansPanel } from '@/app/(ward)/ward/guardians/_components/Ward
 
 export default function WardGuardiansPage() {
   return (
-    <PageLayout title="내 보호자" description="보호자 연결 요청을 확인하고 현재 연결된 보호자를 관리합니다.">
+    <PageLayout title="내 보호자" description="비상시 연결되는 보호자 및 연결 요청을 관리합니다.">
       <WardGuardiansPanel />
     </PageLayout>
   );

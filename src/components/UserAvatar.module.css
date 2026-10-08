@@ -43,6 +43,12 @@ button.avatar:disabled {
   font-size: 14px;
 }
 
+.w-48 {
+  width: 48px;
+  height: 48px;
+  font-size: 20px;
+}
+
 .w-56 {
   width: 56px;
   height: 56px;
@@ -55,6 +61,14 @@ button.avatar:disabled {
   height: 72px;
   border-radius: 18px;
   font-size: 28px;
+}
+
+.w-76 {
+  width: 76px;
+  height: 76px;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px var(--sb-line);
+  font-size: 30px;
 }
 
 .w-60 {

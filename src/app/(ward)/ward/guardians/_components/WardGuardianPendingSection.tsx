@@ -32,25 +32,28 @@ export function WardGuardianPendingSection() {
         <RefreshButton
           ariaLabel="요청온 목록 새로고침"
           disabled={pendingQuery.isLoading}
+          placement="inline"
           onRefresh={() => pendingQuery.refetch()}
         />
       </header>
 
-      {pendingQuery.isError ? (
-        <EmptyState message="요청온 목록을 불러오지 못했습니다." />
-      ) : pendingConnections.length > 0 ? (
-        <ConnectionList
-          connections={pendingConnections}
-          isPending={isPending}
-          role="ward"
-          getActions={connection => [
-            { label: '수락', onClick: () => acceptMutation.mutate(connection.id) },
-            { label: '거절', onClick: () => refuseMutation.mutate(connection.id), variant: 'secondary' },
-          ]}
-        />
-      ) : (
-        !pendingQuery.isLoading && <EmptyState message="수락 또는 거절하지 않은 연결 요청이 없습니다." />
-      )}
+      <div className={cx('sectionBody')}>
+        {pendingQuery.isError ? (
+          <EmptyState message="요청온 목록을 불러오지 못했습니다." />
+        ) : pendingConnections.length > 0 ? (
+          <ConnectionList
+            connections={pendingConnections}
+            isPending={isPending}
+            role="ward"
+            getActions={connection => [
+              { label: '거절', onClick: () => refuseMutation.mutate(connection.id), variant: 'secondary' },
+              { label: '수락', onClick: () => acceptMutation.mutate(connection.id) },
+            ]}
+          />
+        ) : (
+          !pendingQuery.isLoading && <EmptyState message="수락 또는 거절하지 않은 연결 요청이 없습니다." />
+        )}
+      </div>
     </section>
   );
 }
