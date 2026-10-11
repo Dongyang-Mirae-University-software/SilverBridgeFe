@@ -69,7 +69,8 @@ export function NotificationSettingsSection() {
         <div className={cx('list')}>
           {error && <div className={cx('errorBanner')}>{error}</div>}
           {CHANNEL_OPTIONS.map(option => {
-            const enabled = enabledMap.get(option.channelType) ?? option.channelType === 'FCM';
+            const isComingSoon = option.badge === '준비 중';
+            const enabled = isComingSoon ? false : enabledMap.get(option.channelType) ?? option.channelType === 'FCM';
             return (
               <div key={option.channelType} className={cx('row')}>
                 <div className={cx('meta')}>
@@ -85,7 +86,7 @@ export function NotificationSettingsSection() {
                   <input
                     type="checkbox"
                     checked={enabled}
-                    disabled={mutation.isPending}
+                    disabled={isComingSoon || mutation.isPending}
                     onChange={e => handleToggle(option.channelType, e.target.checked)}
                   />
                   <span className={cx('toggleThumb')} />
