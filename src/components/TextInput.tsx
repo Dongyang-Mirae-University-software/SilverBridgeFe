@@ -25,7 +25,7 @@ function TextInput(
         </div>
       )}
       <div className={cx('input-area', { error })}>
-        <input className={cx('input')} ref={ref} {...props} />
+        <input className={cx('input')} ref={ref} suppressHydrationWarning {...props} />
       </div>
       {errorText ? (
         <span className={cx('input-helperText')} role="alert">
