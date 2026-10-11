@@ -1,6 +1,7 @@
 export * from './anomaly';
 export * from './camera';
 export * from './connection';
+export * from './dashboard';
 export * from './medication';
 export * from './notification';
 export * from './sosHistory';
