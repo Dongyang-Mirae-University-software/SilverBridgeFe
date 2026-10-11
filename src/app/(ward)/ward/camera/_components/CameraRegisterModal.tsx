@@ -73,7 +73,8 @@ export function CameraRegisterModal({
   const [errorMessage, setErrorMessage] = useState('');
   const [registeredCamera, setRegisteredCamera] = useState<WardCamera | null>(null);
   const [isStartingStream, setIsStartingStream] = useState(false);
-  const [rotation, setRotation] = useState<FrameRotation>(getStoredRotation);
+  // 서버와 첫 브라우저 렌더는 같은 기본값으로 맞추고, 저장된 기기별 값은 마운트 후 읽는다.
+  const [rotation, setRotation] = useState<FrameRotation>(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -102,6 +103,10 @@ export function CameraRegisterModal({
       mediaStreamRef.current?.getTracks().forEach(track => track.stop());
       void wakeLockRef.current?.release().catch(() => {});
     };
+  }, []);
+
+  useEffect(() => {
+    setRotation(getStoredRotation());
   }, []);
 
   useEffect(() => {

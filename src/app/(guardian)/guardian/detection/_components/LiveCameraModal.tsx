@@ -21,10 +21,16 @@ const DETECT_LABEL: Record<string, string> = {
 };
 
 function useLiveClock() {
-  const [now, setNow] = useState(() => new Date());
+  // 현재 시각을 첫 SSR HTML에 넣으면 서버와 휴대폰의 렌더 시각이 달라 hydration 오류가 난다.
+  const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
+    const updateClock = () => setNow(new Date());
+    const initialTimer = setTimeout(updateClock, 0);
     const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(timer);
+    };
   }, []);
   return now;
 }
@@ -177,7 +183,7 @@ export function LiveCameraModal({
               <span className={cx('recDot')} />
               REC
             </strong>
-            <span>{formatLiveDateTime(now)}</span>
+            <span>{now ? formatLiveDateTime(now) : '-'}</span>
             <span>CAM · {monitor.selectedSession?.label ?? '-'}</span>
           </div>
           <div className={cx('aiBadge')}>
