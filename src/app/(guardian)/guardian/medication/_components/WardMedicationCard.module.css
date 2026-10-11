@@ -251,6 +251,16 @@
   border-top: 1px solid var(--sb-line-soft);
 }
 
+.notificationDisabledNotice {
+  margin: 0;
+  background: var(--sb-warn-soft);
+  color: var(--sb-warn);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-top: 1px solid var(--sb-line-soft);
+}
+
 .settingsRowWrap {
   flex-wrap: wrap;
 }
