@@ -22,7 +22,7 @@ const CHANNEL_OPTIONS: Array<{
   {
     channelType: 'FCM',
     label: '앱 푸시 알림',
-    desc: '연결 요청, 이상 감지 등 주요 알림을 실시간으로 받습니다.',
+    desc: '연결 요청, 이상 감지 등 주요 알림을 실시간으로 받습니다. SOS·이상 감지 발생 알림은 꺼도 항상 발송됩니다.',
     badge: '기본값',
   },
   {
@@ -33,12 +33,13 @@ const CHANNEL_OPTIONS: Array<{
   {
     channelType: 'KAKAO_ALIMTALK',
     label: '카카오 알림톡',
-    desc: '카카오톡으로 서비스 알림을 받습니다.',
+    desc: '이상 감지 발생 알림을 카카오톡으로 받습니다.',
   },
   {
     channelType: 'EMAIL',
     label: '이메일',
     desc: '공지사항 및 서비스 안내를 이메일로 받습니다.',
+    badge: '준비 중',
   },
 ];
 
@@ -74,7 +75,9 @@ export function NotificationSettingsSection() {
                 <div className={cx('meta')}>
                   <div className={cx('titleRow')}>
                     <span className={cx('label')}>{option.label}</span>
-                    {option.badge && <span className={cx('badge')}>{option.badge}</span>}
+                    {option.badge && (
+                      <span className={cx('badge', { badgeMuted: option.badge === '준비 중' })}>{option.badge}</span>
+                    )}
                   </div>
                   <span className={cx('desc')}>{option.desc}</span>
                 </div>
