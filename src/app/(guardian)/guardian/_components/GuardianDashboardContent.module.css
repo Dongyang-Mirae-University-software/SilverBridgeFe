@@ -72,6 +72,21 @@
   opacity: 0.75;
 }
 
+.wardChipBadge {
+  display: inline-flex;
+  min-width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--sb-danger);
+  color: #fff;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+  padding: 0 5px;
+}
+
 .attentionBadge {
   display: inline-flex;
   align-items: center;
