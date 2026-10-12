@@ -7,32 +7,41 @@ import styles from './ChatUiPrompt.module.css';
 interface Props {
   ui: ChatUiPromptData;
   active: boolean;
-  onSelect: (field: string, value: string) => void;
+  onSelect: (field: string, value: string, label?: string) => void;
 }
 
 export default function ChatUiPrompt({ ui, active, onSelect }: Props) {
   const [textVal, setTextVal] = useState('');
   const [dateVal, setDateVal] = useState('');
+  const [selectedValue, setSelectedValue] = useState<string | null>(null);
 
-  function apply(value: string) {
+  function apply(value: string, label?: string) {
     if (!value.trim() || !active) return;
-    onSelect(ui.field, value.trim());
+    onSelect(ui.field, value.trim(), label);
   }
 
   if (ui.kind === 'select') {
+    const isTimeSelection = ui.field === 'time';
+
     return (
-      <div className={styles.wrap}>
+      <div className={`${styles.wrap} ${isTimeSelection ? styles.timeSelect : ''}`}>
         {ui.label && <p className={styles.label}>{ui.label}</p>}
         <div className={styles.chips}>
           {(ui.options ?? []).map(raw => {
             const opt = typeof raw === 'string' ? { value: raw, label: raw } : raw;
+            const isDateChangeOption = opt.value === '__change_date__';
             return (
               <button
                 key={opt.value}
                 type="button"
                 disabled={!active}
-                className={styles.chip}
-                onClick={() => apply(opt.value)}
+                className={`${styles.chip} ${selectedValue === opt.value ? styles.chipSelected : ''} ${
+                  isDateChangeOption ? styles.changeDateChip : ''
+                }`}
+                onClick={() => {
+                  setSelectedValue(opt.value);
+                  apply(opt.value, opt.label);
+                }}
               >
                 {opt.label}
               </button>

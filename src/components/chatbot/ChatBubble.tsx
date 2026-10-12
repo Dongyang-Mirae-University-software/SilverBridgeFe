@@ -3,7 +3,6 @@ import 'dayjs/locale/ko';
 
 import { UserAvatar } from '@/components/UserAvatar';
 import type { ChatMessage } from '@/service/interface/chat';
-import { INTENT_LABEL, RISK_LABEL } from '@/service/interface/chat';
 import ChatToolCard from './ChatToolCard';
 import ChatUiPrompt from './ChatUiPrompt';
 import styles from './ChatBubble.module.css';
@@ -13,7 +12,7 @@ dayjs.locale('ko');
 interface Props {
   message: ChatMessage;
   isLastAssistant: boolean;
-  onUiSelect: (field: string, value: string) => void;
+  onUiSelect: (field: string, value: string, label?: string) => void;
   userImageUrl?: string | null;
   userName?: string | null;
 }
@@ -36,32 +35,10 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect, userI
     );
   }
 
-  const intentLabel = message.intent ? (INTENT_LABEL[message.intent] ?? message.intent) : null;
-  const riskLabel = message.riskLevel ? RISK_LABEL[message.riskLevel] : null;
-  const riskClass = message.riskLevel === 'high'
-    ? styles.riskHigh
-    : message.riskLevel === 'medium'
-    ? styles.riskMedium
-    : styles.riskLow;
-
   return (
     <div className={styles.rowAssistant}>
       <div className={styles.avatar}>AI</div>
       <div className={styles.assistantBody}>
-        {/* 배지 영역 */}
-        {(intentLabel || riskLabel || message.engine) && (
-          <div className={styles.badges}>
-            {intentLabel && <span className={styles.intentBadge}>{intentLabel}</span>}
-            {riskLabel && <span className={`${styles.riskBadge} ${riskClass}`}>위험도 {riskLabel}</span>}
-            {message.engine === 'fallback' && (
-              <span className={styles.fallbackBadge}>Fallback 응답</span>
-            )}
-            {message.modelName && (
-              <span className={styles.modelBadge}>{message.modelName}</span>
-            )}
-          </div>
-        )}
-
         {/* 메시지 본문 */}
         <div className={styles.assistantMessageRow}>
           <div className={styles.messageColumnAssistant}>
@@ -125,8 +102,9 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect, userI
               />
             )}
 
-            {/* UI 프롬프트 — 마지막 assistant 메시지에만 활성 */}
-            {message.type === 'ui' && message.ui && (
+            {/* 응답 type과 무관하게 ui가 있으면 선택지를 표시한다.
+                예약 시간 응답은 type이 tool_result/message여도 ui.select를 함께 내려줄 수 있다. */}
+            {message.ui && (
               <ChatUiPrompt
                 ui={message.ui}
                 active={isLastAssistant}
