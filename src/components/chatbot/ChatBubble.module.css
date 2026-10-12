@@ -61,54 +61,6 @@
   gap: 10px;
 }
 
-/* ── 배지 ── */
-.badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.intentBadge,
-.riskBadge,
-.fallbackBadge,
-.modelBadge {
-  display: inline-flex;
-  border-radius: 999px;
-  font-size: 0.625rem;
-  font-weight: 800;
-  padding: 2px 8px;
-}
-
-.intentBadge {
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-}
-
-.riskHigh {
-  background: #fbe5e0;
-  color: var(--sb-warn);
-}
-
-.riskMedium {
-  background: #fbf1db;
-  color: var(--sb-sun);
-}
-
-.riskLow {
-  background: #dceee3;
-  color: var(--sb-safe);
-}
-
-.fallbackBadge {
-  background: #fbe5e0;
-  color: var(--sb-warn);
-}
-
-.modelBadge {
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-mute);
-}
-
 /* ── 말풍선 ── */
 .bubbleUser {
   box-sizing: border-box;

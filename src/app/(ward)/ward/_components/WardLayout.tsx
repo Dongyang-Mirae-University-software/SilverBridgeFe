@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
+import { usePathname } from 'next/navigation';
 
 import { DashboardProvider } from '@/components/layout/dashboard/DashboardContext';
 import { SidebarLayout } from '@/components/layout/dashboard/SidebarLayout';
@@ -28,6 +29,7 @@ const role = 'WARD' as const;
 const rootPath = '/ward';
 
 export function WardLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [wardSettings, setWardSettings] = useState<WardSettings>(DEFAULT_WARD_SETTINGS);
   const [isWardSettingsLoaded, setIsWardSettingsLoaded] = useState(false);
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
@@ -38,6 +40,7 @@ export function WardLayout({ children }: { children: ReactNode }) {
   useWardSosSettingSync(setWardSettings);
   useWardConnectionSocket(realtimeUserId);
   useWardRootFontSize(wardSettings.fontSize);
+  const isChatbotPage = pathname === '/ward/chatbot';
 
   return (
     <DashboardProvider
@@ -46,9 +49,15 @@ export function WardLayout({ children }: { children: ReactNode }) {
         updateWardSettings: settings => setWardSettings(current => ({ ...current, ...settings })),
       }}
     >
-      <div className={cx('stage', { wardHighContrast: wardSettings.highContrast, wardReadableText: true })}>
+      <div
+        className={cx('stage', {
+          chatStage: isChatbotPage,
+          wardHighContrast: wardSettings.highContrast,
+          wardReadableText: true,
+        })}
+      >
         <SidebarLayout navItems={WARD_NAV} profile={profile} role={role} rootPath={rootPath} />
-        <main className={cx('main')}>{children}</main>
+        <main className={cx('main', { chatMain: isChatbotPage })}>{children}</main>
       </div>
     </DashboardProvider>
   );
