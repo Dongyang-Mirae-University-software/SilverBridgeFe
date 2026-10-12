@@ -128,7 +128,14 @@ export default function ChatbotContent() {
           message: uiSelection ? undefined : trimmed,
           sessionId,
           history,
-          context: { role: getAuthRole() ?? undefined },
+          // 예약에 쓰는 이름·전화·주소를 같이 보내야 챗봇이 되묻지 않는다.
+          context: {
+            role: getAuthRole() ?? undefined,
+            name: profile?.name || undefined,
+            phone: profile?.phone || undefined,
+            birthDate: profile?.birthDate || undefined,
+            address: profile?.address || undefined,
+          },
           uiSelection: uiSelection ?? undefined,
         });
 
@@ -173,7 +180,7 @@ export default function ChatbotContent() {
         textareaRef.current?.focus();
       }
     },
-    [sessionId],
+    [sessionId, profile],
   );
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
