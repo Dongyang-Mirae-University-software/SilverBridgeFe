@@ -89,11 +89,15 @@
 
 @media (max-width: 425px) {
   .homeGrid {
+    /* iOS 주소창 변화로 계산된 남는 높이를 행에 분배하지 않는다. */
+    flex: none;
+    align-content: start;
     grid-template-columns: 1fr;
     grid-template-rows: none;
   }
 
   .actionCard {
-    min-height: 170px;
+    min-height: 0;
+    aspect-ratio: 1.8 / 1;
   }
 }

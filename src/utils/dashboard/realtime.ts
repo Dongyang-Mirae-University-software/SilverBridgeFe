@@ -1,4 +1,5 @@
 import { ConnectionRealtimePayload } from '@/lib/realtime/connectionSocket';
+import { getSubjectParticle } from '@/utils/format/korean';
 
 export function getRealtimeNotification(payload: ConnectionRealtimePayload, role?: 'WARD' | 'GUARDIAN') {
   switch (payload.type) {
@@ -33,16 +34,19 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload, role
         title: payload.title ?? '복약 일정 중지',
       };
     case 'ANOMALY_DETECTED': {
+      const detectedLabel = payload.detectedTypeLabel ?? '이상 상황';
       if (role === 'WARD') {
         return {
-          body: payload.body ?? `${payload.location ?? '집'}에서 ${payload.detectedTypeLabel ?? '이상 상황'}이 감지되었습니다. 안전한 곳으로 대피해 주세요.`,
+          body:
+            payload.body ??
+            `${payload.location ?? '집'}에서 ${detectedLabel}${getSubjectParticle(detectedLabel)} 감지되었습니다. 안전한 곳으로 대피해 주세요.`,
           title: payload.title ?? '이상 상황 감지',
         };
       }
       return {
         body:
           payload.body ??
-          `${payload.wardName ?? '피보호자'}님 댁 ${payload.location ?? ''}에서 ${payload.detectedTypeLabel ?? '이상 상황'}가 감지되었습니다.`,
+          `${payload.wardName ?? '피보호자'}님 댁 ${payload.location ?? ''}에서 ${detectedLabel}${getSubjectParticle(detectedLabel)} 감지되었습니다.`,
         title: payload.title ?? '이상 상황 감지',
       };
     }

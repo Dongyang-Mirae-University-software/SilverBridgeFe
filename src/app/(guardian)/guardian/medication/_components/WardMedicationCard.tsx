@@ -3,6 +3,7 @@
 import { Fragment } from 'react';
 import classNames from 'classnames/bind';
 
+import { useQuery } from '@tanstack/react-query';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import { formatDoseTime, getMedicationTimeSlotLabel, sortMedicationsByDoseTime } from '@/utils/format/medication';
@@ -13,6 +14,7 @@ import {
   useUpdateMedicationAlertSettingMutation,
   useUpdateMedicationSettingMutation,
 } from '@/service/query/guardian/medication';
+import { guardianNotificationTypeSettingQueryOptions } from '@/service/query/guardian/notification';
 import { MedicationFormModal, MedicationFormValue } from './MedicationFormModal';
 import styles from './WardMedicationCard.module.css';
 
@@ -93,6 +95,8 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const deleteMutation = useDeleteGuardianMedicationMutation();
   const settingMutation = useUpdateMedicationSettingMutation();
   const alertSettingMutation = useUpdateMedicationAlertSettingMutation();
+  const { data: notificationTypeSetting } = useQuery(guardianNotificationTypeSettingQueryOptions);
+  const isMedicationNotificationDisabled = notificationTypeSetting?.medication.enabled === false;
 
   const wardName = summary.wardName ?? '피보호자';
   const medications = sortMedicationsByDoseTime(summary.medications);
@@ -243,6 +247,12 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
               <span className={cx('switchTrack')} aria-hidden="true" />
             </label>
           </div>
+
+          {isMedicationNotificationDisabled && summary.missedAlertEnabled && (
+            <p className={cx('notificationDisabledNotice')}>
+              알림 종류 설정에서 복약 알림이 꺼져 있어 미복용 요약이 가지 않아요.
+            </p>
+          )}
 
           <div className={cx('settingsRow')}>
             <div className={cx('settingsMeta')}>
