@@ -3,7 +3,6 @@ import 'dayjs/locale/ko';
 
 import { UserAvatar } from '@/components/UserAvatar';
 import type { ChatMessage } from '@/service/interface/chat';
-import { INTENT_LABEL, RISK_LABEL } from '@/service/interface/chat';
 import ChatToolCard from './ChatToolCard';
 import ChatUiPrompt from './ChatUiPrompt';
 import styles from './ChatBubble.module.css';
@@ -36,32 +35,10 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect, userI
     );
   }
 
-  const intentLabel = message.intent ? (INTENT_LABEL[message.intent] ?? message.intent) : null;
-  const riskLabel = message.riskLevel ? RISK_LABEL[message.riskLevel] : null;
-  const riskClass = message.riskLevel === 'high'
-    ? styles.riskHigh
-    : message.riskLevel === 'medium'
-    ? styles.riskMedium
-    : styles.riskLow;
-
   return (
     <div className={styles.rowAssistant}>
       <div className={styles.avatar}>AI</div>
       <div className={styles.assistantBody}>
-        {/* 배지 영역 */}
-        {(intentLabel || riskLabel || message.engine) && (
-          <div className={styles.badges}>
-            {intentLabel && <span className={styles.intentBadge}>{intentLabel}</span>}
-            {riskLabel && <span className={`${styles.riskBadge} ${riskClass}`}>위험도 {riskLabel}</span>}
-            {message.engine === 'fallback' && (
-              <span className={styles.fallbackBadge}>Fallback 응답</span>
-            )}
-            {message.modelName && (
-              <span className={styles.modelBadge}>{message.modelName}</span>
-            )}
-          </div>
-        )}
-
         {/* 메시지 본문 */}
         <div className={styles.assistantMessageRow}>
           <div className={styles.messageColumnAssistant}>

@@ -115,16 +115,4 @@ export interface ChatLogItem {
   createdAt?: string;
 }
 
-export const INTENT_LABEL: Record<string, string> = {
-  emergency_guidance: '응급 안내',
-  hospital_reservation: '병원 예약',
-  medical_advice: '의료 상담',
-};
-
-export const RISK_LABEL: Record<ChatRiskLevel, string> = {
-  high: '높음',
-  medium: '중간',
-  low: '낮음',
-};
-
 export const SAMPLE_CHIPS = ['응급 증상이 있어요', '병원 예약하고 싶어요', '건강 상담이 필요해요'];
