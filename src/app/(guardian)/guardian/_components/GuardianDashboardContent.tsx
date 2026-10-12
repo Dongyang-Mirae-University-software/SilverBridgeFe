@@ -42,7 +42,10 @@ export function GuardianDashboardContent() {
   const [selectedConnectionId, setSelectedConnectionId] = useState<number | null>(null);
   const selectedWard = activeConnections.find(connection => connection.id === selectedConnectionId) ?? activeConnections[0] ?? null;
 
-  const { data: dashboard } = useQuery(guardianDashboardQueryOptions({ wardId: selectedWard?.partnerUserId }));
+  const { data: dashboard } = useQuery({
+    ...guardianDashboardQueryOptions({ wardId: selectedWard?.partnerUserId }),
+    enabled: connectionsResponse !== undefined,
+  });
   const pendingByWard = new Map((dashboard?.wards ?? []).map(ward => [ward.wardId, ward.pendingCount]));
 
   const isAnomalyUnavailable = dashboard?.unavailable.includes('anomalyDetection') ?? false;
