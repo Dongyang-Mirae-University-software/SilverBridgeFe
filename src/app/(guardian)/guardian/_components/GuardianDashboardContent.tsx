@@ -42,11 +42,17 @@ export function GuardianDashboardContent() {
   const [selectedConnectionId, setSelectedConnectionId] = useState<number | null>(null);
   const selectedWard = activeConnections.find(connection => connection.id === selectedConnectionId) ?? activeConnections[0] ?? null;
 
+  // 피보호자 칩 배지는 선택 상태와 무관하게 항상 전체 기준으로 보여야 해서 별도로 조회
+  const { data: dashboardAll } = useQuery({
+    ...guardianDashboardQueryOptions({}),
+    enabled: connectionsResponse !== undefined,
+  });
+  const pendingByWard = new Map((dashboardAll?.wards ?? []).map(ward => [ward.wardId, ward.pendingCount]));
+
   const { data: dashboard } = useQuery({
     ...guardianDashboardQueryOptions({ wardId: selectedWard?.partnerUserId }),
     enabled: connectionsResponse !== undefined,
   });
-  const pendingByWard = new Map((dashboard?.wards ?? []).map(ward => [ward.wardId, ward.pendingCount]));
 
   const isAnomalyUnavailable = dashboard?.unavailable.includes('anomalyDetection') ?? false;
   const isSosUnavailable = dashboard?.unavailable.includes('sos') ?? false;
