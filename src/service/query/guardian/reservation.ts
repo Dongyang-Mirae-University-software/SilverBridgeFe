@@ -11,13 +11,16 @@ export const hospitalsQueryOptions = queryOptions({
 
 export const myReservationsQueryKey = ['reservation-my'] as const;
 
-export const myReservationsQueryOptions = queryOptions({
-  queryKey: myReservationsQueryKey,
-  queryFn: getMyReservations,
-  refetchOnMount: 'always',
-  staleTime: 10 * 1000,
-  retry: false,
-});
+// wardId 없이 호출하면 로그인한 피보호자 본인의 예약 내역
+export function myReservationsQueryOptions(wardId?: string | null) {
+  return queryOptions({
+    queryKey: [...myReservationsQueryKey, wardId ?? null] as const,
+    queryFn: () => getMyReservations(wardId),
+    refetchOnMount: 'always',
+    staleTime: 10 * 1000,
+    retry: false,
+  });
+}
 
 export function availableSlotsQueryOptions(hospitalId: number | null, date: string) {
   return queryOptions({

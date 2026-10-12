@@ -6,10 +6,11 @@ import classNames from 'classnames/bind';
 import dayjs from 'dayjs';
 
 import { RefreshButton } from '@/components/RefreshButton';
+import { ReservationList } from '@/components/reservation/ReservationList';
 import { TabItem, Tabs } from '@/components/Tabs';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { cancelReservation, createReservation } from '@/service/api/guardian/reservation';
-import { IHospital, IReservationItem } from '@/service/interface/reservation';
+import { IHospital, IReservationCreateReq } from '@/service/interface/reservation';
 import {
   availableSlotsQueryOptions,
   hospitalsQueryOptions,
@@ -28,13 +29,6 @@ const TABS: TabItem<Tab>[] = [
   { value: 'book', label: '예약하기' },
   { value: 'history', label: '예약 내역' },
 ];
-
-const STATUS_LABEL: Record<IReservationItem['status'], string> = {
-  BOOKED: '예약됨',
-  CONFIRMED: '확정',
-  COMPLETED: '진료 완료',
-  CANCELED: '취소됨',
-};
 
 const OPERATION_LABEL: Record<IHospital['operationStatus'], string> = {
   OPEN: '진료 중',
@@ -84,7 +78,9 @@ export function GuardianHospitalContent() {
     refetch: refetchHospitals,
   } = useQuery(hospitalsQueryOptions);
   const { data: slots = [], isFetching: isSlotsLoading } = useQuery(availableSlotsQueryOptions(hospitalId, date));
-  const { data: reservations = [], isLoading: isReservationsLoading } = useQuery(myReservationsQueryOptions);
+  const { data: reservations = [], isLoading: isReservationsLoading } = useQuery(
+    myReservationsQueryOptions(ward?.partnerUserId),
+  );
 
   const hospital = hospitals.find(item => item.id === hospitalId) ?? null;
   const keyword = search.trim();
@@ -103,7 +99,7 @@ export function GuardianHospitalContent() {
   };
 
   const createMutation = useMutation({
-    mutationFn: createReservation,
+    mutationFn: ({ wardId, body }: { wardId: string; body: IReservationCreateReq }) => createReservation(wardId, body),
     onSuccess: () => {
       invalidateReservations();
       setTime('');
@@ -115,7 +111,8 @@ export function GuardianHospitalContent() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: cancelReservation,
+    mutationFn: ({ wardId, reservationId }: { wardId: string; reservationId: number }) =>
+      cancelReservation(wardId, reservationId),
     onSuccess: () => {
       invalidateReservations();
       setNotice({ tone: 'ok', text: '예약이 취소되었습니다.' });
@@ -131,23 +128,31 @@ export function GuardianHospitalContent() {
   };
 
   const canSubmit =
-    Boolean(ward && hospital && department && date && time) && PHONE_PATTERN.test(patientPhone) && !createMutation.isPending;
+    Boolean(ward && hospital && department && date && time) &&
+    PHONE_PATTERN.test(patientPhone) &&
+    !createMutation.isPending;
 
   const submit = () => {
     if (!ward || !hospital) return;
     const guardianPhone = guardian?.phone && PHONE_PATTERN.test(guardian.phone) ? guardian.phone : undefined;
-    const birthDate = ward.partnerBirthDate && /^\d{4}-\d{2}-\d{2}/.test(ward.partnerBirthDate) ? ward.partnerBirthDate.slice(0, 10) : undefined;
+    const birthDate =
+      ward.partnerBirthDate && /^\d{4}-\d{2}-\d{2}/.test(ward.partnerBirthDate)
+        ? ward.partnerBirthDate.slice(0, 10)
+        : undefined;
     createMutation.mutate({
-      hospitalId: hospital.id,
-      department,
-      reservationDate: date,
-      reservationTime: time,
-      patientName: ward.partnerName,
-      phone: patientPhone,
-      birthDate,
-      symptomSummary: symptom.trim() || undefined,
-      guardianName: guardian?.name,
-      guardianPhone,
+      wardId: ward.partnerUserId,
+      body: {
+        hospitalId: hospital.id,
+        department,
+        reservationDate: date,
+        reservationTime: time,
+        patientName: ward.partnerName,
+        phone: patientPhone,
+        birthDate,
+        symptomSummary: symptom.trim() || undefined,
+        guardianName: guardian?.name,
+        guardianPhone,
+      },
     });
   };
 
@@ -218,8 +223,8 @@ export function GuardianHospitalContent() {
                       {item.region} · {item.departments.join(', ')}
                     </span>
                     <span className={cx('hospitalMeta')}>
-                      {OPERATION_LABEL[item.operationStatus]} · {CONGESTION_LABEL[item.congestionLevel]} · {item.openTime}~
-                      {item.closeTime}
+                      {OPERATION_LABEL[item.operationStatus]} · {CONGESTION_LABEL[item.congestionLevel]} ·{' '}
+                      {item.openTime}~{item.closeTime}
                     </span>
                   </button>
                 </li>
@@ -307,7 +312,11 @@ export function GuardianHospitalContent() {
 
               <label className={cx('field')}>
                 <span className={cx('fieldLabel')}>증상 (선택)</span>
-                <textarea className={cx('textarea')} value={symptom} onChange={event => setSymptom(event.target.value)} />
+                <textarea
+                  className={cx('textarea')}
+                  value={symptom}
+                  onChange={event => setSymptom(event.target.value)}
+                />
               </label>
 
               <button type="submit" className={cx('submit')} disabled={!canSubmit}>
@@ -319,40 +328,14 @@ export function GuardianHospitalContent() {
           )}
         </div>
       ) : (
-        <>
-          {isReservationsLoading && <p className={cx('emptyText')}>예약 내역을 불러오는 중입니다.</p>}
-          {!isReservationsLoading && reservations.length === 0 && (
-            <p className={cx('emptyText')}>예약 내역이 없습니다.</p>
-          )}
-          <ul className={cx('list')}>
-            {reservations.map(item => (
-              <li key={item.reservationId} className={cx('reservationCard', { canceled: item.status === 'CANCELED' })}>
-                <div className={cx('reservationMain')}>
-                  <span className={cx('hospitalName')}>
-                    {item.hospitalName}
-                    <span className={cx('badge')}>{STATUS_LABEL[item.status]}</span>
-                  </span>
-                  <span className={cx('hospitalMeta')}>
-                    {item.department} · {item.reservationDate} {item.reservationTime}
-                  </span>
-                  {item.symptomSummary && <span className={cx('hospitalMeta')}>{item.symptomSummary}</span>}
-                </div>
-                {(item.status === 'BOOKED' || item.status === 'CONFIRMED') && (
-                  <button
-                    type="button"
-                    className={cx('cancelButton')}
-                    disabled={cancelMutation.isPending}
-                    onClick={() => {
-                      if (window.confirm('예약을 취소할까요?')) cancelMutation.mutate(item.reservationId);
-                    }}
-                  >
-                    취소
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </>
+        <ReservationList
+          reservations={reservations}
+          isLoading={isReservationsLoading}
+          isCanceling={cancelMutation.isPending}
+          onCancel={reservationId => {
+            if (ward) cancelMutation.mutate({ wardId: ward.partnerUserId, reservationId });
+          }}
+        />
       )}
     </section>
   );

@@ -1,6 +1,8 @@
 // 병원 예약 서비스(SilverBridgeReservation) BFF 프록시.
-// 예약 서비스는 자체 계정(JWT)이 필요하므로, 로그인한 보호자마다 예약 서비스 계정을
+// 예약 서비스는 자체 계정(JWT)이 필요하므로, 로그인한 사용자마다 예약 서비스 계정을
 // 자동 생성/로그인해 토큰을 붙여 전달한다. 클라이언트는 /api/reservation/<예약API 경로>로 호출.
+// 예약은 피보호자 계정 소유다: 보호자는 x-sb-ward-id 헤더로 연결된 피보호자 계정을 대신 쓰고,
+// 피보호자 웹은 헤더 없이 자기 계정으로 같은 내역을 본다.
 import { createHmac } from 'crypto';
 import { NextRequest } from 'next/server';
 
@@ -8,9 +10,11 @@ const RESERVATION_API = `${(process.env.RESERVATION_API_URL ?? 'https://reservat
 // ponytail: 예약 서비스 계정 비밀번호 파생용. 운영에서는 RESERVATION_ACCOUNT_SECRET로 반드시 덮어쓸 것.
 const ACCOUNT_SECRET = process.env.RESERVATION_ACCOUNT_SECRET ?? 'silverbridge-reservation-dev-secret';
 const PHONE_PATTERN = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
+const WARD_HEADER = 'x-sb-ward-id';
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 type Profile = { id: string; name?: string; phone?: string };
+type Connection = { partnerUserId: string; partnerName?: string; partnerPhone?: string | null };
 
 const tokenCache = new Map<string, { token: string; expiresAt: number }>();
 
@@ -18,21 +22,33 @@ function fail(status: number, message: string) {
   return Response.json({ success: false, code: 'RESERVATION_PROXY', message }, { status });
 }
 
-async function getCurrentProfile(request: NextRequest): Promise<Profile | null> {
+function getSbToken(request: NextRequest) {
   const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-  const token = bearer || request.cookies.get('careai_access_token')?.value;
-  const apiDomain = process.env.NEXT_PUBLIC_API_DOMAIN;
-  if (!token || !apiDomain) return null;
+  return bearer || request.cookies.get('careai_access_token')?.value;
+}
 
-  const response = await fetch(`${apiDomain.replace(/\/$/, '')}/api/user/me`, {
+async function fetchSb(token: string, path: string): Promise<unknown> {
+  const apiDomain = process.env.NEXT_PUBLIC_API_DOMAIN;
+  if (!apiDomain) return null;
+  const response = await fetch(`${apiDomain.replace(/\/$/, '')}${path}`, {
     cache: 'no-store',
     headers: { authorization: `Bearer ${token}` },
   });
   if (!response.ok) return null;
-
   const body = await response.json();
-  const profile = (body?.data?.data ?? body?.data ?? body) as Profile | undefined;
+  return body?.data?.data ?? body?.data ?? body;
+}
+
+async function getCurrentProfile(token: string): Promise<Profile | null> {
+  const profile = (await fetchSb(token, '/api/user/me')) as Profile | null;
   return profile?.id ? profile : null;
+}
+
+// 보호자가 대신 예약할 피보호자. ACTIVE 연결만 허용해 남의 예약 내역을 볼 수 없게 한다.
+async function getWardProfile(token: string, wardId: string): Promise<Profile | null> {
+  const wards = (await fetchSb(token, '/api/guardian/connection/select?status=ACTIVE')) as Connection[] | null;
+  const ward = Array.isArray(wards) ? wards.find(item => item.partnerUserId === wardId) : undefined;
+  return ward ? { id: ward.partnerUserId, name: ward.partnerName, phone: ward.partnerPhone ?? undefined } : null;
 }
 
 async function postJson(path: string, body: unknown) {
@@ -54,7 +70,7 @@ async function getReservationToken(profile: Profile) {
   let response = await postJson('/auth/login', { email, password });
   if (response.status === 401) {
     const phone = profile.phone && PHONE_PATTERN.test(profile.phone) ? profile.phone : '010-0000-0000';
-    response = await postJson('/auth/signup', { email, password, name: profile.name || '보호자', phone });
+    response = await postJson('/auth/signup', { email, password, name: profile.name || '사용자', phone });
   }
   if (!response.ok) throw new Error('예약 서비스 계정을 준비하지 못했습니다.');
 
@@ -64,8 +80,13 @@ async function getReservationToken(profile: Profile) {
 }
 
 async function proxyReservationRequest(request: NextRequest, context: RouteContext) {
-  const profile = await getCurrentProfile(request);
-  if (!profile) return fail(401, '로그인이 필요해요.');
+  const sbToken = getSbToken(request);
+  const me = sbToken ? await getCurrentProfile(sbToken) : null;
+  if (!sbToken || !me) return fail(401, '로그인이 필요해요.');
+
+  const wardId = request.headers.get(WARD_HEADER);
+  const profile = wardId ? await getWardProfile(sbToken, wardId) : me;
+  if (!profile) return fail(403, '연결된 피보호자가 아니에요.');
 
   let token: string;
   try {
