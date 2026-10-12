@@ -4,13 +4,14 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useQuery } from '@tanstack/react-query';
 
 import { Icon } from '@/components/Icon';
+import { getAuthRole } from '@/lib/auth/tokenStore';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import type { ChatLogItem, ChatMessage } from '@/service/interface/chat';
 
 import ChatBubble from './ChatBubble';
-import styles from './GuardianChatContent.module.css';
+import styles from './ChatbotContent.module.css';
 
 function makeId() {
   return Math.random().toString(36).slice(2);
@@ -41,7 +42,7 @@ const QUICK_PROMPTS = [
 
 const COMPOSER_MAX_LINES = 2;
 
-export default function GuardianChatContent() {
+export default function ChatbotContent() {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const [sessionId] = useState(makeSessionId);
@@ -127,6 +128,7 @@ export default function GuardianChatContent() {
           message: uiSelection ? undefined : trimmed,
           sessionId,
           history,
+          context: { role: getAuthRole() ?? undefined },
           uiSelection: uiSelection ?? undefined,
         });
 

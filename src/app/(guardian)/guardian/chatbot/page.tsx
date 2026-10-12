@@ -1,5 +1,5 @@
-import GuardianChatContent from './_components/GuardianChatContent';
+import ChatbotContent from '@/components/chatbot/ChatbotContent';
 
 export default function GuardianChatbotPage() {
-  return <GuardianChatContent />;
+  return <ChatbotContent />;
 }
