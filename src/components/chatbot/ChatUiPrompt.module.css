@@ -18,6 +18,12 @@
   gap: 6px;
 }
 
+.timeSelect .chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
 .chip {
   border: 1px solid rgba(37, 32, 24, 0.08);
   border-radius: 999px;
@@ -33,6 +39,16 @@
 .chip:hover:not(:disabled) {
   border-color: var(--sb-line);
   background: var(--sb-brand-50);
+}
+
+.chipSelected {
+  border-color: var(--sb-brand);
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.changeDateChip {
+  grid-column: 1 / -1;
 }
 
 .chip:disabled {
@@ -95,4 +111,10 @@
   margin: 0;
   color: var(--sb-ink-mute);
   font-size: 0.6875rem;
+}
+
+@media (max-width: 480px) {
+  .timeSelect .chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

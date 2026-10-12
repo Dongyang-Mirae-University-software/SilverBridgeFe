@@ -102,8 +102,9 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect, userI
               />
             )}
 
-            {/* UI 프롬프트 — 마지막 assistant 메시지에만 활성 */}
-            {message.type === 'ui' && message.ui && (
+            {/* 응답 type과 무관하게 ui가 있으면 선택지를 표시한다.
+                예약 시간 응답은 type이 tool_result/message여도 ui.select를 함께 내려줄 수 있다. */}
+            {message.ui && (
               <ChatUiPrompt
                 ui={message.ui}
                 active={isLastAssistant}
