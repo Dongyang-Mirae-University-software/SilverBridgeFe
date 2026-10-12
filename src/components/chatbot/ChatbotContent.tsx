@@ -101,7 +101,7 @@ export default function ChatbotContent() {
   const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
   const historyItems = Array.isArray(chatLogs) ? chatLogs : [];
   const send = useCallback(
-    async (text: string, uiSelection?: { field: string; value: string }) => {
+    async (text: string, uiSelection?: { field: string; value: string }, uiSelectionLabel?: string) => {
       const trimmed = text.trim();
       if (!trimmed && !uiSelection) return;
       if (sendingRef.current) return;
@@ -114,7 +114,7 @@ export default function ChatbotContent() {
       const userMessage: ChatMessage = {
         id: makeId(),
         role: 'user',
-        content: uiSelection ? `[선택] ${uiSelection.field}: ${uiSelection.value}` : trimmed,
+        content: uiSelection ? uiSelectionLabel ?? uiSelection.value : trimmed,
         timestamp: new Date().toISOString(),
       };
 
@@ -183,8 +183,8 @@ export default function ChatbotContent() {
     }
   }
 
-  function handleUiSelect(field: string, value: string) {
-    void send('', { field, value });
+  function handleUiSelect(field: string, value: string, label?: string) {
+    void send('', { field, value }, label);
   }
 
   function handleQuickPrompt(prompt: string) {

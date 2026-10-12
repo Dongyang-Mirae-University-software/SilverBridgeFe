@@ -13,7 +13,7 @@ dayjs.locale('ko');
 interface Props {
   message: ChatMessage;
   isLastAssistant: boolean;
-  onUiSelect: (field: string, value: string) => void;
+  onUiSelect: (field: string, value: string, label?: string) => void;
   userImageUrl?: string | null;
   userName?: string | null;
 }
