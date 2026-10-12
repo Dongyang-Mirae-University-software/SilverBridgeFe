@@ -7,10 +7,10 @@ import classNames from 'classnames/bind';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { UserAvatar } from '@/components/UserAvatar';
-import { getGuardianLiveCameras } from '@/service/api/guardian/camera';
-import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
-import { guardianMedicationQueryOptions } from '@/service/query/guardian/medication';
+import { guardianConnectionsQueryOptions, guardianDashboardQueryOptions } from '@/service/query/guardian';
 import { myProfileQueryOptions } from '@/service/query/user';
+import { formatDateTime } from '@/utils/format/date';
+import { formatDoseTime, getMedicationTimeSlotLabel } from '@/utils/format/medication';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import styles from './GuardianDashboardContent.module.css';
 
@@ -32,13 +32,6 @@ export function GuardianDashboardContent() {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const { data: connectionsResponse } = useQuery(guardianConnectionsQueryOptions);
-  const { data: medicationSummaries = [] } = useQuery(guardianMedicationQueryOptions);
-  const { data: liveCameras, isError: isLiveStreamsError } = useQuery({
-    queryKey: ['dashboard-live-cameras'],
-    queryFn: getGuardianLiveCameras,
-    retry: false,
-    staleTime: 15 * 1000,
-  });
 
   const activeConnections = useMemo(
     () => (Array.isArray(connectionsResponse?.data) ? connectionsResponse.data : [])
@@ -49,15 +42,46 @@ export function GuardianDashboardContent() {
   const [selectedConnectionId, setSelectedConnectionId] = useState<number | null>(null);
   const selectedWard = activeConnections.find(connection => connection.id === selectedConnectionId) ?? activeConnections[0] ?? null;
 
-  const medication = medicationSummaries.find(summary => summary.wardId === selectedWard?.partnerUserId);
-  const missedMedicationCount = medication ? Math.max(medication.totalCount - medication.takenCount, 0) : 0;
-  const runningCameraCount = liveCameras?.filter(camera => camera.status === 'running').length ?? 0;
+  // 피보호자 칩 배지는 선택 상태와 무관하게 항상 전체 기준으로 보여야 해서 별도로 조회
+  const { data: dashboardAll } = useQuery({
+    ...guardianDashboardQueryOptions({}),
+    enabled: connectionsResponse !== undefined,
+  });
+  const pendingByWard = new Map((dashboardAll?.wards ?? []).map(ward => [ward.wardId, ward.pendingCount]));
+
+  const { data: dashboard } = useQuery({
+    ...guardianDashboardQueryOptions({ wardId: selectedWard?.partnerUserId }),
+    enabled: connectionsResponse !== undefined,
+  });
+
+  const isAnomalyUnavailable = dashboard?.unavailable.includes('anomalyDetection') ?? false;
+  const isSosUnavailable = dashboard?.unavailable.includes('sos') ?? false;
+  const isMedicationUnavailable = dashboard?.unavailable.includes('medication') ?? false;
+
+  const anomaly = dashboard?.anomalyDetection;
+  const sos = dashboard?.sos;
+  const medication = dashboard?.medication;
+  const mostUrgent = medication?.mostUrgent;
+
   const cards: DashboardCard[] = [
     {
       href: '/guardian/detection', icon: 'alert', kind: 'detect', title: '이상감지',
-      main: isLiveStreamsError ? '상태를 확인할 수 없어요' : runningCameraCount > 0 ? '실시간 감지 진행 중' : '모니터링 대기 중',
-      sub: isLiveStreamsError ? '카메라 연결 상태를 다시 확인해 주세요' : `분석 중인 카메라 ${runningCameraCount}대`,
-      pill: isLiveStreamsError ? { tone: 'warn', label: '확인 필요' } : { tone: 'ok', label: '괜찮아요' },
+      main: isAnomalyUnavailable
+        ? '확인 중'
+        : anomaly?.latest
+          ? `${anomaly.latest.cameraLabel ?? '카메라'}에서 ${anomaly.latest.detectedTypeLabel} 의심 감지`
+          : '확인할 이상 감지가 없어요',
+      sub: isAnomalyUnavailable
+        ? '잠시 후 다시 시도해 주세요'
+        : anomaly?.needsReviewCount
+          ? `확인 필요 ${anomaly.needsReviewCount}건`
+          : null,
+      pill: isAnomalyUnavailable
+        ? undefined
+        : anomaly?.needsReviewCount
+          ? { tone: 'warn', label: '확인 필요' }
+          : { tone: 'ok', label: '괜찮아요' },
+      highlighted: !isAnomalyUnavailable && (anomaly?.needsReviewCount ?? 0) > 0 ? 'danger' : undefined,
     },
     {
       href: '/guardian/emotion', icon: 'heart', kind: 'mood', title: '오늘의 정서', main: '정서 상태 확인하기',
@@ -66,16 +90,33 @@ export function GuardianDashboardContent() {
     },
     {
       href: '/guardian/medication', icon: 'pill', kind: 'medication', title: '복약',
-      main: medication ? `${medication.totalCount}번 중 ${medication.takenCount}번 드셨어요` : '등록된 복약 정보 없음',
-      sub: medication ? (missedMedicationCount > 0 ? `오늘 미복용 ${missedMedicationCount}건` : '오늘 복약을 모두 확인했어요') : null,
-      pill: medication ? (missedMedicationCount > 0 ? { tone: 'care', label: '미복용' } : { tone: 'ok', label: '잘 드셨어요' }) : undefined,
-      highlighted: missedMedicationCount > 0 ? 'care' : undefined,
+      main: isMedicationUnavailable
+        ? '확인 중'
+        : mostUrgent
+          ? `${getMedicationTimeSlotLabel(mostUrgent.timeSlot)} ${mostUrgent.name} (${formatDoseTime(mostUrgent.doseTime)})`
+          : '체크되지 않은 약이 없어요',
+      sub: isMedicationUnavailable
+        ? '잠시 후 다시 시도해 주세요'
+        : mostUrgent
+          ? '체크되지 않았습니다'
+          : '오늘 복약을 모두 확인했어요',
+      pill: isMedicationUnavailable ? undefined : mostUrgent ? { tone: 'care', label: '미체크' } : { tone: 'ok', label: '잘 드셨어요' },
+      highlighted: !isMedicationUnavailable && mostUrgent ? 'care' : undefined,
     },
-    { href: '/guardian/sos', icon: 'phone', kind: 'sos', title: 'SOS', main: 'SOS 이력 확인하기', sub: selectedWard ? `${selectedWard.partnerName} 님의 긴급 호출 이력` : null },
+    {
+      href: '/guardian/sos', icon: 'phone', kind: 'sos', title: 'SOS',
+      main: isSosUnavailable
+        ? '확인 중'
+        : sos?.latest
+          ? `최근 ${formatDateTime(sos.latest.triggeredAt)}`
+          : '이번 달 호출 이력이 없어요',
+      sub: isSosUnavailable ? '잠시 후 다시 시도해 주세요' : sos?.latest?.location ?? null,
+      pill: isSosUnavailable || !sos?.thisMonthCount ? undefined : { tone: 'warn', label: `이번 달 ${sos.thisMonthCount}건` },
+    },
     { href: '/guardian/hospital', icon: 'hospital', kind: 'hospital', title: '병원 예약', main: '병원 예약하기', sub: selectedWard ? `${selectedWard.partnerName} 님을 대신해 예약할 수 있어요` : null },
     { href: '/guardian/game', icon: 'game', kind: 'game', title: '게임·인지 활동', main: '게임 현황 확인하기', sub: selectedWard ? `${selectedWard.partnerName} 님의 인지 활동 기록` : null },
   ];
-  const attentionCount = missedMedicationCount + (isLiveStreamsError ? 1 : 0);
+  const pendingTotal = dashboard?.pendingActions.total;
 
   if (activeConnections.length === 0) {
     return (
@@ -97,17 +138,19 @@ export function GuardianDashboardContent() {
         <div className={cx('wardRail')} role="list" aria-label="피보호자 선택">
           {activeConnections.map(connection => {
             const isSelected = selectedWard?.id === connection.id;
+            const pendingCount = pendingByWard.get(connection.partnerUserId);
             return (
               <button key={connection.id} className={cx('wardChip', { active: isSelected })} type="button" onClick={() => setSelectedConnectionId(connection.id)}>
                 <UserAvatar imageUrl={connection.partnerProfileImage} size="w-32" />
                 <span>{connection.partnerName || EMPTY_VALUE}</span><em>{connection.relation || '관계'}</em>
+                {!!pendingCount && <i className={cx('wardChipBadge')}>{pendingCount}</i>}
               </button>
             );
           })}
         </div>
-        <span className={cx('attentionBadge', { attention: attentionCount > 0 })}>
-          <Icon name={attentionCount > 0 ? 'bell' : 'alert'} size={20} />
-          {attentionCount > 0 ? `확인이 필요한 일 ${attentionCount}건` : '지금 확인할 일이 없어요'}
+        <span className={cx('attentionBadge', { attention: !!pendingTotal })}>
+          <Icon name={pendingTotal ? 'bell' : 'alert'} size={20} />
+          {pendingTotal == null ? '확인 중' : pendingTotal > 0 ? `확인이 필요한 일 ${pendingTotal}건` : '지금 확인할 일이 없어요'}
         </span>
       </div>
       <section className={cx('featureGrid')} aria-label="피보호자 현황">

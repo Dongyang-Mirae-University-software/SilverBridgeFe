@@ -22,6 +22,8 @@ type WakeLockSentinelLike = { released: boolean; release: () => Promise<void> };
 
 const CAMERA_ROTATION_STORAGE_KEY = 'silverbridge_ward_camera_rotation';
 const MAX_IN_FLIGHT = 2;
+// 화면 공유는 getDisplayMedia에 크기 제한이 없어 원본 해상도 그대로 올라간다 — 가로 1280으로 줄여서 업로드 속도를 맞춘다
+const MAX_CAPTURE_WIDTH = 1280;
 
 const FACING_OPTIONS: Array<{ value: CameraFacing; label: string }> = [
   { value: 'user', label: '전면 카메라' },
@@ -79,7 +81,7 @@ export function CameraRegisterModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-  const captureTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const captureWorkerRef = useRef<Worker | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const liveSessionIdRef = useRef<string | null>(null);
   const frameQueueRef = useRef<Blob[]>([]);
@@ -98,7 +100,8 @@ export function CameraRegisterModal({
 
   useEffect(() => {
     return () => {
-      if (captureTimerRef.current) clearInterval(captureTimerRef.current);
+      captureWorkerRef.current?.terminate();
+      captureWorkerRef.current = null;
       if (previewTimerRef.current) clearInterval(previewTimerRef.current);
       mediaStreamRef.current?.getTracks().forEach(track => track.stop());
       void wakeLockRef.current?.release().catch(() => {});
@@ -168,10 +171,8 @@ export function CameraRegisterModal({
     const sessionId = liveSessionIdRef.current;
     liveSessionIdRef.current = null;
     if (sessionId) await stopStreamSession(sessionId).catch(() => {});
-    if (captureTimerRef.current) {
-      clearInterval(captureTimerRef.current);
-      captureTimerRef.current = null;
-    }
+    captureWorkerRef.current?.terminate();
+    captureWorkerRef.current = null;
     if (previewTimerRef.current) {
       clearInterval(previewTimerRef.current);
       previewTimerRef.current = null;
@@ -217,8 +218,11 @@ export function CameraRegisterModal({
     const canvas = canvasRef.current;
     if (!video || !canvas || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return false;
 
-    const width = video.videoWidth || 1280;
-    const height = video.videoHeight || 720;
+    const srcWidth = video.videoWidth || 1280;
+    const srcHeight = video.videoHeight || 720;
+    const scale = Math.min(1, MAX_CAPTURE_WIDTH / srcWidth);
+    const width = Math.round(srcWidth * scale);
+    const height = Math.round(srcHeight * scale);
     const currentRotation = rotationRef.current;
     const shouldSwapDimensions = currentRotation === 90 || currentRotation === 270;
     const context = canvas.getContext('2d');
@@ -239,18 +243,24 @@ export function CameraRegisterModal({
     previewTimerRef.current = setInterval(drawFrameToCanvas, Math.floor(1000 / 15));
   };
 
+  // 화면 공유로 다른 탭·창을 띄우면 이 탭이 숨겨져 메인 스레드 setInterval이 1초에 1번으로
+  // 제한된다. Worker 안의 타이머는 이 제한을 받지 않아 recommendedFps를 그대로 유지할 수 있다
   const startCaptureLoop = (recommendedFps: number) => {
     if (previewTimerRef.current) {
       clearInterval(previewTimerRef.current);
       previewTimerRef.current = null;
     }
-    if (captureTimerRef.current) clearInterval(captureTimerRef.current);
+
+    if (!captureWorkerRef.current) {
+      captureWorkerRef.current = new Worker('/capture-timer.js');
+      captureWorkerRef.current.onmessage = () => {
+        if (!drawFrameToCanvas()) return;
+        canvasRef.current?.toBlob(blob => blob && enqueueLatestFrame(blob), 'image/jpeg', 0.8);
+      };
+    }
 
     const intervalMs = Math.max(Math.floor(1000 / Math.max(recommendedFps, 1)), 1);
-    captureTimerRef.current = setInterval(() => {
-      if (!drawFrameToCanvas()) return;
-      canvasRef.current?.toBlob(blob => blob && enqueueLatestFrame(blob), 'image/jpeg', 0.8);
-    }, intervalMs);
+    captureWorkerRef.current.postMessage(intervalMs);
   };
 
   const startStreaming = async (camera: WardCamera) => {

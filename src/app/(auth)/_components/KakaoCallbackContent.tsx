@@ -3,6 +3,7 @@
 import { useEffect, Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
+import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
@@ -10,6 +11,9 @@ import { getKakaoRedirectUri } from '@/lib/auth/kakao';
 import { getRoleHomePath } from '@/utils/auth/routes';
 import { signinKakao } from '@/service/api/auth/auth';
 import { IKakaoSigninRes } from '@/service/interface/auth/auth';
+import styles from './KakaoCallbackContent.module.css';
+
+const cx = classNames.bind(styles);
 
 type KakaoSigninData = IKakaoSigninRes['data'];
 
@@ -75,7 +79,7 @@ function KakaoCallbackInner() {
 
   return (
     <>
-      <div>카카오 로그인 처리 중...</div>
+      <LoadingScreen label="카카오 로그인 처리 중..." />
       {errorMessage && (
         <CommonModal type="error" title="카카오 로그인 실패" message={errorMessage} onClose={handleErrorClose} />
       )}
@@ -83,9 +87,18 @@ function KakaoCallbackInner() {
   );
 }
 
+function LoadingScreen({ label }: { label: string }) {
+  return (
+    <div className={cx('loadingScreen')}>
+      <span className={cx('spinner')} aria-hidden="true" />
+      <p className={cx('loadingText')}>{label}</p>
+    </div>
+  );
+}
+
 export function KakaoCallbackContent() {
   return (
-    <Suspense fallback={<div>로딩 중...</div>}>
+    <Suspense fallback={<LoadingScreen label="로딩 중..." />}>
       <KakaoCallbackInner />
     </Suspense>
   );

@@ -4,29 +4,29 @@
   z-index: 300;
   display: grid;
   place-items: center;
-  background: rgba(10, 9, 7, 0.6);
-  backdrop-filter: blur(6px);
-  padding: 20px;
+  background: rgba(31, 25, 21, 0.38);
+  backdrop-filter: blur(3px);
+  padding: 24px;
 }
 
 .modal {
   display: flex;
   flex-direction: column;
-  width: min(920px, 100%);
-  max-height: calc(100vh - 40px);
+  width: min(880px, 100%);
+  max-height: calc(100vh - 48px);
   overflow: hidden auto;
-  border-radius: 16px;
-  background: #1c1915;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  border: 1px solid #e7d1c0;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(60, 40, 24, 0.28);
 }
 
 .header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.35);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 14px 20px;
+  min-height: 77px;
+  gap: 13px;
+  padding: 18px 21px;
 }
 
 .liveBadge {
@@ -34,13 +34,13 @@
   flex-shrink: 0;
   align-items: center;
   gap: 6px;
-  border-radius: 6px;
+  border-radius: 7px;
   background: var(--sb-warn);
   color: #fff;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.05em;
-  padding: 4px 10px;
+  padding: 7px 10px;
 }
 
 .liveDot {
@@ -67,8 +67,8 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  color: #fff;
-  font-size: 1rem;
+  color: var(--sb-ink);
+  font-size: 18px;
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -77,13 +77,13 @@
 .closeButton {
   display: grid;
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   place-items: center;
-  border: 0;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border: 1px solid #e9cfbc;
+  border-radius: 11px;
+  background: #fff;
+  color: #534943;
   cursor: pointer;
   font-size: 15px;
   font-weight: 700;
@@ -94,7 +94,9 @@
   display: grid;
   aspect-ratio: 16 / 9;
   place-items: center;
-  background: #14110c;
+  margin: 0 21px;
+  border-radius: 14px;
+  background: #201b19;
   overflow: hidden;
 }
 
@@ -109,7 +111,7 @@
 }
 
 .placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: #766e69;
   font-size: 0.875rem;
 }
 
@@ -118,7 +120,7 @@
   gap: 6px;
   place-items: center;
   padding: 20px;
-  color: rgba(255, 255, 255, 0.7);
+  color: #b1aaa6;
   text-align: center;
 }
 
@@ -134,17 +136,17 @@
 
 .recBadge {
   position: absolute;
-  top: 14px;
-  left: 14px;
+  top: 12px;
+  left: 12px;
   display: grid;
   gap: 2px;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.72);
   color: #fff;
   font-size: 0.75rem;
   font-family: monospace;
   letter-spacing: 0.03em;
-  padding: 8px 12px;
+  padding: 9px 12px;
 }
 
 .recBadge strong {
@@ -170,92 +172,58 @@
   background: #e0392f;
 }
 
-.aiBadge {
-  position: absolute;
-  top: 14px;
-  right: 14px;
+.connectionRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 17px 21px 14px;
+  color: #827970;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.connectionBadge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 6px 10px;
+  border: 1px solid #3a9d6f;
+  border-radius: 999px;
+  background: #edf9f2;
+  color: #26895c;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 7px 10px;
 }
 
-.aiDot {
+.connectionBadge.offline {
+  border-color: #cfc5bd;
+  background: #f7f4f1;
+  color: #877e76;
+}
+
+.connectionBadge.checking {
+  border-color: #e3b46e;
+  background: #fff8e8;
+  color: #a66d15;
+}
+
+.connectionDot {
   width: 7px;
   height: 7px;
-  box-sizing: border-box;
   border-radius: 50%;
-  background: #9a928b;
-}
-
-.aiDot.running {
-  background: #4ade80;
-}
-
-.aiDot.checking {
-  border: 1.5px dashed #c9c2ba;
-  background: transparent;
-}
-
-.caption {
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 0;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.55);
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  padding: 6px 14px;
-  white-space: nowrap;
-}
-
-.infoRow {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.infoChip {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: #1c1915;
-  padding: 12px 16px;
-}
-
-.infoChip span {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.6875rem;
-  font-weight: 700;
-}
-
-.infoChip strong {
-  color: #fff;
-  font-size: 0.9375rem;
-  font-weight: 850;
+  background: currentColor;
 }
 
 .switchRow {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 14px 20px;
+  gap: 11px;
+  padding: 1px 21px 20px;
 }
 
 .switchLabel {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 11px;
+  color: #827970;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.05em;
 }
@@ -263,27 +231,27 @@
 .switchChips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .switchChip {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  color: #fff;
+  gap: 6px;
+  border: 1px solid #e7cdb9;
+  border-radius: 999px;
+  background: #fff;
+  color: #39322e;
   cursor: pointer;
   font-size: 13px;
   font-weight: 700;
-  padding: 9px 14px;
+  padding: 11px 15px;
 }
 
 .switchChip.active {
   border-color: var(--sb-brand);
-  background: rgba(176, 103, 77, 0.3);
-  color: #fff;
+  background: #fff8f2;
+  color: var(--sb-brand);
 }
 
 .switchStatusDot {
@@ -291,7 +259,7 @@
   height: 8px;
   box-sizing: border-box;
   border-radius: 50%;
-  background: #9a928b;
+  background: #aaa29a;
 }
 
 .switchStatusDot.running {
@@ -299,45 +267,91 @@
 }
 
 .switchStatusDot.checking {
-  border: 1.5px dashed #c9c2ba;
+  border: 1.5px dashed #c8a16e;
   background: transparent;
 }
 
 .switchStatus {
-  color: rgba(255, 255, 255, 0.7);
+  color: #827970;
   font-size: 11px;
   font-weight: 600;
 }
 
 .footer {
   display: flex;
-  gap: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 14px 18px;
+  justify-content: flex-end;
+  padding: 0 21px 21px;
 }
 
-.snapshotButton,
 .closeFooterButton {
-  flex: 1;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 800;
-  padding: 13px;
-}
-
-.snapshotButton {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-}
-
-.snapshotButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+  padding: 15px 51px;
 }
 
 .closeFooterButton {
   background: var(--sb-brand);
   color: #fff;
+}
+
+@media (max-width: 600px) {
+  .overlay {
+    align-items: end;
+    padding: 0;
+  }
+
+  .modal {
+    width: 100%;
+    max-height: min(100dvh, 760px);
+    border-width: 1px 0 0;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .header {
+    min-height: 68px;
+    padding: 14px 16px;
+  }
+
+  .header strong {
+    font-size: 16px;
+  }
+
+  .frameArea {
+    margin: 0 16px;
+    border-radius: 12px;
+  }
+
+  .connectionRow {
+    padding: 14px 16px 12px;
+  }
+
+  .switchRow {
+    padding: 1px 16px 16px;
+  }
+
+  .switchChips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .switchChips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .switchChip {
+    flex: 0 0 auto;
+  }
+
+  .footer {
+    padding: 0 16px 16px;
+  }
+
+  .closeFooterButton {
+    width: 100%;
+  }
 }

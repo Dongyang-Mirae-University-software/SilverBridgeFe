@@ -68,6 +68,11 @@
   padding: 2px 8px;
 }
 
+.badgeMuted {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+}
+
 .desc {
   margin-top: 3px;
   color: var(--sb-ink-mute);
