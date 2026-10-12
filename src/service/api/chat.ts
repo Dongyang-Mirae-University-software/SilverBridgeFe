@@ -23,8 +23,10 @@ export async function getChatLogs(): Promise<ChatLogItem[]> {
   return Array.isArray(data) ? (data as ChatLogItem[]) : [];
 }
 
-export async function getChatLogDetail(chatId: string): Promise<ChatLogItem> {
+// 기록 번호(chatId)가 1,2,3… 순서라 번호만 바꿔 넣으면 남의 상담 기록이 조회될 수 있어 본인 userId를 함께 보낸다
+export async function getChatLogDetail(chatId: string, userId: string): Promise<ChatLogItem> {
   const response = await apiClient.get<CommonResponse<ChatLogItem>>(`${getChatBasePath()}/logs/${chatId}`, {
+    params: { userId },
     timeout: 15_000,
   });
   const data = getResponseData<ChatLogItem>(response);
