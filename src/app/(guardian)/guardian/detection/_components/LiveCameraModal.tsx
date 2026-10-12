@@ -3,22 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
-import { formatNumber } from './monitorUtils';
 import { useGuardianMonitor } from './useGuardianMonitor';
 import type { GuardianCameraLiveStatus, GuardianLiveCamera } from '@/service/interface/guardian/camera';
 import styles from './LiveCameraModal.module.css';
 
 const cx = classNames.bind(styles);
-
-const DETECT_LABEL: Record<string, string> = {
-  fire: '화재 감지됨',
-  smoke: '연기 감지됨',
-  knife: '흉기 발견',
-  fall: '낙상 감지됨',
-  person: '사람 감지됨',
-  danger: '위험 감지됨',
-  safe: '이상 없음',
-};
 
 function useLiveClock() {
   // 현재 시각을 첫 SSR HTML에 넣으면 서버와 휴대폰의 렌더 시각이 달라 hydration 오류가 난다.
@@ -33,10 +22,6 @@ function useLiveClock() {
     };
   }, []);
   return now;
-}
-
-function getWardName(session: { wardName?: string }) {
-  return session.wardName ?? '피보호자';
 }
 
 function getCameraStatusMeta(status: GuardianCameraLiveStatus) {
@@ -93,7 +78,6 @@ export function LiveCameraModal({
 }) {
   const monitor = useGuardianMonitor();
   const didInitRef = useRef(false);
-  const imgRef = useRef<HTMLImageElement>(null);
   const now = useLiveClock();
 
   useEffect(() => {
@@ -109,25 +93,7 @@ export function LiveCameraModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSessionId, initialWardId, monitor.isLoading, monitor.sessions]);
 
-  const handleSnapshot = () => {
-    const img = imgRef.current;
-    if (!img || !img.src) return;
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth || 640;
-    canvas.height = img.naturalHeight || 480;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const link = document.createElement('a');
-    link.download = `snapshot-${monitor.selectedId ?? 'camera'}-${Date.now()}.jpg`;
-    link.href = canvas.toDataURL('image/jpeg', 0.9);
-    link.click();
-  };
-
-  const confidence = monitor.latestAnalysis?.confidence ?? 0;
-  const detectLabel = DETECT_LABEL[monitor.detectState] ?? '분석 대기 중';
   const cameraStatus = monitor.sessionStatus?.status;
-  const cameraStatusLabel = cameraStatus === null ? '확인 불가' : (cameraStatus ?? '-');
   const cameraStatusMeta = getCameraStatusMeta(cameraStatus ?? null);
 
   const wardGroups = useMemo(() => groupSessionsByWard(monitor.sessions), [monitor.sessions]);
@@ -151,7 +117,7 @@ export function LiveCameraModal({
             <span className={cx('liveDot')} />
             LIVE
           </span>
-          <strong>실시간 카메라{monitor.selectedSession ? ` - ${getWardName(monitor.selectedSession)}` : ''}</strong>
+          <strong>실시간 카메라{monitor.selectedSession?.label ? ` · ${monitor.selectedSession.label}` : ''}</strong>
           <button type="button" className={cx('closeButton')} onClick={onClose} aria-label="닫기">
             ✕
           </button>
@@ -169,7 +135,6 @@ export function LiveCameraModal({
             <div className={cx('placeholder')}>{monitor.streamErrorMessage ?? '프레임을 수신하는 중입니다...'}</div>
           ) : (
             <img
-              ref={imgRef}
               key={monitor.frameSrc}
               src={monitor.frameSrc}
               alt="실시간 영상"
@@ -186,31 +151,14 @@ export function LiveCameraModal({
             <span>{now ? formatLiveDateTime(now) : '-'}</span>
             <span>CAM · {monitor.selectedSession?.label ?? '-'}</span>
           </div>
-          <div className={cx('aiBadge')}>
-            <span className={cx('aiDot', cameraStatusMeta.tone)} />
-            {cameraStatusMeta.label}
-          </div>
-
-          {monitor.latestAnalysis && (
-            <p className={cx('caption')}>
-              {monitor.latestAnalysis.detectedTypeLabel} · {detectLabel.toUpperCase()}
-            </p>
-          )}
         </div>
 
-        <div className={cx('infoRow')}>
-          <div className={cx('infoChip')}>
-            <span>신뢰도</span>
-            <strong>{Math.round(confidence * 100)}%</strong>
-          </div>
-          <div className={cx('infoChip')}>
-            <span>FPS</span>
-            <strong>{formatNumber(monitor.sessionStatus?.fps)}</strong>
-          </div>
-          <div className={cx('infoChip')}>
-            <span>상태</span>
-            <strong>{cameraStatusLabel}</strong>
-          </div>
+        <div className={cx('connectionRow')}>
+          <span>연결 상태</span>
+          <strong className={cx('connectionBadge', cameraStatusMeta.tone)}>
+            <span className={cx('connectionDot')} />
+            {cameraStatusMeta.label}
+          </strong>
         </div>
 
         {selectedWardGroup && (
@@ -237,9 +185,6 @@ export function LiveCameraModal({
         )}
 
         <footer className={cx('footer')}>
-          <button type="button" className={cx('snapshotButton')} disabled={!monitor.frameSrc} onClick={handleSnapshot}>
-            스냅샷 저장
-          </button>
           <button type="button" className={cx('closeFooterButton')} onClick={onClose}>
             닫기
           </button>
