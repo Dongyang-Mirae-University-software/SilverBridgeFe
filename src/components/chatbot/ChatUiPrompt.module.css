@@ -21,7 +21,13 @@
 .timeSelect .chips {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 7px;
+  gap: 11px;
+  padding: 3px 1px;
+}
+
+.timeSelect .chip {
+  min-height: 40px;
+  padding: 7px 10px;
 }
 
 .chip {
