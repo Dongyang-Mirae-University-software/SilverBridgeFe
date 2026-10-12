@@ -140,11 +140,18 @@ export default function ChatbotContent() {
 
       try {
         const wardBirthDate = selectedWard?.partnerBirthDate?.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
-        const context = isGuardian
-          ? selectedWard
+        // 피보호자 본인 상담은 로그인 프로필을, 보호자 상담은 선택한 피보호자 정보를
+        // 예약 도구에 전달한다. 보호자가 아직 대상을 선택할 수 없는 경우에만 본인 정보를 쓴다.
+        const ownProfileContext = {
+          role: getAuthRole() ?? undefined,
+          name: profile?.name || undefined,
+          phone: profile?.phone || undefined,
+          birthDate: profile?.birthDate || undefined,
+          address: profile?.address || undefined,
+        };
+        const context =
+          isGuardian && selectedWard
             ? {
-                // 예약 도구는 context.name을 진료받는 사람으로 사용한다.
-                // 로그인한 보호자 정보가 아닌 선택한 피보호자 정보를 명시한다.
                 role: 'GUARDIAN',
                 name: selectedWard.partnerName,
                 age: wardBirthDate ? calcAge(wardBirthDate) : undefined,
@@ -153,7 +160,6 @@ export default function ChatbotContent() {
                 gender: selectedWard.partnerGender ?? undefined,
                 wardId: selectedWard.partnerUserId,
                 wardName: selectedWard.partnerName,
-                // 예약 도구가 환자를 명확히 식별할 수 있도록 예약 도메인 필드도 함께 전달한다.
                 patientId: selectedWard.partnerUserId,
                 patientName: selectedWard.partnerName,
                 patientBirthDate: wardBirthDate,
@@ -161,8 +167,7 @@ export default function ChatbotContent() {
                 patientGender: selectedWard.partnerGender ?? undefined,
                 relation: selectedWard.relation ?? undefined,
               }
-            : { role: 'GUARDIAN' }
-          : { role: getAuthRole() ?? undefined };
+            : ownProfileContext;
 
         const result = await sendChatMessage({
           message: uiSelection ? undefined : trimmed,
@@ -213,7 +218,7 @@ export default function ChatbotContent() {
         textareaRef.current?.focus();
       }
     },
-    [isGuardian, selectedWard, sessionId],
+    [isGuardian, profile, selectedWard, sessionId],
   );
 
   function handleWardSelect(wardId: string) {
