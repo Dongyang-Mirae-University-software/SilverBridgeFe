@@ -114,7 +114,9 @@ export default function ChatbotContent() {
   }, [input, resizeComposer]);
 
   const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
-  const historyItems = Array.isArray(chatLogs) ? chatLogs : [];
+  // 서버는 버튼·날짜·지역 선택도 "[선택] field: value" 형식의 별도 기록으로 남긴다.
+  // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
+  const historyItems = Array.isArray(chatLogs) ? chatLogs.filter(log => !isUiSelectionLog(log.message)) : [];
   const send = useCallback(
     async (text: string, uiSelection?: { field: string; value: string }, uiSelectionLabel?: string) => {
       const trimmed = text.trim();
@@ -443,4 +445,8 @@ function formatLogDate(value?: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
   return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+}
+
+function isUiSelectionLog(message?: string) {
+  return /^\s*\[선택\]\s*/.test(message ?? '');
 }
