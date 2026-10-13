@@ -22,13 +22,50 @@ export default function ChatUiPrompt({ ui, active, onSelect }: Props) {
 
   if (ui.kind === 'select') {
     const isTimeSelection = ui.field === 'time';
+    const isReservationSelection = ui.field === 'reservation_id';
+    const options = (ui.options ?? []).map(raw => (typeof raw === 'string' ? { value: raw, label: raw } : raw));
+
+    if (isReservationSelection) {
+      return (
+        <div className={`${styles.wrap} ${styles.reservationSelect}`}>
+          {ui.label && <p className={styles.label}>{ui.label}</p>}
+          <div className={styles.reservationPickerRow}>
+            <select
+              className={styles.reservationPicker}
+              value={selectedValue ?? ''}
+              disabled={!active}
+              aria-label={ui.label ?? '예약 선택'}
+              onChange={event => setSelectedValue(event.target.value || null)}
+            >
+              <option value="">예약을 선택해 주세요</option>
+              {options.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className={styles.reservationApplyButton}
+              disabled={!active || !selectedValue}
+              onClick={() => {
+                const selected = options.find(option => option.value === selectedValue);
+                if (selected) apply(selected.value, selected.label);
+              }}
+            >
+              상세 보기
+            </button>
+          </div>
+          {!active && <p className={styles.inactiveNote}>이전 대화의 선택지입니다.</p>}
+        </div>
+      );
+    }
 
     return (
       <div className={`${styles.wrap} ${isTimeSelection ? styles.timeSelect : ''}`}>
         {ui.label && <p className={styles.label}>{ui.label}</p>}
         <div className={styles.chips}>
-          {(ui.options ?? []).map(raw => {
-            const opt = typeof raw === 'string' ? { value: raw, label: raw } : raw;
+          {options.map(opt => {
             const isDateChangeOption = opt.value === '__change_date__';
             return (
               <button

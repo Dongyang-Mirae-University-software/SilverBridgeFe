@@ -30,6 +30,52 @@
   padding: 7px 10px;
 }
 
+.reservationSelect {
+  min-width: min(100%, 440px);
+}
+
+.reservationPickerRow {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.reservationPicker {
+  min-width: 0;
+  flex: 1;
+  height: 42px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 13px;
+  padding: 0 10px;
+}
+
+.reservationPicker:disabled {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+}
+
+.reservationApplyButton {
+  flex-shrink: 0;
+  min-height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 0 13px;
+}
+
+.reservationApplyButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
 .chip {
   border: 1px solid rgba(37, 32, 24, 0.08);
   border-radius: 999px;
@@ -122,5 +168,14 @@
 @media (max-width: 480px) {
   .timeSelect .chips {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reservationPickerRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reservationApplyButton {
+    width: 100%;
   }
 }

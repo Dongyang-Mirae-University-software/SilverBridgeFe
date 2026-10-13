@@ -94,7 +94,11 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect, userI
             )}
 
             {/* 툴 결과 카드 */}
-            {message.type === 'tool_result' && message.tool && (
+            {message.type === 'tool_result' &&
+              message.tool &&
+              // 예약 목록은 UI 선택 컨트롤로 한 번만 표시한다. toolData의 전체 목록과
+              // ui.options를 동시에 그리면 수십 개 항목이 중복되어 말풍선이 무너진다.
+              !(message.tool === 'list_my_appointments' && message.ui?.field === 'reservation_id') && (
               <ChatToolCard
                 tool={message.tool}
                 data={message.toolData}
