@@ -54,6 +54,8 @@ export interface ChatContext {
   address?: string;
   addressDetail?: string;
   guardianId?: number;
+  wardId?: string;
+  wardName?: string;
   location?: string;
   role?: string;
 }

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useQuery } from '@tanstack/react-query';
 
 import { Icon } from '@/components/Icon';
+import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
+import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { getAuthRole } from '@/lib/auth/tokenStore';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
@@ -22,8 +24,17 @@ function makeSessionId() {
   return makeId();
 }
 
-function buildWelcomeMessage(name?: string): ChatMessage {
+function buildWelcomeMessage(name?: string, isGuardian = false): ChatMessage {
   const title = name ? `${name}님 안녕하세요 😊` : '안녕하세요 😊';
+
+  if (isGuardian && name) {
+    return {
+      id: 'welcome',
+      role: 'assistant',
+      content: `${name} 님의 건강에 대해 무엇이 궁금하신가요?\n복약·혈압·증상·병원 예약을 도와드릴게요.`,
+      timestamp: new Date().toISOString(),
+    };
+  }
 
   return {
     id: 'welcome',
@@ -45,7 +56,11 @@ const COMPOSER_MAX_LINES = 2;
 export default function ChatbotContent() {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
-  const [sessionId] = useState(makeSessionId);
+  const isGuardian = getAuthRole() === 'GUARDIAN';
+  const { activeWards } = useGuardianActiveWards(isGuardian);
+  const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
+  const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId) ?? activeWards[0] ?? null;
+  const [sessionId, setSessionId] = useState(makeSessionId);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [buildWelcomeMessage()]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -70,9 +85,9 @@ export default function ChatbotContent() {
 
     setMessages(prev => {
       if (prev.length !== 1 || prev[0].id !== 'welcome') return prev;
-      return [buildWelcomeMessage(profile.name)];
+      return [buildWelcomeMessage(isGuardian ? selectedWard?.partnerName : profile.name, isGuardian)];
     });
-  }, [profile]);
+  }, [isGuardian, profile, selectedWard?.partnerName]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
@@ -124,11 +139,17 @@ export default function ChatbotContent() {
       setFallback(false);
 
       try {
+        const context = isGuardian
+          ? selectedWard
+            ? { role: 'GUARDIAN', wardId: selectedWard.partnerUserId, wardName: selectedWard.partnerName }
+            : { role: 'GUARDIAN' }
+          : { role: getAuthRole() ?? undefined };
+
         const result = await sendChatMessage({
           message: uiSelection ? undefined : trimmed,
           sessionId,
           history,
-          context: { role: getAuthRole() ?? undefined },
+          context,
           uiSelection: uiSelection ?? undefined,
         });
 
@@ -173,8 +194,18 @@ export default function ChatbotContent() {
         textareaRef.current?.focus();
       }
     },
-    [sessionId],
+    [isGuardian, selectedWard, sessionId],
   );
+
+  function handleWardSelect(wardId: string) {
+    if (wardId === selectedWard?.partnerUserId) return;
+    const ward = activeWards.find(item => item.partnerUserId === wardId);
+    setSelectedWardId(wardId);
+    setSessionId(makeSessionId());
+    setMessages([buildWelcomeMessage(ward?.partnerName, true)]);
+    setInput('');
+    setFallback(false);
+  }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -242,6 +273,17 @@ export default function ChatbotContent() {
             </button>
           </div>
         </header>
+
+        {isGuardian && activeWards.length > 0 && selectedWard && (
+          <section className={styles.wardTarget} aria-label="상담할 피보호자">
+            <span>상담할 피보호자</span>
+            <WardSelectorTabs
+              wards={activeWards.map(ward => ({ wardId: ward.partnerUserId, wardName: ward.partnerName }))}
+              selectedWardId={selectedWard.partnerUserId}
+              onSelect={handleWardSelect}
+            />
+          </section>
+        )}
 
         <div className={styles.body}>
           <section className={styles.board}>

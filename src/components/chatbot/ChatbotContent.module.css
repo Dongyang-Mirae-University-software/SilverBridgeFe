@@ -86,6 +86,26 @@
   flex-shrink: 0;
 }
 
+.wardTarget {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--sb-line);
+  background: #fff;
+  padding: 10px 22px;
+}
+
+.wardTarget > span {
+  flex-shrink: 0;
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.wardTarget > div {
+  min-width: 0;
+}
+
 .historyButton {
   display: inline-flex;
   align-items: center;
@@ -598,6 +618,12 @@
   .headerActions {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  .wardTarget {
+    display: grid;
+    gap: 8px;
+    padding: 10px 14px;
   }
 
   .brandCopy h1 {
