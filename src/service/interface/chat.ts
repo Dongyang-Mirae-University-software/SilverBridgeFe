@@ -56,6 +56,12 @@ export interface ChatContext {
   guardianId?: number;
   wardId?: string;
   wardName?: string;
+  patientId?: string;
+  patientName?: string;
+  patientBirthDate?: string;
+  patientPhone?: string;
+  patientGender?: string;
+  relation?: string;
   location?: string;
   role?: string;
 }

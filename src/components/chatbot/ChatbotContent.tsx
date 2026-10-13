@@ -153,6 +153,13 @@ export default function ChatbotContent() {
                 gender: selectedWard.partnerGender ?? undefined,
                 wardId: selectedWard.partnerUserId,
                 wardName: selectedWard.partnerName,
+                // 예약 도구가 환자를 명확히 식별할 수 있도록 예약 도메인 필드도 함께 전달한다.
+                patientId: selectedWard.partnerUserId,
+                patientName: selectedWard.partnerName,
+                patientBirthDate: wardBirthDate,
+                patientPhone: selectedWard.partnerPhone ?? undefined,
+                patientGender: selectedWard.partnerGender ?? undefined,
+                relation: selectedWard.relation ?? undefined,
               }
             : { role: 'GUARDIAN' }
           : { role: getAuthRole() ?? undefined };
