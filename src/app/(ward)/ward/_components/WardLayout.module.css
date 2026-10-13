@@ -60,3 +60,9 @@
     padding: 28px 28px 20px;
   }
 }
+
+@media (max-width: 760px) {
+  .chatMain > * {
+    padding: 0;
+  }
+}

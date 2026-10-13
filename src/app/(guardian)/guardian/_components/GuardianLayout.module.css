@@ -68,3 +68,9 @@
     padding: 18px 18px calc(28px + env(safe-area-inset-bottom));
   }
 }
+
+@media (max-width: 760px) {
+  .chatMain > * {
+    padding: 0;
+  }
+}
