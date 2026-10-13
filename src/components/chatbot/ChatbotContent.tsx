@@ -80,26 +80,6 @@ export default function ChatbotContent() {
   messagesRef.current = messages;
   sendingRef.current = sending;
 
-  // 모바일 키보드가 열릴 때 브라우저 문서까지 함께 스크롤되는 것을 막는다.
-  // 채팅 메시지 목록(.messageList)만 독립적으로 스크롤한다.
-  useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const previousHtmlOverflow = html.style.overflow;
-    const previousBodyOverflow = body.style.overflow;
-    const previousBodyOverscrollBehavior = body.style.overscrollBehavior;
-
-    html.style.overflow = 'hidden';
-    body.style.overflow = 'hidden';
-    body.style.overscrollBehavior = 'none';
-
-    return () => {
-      html.style.overflow = previousHtmlOverflow;
-      body.style.overflow = previousBodyOverflow;
-      body.style.overscrollBehavior = previousBodyOverscrollBehavior;
-    };
-  }, []);
-
   useEffect(() => {
     if (!profile) return;
 
