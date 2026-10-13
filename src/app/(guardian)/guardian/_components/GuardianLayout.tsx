@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { CSSProperties, ReactNode, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 import classNames from 'classnames/bind';
@@ -9,6 +9,7 @@ import { SidebarLayout } from '@/components/layout/dashboard/SidebarLayout';
 import { GUARDIAN_NAV } from '@/constants/dashboard';
 import { getAccessTokenSubject } from '@/lib/auth/tokenStore';
 import { getRealtimeNotification } from '@/utils/dashboard/realtime';
+import { useVisualViewportHeight } from '@/hooks/useVisualViewportHeight';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
@@ -25,12 +26,20 @@ export function GuardianLayout({ children }: { children: ReactNode }) {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const realtimeUserId = profile?.id ?? getAccessTokenSubject() ?? undefined;
+  const isChatbotPage = pathname === '/guardian/chatbot';
+  const chatViewportHeight = useVisualViewportHeight(isChatbotPage);
+  const chatViewportStyle = chatViewportHeight
+    ? ({ '--chat-viewport-height': `${chatViewportHeight}px` } as CSSProperties)
+    : undefined;
   useGuardianConnectionSocket(realtimeUserId);
 
   return (
-    <div className={cx('stage', { medicationStage: pathname === '/guardian/medication' })}>
+    <div
+      className={cx('stage', { chatStage: isChatbotPage, medicationStage: pathname === '/guardian/medication' })}
+      style={chatViewportStyle}
+    >
       <SidebarLayout navItems={GUARDIAN_NAV} profile={profile} role={role} rootPath={rootPath} />
-      <main className={cx('main', { chatMain: pathname === '/guardian/chatbot' })}>{children}</main>
+      <main className={cx('main', { chatMain: isChatbotPage })}>{children}</main>
     </div>
   );
 }

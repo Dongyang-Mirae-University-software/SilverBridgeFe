@@ -29,6 +29,12 @@
   overflow: hidden;
 }
 
+.chatStage {
+  min-height: 0;
+  height: var(--chat-viewport-height, 100dvh);
+  overflow-y: hidden;
+}
+
 .chatMain > * {
   min-height: 0;
   overflow: hidden;

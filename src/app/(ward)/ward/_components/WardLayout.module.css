@@ -38,6 +38,10 @@
   overflow: hidden;
 }
 
+.chatStage {
+  height: var(--chat-viewport-height, 100dvh);
+}
+
 .chatMain > * {
   overflow: hidden;
 }

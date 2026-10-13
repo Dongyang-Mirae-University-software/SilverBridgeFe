@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 import { usePathname } from 'next/navigation';
@@ -17,6 +17,7 @@ import {
 } from '@/constants/wardSettings';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { getRealtimeNotification } from '@/utils/dashboard/realtime';
+import { useVisualViewportHeight } from '@/hooks/useVisualViewportHeight';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
 import { applyMedicationTakenToWardCache } from '@/service/query/ward/medication';
@@ -41,6 +42,10 @@ export function WardLayout({ children }: { children: ReactNode }) {
   useWardConnectionSocket(realtimeUserId);
   useWardRootFontSize(wardSettings.fontSize);
   const isChatbotPage = pathname === '/ward/chatbot';
+  const chatViewportHeight = useVisualViewportHeight(isChatbotPage);
+  const chatViewportStyle = chatViewportHeight
+    ? ({ '--chat-viewport-height': `${chatViewportHeight}px` } as CSSProperties)
+    : undefined;
 
   return (
     <DashboardProvider
@@ -55,6 +60,7 @@ export function WardLayout({ children }: { children: ReactNode }) {
           wardHighContrast: wardSettings.highContrast,
           wardReadableText: true,
         })}
+        style={chatViewportStyle}
       >
         <SidebarLayout navItems={WARD_NAV} profile={profile} role={role} rootPath={rootPath} />
         <main className={cx('main', { chatMain: isChatbotPage })}>{children}</main>
