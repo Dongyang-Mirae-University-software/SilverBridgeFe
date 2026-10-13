@@ -70,6 +70,15 @@
 }
 
 @media (max-width: 760px) {
+  .chatStage {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 0;
+    width: 100%;
+  }
+
   .chatMain > * {
     padding: 0;
   }
