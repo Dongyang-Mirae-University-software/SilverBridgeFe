@@ -33,6 +33,7 @@
   min-height: 0;
   height: var(--chat-viewport-height, 100dvh);
   overflow-y: hidden;
+  overscroll-behavior: none;
 }
 
 .chatMain > * {
@@ -65,5 +66,11 @@
 
   .main > * {
     padding: 18px 18px calc(28px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 760px) {
+  .chatMain > * {
+    padding: 0;
   }
 }
