@@ -10,7 +10,7 @@ import { getAuthRole } from '@/lib/auth/tokenStore';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
-import type { ChatLogItem, ChatMessage } from '@/service/interface/chat';
+import { calcAge, type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
 
 import ChatBubble from './ChatBubble';
 import styles from './ChatbotContent.module.css';
@@ -139,9 +139,21 @@ export default function ChatbotContent() {
       setFallback(false);
 
       try {
+        const wardBirthDate = selectedWard?.partnerBirthDate?.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
         const context = isGuardian
           ? selectedWard
-            ? { role: 'GUARDIAN', wardId: selectedWard.partnerUserId, wardName: selectedWard.partnerName }
+            ? {
+                // 예약 도구는 context.name을 진료받는 사람으로 사용한다.
+                // 로그인한 보호자 정보가 아닌 선택한 피보호자 정보를 명시한다.
+                role: 'GUARDIAN',
+                name: selectedWard.partnerName,
+                age: wardBirthDate ? calcAge(wardBirthDate) : undefined,
+                birthDate: wardBirthDate,
+                phone: selectedWard.partnerPhone ?? undefined,
+                gender: selectedWard.partnerGender ?? undefined,
+                wardId: selectedWard.partnerUserId,
+                wardName: selectedWard.partnerName,
+              }
             : { role: 'GUARDIAN' }
           : { role: getAuthRole() ?? undefined };
 
