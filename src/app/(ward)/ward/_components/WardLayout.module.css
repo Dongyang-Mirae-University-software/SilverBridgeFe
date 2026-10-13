@@ -40,6 +40,7 @@
 
 .chatStage {
   height: var(--chat-viewport-height, 100dvh);
+  overscroll-behavior: none;
 }
 
 .chatMain > * {
