@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -9,7 +9,7 @@ import { Icon } from '@/components/Icon';
 import { wardLiveCamerasQueryOptions } from '@/service/query/ward/camera';
 import { showToast } from '@/store/toastStore';
 import { CameraRegisterModal, type CameraRegisterModalHandle } from './CameraRegisterModal';
-import { ALREADY_STREAMING, getCameraPrimaryAction } from './cameraAction';
+import { ALREADY_STREAMING, AWAIT_RUNNING_MS, getCameraPrimaryAction, isThisDeviceConnecting } from './cameraAction';
 import { WardCameraList } from './WardCameraList';
 import styles from './WardCameraContent.module.css';
 
@@ -20,11 +20,29 @@ export function WardCameraContent() {
   const [isStreamUnstable, setIsStreamUnstable] = useState(false);
   const [isTurningOn, setIsTurningOn] = useState(false);
   const [isModalStarting, setIsModalStarting] = useState(false);
+  // 이 탭이 송출을 시작했고 서버가 아직 'running'을 알려 주지 않은 동안(최대 AWAIT_RUNNING_MS)
+  const [isAwaitingRunning, setIsAwaitingRunning] = useState(false);
   const modalRef = useRef<CameraRegisterModalHandle>(null);
   const { data: cameras = [], isError: isLiveError } = useQuery(wardLiveCamerasQueryOptions);
   const myDeviceId = getStoredDeviceId();
   const myCamera = myDeviceId ? cameras.find(camera => camera.deviceId === myDeviceId) : undefined;
   const action = getCameraPrimaryAction(myCamera);
+  const isConnecting = isThisDeviceConnecting({
+    isTurningOn,
+    isModalStarting,
+    isAwaitingRunning,
+    status: myCamera?.status,
+  });
+
+  useEffect(() => {
+    if (!isAwaitingRunning) return;
+    const timer = setTimeout(() => setIsAwaitingRunning(false), AWAIT_RUNNING_MS);
+    return () => clearTimeout(timer);
+  }, [isAwaitingRunning]);
+
+  useEffect(() => {
+    if (myCamera?.status === 'running') setIsAwaitingRunning(false);
+  }, [myCamera?.status]);
 
   // 이 기기 카드의 주 버튼(카메라 화면 보기 / 카메라 켜기)
   const handlePrimary = async () => {
@@ -58,7 +76,7 @@ export function WardCameraContent() {
       <WardCameraList
         onRegister={() => setIsRegisterOpen(true)}
         primaryAction={action}
-        isConnecting={isTurningOn || isModalStarting}
+        isConnecting={isConnecting}
         onPrimary={handlePrimary}
       />
 
@@ -66,10 +84,13 @@ export function WardCameraContent() {
         ref={modalRef}
         initialRoom={myCamera?.label}
         isCameraRunning={myCamera?.status === 'running'}
+        connectionStatus={myCamera?.status ?? null}
+        isConnecting={isConnecting}
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
         onUnstableChange={setIsStreamUnstable}
         onStartingChange={setIsModalStarting}
+        onStreamingChange={setIsAwaitingRunning}
       />
     </section>
   );

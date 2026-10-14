@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getCameraPrimaryAction,
+  getCaptureSize,
   getCardStatus,
   getModalTitle,
   getVisibleFacings,
+  isThisDeviceConnecting,
   parseStoredFacing,
 } from './cameraAction';
 
@@ -28,8 +30,8 @@ describe('getModalTitle', () => {
   it('카메라가 없으면 등록', () => {
     expect(getModalTitle(undefined, false)).toBe('이 기기를 카메라로 등록');
   });
-  it('이 탭이 송출 중일 때만 화면 보기', () => {
-    expect(getModalTitle('거실', true)).toBe('"거실" 카메라 화면 보기');
+  it('이 탭이 송출 중이면 화면 보기 제목은 방 이름만', () => {
+    expect(getModalTitle('거실', true)).toBe('거실 카메라');
     expect(getModalTitle('거실', false)).toBe('"거실" 카메라 켜기');
   });
 });
@@ -49,8 +51,12 @@ describe('parseStoredFacing', () => {
 
 describe('getCardStatus', () => {
   const base = { isThisDevice: false, isConnecting: false };
-  it('연결됨은 안내 문구가 없다', () => {
-    expect(getCardStatus({ ...base, status: 'running' })).toMatchObject({ label: '연결됨', tone: 'connected', message: null });
+  it('연결됨은 영상을 보내고 있다고 안내한다', () => {
+    expect(getCardStatus({ ...base, status: 'running' })).toMatchObject({
+      label: '연결됨',
+      tone: 'connected',
+      message: '지금 영상을 보내고 있어요',
+    });
   });
   it('상태를 모르면 확인 중', () => {
     expect(getCardStatus({ ...base, status: null })).toMatchObject({ label: '확인 중', tone: 'checking' });
@@ -79,5 +85,41 @@ describe('getVisibleFacings', () => {
   it('화면 공유를 쓰고 있거나 허용하면 화면 공유도 보인다', () => {
     expect(getVisibleFacings('screen', false)).toContain('screen');
     expect(getVisibleFacings('user', true)).toContain('screen');
+  });
+});
+
+describe('getCaptureSize', () => {
+  it('회전 없이 찍힌 그대로 - 세로 원본 720x1280은 그대로 보낸다', () => {
+    expect(getCaptureSize(720, 1280)).toEqual({ width: 720, height: 1280 });
+  });
+  it('가로 1280 이하는 줄이지 않는다', () => {
+    expect(getCaptureSize(1280, 720)).toEqual({ width: 1280, height: 720 });
+    expect(getCaptureSize(640, 480)).toEqual({ width: 640, height: 480 });
+  });
+  it('가로가 1280을 넘을 때만 비율대로 줄인다', () => {
+    expect(getCaptureSize(1920, 1080)).toEqual({ width: 1280, height: 720 });
+    expect(getCaptureSize(2560, 1600)).toEqual({ width: 1280, height: 800 });
+  });
+  it('영상 크기를 아직 모르면(0) 1280x720 기준', () => {
+    expect(getCaptureSize(0, 0)).toEqual({ width: 1280, height: 720 });
+  });
+});
+
+describe('isThisDeviceConnecting', () => {
+  const idle = { isTurningOn: false, isModalStarting: false, isAwaitingRunning: false };
+  it('켜는 중이거나 모달이 시작 중이면 연결하는 중', () => {
+    expect(isThisDeviceConnecting({ ...idle, isTurningOn: true, status: 'disconnected' })).toBe(true);
+    expect(isThisDeviceConnecting({ ...idle, isModalStarting: true, status: 'offline' })).toBe(true);
+  });
+  it('송출을 시작했고 서버가 아직 running이 아니면 연결하는 중', () => {
+    expect(isThisDeviceConnecting({ ...idle, isAwaitingRunning: true, status: 'disconnected' })).toBe(true);
+    expect(isThisDeviceConnecting({ ...idle, isAwaitingRunning: true, status: null })).toBe(true);
+    expect(isThisDeviceConnecting({ ...idle, isAwaitingRunning: true, status: undefined })).toBe(true);
+  });
+  it('서버가 running이면 기다림을 끝낸다', () => {
+    expect(isThisDeviceConnecting({ ...idle, isAwaitingRunning: true, status: 'running' })).toBe(false);
+  });
+  it('기다림이 끝나면(상한 경과·송출 꺼짐) 서버 상태를 그대로 보여 준다', () => {
+    expect(isThisDeviceConnecting({ ...idle, status: 'disconnected' })).toBe(false);
   });
 });
