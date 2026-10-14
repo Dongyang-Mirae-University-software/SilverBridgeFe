@@ -55,3 +55,9 @@ export function getCardStatus(input: {
     message: isThisDevice ? '"카메라 켜기"를 눌러 다시 시작하세요' : '카메라로 쓰는 기기의 화면을 켜 두세요',
   };
 }
+
+// 일반 화면에는 전면·후면만 보인다. 화면 공유는 시연용이라 이미 그 방식을 쓰고 있거나
+// 주소에 ?screen=1 을 붙였을 때만 노출한다.
+export function getVisibleFacings(current: CameraFacing, allowScreenShare: boolean): CameraFacing[] {
+  return current === 'screen' || allowScreenShare ? ['user', 'environment', 'screen'] : ['user', 'environment'];
+}
