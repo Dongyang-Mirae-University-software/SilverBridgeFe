@@ -32,3 +32,26 @@ export type CameraFacing = 'user' | 'environment' | 'screen';
 export function parseStoredFacing(value: string | null | undefined): CameraFacing {
   return value === 'environment' || value === 'screen' ? value : 'user';
 }
+
+export type CardTone = 'checking' | 'connected' | 'disconnected' | 'connecting';
+
+// 카드의 상태 배지와 안내 문구. '연결하는 중'은 이 기기가 송출을 시작하는 동안에만 쓴다.
+export function getCardStatus(input: {
+  status: WardCameraConnectionStatus;
+  isThisDevice: boolean;
+  isConnecting: boolean;
+}): { label: string; tone: CardTone; message: string | null } {
+  const { status, isThisDevice, isConnecting } = input;
+  if (isThisDevice && isConnecting) {
+    return { label: '연결하는 중...', tone: 'connecting', message: '촬영을 시작하고 있어요. 잠시만 기다려 주세요' };
+  }
+  if (status === null) {
+    return { label: '확인 중', tone: 'checking', message: '상태를 확인하고 있어요. 잠시 후 다시 보여드려요' };
+  }
+  if (status === 'running') return { label: '연결됨', tone: 'connected', message: null };
+  return {
+    label: '연결 안 됨',
+    tone: 'disconnected',
+    message: isThisDevice ? '"카메라 켜기"를 눌러 다시 시작하세요' : '카메라로 쓰는 기기의 화면을 켜 두세요',
+  };
+}

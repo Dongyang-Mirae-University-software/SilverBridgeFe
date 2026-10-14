@@ -91,6 +91,7 @@ export function CameraRegisterModal({
   isOpen,
   onClose,
   onUnstableChange,
+  onStartingChange,
   ref,
 }: {
   // 페이지의 '카메라 켜기' 버튼이 모달을 열지 않고 바로 송출을 시작할 때 쓴다.
@@ -104,6 +105,8 @@ export function CameraRegisterModal({
   onClose: () => void;
   // 송출 업로드가 계속 실패 중인지 알린다(모달이 닫혀 있어도 페이지가 안내할 수 있게)
   onUnstableChange?: (unstable: boolean) => void;
+  // 이 기기가 송출을 시작하는 중인지 알린다(카드의 '연결하는 중' 표시용)
+  onStartingChange?: (starting: boolean) => void;
 }) {
   const [facing, setFacing] = useState<CameraFacing>('user');
   const [status, setStatus] = useState<StreamStatus>('off');
@@ -139,6 +142,8 @@ export function CameraRegisterModal({
   const failSinceRef = useRef<number | null>(null);
   const onUnstableChangeRef = useRef(onUnstableChange);
   onUnstableChangeRef.current = onUnstableChange;
+  const onStartingChangeRef = useRef(onStartingChange);
+  onStartingChangeRef.current = onStartingChange;
 
   const { data: rooms = [], refetch: refetchRooms } = useQuery(wardCameraRoomsQueryOptions);
   const registerMutation = useRegisterWardCameraMutation();
@@ -424,6 +429,10 @@ export function CameraRegisterModal({
   };
 
   useImperativeHandle(ref, () => ({ turnOn: turnOnCamera }));
+
+  useEffect(() => {
+    onStartingChangeRef.current?.(isStartingStream);
+  }, [isStartingStream]);
 
   const handleRegister = () => {
     if (!room || registerMutation.isPending || isStartingStream) return;
