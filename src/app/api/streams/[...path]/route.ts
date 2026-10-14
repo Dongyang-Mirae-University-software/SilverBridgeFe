@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { createWardAuthVerifier, type WardAuthResult } from '@/lib/server/wardAuth';
+
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
   'content-encoding',
@@ -59,26 +61,38 @@ function forbiddenResponse() {
 
 // 쿠키 존재 여부만 보는 게 아니라 우리 백엔드에 실제로 유효한 토큰인지 확인하고,
 // 카메라 송출은 피보호자(WARD) 기기만 하므로 역할도 함께 검증한다.
-// AI 서버는 이 프록시가 보낸 값을 그대로 믿으므로, 로그인한 본인 확인이 실제로 막아주는 효과가 있으려면
-// 여기서 가짜 토큰·다른 역할 요청을 걸러내야 한다.
-async function isAuthenticatedWard(request: NextRequest) {
+// 프레임마다 /api/user/me를 부르면 백엔드 속도 제한(429)에 걸려 송출이 끊기므로,
+// 성공 결과만 30초 메모리 캐시한다(토큰 해시 키, 실패·429는 캐시하지 않음).
+let wardAuthVerifier: ReturnType<typeof createWardAuthVerifier> | null = null;
+
+async function verifyWard(request: NextRequest): Promise<WardAuthResult> {
   const accessToken = request.cookies.get('careai_access_token')?.value;
   const apiDomain = process.env.NEXT_PUBLIC_API_DOMAIN;
-  if (!accessToken || !apiDomain) return false;
+  if (!accessToken) return { status: 'unauthorized' };
+  if (!apiDomain) return { status: 'unavailable' };
 
-  try {
-    const response = await fetch(`${apiDomain.replace(/\/$/, '')}/api/user/me`, {
-      cache: 'no-store',
-      headers: { authorization: `Bearer ${accessToken}` },
-    });
-    if (!response.ok) return false;
+  wardAuthVerifier ??= createWardAuthVerifier({ apiDomain });
+  return wardAuthVerifier(accessToken);
+}
 
-    const body = (await response.json()) as { data?: { data?: { role?: string }; role?: string } };
-    const role = body?.data?.data?.role ?? body?.data?.role;
-    return role === 'WARD';
-  } catch {
-    return false;
+function authFailureResponse(result: Exclude<WardAuthResult, { status: 'ok' }>) {
+  const headers = new Headers();
+  let status = 401;
+  let message = '로그인이 필요합니다.';
+
+  if (result.status === 'rate_limited') {
+    status = 429;
+    message = '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
+    if (result.retryAfter) headers.set('retry-after', result.retryAfter);
+  } else if (result.status === 'forbidden') {
+    status = 403;
+    message = '피보호자 계정만 사용할 수 있습니다.';
+  } else if (result.status === 'unavailable') {
+    status = 503;
+    message = '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.';
   }
+
+  return NextResponse.json({ success: false, message, data: null }, { headers, status });
 }
 
 async function proxyStreamRequest(request: NextRequest, context: RouteContext) {
@@ -88,9 +102,8 @@ async function proxyStreamRequest(request: NextRequest, context: RouteContext) {
     return forbiddenResponse();
   }
 
-  if (!(await isAuthenticatedWard(request))) {
-    return NextResponse.json({ success: false, message: '로그인이 필요합니다.', data: null }, { status: 401 });
-  }
+  const auth = await verifyWard(request);
+  if (auth.status !== 'ok') return authFailureResponse(auth);
 
   const targetUrl = getStreamApiUrl(path, request.nextUrl.search);
   const body = await request.arrayBuffer();

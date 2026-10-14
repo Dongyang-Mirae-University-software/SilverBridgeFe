@@ -98,7 +98,7 @@ function shouldRefreshOnUnauthorized(config?: RetryableRequestConfig): config is
   return true;
 }
 
-async function refreshAccessToken() {
+export async function refreshAccessToken() {
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {
