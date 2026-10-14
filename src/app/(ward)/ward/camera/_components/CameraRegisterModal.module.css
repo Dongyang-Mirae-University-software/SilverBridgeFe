@@ -352,3 +352,11 @@
     padding: 12px 20px 20px;
   }
 }
+
+/* 전송 화면을 접는다. 캔버스가 송출 원본이라 display:none 대신 높이만 줄여 DOM·그리기를 유지한다 */
+.previewBox.collapsed {
+  height: 0;
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}

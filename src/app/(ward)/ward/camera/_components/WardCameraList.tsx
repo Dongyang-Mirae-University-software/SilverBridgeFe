@@ -77,7 +77,12 @@ export function WardCameraList({ onRegister }: { onRegister: () => void }) {
                 </div>
               </div>
 
-              {camera.status === 'disconnected' && <p className={cx('statusMessage')}>카메라로 쓰는 기기의 화면을 켜 두세요</p>}
+              {camera.status === 'disconnected' && (
+                <p className={cx('statusMessage')}>
+                  {isThisDevice ? '위의 "카메라 켜기"를 눌러 다시 시작하세요' : '카메라로 쓰는 기기의 화면을 켜 두세요'}
+                </p>
+              )}
+              {!isThisDevice && <p className={cx('statusMessage')}>다른 기기에서 쓰는 카메라예요. 그 기기에서 켜고 끌 수 있어요.</p>}
               {camera.status === null && <p className={cx('statusMessage', 'checkingMessage')}>상태를 확인하고 있어요. 잠시 후 다시 보여드려요</p>}
 
               <div className={cx('meta')}><span>등록일</span><strong>{formatDateTime(camera.createdAt)}</strong></div>

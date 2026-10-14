@@ -31,3 +31,9 @@
   font-size: 0.875rem;
   font-weight: 700;
 }
+
+.registerButton:disabled {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  cursor: not-allowed;
+}
