@@ -15,12 +15,15 @@ const cx = classNames.bind(styles);
 
 export function WardCameraContent() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const { data: cameras = [] } = useQuery(wardLiveCamerasQueryOptions);
+  const [isStreamUnstable, setIsStreamUnstable] = useState(false);
+  const { data: cameras = [], isError: isLiveError } = useQuery(wardLiveCamerasQueryOptions);
   const myDeviceId = getStoredDeviceId();
   const myCamera = myDeviceId ? cameras.find(camera => camera.deviceId === myDeviceId) : undefined;
 
   return (
     <section className={cx('page')}>
+      {isStreamUnstable && <p className={cx('registerHint')}>송출이 불안정합니다. 네트워크 상태를 확인해 주세요.</p>}
+      {isLiveError && cameras.length === 0 && <p className={cx('registerHint')}>카메라 연결 상태를 확인하는 중이에요. 잠시만 기다려 주세요.</p>}
       {cameras.length > 0 && <div className={cx('registerRow')}>
         <button type="button" className={cx('registerButton')} onClick={() => setIsRegisterOpen(true)}>
           <Icon name={myCamera?.status === 'running' ? 'gear' : 'plus'} size={22} decorative />
@@ -44,6 +47,7 @@ export function WardCameraContent() {
         isCameraRunning={myCamera?.status === 'running'}
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
+        onUnstableChange={setIsStreamUnstable}
       />
     </section>
   );
