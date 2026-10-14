@@ -5,10 +5,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { createStreamSession, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
-import { getWardCameras } from '@/service/api/ward/camera';
+import { getWardCameras, issueWardCameraUploadTicket } from '@/service/api/ward/camera';
 import { Icon } from '@/components/Icon';
 import { getHttpStatus, getRetryAfterMs } from '@/lib/api/streamClient';
 import { getStoredDeviceId, setStoredDeviceId } from '@/lib/device/deviceId';
+import { H264Sender, evenSize, type SenderClosedInfo } from '@/lib/stream/h264Sender';
+import { buildUploadSocketUrl, selectTransport } from '@/lib/stream/selectTransport';
 import {
   useRegisterWardCameraMutation,
   wardCameraRoomsQueryOptions,
@@ -33,6 +35,8 @@ const UNSTABLE_FAIL_COUNT = 5;
 const UNSTABLE_FAIL_MS = 3000;
 // 화면 공유는 getDisplayMedia에 크기 제한이 없어 원본 해상도 그대로 올라간다 — 가로 1280으로 줄여서 업로드 속도를 맞춘다
 const MAX_CAPTURE_WIDTH = 1280;
+// H.264 송출(PoC)이 비정상으로 끊겼을 때 티켓을 다시 받아 이어 붙이는 횟수. 넘으면 이 세션은 JPEG로 간다
+const H264_MAX_RECONNECTS = 1;
 const MEDIA_PERMISSION_MESSAGE = '카메라를 켜지 못했어요. 브라우저의 카메라 권한을 확인해 주세요.';
 const RESTART_FAILED_MESSAGE = '카메라를 켜지 못했어요. 잠시 후 다시 시도해 주세요.';
 
@@ -139,6 +143,11 @@ export function CameraRegisterModal({
   const inFlightRef = useRef(0);
   const rotationRef = useRef<FrameRotation>(rotation);
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
+  // H.264 송출(PoC). 켜져 있으면 캡처 틱이 JPEG 대신 인코더로 간다. null이면 지금까지의 JPEG 경로 그대로다.
+  const h264SenderRef = useRef<H264Sender | null>(null);
+  // 같은 세션을 JPEG로 되돌렸으면 true - 세션 안에서 다시 h264로 올리지 않는다
+  const h264DisabledRef = useRef(false);
+  const h264ReconnectsRef = useRef(0);
   const pausedUntilRef = useRef(0);
   // 권한 프롬프트·재시작 중 중복 실행 방지(state 는 비동기라 같은 틱의 두 번째 호출을 못 막는다)
   const startingRef = useRef(false);
@@ -163,6 +172,8 @@ export function CameraRegisterModal({
     return () => {
       captureWorkerRef.current?.terminate();
       captureWorkerRef.current = null;
+      h264SenderRef.current?.close();
+      h264SenderRef.current = null;
       if (previewTimerRef.current) clearInterval(previewTimerRef.current);
       mediaStreamRef.current?.getTracks().forEach(track => track.stop());
       void wakeLockRef.current?.release().catch(() => {});
@@ -276,6 +287,8 @@ export function CameraRegisterModal({
     resetUploadHealth();
     const sessionId = liveSessionIdRef.current;
     liveSessionIdRef.current = null;
+    h264SenderRef.current?.close();
+    h264SenderRef.current = null;
     if (sessionId) await stopStreamSession(sessionId).catch(() => {});
     captureWorkerRef.current?.terminate();
     captureWorkerRef.current = null;
@@ -366,12 +379,87 @@ export function CameraRegisterModal({
       captureWorkerRef.current = new Worker('/capture-timer.js');
       captureWorkerRef.current.onmessage = () => {
         if (!drawFrameToCanvas()) return;
+        // H.264 송출 중이면 인코더로 보낸다. 이 한 줄 분기 밖의 JPEG 경로는 그대로다.
+        const h264Sender = h264SenderRef.current;
+        if (h264Sender && canvasRef.current) {
+          h264Sender.push(canvasRef.current);
+          return;
+        }
         canvasRef.current?.toBlob(blob => blob && enqueueLatestFrame(blob), 'image/jpeg', 0.8);
       };
     }
 
     const intervalMs = Math.max(Math.floor(1000 / Math.max(recommendedFps, 1)), 1);
     captureWorkerRef.current.postMessage(intervalMs);
+  };
+
+  // H.264 송출(PoC) 시도 - JPEG 송출이 이미 돌고 있는 상태에서 비동기로 붙인다. 성공하면 캡처 틱이 인코더로 바뀌고,
+  // 어느 단계든 실패하면 아무것도 바뀌지 않아 JPEG가 그대로 이어진다(폴백 = 무동작).
+  const startH264 = async (camera: WardCamera) => {
+    if (h264DisabledRef.current || h264SenderRef.current) return;
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas || canvas.width < 2 || canvas.height < 2) {
+        h264DisabledRef.current = true;
+        return;
+      }
+      const { width, height } = evenSize(canvas.width, canvas.height);
+      const choice = await selectTransport({
+        cameraId: camera.id,
+        serverTransport: camera.transport,
+        width,
+        height,
+        framerate: camera.recommendedFps,
+        deps: { issueTicket: issueWardCameraUploadTicket },
+      });
+      if (choice.kind !== 'h264') {
+        h264DisabledRef.current = true;
+        return;
+      }
+      const url = buildUploadSocketUrl(choice.uploadUrl, choice.ticket);
+      if (!url) {
+        h264DisabledRef.current = true;
+        return;
+      }
+
+      const sender = new H264Sender({
+        url,
+        framerate: camera.recommendedFps,
+        onClosed: info => handleH264Closed(camera, info),
+        onFatal: () => {
+          h264SenderRef.current = null;
+          h264DisabledRef.current = true;
+        },
+      });
+      try {
+        await sender.open(width, height);
+      } catch {
+        sender.close();
+        h264DisabledRef.current = true;
+        return;
+      }
+      // 연결하는 사이에 송출이 꺼졌거나 다른 세션으로 바뀌었으면 쓰지 않는다
+      if (liveSessionIdRef.current !== camera.sessionId) {
+        sender.close();
+        return;
+      }
+      h264SenderRef.current = sender;
+    } catch {
+      h264DisabledRef.current = true;
+    }
+  };
+
+  const handleH264Closed = (camera: WardCamera, info: SenderClosedInfo) => {
+    // 먼저 JPEG로 돌린다 - 재연결하는 동안에도 감지 입력이 끊기지 않는다
+    h264SenderRef.current = null;
+    if (liveSessionIdRef.current !== camera.sessionId) return;
+    // 1013: 같은 카메라의 다른 연결로 교체됨 - 맞붙지 않는다. 1008(권한 변경)·그 밖은 티켓을 새로 받아 한 번만 다시 시도한다.
+    if (info.code === 1013 || h264ReconnectsRef.current >= H264_MAX_RECONNECTS) {
+      h264DisabledRef.current = true;
+      return;
+    }
+    h264ReconnectsRef.current += 1;
+    void startH264(camera);
   };
 
   const startStreaming = async (camera: WardCamera) => {
@@ -386,6 +474,9 @@ export function CameraRegisterModal({
     setIsNewSession(!initialRoom);
     setStatus('streaming');
     startCaptureLoop(camera.recommendedFps);
+    h264DisabledRef.current = false;
+    h264ReconnectsRef.current = 0;
+    void startH264(camera);
     void requestScreenWakeLock();
     // 방금 켠 상태가 바로 보이도록 15초 폴링을 기다리지 않고 한 번 갱신한다(등록·켜기 공통)
     void queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey });

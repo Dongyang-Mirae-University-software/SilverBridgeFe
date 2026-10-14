@@ -11,6 +11,7 @@ import {
   UpdateWardCameraReq,
   WardCamera,
   WardCameraRoom,
+  WardCameraUploadTicket,
   WardLiveCamera,
 } from '../../interface/ward/camera';
 
@@ -50,4 +51,12 @@ export async function updateWardCamera(id: number, body: UpdateWardCameraReq) {
 // 카메라 삭제
 export async function deleteWardCamera(id: number) {
   return apiClient.delete<CommonResponse<null>>(`${WARD_CAMERA_BASE}/${id}`);
+}
+
+// 송출(WebSocket H.264) 티켓 - transport가 ws-h264인 카메라만 발급된다(아니면 409). 실패는 JPEG로 폴백한다
+export async function issueWardCameraUploadTicket(id: number) {
+  const response = await apiClient.post<CommonResponse<WardCameraUploadTicket>>(`${WARD_CAMERA_BASE}/${id}/upload-ticket`);
+  const data = getResponseData<WardCameraUploadTicket>(response);
+  if (!data) throw new Error('upload ticket missing');
+  return data;
 }

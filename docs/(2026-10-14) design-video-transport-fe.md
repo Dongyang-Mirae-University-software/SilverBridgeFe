@@ -178,3 +178,37 @@ h264 경로: 새 모듈(예: lib/stream/h264Sender.ts)이 캔버스 -> VideoFram
 4. 실기기 확인 대상 목록(폰 모델·삼성 인터넷/Chrome 버전·iPad 사용 여부) 제공: 2절 지원 표를 실측으로 바꾸는 데 필요하다.
 
 > 이 문서는 설계이며 코드·배포 변경이 없다. 승인 후 구현은 AI·BE 구현이 끝난 뒤 마지막에 진행한다.
+
+---
+
+## 9. 구현 확정 사항 (2026-10-14, 통합 계약 반영)
+
+> 통합 계약: BE `docs/(2026-10-14) design-video-transport-contract.md`. 위 4·6절과 다르면 **이 절이 우선**한다.
+
+### 9-1. 확정된 것
+
+| 4·6절 | 확정 |
+|---|---|
+| 업로드 WS 위치 P1(BE 중계) | 확정. 경로 `wss://api.devdmu.gosky.kr/ws/camera-upload?ticket=` - 주소는 발급 응답의 `uploadUrl`을 쓴다(FE에 주소를 적지 않는다) |
+| 서버 값 `'h264-ws'` | **`'ws-h264'`** (`WardCamera.transport`, 기본 `jpeg`) |
+| 메시지 계약 `[미정]` | 확정(`lib/stream/h264Sender.ts` 머리 주석). config -> 바이너리 `[8B ts(us)][1B 플래그][Annex B]`, 서버 `keyframe_request` |
+| 재연결 | 비정상 종료 시 **티켓을 새로 받아 1회만** 다시 붙인다. 재연결하는 동안·실패 뒤에는 JPEG가 이어진다. 1013(교체됨)은 재연결하지 않는다 |
+| 세션 내 재승격 | 폴백(jpeg)으로 간 세션은 송출을 끌 때까지 다시 h264로 올리지 않는다 |
+
+### 9-2. 구현 위치
+
+- `src/lib/stream/h264Sender.ts` - 캔버스 -> VideoFrame -> VideoEncoder -> WS. 인코더·소켓은 주입 가능(시험용). Baseline `avc1.42E01F`, annexb, realtime, 1.5Mbps, 키프레임 2초 + 첫 프레임 + 재설정 + 서버 요청, `encodeQueueSize > 2`와 소켓 송신 대기 512KB 초과는 입력 단계에서 건너뜀(델타를 버리면 다음은 키프레임), 해상도·회전 변경은 flush 뒤 새 config + 키프레임, 짝수화.
+- `src/lib/stream/selectTransport.ts` - `PoC 플래그 AND 서버 ws-h264 AND VideoEncoder AND isConfigSupported AND 티켓 발급 성공`일 때만 h264. PoC가 꺼져 있으면 서버에 아무것도 묻지 않는다.
+- `CameraRegisterModal.tsx` - 분기점은 Worker `onmessage` 한 곳(`h264SenderRef`가 있으면 `push`, 없으면 기존 `toBlob` 경로 그대로). h264 연결은 JPEG 송출이 돈 뒤에 **비동기로 붙인다** - 실패하면 아무것도 바뀌지 않아 폴백 = 무동작이다.
+- `service/api/ward/camera.ts` - `issueWardCameraUploadTicket`(`POST /api/ward/camera/{id}/upload-ticket`).
+
+### 9-3. PoC 켜는 법
+
+`NEXT_PUBLIC_VIDEO_TRANSPORT_POC=1`(빌드 환경변수) 또는 주소에 `?transport=h264`. 둘 다 없으면 어떤 환경에서도 지금과 동일하다. 서버가 해당 카메라에 `transport=ws-h264`를 내릴 때만 실제로 켜진다(BE `CAMERA_WS_H264_SESSION_IDS`).
+
+### 9-4. 아직 하지 않은 것·알려진 한계
+
+- 실기기(폰·삼성 인터넷·iPad)의 `VideoEncoder` 지원·H.264 하드웨어 인코더·프레임당 슬라이스 수는 PHASE 5에서 확인한다. 미지원이면 `isConfigSupported`가 거르고 JPEG로 간다.
+- 화면 공유(`?screen=1`)는 같은 캔버스 경로라 재설정 경로를 탄다. 합격 기준에서는 제외한다.
+- 탭이 숨겨졌을 때 Worker 타이머는 유지되지만 `VideoEncoder` 처리가 브라우저에서 제한되는지는 실기기 확인 대상이다.
+- 이 PR은 시험 계측을 화면에 내지 않는다(카운터는 `getStats()`로만 읽는다).
