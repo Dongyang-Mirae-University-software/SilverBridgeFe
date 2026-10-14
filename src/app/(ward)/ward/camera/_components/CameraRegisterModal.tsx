@@ -1,14 +1,19 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { createStreamSession, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
 import { getWardCameras } from '@/service/api/ward/camera';
 import { Icon } from '@/components/Icon';
+import { getHttpStatus, getRetryAfterMs } from '@/lib/api/streamClient';
 import { getStoredDeviceId, setStoredDeviceId } from '@/lib/device/deviceId';
-import { useRegisterWardCameraMutation, wardCameraRoomsQueryOptions } from '@/service/query/ward/camera';
+import {
+  useRegisterWardCameraMutation,
+  wardCameraRoomsQueryOptions,
+  wardLiveCamerasQueryKey,
+} from '@/service/query/ward/camera';
 import { WardCamera } from '@/service/interface/ward/camera';
 import { RoomPicker } from './RoomPicker';
 import styles from './CameraRegisterModal.module.css';
@@ -22,6 +27,9 @@ type WakeLockSentinelLike = { released: boolean; release: () => Promise<void> };
 
 const CAMERA_ROTATION_STORAGE_KEY = 'silverbridge_ward_camera_rotation';
 const MAX_IN_FLIGHT = 2;
+// 연속 업로드 실패가 이 횟수 또는 시간을 넘으면 사용자에게 알린다
+const UNSTABLE_FAIL_COUNT = 5;
+const UNSTABLE_FAIL_MS = 3000;
 // 화면 공유는 getDisplayMedia에 크기 제한이 없어 원본 해상도 그대로 올라간다 — 가로 1280으로 줄여서 업로드 속도를 맞춘다
 const MAX_CAPTURE_WIDTH = 1280;
 
@@ -61,6 +69,7 @@ export function CameraRegisterModal({
   isCameraRunning = false,
   isOpen,
   onClose,
+  onUnstableChange,
 }: {
   // 이 기기가 쓰던 카메라가 끊겨서 다시 켤 때 — 원래 쓰던 방을 미리 선택해 둔다.
   // 같은 기기·같은 방으로 다시 등록하면 백엔드가 기존 sessionId를 그대로 재사용한다
@@ -68,6 +77,8 @@ export function CameraRegisterModal({
   isCameraRunning?: boolean;
   isOpen: boolean;
   onClose: () => void;
+  // 송출 업로드가 계속 실패 중인지 알린다(모달이 닫혀 있어도 페이지가 안내할 수 있게)
+  onUnstableChange?: (unstable: boolean) => void;
 }) {
   const [facing, setFacing] = useState<CameraFacing>('user');
   const [status, setStatus] = useState<StreamStatus>('off');
@@ -75,6 +86,7 @@ export function CameraRegisterModal({
   const [errorMessage, setErrorMessage] = useState('');
   const [registeredCamera, setRegisteredCamera] = useState<WardCamera | null>(null);
   const [isStartingStream, setIsStartingStream] = useState(false);
+  const [isUnstable, setIsUnstable] = useState(false);
   // 서버와 첫 브라우저 렌더는 같은 기본값으로 맞추고, 저장된 기기별 값은 마운트 후 읽는다.
   const [rotation, setRotation] = useState<FrameRotation>(0);
 
@@ -88,9 +100,15 @@ export function CameraRegisterModal({
   const inFlightRef = useRef(0);
   const rotationRef = useRef<FrameRotation>(rotation);
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
+  const pausedUntilRef = useRef(0);
+  const failCountRef = useRef(0);
+  const failSinceRef = useRef<number | null>(null);
+  const onUnstableChangeRef = useRef(onUnstableChange);
+  onUnstableChangeRef.current = onUnstableChange;
 
   const { data: rooms = [], refetch: refetchRooms } = useQuery(wardCameraRoomsQueryOptions);
   const registerMutation = useRegisterWardCameraMutation();
+  const queryClient = useQueryClient();
 
   // 모달은 송출을 유지하기 위해 항상 마운트돼 있다. 따라서 카메라 목록이 나중에
   // 도착한 경우에도, 다시 열 때 기존 카메라의 방을 등록 대상으로 채워야 한다.
@@ -167,7 +185,34 @@ export function CameraRegisterModal({
     }
   };
 
+  const updateUnstable = (unstable: boolean) => {
+    setIsUnstable(prev => {
+      if (prev !== unstable) onUnstableChangeRef.current?.(unstable);
+      return unstable;
+    });
+  };
+
+  const resetUploadHealth = () => {
+    pausedUntilRef.current = 0;
+    failCountRef.current = 0;
+    failSinceRef.current = null;
+    updateUnstable(false);
+  };
+
+  const handleUploadFailure = (error: unknown) => {
+    // 429: 서버가 쉬라고 한 시간만큼 업로드를 멈춘다(새 프레임은 계속 최신으로 덮어쓴다)
+    if (getHttpStatus(error) === 429) pausedUntilRef.current = Date.now() + getRetryAfterMs(error);
+
+    const now = Date.now();
+    failCountRef.current += 1;
+    failSinceRef.current ??= now;
+    if (failCountRef.current >= UNSTABLE_FAIL_COUNT || now - failSinceRef.current >= UNSTABLE_FAIL_MS) {
+      updateUnstable(true);
+    }
+  };
+
   const handleStopMedia = async () => {
+    resetUploadHealth();
     const sessionId = liveSessionIdRef.current;
     liveSessionIdRef.current = null;
     if (sessionId) await stopStreamSession(sessionId).catch(() => {});
@@ -193,6 +238,7 @@ export function CameraRegisterModal({
   const enqueueLatestFrame = (blob: Blob) => {
     if (!liveSessionIdRef.current) return;
     frameQueueRef.current = [blob];
+    if (Date.now() < pausedUntilRef.current) return;
     void drainQueue();
   };
 
@@ -205,7 +251,8 @@ export function CameraRegisterModal({
 
       inFlightRef.current += 1;
       void uploadFrame(sessionId, blob)
-        .catch(() => {})
+        .then(resetUploadHealth)
+        .catch(handleUploadFailure)
         .finally(() => {
           inFlightRef.current -= 1;
           void drainQueue();
@@ -269,6 +316,7 @@ export function CameraRegisterModal({
       cameraIdentifier: camera.deviceId,
       deviceType: 'web',
     });
+    resetUploadHealth();
     liveSessionIdRef.current = session.session_id ?? camera.sessionId;
     setRegisteredCamera(camera);
     setStatus('streaming');
@@ -294,6 +342,8 @@ export function CameraRegisterModal({
         return;
       }
       await startStreaming(camera);
+      // 방금 켠 상태가 바로 보이도록 15초 폴링을 기다리지 않고 한 번 갱신한다
+      void queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey });
     } catch {
       setErrorMessage('카메라 송출을 다시 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
@@ -465,6 +515,10 @@ export function CameraRegisterModal({
             <p className={cx('streamingNotice')}>
               &quot;{registeredCamera.label}&quot; 카메라가 송출 중입니다. 완료를 눌러도 백그라운드에서 촬영을 계속해요.
             </p>
+          )}
+
+          {status === 'streaming' && isUnstable && (
+            <p className={cx('error')}>송출이 불안정합니다. 네트워크 상태를 확인해 주세요. 연결되면 자동으로 이어집니다.</p>
           )}
 
           {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
