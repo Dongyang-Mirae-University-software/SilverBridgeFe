@@ -25,3 +25,10 @@ export function getModalTitle(initialRoom: string | undefined, isStreamingHere: 
 
 // turnOn 이 이미 송출 중이라 아무것도 하지 않았음을 알리는 값(오류 문구가 아니다)
 export const ALREADY_STREAMING = 'ALREADY_STREAMING';
+
+export type CameraFacing = 'user' | 'environment' | 'screen';
+
+// 저장된 촬영 방식. 알 수 없는 값(옛 값·손상)은 기본 전면으로 돌린다.
+export function parseStoredFacing(value: string | null | undefined): CameraFacing {
+  return value === 'environment' || value === 'screen' ? value : 'user';
+}

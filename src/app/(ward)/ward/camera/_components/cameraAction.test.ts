@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCameraPrimaryAction, getModalTitle } from './cameraAction';
+import { getCameraPrimaryAction, getModalTitle, parseStoredFacing } from './cameraAction';
 
 describe('getCameraPrimaryAction', () => {
   it('이 기기의 카메라가 없으면 등록', () => {
@@ -25,5 +25,18 @@ describe('getModalTitle', () => {
   it('이 탭이 송출 중일 때만 화면 보기', () => {
     expect(getModalTitle('거실', true)).toBe('"거실" 카메라 화면 보기');
     expect(getModalTitle('거실', false)).toBe('"거실" 카메라 켜기');
+  });
+});
+
+describe('parseStoredFacing', () => {
+  it('저장된 세 방식을 그대로 돌려준다', () => {
+    expect(parseStoredFacing('user')).toBe('user');
+    expect(parseStoredFacing('environment')).toBe('environment');
+    expect(parseStoredFacing('screen')).toBe('screen');
+  });
+  it('없거나 알 수 없는 값은 전면', () => {
+    expect(parseStoredFacing(null)).toBe('user');
+    expect(parseStoredFacing(undefined)).toBe('user');
+    expect(parseStoredFacing('rear')).toBe('user');
   });
 });
