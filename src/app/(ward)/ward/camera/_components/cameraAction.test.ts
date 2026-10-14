@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCameraPrimaryAction, getCardStatus, getModalTitle, parseStoredFacing } from './cameraAction';
+import {
+  getCameraPrimaryAction,
+  getCardStatus,
+  getModalTitle,
+  getVisibleFacings,
+  parseStoredFacing,
+} from './cameraAction';
 
 describe('getCameraPrimaryAction', () => {
   it('이 기기의 카메라가 없으면 등록', () => {
@@ -63,5 +69,15 @@ describe('getCardStatus', () => {
   it('끊김 안내는 이 기기와 다른 기기가 다르다', () => {
     expect(getCardStatus({ status: 'disconnected', isThisDevice: true, isConnecting: false }).message).toContain('카메라 켜기');
     expect(getCardStatus({ ...base, status: 'offline' }).message).toContain('화면을 켜 두세요');
+  });
+});
+
+describe('getVisibleFacings', () => {
+  it('기본은 전면·후면만', () => {
+    expect(getVisibleFacings('user', false)).toEqual(['user', 'environment']);
+  });
+  it('화면 공유를 쓰고 있거나 허용하면 화면 공유도 보인다', () => {
+    expect(getVisibleFacings('screen', false)).toContain('screen');
+    expect(getVisibleFacings('user', true)).toContain('screen');
   });
 });

@@ -15,7 +15,7 @@ import {
   wardLiveCamerasQueryKey,
 } from '@/service/query/ward/camera';
 import { WardCamera } from '@/service/interface/ward/camera';
-import { ALREADY_STREAMING, getModalTitle, parseStoredFacing, type CameraFacing } from './cameraAction';
+import { ALREADY_STREAMING, getModalTitle, getVisibleFacings, parseStoredFacing, type CameraFacing } from './cameraAction';
 import { RoomPicker } from './RoomPicker';
 import styles from './CameraRegisterModal.module.css';
 
@@ -33,8 +33,8 @@ const UNSTABLE_FAIL_COUNT = 5;
 const UNSTABLE_FAIL_MS = 3000;
 // 화면 공유는 getDisplayMedia에 크기 제한이 없어 원본 해상도 그대로 올라간다 — 가로 1280으로 줄여서 업로드 속도를 맞춘다
 const MAX_CAPTURE_WIDTH = 1280;
-const MEDIA_PERMISSION_MESSAGE = '카메라·화면 접근 권한이 필요합니다.';
-const RESTART_FAILED_MESSAGE = '카메라를 켜지 못했습니다. 잠시 후 다시 시도해 주세요.';
+const MEDIA_PERMISSION_MESSAGE = '카메라를 켜지 못했어요. 브라우저의 카메라 권한을 확인해 주세요.';
+const RESTART_FAILED_MESSAGE = '카메라를 켜지 못했어요. 잠시 후 다시 시도해 주세요.';
 
 const FACING_OPTIONS: Array<{ value: CameraFacing; label: string }> = [
   { value: 'user', label: '전면 카메라' },
@@ -122,6 +122,9 @@ export function CameraRegisterModal({
   const isExisting = Boolean(initialRoom) && !isNewSession;
   // 기존 카메라는 송출 중일 때 전송 화면만 보여 준다(촬영 방식은 끄면 다시 고를 수 있다)
   const isViewOnly = isExisting && status === 'streaming';
+  // 화면 공유 칩은 시연용 - 쓰고 있거나 주소에 ?screen=1 이 있을 때만 보인다
+  const [allowScreenShare, setAllowScreenShare] = useState(false);
+  const visibleFacings = getVisibleFacings(facing, allowScreenShare);
   const isPreviewVisible = !isExisting || status === 'streaming';
   // 서버와 첫 브라우저 렌더는 같은 기본값으로 맞추고, 저장된 기기별 값은 마운트 후 읽는다.
   const [rotation, setRotation] = useState<FrameRotation>(0);
@@ -170,6 +173,7 @@ export function CameraRegisterModal({
     setRotation(getStoredRotation());
     // 페이지의 '카메라 켜기'가 모달을 열지 않고 시작해도 마지막에 쓴 방식으로 켜지게 한다
     setFacing(getStoredFacing());
+    setAllowScreenShare(new URLSearchParams(window.location.search).get('screen') === '1');
   }, []);
 
   useEffect(() => {
@@ -537,7 +541,7 @@ export function CameraRegisterModal({
           {!isViewOnly && <section className={cx('setupSection')}>
             <h2>{isExisting ? '촬영 방식' : '3. 촬영 방식을 골라 주세요'}</h2>
             <div className={cx('facingRow')}>
-              {FACING_OPTIONS.map(option => (
+              {FACING_OPTIONS.filter(option => visibleFacings.includes(option.value)).map(option => (
                 <button
                   key={option.value}
                   type="button"
@@ -558,13 +562,13 @@ export function CameraRegisterModal({
           </section>}
 
           <section className={cx('setupSection')}>
-            <h2>{isExisting ? '전송 화면' : '4. 미리보기를 확인해 주세요'}</h2>
+            <h2>{isExisting ? '지금 찍고 있는 화면' : '4. 지금 찍고 있는 화면을 확인해 주세요'}</h2>
             <div className={cx('previewRow')}>
               {/* 캔버스는 송출용 toBlob 원본이라 접어도 DOM에 남긴다(높이만 0) */}
               <div className={cx('previewBox', { collapsed: !isPreviewVisible })} aria-hidden={!isPreviewVisible}>
                 <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline />
                 <div className={cx('sentPreview')}>
-                  <span>AI에 전송되는 화면</span>
+                  <span>지금 찍고 있는 화면</span>
                   <canvas ref={canvasRef} className={cx('canvas')} />
                 </div>
               </div>
@@ -595,7 +599,7 @@ export function CameraRegisterModal({
               </div>
             </div>
             {isPreviewVisible && (
-              <p className={cx('previewHint')}>AI에 전송되는 작은 미리보기에서 사람이 똑바로 보이는지 확인해 주세요.</p>
+              <p className={cx('previewHint')}>방 전체가 보이고 사람이 똑바로 보이도록 폰 위치와 방향을 맞춰 주세요.</p>
             )}
             {isExisting && status === 'off' && isCameraRunning && (
               <p className={cx('previewHint')}>
@@ -626,7 +630,7 @@ export function CameraRegisterModal({
           )}
 
           {status === 'streaming' && isUnstable && (
-            <p className={cx('error')}>송출이 불안정합니다. 네트워크 상태를 확인해 주세요. 연결되면 자동으로 이어집니다.</p>
+            <p className={cx('error')}>송출이 끊기고 있어요. 화면을 켜 둔 채 잠시 기다려 주세요. 연결되면 자동으로 이어집니다.</p>
           )}
 
           {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
