@@ -15,18 +15,18 @@ import {
   wardLiveCamerasQueryKey,
 } from '@/service/query/ward/camera';
 import { WardCamera } from '@/service/interface/ward/camera';
-import { ALREADY_STREAMING, getModalTitle } from './cameraAction';
+import { ALREADY_STREAMING, getModalTitle, parseStoredFacing, type CameraFacing } from './cameraAction';
 import { RoomPicker } from './RoomPicker';
 import styles from './CameraRegisterModal.module.css';
 
 const cx = classNames.bind(styles);
 
-type CameraFacing = 'user' | 'environment' | 'screen';
 type StreamStatus = 'off' | 'ready' | 'streaming';
 type FrameRotation = 0 | 90 | 180 | 270;
 type WakeLockSentinelLike = { released: boolean; release: () => Promise<void> };
 
 const CAMERA_ROTATION_STORAGE_KEY = 'silverbridge_ward_camera_rotation';
+const CAMERA_FACING_STORAGE_KEY = 'silverbridge_ward_camera_facing';
 const MAX_IN_FLIGHT = 2;
 // 연속 업로드 실패가 이 횟수 또는 시간을 넘으면 사용자에게 알린다
 const UNSTABLE_FAIL_COUNT = 5;
@@ -56,6 +56,22 @@ function getStoredRotation(): FrameRotation {
     return value === 90 || value === 180 || value === 270 ? value : 0;
   } catch {
     return 0;
+  }
+}
+
+function getStoredFacing(): CameraFacing {
+  try {
+    return parseStoredFacing(window.localStorage.getItem(CAMERA_FACING_STORAGE_KEY));
+  } catch {
+    return 'user';
+  }
+}
+
+function setStoredFacing(facing: CameraFacing) {
+  try {
+    window.localStorage.setItem(CAMERA_FACING_STORAGE_KEY, facing);
+  } catch {
+    // 저장을 지원하지 않는 환경에서는 이번 실행 중 선택값만 사용한다.
   }
 }
 
@@ -146,6 +162,8 @@ export function CameraRegisterModal({
 
   useEffect(() => {
     setRotation(getStoredRotation());
+    // 페이지의 '카메라 켜기'가 모달을 열지 않고 시작해도 마지막에 쓴 방식으로 켜지게 한다
+    setFacing(getStoredFacing());
   }, []);
 
   useEffect(() => {
@@ -514,13 +532,19 @@ export function CameraRegisterModal({
                   key={option.value}
                   type="button"
                   className={cx('facingChip', { active: facing === option.value })}
-                  onClick={() => setFacing(option.value)}
+                  onClick={() => {
+                    setFacing(option.value);
+                    setStoredFacing(option.value);
+                  }}
                   disabled={status !== 'off'}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
+            {status === 'streaming' && (
+              <p className={cx('previewHint')}>촬영 방식을 바꾸려면 카메라를 끄고 다시 켜 주세요.</p>
+            )}
           </section>
 
           <section className={cx('setupSection')}>
