@@ -127,13 +127,6 @@
   overflow: hidden;
 }
 
-.previewRow {
-  display: grid;
-  grid-template-columns: 1fr;
-  align-items: stretch;
-  gap: 12px;
-}
-
 .previewControls {
   display: flex;
   flex-direction: row;
@@ -145,33 +138,60 @@
   flex: 1;
 }
 
-.sentPreview {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #14110c;
-}
-
-.sentPreview > span {
-  display: block;
-  background: rgba(20, 17, 12, 0.82);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 5px 7px;
-}
-
 .canvas {
   display: block;
   width: 100%;
   height: 100%;
   min-height: 0;
+  /* 찍힌 그대로 보여 준다 - 세로·가로 영상 모두 잘리지 않게 상자 안에 맞춘다 */
   object-fit: contain;
 }
+
+/* 영상 좌상단에 겹치는 배지(영상 높이를 차지하지 않는다) */
+.liveBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: rgba(20, 17, 12, 0.72);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 5px 12px;
+}
+
+.liveBadge.live::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+/* 화면 보기 제목 옆 연결 상태 배지 - 카드(WardCameraList)와 같은 색 기준 */
+.statusBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--sb-line);
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  font-size: 15px;
+  font-weight: 800;
+  padding: 5px 12px;
+}
+
+.statusDot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.statusBadge.connected { border-color: var(--sb-safe); background: var(--sb-safe-soft); color: var(--sb-safe); }
+.statusBadge.disconnected { background: var(--sb-bg-soft); color: var(--sb-ink-soft); }
+.statusBadge.checking { background: var(--sb-sun-soft); color: #b07f1f; }
+.statusBadge.connecting { border-color: #b8d4e8; background: #eaf3fa; color: #3f6e8c; }
 
 /* 카메라 스트림은 캔버스에 그리기 위한 원본으로만 사용한다. 화면에는 AI 전송본만 보인다. */
 .sourceVideo {
@@ -235,33 +255,11 @@
   font-weight: 800;
 }
 
-.rotateButton {
-  display: inline-flex;
-  width: 100%;
-  min-height: 52px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 2px solid var(--sb-line);
-  border-radius: 12px;
-  background: #fff;
-  color: var(--sb-ink-soft);
-  cursor: pointer;
-  font: inherit;
-  font-size: 17px;
-  font-weight: 800;
-  padding: 0 18px;
-}
-
 .previewHint {
   margin: 0;
   color: var(--sb-ink-soft);
   font-size: 14px;
   line-height: 1.55;
-}
-
-.rotateButton strong {
-  color: var(--sb-brand);
 }
 
 .roomSection {
@@ -293,16 +291,6 @@
   opacity: 0.45;
 }
 
-.streamingNotice {
-  margin: 0;
-  border-radius: 12px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 0.9375rem;
-  font-weight: 800;
-  padding: 12px 16px;
-}
-
 .error {
   margin: 0;
   border-radius: 12px;
@@ -311,26 +299,6 @@
   font-size: 0.875rem;
   font-weight: 700;
   padding: 12px 16px;
-}
-
-.footer {
-  display: flex;
-  flex-shrink: 0;
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 14px 28px 24px;
-}
-
-.doneButton {
-  flex: 1;
-  border: 0;
-  min-height: 56px;
-  border-radius: 12px;
-  background: var(--sb-brand);
-  color: #fff;
-  cursor: pointer;
-  font-size: 17px;
-  font-weight: 800;
-  padding: 0;
 }
 
 @media (max-width: 640px) {
@@ -354,10 +322,6 @@
   .guideIllustration {
     width: 78px;
     height: 60px;
-  }
-
-  .footer {
-    padding: 12px 20px 20px;
   }
 }
 

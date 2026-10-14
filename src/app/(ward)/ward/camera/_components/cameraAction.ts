@@ -18,9 +18,37 @@ export function getCameraPrimaryAction(
 
 // 모달 제목. 송출 여부는 서버 상태가 아니라 이 탭의 실제 송출 상태로 정한다
 // (서버는 running인데 이 탭은 송출하지 않는 경우 '화면 보기'를 약속하면 보여 줄 화면이 없다).
+// 화면 보기는 영상만 보여 주는 화면이라 제목도 방 이름만 둔다(상태는 옆 배지가 알린다).
 export function getModalTitle(initialRoom: string | undefined, isStreamingHere: boolean): string {
   if (!initialRoom) return '이 기기를 카메라로 등록';
-  return `"${initialRoom}" ${isStreamingHere ? '카메라 화면 보기' : '카메라 켜기'}`;
+  return isStreamingHere ? `${initialRoom} 카메라` : `"${initialRoom}" 카메라 켜기`;
+}
+
+// 송출 캔버스 크기. 회전 없이 찍힌 그대로 보내고, 가로가 1280을 넘을 때만 비율대로 줄인다
+// (화면 공유는 getDisplayMedia에 크기 제한이 없어 원본 해상도가 그대로 올라온다).
+export const MAX_CAPTURE_WIDTH = 1280;
+
+export function getCaptureSize(videoWidth: number, videoHeight: number): { width: number; height: number } {
+  const srcWidth = videoWidth || 1280;
+  const srcHeight = videoHeight || 720;
+  const scale = Math.min(1, MAX_CAPTURE_WIDTH / srcWidth);
+  return { width: Math.round(srcWidth * scale), height: Math.round(srcHeight * scale) };
+}
+
+// 송출을 시작한 뒤 서버가 'running'을 알려 줄 때까지 '연결하는 중'으로 보여 주는 최대 시간.
+// 넘기면 서버가 알려 준 실제 상태를 보여 준다(무한히 '연결하는 중'에 머물지 않게).
+export const AWAIT_RUNNING_MS = 45 * 1000;
+
+// 이 기기 카드의 '연결하는 중' 여부. 송출 시작 직후에는 첫 영상이 올라가기 전이라 서버가 아직
+// 'running'이 아니다 - 그 사이 '연결 안 됨·카메라 켜기'가 잠깐 보이지 않게 한다.
+export function isThisDeviceConnecting(input: {
+  isTurningOn: boolean;
+  isModalStarting: boolean;
+  isAwaitingRunning: boolean;
+  status: WardCameraConnectionStatus | undefined;
+}): boolean {
+  const { isTurningOn, isModalStarting, isAwaitingRunning, status } = input;
+  return isTurningOn || isModalStarting || (isAwaitingRunning && status !== 'running');
 }
 
 // turnOn 이 이미 송출 중이라 아무것도 하지 않았음을 알리는 값(오류 문구가 아니다)
@@ -48,7 +76,7 @@ export function getCardStatus(input: {
   if (status === null) {
     return { label: '확인 중', tone: 'checking', message: '상태를 확인하고 있어요. 잠시 후 다시 보여드려요' };
   }
-  if (status === 'running') return { label: '연결됨', tone: 'connected', message: null };
+  if (status === 'running') return { label: '연결됨', tone: 'connected', message: '지금 영상을 보내고 있어요' };
   return {
     label: '연결 안 됨',
     tone: 'disconnected',
