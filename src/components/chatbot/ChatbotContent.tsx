@@ -142,15 +142,9 @@ export default function ChatbotContent() {
 
       try {
         const wardBirthDate = selectedWard?.partnerBirthDate?.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
-        // 피보호자 본인 상담은 로그인 프로필을, 보호자 상담은 선택한 피보호자 정보를
-        // 예약 도구에 전달한다. 보호자가 아직 대상을 선택할 수 없는 경우에만 본인 정보를 쓴다.
-        const ownProfileContext = {
-          role: getAuthRole() ?? undefined,
-          name: profile?.name || undefined,
-          phone: profile?.phone || undefined,
-          birthDate: profile?.birthDate || undefined,
-          address: profile?.address || undefined,
-        };
+        // 피보호자 본인 상담은 역할만 보낸다(개인정보는 서버에 싣지 않는다).
+        // 보호자 상담은 선택한 피보호자 정보를 예약 도구에 전달한다.
+        const role = getAuthRole() ?? undefined;
         const context =
           isGuardian && selectedWard
             ? {
@@ -169,7 +163,7 @@ export default function ChatbotContent() {
                 patientGender: selectedWard.partnerGender ?? undefined,
                 relation: selectedWard.relation ?? undefined,
               }
-            : ownProfileContext;
+            : { role };
 
         const result = await sendChatMessage({
           message: uiSelection ? undefined : trimmed,
@@ -220,7 +214,7 @@ export default function ChatbotContent() {
         textareaRef.current?.focus();
       }
     },
-    [isGuardian, profile, selectedWard, sessionId],
+    [isGuardian, selectedWard, sessionId],
   );
 
   function handleWardSelect(wardId: string) {
@@ -328,7 +322,7 @@ export default function ChatbotContent() {
               ))}
 
               {sending && (
-                <div className={styles.typing}>
+                <div className={styles.typing} role="status" aria-live="polite" aria-label="답변을 만들고 있어요">
                   <span className={styles.typingDot} />
                   <span className={styles.typingDot} />
                   <span className={styles.typingDot} />
