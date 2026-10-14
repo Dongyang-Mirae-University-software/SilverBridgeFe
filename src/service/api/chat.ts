@@ -23,10 +23,9 @@ export async function getChatLogs(): Promise<ChatLogItem[]> {
   return Array.isArray(data) ? (data as ChatLogItem[]) : [];
 }
 
-// 기록 번호(chatId)가 1,2,3… 순서라 번호만 바꿔 넣으면 남의 상담 기록이 조회될 수 있어 본인 userId를 함께 보낸다
-export async function getChatLogDetail(chatId: string, userId: string): Promise<ChatLogItem> {
+// 소유자는 서버가 로그인 토큰으로만 판정한다(없는 기록과 남의 기록 모두 404 CHAT_LOG_NOT_FOUND). userId를 쿼리로 보내도 무시된다
+export async function getChatLogDetail(chatId: string): Promise<ChatLogItem> {
   const response = await apiClient.get<CommonResponse<ChatLogItem>>(`${getChatBasePath()}/logs/${chatId}`, {
-    params: { userId },
     timeout: 15_000,
   });
   const data = getResponseData<ChatLogItem>(response);
