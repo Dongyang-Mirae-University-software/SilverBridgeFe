@@ -1,17 +1,16 @@
-import axios from 'axios';
 import { apiClient } from '@/lib/api/apiClient';
 import { getAuthRole } from '@/lib/auth/tokenStore';
 import { getResponseData } from '@/utils/api/responseData';
 import type { CommonResponse } from '@/service/interface/common';
 import type { ChatLogItem, ChatRequest, ChatResponse } from '../interface/chat';
+import { getChatErrorMessage, resolveChatBasePath } from './chatPolicy';
 
-// 역할에 따라 호출할 경로가 다르다 (서로 호출 불가 — 403). userId는 토큰으로만 식별하므로 요청에 넣지 않는다
 function getChatBasePath() {
-  return getAuthRole() === 'WARD' ? '/ward/chat' : '/guardian/chat';
+  return resolveChatBasePath(getAuthRole());
 }
 
 export async function sendChatMessage(body: ChatRequest): Promise<ChatResponse> {
-  const response = await apiClient.post<CommonResponse<ChatResponse>>(getChatBasePath(), body, { timeout: 140_000 });
+  const response = await apiClient.post<CommonResponse<ChatResponse>>(getChatBasePath(), body, { timeout: 150_000 });
   const data = getResponseData<ChatResponse>(response);
   if (!data || typeof data.reply !== 'string') throw new Error('챗봇 응답 형식이 올바르지 않습니다.');
   return data;
@@ -23,10 +22,9 @@ export async function getChatLogs(): Promise<ChatLogItem[]> {
   return Array.isArray(data) ? (data as ChatLogItem[]) : [];
 }
 
-// 기록 번호(chatId)가 1,2,3… 순서라 번호만 바꿔 넣으면 남의 상담 기록이 조회될 수 있어 본인 userId를 함께 보낸다
-export async function getChatLogDetail(chatId: string, userId: string): Promise<ChatLogItem> {
-  const response = await apiClient.get<CommonResponse<ChatLogItem>>(`${getChatBasePath()}/logs/${chatId}`, {
-    params: { userId },
+// 본인 기록만 서버가 토큰으로 결정한다. userId를 요청에 싣지 않는다
+export async function getChatLogDetail(chatId: string): Promise<ChatLogItem> {
+  const response = await apiClient.get<CommonResponse<ChatLogItem>>(`${getChatBasePath()}/logs/${encodeURIComponent(chatId)}`, {
     timeout: 15_000,
   });
   const data = getResponseData<ChatLogItem>(response);
@@ -34,19 +32,4 @@ export async function getChatLogDetail(chatId: string, userId: string): Promise<
   return data;
 }
 
-export function getChatErrorMessage(error: unknown) {
-  if (!axios.isAxiosError<{ code?: string }>(error)) return '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-
-  const code = error.response?.data?.code;
-  if (code === 'CHAT_LIMIT_EXCEEDED') return '이전 상담의 답변을 기다리고 있어요. 잠시 후 다시 시도해 주세요.';
-  if (code === 'CHAT_TIMEOUT') return '답변이 오래 걸리고 있어요. 다시 시도해 주세요.';
-  if (code === 'CHAT_UNAVAILABLE') return 'AI 상담 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.';
-  if (code === 'CHAT_INVALID_REQUEST') return '입력 내용을 확인한 뒤 다시 보내주세요.';
-  if (code === 'CHAT_LOG_NOT_FOUND') return '상담 기록을 찾을 수 없습니다.';
-  if (code === 'TOO_MANY_REQUESTS') {
-    const retryAfter = error.response?.headers?.['retry-after'];
-    return retryAfter ? `요청이 많아요. ${retryAfter}초 후 다시 시도해 주세요.` : '요청이 많아요. 잠시 후 다시 시도해 주세요.';
-  }
-
-  return '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-}
+export { getChatErrorMessage };
