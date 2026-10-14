@@ -21,7 +21,7 @@ export function RoomPicker({ rooms, selectedLabel, availableRegisteredLabel, dis
   return (
     <div className={cx('grid')} role="radiogroup" aria-label="방 선택">
       {rooms.map(room => {
-        // 다른 기기가 점유한 방만 막는다. 현재 기기의 방은 다시 켜기 위해 선택 가능해야 한다.
+        // 다른 기기가 점유한 방만 막는다. 현재 기기의 방은 카메라를 켜기 위해 선택 가능해야 한다.
         const isLocked = room.registered && room.label !== availableRegisteredLabel;
 
         return (
