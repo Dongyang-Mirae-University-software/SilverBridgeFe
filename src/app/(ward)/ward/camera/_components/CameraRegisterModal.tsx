@@ -15,6 +15,7 @@ import {
   wardLiveCamerasQueryKey,
 } from '@/service/query/ward/camera';
 import { WardCamera } from '@/service/interface/ward/camera';
+import { ALREADY_STREAMING, getModalTitle } from './cameraAction';
 import { RoomPicker } from './RoomPicker';
 import styles from './CameraRegisterModal.module.css';
 
@@ -96,7 +97,10 @@ export function CameraRegisterModal({
   const [isStartingStream, setIsStartingStream] = useState(false);
   const [isUnstable, setIsUnstable] = useState(false);
   // 이미 카메라가 있으면 설정 단계를 줄이고 전송 화면은 기본으로 접는다. 새로 등록할 때는 확인이 필요해 펼친다.
-  const isExisting = Boolean(initialRoom);
+  // 방금 이 화면에서 새로 등록해 송출을 시작한 경우는 송출을 끌 때까지 등록 화면을 유지한다
+  // (등록 직후 목록이 갱신돼 initialRoom 이 채워져도 확인 중이던 화면이 갑자기 바뀌지 않게)
+  const [isNewSession, setIsNewSession] = useState(false);
+  const isExisting = Boolean(initialRoom) && !isNewSession;
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const isPreviewVisible = !isExisting || isPreviewOpen;
   // 서버와 첫 브라우저 렌더는 같은 기본값으로 맞추고, 저장된 기기별 값은 마운트 후 읽는다.
@@ -113,6 +117,8 @@ export function CameraRegisterModal({
   const rotationRef = useRef<FrameRotation>(rotation);
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const pausedUntilRef = useRef(0);
+  // 권한 프롬프트·재시작 중 중복 실행 방지(state 는 비동기라 같은 틱의 두 번째 호출을 못 막는다)
+  const startingRef = useRef(false);
   const failCountRef = useRef(0);
   const failSinceRef = useRef<number | null>(null);
   const onUnstableChangeRef = useRef(onUnstableChange);
@@ -174,6 +180,9 @@ export function CameraRegisterModal({
 
   // 카메라·화면 권한을 받아 미리보기 루프까지 시작한다. 실패하면 false.
   const openMedia = async (): Promise<boolean> => {
+    // 이전 스트림이 남아 있으면(중복 호출 등) 참조를 덮어쓰기 전에 트랙을 먼저 끈다
+    mediaStreamRef.current?.getTracks().forEach(track => track.stop());
+    mediaStreamRef.current = null;
     try {
       const stream =
         facing === 'screen'
@@ -199,8 +208,14 @@ export function CameraRegisterModal({
   };
 
   const handleStartMedia = async () => {
+    if (startingRef.current) return;
+    startingRef.current = true;
     setErrorMessage('');
-    if (!(await openMedia())) setErrorMessage(MEDIA_PERMISSION_MESSAGE);
+    try {
+      if (!(await openMedia())) setErrorMessage(MEDIA_PERMISSION_MESSAGE);
+    } finally {
+      startingRef.current = false;
+    }
   };
 
   const updateUnstable = (unstable: boolean) => {
@@ -247,6 +262,9 @@ export function CameraRegisterModal({
     if (videoRef.current) videoRef.current.srcObject = null;
     setStatus('off');
     setRegisteredCamera(null);
+    setIsNewSession(false);
+    // 끈 상태가 15초 폴링을 기다리지 않고 바로 보이게 한다
+    void queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey });
   };
 
   // 모달을 닫아도 카메라와 업로드 루프를 유지한다. 이 컴포넌트는 숨긴 채로 남아
@@ -337,6 +355,7 @@ export function CameraRegisterModal({
     resetUploadHealth();
     liveSessionIdRef.current = session.session_id ?? camera.sessionId;
     setRegisteredCamera(camera);
+    setIsNewSession(!initialRoom);
     setStatus('streaming');
     startCaptureLoop(camera.recommendedFps);
     void requestScreenWakeLock();
@@ -367,13 +386,23 @@ export function CameraRegisterModal({
 
   // '카메라 켜기' 한 번 흐름: 권한 → 기존 카메라로 송출 재개. 실패하면 켠 미디어를 정리하고 사유를 돌려준다.
   const turnOnCamera = async (): Promise<string | null> => {
-    if (isStartingStream || registerMutation.isPending || status === 'streaming') return null;
+    // 이미 이 탭이 송출 중이면 호출자가 화면을 열어 보여 주게 한다(조용히 무반응이지 않도록)
+    if (status === 'streaming') return ALREADY_STREAMING;
+    if (startingRef.current || isStartingStream || registerMutation.isPending) return null;
+
+    startingRef.current = true;
+    setIsStartingStream(true);
     setErrorMessage('');
-    const hasMedia = status === 'ready' || (await openMedia());
-    if (!hasMedia) return MEDIA_PERMISSION_MESSAGE;
-    const failure = await restartExistingCamera();
-    if (failure) await handleStopMedia();
-    return failure;
+    try {
+      const hasMedia = status === 'ready' || (await openMedia());
+      if (!hasMedia) return MEDIA_PERMISSION_MESSAGE;
+      const failure = await restartExistingCamera();
+      if (failure) await handleStopMedia();
+      return failure;
+    } finally {
+      startingRef.current = false;
+      setIsStartingStream(false);
+    }
   };
 
   useImperativeHandle(ref, () => ({ turnOn: turnOnCamera }));
@@ -415,7 +444,7 @@ export function CameraRegisterModal({
 
   // 모달 안의 '카메라 켜기' - 실패 사유는 모달 오류 영역에 보인다
   const handleTurnOn = () => {
-    void turnOnCamera().then(failure => failure && setErrorMessage(failure));
+    void turnOnCamera().then(failure => failure && failure !== ALREADY_STREAMING && setErrorMessage(failure));
   };
 
   const handleRotate = () => {
@@ -439,7 +468,7 @@ export function CameraRegisterModal({
         <header className={cx('header')}>
           <strong>
             <Icon name="camera" size={26} decorative />
-            {initialRoom ? `"${initialRoom}" ${isCameraRunning ? '카메라 화면 보기' : '카메라 켜기'}` : '이 기기를 카메라로 등록'}
+            {getModalTitle(initialRoom, status === 'streaming')}
           </strong>
           <button type="button" className={cx('closeButton')} onClick={handleClose} aria-label="닫기">
             ×
@@ -498,7 +527,7 @@ export function CameraRegisterModal({
             <h2>{isExisting ? '전송 화면' : '4. 미리보기를 확인해 주세요'}</h2>
             <div className={cx('previewRow')}>
               {/* 캔버스는 송출용 toBlob 원본이라 접어도 DOM에 남긴다(높이만 0) */}
-              <div className={cx('previewBox', { collapsed: !isPreviewVisible })}>
+              <div className={cx('previewBox', { collapsed: !isPreviewVisible })} aria-hidden={!isPreviewVisible}>
                 <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline />
                 <div className={cx('sentPreview')}>
                   <span>AI에 전송되는 화면</span>
@@ -523,7 +552,12 @@ export function CameraRegisterModal({
                   </button>
                 )}
                 {isExisting && status === 'streaming' && (
-                  <button type="button" className={cx('rotateButton')} onClick={() => setIsPreviewOpen(open => !open)}>
+                  <button
+                    type="button"
+                    className={cx('rotateButton')}
+                    aria-expanded={isPreviewVisible}
+                    onClick={() => setIsPreviewOpen(open => !open)}
+                  >
                     <span>{isPreviewVisible ? '전송 화면 접기' : '전송 화면 보기'}</span>
                   </button>
                 )}
@@ -538,6 +572,11 @@ export function CameraRegisterModal({
             </div>
             {isPreviewVisible && (
               <p className={cx('previewHint')}>AI에 전송되는 작은 미리보기에서 사람이 똑바로 보이는지 확인해 주세요.</p>
+            )}
+            {isExisting && status === 'off' && isCameraRunning && (
+              <p className={cx('previewHint')}>
+                이 화면에서는 아직 송출하고 있지 않아요. &quot;카메라 켜기&quot;를 누르면 이어서 보내요.
+              </p>
             )}
           </section>
 

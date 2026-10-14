@@ -9,7 +9,7 @@ import { Icon } from '@/components/Icon';
 import { wardLiveCamerasQueryOptions } from '@/service/query/ward/camera';
 import { showToast } from '@/store/toastStore';
 import { CameraRegisterModal, type CameraRegisterModalHandle } from './CameraRegisterModal';
-import { getCameraPrimaryAction } from './cameraAction';
+import { ALREADY_STREAMING, getCameraPrimaryAction } from './cameraAction';
 import { WardCameraList } from './WardCameraList';
 import styles from './WardCameraContent.module.css';
 
@@ -30,7 +30,8 @@ export function WardCameraContent() {
       setIsTurningOn(true);
       try {
         const failure = await modalRef.current?.turnOn();
-        if (failure) showToast(failure, { variant: 'error' });
+        if (failure === ALREADY_STREAMING) setIsRegisterOpen(true);
+        else if (failure) showToast(failure, { variant: 'error' });
       } finally {
         setIsTurningOn(false);
       }
