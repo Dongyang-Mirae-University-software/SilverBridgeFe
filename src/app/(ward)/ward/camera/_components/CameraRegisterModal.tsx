@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -15,6 +15,7 @@ import {
   wardLiveCamerasQueryKey,
 } from '@/service/query/ward/camera';
 import { WardCamera } from '@/service/interface/ward/camera';
+import { ALREADY_STREAMING, getModalTitle } from './cameraAction';
 import { RoomPicker } from './RoomPicker';
 import styles from './CameraRegisterModal.module.css';
 
@@ -32,6 +33,8 @@ const UNSTABLE_FAIL_COUNT = 5;
 const UNSTABLE_FAIL_MS = 3000;
 // 화면 공유는 getDisplayMedia에 크기 제한이 없어 원본 해상도 그대로 올라간다 — 가로 1280으로 줄여서 업로드 속도를 맞춘다
 const MAX_CAPTURE_WIDTH = 1280;
+const MEDIA_PERMISSION_MESSAGE = '카메라·화면 접근 권한이 필요합니다.';
+const RESTART_FAILED_MESSAGE = '카메라를 켜지 못했습니다. 잠시 후 다시 시도해 주세요.';
 
 const FACING_OPTIONS: Array<{ value: CameraFacing; label: string }> = [
   { value: 'user', label: '전면 카메라' },
@@ -64,13 +67,19 @@ function setStoredRotation(rotation: FrameRotation) {
   }
 }
 
+export type CameraRegisterModalHandle = { turnOn: () => Promise<string | null> };
+
 export function CameraRegisterModal({
   initialRoom,
   isCameraRunning = false,
   isOpen,
   onClose,
   onUnstableChange,
+  ref,
 }: {
+  // 페이지의 '카메라 켜기' 버튼이 모달을 열지 않고 바로 송출을 시작할 때 쓴다.
+  // 실패 사유(고정 문구)를 돌려주고, 성공하거나 이미 켜져 있으면 null.
+  ref?: Ref<CameraRegisterModalHandle>;
   // 이 기기가 쓰던 카메라가 끊겨서 다시 켤 때 — 원래 쓰던 방을 미리 선택해 둔다.
   // 같은 기기·같은 방으로 다시 등록하면 백엔드가 기존 sessionId를 그대로 재사용한다
   initialRoom?: string;
@@ -87,6 +96,13 @@ export function CameraRegisterModal({
   const [registeredCamera, setRegisteredCamera] = useState<WardCamera | null>(null);
   const [isStartingStream, setIsStartingStream] = useState(false);
   const [isUnstable, setIsUnstable] = useState(false);
+  // 이미 카메라가 있으면 설정 단계를 줄이고 전송 화면은 기본으로 접는다. 새로 등록할 때는 확인이 필요해 펼친다.
+  // 방금 이 화면에서 새로 등록해 송출을 시작한 경우는 송출을 끌 때까지 등록 화면을 유지한다
+  // (등록 직후 목록이 갱신돼 initialRoom 이 채워져도 확인 중이던 화면이 갑자기 바뀌지 않게)
+  const [isNewSession, setIsNewSession] = useState(false);
+  const isExisting = Boolean(initialRoom) && !isNewSession;
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const isPreviewVisible = !isExisting || isPreviewOpen;
   // 서버와 첫 브라우저 렌더는 같은 기본값으로 맞추고, 저장된 기기별 값은 마운트 후 읽는다.
   const [rotation, setRotation] = useState<FrameRotation>(0);
 
@@ -101,6 +117,8 @@ export function CameraRegisterModal({
   const rotationRef = useRef<FrameRotation>(rotation);
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const pausedUntilRef = useRef(0);
+  // 권한 프롬프트·재시작 중 중복 실행 방지(state 는 비동기라 같은 틱의 두 번째 호출을 못 막는다)
+  const startingRef = useRef(false);
   const failCountRef = useRef(0);
   const failSinceRef = useRef<number | null>(null);
   const onUnstableChangeRef = useRef(onUnstableChange);
@@ -160,8 +178,11 @@ export function CameraRegisterModal({
     return () => document.removeEventListener('visibilitychange', requestWakeLockWhenVisible);
   }, []);
 
-  const handleStartMedia = async () => {
-    setErrorMessage('');
+  // 카메라·화면 권한을 받아 미리보기 루프까지 시작한다. 실패하면 false.
+  const openMedia = async (): Promise<boolean> => {
+    // 이전 스트림이 남아 있으면(중복 호출 등) 참조를 덮어쓰기 전에 트랙을 먼저 끈다
+    mediaStreamRef.current?.getTracks().forEach(track => track.stop());
+    mediaStreamRef.current = null;
     try {
       const stream =
         facing === 'screen'
@@ -180,8 +201,20 @@ export function CameraRegisterModal({
       if (videoRef.current) videoRef.current.srcObject = stream;
       setStatus('ready');
       startPreviewLoop();
+      return true;
     } catch {
-      setErrorMessage('카메라·화면 접근 권한이 필요합니다.');
+      return false;
+    }
+  };
+
+  const handleStartMedia = async () => {
+    if (startingRef.current) return;
+    startingRef.current = true;
+    setErrorMessage('');
+    try {
+      if (!(await openMedia())) setErrorMessage(MEDIA_PERMISSION_MESSAGE);
+    } finally {
+      startingRef.current = false;
     }
   };
 
@@ -229,6 +262,9 @@ export function CameraRegisterModal({
     if (videoRef.current) videoRef.current.srcObject = null;
     setStatus('off');
     setRegisteredCamera(null);
+    setIsNewSession(false);
+    // 끈 상태가 15초 폴링을 기다리지 않고 바로 보이게 한다
+    void queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey });
   };
 
   // 모달을 닫아도 카메라와 업로드 루프를 유지한다. 이 컴포넌트는 숨긴 채로 남아
@@ -319,17 +355,18 @@ export function CameraRegisterModal({
     resetUploadHealth();
     liveSessionIdRef.current = session.session_id ?? camera.sessionId;
     setRegisteredCamera(camera);
+    setIsNewSession(!initialRoom);
     setStatus('streaming');
     startCaptureLoop(camera.recommendedFps);
     void requestScreenWakeLock();
+    // 방금 켠 상태가 바로 보이도록 15초 폴링을 기다리지 않고 한 번 갱신한다(등록·켜기 공통)
+    void queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey });
   };
 
-  const restartExistingCamera = async () => {
+  // 이미 등록된 이 기기의 카메라로 송출만 재개한다. 실패 사유(고정 문구)를 돌려주고 성공이면 null.
+  const restartExistingCamera = async (): Promise<string | null> => {
     const deviceId = getStoredDeviceId();
-    if (!deviceId) {
-      setErrorMessage('이 기기의 카메라 정보를 찾지 못했습니다. 다시 등록해 주세요.');
-      return;
-    }
+    if (!deviceId) return '이 기기의 카메라 정보를 찾지 못했습니다. 다시 등록해 주세요.';
 
     setIsStartingStream(true);
     try {
@@ -337,26 +374,45 @@ export function CameraRegisterModal({
       // 거절될 수 있으므로, 기존 카메라의 sessionId로 송출만 재개한다.
       const cameras = await getWardCameras();
       const camera = cameras.find(item => item.deviceId === deviceId);
-      if (!camera) {
-        setErrorMessage('등록된 카메라 정보를 찾지 못했습니다. 다시 등록해 주세요.');
-        return;
-      }
+      if (!camera) return '등록된 카메라 정보를 찾지 못했습니다. 다시 등록해 주세요.';
       await startStreaming(camera);
-      // 방금 켠 상태가 바로 보이도록 15초 폴링을 기다리지 않고 한 번 갱신한다
-      void queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey });
+      return null;
     } catch {
-      setErrorMessage('카메라 송출을 다시 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      return RESTART_FAILED_MESSAGE;
     } finally {
       setIsStartingStream(false);
     }
   };
+
+  // '카메라 켜기' 한 번 흐름: 권한 → 기존 카메라로 송출 재개. 실패하면 켠 미디어를 정리하고 사유를 돌려준다.
+  const turnOnCamera = async (): Promise<string | null> => {
+    // 이미 이 탭이 송출 중이면 호출자가 화면을 열어 보여 주게 한다(조용히 무반응이지 않도록)
+    if (status === 'streaming') return ALREADY_STREAMING;
+    if (startingRef.current || isStartingStream || registerMutation.isPending) return null;
+
+    startingRef.current = true;
+    setIsStartingStream(true);
+    setErrorMessage('');
+    try {
+      const hasMedia = status === 'ready' || (await openMedia());
+      if (!hasMedia) return MEDIA_PERMISSION_MESSAGE;
+      const failure = await restartExistingCamera();
+      if (failure) await handleStopMedia();
+      return failure;
+    } finally {
+      startingRef.current = false;
+      setIsStartingStream(false);
+    }
+  };
+
+  useImperativeHandle(ref, () => ({ turnOn: turnOnCamera }));
 
   const handleRegister = () => {
     if (!room || registerMutation.isPending || isStartingStream) return;
     setErrorMessage('');
 
     if (initialRoom && room === initialRoom) {
-      void restartExistingCamera();
+      void restartExistingCamera().then(failure => failure && setErrorMessage(failure));
       return;
     }
 
@@ -386,6 +442,11 @@ export function CameraRegisterModal({
     );
   };
 
+  // 모달 안의 '카메라 켜기' - 실패 사유는 모달 오류 영역에 보인다
+  const handleTurnOn = () => {
+    void turnOnCamera().then(failure => failure && failure !== ALREADY_STREAMING && setErrorMessage(failure));
+  };
+
   const handleRotate = () => {
     setRotation(current => {
       const next = ((current + 90) % 360) as FrameRotation;
@@ -407,7 +468,7 @@ export function CameraRegisterModal({
         <header className={cx('header')}>
           <strong>
             <Icon name="camera" size={26} decorative />
-            {initialRoom ? `"${initialRoom}" 카메라 ${isCameraRunning ? '관리' : '다시 켜기'}` : '이 기기를 카메라로 등록'}
+            {getModalTitle(initialRoom, status === 'streaming')}
           </strong>
           <button type="button" className={cx('closeButton')} onClick={handleClose} aria-label="닫기">
             ×
@@ -415,7 +476,7 @@ export function CameraRegisterModal({
         </header>
 
         <div className={cx('body')}>
-          <section className={cx('setupSection')}>
+          {!isExisting && <section className={cx('setupSection')}>
             <h2>1. 어디에 두셨나요?</h2>
             <RoomPicker
               rooms={rooms}
@@ -424,9 +485,9 @@ export function CameraRegisterModal({
               disabled={status === 'streaming'}
               onSelect={setRoom}
             />
-          </section>
+          </section>}
 
-          <section className={cx('setupSection')}>
+          {!isExisting && <section className={cx('setupSection')}>
             <h2>2. 기기를 이렇게 놓아 주세요</h2>
             <div className={cx('cameraGuide')}>
               <svg className={cx('guideIllustration')} viewBox="0 0 104 80" fill="none" aria-hidden="true">
@@ -443,10 +504,10 @@ export function CameraRegisterModal({
                 <p>휴대폰을 <strong>가로</strong>로 두고, 방 전체가 보이도록 <strong>위에서 아래로</strong> 비춰 주세요.</p>
               </div>
             </div>
-          </section>
+          </section>}
 
           <section className={cx('setupSection')}>
-            <h2>3. 촬영 방식을 골라 주세요</h2>
+            <h2>{isExisting ? '촬영 방식' : '3. 촬영 방식을 골라 주세요'}</h2>
             <div className={cx('facingRow')}>
               {FACING_OPTIONS.map(option => (
                 <button
@@ -463,9 +524,10 @@ export function CameraRegisterModal({
           </section>
 
           <section className={cx('setupSection')}>
-            <h2>4. 미리보기를 확인해 주세요</h2>
+            <h2>{isExisting ? '전송 화면' : '4. 미리보기를 확인해 주세요'}</h2>
             <div className={cx('previewRow')}>
-              <div className={cx('previewBox')}>
+              {/* 캔버스는 송출용 toBlob 원본이라 접어도 DOM에 남긴다(높이만 0) */}
+              <div className={cx('previewBox', { collapsed: !isPreviewVisible })} aria-hidden={!isPreviewVisible}>
                 <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline />
                 <div className={cx('sentPreview')}>
                   <span>AI에 전송되는 화면</span>
@@ -474,14 +536,29 @@ export function CameraRegisterModal({
               </div>
               <div className={cx('previewControls')}>
                 {status === 'off' ? (
-                  <button type="button" className={cx('previewButton')} onClick={handleStartMedia}>
+                  <button
+                    type="button"
+                    className={cx('previewButton')}
+                    disabled={isExisting && isStartingStream}
+                    onClick={isExisting ? handleTurnOn : handleStartMedia}
+                  >
                     <Icon name="camera" size={20} decorative />
-                    미리보기 시작
+                    {isExisting ? (isStartingStream ? '카메라 켜는 중...' : '카메라 켜기') : '미리보기 시작'}
                   </button>
                 ) : (
                   <button type="button" className={cx('previewButton', 'stop')} onClick={handleStopMedia}>
                     <Icon name="camera" size={20} decorative />
-                    {status === 'streaming' ? '등록 취소하고 끄기' : '미리보기 끄기'}
+                    {status === 'streaming' ? (isExisting ? '카메라 끄기' : '등록 취소하고 끄기') : '미리보기 끄기'}
+                  </button>
+                )}
+                {isExisting && status === 'streaming' && (
+                  <button
+                    type="button"
+                    className={cx('rotateButton')}
+                    aria-expanded={isPreviewVisible}
+                    onClick={() => setIsPreviewOpen(open => !open)}
+                  >
+                    <span>{isPreviewVisible ? '전송 화면 접기' : '전송 화면 보기'}</span>
                   </button>
                 )}
                 {status !== 'off' && (
@@ -493,7 +570,14 @@ export function CameraRegisterModal({
                 )}
               </div>
             </div>
-            <p className={cx('previewHint')}>AI에 전송되는 작은 미리보기에서 사람이 똑바로 보이는지 확인해 주세요.</p>
+            {isPreviewVisible && (
+              <p className={cx('previewHint')}>AI에 전송되는 작은 미리보기에서 사람이 똑바로 보이는지 확인해 주세요.</p>
+            )}
+            {isExisting && status === 'off' && isCameraRunning && (
+              <p className={cx('previewHint')}>
+                이 화면에서는 아직 송출하고 있지 않아요. &quot;카메라 켜기&quot;를 누르면 이어서 보내요.
+              </p>
+            )}
           </section>
 
           {status === 'ready' && (
