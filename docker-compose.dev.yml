@@ -32,7 +32,8 @@ services:
     # next dev 부팅 + 최초 컴파일이 느려 start_period를 길게 잡는다.
     # 페이지 렌더링 비용이 없는 TCP 연결 확인으로 체크.
     healthcheck:
-      test: ['CMD-SHELL', 'nc -z localhost 3000 || exit 1']
+      # Alpine에서 localhost가 ::1(IPv6)로 풀리는데 앱은 0.0.0.0(IPv4)만 들어 localhost로는 항상 실패한다
+      test: ['CMD-SHELL', 'nc -z 127.0.0.1 3000 || exit 1']
       interval: 30s
       timeout: 5s
       retries: 5
