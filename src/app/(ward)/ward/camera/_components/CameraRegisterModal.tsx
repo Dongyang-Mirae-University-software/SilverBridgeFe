@@ -120,8 +120,9 @@ export function CameraRegisterModal({
   // (등록 직후 목록이 갱신돼 initialRoom 이 채워져도 확인 중이던 화면이 갑자기 바뀌지 않게)
   const [isNewSession, setIsNewSession] = useState(false);
   const isExisting = Boolean(initialRoom) && !isNewSession;
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const isPreviewVisible = !isExisting || isPreviewOpen;
+  // 기존 카메라는 송출 중일 때 전송 화면만 보여 준다(촬영 방식은 끄면 다시 고를 수 있다)
+  const isViewOnly = isExisting && status === 'streaming';
+  const isPreviewVisible = !isExisting || status === 'streaming';
   // 서버와 첫 브라우저 렌더는 같은 기본값으로 맞추고, 저장된 기기별 값은 마운트 후 읽는다.
   const [rotation, setRotation] = useState<FrameRotation>(0);
 
@@ -533,7 +534,7 @@ export function CameraRegisterModal({
             </div>
           </section>}
 
-          <section className={cx('setupSection')}>
+          {!isViewOnly && <section className={cx('setupSection')}>
             <h2>{isExisting ? '촬영 방식' : '3. 촬영 방식을 골라 주세요'}</h2>
             <div className={cx('facingRow')}>
               {FACING_OPTIONS.map(option => (
@@ -554,7 +555,7 @@ export function CameraRegisterModal({
             {status === 'streaming' && (
               <p className={cx('previewHint')}>촬영 방식을 바꾸려면 카메라를 끄고 다시 켜 주세요.</p>
             )}
-          </section>
+          </section>}
 
           <section className={cx('setupSection')}>
             <h2>{isExisting ? '전송 화면' : '4. 미리보기를 확인해 주세요'}</h2>
@@ -582,16 +583,6 @@ export function CameraRegisterModal({
                   <button type="button" className={cx('previewButton', 'stop')} onClick={handleStopMedia}>
                     <Icon name="camera" size={20} decorative />
                     {status === 'streaming' ? (isExisting ? '카메라 끄기' : '등록 취소하고 끄기') : '미리보기 끄기'}
-                  </button>
-                )}
-                {isExisting && status === 'streaming' && (
-                  <button
-                    type="button"
-                    className={cx('rotateButton')}
-                    aria-expanded={isPreviewVisible}
-                    onClick={() => setIsPreviewOpen(open => !open)}
-                  >
-                    <span>{isPreviewVisible ? '전송 화면 접기' : '전송 화면 보기'}</span>
                   </button>
                 )}
                 {status !== 'off' && (
