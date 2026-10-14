@@ -6,10 +6,11 @@ import classNames from 'classnames/bind';
 
 import { getStoredDeviceId } from '@/lib/device/deviceId';
 import { useDeleteWardCameraMutation, wardLiveCamerasQueryOptions } from '@/service/query/ward/camera';
-import { WardCameraConnectionStatus, WardLiveCamera } from '@/service/interface/ward/camera';
+import { WardLiveCamera } from '@/service/interface/ward/camera';
 import { formatDateTime } from '@/utils/format/date';
 import { Icon } from '@/components/Icon';
 import { showToast } from '@/store/toastStore';
+import { getCardStatus, type CameraPrimaryAction } from './cameraAction';
 import { RoomRenameModal } from './RoomRenameModal';
 import styles from './WardCameraList.module.css';
 
@@ -19,13 +20,18 @@ function getErrorMessage(error: unknown, fallback: string) {
   return (error as { message?: string })?.message ?? fallback;
 }
 
-function getStatusBadge(status: WardCameraConnectionStatus) {
-  if (status === null) return { label: '확인 중', tone: 'checking' } as const;
-  if (status === 'running') return { label: '연결됨', tone: 'connected' } as const;
-  return { label: '연결 안 됨', tone: 'disconnected' } as const;
-}
-
-export function WardCameraList({ onRegister }: { onRegister: () => void }) {
+export function WardCameraList({
+  onRegister,
+  primaryAction,
+  isConnecting,
+  onPrimary,
+}: {
+  onRegister: () => void;
+  // 이 기기 카드의 주 버튼. 다른 기기 카드에는 버튼을 두지 않는다(영상 시청은 보호자 전용)
+  primaryAction: CameraPrimaryAction;
+  isConnecting: boolean;
+  onPrimary: () => void;
+}) {
   const { data, isLoading } = useQuery(wardLiveCamerasQueryOptions);
   const cameras = data ?? [];
   const myDeviceId = getStoredDeviceId();
@@ -61,8 +67,9 @@ export function WardCameraList({ onRegister }: { onRegister: () => void }) {
     <section>
       <ul className={cx('list')}>
         {cameras.map(camera => {
-          const badge = getStatusBadge(camera.status);
           const isThisDevice = Boolean(myDeviceId) && camera.deviceId === myDeviceId;
+          const card = getCardStatus({ status: camera.status, isThisDevice, isConnecting });
+          const showPrimary = isThisDevice && primaryAction.kind !== 'register';
 
           return (
             <li key={camera.id} className={cx('item')}>
@@ -73,19 +80,29 @@ export function WardCameraList({ onRegister }: { onRegister: () => void }) {
                     <span className={cx('label')}>{camera.label}</span>
                     {isThisDevice && <span className={cx('deviceTag')}>이 기기</span>}
                   </div>
-                  <span className={cx('statusBadge', badge.tone)}><span className={cx('statusDot')} />{badge.label}</span>
+                  <span className={cx('statusBadge', card.tone)}><span className={cx('statusDot')} />{card.label}</span>
                 </div>
               </div>
 
-              {camera.status === 'disconnected' && (
-                <p className={cx('statusMessage')}>
-                  {isThisDevice ? '위의 "카메라 켜기"를 눌러 다시 시작하세요' : '카메라로 쓰는 기기의 화면을 켜 두세요'}
+              {card.message && (
+                <p className={cx('statusMessage', { checkingMessage: card.tone === 'checking' || card.tone === 'connecting' })}>
+                  {card.message}
                 </p>
               )}
-              {!isThisDevice && <p className={cx('statusMessage')}>다른 기기에서 쓰는 카메라예요. 그 기기에서 켜고 끌 수 있어요.</p>}
-              {camera.status === null && <p className={cx('statusMessage', 'checkingMessage')}>상태를 확인하고 있어요. 잠시 후 다시 보여드려요</p>}
 
               <div className={cx('meta')}><span>등록일</span><strong>{formatDateTime(camera.createdAt)}</strong></div>
+
+              {showPrimary && (
+                <button
+                  type="button"
+                  className={cx('primaryButton')}
+                  disabled={primaryAction.kind === 'checking' || isConnecting}
+                  onClick={onPrimary}
+                >
+                  <Icon name="camera" size={22} decorative />
+                  {isConnecting ? '카메라 켜는 중...' : 'label' in primaryAction ? primaryAction.label : ''}
+                </button>
+              )}
 
               <div className={cx('actions')}>
                 <button type="button" className={cx('linkButton')} onClick={() => setRenamingCamera(camera)}>

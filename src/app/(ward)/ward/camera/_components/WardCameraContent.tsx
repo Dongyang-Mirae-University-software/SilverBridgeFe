@@ -19,12 +19,14 @@ export function WardCameraContent() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isStreamUnstable, setIsStreamUnstable] = useState(false);
   const [isTurningOn, setIsTurningOn] = useState(false);
+  const [isModalStarting, setIsModalStarting] = useState(false);
   const modalRef = useRef<CameraRegisterModalHandle>(null);
   const { data: cameras = [], isError: isLiveError } = useQuery(wardLiveCamerasQueryOptions);
   const myDeviceId = getStoredDeviceId();
   const myCamera = myDeviceId ? cameras.find(camera => camera.deviceId === myDeviceId) : undefined;
   const action = getCameraPrimaryAction(myCamera);
 
+  // 이 기기 카드의 주 버튼(카메라 화면 보기 / 카메라 켜기)
   const handlePrimary = async () => {
     if (action.kind === 'turnOn') {
       setIsTurningOn(true);
@@ -44,33 +46,21 @@ export function WardCameraContent() {
     <section className={cx('page')}>
       {isStreamUnstable && <p className={cx('registerHint')}>송출이 불안정합니다. 네트워크 상태를 확인해 주세요.</p>}
       {isLiveError && cameras.length === 0 && <p className={cx('registerHint')}>카메라 연결 상태를 확인하는 중이에요. 잠시만 기다려 주세요.</p>}
-      {cameras.length > 0 && <div className={cx('registerRow')}>
-        <button
-          type="button"
-          className={cx('registerButton')}
-          disabled={action.kind === 'checking' || isTurningOn}
-          onClick={handlePrimary}
-        >
-          <Icon name={action.kind === 'register' ? 'plus' : 'camera'} size={22} decorative />
-          {action.kind === 'register'
-            ? '이 기기를 카메라로 등록'
-            : isTurningOn
-              ? '카메라 켜는 중...'
-              : action.label}
-        </button>
-        {myCamera && (
-          <p className={cx('registerHint')}>
-            {action.kind === 'view' && `"${myCamera.label}" 카메라가 송출 중이에요.`}
-            {action.kind === 'turnOn' && `이 기기는 "${myCamera.label}" 카메라예요. 꺼져 있다면 버튼을 눌러 다시 시작하세요.`}
-            {action.kind === 'checking' && '연결 상태를 확인하고 있어요. 잠시만 기다려 주세요.'}
-          </p>
-        )}
-        {!myCamera && (
-          <p className={cx('registerHint')}>다른 기기에서 등록한 카메라는 그 기기에서 켜고 끌 수 있어요.</p>
-        )}
-      </div>}
+      {cameras.length > 0 && !myCamera && (
+        <div className={cx('registerRow')}>
+          <button type="button" className={cx('registerButton')} onClick={() => setIsRegisterOpen(true)}>
+            <Icon name="plus" size={22} decorative />
+            이 기기를 카메라로 등록
+          </button>
+        </div>
+      )}
 
-      <WardCameraList onRegister={() => setIsRegisterOpen(true)} />
+      <WardCameraList
+        onRegister={() => setIsRegisterOpen(true)}
+        primaryAction={action}
+        isConnecting={isTurningOn || isModalStarting}
+        onPrimary={handlePrimary}
+      />
 
       <CameraRegisterModal
         ref={modalRef}
@@ -79,6 +69,7 @@ export function WardCameraContent() {
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
         onUnstableChange={setIsStreamUnstable}
+        onStartingChange={setIsModalStarting}
       />
     </section>
   );
