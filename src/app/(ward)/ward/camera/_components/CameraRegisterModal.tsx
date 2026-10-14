@@ -15,18 +15,18 @@ import {
   wardLiveCamerasQueryKey,
 } from '@/service/query/ward/camera';
 import { WardCamera } from '@/service/interface/ward/camera';
-import { ALREADY_STREAMING, getModalTitle } from './cameraAction';
+import { ALREADY_STREAMING, getModalTitle, parseStoredFacing, type CameraFacing } from './cameraAction';
 import { RoomPicker } from './RoomPicker';
 import styles from './CameraRegisterModal.module.css';
 
 const cx = classNames.bind(styles);
 
-type CameraFacing = 'user' | 'environment' | 'screen';
 type StreamStatus = 'off' | 'ready' | 'streaming';
 type FrameRotation = 0 | 90 | 180 | 270;
 type WakeLockSentinelLike = { released: boolean; release: () => Promise<void> };
 
 const CAMERA_ROTATION_STORAGE_KEY = 'silverbridge_ward_camera_rotation';
+const CAMERA_FACING_STORAGE_KEY = 'silverbridge_ward_camera_facing';
 const MAX_IN_FLIGHT = 2;
 // 연속 업로드 실패가 이 횟수 또는 시간을 넘으면 사용자에게 알린다
 const UNSTABLE_FAIL_COUNT = 5;
@@ -59,6 +59,22 @@ function getStoredRotation(): FrameRotation {
   }
 }
 
+function getStoredFacing(): CameraFacing {
+  try {
+    return parseStoredFacing(window.localStorage.getItem(CAMERA_FACING_STORAGE_KEY));
+  } catch {
+    return 'user';
+  }
+}
+
+function setStoredFacing(facing: CameraFacing) {
+  try {
+    window.localStorage.setItem(CAMERA_FACING_STORAGE_KEY, facing);
+  } catch {
+    // 저장을 지원하지 않는 환경에서는 이번 실행 중 선택값만 사용한다.
+  }
+}
+
 function setStoredRotation(rotation: FrameRotation) {
   try {
     window.localStorage.setItem(CAMERA_ROTATION_STORAGE_KEY, String(rotation));
@@ -75,6 +91,7 @@ export function CameraRegisterModal({
   isOpen,
   onClose,
   onUnstableChange,
+  onStartingChange,
   ref,
 }: {
   // 페이지의 '카메라 켜기' 버튼이 모달을 열지 않고 바로 송출을 시작할 때 쓴다.
@@ -88,6 +105,8 @@ export function CameraRegisterModal({
   onClose: () => void;
   // 송출 업로드가 계속 실패 중인지 알린다(모달이 닫혀 있어도 페이지가 안내할 수 있게)
   onUnstableChange?: (unstable: boolean) => void;
+  // 이 기기가 송출을 시작하는 중인지 알린다(카드의 '연결하는 중' 표시용)
+  onStartingChange?: (starting: boolean) => void;
 }) {
   const [facing, setFacing] = useState<CameraFacing>('user');
   const [status, setStatus] = useState<StreamStatus>('off');
@@ -123,6 +142,8 @@ export function CameraRegisterModal({
   const failSinceRef = useRef<number | null>(null);
   const onUnstableChangeRef = useRef(onUnstableChange);
   onUnstableChangeRef.current = onUnstableChange;
+  const onStartingChangeRef = useRef(onStartingChange);
+  onStartingChangeRef.current = onStartingChange;
 
   const { data: rooms = [], refetch: refetchRooms } = useQuery(wardCameraRoomsQueryOptions);
   const registerMutation = useRegisterWardCameraMutation();
@@ -146,6 +167,8 @@ export function CameraRegisterModal({
 
   useEffect(() => {
     setRotation(getStoredRotation());
+    // 페이지의 '카메라 켜기'가 모달을 열지 않고 시작해도 마지막에 쓴 방식으로 켜지게 한다
+    setFacing(getStoredFacing());
   }, []);
 
   useEffect(() => {
@@ -407,6 +430,10 @@ export function CameraRegisterModal({
 
   useImperativeHandle(ref, () => ({ turnOn: turnOnCamera }));
 
+  useEffect(() => {
+    onStartingChangeRef.current?.(isStartingStream);
+  }, [isStartingStream]);
+
   const handleRegister = () => {
     if (!room || registerMutation.isPending || isStartingStream) return;
     setErrorMessage('');
@@ -514,13 +541,19 @@ export function CameraRegisterModal({
                   key={option.value}
                   type="button"
                   className={cx('facingChip', { active: facing === option.value })}
-                  onClick={() => setFacing(option.value)}
+                  onClick={() => {
+                    setFacing(option.value);
+                    setStoredFacing(option.value);
+                  }}
                   disabled={status !== 'off'}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
+            {status === 'streaming' && (
+              <p className={cx('previewHint')}>촬영 방식을 바꾸려면 카메라를 끄고 다시 켜 주세요.</p>
+            )}
           </section>
 
           <section className={cx('setupSection')}>

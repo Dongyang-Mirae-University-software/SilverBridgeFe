@@ -108,6 +108,14 @@
   opacity: 1;
 }
 
+/* 송출 중에는 바꿀 수 없지만, 지금 어떤 방식으로 보내는지는 보여야 한다 */
+.facingChip.active:disabled {
+  border-color: var(--sb-brand);
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  cursor: default;
+}
+
 .previewBox {
   position: relative;
   display: grid;

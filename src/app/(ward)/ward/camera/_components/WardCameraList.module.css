@@ -109,6 +109,25 @@
 .statusBadge.disconnected { background: var(--sb-bg-soft); color: var(--sb-ink-soft); }
 .statusBadge.checking { background: var(--sb-sun-soft); color: #b07f1f; }
 .statusBadge.checking .statusDot { border: 1px dashed currentColor; background: transparent; }
+.statusBadge.connecting { border-color: #b8d4e8; background: #eaf3fa; color: #3f6e8c; }
+.statusBadge.connecting .statusDot,
+.statusBadge.checking .statusDot {
+  width: 11px;
+  height: 11px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  background: transparent;
+  animation: statusSpin 0.9s linear infinite;
+}
+
+@keyframes statusSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusBadge.connecting .statusDot,
+  .statusBadge.checking .statusDot { animation: none; }
+}
 
 .deviceTag {
   border-radius: 999px;
@@ -136,6 +155,27 @@
 }
 
 .meta strong { color: var(--sb-ink); font-weight: 700; }
+
+.primaryButton {
+  display: inline-flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.primaryButton:disabled {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  cursor: not-allowed;
+}
 
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
