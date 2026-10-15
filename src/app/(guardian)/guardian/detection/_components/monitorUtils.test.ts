@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { pickInitialSessionId } from './monitorUtils';
+import { getStreamResumeAction, pickInitialSessionId } from './monitorUtils';
 
 const bedroomOff = { sessionId: 'bed', wardId: 'w1', status: 'offline' as const };
 const livingOn = { sessionId: 'living', wardId: 'w1', status: 'running' as const };
@@ -25,5 +25,37 @@ describe('pickInitialSessionId', () => {
   });
   it('카메라가 없으면 고르지 않는다', () => {
     expect(pickInitialSessionId([])).toBeUndefined();
+  });
+});
+
+describe('getStreamResumeAction', () => {
+  const at = (sessionId: string | null, status: 'running' | 'disconnected' | 'offline' | null | undefined) => ({
+    sessionId,
+    status,
+  });
+  it('보던 카메라가 끊기면 써 버린 영상 주소를 버린다', () => {
+    expect(getStreamResumeAction(at('k', 'running'), at('k', 'offline'))).toBe('drop');
+    expect(getStreamResumeAction(at('k', 'running'), at('k', 'disconnected'))).toBe('drop');
+  });
+  it('끊겼던 카메라가 다시 송출되면 새 티켓으로 다시 연다(끄기 → 다시 켜기)', () => {
+    expect(getStreamResumeAction(at('k', 'offline'), at('k', 'running'))).toBe('reopen');
+    expect(getStreamResumeAction(at('k', 'disconnected'), at('k', 'running'))).toBe('reopen');
+  });
+  it('상태가 그대로면 아무것도 하지 않는다(반복 요청 없음)', () => {
+    expect(getStreamResumeAction(at('k', 'running'), at('k', 'running'))).toBe('none');
+    expect(getStreamResumeAction(at('k', 'offline'), at('k', 'offline'))).toBe('none');
+  });
+  it('다른 카메라로 바꾸는 중이면 카메라 선택에 맡긴다', () => {
+    expect(getStreamResumeAction(at('bed', 'offline'), at('kitchen', 'running'))).toBe('none');
+  });
+  it('상태를 모르거나 조회 전에서 송출 중으로 바뀌면 다시 열지 않는다(선택 때 이미 열었다)', () => {
+    expect(getStreamResumeAction(at('k', undefined), at('k', 'running'))).toBe('none');
+    expect(getStreamResumeAction(at('k', null), at('k', 'running'))).toBe('none');
+  });
+  it('끊김에서 상태 모름(null)으로 바뀌면 기다린다', () => {
+    expect(getStreamResumeAction(at('k', 'offline'), at('k', null))).toBe('none');
+  });
+  it('선택한 카메라가 없으면 아무것도 하지 않는다', () => {
+    expect(getStreamResumeAction(at(null, 'offline'), at(null, 'running'))).toBe('none');
   });
 });
