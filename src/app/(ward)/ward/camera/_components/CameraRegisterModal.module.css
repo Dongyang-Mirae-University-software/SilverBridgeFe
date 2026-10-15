@@ -249,12 +249,15 @@
   object-fit: contain;
 }
 
-/* 카메라 스트림은 캔버스에 그리기 위한 원본으로만 사용한다. 화면에는 AI 전송본만 보인다. */
+/* 카메라 스트림은 캔버스에 그리기 위한 원본으로만 사용한다. 화면에는 AI 전송본만 보인다.
+   창 밖에서 화면 안에 아주 작게 둔다 - 화면 밖·숨김이면 브라우저가 재생을 멈춰 송출이 끊긴다 */
 .sourceVideo {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 2px;
+  height: 2px;
+  opacity: 0.01;
   pointer-events: none;
 }
 
@@ -304,7 +307,7 @@
 
 .statusDot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 .statusBadge.connected { border-color: #b9dcc7; background: var(--sb-safe-soft); color: var(--sb-safe); }
-.statusBadge.disconnected { background: var(--sb-bg-soft); color: var(--sb-ink-soft); }
+.statusBadge.disconnected { border-color: #f0c4bd; background: #fdecea; color: #b3312b; }
 .statusBadge.checking { background: var(--sb-sun-soft); color: #b07f1f; }
 .statusBadge.connecting { border-color: #b8d4e8; background: #eaf3fa; color: #3f6e8c; }
 

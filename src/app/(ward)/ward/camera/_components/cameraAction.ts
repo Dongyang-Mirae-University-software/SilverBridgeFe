@@ -72,7 +72,7 @@ export function parseStoredFacing(value: string | null | undefined): CameraFacin
 
 export type CardTone = 'checking' | 'connected' | 'disconnected' | 'connecting';
 
-// 카드의 상태 배지와 안내 문구. '연결하는 중'은 이 기기가 송출을 시작하는 동안에만 쓴다.
+// 카드의 상태 배지와 안내 문구 - '켜짐/꺼짐'(보호자 화면과 같은 말, 2026-10-15 시안). '켜는 중'은 이 기기가 송출을 시작하는 동안에만 쓴다.
 export function getCardStatus(input: {
   status: WardCameraConnectionStatus;
   isThisDevice: boolean;
@@ -80,14 +80,14 @@ export function getCardStatus(input: {
 }): { label: string; tone: CardTone; message: string | null } {
   const { status, isThisDevice, isConnecting } = input;
   if (isThisDevice && isConnecting) {
-    return { label: '연결하는 중...', tone: 'connecting', message: '촬영을 시작하고 있어요. 잠시만 기다려 주세요' };
+    return { label: '켜는 중...', tone: 'connecting', message: '촬영을 시작하고 있어요. 잠시만 기다려 주세요' };
   }
   if (status === null) {
     return { label: '확인 중', tone: 'checking', message: '상태를 확인하고 있어요. 잠시 후 다시 보여드려요' };
   }
-  if (status === 'running') return { label: '연결됨', tone: 'connected', message: '지금 영상을 보내고 있어요' };
+  if (status === 'running') return { label: '켜짐', tone: 'connected', message: '지금 영상을 보내고 있어요' };
   return {
-    label: '연결 안 됨',
+    label: '꺼짐',
     tone: 'disconnected',
     message: isThisDevice ? '"카메라 켜기"를 눌러 다시 시작하세요' : '카메라로 쓰는 기기의 화면을 켜 두세요',
   };
