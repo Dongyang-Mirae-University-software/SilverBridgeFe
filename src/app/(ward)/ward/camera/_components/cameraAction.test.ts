@@ -6,6 +6,7 @@ import {
   getCardStatus,
   getModalTitle,
   getVisibleFacings,
+  isPortraitFrame,
   isThisDeviceConnecting,
   parseStoredFacing,
 } from './cameraAction';
@@ -121,5 +122,18 @@ describe('isThisDeviceConnecting', () => {
   });
   it('기다림이 끝나면(상한 경과·송출 꺼짐) 서버 상태를 그대로 보여 준다', () => {
     expect(isThisDeviceConnecting({ ...idle, status: 'disconnected' })).toBe(false);
+  });
+});
+
+describe('isPortraitFrame', () => {
+  it('세로 영상(자동 회전 꺼짐·가로로 들었을 때 오는 720x1280)이면 안내한다', () => {
+    expect(isPortraitFrame(720, 1280)).toBe(true);
+  });
+  it('가로·정사각 영상은 안내하지 않는다', () => {
+    expect(isPortraitFrame(1280, 720)).toBe(false);
+    expect(isPortraitFrame(720, 720)).toBe(false);
+  });
+  it('크기를 아직 모르면 안내하지 않는다', () => {
+    expect(isPortraitFrame(0, 0)).toBe(false);
   });
 });

@@ -262,6 +262,18 @@
   line-height: 1.55;
 }
 
+/* 세로 영상일 때 자동 회전 안내 - 일반 안내보다 눈에 띄게 */
+.rotateHint {
+  margin: 0;
+  border-radius: 12px;
+  background: var(--sb-sun-soft);
+  color: #8a5d0f;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  padding: 12px 16px;
+}
+
 .roomSection {
   display: grid;
   gap: 12px;
