@@ -11,7 +11,7 @@
   align-items: center;
   gap: 8px;
   border: 2px solid var(--sb-line);
-  border-radius: 8px;
+  border-radius: 12px;
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
@@ -32,16 +32,8 @@
   border-color: var(--sb-line-soft);
   background: var(--sb-bg-soft);
   color: var(--sb-ink-mute);
+  font-weight: 600;
   opacity: 1;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-left: 2px;
-  font-size: 0.8125rem;
-  font-weight: 700;
 }
 
 @media (max-width: 640px) {

@@ -46,6 +46,11 @@ export function WardCameraContent() {
 
   // 이 기기 카드의 주 버튼(카메라 화면 보기 / 카메라 켜기)
   const handlePrimary = async () => {
+    // 연결하는 중(이 탭이 송출을 시작했거나 시작하는 중)에는 켜기를 다시 부르지 않고 화면만 연다
+    if (isConnecting) {
+      setIsRegisterOpen(true);
+      return;
+    }
     if (action.kind === 'turnOn') {
       setIsTurningOn(true);
       try {

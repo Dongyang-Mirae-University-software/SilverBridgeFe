@@ -17,14 +17,18 @@ import {
 import { WardCamera, type WardCameraConnectionStatus } from '@/service/interface/ward/camera';
 import {
   ALREADY_STREAMING,
-  AUTO_ROTATE_HINT,
+  FACING_CHOICES,
+  REGISTER_STEPS,
+  canGoNextStep,
   getCaptureSize,
   getCardStatus,
+  getFacingLabel,
   getModalTitle,
   getVisibleFacings,
   isPortraitFrame,
   parseStoredFacing,
   type CameraFacing,
+  type RegisterStep,
 } from './cameraAction';
 import { registerAndStart } from './registerFlow';
 import { RoomPicker } from './RoomPicker';
@@ -46,12 +50,6 @@ const MEDIA_PERMISSION_MESSAGE = '카메라를 켜지 못했어요. 브라우저
 const RESTART_FAILED_MESSAGE = '카메라를 켜지 못했어요. 잠시 후 다시 시도해 주세요.';
 const START_AFTER_REGISTER_FAILED_MESSAGE = '카메라는 등록됐지만 촬영을 시작하지 못했어요. 아래 버튼을 눌러 다시 시작해 주세요.';
 const VIEW_GUARDIAN_NOTICE = '연결된 보호자도 이 화면을 볼 수 있어요. 이상 상황이 생기면 보호자에게 영상과 함께 알려 드려요.';
-
-const FACING_OPTIONS: Array<{ value: CameraFacing; label: string }> = [
-  { value: 'user', label: '전면 카메라' },
-  { value: 'environment', label: '후면 카메라' },
-  { value: 'screen', label: '화면 공유' },
-];
 
 function getErrorCode(error: unknown) {
   return (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
@@ -140,7 +138,12 @@ export function CameraRegisterModal({
   // 화면 공유 칩은 시연용 - 쓰고 있거나 주소에 ?screen=1 이 있을 때만 보인다
   const [allowScreenShare, setAllowScreenShare] = useState(false);
   const visibleFacings = getVisibleFacings(facing, allowScreenShare);
-  const isPreviewVisible = !isExisting || status === 'streaming';
+  // 새 등록은 4단계 마법사(방 → 기기 놓기 → 촬영 방식 → 미리보기). 촬영 방식은 3단계에서 직접 골라야 넘어간다
+  const [wizardStep, setWizardStep] = useState<RegisterStep>(1);
+  const [facingChosen, setFacingChosen] = useState(false);
+  const isWizard = !isExisting;
+  // 영상 상자는 송출 원본(video·canvas)이라 하나만 두고 보일 때만 펼친다
+  const isPreviewVisible = isWizard ? wizardStep === 4 : status !== 'off';
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -195,6 +198,30 @@ export function CameraRegisterModal({
   useEffect(() => {
     onStreamingChangeRef.current?.(status === 'streaming');
   }, [status]);
+
+  // 새 등록 창을 열 때마다 1단계부터 시작한다(방·촬영 방식은 다시 고른다)
+  useEffect(() => {
+    if (!isOpen || isExisting || status !== 'off') return;
+    setWizardStep(1);
+    setFacingChosen(false);
+    setRoom('');
+    setErrorMessage('');
+    // 창을 열 때만 초기화한다 - 단계 이동 중 상태 변화로 다시 돌지 않게
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // 4단계(미리보기)에 들어가면 고른 방식으로 카메라를 켠다. 실패하면 자동으로 다시 시도하지 않는다(권한 창 반복 방지)
+  const autoPreviewTriedRef = useRef(false);
+  useEffect(() => {
+    if (!isOpen || !isWizard || wizardStep !== 4) {
+      autoPreviewTriedRef.current = false;
+      return;
+    }
+    if (status !== 'off' || autoPreviewTriedRef.current) return;
+    autoPreviewTriedRef.current = true;
+    void handleStartMedia();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, isWizard, wizardStep, status]);
 
   // 영상 크기는 권한을 받은 뒤·기기를 돌릴 때 바뀐다 - 그때마다 세로 여부를 다시 본다
   useEffect(() => {
@@ -323,9 +350,13 @@ export function CameraRegisterModal({
     void queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey });
   };
 
-  // 모달을 닫아도 카메라와 업로드 루프를 유지한다. 이 컴포넌트는 숨긴 채로 남아
+  // 모달을 닫아도 송출(streaming)은 유지한다. 이 컴포넌트는 숨긴 채로 남아
   // video/canvas ref와 송출 세션이 끊기지 않도록 WardCameraContent에서 계속 마운트한다.
-  const handleClose = () => onClose();
+  // 다만 등록 전 미리보기(ready)는 보내는 것이 없으니 닫을 때 카메라를 끈다.
+  const handleClose = () => {
+    if (status === 'ready' && !isRegistering) void handleStopMedia();
+    onClose();
+  };
 
   const enqueueLatestFrame = (blob: Blob) => {
     if (!liveSessionIdRef.current) return;
@@ -499,6 +530,9 @@ export function CameraRegisterModal({
     if (getErrorCode(result.error) === 'CAMERA_LABEL_DUPLICATED') {
       void refetchRooms();
       setRoom('');
+      // 방을 다시 골라야 하므로 미리보기를 끄고 1단계로 돌아간다(4단계에 남으면 방이 비어 버튼을 누를 수 없다)
+      if (status === 'ready') void handleStopMedia();
+      setWizardStep(1);
       setErrorMessage('방금 다른 기기에서 그 방을 등록했어요. 다른 방을 골라 주세요.');
       return;
     }
@@ -519,6 +553,52 @@ export function CameraRegisterModal({
   const title = getModalTitle(initialRoom, status === 'streaming');
   const viewBadge = isViewOnly ? getCardStatus({ status: connectionStatus, isThisDevice: true, isConnecting }) : null;
   const isRegisterBusy = registerMutation.isPending || isStartingStream || isRegistering;
+  const facingChoices = FACING_CHOICES.filter(choice => visibleFacings.includes(choice.value));
+  const showRotateHint = status !== 'off' && facing !== 'screen' && isPortrait;
+
+  const chooseFacing = (value: CameraFacing) => {
+    setFacing(value);
+    setStoredFacing(value);
+    setFacingChosen(true);
+  };
+
+  // 4단계에서 '이전' - 켜 둔 미리보기 카메라를 끄고 촬영 방식으로 돌아간다
+  const handleWizardBack = () => {
+    setErrorMessage('');
+    if (wizardStep === 4 && status === 'ready') void handleStopMedia();
+    setWizardStep(step => (step > 1 ? ((step - 1) as RegisterStep) : step));
+  };
+
+  const handleWizardNext = () => {
+    if (!canGoNextStep(wizardStep, { room, facingChosen })) return;
+    setErrorMessage('');
+    setWizardStep(step => (step < 4 ? ((step + 1) as RegisterStep) : step));
+  };
+
+  const facingRadios = (
+    <div className={cx('facingList')} role="radiogroup" aria-label="촬영 방식">
+      {facingChoices.map(choice => {
+        const checked = (isWizard ? facingChosen : true) && facing === choice.value;
+        return (
+          <button
+            key={choice.value}
+            type="button"
+            role="radio"
+            aria-checked={checked}
+            className={cx('facingCard', { checked })}
+            disabled={status !== 'off'}
+            onClick={() => chooseFacing(choice.value)}
+          >
+            <span className={cx('radioMark')} aria-hidden="true" />
+            <span className={cx('facingText')}>
+              <strong>{choice.label}</strong>
+              <span>{choice.description}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className={cx('overlay', { hidden: !isOpen })} role="presentation" aria-hidden={!isOpen} onClick={handleClose}>
@@ -531,153 +611,192 @@ export function CameraRegisterModal({
         onClick={event => event.stopPropagation()}
       >
         <header className={cx('header')}>
-          <strong>
-            <Icon name="camera" size={26} decorative />
-            {title}
-          </strong>
+          <strong>{title}</strong>
           {viewBadge && (
             <span className={cx('statusBadge', viewBadge.tone)}>
               <span className={cx('statusDot')} />
               {viewBadge.label}
             </span>
           )}
-          <button type="button" className={cx('closeButton')} onClick={handleClose} aria-label="닫기">
+          <button type="button" className={cx('closeButton', { boxed: isViewOnly })} onClick={handleClose} aria-label="닫기">
             ×
           </button>
         </header>
 
         <div className={cx('body')}>
-          {!isExisting && <section className={cx('setupSection')}>
-            <h2>1. 어디에 두셨나요?</h2>
-            <RoomPicker
-              rooms={rooms}
-              selectedLabel={room}
-              availableRegisteredLabel={initialRoom}
-              disabled={status === 'streaming'}
-              onSelect={setRoom}
-            />
-          </section>}
+          {isWizard && (
+            <ol className={cx('stepper')} aria-label="등록 단계">
+              {REGISTER_STEPS.map((label, index) => {
+                const step = index + 1;
+                return (
+                  <li
+                    key={label}
+                    className={cx('stepItem', { done: step < wizardStep, current: step === wizardStep })}
+                    aria-current={step === wizardStep ? 'step' : undefined}
+                  >
+                    <span className={cx('stepBar')} />
+                    <span className={cx('stepLabel')}>{`${step}. ${label}`}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
 
-          {!isExisting && <section className={cx('setupSection')}>
-            <h2>2. 기기를 이렇게 놓아 주세요</h2>
-            <div className={cx('cameraGuide')}>
-              <svg className={cx('guideIllustration')} viewBox="0 0 104 80" fill="none" aria-hidden="true">
-                <path d="M8 74H96" stroke="#cfc6bc" strokeWidth="2.5" strokeLinecap="round" />
-                <rect x="26" y="12" width="40" height="54" rx="6" fill="#fff" stroke="var(--sb-brand)" strokeWidth="2.5" transform="rotate(-8 46 39)" />
-                <circle cx="44" cy="20" r="2.4" fill="var(--sb-brand)" transform="rotate(-8 46 39)" />
-                <path d="m56 66 8 8" stroke="var(--sb-brand)" strokeWidth="2.5" strokeLinecap="round" />
-                <path d="M62 60q16-2 18 10v4" stroke="#8a827b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-                <rect x="76" y="66" width="10" height="8" rx="2" fill="#8a827b" />
-                <path d="m8 22 10 6M8 38h10m-10 16 10-6" stroke="#cfc6bc" strokeWidth="2.5" strokeLinecap="round" />
-              </svg>
-              <div>
-                <p>방 전체가 보이는 곳에 세워 두고, 화면을 켠 채 충전기를 연결해 주세요.</p>
-                <p>휴대폰을 <strong>가로</strong>로 두고, 방 전체가 보이도록 <strong>위에서 아래로</strong> 비춰 주세요.</p>
+          {isWizard && wizardStep === 1 && (
+            <section className={cx('setupSection')}>
+              <h2>어디에 두셨나요?</h2>
+              <RoomPicker rooms={rooms} selectedLabel={room} availableRegisteredLabel={initialRoom} onSelect={setRoom} />
+            </section>
+          )}
+
+          {isWizard && wizardStep === 2 && (
+            <section className={cx('setupSection')}>
+              <h2>기기를 이렇게 놓아 주세요</h2>
+              <div className={cx('cameraGuide')}>
+                <svg className={cx('guideIllustration')} viewBox="0 0 104 80" fill="none" aria-hidden="true">
+                  <path d="M8 74H96" stroke="#cfc6bc" strokeWidth="2.5" strokeLinecap="round" />
+                  <rect x="26" y="12" width="40" height="54" rx="6" fill="#fff" stroke="var(--sb-brand)" strokeWidth="2.5" transform="rotate(-8 46 39)" />
+                  <circle cx="44" cy="20" r="2.4" fill="var(--sb-brand)" transform="rotate(-8 46 39)" />
+                  <path d="m56 66 8 8" stroke="var(--sb-brand)" strokeWidth="2.5" strokeLinecap="round" />
+                  <path d="M62 60q16-2 18 10v4" stroke="#8a827b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                  <rect x="76" y="66" width="10" height="8" rx="2" fill="#8a827b" />
+                </svg>
+                <p>방 전체가 보이는 곳에 세워 두고, 화면을 켠 채 충전기를 연결해 주세요</p>
               </div>
-            </div>
-          </section>}
+            </section>
+          )}
 
-          {!isViewOnly && <section className={cx('setupSection')}>
-            <h2>{isExisting ? '촬영 방식' : '3. 촬영 방식을 골라 주세요'}</h2>
-            <div className={cx('facingRow')}>
-              {FACING_OPTIONS.filter(option => visibleFacings.includes(option.value)).map(option => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={cx('facingChip', { active: facing === option.value })}
-                  onClick={() => {
-                    setFacing(option.value);
-                    setStoredFacing(option.value);
-                  }}
-                  disabled={status !== 'off'}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-            {status === 'streaming' && (
-              <p className={cx('previewHint')}>촬영 방식을 바꾸려면 카메라를 끄고 다시 켜 주세요.</p>
-            )}
-          </section>}
+          {isWizard && wizardStep === 3 && (
+            <section className={cx('setupSection')}>
+              <h2>어떻게 촬영할까요?</h2>
+              {facingRadios}
+            </section>
+          )}
 
-          <section className={cx('setupSection')}>
-            {!isViewOnly && <h2>{isExisting ? '지금 찍고 있는 화면' : '4. 지금 찍고 있는 화면을 확인해 주세요'}</h2>}
-            {/* 캔버스는 송출용 toBlob 원본이라 접어도 DOM에 남긴다(높이만 0) */}
-            <div className={cx('previewBox', { collapsed: !isPreviewVisible })} aria-hidden={!isPreviewVisible}>
-              <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline />
-              <canvas ref={canvasRef} className={cx('canvas')} />
-              {status !== 'off' && (
-                <span className={cx('liveBadge', { live: status === 'streaming' })}>
-                  {status === 'streaming' ? '지금 촬영 중' : '미리보기'}
-                </span>
+          {isWizard && wizardStep === 4 && <h2 className={cx('sectionTitle')}>이렇게 보여요</h2>}
+
+          {isExisting && status === 'off' && (
+            <section className={cx('setupSection')}>
+              <h2>어떻게 촬영할까요?</h2>
+              {facingRadios}
+              {isCameraRunning && (
+                <p className={cx('previewHint')}>
+                  이 화면에서는 아직 송출하고 있지 않아요. &quot;카메라 켜기&quot;를 누르면 이어서 보내요.
+                </p>
               )}
-            </div>
-            {isViewOnly && <p className={cx('previewHint')}>{VIEW_GUARDIAN_NOTICE}</p>}
-            {status !== 'off' && facing !== 'screen' && isPortrait && (
-              <p className={cx('rotateHint')}>{AUTO_ROTATE_HINT}</p>
-            )}
-            {isPreviewVisible && !isViewOnly && (
-              <p className={cx('previewHint')}>방 전체가 보이고 사람이 똑바로 보이도록 폰 위치와 방향을 맞춰 주세요.</p>
-            )}
-            {isExisting && status === 'off' && isCameraRunning && (
-              <p className={cx('previewHint')}>
-                이 화면에서는 아직 송출하고 있지 않아요. &quot;카메라 켜기&quot;를 누르면 이어서 보내요.
-              </p>
-            )}
-            {status === 'streaming' && isUnstable && (
-              <p className={cx('error')}>송출이 끊기고 있어요. 화면을 켜 둔 채 잠시 기다려 주세요. 연결되면 자동으로 이어집니다.</p>
-            )}
-            <div className={cx('previewControls')}>
-              {isViewOnly ? (
-                <>
-                  <button type="button" className={cx('previewButton', 'stop')} onClick={handleViewStop}>
-                    카메라 끄기
-                  </button>
-                  <button type="button" className={cx('previewButton')} onClick={handleClose}>
-                    닫기
-                  </button>
-                </>
-              ) : status === 'off' ? (
-                <button
-                  type="button"
-                  className={cx('previewButton')}
-                  disabled={isExisting && isStartingStream}
-                  onClick={isExisting ? handleTurnOn : handleStartMedia}
-                >
-                  <Icon name="camera" size={20} decorative />
-                  {isExisting ? (isStartingStream ? '카메라 켜는 중...' : '카메라 켜기') : '미리보기 시작'}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className={cx('previewButton', 'stop')}
-                  disabled={isRegisterBusy}
-                  onClick={handleStopMedia}
-                >
-                  <Icon name="camera" size={20} decorative />
-                  {status === 'streaming' ? '카메라 끄기' : '미리보기 끄기'}
-                </button>
-              )}
-            </div>
-          </section>
+            </section>
+          )}
 
-          {status === 'ready' && (
-            <button
-              type="button"
-              className={cx('registerButton')}
-              disabled={!room || isRegisterBusy}
-              onClick={() => void handleRegister()}
-            >
-              {isRegisterBusy
-                ? '송출 시작 중...'
-                : initialRoom && room === initialRoom
-                  ? '촬영 다시 시작'
-                  : '등록하고 촬영 시작'}
-            </button>
+          {/* 캔버스는 송출용 toBlob 원본이라 접어도 DOM에 남긴다(높이만 0) */}
+          <div className={cx('previewBox', { collapsed: !isPreviewVisible })} aria-hidden={!isPreviewVisible}>
+            <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline />
+            <canvas ref={canvasRef} className={cx('canvas')} />
+            {status !== 'off' && (
+              <span className={cx('liveBadge', { live: status === 'streaming' })}>
+                {status === 'streaming' ? '지금 촬영 중' : '미리보기'}
+              </span>
+            )}
+          </div>
+
+          {isWizard && wizardStep === 4 && (
+            <dl className={cx('summary')}>
+              <div>
+                <dt>방</dt>
+                <dd>{room}</dd>
+              </div>
+              <div>
+                <dt>촬영 방식</dt>
+                <dd>{getFacingLabel(facing)}</dd>
+              </div>
+            </dl>
+          )}
+
+          {showRotateHint && (
+            <p className={cx('rotateHint')}>
+              <span className={cx('rotateHintIcon')}>
+                <Icon name="refresh" size={18} decorative />
+              </span>
+              <span>
+                휴대폰을 가로로 두셨는데 화면이 세로로 보이면 휴대폰 설정에서 <strong>&apos;자동 회전&apos;</strong>을 켜 주세요.
+              </span>
+            </p>
+          )}
+
+          {isViewOnly && <p className={cx('previewHint')}>{VIEW_GUARDIAN_NOTICE}</p>}
+
+          {status === 'streaming' && isUnstable && (
+            <p className={cx('error')}>송출이 끊기고 있어요. 화면을 켜 둔 채 잠시 기다려 주세요. 연결되면 자동으로 이어집니다.</p>
           )}
 
           {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
         </div>
+
+        <footer className={cx('footer')}>
+          {isViewOnly ? (
+            <>
+              <button type="button" className={cx('secondaryButton', 'accent')} onClick={() => void handleViewStop()}>
+                카메라 끄기
+              </button>
+              <button type="button" className={cx('primaryButton')} onClick={handleClose}>
+                닫기
+              </button>
+            </>
+          ) : isWizard ? (
+            <>
+              {wizardStep > 1 && (
+                <button type="button" className={cx('secondaryButton')} disabled={isRegisterBusy} onClick={handleWizardBack}>
+                  이전
+                </button>
+              )}
+              {wizardStep < 4 ? (
+                <button
+                  type="button"
+                  className={cx('primaryButton')}
+                  disabled={!canGoNextStep(wizardStep, { room, facingChosen })}
+                  onClick={handleWizardNext}
+                >
+                  {wizardStep === 2 ? '이렇게 놓았어요' : '다음'}
+                </button>
+              ) : status === 'off' ? (
+                <button type="button" className={cx('primaryButton')} onClick={() => void handleStartMedia()}>
+                  카메라 다시 켜기
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={cx('primaryButton')}
+                  disabled={!room || status !== 'ready' || isRegisterBusy}
+                  onClick={() => void handleRegister()}
+                >
+                  {isRegisterBusy ? '촬영 시작하는 중...' : '등록하고 촬영 시작'}
+                </button>
+              )}
+            </>
+          ) : status === 'off' ? (
+            <>
+              <button type="button" className={cx('secondaryButton')} onClick={handleClose}>
+                닫기
+              </button>
+              <button type="button" className={cx('primaryButton')} disabled={isStartingStream} onClick={handleTurnOn}>
+                {isStartingStream ? '카메라 켜는 중...' : '카메라 켜기'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" className={cx('secondaryButton')} disabled={isRegisterBusy} onClick={() => void handleStopMedia()}>
+                미리보기 끄기
+              </button>
+              <button
+                type="button"
+                className={cx('primaryButton')}
+                disabled={!room || isRegisterBusy}
+                onClick={() => void handleRegister()}
+              >
+                {isRegisterBusy ? '촬영 시작하는 중...' : '촬영 다시 시작'}
+              </button>
+            </>
+          )}
+        </footer>
       </div>
     </div>
   );

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+
 import type { WardCameraConnectionStatus } from '@/service/interface/ward/camera';
 
 // 피보호자 '내 카메라' 화면의 주 버튼 상태. 이 기기의 카메라 상태로만 정한다.
@@ -41,7 +43,6 @@ export function isPortraitFrame(videoWidth: number, videoHeight: number): boolea
   return videoWidth > 0 && videoHeight > videoWidth;
 }
 
-export const AUTO_ROTATE_HINT = "휴대폰을 가로로 두셨는데 화면이 세로로 보이면, 휴대폰 설정에서 '자동 회전'을 켜 주세요.";
 
 // 송출을 시작한 뒤 서버가 'running'을 알려 줄 때까지 '연결하는 중'으로 보여 주는 최대 시간.
 // 넘기면 서버가 알려 준 실제 상태를 보여 준다(무한히 '연결하는 중'에 머물지 않게).
@@ -96,4 +97,33 @@ export function getCardStatus(input: {
 // 주소에 ?screen=1 을 붙였을 때만 노출한다.
 export function getVisibleFacings(current: CameraFacing, allowScreenShare: boolean): CameraFacing[] {
   return current === 'screen' || allowScreenShare ? ['user', 'environment', 'screen'] : ['user', 'environment'];
+}
+
+// 새 카메라 등록 마법사의 단계(시안 2026-10-15). 단계 이름은 진행 표시줄 아래에 그대로 보인다.
+export const REGISTER_STEPS = ['방 고르기', '기기 놓기', '촬영 방식', '미리보기'] as const;
+export type RegisterStep = 1 | 2 | 3 | 4;
+
+// '다음'을 누를 수 있는지 - 방은 1단계, 촬영 방식은 3단계에서 골라야 넘어간다
+export function canGoNextStep(step: RegisterStep, input: { room: string; facingChosen: boolean }): boolean {
+  if (step === 1) return Boolean(input.room);
+  if (step === 3) return input.facingChosen;
+  return step === 2;
+}
+
+// 촬영 방식 선택지와 설명. 화면(공유)은 시연용이라 getVisibleFacings 가 허용할 때만 보인다.
+export const FACING_CHOICES: Array<{ value: CameraFacing; label: string; description: string }> = [
+  { value: 'user', label: '전면 카메라', description: '화면 쪽 카메라로 찍어요. 화면을 보면서 방향을 맞추기 쉬워요' },
+  { value: 'environment', label: '후면 카메라', description: '뒷면 카메라로 찍어요. 더 넓고 선명하게 보여요' },
+  { value: 'screen', label: '화면', description: '기기 화면에 보이는 내용을 그대로 보내요' },
+];
+
+export function getFacingLabel(facing: CameraFacing): string {
+  return FACING_CHOICES.find(choice => choice.value === facing)?.label ?? '';
+}
+
+// 카드의 등록일 - "2026년 3월 2일에 등록". 날짜를 읽을 수 없으면 빈 문자열(줄을 그리지 않는다)
+export function formatRegisteredDate(createdAt: string | null | undefined): string {
+  if (!createdAt) return '';
+  const date = dayjs(createdAt);
+  return date.isValid() ? `${date.format('YYYY년 M월 D일')}에 등록` : '';
 }
