@@ -17,10 +17,10 @@
 .modal {
   display: flex;
   flex-direction: column;
-  width: min(680px, 100%);
+  width: min(640px, 100%);
   max-height: calc(100svh - 40px);
   overflow: hidden;
-  border-radius: var(--sb-radius);
+  border-radius: 18px;
   background: #fff;
   box-shadow: 0 22px 56px rgba(15, 23, 42, 0.12);
 }
@@ -29,113 +29,215 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 10px;
-  padding: 28px 28px 0;
+  gap: 12px;
+  padding: 26px 28px 0;
 }
 
 .header strong {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
   flex: 1;
+  min-width: 0;
   color: var(--sb-ink);
   font-size: 24px;
   font-weight: 800;
 }
 
+/* 제목 옆에 배지가 오면 제목이 늘어나지 않게 한다 */
+.header strong:has(+ .statusBadge) {
+  flex: 0 1 auto;
+}
+
+.header .statusBadge + .closeButton {
+  margin-left: auto;
+}
+
 .closeButton {
+  display: grid;
   flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  place-items: center;
   border: 0;
+  border-radius: 12px;
   background: transparent;
   color: var(--sb-ink-mute);
   cursor: pointer;
-  width: 48px;
-  height: 48px;
-  font-size: 26px;
+  font-size: 30px;
   line-height: 1;
+}
+
+.closeButton.boxed {
+  border: 1px solid var(--sb-line);
+  color: var(--sb-ink-soft);
 }
 
 .body {
   display: grid;
   flex: 1;
-  gap: 22px;
+  gap: 18px;
   min-height: 0;
   overflow-y: auto;
-  padding: 22px 28px 28px;
+  padding: 22px 28px 8px;
 }
 
 .setupSection {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
-.setupSection h2 {
+.setupSection h2,
+.sectionTitle {
   margin: 0;
   color: var(--sb-ink);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* 등록 진행 표시 - 지난 단계·지금 단계는 막대를 칠하고 지금 단계 이름만 강조한다 */
+.stepper {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepItem {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.stepBar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--sb-line-soft);
+}
+
+.stepLabel {
+  overflow: hidden;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stepItem.done .stepBar,
+.stepItem.current .stepBar {
+  background: var(--sb-brand);
+}
+
+.stepItem.done .stepLabel {
+  color: var(--sb-ink-soft);
+}
+
+.stepItem.current .stepLabel {
+  color: var(--sb-brand);
+  font-weight: 800;
+}
+
+.cameraGuide {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  padding: 24px;
+}
+
+.cameraGuide p {
+  margin: 0;
+}
+
+.guideIllustration {
+  width: 120px;
+  height: 92px;
+  flex: 0 0 auto;
+}
+
+/* 촬영 방식 - 설명이 붙은 라디오 카드 */
+.facingList {
+  display: grid;
+  gap: 10px;
+}
+
+.facingCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 76px;
+  border: 1px solid var(--sb-line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  padding: 14px 20px;
+  text-align: left;
+}
+
+.facingCard.checked {
+  border: 2px solid var(--sb-brand);
+  background: var(--sb-brand-50);
+  padding: 13px 19px;
+}
+
+.facingCard:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.radioMark {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border: 2px solid var(--sb-line);
+  border-radius: 50%;
+  background: #fff;
+}
+
+.facingCard.checked .radioMark {
+  border: 7px solid var(--sb-brand);
+}
+
+.facingText {
+  display: grid;
+  gap: 3px;
+}
+
+.facingText strong {
   font-size: 18px;
   font-weight: 800;
 }
 
-.facingRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.facingChip {
-  min-height: 52px;
-  border: 2px solid var(--sb-line);
-  border-radius: 12px;
-  background: #fff;
-  color: var(--sb-ink);
-  cursor: pointer;
-  font-size: 17px;
-  font-weight: 700;
-  padding: 0 18px;
-}
-
-.facingChip.active {
-  border-color: var(--sb-brand);
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-}
-
-.facingChip:disabled {
-  cursor: not-allowed;
-  border-color: var(--sb-line-soft);
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-mute);
-  opacity: 1;
-}
-
-/* 송출 중에는 바꿀 수 없지만, 지금 어떤 방식으로 보내는지는 보여야 한다 */
-.facingChip.active:disabled {
-  border-color: var(--sb-brand);
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  cursor: default;
+.facingText span {
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  line-height: 1.45;
 }
 
 .previewBox {
   position: relative;
   display: grid;
   place-items: center;
-  height: min(320px, 38svh);
-  max-height: 320px;
-  border-radius: 14px;
-  background: #14110c;
+  height: min(420px, 46svh);
+  border-radius: 16px;
+  background: #1f1a16;
   overflow: hidden;
 }
 
-.previewControls {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap: 10px;
-}
-
-.previewControls > * {
-  flex: 1;
+/* 전송 화면을 접는다. 캔버스가 송출 원본이라 display:none 대신 높이만 줄여 DOM·그리기를 유지한다 */
+.previewBox.collapsed {
+  height: 0;
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .canvas {
@@ -147,21 +249,34 @@
   object-fit: contain;
 }
 
+/* 카메라 스트림은 캔버스에 그리기 위한 원본으로만 사용한다. 화면에는 AI 전송본만 보인다. */
+.sourceVideo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* 영상 좌상단에 겹치는 배지(영상 높이를 차지하지 않는다) */
 .liveBadge {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 14px;
+  left: 14px;
   z-index: 1;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  border-radius: 999px;
-  background: rgba(20, 17, 12, 0.72);
+  gap: 7px;
+  border-radius: 8px;
+  background: rgba(20, 17, 12, 0.78);
   color: #fff;
   font-size: 14px;
   font-weight: 800;
-  padding: 5px 12px;
+  padding: 6px 12px;
+}
+
+.liveBadge.live {
+  background: var(--sb-brand);
 }
 
 .liveBadge.live::before {
@@ -169,7 +284,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ef4444;
+  background: #fff;
 }
 
 /* 화면 보기 제목 옆 연결 상태 배지 - 카드(WardCameraList)와 같은 색 기준 */
@@ -187,120 +302,78 @@
   padding: 5px 12px;
 }
 
-.statusDot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.statusBadge.connected { border-color: var(--sb-safe); background: var(--sb-safe-soft); color: var(--sb-safe); }
+.statusDot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.statusBadge.connected { border-color: #b9dcc7; background: var(--sb-safe-soft); color: var(--sb-safe); }
 .statusBadge.disconnected { background: var(--sb-bg-soft); color: var(--sb-ink-soft); }
 .statusBadge.checking { background: var(--sb-sun-soft); color: #b07f1f; }
 .statusBadge.connecting { border-color: #b8d4e8; background: #eaf3fa; color: #3f6e8c; }
 
-/* 카메라 스트림은 캔버스에 그리기 위한 원본으로만 사용한다. 화면에는 AI 전송본만 보인다. */
-.sourceVideo {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.previewButton {
-  display: inline-flex;
-  width: 100%;
-  min-height: 52px;
-  align-items: center;
-  justify-content: center;
+/* 미리보기 단계의 방·촬영 방식 요약 */
+.summary {
+  display: grid;
   gap: 8px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--sb-brand);
-  color: #fff;
-  cursor: pointer;
-  font-size: 17px;
-  font-weight: 800;
-  padding: 0 20px;
-}
-
-.previewButton.stop {
-  background: var(--sb-warn);
-}
-
-.cameraGuide {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  border: 0;
+  margin: 0;
   border-radius: 14px;
   background: var(--sb-bg-soft);
-  color: var(--sb-ink-soft);
-  font-size: 14px;
-  line-height: 1.55;
-  padding: 16px;
+  padding: 16px 20px;
 }
 
-.cameraGuide p {
-  margin: 0;
+.summary div {
+  display: flex;
+  gap: 16px;
 }
 
-.cameraGuide p + p {
-  margin-top: 4px;
-}
-
-.guideIllustration {
-  width: 104px;
-  height: 80px;
+.summary dt {
+  width: 80px;
   flex: 0 0 auto;
+  color: var(--sb-ink-mute);
+  font-size: 16px;
+  font-weight: 700;
 }
 
-.cameraGuide strong {
+.summary dd {
+  margin: 0;
   color: var(--sb-ink);
+  font-size: 16px;
   font-weight: 800;
+}
+
+/* 세로 영상일 때 자동 회전 안내 */
+.rotateHint {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  border: 1px solid #ecd8a8;
+  border-radius: 14px;
+  background: var(--sb-sun-soft);
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  padding: 16px 18px;
+}
+
+.rotateHint strong {
+  color: #a8741a;
+}
+
+.rotateHintIcon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  color: #a8741a;
 }
 
 .previewHint {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-/* 세로 영상일 때 자동 회전 안내 - 일반 안내보다 눈에 띄게 */
-.rotateHint {
-  margin: 0;
-  border-radius: 12px;
-  background: var(--sb-sun-soft);
-  color: #8a5d0f;
   font-size: 15px;
-  font-weight: 700;
-  line-height: 1.5;
-  padding: 12px 16px;
-}
-
-.roomSection {
-  display: grid;
-  gap: 12px;
-}
-
-.roomLabel {
-  color: var(--sb-ink);
-  font-size: 1rem;
-  font-weight: 850;
-}
-
-.registerButton {
-  width: 100%;
-  min-height: 60px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--sb-brand);
-  color: #fff;
-  cursor: pointer;
-  font-size: 19px;
-  font-weight: 800;
-  padding: 0 24px;
-}
-
-.registerButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
+  line-height: 1.55;
 }
 
 .error {
@@ -308,9 +381,66 @@
   border-radius: 12px;
   background: #fff7f5;
   color: var(--sb-warn);
-  font-size: 0.875rem;
+  font-size: 15px;
   font-weight: 700;
   padding: 12px 16px;
+}
+
+.footer {
+  display: flex;
+  flex-shrink: 0;
+  gap: 12px;
+  padding: 14px 28px 26px;
+}
+
+.footer > button {
+  flex: 1;
+}
+
+/* 이전·닫기 같은 보조 버튼은 주 버튼보다 좁게 */
+.footer > .secondaryButton {
+  flex: 0.6;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  min-height: 60px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  padding: 0 20px;
+}
+
+.primaryButton {
+  border: 0;
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.primaryButton:disabled {
+  background: #dcb9ac;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  border: 1px solid var(--sb-line);
+  background: #fff;
+  color: var(--sb-ink-soft);
+}
+
+.secondaryButton.accent {
+  color: var(--sb-warn);
+}
+
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 @media (max-width: 640px) {
@@ -323,24 +453,31 @@
   }
 
   .body {
-    gap: 18px;
-    padding: 18px 20px 20px;
+    gap: 16px;
+    padding: 18px 20px 8px;
+  }
+
+  .stepLabel {
+    font-size: 12px;
   }
 
   .cameraGuide {
-    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
   }
 
   .guideIllustration {
-    width: 78px;
-    height: 60px;
+    width: 84px;
+    height: 64px;
   }
-}
 
-/* 전송 화면을 접는다. 캔버스가 송출 원본이라 display:none 대신 높이만 줄여 DOM·그리기를 유지한다 */
-.previewBox.collapsed {
-  height: 0;
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
+  .footer {
+    padding: 12px 20px 20px;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    min-height: 56px;
+    font-size: 17px;
+  }
 }

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  canGoNextStep,
+  formatRegisteredDate,
+  getFacingLabel,
   getCameraPrimaryAction,
   getCaptureSize,
   getCardStatus,
@@ -135,5 +138,41 @@ describe('isPortraitFrame', () => {
   });
   it('크기를 아직 모르면 안내하지 않는다', () => {
     expect(isPortraitFrame(0, 0)).toBe(false);
+  });
+});
+
+describe('canGoNextStep', () => {
+  it('1단계는 방을 골라야 넘어간다', () => {
+    expect(canGoNextStep(1, { room: '', facingChosen: false })).toBe(false);
+    expect(canGoNextStep(1, { room: '베란다', facingChosen: false })).toBe(true);
+  });
+  it('2단계(기기 놓기)는 안내만 보고 넘어간다', () => {
+    expect(canGoNextStep(2, { room: '베란다', facingChosen: false })).toBe(true);
+  });
+  it('3단계는 촬영 방식을 직접 골라야 넘어간다', () => {
+    expect(canGoNextStep(3, { room: '베란다', facingChosen: false })).toBe(false);
+    expect(canGoNextStep(3, { room: '베란다', facingChosen: true })).toBe(true);
+  });
+  it('4단계는 마지막이라 다음이 없다(등록 버튼이 대신한다)', () => {
+    expect(canGoNextStep(4, { room: '베란다', facingChosen: true })).toBe(false);
+  });
+});
+
+describe('formatRegisteredDate', () => {
+  it('카드 등록일은 "YYYY년 M월 D일에 등록"', () => {
+    expect(formatRegisteredDate('2026-03-02T10:15:00')).toBe('2026년 3월 2일에 등록');
+    expect(formatRegisteredDate('2026-10-05T09:00:00')).toBe('2026년 10월 5일에 등록');
+  });
+  it('날짜가 없거나 읽을 수 없으면 빈 문자열(줄을 그리지 않는다)', () => {
+    expect(formatRegisteredDate(null)).toBe('');
+    expect(formatRegisteredDate('not-a-date')).toBe('');
+  });
+});
+
+describe('getFacingLabel', () => {
+  it('요약에 보이는 촬영 방식 이름', () => {
+    expect(getFacingLabel('user')).toBe('전면 카메라');
+    expect(getFacingLabel('environment')).toBe('후면 카메라');
+    expect(getFacingLabel('screen')).toBe('화면');
   });
 });
