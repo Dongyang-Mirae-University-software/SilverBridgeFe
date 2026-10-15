@@ -9,6 +9,7 @@ import { getWardCameras } from '@/service/api/ward/camera';
 import { Icon } from '@/components/Icon';
 import { getHttpStatus, getRetryAfterMs } from '@/lib/api/streamClient';
 import { getStoredDeviceId, setStoredDeviceId } from '@/lib/device/deviceId';
+import { showToast } from '@/store/toastStore';
 import {
   useRegisterWardCameraMutation,
   wardCameraRoomsQueryOptions,
@@ -20,6 +21,9 @@ import {
   FACING_CHOICES,
   REGISTER_STEPS,
   canGoNextStep,
+  isMobileCameraDevice,
+  isSourceFresh,
+  shouldRecoverCamera,
   getCaptureSize,
   getCardStatus,
   getFacingLabel,
@@ -47,6 +51,14 @@ const UNSTABLE_FAIL_COUNT = 5;
 const UNSTABLE_FAIL_MS = 3000;
 const MEDIA_PERMISSION_MESSAGE = '카메라를 켜지 못했어요. 브라우저의 카메라 권한을 확인해 주세요.';
 const RESTART_FAILED_MESSAGE = '카메라를 켜지 못했어요. 잠시 후 다시 시도해 주세요.';
+const CAMERA_STOPPED_MESSAGE = '카메라가 멈춰서 촬영을 껐어요. "카메라 켜기"를 눌러 다시 시작해 주세요.';
+
+function getCameraConstraints(facing: Exclude<CameraFacing, 'screen'>): MediaStreamConstraints {
+  return {
+    video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 15 } },
+    audio: false,
+  };
+}
 const START_AFTER_REGISTER_FAILED_MESSAGE = '카메라는 등록됐지만 촬영을 시작하지 못했어요. 아래 버튼을 눌러 다시 시작해 주세요.';
 
 function getErrorCode(error: unknown) {
@@ -150,6 +162,12 @@ export function CameraRegisterModal({
   const inFlightRef = useRef(0);
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const pausedUntilRef = useRef(0);
+  // 카메라가 새 프레임을 주는지 보는 값들(멈춘 장면을 보내지 않고, 폰을 다시 켜면 카메라를 다시 켠다)
+  const facingRef = useRef<CameraFacing>(facing);
+  facingRef.current = facing;
+  const staleSinceRef = useRef<number | null>(null);
+  const recoveringRef = useRef(false);
+  const lastRecoverAtRef = useRef(0);
   // 송출을 시작한 뒤 첫 업로드가 성공하면 목록을 한 번 갱신한다(카드 '연결하는 중' → '연결됨')
   const refreshOnFirstUploadRef = useRef(false);
   // 권한 프롬프트·재시작 중 중복 실행 방지(state 는 비동기라 같은 틱의 두 번째 호출을 못 막는다)
@@ -249,12 +267,86 @@ export function CameraRegisterModal({
 
   useEffect(() => {
     const requestWakeLockWhenVisible = () => {
-      if (document.visibilityState === 'visible' && liveSessionIdRef.current) void requestScreenWakeLock();
+      if (document.visibilityState !== 'visible' || !liveSessionIdRef.current) return;
+      void requestScreenWakeLock();
+      // 화면이 꺼진 동안 브라우저가 멈춘 영상을 다시 재생한다(카메라가 끊겼으면 송출 루프가 다시 켠다)
+      const video = videoRef.current;
+      if (video?.paused) void video.play().catch(() => {});
     };
 
     document.addEventListener('visibilitychange', requestWakeLockWhenVisible);
     return () => document.removeEventListener('visibilitychange', requestWakeLockWhenVisible);
   }, []);
+
+  const isCaptureSourceFresh = () => {
+    const track = mediaStreamRef.current?.getVideoTracks()[0];
+    return isSourceFresh({
+      isScreen: facingRef.current === 'screen',
+      visible: document.visibilityState === 'visible',
+      hiddenStopsCamera: isMobileCameraDevice(navigator.userAgent, navigator.maxTouchPoints),
+      trackLive: track?.readyState === 'live',
+      trackMuted: Boolean(track?.muted),
+      videoPaused: Boolean(videoRef.current?.paused),
+    });
+  };
+
+  // 카메라가 멈췄다(폰 화면 꺼짐·다른 앱이 카메라를 가져감 등) - 영상을 다시 재생해 보고, 안 되면 같은 방식으로
+  // 카메라를 다시 켜 같은 송출 세션으로 이어 보낸다. 다시 켜지 못하면 송출을 완전히 꺼서 '카메라 켜기'로 돌아가게 한다.
+  const recoverCamera = async () => {
+    const facingNow = facingRef.current;
+    if (facingNow === 'screen') return;
+    recoveringRef.current = true;
+    lastRecoverAtRef.current = Date.now();
+    try {
+      const video = videoRef.current;
+      const track = mediaStreamRef.current?.getVideoTracks()[0];
+      if (video && video.paused && track?.readyState === 'live' && !track.muted) {
+        await video.play().catch(() => {});
+        return;   // 다음 송출 틱이 다시 판단한다 - 재생만으로 살아나지 않으면 쿨다운 뒤 카메라를 다시 켠다
+      }
+      const stream = await navigator.mediaDevices.getUserMedia(getCameraConstraints(facingNow));
+      if (!liveSessionIdRef.current) {
+        stream.getTracks().forEach(item => item.stop());   // 그 사이 송출이 꺼졌다
+        return;
+      }
+      mediaStreamRef.current?.getTracks().forEach(item => item.stop());
+      mediaStreamRef.current = stream;
+      staleSinceRef.current = null;
+      if (video) {
+        video.srcObject = stream;
+        await video.play().catch(() => {});
+      }
+    } catch {
+      if (liveSessionIdRef.current) {
+        await handleStopMedia();
+        showToast(CAMERA_STOPPED_MESSAGE, { variant: 'error' });
+      }
+    } finally {
+      recoveringRef.current = false;
+    }
+  };
+
+  const handleStaleSource = () => {
+    const now = Date.now();
+    staleSinceRef.current ??= now;
+    const isScreen = facingRef.current === 'screen';
+    // 화면 공유를 브라우저에서 '공유 중지'로 끊었으면 다시 켤 수 없으니 송출을 끈다
+    if (isScreen && mediaStreamRef.current?.getVideoTracks()[0]?.readyState !== 'live') {
+      void handleStopMedia().then(() => showToast(CAMERA_STOPPED_MESSAGE, { variant: 'error' }));
+      return;
+    }
+    if (
+      shouldRecoverCamera({
+        isScreen,
+        visible: document.visibilityState === 'visible',
+        staleForMs: now - staleSinceRef.current,
+        msSinceLastRecover: now - lastRecoverAtRef.current,
+        recovering: recoveringRef.current,
+      })
+    ) {
+      void recoverCamera();
+    }
+  };
 
   // 카메라·화면 권한을 받아 미리보기 루프까지 시작한다. 실패하면 false.
   const openMedia = async (): Promise<boolean> => {
@@ -265,15 +357,7 @@ export function CameraRegisterModal({
       const stream =
         facing === 'screen'
           ? await navigator.mediaDevices.getDisplayMedia({ video: true })
-          : await navigator.mediaDevices.getUserMedia({
-              video: {
-                facingMode: facing,
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                frameRate: { ideal: 15 },
-              },
-              audio: false,
-            });
+          : await navigator.mediaDevices.getUserMedia(getCameraConstraints(facing));
 
       mediaStreamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
@@ -325,6 +409,7 @@ export function CameraRegisterModal({
   const handleStopMedia = async () => {
     resetUploadHealth();
     refreshOnFirstUploadRef.current = false;
+    staleSinceRef.current = null;
     const sessionId = liveSessionIdRef.current;
     liveSessionIdRef.current = null;
     if (sessionId) await stopStreamSession(sessionId).catch(() => {});
@@ -415,6 +500,12 @@ export function CameraRegisterModal({
     if (!captureWorkerRef.current) {
       captureWorkerRef.current = new Worker('/capture-timer.js');
       captureWorkerRef.current.onmessage = () => {
+        // 카메라가 새 프레임을 주지 않으면 보내지 않는다(멈춘 장면을 '연결됨'으로 계속 보내지 않게)
+        if (!isCaptureSourceFresh()) {
+          handleStaleSource();
+          return;
+        }
+        staleSinceRef.current = null;
         if (!drawFrameToCanvas()) return;
         canvasRef.current?.toBlob(blob => blob && enqueueLatestFrame(blob), 'image/jpeg', 0.8);
       };
