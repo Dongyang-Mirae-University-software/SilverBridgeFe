@@ -166,3 +166,24 @@ export function shouldRecoverCamera(input: {
   if (input.isScreen || !input.visible || input.recovering) return false;
   return input.staleForMs >= RECOVER_AFTER_MS && input.msSinceLastRecover >= RECOVER_COOLDOWN_MS;
 }
+
+// 다른 기기 카메라의 "찍히는 장면 보기" - 송출 중이면 이 간격으로 새로 받는다(BE 제한 분 30회 안)
+export const SCENE_REFRESH_MS = 3000;
+
+// 장면 시각 - "10월 15일 오전 10:35" (로케일 설정과 무관하게 같은 글자로)
+export function formatSceneTime(value: string | null | undefined): string {
+  if (!value) return '';
+  const date = dayjs(value);
+  if (!date.isValid()) return '';
+  const hour = date.hour();
+  const meridiem = hour < 12 ? '오전' : '오후';
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${date.month() + 1}월 ${date.date()}일 ${meridiem} ${hour12}:${date.format('mm')}`;
+}
+
+// 장면 아래 안내 한 줄. 켜져 있으면 계속 새로 받고, 꺼져 있으면 마지막 장면과 그 시각을 알린다
+export function getSceneCaption(status: WardCameraConnectionStatus, lastFrameAt: string | null | undefined): string {
+  if (status === 'running') return '몇 초마다 새로 보여 드려요';
+  const time = formatSceneTime(lastFrameAt);
+  return time ? `마지막으로 보낸 장면 · ${time}` : '마지막으로 보낸 장면';
+}

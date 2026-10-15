@@ -39,3 +39,10 @@ export interface WardLiveCamera {
   lastFrameAt: string | null;
   createdAt: string;
 }
+
+// 찍히는 장면(정지 화면) 요청 실패. 404 CAMERA_NOT_STREAMING = 아직 받은 장면 없음
+export interface WardCameraFrameError {
+  status: number;
+  code?: string;
+  message?: string;
+}

@@ -1,0 +1,130 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.32);
+  backdrop-filter: blur(8px);
+  padding: 20px;
+}
+
+.modal {
+  display: grid;
+  gap: 16px;
+  width: min(640px, 100%);
+  max-height: calc(100svh - 40px);
+  overflow-y: auto;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 22px 56px rgba(15, 23, 42, 0.12);
+  padding: 26px 28px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header strong {
+  min-width: 0;
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.closeButton {
+  display: grid;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  margin-left: auto;
+  place-items: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.statusBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--sb-line);
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  font-size: 15px;
+  font-weight: 800;
+  padding: 5px 12px;
+}
+
+.statusDot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.statusBadge.connected { border-color: #b9dcc7; background: var(--sb-safe-soft); color: var(--sb-safe); }
+.statusBadge.disconnected { background: var(--sb-bg-soft); color: var(--sb-ink-soft); }
+.statusBadge.checking { background: var(--sb-sun-soft); color: #b07f1f; }
+
+.sceneBox {
+  display: grid;
+  height: min(420px, 46svh);
+  place-items: center;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #1f1a16;
+}
+
+/* 세로·가로 장면 모두 잘리지 않게 상자 안에 맞춘다 */
+.sceneImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.placeholder {
+  margin: 0;
+  color: #d8cfc6;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.caption {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.footer {
+  display: flex;
+}
+
+.primaryButton {
+  flex: 1;
+  min-height: 60px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .modal {
+    padding: 22px 20px;
+  }
+
+  .header strong {
+    font-size: 20px;
+  }
+}
