@@ -17,10 +17,12 @@ import {
 import { WardCamera, type WardCameraConnectionStatus } from '@/service/interface/ward/camera';
 import {
   ALREADY_STREAMING,
+  AUTO_ROTATE_HINT,
   getCaptureSize,
   getCardStatus,
   getModalTitle,
   getVisibleFacings,
+  isPortraitFrame,
   parseStoredFacing,
   type CameraFacing,
 } from './cameraAction';
@@ -126,6 +128,8 @@ export function CameraRegisterModal({
   const [errorMessage, setErrorMessage] = useState('');
   const [isStartingStream, setIsStartingStream] = useState(false);
   const [isUnstable, setIsUnstable] = useState(false);
+  // 지금 카메라 영상이 세로인지(자동 회전 안내용)
+  const [isPortrait, setIsPortrait] = useState(false);
   // 이미 카메라가 있으면 설정 단계를 줄이고 전송 화면은 기본으로 접는다. 새로 등록할 때는 확인이 필요해 펼친다.
   // 등록하는 동안에는 화면을 고정한다 - 등록 직후 목록이 갱신돼 initialRoom 이 먼저 채워져도
   // 창이 닫히기 전에 '카메라 켜기' 화면으로 잠깐 바뀌지 않게
@@ -191,6 +195,19 @@ export function CameraRegisterModal({
   useEffect(() => {
     onStreamingChangeRef.current?.(status === 'streaming');
   }, [status]);
+
+  // 영상 크기는 권한을 받은 뒤·기기를 돌릴 때 바뀐다 - 그때마다 세로 여부를 다시 본다
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const update = () => setIsPortrait(isPortraitFrame(video.videoWidth, video.videoHeight));
+    video.addEventListener('loadedmetadata', update);
+    video.addEventListener('resize', update);
+    return () => {
+      video.removeEventListener('loadedmetadata', update);
+      video.removeEventListener('resize', update);
+    };
+  }, []);
 
   async function requestScreenWakeLock() {
     const wakeLock = (navigator as Navigator & { wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinelLike> } }).wakeLock;
@@ -596,6 +613,9 @@ export function CameraRegisterModal({
               )}
             </div>
             {isViewOnly && <p className={cx('previewHint')}>{VIEW_GUARDIAN_NOTICE}</p>}
+            {status !== 'off' && facing !== 'screen' && isPortrait && (
+              <p className={cx('rotateHint')}>{AUTO_ROTATE_HINT}</p>
+            )}
             {isPreviewVisible && !isViewOnly && (
               <p className={cx('previewHint')}>방 전체가 보이고 사람이 똑바로 보이도록 폰 위치와 방향을 맞춰 주세요.</p>
             )}
