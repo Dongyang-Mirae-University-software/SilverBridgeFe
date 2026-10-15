@@ -93,12 +93,6 @@ export function getCardStatus(input: {
   };
 }
 
-// 일반 화면에는 전면·후면만 보인다. 화면 공유는 시연용이라 이미 그 방식을 쓰고 있거나
-// 주소에 ?screen=1 을 붙였을 때만 노출한다.
-export function getVisibleFacings(current: CameraFacing, allowScreenShare: boolean): CameraFacing[] {
-  return current === 'screen' || allowScreenShare ? ['user', 'environment', 'screen'] : ['user', 'environment'];
-}
-
 // 새 카메라 등록 마법사의 단계(시안 2026-10-15). 단계 이름은 진행 표시줄 아래에 그대로 보인다.
 export const REGISTER_STEPS = ['방 고르기', '기기 놓기', '촬영 방식', '미리보기'] as const;
 export type RegisterStep = 1 | 2 | 3 | 4;
@@ -110,7 +104,7 @@ export function canGoNextStep(step: RegisterStep, input: { room: string; facingC
   return step === 2;
 }
 
-// 촬영 방식 선택지와 설명. 화면(공유)은 시연용이라 getVisibleFacings 가 허용할 때만 보인다.
+// 촬영 방식 선택지와 설명. 세 가지 모두 항상 고를 수 있다(화면 공유 포함, 2026-10-15 사용자 결정).
 export const FACING_CHOICES: Array<{ value: CameraFacing; label: string; description: string }> = [
   { value: 'user', label: '전면 카메라', description: '화면 쪽 카메라로 찍어요. 화면을 보면서 방향을 맞추기 쉬워요' },
   { value: 'environment', label: '후면 카메라', description: '뒷면 카메라로 찍어요. 더 넓고 선명하게 보여요' },
