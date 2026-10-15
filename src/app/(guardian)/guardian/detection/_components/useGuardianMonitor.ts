@@ -14,7 +14,7 @@ import type {
   GuardianCameraLiveStatus,
   GuardianCameraStatus,
 } from '@/service/interface/guardian/camera';
-import { resolveCameraDetectState } from './monitorUtils';
+import { getStreamResumeAction, resolveCameraDetectState } from './monitorUtils';
 
 function getStreamErrorMessage(error: unknown) {
   return (error as { message?: string })?.message ?? '영상을 불러오지 못했습니다.';
@@ -65,6 +65,28 @@ export function useGuardianMonitor() {
   // 티켓은 카메라를 선택할 때 한 번만 발급한다. MJPEG 연결 오류는 티켓을 재발급하지
   // 않는다. 자동 재시도는 짧은 오류에도 티켓 요청을 반복하게 만들어 서버 부담과
   // 요청 한도 초과를 유발한다.
+  // 보고 있는 카메라가 끊겼다 다시 켜지면(피보호자가 '카메라 끄기' 뒤 다시 켬) 새 티켓으로 영상을 다시 연다.
+  // 예전 주소를 그대로 다시 쓰면 1회용 티켓이 이미 소비돼 거절되고, 배지는 '연결됨'인데 영상이 오지 않았다.
+  const liveStatus = status?.status;
+  const previousLiveRef = useRef<{ sessionId: string | null; status: typeof liveStatus }>({
+    sessionId: null,
+    status: undefined,
+  });
+  useEffect(() => {
+    const next = { sessionId: selectedId, status: liveStatus };
+    const action = getStreamResumeAction(previousLiveRef.current, next);
+    previousLiveRef.current = next;
+    if (action === 'drop') {
+      setFrameSrc(null);
+    } else if (action === 'reopen' && selectedId) {
+      setFrameSrc(null);
+      setStreamErrorMessage(null);
+      openStream(selectedId);
+    }
+    // openStream 은 mutation 객체가 바뀔 때마다 새로 만들어져, 의존성에 넣으면 상태 변화 없이도 다시 돈다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, liveStatus]);
+
   const handleStreamError = useCallback(() => {
     setFrameSrc(null);
     setStreamErrorMessage('영상 연결이 종료됐습니다. 실시간 카메라를 다시 열어 주세요.');
