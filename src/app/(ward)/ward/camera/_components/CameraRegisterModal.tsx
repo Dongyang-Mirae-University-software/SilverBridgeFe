@@ -24,7 +24,6 @@ import {
   getCardStatus,
   getFacingLabel,
   getModalTitle,
-  getVisibleFacings,
   isPortraitFrame,
   parseStoredFacing,
   type CameraFacing,
@@ -49,7 +48,6 @@ const UNSTABLE_FAIL_MS = 3000;
 const MEDIA_PERMISSION_MESSAGE = '카메라를 켜지 못했어요. 브라우저의 카메라 권한을 확인해 주세요.';
 const RESTART_FAILED_MESSAGE = '카메라를 켜지 못했어요. 잠시 후 다시 시도해 주세요.';
 const START_AFTER_REGISTER_FAILED_MESSAGE = '카메라는 등록됐지만 촬영을 시작하지 못했어요. 아래 버튼을 눌러 다시 시작해 주세요.';
-const VIEW_GUARDIAN_NOTICE = '연결된 보호자도 이 화면을 볼 수 있어요. 이상 상황이 생기면 보호자에게 영상과 함께 알려 드려요.';
 
 function getErrorCode(error: unknown) {
   return (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
@@ -135,9 +133,6 @@ export function CameraRegisterModal({
   const isExisting = Boolean(initialRoom) && !isRegistering;
   // 기존 카메라는 송출 중일 때 전송 화면만 보여 준다(촬영 방식은 끄면 다시 고를 수 있다)
   const isViewOnly = isExisting && status === 'streaming';
-  // 화면 공유 칩은 시연용 - 쓰고 있거나 주소에 ?screen=1 이 있을 때만 보인다
-  const [allowScreenShare, setAllowScreenShare] = useState(false);
-  const visibleFacings = getVisibleFacings(facing, allowScreenShare);
   // 새 등록은 4단계 마법사(방 → 기기 놓기 → 촬영 방식 → 미리보기). 촬영 방식은 3단계에서 직접 골라야 넘어간다
   const [wizardStep, setWizardStep] = useState<RegisterStep>(1);
   const [facingChosen, setFacingChosen] = useState(false);
@@ -192,7 +187,6 @@ export function CameraRegisterModal({
     clearLegacyRotation();
     // 페이지의 '카메라 켜기'가 모달을 열지 않고 시작해도 마지막에 쓴 방식으로 켜지게 한다
     setFacing(getStoredFacing());
-    setAllowScreenShare(new URLSearchParams(window.location.search).get('screen') === '1');
   }, []);
 
   useEffect(() => {
@@ -553,7 +547,6 @@ export function CameraRegisterModal({
   const title = getModalTitle(initialRoom, status === 'streaming');
   const viewBadge = isViewOnly ? getCardStatus({ status: connectionStatus, isThisDevice: true, isConnecting }) : null;
   const isRegisterBusy = registerMutation.isPending || isStartingStream || isRegistering;
-  const facingChoices = FACING_CHOICES.filter(choice => visibleFacings.includes(choice.value));
   const showRotateHint = status !== 'off' && facing !== 'screen' && isPortrait;
 
   const chooseFacing = (value: CameraFacing) => {
@@ -577,7 +570,7 @@ export function CameraRegisterModal({
 
   const facingRadios = (
     <div className={cx('facingList')} role="radiogroup" aria-label="촬영 방식">
-      {facingChoices.map(choice => {
+      {FACING_CHOICES.map(choice => {
         const checked = (isWizard ? facingChosen : true) && facing === choice.value;
         return (
           <button
@@ -721,8 +714,6 @@ export function CameraRegisterModal({
               </span>
             </p>
           )}
-
-          {isViewOnly && <p className={cx('previewHint')}>{VIEW_GUARDIAN_NOTICE}</p>}
 
           {status === 'streaming' && isUnstable && (
             <p className={cx('error')}>송출이 끊기고 있어요. 화면을 켜 둔 채 잠시 기다려 주세요. 연결되면 자동으로 이어집니다.</p>
