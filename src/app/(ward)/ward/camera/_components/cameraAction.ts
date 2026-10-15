@@ -121,3 +121,48 @@ export function formatRegisteredDate(createdAt: string | null | undefined): stri
   const date = dayjs(createdAt);
   return date.isValid() ? `${date.format('YYYY년 M월 D일')}에 등록` : '';
 }
+
+// 송출 원본 카메라가 새 프레임을 주고 있는지. 아니면 업로드하지 않는다.
+// 폰 화면을 끄면 카메라는 멈추는데 <video>에는 마지막 장면이 남아, 예전에는 멈춘 장면을 계속 보내
+// AI가 '연결됨'으로 보고 보호자에게 멈춘 영상이 보였다(2026-10-15 gosky). 보내지 않으면 AI가 10초 뒤 '연결 안 됨'으로 바꾼다.
+// 그림이 같은지는 보지 않는다 - 고정된 카메라도 새 프레임은 계속 찍히고, 조용한 방도 이상감지를 위해 계속 보내야 한다.
+// 새 프레임 감지(requestVideoFrameCallback)는 쓰지 않는다 - 숨겨진 <video>(모달을 닫은 평소 상태)에서는 호출이 멈출 수 있어
+// 정상 카메라를 멈춤으로 오판할 수 있다. 확실한 신호(화면·트랙·재생 상태)만 본다.
+
+export function isSourceFresh(input: {
+  isScreen: boolean;
+  visible: boolean;
+  // 폰·태블릿은 화면이 꺼지거나 앱이 뒤로 가면(숨겨짐) 운영체제가 카메라를 멈춘다.
+  // PC 브라우저는 탭이 숨겨져도 웹캠이 계속 진짜 프레임을 주므로 이 기준을 쓰지 않는다.
+  hiddenStopsCamera: boolean;
+  trackLive: boolean;
+  trackMuted: boolean;
+  videoPaused: boolean;
+}): boolean {
+  if (!input.trackLive) return false;
+  // 화면 공유는 내용이 바뀔 때만 프레임이 나오고, 다른 탭을 띄워 이 탭이 숨겨진 채 쓰는 게 정상이다
+  if (input.isScreen) return true;
+  if (!input.visible && input.hiddenStopsCamera) return false;
+  return !input.trackMuted && !input.videoPaused;
+}
+
+// 숨겨지면 카메라가 멈추는 기기(폰·태블릿)인지. iPadOS는 PC처럼 'Macintosh'로 알리지만 터치 지점이 여럿이다.
+export function isMobileCameraDevice(userAgent: string, maxTouchPoints: number): boolean {
+  return /Android|iPhone|iPad|iPod/i.test(userAgent) || (/Macintosh/i.test(userAgent) && maxTouchPoints > 1);
+}
+
+// 멈춘 상태가 이만큼 이어지면 카메라를 다시 켜 본다(재시도 간격은 RECOVER_COOLDOWN_MS)
+export const RECOVER_AFTER_MS = 3000;
+export const RECOVER_COOLDOWN_MS = 10000;
+
+export function shouldRecoverCamera(input: {
+  isScreen: boolean;
+  visible: boolean;
+  staleForMs: number;
+  msSinceLastRecover: number;
+  recovering: boolean;
+}): boolean {
+  // 화면 공유는 사용자가 직접 허락해야 다시 켜져서 자동 복구하지 않는다. 숨겨진 동안에는 카메라를 켤 수 없다
+  if (input.isScreen || !input.visible || input.recovering) return false;
+  return input.staleForMs >= RECOVER_AFTER_MS && input.msSinceLastRecover >= RECOVER_COOLDOWN_MS;
+}
