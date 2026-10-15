@@ -22,17 +22,26 @@ export function WardCameraContent() {
   const [isModalStarting, setIsModalStarting] = useState(false);
   // 이 탭이 송출을 시작했고 서버가 아직 'running'을 알려 주지 않은 동안(최대 AWAIT_RUNNING_MS)
   const [isAwaitingRunning, setIsAwaitingRunning] = useState(false);
+  // 이 탭이 실제로 송출 중인지 - 주 버튼(화면 보기 / 켜기)은 서버 상태가 아니라 이 값으로 정한다
+  const [isStreamingHere, setIsStreamingHere] = useState(false);
   const modalRef = useRef<CameraRegisterModalHandle>(null);
   const { data: cameras = [], isError: isLiveError } = useQuery(wardLiveCamerasQueryOptions);
   const myDeviceId = getStoredDeviceId();
   const myCamera = myDeviceId ? cameras.find(camera => camera.deviceId === myDeviceId) : undefined;
-  const action = getCameraPrimaryAction(myCamera);
+  const action = getCameraPrimaryAction(myCamera, isStreamingHere);
   const isConnecting = isThisDeviceConnecting({
     isTurningOn,
     isModalStarting,
     isAwaitingRunning,
     status: myCamera?.status,
   });
+  // 켜는 중(아직 송출 전)에는 버튼을 막는다 - 이때 창을 열면 보여 줄 화면 없이 촬영 방식 고르기만 나온다
+  const isPrimaryBusy = (isTurningOn || isModalStarting) && !isStreamingHere;
+
+  const handleStreamingChange = (streaming: boolean) => {
+    setIsStreamingHere(streaming);
+    setIsAwaitingRunning(streaming);
+  };
 
   useEffect(() => {
     if (!isAwaitingRunning) return;
@@ -46,11 +55,7 @@ export function WardCameraContent() {
 
   // 이 기기 카드의 주 버튼(카메라 화면 보기 / 카메라 켜기)
   const handlePrimary = async () => {
-    // 연결하는 중(이 탭이 송출을 시작했거나 시작하는 중)에는 켜기를 다시 부르지 않고 화면만 연다
-    if (isConnecting) {
-      setIsRegisterOpen(true);
-      return;
-    }
+    if (isPrimaryBusy) return;
     if (action.kind === 'turnOn') {
       setIsTurningOn(true);
       try {
@@ -82,6 +87,7 @@ export function WardCameraContent() {
         onRegister={() => setIsRegisterOpen(true)}
         primaryAction={action}
         isConnecting={isConnecting}
+        isPrimaryBusy={isPrimaryBusy}
         onPrimary={handlePrimary}
         onThisDeviceDeleted={() => {
           setIsRegisterOpen(false);
@@ -99,7 +105,7 @@ export function WardCameraContent() {
         onClose={() => setIsRegisterOpen(false)}
         onUnstableChange={setIsStreamUnstable}
         onStartingChange={setIsModalStarting}
-        onStreamingChange={setIsAwaitingRunning}
+        onStreamingChange={handleStreamingChange}
       />
     </section>
   );
