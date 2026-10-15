@@ -10,6 +10,7 @@ import { WardLiveCamera } from '@/service/interface/ward/camera';
 import { Icon } from '@/components/Icon';
 import { showToast } from '@/store/toastStore';
 import { formatRegisteredDate, getCardStatus, type CameraPrimaryAction } from './cameraAction';
+import { CameraSceneModal } from './CameraSceneModal';
 import { RemoveCameraDialog } from './RemoveCameraDialog';
 import { RoomRenameModal } from './RoomRenameModal';
 import styles from './WardCameraList.module.css';
@@ -28,7 +29,7 @@ export function WardCameraList({
   onThisDeviceDeleted,
 }: {
   onRegister: () => void;
-  // 이 기기 카드의 주 버튼. 다른 기기 카드에는 버튼을 두지 않는다(영상 시청은 보호자 전용)
+  // 이 기기 카드의 주 버튼. 다른 기기 카드는 '찍히는 장면 보기'(정지 화면)를 둔다 - 실시간 영상은 보호자 전용
   primaryAction: CameraPrimaryAction;
   isConnecting: boolean;
   onPrimary: () => void;
@@ -39,6 +40,8 @@ export function WardCameraList({
   const cameras = data ?? [];
   const myDeviceId = getStoredDeviceId();
   const [renamingCamera, setRenamingCamera] = useState<WardLiveCamera | null>(null);
+  // 다른 기기 카메라의 찍히는 장면 보기(어느 방을 비추는 기기인지 알아보는 용도)
+  const [viewingSceneId, setViewingSceneId] = useState<number | null>(null);
   const [removing, setRemoving] = useState<{ camera: WardLiveCamera; isThisDevice: boolean } | null>(null);
 
   const deleteMutation = useDeleteWardCameraMutation();
@@ -121,6 +124,13 @@ export function WardCameraList({
                 </button>
               )}
 
+              {!isThisDevice && (
+                <button type="button" className={cx('primaryButton')} onClick={() => setViewingSceneId(camera.id)}>
+                  <Icon name="camera" size={22} decorative />
+                  찍히는 장면 보기
+                </button>
+              )}
+
               <div className={cx('actions')}>
                 <button type="button" className={cx('linkButton')} onClick={() => setRenamingCamera(camera)}>
                   방 이름 바꾸기
@@ -140,6 +150,9 @@ export function WardCameraList({
       </ul>
 
       {renamingCamera && <RoomRenameModal camera={renamingCamera} onClose={() => setRenamingCamera(null)} />}
+      {viewingSceneId !== null && (
+        <CameraSceneModal cameraId={viewingSceneId} onClose={() => setViewingSceneId(null)} />
+      )}
       {removing && (
         <RemoveCameraDialog
           label={removing.camera.label}

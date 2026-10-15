@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatSceneTime,
+  getSceneCaption,
   isMobileCameraDevice,
   isSourceFresh,
   shouldRecoverCamera,
@@ -223,5 +225,20 @@ describe('isMobileCameraDevice', () => {
   it('PC 브라우저는 모바일이 아니다', () => {
     expect(isMobileCameraDevice('Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 0)).toBe(false);
     expect(isMobileCameraDevice('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 0)).toBe(false);
+  });
+});
+
+describe('찍히는 장면 보기 - 시각과 안내', () => {
+  it('장면 시각은 "M월 D일 오전/오후 h:mm"', () => {
+    expect(formatSceneTime('2026-10-15T10:35:24')).toBe('10월 15일 오전 10:35');
+    expect(formatSceneTime('2026-10-14T15:08:00')).toBe('10월 14일 오후 3:08');
+    expect(formatSceneTime('2026-10-14T00:05:00')).toBe('10월 14일 오전 12:05');
+    expect(formatSceneTime('2026-10-14T12:00:00')).toBe('10월 14일 오후 12:00');
+    expect(formatSceneTime(null)).toBe('');
+  });
+  it('켜져 있으면 계속 새로 받는다고, 꺼져 있으면 마지막 장면과 시각을 알린다', () => {
+    expect(getSceneCaption('running', '2026-10-15T10:35:24')).toBe('몇 초마다 새로 보여 드려요');
+    expect(getSceneCaption('disconnected', '2026-10-14T15:08:00')).toBe('마지막으로 보낸 장면 · 10월 14일 오후 3:08');
+    expect(getSceneCaption('offline', null)).toBe('마지막으로 보낸 장면');
   });
 });

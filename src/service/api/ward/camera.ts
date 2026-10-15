@@ -4,12 +4,14 @@
 // 등록하면 새 카메라가 생기지 않고 기존 sessionId를 재사용하며 label만 갱신된다.
 
 import { apiClient } from '@/lib/api/apiClient';
+import { getAccessToken } from '@/lib/auth/tokenStore';
 import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import {
   RegisterWardCameraReq,
   UpdateWardCameraReq,
   WardCamera,
+  WardCameraFrameError,
   WardCameraRoom,
   WardLiveCamera,
 } from '../../interface/ward/camera';
@@ -50,4 +52,22 @@ export async function updateWardCamera(id: number, body: UpdateWardCameraReq) {
 // 카메라 삭제
 export async function deleteWardCamera(id: number) {
   return apiClient.delete<CommonResponse<null>>(`${WARD_CAMERA_BASE}/${id}`);
+}
+
+// 본인 카메라가 지금(꺼졌으면 마지막으로) 보낸 장면 JPEG. 다른 기기 카메라가 어느 방을 비추는지 알아보는 용도.
+// 에러 응답도 JSON(ApiResponse)이라 apiClient의 blob responseType을 쓰면 파싱이 깨진다 — fetch로 직접 처리
+export async function fetchWardCameraLatestFrame(id: number): Promise<Blob> {
+  const token = getAccessToken();
+  const response = await fetch(`/api${WARD_CAMERA_BASE}/${id}/latest-frame`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { code?: string; message?: string } | null;
+    const error: WardCameraFrameError = { status: response.status, code: body?.code, message: body?.message };
+    throw error;
+  }
+
+  return response.blob();
 }
