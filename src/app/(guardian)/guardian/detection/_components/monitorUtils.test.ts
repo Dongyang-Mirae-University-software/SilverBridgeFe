@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getStreamResumeAction, pickInitialSessionId } from './monitorUtils';
+import { getStreamResumeAction, needsReselect, pickInitialSessionId } from './monitorUtils';
 
 const bedroomOff = { sessionId: 'bed', wardId: 'w1', status: 'offline' as const };
 const livingOn = { sessionId: 'living', wardId: 'w1', status: 'running' as const };
@@ -57,5 +57,18 @@ describe('getStreamResumeAction', () => {
   });
   it('선택한 카메라가 없으면 아무것도 하지 않는다', () => {
     expect(getStreamResumeAction(at(null, 'offline'), at(null, 'running'))).toBe('none');
+  });
+});
+
+describe('needsReselect', () => {
+  it('보던 카메라가 목록에서 사라지면(등록 해제 후 재등록) 다시 고른다', () => {
+    expect(needsReselect([{ sessionId: 'new' }], 'old')).toBe(true);
+  });
+  it('처음 열 때 아무것도 고르지 않았으면 고른다', () => {
+    expect(needsReselect([{ sessionId: 'a' }], null)).toBe(true);
+  });
+  it('보던 카메라가 그대로 있거나 목록이 비면 그대로 둔다', () => {
+    expect(needsReselect([{ sessionId: 'a' }, { sessionId: 'b' }], 'b')).toBe(false);
+    expect(needsReselect([], 'old')).toBe(false);
   });
 });

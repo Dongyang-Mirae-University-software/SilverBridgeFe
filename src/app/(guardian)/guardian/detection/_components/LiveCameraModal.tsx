@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
-import { pickInitialSessionId } from './monitorUtils';
+import { needsReselect, pickInitialSessionId } from './monitorUtils';
 import { useGuardianMonitor } from './useGuardianMonitor';
 import type { GuardianCameraLiveStatus, GuardianLiveCamera } from '@/service/interface/guardian/camera';
 import styles from './LiveCameraModal.module.css';
@@ -99,13 +99,15 @@ export function LiveCameraModal({
   const didInitRef = useRef(false);
   const now = useLiveClock();
 
+  // 처음 열 때, 그리고 보던 카메라가 목록에서 사라졌을 때(등록 해제 후 재등록 등) 카메라를 고른다.
+  // 지정 카메라(initialSessionId)는 처음 한 번만 따른다.
   useEffect(() => {
-    if (didInitRef.current || monitor.isLoading || monitor.sessions.length === 0) return;
+    if (monitor.isLoading || !needsReselect(monitor.sessions, monitor.selectedId)) return;
+    const target = pickInitialSessionId(monitor.sessions, didInitRef.current ? null : initialSessionId, initialWardId);
     didInitRef.current = true;
-    const target = pickInitialSessionId(monitor.sessions, initialSessionId, initialWardId);
     if (target) monitor.selectSession(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialSessionId, initialWardId, monitor.isLoading, monitor.sessions]);
+  }, [initialSessionId, initialWardId, monitor.isLoading, monitor.sessions, monitor.selectedId]);
 
   const cameraStatus = monitor.sessionStatus?.status;
 
