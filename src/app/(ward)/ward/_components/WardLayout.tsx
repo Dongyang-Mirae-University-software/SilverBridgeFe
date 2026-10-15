@@ -22,6 +22,7 @@ import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
 import { applyMedicationTakenToWardCache } from '@/service/query/ward/medication';
 import { wardSosSettingQueryOptions } from '@/service/query/ward/sosSetting';
+import { WardCameraStreamProvider } from '../camera/_components/WardCameraStreamProvider';
 import styles from './WardLayout.module.css';
 
 const cx = classNames.bind(styles);
@@ -63,7 +64,10 @@ export function WardLayout({ children }: { children: ReactNode }) {
         style={chatViewportStyle}
       >
         <SidebarLayout navItems={WARD_NAV} profile={profile} role={role} rootPath={rootPath} />
-        <main className={cx('main', { chatMain: isChatbotPage })}>{children}</main>
+        {/* 카메라 송출은 피보호자 웹 어느 화면에서든 이어지도록 레이아웃에 둔다 */}
+        <WardCameraStreamProvider>
+          <main className={cx('main', { chatMain: isChatbotPage })}>{children}</main>
+        </WardCameraStreamProvider>
       </div>
     </DashboardProvider>
   );
