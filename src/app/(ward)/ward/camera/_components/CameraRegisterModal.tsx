@@ -46,6 +46,7 @@ type WakeLockSentinelLike = { released: boolean; release: () => Promise<void> };
 const LEGACY_ROTATION_STORAGE_KEY = 'silverbridge_ward_camera_rotation';
 const CAMERA_FACING_STORAGE_KEY = 'silverbridge_ward_camera_facing';
 const MAX_IN_FLIGHT = 2;
+const STOP_DRAIN_TIMEOUT_MS = 3000;
 // 연속 업로드 실패가 이 횟수 또는 시간을 넘으면 사용자에게 알린다
 const UNSTABLE_FAIL_COUNT = 5;
 const UNSTABLE_FAIL_MS = 3000;
@@ -410,13 +411,20 @@ export function CameraRegisterModal({
     }
   };
 
+  // 업로드 중인 프레임이 끝나기를 기다린다(최대 STOP_DRAIN_TIMEOUT_MS - 업로드가 멈춰 있어도 끄기는 진행한다)
+  const waitForInFlightUploads = async () => {
+    const deadline = Date.now() + STOP_DRAIN_TIMEOUT_MS;
+    while (inFlightRef.current > 0 && Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  };
+
   const handleStopMedia = async () => {
     resetUploadHealth();
     refreshOnFirstUploadRef.current = false;
     staleSinceRef.current = null;
     const sessionId = liveSessionIdRef.current;
     liveSessionIdRef.current = null;
-    if (sessionId) await stopStreamSession(sessionId).catch(() => {});
     captureWorkerRef.current?.terminate();
     captureWorkerRef.current = null;
     if (previewTimerRef.current) {
@@ -424,6 +432,10 @@ export function CameraRegisterModal({
       previewTimerRef.current = null;
     }
     frameQueueRef.current = [];
+    // 보내던 프레임이 다 끝난 뒤에 중지한다 - 중지 뒤에 늦게 도착한 프레임이 AI 세션을 '송출 중'으로 되살려
+    // 끈 카메라가 보호자·피보호자 화면에 계속 '켜짐'으로 남았다(2026-10-15 gosky)
+    await waitForInFlightUploads();
+    if (sessionId) await stopStreamSession(sessionId).catch(() => {});
     await releaseScreenWakeLock();
     mediaStreamRef.current?.getTracks().forEach(track => track.stop());
     mediaStreamRef.current = null;

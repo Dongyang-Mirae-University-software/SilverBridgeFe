@@ -20,17 +20,22 @@ import {
 
 describe('getCameraPrimaryAction', () => {
   it('이 기기의 카메라가 없으면 등록', () => {
-    expect(getCameraPrimaryAction(undefined)).toEqual({ kind: 'register' });
+    expect(getCameraPrimaryAction(undefined, false)).toEqual({ kind: 'register' });
   });
-  it('송출 중이면 화면 보기', () => {
-    expect(getCameraPrimaryAction({ status: 'running' })).toMatchObject({ kind: 'view', label: '카메라 화면 보기' });
+  it('이 탭이 송출 중이면 화면 보기', () => {
+    expect(getCameraPrimaryAction({ status: 'running' }, true)).toMatchObject({ kind: 'view', label: '카메라 화면 보기' });
+    // 서버가 아직 running을 모르더라도(켠 직후) 이 탭이 보내고 있으면 화면 보기
+    expect(getCameraPrimaryAction({ status: 'offline' }, true)).toMatchObject({ kind: 'view' });
+  });
+  it('서버가 running이어도 이 탭이 송출하지 않으면 켜기(끈 직후 서버 상태가 늦게 바뀌는 경우)', () => {
+    expect(getCameraPrimaryAction({ status: 'running' }, false)).toMatchObject({ kind: 'turnOn', label: '카메라 켜기' });
   });
   it('끊김·오프라인이면 카메라 켜기', () => {
-    expect(getCameraPrimaryAction({ status: 'disconnected' })).toMatchObject({ kind: 'turnOn', label: '카메라 켜기' });
-    expect(getCameraPrimaryAction({ status: 'offline' })).toMatchObject({ kind: 'turnOn' });
+    expect(getCameraPrimaryAction({ status: 'disconnected' }, false)).toMatchObject({ kind: 'turnOn', label: '카메라 켜기' });
+    expect(getCameraPrimaryAction({ status: 'offline' }, false)).toMatchObject({ kind: 'turnOn' });
   });
   it('상태를 모르면(null) 켜기로 취급하지 않는다', () => {
-    expect(getCameraPrimaryAction({ status: null })).toMatchObject({ kind: 'checking' });
+    expect(getCameraPrimaryAction({ status: null }, false)).toMatchObject({ kind: 'checking' });
   });
 });
 
