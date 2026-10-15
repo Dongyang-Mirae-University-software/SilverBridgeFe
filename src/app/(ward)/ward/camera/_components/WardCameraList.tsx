@@ -25,6 +25,7 @@ export function WardCameraList({
   onRegister,
   primaryAction,
   isConnecting,
+  isPrimaryBusy,
   onPrimary,
   onThisDeviceDeleted,
 }: {
@@ -32,6 +33,8 @@ export function WardCameraList({
   // 이 기기 카드의 주 버튼. 다른 기기 카드는 '찍히는 장면 보기'(정지 화면)를 둔다 - 실시간 영상은 보호자 전용
   primaryAction: CameraPrimaryAction;
   isConnecting: boolean;
+  // 이 기기가 카메라를 켜는 중(아직 송출 전) - 버튼을 막고 '카메라 켜는 중...'
+  isPrimaryBusy: boolean;
   onPrimary: () => void;
   // 이 기기의 카메라를 등록 해제했을 때 - 이 탭의 송출을 끄게 한다
   onThisDeviceDeleted?: () => void;
@@ -83,8 +86,7 @@ export function WardCameraList({
           const card = getCardStatus({ status: camera.status, isThisDevice, isConnecting });
           const showPrimary = isThisDevice && primaryAction.kind !== 'register';
           const registeredDate = formatRegisteredDate(camera.createdAt);
-          // 시작하는 동안에도 화면은 열 수 있다(확인은 '카메라 화면 보기'로 한다)
-          const primaryLabel = isConnecting ? '카메라 화면 보기' : 'label' in primaryAction ? primaryAction.label : '';
+          const primaryLabel = isPrimaryBusy ? '카메라 켜는 중...' : 'label' in primaryAction ? primaryAction.label : '';
 
           return (
             <li key={camera.id} className={cx('item')}>
@@ -116,7 +118,7 @@ export function WardCameraList({
                 <button
                   type="button"
                   className={cx('primaryButton')}
-                  disabled={primaryAction.kind === 'checking' && !isConnecting}
+                  disabled={isPrimaryBusy || primaryAction.kind === 'checking'}
                   onClick={onPrimary}
                 >
                   <Icon name="camera" size={22} decorative />

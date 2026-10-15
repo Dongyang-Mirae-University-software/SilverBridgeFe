@@ -9,11 +9,14 @@ export type CameraPrimaryAction =
   | { kind: 'turnOn'; label: string }
   | { kind: 'checking'; label: string };
 
+// '화면 보기'는 이 탭이 실제로 송출 중일 때만 준다 - 서버 상태는 늦게 바뀌어(끈 직후에도 잠시 running),
+// 서버만 보고 '화면 보기'를 주면 보여 줄 화면이 없어 카메라 고르는 화면이 엉뚱하게 떴다(2026-10-15 gosky).
 export function getCameraPrimaryAction(
   myCamera: { status: WardCameraConnectionStatus } | undefined,
+  isStreamingHere: boolean,
 ): CameraPrimaryAction {
   if (!myCamera) return { kind: 'register' };
-  if (myCamera.status === 'running') return { kind: 'view', label: '카메라 화면 보기' };
+  if (isStreamingHere) return { kind: 'view', label: '카메라 화면 보기' };
   if (myCamera.status === null) return { kind: 'checking', label: '연결 상태 확인 중' };
   return { kind: 'turnOn', label: '카메라 켜기' };
 }
