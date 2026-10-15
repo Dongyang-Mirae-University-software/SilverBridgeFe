@@ -2,7 +2,6 @@
 
 import classNames from 'classnames/bind';
 
-import { Icon } from '@/components/Icon';
 import { WardCameraRoom } from '@/service/interface/ward/camera';
 import styles from './RoomPicker.module.css';
 
@@ -32,12 +31,7 @@ export function RoomPicker({ rooms, selectedLabel, availableRegisteredLabel, dis
             disabled={disabled || isLocked}
             onClick={() => onSelect(room.label)}
           >
-            <span>{room.label}</span>
-            {isLocked && (
-              <span className={cx('badge')}>
-                <Icon name="alert" size={14} decorative />등록됨
-              </span>
-            )}
+            <span>{isLocked ? `${room.label} · 등록됨` : room.label}</span>
           </button>
         );
       })}

@@ -10,6 +10,7 @@ import BackIcon from '@/assets/icons/back.svg';
 import BellIcon from '@/assets/icons/bell.svg';
 import BrainIcon from '@/assets/icons/brain.svg';
 import CakeIcon from '@/assets/icons/cake.svg';
+import CalendarIcon from '@/assets/icons/calendar.svg';
 import CameraFlipIcon from '@/assets/icons/camera-flip.svg';
 import CameraIcon from '@/assets/icons/camera.svg';
 import CheckIcon from '@/assets/icons/check.svg';
@@ -37,6 +38,7 @@ import RefreshIcon from '@/assets/icons/refresh.svg';
 import RefreshDoubleIcon from '@/assets/icons/refresh-double.svg';
 import SettingsIcon from '@/assets/icons/settings.svg';
 import TagIcon from '@/assets/icons/tag.svg';
+import TrashIcon from '@/assets/icons/trash.svg';
 import UserIcon from '@/assets/icons/user.svg';
 import UsersIcon from '@/assets/icons/users.svg';
 import WarningIcon from '@/assets/icons/warning.svg';
@@ -52,6 +54,7 @@ const ICONS = {
   bell: BellIcon,
   brain: BrainIcon,
   cake: CakeIcon,
+  calendar: CalendarIcon,
   camera: CameraIcon,
   cameraFlip: CameraFlipIcon,
   check: CheckIcon,
@@ -79,6 +82,7 @@ const ICONS = {
   refreshDouble: RefreshDoubleIcon,
   settings: SettingsIcon,
   tag: TagIcon,
+  trash: TrashIcon,
   user: UserIcon,
   users: UsersIcon,
   warning: WarningIcon,

@@ -7,10 +7,10 @@ import classNames from 'classnames/bind';
 import { getStoredDeviceId } from '@/lib/device/deviceId';
 import { useDeleteWardCameraMutation, wardLiveCamerasQueryOptions } from '@/service/query/ward/camera';
 import { WardLiveCamera } from '@/service/interface/ward/camera';
-import { formatDateTime } from '@/utils/format/date';
 import { Icon } from '@/components/Icon';
 import { showToast } from '@/store/toastStore';
-import { getCardStatus, type CameraPrimaryAction } from './cameraAction';
+import { formatRegisteredDate, getCardStatus, type CameraPrimaryAction } from './cameraAction';
+import { RemoveCameraDialog } from './RemoveCameraDialog';
 import { RoomRenameModal } from './RoomRenameModal';
 import styles from './WardCameraList.module.css';
 
@@ -39,22 +39,23 @@ export function WardCameraList({
   const cameras = data ?? [];
   const myDeviceId = getStoredDeviceId();
   const [renamingCamera, setRenamingCamera] = useState<WardLiveCamera | null>(null);
+  const [removing, setRemoving] = useState<{ camera: WardLiveCamera; isThisDevice: boolean } | null>(null);
 
   const deleteMutation = useDeleteWardCameraMutation();
 
-  const handleDelete = (camera: WardLiveCamera, isThisDevice: boolean) => {
-    const confirmed = window.confirm(
-      `"${camera.label}" 카메라를 등록 해제할까요?\n해제하면 이 방의 이상 상황 알림이 오지 않고, 저장된 영상도 지워져요.` +
-        (isThisDevice ? '\n이 기기의 촬영도 꺼져요.' : ''),
-    );
-    if (!confirmed) return;
-
+  const handleDelete = () => {
+    if (!removing) return;
+    const { camera, isThisDevice } = removing;
     deleteMutation.mutate(camera.id, {
       // 이 기기의 카메라면 송출도 끈다 - 그대로 두면 지워진 카메라로 계속 보내고, 다시 등록할 때 '카메라 끄기'부터 보인다
       onSuccess: () => {
+        setRemoving(null);
         if (isThisDevice) onThisDeviceDeleted?.();
       },
-      onError: error => showToast(getErrorMessage(error, '카메라를 삭제하지 못했습니다.'), { variant: 'error' }),
+      onError: error => {
+        setRemoving(null);
+        showToast(getErrorMessage(error, '카메라를 삭제하지 못했습니다.'), { variant: 'error' });
+      },
     });
   };
 
@@ -78,6 +79,9 @@ export function WardCameraList({
           const isThisDevice = Boolean(myDeviceId) && camera.deviceId === myDeviceId;
           const card = getCardStatus({ status: camera.status, isThisDevice, isConnecting });
           const showPrimary = isThisDevice && primaryAction.kind !== 'register';
+          const registeredDate = formatRegisteredDate(camera.createdAt);
+          // 시작하는 동안에도 화면은 열 수 있다(확인은 '카메라 화면 보기'로 한다)
+          const primaryLabel = isConnecting ? '카메라 화면 보기' : 'label' in primaryAction ? primaryAction.label : '';
 
           return (
             <li key={camera.id} className={cx('item')}>
@@ -98,17 +102,22 @@ export function WardCameraList({
                 </p>
               )}
 
-              <div className={cx('meta')}><span>등록일</span><strong>{formatDateTime(camera.createdAt)}</strong></div>
+              {registeredDate && (
+                <p className={cx('meta')}>
+                  <Icon name="calendar" size={18} decorative />
+                  {registeredDate}
+                </p>
+              )}
 
               {showPrimary && (
                 <button
                   type="button"
                   className={cx('primaryButton')}
-                  disabled={primaryAction.kind === 'checking' || isConnecting}
+                  disabled={primaryAction.kind === 'checking' && !isConnecting}
                   onClick={onPrimary}
                 >
                   <Icon name="camera" size={22} decorative />
-                  {isConnecting ? '카메라 켜는 중...' : 'label' in primaryAction ? primaryAction.label : ''}
+                  {primaryLabel}
                 </button>
               )}
 
@@ -116,7 +125,12 @@ export function WardCameraList({
                 <button type="button" className={cx('linkButton')} onClick={() => setRenamingCamera(camera)}>
                   방 이름 바꾸기
                 </button>
-                <button type="button" className={cx('linkButton', 'danger')} onClick={() => handleDelete(camera, isThisDevice)}>
+                <button
+                  type="button"
+                  className={cx('linkButton', 'danger')}
+                  onClick={() => setRemoving({ camera, isThisDevice })}
+                >
+                  <Icon name="trash" size={18} decorative />
                   등록 해제
                 </button>
               </div>
@@ -126,6 +140,15 @@ export function WardCameraList({
       </ul>
 
       {renamingCamera && <RoomRenameModal camera={renamingCamera} onClose={() => setRenamingCamera(null)} />}
+      {removing && (
+        <RemoveCameraDialog
+          label={removing.camera.label}
+          isThisDevice={removing.isThisDevice}
+          isPending={deleteMutation.isPending}
+          onCancel={() => setRemoving(null)}
+          onConfirm={handleDelete}
+        />
+      )}
     </section>
   );
 }

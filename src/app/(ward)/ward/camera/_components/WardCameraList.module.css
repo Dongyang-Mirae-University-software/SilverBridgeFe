@@ -105,7 +105,7 @@
 }
 
 .statusDot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.statusBadge.connected { border-color: var(--sb-safe); background: var(--sb-safe-soft); color: var(--sb-safe); }
+.statusBadge.connected { border-color: #b9dcc7; background: var(--sb-safe-soft); color: var(--sb-safe); }
 .statusBadge.disconnected { background: var(--sb-bg-soft); color: var(--sb-ink-soft); }
 .statusBadge.checking { background: var(--sb-sun-soft); color: #b07f1f; }
 .statusBadge.checking .statusDot { border: 1px dashed currentColor; background: transparent; }
@@ -139,22 +139,18 @@
   white-space: nowrap;
 }
 
-.statusMessage { margin: 0; color: var(--sb-ink-soft); font-size: 15px; font-weight: 600; line-height: 1.5; }
+.statusMessage { margin: 0; color: var(--sb-ink); font-size: 15px; font-weight: 600; line-height: 1.5; }
 .checkingMessage { color: #3f6e8c; }
 
 .meta {
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  border-top: 1px solid var(--sb-line-soft);
-  border-bottom: 1px solid var(--sb-line-soft);
+  align-items: center;
+  gap: 8px;
+  margin: 0;
   color: var(--sb-ink-mute);
   font-size: 15px;
-  font-weight: 600;
-  padding: 10px 0;
+  font-weight: 700;
 }
-
-.meta strong { color: var(--sb-ink); font-weight: 700; }
 
 .primaryButton {
   display: inline-flex;
@@ -180,11 +176,15 @@
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
 .linkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-height: 52px;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
-  color: var(--sb-ink-soft);
+  color: var(--sb-ink);
   cursor: pointer;
   font-size: 16px;
   font-weight: 700;
@@ -195,5 +195,4 @@
 @media (max-width: 640px) {
   .item { padding: 18px; }
   .label { font-size: 20px; }
-  .actions { grid-template-columns: 1fr; }
 }
