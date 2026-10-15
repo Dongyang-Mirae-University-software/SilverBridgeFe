@@ -3,11 +3,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
+import { pickInitialSessionId } from './monitorUtils';
 import { useGuardianMonitor } from './useGuardianMonitor';
 import type { GuardianCameraLiveStatus, GuardianLiveCamera } from '@/service/interface/guardian/camera';
 import styles from './LiveCameraModal.module.css';
 
 const cx = classNames.bind(styles);
+
+// MJPEG 영상. 화면에서 빠질 때(카메라 전환·모달 닫기·영상 없음 표시) src 속성을 지워 브라우저가 영상 연결을
+// 끊게 한다 - <img>를 DOM에서 빼기만 하면 연결이 남아 서버 중계가 30분 상한까지 이어지고, 동시 시청 자리(1인 2개)를
+// 차지해 다음 영상이 '동시 시청 상한'으로 거절된다. 속성을 지우는 방식은 error 이벤트를 내지 않는다.
+function MjpegFrame({ src, className, onError }: { src: string; className?: string; onError: () => void }) {
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    return () => img?.removeAttribute('src');
+  }, [src]);
+
+  return (
+    <img ref={imgRef} src={src} alt="실시간 영상" className={className} onError={onError} />
+  );
+}
 
 function useLiveClock() {
   // 현재 시각을 첫 SSR HTML에 넣으면 서버와 휴대폰의 렌더 시각이 달라 hydration 오류가 난다.
@@ -83,12 +100,7 @@ export function LiveCameraModal({
   useEffect(() => {
     if (didInitRef.current || monitor.isLoading || monitor.sessions.length === 0) return;
     didInitRef.current = true;
-    const target =
-      initialSessionId && monitor.sessions.some(session => session.sessionId === initialSessionId)
-        ? initialSessionId
-        : initialWardId
-          ? monitor.sessions.find(session => session.wardId === initialWardId)?.sessionId
-          : monitor.sessions[0].sessionId;
+    const target = pickInitialSessionId(monitor.sessions, initialSessionId, initialWardId);
     if (target) monitor.selectSession(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSessionId, initialWardId, monitor.isLoading, monitor.sessions]);
@@ -134,10 +146,9 @@ export function LiveCameraModal({
           ) : !monitor.frameSrc ? (
             <div className={cx('placeholder')}>{monitor.streamErrorMessage ?? '프레임을 수신하는 중입니다...'}</div>
           ) : (
-            <img
+            <MjpegFrame
               key={monitor.frameSrc}
               src={monitor.frameSrc}
-              alt="실시간 영상"
               className={cx('frameImg')}
               onError={monitor.onStreamError}
             />

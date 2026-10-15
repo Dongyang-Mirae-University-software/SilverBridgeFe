@@ -35,6 +35,14 @@ export function getCaptureSize(videoWidth: number, videoHeight: number): { width
   return { width: Math.round(srcWidth * scale), height: Math.round(srcHeight * scale) };
 }
 
+// 영상이 세로로 들어오는지. 휴대폰 '자동 회전'이 꺼져 있으면 가로로 들어도 세로 영상이 와서 장면이 옆으로 눕는다
+// (브라우저는 실제로 어떻게 들었는지 알 수 없다) - 이때 자동 회전을 켜라고 안내한다. 크기를 모르면(0) 안내하지 않는다.
+export function isPortraitFrame(videoWidth: number, videoHeight: number): boolean {
+  return videoWidth > 0 && videoHeight > videoWidth;
+}
+
+export const AUTO_ROTATE_HINT = "휴대폰을 가로로 두셨는데 화면이 세로로 보이면, 휴대폰 설정에서 '자동 회전'을 켜 주세요.";
+
 // 송출을 시작한 뒤 서버가 'running'을 알려 줄 때까지 '연결하는 중'으로 보여 주는 최대 시간.
 // 넘기면 서버가 알려 준 실제 상태를 보여 준다(무한히 '연결하는 중'에 머물지 않게).
 export const AWAIT_RUNNING_MS = 45 * 1000;
