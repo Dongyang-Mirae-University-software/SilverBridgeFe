@@ -1,9 +1,18 @@
 import type { Metadata } from 'next';
+import localFont from 'next/font/local';
 import './globals.css';
 import ReactQueryProvider from '@/lib/ReactQueryProvider';
 import PushNotificationListener from '@/components/PushNotificationListener';
 import { ModalHost } from '@/components/ModalHost';
 import { ToastHost } from '@/components/ToastHost';
+
+// Pretendard Variable (SIL OFL 1.1, 라이선스: ./fonts/LICENSE-Pretendard.txt)
+const pretendard = localFont({
+  src: './fonts/PretendardVariable.woff2',
+  variable: '--font-pretendard',
+  weight: '45 920',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'silver bridge',
@@ -16,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning>
+    <html suppressHydrationWarning className={pretendard.variable}>
       <body>
         <ReactQueryProvider>
           {children}

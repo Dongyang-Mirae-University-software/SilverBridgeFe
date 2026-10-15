@@ -62,14 +62,24 @@ body {
   background: var(--sb-bg);
   color: var(--sb-ink);
   font-family:
-    Pretendard,
+    var(--font-pretendard),
     -apple-system,
     BlinkMacSystemFont,
+    'Apple SD Gothic Neo',
+    'Malgun Gothic',
     system-ui,
     sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+/* 버튼·입력창은 브라우저 기본이 system-ui라 body 글꼴을 상속하지 않는다 */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 .layout {
