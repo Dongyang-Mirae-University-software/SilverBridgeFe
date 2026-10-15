@@ -61,7 +61,7 @@ describe('getCardStatus', () => {
   const base = { isThisDevice: false, isConnecting: false };
   it('연결됨은 영상을 보내고 있다고 안내한다', () => {
     expect(getCardStatus({ ...base, status: 'running' })).toMatchObject({
-      label: '연결됨',
+      label: '켜짐',
       tone: 'connected',
       message: '지금 영상을 보내고 있어요',
     });
@@ -71,13 +71,13 @@ describe('getCardStatus', () => {
   });
   it('이 기기가 시작하는 중이면 연결하는 중(서버 상태보다 우선)', () => {
     expect(getCardStatus({ status: 'disconnected', isThisDevice: true, isConnecting: true })).toMatchObject({
-      label: '연결하는 중...',
+      label: '켜는 중...',
       tone: 'connecting',
     });
   });
   it('다른 기기 카드는 시작 중 상태를 따르지 않는다', () => {
     expect(getCardStatus({ status: 'disconnected', isThisDevice: false, isConnecting: true })).toMatchObject({
-      label: '연결 안 됨',
+      label: '꺼짐',
     });
   });
   it('끊김 안내는 이 기기와 다른 기기가 다르다', () => {

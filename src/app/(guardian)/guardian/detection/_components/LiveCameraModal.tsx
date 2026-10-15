@@ -41,10 +41,12 @@ function useLiveClock() {
   return now;
 }
 
+// 카메라 상태는 '켜짐/꺼짐' 두 말로만 보인다(2026-10-15 시안 - '연결 상태'와 버튼 상태가 따로 보여 헷갈렸다).
+// 모르면(null) '확인 중'. 피보호자 '내 카메라' 카드와 같은 말을 쓴다.
 function getCameraStatusMeta(status: GuardianCameraLiveStatus) {
-  if (status === 'running') return { label: '연결됨', tone: 'running' } as const;
+  if (status === 'running') return { label: '켜짐', tone: 'running' } as const;
   if (status === null) return { label: '확인 중', tone: 'checking' } as const;
-  return { label: '연결 안 됨', tone: 'offline' } as const;
+  return { label: '꺼짐', tone: 'offline' } as const;
 }
 
 function formatLiveDateTime(date: Date) {
@@ -106,7 +108,6 @@ export function LiveCameraModal({
   }, [initialSessionId, initialWardId, monitor.isLoading, monitor.sessions]);
 
   const cameraStatus = monitor.sessionStatus?.status;
-  const cameraStatusMeta = getCameraStatusMeta(cameraStatus ?? null);
 
   const wardGroups = useMemo(() => groupSessionsByWard(monitor.sessions), [monitor.sessions]);
   const selectedWardId = initialWardId || monitor.selectedSession?.wardId || monitor.selectedSession?.wardName || '';
@@ -141,7 +142,7 @@ export function LiveCameraModal({
           ) : isVideoUnavailable ? (
             <div className={cx('videoUnavailable')}>
               <strong>영상이 오지 않아요</strong>
-              <span>카메라로 쓰는 기기의 화면이 켜져 있는지 확인해 주세요</span>
+              <span>카메라로 쓰는 기기의 화면을 켜 두세요</span>
             </div>
           ) : !monitor.frameSrc ? (
             <div className={cx('placeholder')}>{monitor.streamErrorMessage ?? '프레임을 수신하는 중입니다...'}</div>
@@ -160,34 +161,26 @@ export function LiveCameraModal({
               REC
             </strong>
             <span>{now ? formatLiveDateTime(now) : '-'}</span>
-            <span>CAM · {monitor.selectedSession?.label ?? '-'}</span>
           </div>
-        </div>
-
-        <div className={cx('connectionRow')}>
-          <span>연결 상태</span>
-          <strong className={cx('connectionBadge', cameraStatusMeta.tone)}>
-            <span className={cx('connectionDot')} />
-            {cameraStatusMeta.label}
-          </strong>
         </div>
 
         {selectedWardGroup && (
           <div className={cx('switchRow')}>
-            <span className={cx('switchLabel')}>카메라 전환</span>
-            <div className={cx('switchChips')}>
+            <div className={cx('switchChips')} role="group" aria-label="카메라 전환">
               {selectedWardGroup.cameras.map(session => {
-                const status = getCameraStatusMeta(session.status);
+                const isSelected = monitor.selectedId === session.sessionId;
+                // 보고 있는 카메라는 목록(15초 간격)보다 최신인 상태 조회 값을 쓴다 - 화면과 버튼이 어긋나지 않게
+                const status = getCameraStatusMeta(isSelected && cameraStatus !== undefined ? cameraStatus : session.status);
                 return (
                   <button
                     key={session.sessionId}
                     type="button"
-                    className={cx('switchChip', { active: monitor.selectedId === session.sessionId })}
+                    className={cx('switchChip', { active: isSelected })}
                     onClick={() => monitor.selectSession(session.sessionId)}
                   >
                     <span className={cx('switchStatusDot', status.tone)} />
                     {session.label}
-                    <span className={cx('switchStatus')}>{status.label}</span>
+                    {status.tone !== 'running' && <span className={cx('switchStatus')}>{status.label}</span>}
                   </button>
                 );
               })}

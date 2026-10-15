@@ -360,7 +360,11 @@ export function CameraRegisterModal({
           : await navigator.mediaDevices.getUserMedia(getCameraConstraints(facing));
 
       mediaStreamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        // 자동 재생에만 맡기지 않고 직접 시작한다(재생이 멈춰 있으면 송출 루프가 멈춘 장면으로 보고 보내지 않는다)
+        void videoRef.current.play().catch(() => {});
+      }
       setStatus('ready');
       startPreviewLoop();
       return true;
@@ -685,201 +689,205 @@ export function CameraRegisterModal({
   );
 
   return (
-    <div className={cx('overlay', { hidden: !isOpen })} role="presentation" aria-hidden={!isOpen} onClick={handleClose}>
-      <div
-        className={cx('modal')}
-        role="dialog"
-        aria-modal={isOpen || undefined}
-        aria-label={title}
-        inert={!isOpen}
-        onClick={event => event.stopPropagation()}
-      >
-        <header className={cx('header')}>
-          <strong>{title}</strong>
-          {viewBadge && (
-            <span className={cx('statusBadge', viewBadge.tone)}>
-              <span className={cx('statusDot')} />
-              {viewBadge.label}
-            </span>
-          )}
-          <button type="button" className={cx('closeButton', { boxed: isViewOnly })} onClick={handleClose} aria-label="닫기">
-            ×
-          </button>
-        </header>
-
-        <div className={cx('body')}>
-          {isWizard && (
-            <ol className={cx('stepper')} aria-label="등록 단계">
-              {REGISTER_STEPS.map((label, index) => {
-                const step = index + 1;
-                return (
-                  <li
-                    key={label}
-                    className={cx('stepItem', { done: step < wizardStep, current: step === wizardStep })}
-                    aria-current={step === wizardStep ? 'step' : undefined}
-                  >
-                    <span className={cx('stepBar')} />
-                    <span className={cx('stepLabel')}>{`${step}. ${label}`}</span>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-
-          {isWizard && wizardStep === 1 && (
-            <section className={cx('setupSection')}>
-              <h2>어디에 두셨나요?</h2>
-              <RoomPicker rooms={rooms} selectedLabel={room} availableRegisteredLabel={initialRoom} onSelect={setRoom} />
-            </section>
-          )}
-
-          {isWizard && wizardStep === 2 && (
-            <section className={cx('setupSection')}>
-              <h2>기기를 이렇게 놓아 주세요</h2>
-              <div className={cx('cameraGuide')}>
-                <svg className={cx('guideIllustration')} viewBox="0 0 104 80" fill="none" aria-hidden="true">
-                  <path d="M8 74H96" stroke="#cfc6bc" strokeWidth="2.5" strokeLinecap="round" />
-                  <rect x="26" y="12" width="40" height="54" rx="6" fill="#fff" stroke="var(--sb-brand)" strokeWidth="2.5" transform="rotate(-8 46 39)" />
-                  <circle cx="44" cy="20" r="2.4" fill="var(--sb-brand)" transform="rotate(-8 46 39)" />
-                  <path d="m56 66 8 8" stroke="var(--sb-brand)" strokeWidth="2.5" strokeLinecap="round" />
-                  <path d="M62 60q16-2 18 10v4" stroke="#8a827b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-                  <rect x="76" y="66" width="10" height="8" rx="2" fill="#8a827b" />
-                </svg>
-                <p>방 전체가 보이는 곳에 세워 두고, 화면을 켠 채 충전기를 연결해 주세요</p>
-              </div>
-            </section>
-          )}
-
-          {isWizard && wizardStep === 3 && (
-            <section className={cx('setupSection')}>
-              <h2>어떻게 촬영할까요?</h2>
-              {facingRadios}
-            </section>
-          )}
-
-          {isWizard && wizardStep === 4 && <h2 className={cx('sectionTitle')}>이렇게 보여요</h2>}
-
-          {isExisting && status === 'off' && (
-            <section className={cx('setupSection')}>
-              <h2>어떻게 촬영할까요?</h2>
-              {facingRadios}
-              {isCameraRunning && (
-                <p className={cx('previewHint')}>
-                  이 화면에서는 아직 송출하고 있지 않아요. &quot;카메라 켜기&quot;를 누르면 이어서 보내요.
-                </p>
-              )}
-            </section>
-          )}
-
-          {/* 캔버스는 송출용 toBlob 원본이라 접어도 DOM에 남긴다(높이만 0) */}
-          <div className={cx('previewBox', { collapsed: !isPreviewVisible })} aria-hidden={!isPreviewVisible}>
-            <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline />
-            <canvas ref={canvasRef} className={cx('canvas')} />
-            {status !== 'off' && (
-              <span className={cx('liveBadge', { live: status === 'streaming' })}>
-                {status === 'streaming' ? '지금 촬영 중' : '미리보기'}
+    <>
+      {/* 송출 원본. 창(숨겨질 수 있음) 밖에 둔다 - 크롬은 보이지 않는 곳의 무음 영상은 자동 재생을 시작하지 않아,
+          창을 열지 않고 카드의 '카메라 켜기'로 시작하면 영상이 멈춰 있어 송출되지 않았다(2026-10-15 gosky) */}
+      <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline aria-hidden="true" />
+      <div className={cx('overlay', { hidden: !isOpen })} role="presentation" aria-hidden={!isOpen} onClick={handleClose}>
+        <div
+          className={cx('modal')}
+          role="dialog"
+          aria-modal={isOpen || undefined}
+          aria-label={title}
+          inert={!isOpen}
+          onClick={event => event.stopPropagation()}
+        >
+          <header className={cx('header')}>
+            <strong>{title}</strong>
+            {viewBadge && (
+              <span className={cx('statusBadge', viewBadge.tone)}>
+                <span className={cx('statusDot')} />
+                {viewBadge.label}
               </span>
             )}
+            <button type="button" className={cx('closeButton', { boxed: isViewOnly })} onClick={handleClose} aria-label="닫기">
+              ×
+            </button>
+          </header>
+
+          <div className={cx('body')}>
+            {isWizard && (
+              <ol className={cx('stepper')} aria-label="등록 단계">
+                {REGISTER_STEPS.map((label, index) => {
+                  const step = index + 1;
+                  return (
+                    <li
+                      key={label}
+                      className={cx('stepItem', { done: step < wizardStep, current: step === wizardStep })}
+                      aria-current={step === wizardStep ? 'step' : undefined}
+                    >
+                      <span className={cx('stepBar')} />
+                      <span className={cx('stepLabel')}>{`${step}. ${label}`}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+
+            {isWizard && wizardStep === 1 && (
+              <section className={cx('setupSection')}>
+                <h2>어디에 두셨나요?</h2>
+                <RoomPicker rooms={rooms} selectedLabel={room} availableRegisteredLabel={initialRoom} onSelect={setRoom} />
+              </section>
+            )}
+
+            {isWizard && wizardStep === 2 && (
+              <section className={cx('setupSection')}>
+                <h2>기기를 이렇게 놓아 주세요</h2>
+                <div className={cx('cameraGuide')}>
+                  <svg className={cx('guideIllustration')} viewBox="0 0 104 80" fill="none" aria-hidden="true">
+                    <path d="M8 74H96" stroke="#cfc6bc" strokeWidth="2.5" strokeLinecap="round" />
+                    <rect x="26" y="12" width="40" height="54" rx="6" fill="#fff" stroke="var(--sb-brand)" strokeWidth="2.5" transform="rotate(-8 46 39)" />
+                    <circle cx="44" cy="20" r="2.4" fill="var(--sb-brand)" transform="rotate(-8 46 39)" />
+                    <path d="m56 66 8 8" stroke="var(--sb-brand)" strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M62 60q16-2 18 10v4" stroke="#8a827b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                    <rect x="76" y="66" width="10" height="8" rx="2" fill="#8a827b" />
+                  </svg>
+                  <p>방 전체가 보이는 곳에 세워 두고, 화면을 켠 채 충전기를 연결해 주세요</p>
+                </div>
+              </section>
+            )}
+
+            {isWizard && wizardStep === 3 && (
+              <section className={cx('setupSection')}>
+                <h2>어떻게 촬영할까요?</h2>
+                {facingRadios}
+              </section>
+            )}
+
+            {isWizard && wizardStep === 4 && <h2 className={cx('sectionTitle')}>이렇게 보여요</h2>}
+
+            {isExisting && status === 'off' && (
+              <section className={cx('setupSection')}>
+                <h2>어떻게 촬영할까요?</h2>
+                {facingRadios}
+                {isCameraRunning && (
+                  <p className={cx('previewHint')}>
+                    이 화면에서는 아직 송출하고 있지 않아요. &quot;카메라 켜기&quot;를 누르면 이어서 보내요.
+                  </p>
+                )}
+              </section>
+            )}
+
+            {/* 캔버스는 송출용 toBlob 원본이라 접어도 DOM에 남긴다(높이만 0) */}
+            <div className={cx('previewBox', { collapsed: !isPreviewVisible })} aria-hidden={!isPreviewVisible}>
+              <canvas ref={canvasRef} className={cx('canvas')} />
+              {status !== 'off' && (
+                <span className={cx('liveBadge', { live: status === 'streaming' })}>
+                  {status === 'streaming' ? '지금 촬영 중' : '미리보기'}
+                </span>
+              )}
+            </div>
+
+            {isWizard && wizardStep === 4 && (
+              <dl className={cx('summary')}>
+                <div>
+                  <dt>방</dt>
+                  <dd>{room}</dd>
+                </div>
+                <div>
+                  <dt>촬영 방식</dt>
+                  <dd>{getFacingLabel(facing)}</dd>
+                </div>
+              </dl>
+            )}
+
+            {showRotateHint && (
+              <p className={cx('rotateHint')}>
+                <span className={cx('rotateHintIcon')}>
+                  <Icon name="refresh" size={18} decorative />
+                </span>
+                <span>
+                  휴대폰을 가로로 두셨는데 화면이 세로로 보이면 휴대폰 설정에서 <strong>&apos;자동 회전&apos;</strong>을 켜 주세요.
+                </span>
+              </p>
+            )}
+
+            {status === 'streaming' && isUnstable && (
+              <p className={cx('error')}>송출이 끊기고 있어요. 화면을 켜 둔 채 잠시 기다려 주세요. 연결되면 자동으로 이어집니다.</p>
+            )}
+
+            {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
           </div>
 
-          {isWizard && wizardStep === 4 && (
-            <dl className={cx('summary')}>
-              <div>
-                <dt>방</dt>
-                <dd>{room}</dd>
-              </div>
-              <div>
-                <dt>촬영 방식</dt>
-                <dd>{getFacingLabel(facing)}</dd>
-              </div>
-            </dl>
-          )}
-
-          {showRotateHint && (
-            <p className={cx('rotateHint')}>
-              <span className={cx('rotateHintIcon')}>
-                <Icon name="refresh" size={18} decorative />
-              </span>
-              <span>
-                휴대폰을 가로로 두셨는데 화면이 세로로 보이면 휴대폰 설정에서 <strong>&apos;자동 회전&apos;</strong>을 켜 주세요.
-              </span>
-            </p>
-          )}
-
-          {status === 'streaming' && isUnstable && (
-            <p className={cx('error')}>송출이 끊기고 있어요. 화면을 켜 둔 채 잠시 기다려 주세요. 연결되면 자동으로 이어집니다.</p>
-          )}
-
-          {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
-        </div>
-
-        <footer className={cx('footer')}>
-          {isViewOnly ? (
-            <>
-              <button type="button" className={cx('secondaryButton', 'accent')} onClick={() => void handleViewStop()}>
-                카메라 끄기
-              </button>
-              <button type="button" className={cx('primaryButton')} onClick={handleClose}>
-                닫기
-              </button>
-            </>
-          ) : isWizard ? (
-            <>
-              {wizardStep > 1 && (
-                <button type="button" className={cx('secondaryButton')} disabled={isRegisterBusy} onClick={handleWizardBack}>
-                  이전
+          <footer className={cx('footer')}>
+            {isViewOnly ? (
+              <>
+                <button type="button" className={cx('secondaryButton', 'accent')} onClick={() => void handleViewStop()}>
+                  카메라 끄기
                 </button>
-              )}
-              {wizardStep < 4 ? (
+                <button type="button" className={cx('primaryButton')} onClick={handleClose}>
+                  닫기
+                </button>
+              </>
+            ) : isWizard ? (
+              <>
+                {wizardStep > 1 && (
+                  <button type="button" className={cx('secondaryButton')} disabled={isRegisterBusy} onClick={handleWizardBack}>
+                    이전
+                  </button>
+                )}
+                {wizardStep < 4 ? (
+                  <button
+                    type="button"
+                    className={cx('primaryButton')}
+                    disabled={!canGoNextStep(wizardStep, { room, facingChosen })}
+                    onClick={handleWizardNext}
+                  >
+                    {wizardStep === 2 ? '이렇게 놓았어요' : '다음'}
+                  </button>
+                ) : status === 'off' ? (
+                  <button type="button" className={cx('primaryButton')} onClick={() => void handleStartMedia()}>
+                    카메라 다시 켜기
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={cx('primaryButton')}
+                    disabled={!room || status !== 'ready' || isRegisterBusy}
+                    onClick={() => void handleRegister()}
+                  >
+                    {isRegisterBusy ? '촬영 시작하는 중...' : '등록하고 촬영 시작'}
+                  </button>
+                )}
+              </>
+            ) : status === 'off' ? (
+              <>
+                <button type="button" className={cx('secondaryButton')} onClick={handleClose}>
+                  닫기
+                </button>
+                <button type="button" className={cx('primaryButton')} disabled={isStartingStream} onClick={handleTurnOn}>
+                  {isStartingStream ? '카메라 켜는 중...' : '카메라 켜기'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className={cx('secondaryButton')} disabled={isRegisterBusy} onClick={() => void handleStopMedia()}>
+                  미리보기 끄기
+                </button>
                 <button
                   type="button"
                   className={cx('primaryButton')}
-                  disabled={!canGoNextStep(wizardStep, { room, facingChosen })}
-                  onClick={handleWizardNext}
-                >
-                  {wizardStep === 2 ? '이렇게 놓았어요' : '다음'}
-                </button>
-              ) : status === 'off' ? (
-                <button type="button" className={cx('primaryButton')} onClick={() => void handleStartMedia()}>
-                  카메라 다시 켜기
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className={cx('primaryButton')}
-                  disabled={!room || status !== 'ready' || isRegisterBusy}
+                  disabled={!room || isRegisterBusy}
                   onClick={() => void handleRegister()}
                 >
-                  {isRegisterBusy ? '촬영 시작하는 중...' : '등록하고 촬영 시작'}
+                  {isRegisterBusy ? '촬영 시작하는 중...' : '촬영 다시 시작'}
                 </button>
-              )}
-            </>
-          ) : status === 'off' ? (
-            <>
-              <button type="button" className={cx('secondaryButton')} onClick={handleClose}>
-                닫기
-              </button>
-              <button type="button" className={cx('primaryButton')} disabled={isStartingStream} onClick={handleTurnOn}>
-                {isStartingStream ? '카메라 켜는 중...' : '카메라 켜기'}
-              </button>
-            </>
-          ) : (
-            <>
-              <button type="button" className={cx('secondaryButton')} disabled={isRegisterBusy} onClick={() => void handleStopMedia()}>
-                미리보기 끄기
-              </button>
-              <button
-                type="button"
-                className={cx('primaryButton')}
-                disabled={!room || isRegisterBusy}
-                onClick={() => void handleRegister()}
-              >
-                {isRegisterBusy ? '촬영 시작하는 중...' : '촬영 다시 시작'}
-              </button>
-            </>
-          )}
-        </footer>
+              </>
+            )}
+          </footer>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
