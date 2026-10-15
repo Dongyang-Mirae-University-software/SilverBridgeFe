@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  isMobileCameraDevice,
+  isSourceFresh,
+  shouldRecoverCamera,
   canGoNextStep,
   formatRegisteredDate,
   getFacingLabel,
@@ -163,5 +166,62 @@ describe('getFacingLabel', () => {
     expect(getFacingLabel('user')).toBe('전면 카메라');
     expect(getFacingLabel('environment')).toBe('후면 카메라');
     expect(getFacingLabel('screen')).toBe('화면');
+  });
+});
+
+describe('isSourceFresh - 멈춘 장면은 보내지 않는다', () => {
+  const live = {
+    isScreen: false,
+    visible: true,
+    hiddenStopsCamera: true,
+    trackLive: true,
+    trackMuted: false,
+    videoPaused: false,
+  };
+  it('카메라가 살아 있고 화면이 보이면 보낸다(고정된 카메라의 조용한 장면도 보낸다)', () => {
+    expect(isSourceFresh(live)).toBe(true);
+  });
+  it('폰 화면이 꺼지면(숨겨짐) 보내지 않는다', () => {
+    expect(isSourceFresh({ ...live, visible: false })).toBe(false);
+  });
+  it('PC는 탭이 숨겨져도 웹캠이 계속 찍으므로 보낸다', () => {
+    expect(isSourceFresh({ ...live, visible: false, hiddenStopsCamera: false })).toBe(true);
+  });
+  it('카메라가 끊겼거나·일시 중지됐거나·영상이 멈췄으면 보내지 않는다', () => {
+    expect(isSourceFresh({ ...live, trackLive: false })).toBe(false);
+    expect(isSourceFresh({ ...live, trackMuted: true })).toBe(false);
+    expect(isSourceFresh({ ...live, videoPaused: true })).toBe(false);
+  });
+  it('화면 공유는 숨겨진 채 쓰는 게 정상이라 트랙만 본다', () => {
+    expect(isSourceFresh({ ...live, isScreen: true, visible: false, videoPaused: true, trackMuted: true })).toBe(true);
+    expect(isSourceFresh({ ...live, isScreen: true, trackLive: false })).toBe(false);
+  });
+});
+
+describe('shouldRecoverCamera', () => {
+  const base = { isScreen: false, visible: true, staleForMs: 3000, msSinceLastRecover: 10000, recovering: false };
+  it('화면이 보이고 3초 넘게 멈춰 있으면 카메라를 다시 켠다', () => {
+    expect(shouldRecoverCamera(base)).toBe(true);
+  });
+  it('멈춘 지 얼마 안 됐거나, 방금 시도했거나, 시도 중이면 기다린다', () => {
+    expect(shouldRecoverCamera({ ...base, staleForMs: 2999 })).toBe(false);
+    expect(shouldRecoverCamera({ ...base, msSinceLastRecover: 9999 })).toBe(false);
+    expect(shouldRecoverCamera({ ...base, recovering: true })).toBe(false);
+  });
+  it('화면이 꺼져 있는 동안·화면 공유는 자동으로 다시 켜지 않는다', () => {
+    expect(shouldRecoverCamera({ ...base, visible: false })).toBe(false);
+    expect(shouldRecoverCamera({ ...base, isScreen: true })).toBe(false);
+  });
+});
+
+describe('isMobileCameraDevice', () => {
+  it('안드로이드·아이폰·아이패드는 모바일', () => {
+    expect(isMobileCameraDevice('Mozilla/5.0 (Linux; Android 14; SM-S918N)', 5)).toBe(true);
+    expect(isMobileCameraDevice('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', 5)).toBe(true);
+    expect(isMobileCameraDevice('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 5)).toBe(true);   // iPadOS
+  });
+  it('PC 브라우저는 모바일이 아니다', () => {
+    expect(isMobileCameraDevice('Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 0)).toBe(false);
+    expect(isMobileCameraDevice('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 0)).toBe(false);
   });
 });
