@@ -83,7 +83,11 @@ function setStoredFacing(facing: CameraFacing) {
   }
 }
 
-export type CameraRegisterModalHandle = { turnOn: () => Promise<string | null> };
+export type CameraRegisterModalHandle = {
+  turnOn: () => Promise<string | null>;
+  // 이 탭의 송출을 끈다(이 기기의 카메라를 등록 해제했을 때 - 지워진 카메라로 계속 보내지 않게)
+  turnOff: () => Promise<void>;
+};
 
 export function CameraRegisterModal({
   initialRoom,
@@ -436,7 +440,12 @@ export function CameraRegisterModal({
     }
   };
 
-  useImperativeHandle(ref, () => ({ turnOn: turnOnCamera }));
+  const turnOffCamera = async () => {
+    if (status === 'off' && !mediaStreamRef.current) return;
+    await handleStopMedia();
+  };
+
+  useImperativeHandle(ref, () => ({ turnOn: turnOnCamera, turnOff: turnOffCamera }));
 
   useEffect(() => {
     onStartingChangeRef.current?.(isStartingStream);

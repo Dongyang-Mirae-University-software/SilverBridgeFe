@@ -25,12 +25,15 @@ export function WardCameraList({
   primaryAction,
   isConnecting,
   onPrimary,
+  onThisDeviceDeleted,
 }: {
   onRegister: () => void;
   // 이 기기 카드의 주 버튼. 다른 기기 카드에는 버튼을 두지 않는다(영상 시청은 보호자 전용)
   primaryAction: CameraPrimaryAction;
   isConnecting: boolean;
   onPrimary: () => void;
+  // 이 기기의 카메라를 등록 해제했을 때 - 이 탭의 송출을 끄게 한다
+  onThisDeviceDeleted?: () => void;
 }) {
   const { data, isLoading } = useQuery(wardLiveCamerasQueryOptions);
   const cameras = data ?? [];
@@ -39,13 +42,18 @@ export function WardCameraList({
 
   const deleteMutation = useDeleteWardCameraMutation();
 
-  const handleDelete = (camera: WardLiveCamera) => {
+  const handleDelete = (camera: WardLiveCamera, isThisDevice: boolean) => {
     const confirmed = window.confirm(
-      `"${camera.label}" 카메라를 등록 해제할까요?\n해제하면 이 방의 이상 상황 알림이 오지 않고, 저장된 영상도 지워져요.`,
+      `"${camera.label}" 카메라를 등록 해제할까요?\n해제하면 이 방의 이상 상황 알림이 오지 않고, 저장된 영상도 지워져요.` +
+        (isThisDevice ? '\n이 기기의 촬영도 꺼져요.' : ''),
     );
     if (!confirmed) return;
 
     deleteMutation.mutate(camera.id, {
+      // 이 기기의 카메라면 송출도 끈다 - 그대로 두면 지워진 카메라로 계속 보내고, 다시 등록할 때 '카메라 끄기'부터 보인다
+      onSuccess: () => {
+        if (isThisDevice) onThisDeviceDeleted?.();
+      },
       onError: error => showToast(getErrorMessage(error, '카메라를 삭제하지 못했습니다.'), { variant: 'error' }),
     });
   };
@@ -108,7 +116,7 @@ export function WardCameraList({
                 <button type="button" className={cx('linkButton')} onClick={() => setRenamingCamera(camera)}>
                   방 이름 바꾸기
                 </button>
-                <button type="button" className={cx('linkButton', 'danger')} onClick={() => handleDelete(camera)}>
+                <button type="button" className={cx('linkButton', 'danger')} onClick={() => handleDelete(camera, isThisDevice)}>
                   등록 해제
                 </button>
               </div>
