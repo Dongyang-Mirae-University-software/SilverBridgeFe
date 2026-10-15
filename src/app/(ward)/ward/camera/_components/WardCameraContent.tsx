@@ -78,6 +78,10 @@ export function WardCameraContent() {
         primaryAction={action}
         isConnecting={isConnecting}
         onPrimary={handlePrimary}
+        onThisDeviceDeleted={() => {
+          setIsRegisterOpen(false);
+          void modalRef.current?.turnOff();
+        }}
       />
 
       <CameraRegisterModal
