@@ -30,3 +30,22 @@ export function pickInitialSessionId(
   const candidates = initialWardId ? sessions.filter(session => session.wardId === initialWardId) : sessions;
   return (candidates.find(session => session.status === 'running') ?? candidates[0])?.sessionId;
 }
+
+type LiveStatus = GuardianLiveCamera['status'] | undefined;
+
+// 보고 있는 카메라의 송출 상태가 바뀔 때 영상 연결을 어떻게 할지.
+// 영상 주소에는 1회용 티켓이 들어 있어 한 번 끊기면 다시 쓸 수 없다(BE '영상 연결이 만료되었습니다').
+// - 끊김(disconnected·offline)으로 바뀌면 써 버린 주소를 버린다('drop')
+// - 끊김에서 송출 중(running)으로 돌아오면 새 티켓으로 다시 연다('reopen') - 상태가 바뀔 때 한 번뿐이라 반복 요청이 없다
+// 다른 카메라로 바꾸는 중이거나 상태를 모르면(null·조회 전) 아무것도 하지 않는다 - 카메라 선택이 직접 연다.
+export function getStreamResumeAction(
+  previous: { sessionId: string | null; status: LiveStatus },
+  next: { sessionId: string | null; status: LiveStatus },
+): 'drop' | 'reopen' | 'none' {
+  if (!next.sessionId || previous.sessionId !== next.sessionId || previous.status === next.status) return 'none';
+  const wasDown = previous.status === 'disconnected' || previous.status === 'offline';
+  const isDown = next.status === 'disconnected' || next.status === 'offline';
+  if (isDown && !wasDown) return 'drop';
+  if (wasDown && next.status === 'running') return 'reopen';
+  return 'none';
+}
