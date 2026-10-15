@@ -49,3 +49,10 @@ export function getStreamResumeAction(
   if (wasDown && next.status === 'running') return 'reopen';
   return 'none';
 }
+
+// 보고 있는 카메라를 다시 골라야 하는지 - 목록에 카메라가 있는데 고른 카메라가 없을 때.
+// 처음 열 때 목록이 비어 있었거나, 보는 사이 피보호자가 등록 해제 후 다시 등록해 세션이 바뀐 경우다
+// (예전에는 사라진 세션을 붙든 채 '영상이 오지 않아요'만 보였다, 2026-10-15).
+export function needsReselect(sessions: Array<Pick<GuardianLiveCamera, 'sessionId'>>, selectedId: string | null): boolean {
+  return sessions.length > 0 && !sessions.some(session => session.sessionId === selectedId);
+}

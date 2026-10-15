@@ -432,15 +432,18 @@ export function CameraRegisterModal({
       previewTimerRef.current = null;
     }
     frameQueueRef.current = [];
-    // 보내던 프레임이 다 끝난 뒤에 중지한다 - 중지 뒤에 늦게 도착한 프레임이 AI 세션을 '송출 중'으로 되살려
-    // 끈 카메라가 보호자·피보호자 화면에 계속 '켜짐'으로 남았다(2026-10-15 gosky)
-    await waitForInFlightUploads();
-    if (sessionId) await stopStreamSession(sessionId).catch(() => {});
-    await releaseScreenWakeLock();
+    // 화면(카메라·꺼짐 표시)은 바로 끈다 - 아래 마무리를 기다리는 몇 초 동안 '송출 중'으로 남아, 등록 해제 직후
+    // 등록 창을 열면 회전 안내가 모든 단계에 뜨고 촬영 방식이 잠겼다(2026-10-15)
     mediaStreamRef.current?.getTracks().forEach(track => track.stop());
     mediaStreamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
     setStatus('off');
+    void releaseScreenWakeLock();
+    // 보내던 프레임이 다 끝난 뒤에 중지한다 - 중지 뒤에 늦게 도착한 프레임이 AI 세션을 '송출 중'으로 되살려
+    // 끈 카메라가 보호자·피보호자 화면에 계속 '켜짐'으로 남았다(2026-10-15 gosky)
+    await waitForInFlightUploads();
+    // 기다리는 사이 같은 카메라로 다시 켰으면 중지하지 않는다(새로 켠 송출을 끄게 된다)
+    if (sessionId && liveSessionIdRef.current !== sessionId) await stopStreamSession(sessionId).catch(() => {});
     // 끈 상태가 15초 폴링을 기다리지 않고 바로 보이게 한다
     void queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey });
   };
@@ -642,8 +645,8 @@ export function CameraRegisterModal({
 
   // 화면 보기의 '카메라 끄기' - 송출을 끄고 창도 닫는다(카드가 '카메라 켜기'로 바뀐다)
   const handleViewStop = async () => {
+    onClose();   // 먼저 닫는다 - 마무리를 기다리는 동안 '카메라 켜기' 화면이 비치지 않게
     await handleStopMedia();
-    onClose();
   };
 
   // 모달 안의 '카메라 켜기' - 실패 사유는 모달 오류 영역에 보인다
@@ -654,7 +657,8 @@ export function CameraRegisterModal({
   const title = getModalTitle(initialRoom, status === 'streaming');
   const viewBadge = isViewOnly ? getCardStatus({ status: connectionStatus, isThisDevice: true, isConnecting }) : null;
   const isRegisterBusy = registerMutation.isPending || isStartingStream || isRegistering;
-  const showRotateHint = status !== 'off' && facing !== 'screen' && isPortrait;
+  // 영상이 보이는 화면(미리보기·화면 보기)에서만 안내한다
+  const showRotateHint = isPreviewVisible && status !== 'off' && facing !== 'screen' && isPortrait;
 
   const chooseFacing = (value: CameraFacing) => {
     setFacing(value);
