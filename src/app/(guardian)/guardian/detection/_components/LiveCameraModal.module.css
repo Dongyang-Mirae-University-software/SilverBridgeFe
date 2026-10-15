@@ -172,60 +172,11 @@
   background: #e0392f;
 }
 
-.connectionRow {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 17px 21px 14px;
-  color: #827970;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.connectionBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid #3a9d6f;
-  border-radius: 999px;
-  background: #edf9f2;
-  color: #26895c;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 7px 10px;
-}
-
-.connectionBadge.offline {
-  border-color: #cfc5bd;
-  background: #f7f4f1;
-  color: #877e76;
-}
-
-.connectionBadge.checking {
-  border-color: #e3b46e;
-  background: #fff8e8;
-  color: #a66d15;
-}
-
-.connectionDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
 .switchRow {
   display: flex;
   flex-direction: column;
   gap: 11px;
-  padding: 1px 21px 20px;
-}
-
-.switchLabel {
-  color: #827970;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  padding: 18px 21px 6px;
 }
 
 .switchChips {
@@ -263,7 +214,11 @@
 }
 
 .switchStatusDot.running {
-  background: #4ade80;
+  background: #2e8559;
+}
+
+.switchStatusDot.offline {
+  background: #c0392b;
 }
 
 .switchStatusDot.checking {
@@ -324,12 +279,8 @@
     border-radius: 12px;
   }
 
-  .connectionRow {
-    padding: 14px 16px 12px;
-  }
-
   .switchRow {
-    padding: 1px 16px 16px;
+    padding: 14px 16px 4px;
   }
 
   .switchChips {
