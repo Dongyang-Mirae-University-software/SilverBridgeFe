@@ -8,7 +8,13 @@ import { createStreamSession, stopStreamSession, uploadFrame } from '@/service/a
 import { getWardCameras } from '@/service/api/ward/camera';
 import { Icon } from '@/components/Icon';
 import { getHttpStatus, getRetryAfterMs } from '@/lib/api/streamClient';
-import { canRecreateSession, getRecreateBackoffMs, isSessionNotFound, isSurveillanceLost } from './streamRecovery';
+import {
+  canRecreateSession,
+  getRecreateBackoffMs,
+  isSessionNotFound,
+  isSurveillanceLost,
+  isUploadUnstable,
+} from './streamRecovery';
 import { getStoredDeviceId, setStoredDeviceId } from '@/lib/device/deviceId';
 import { showToast } from '@/store/toastStore';
 import {
@@ -49,8 +55,6 @@ const CAMERA_FACING_STORAGE_KEY = 'silverbridge_ward_camera_facing';
 const MAX_IN_FLIGHT = 2;
 const STOP_DRAIN_TIMEOUT_MS = 3000;
 // 연속 업로드 실패가 이 횟수 또는 시간을 넘으면 사용자에게 알린다
-const UNSTABLE_FAIL_COUNT = 5;
-const UNSTABLE_FAIL_MS = 3000;
 const MEDIA_PERMISSION_MESSAGE = '카메라를 켜지 못했어요. 브라우저의 카메라 권한을 확인해 주세요.';
 const RESTART_FAILED_MESSAGE = '카메라를 켜지 못했어요. 잠시 후 다시 시도해 주세요.';
 const CAMERA_STOPPED_MESSAGE = '카메라가 멈춰서 촬영을 껐어요. "카메라 켜기"를 눌러 다시 시작해 주세요.';
@@ -178,7 +182,6 @@ export function CameraRegisterModal({
   const refreshOnFirstUploadRef = useRef(false);
   // 권한 프롬프트·재시작 중 중복 실행 방지(state 는 비동기라 같은 틱의 두 번째 호출을 못 막는다)
   const startingRef = useRef(false);
-  const failCountRef = useRef(0);
   const failSinceRef = useRef<number | null>(null);
   const onUnstableChangeRef = useRef(onUnstableChange);
   onUnstableChangeRef.current = onUnstableChange;
@@ -435,7 +438,6 @@ export function CameraRegisterModal({
 
   const resetUploadHealth = () => {
     pausedUntilRef.current = 0;
-    failCountRef.current = 0;
     failSinceRef.current = null;
     recreateAttemptRef.current = 0;
     nextRecreateAtRef.current = 0;
@@ -448,11 +450,8 @@ export function CameraRegisterModal({
     if (getHttpStatus(error) === 429) pausedUntilRef.current = Date.now() + getRetryAfterMs(error);
 
     const now = Date.now();
-    failCountRef.current += 1;
     failSinceRef.current ??= now;
-    if (failCountRef.current >= UNSTABLE_FAIL_COUNT || now - failSinceRef.current >= UNSTABLE_FAIL_MS) {
-      updateUnstable(true);
-    }
+    if (isUploadUnstable(failSinceRef.current, now)) updateUnstable(true);
     if (isSurveillanceLost(failSinceRef.current, now)) updateSurveillanceLost(true);
     // 업로드 실패 원인을 운영에서 볼 수 있게 10초에 한 번만 남긴다(토큰·세션 ID·응답 본문은 남기지 않는다)
     if (now - lastFailLogAtRef.current >= 10_000) {
@@ -873,6 +872,12 @@ export function CameraRegisterModal({
                   {status === 'streaming' ? '지금 촬영 중' : '미리보기'}
                 </span>
               )}
+              {/* 10초 넘게 끊기면 영상을 가리지 않는 작은 표시, 30초를 넘기면 아래 덮개가 대신한다 */}
+              {status === 'streaming' && isUnstable && !isSurveillanceLostState && (
+                <span className={cx('unstableBadge')} role="status">
+                  연결이 불안정해요
+                </span>
+              )}
               {/* 30초 넘게 끊기면 촬영 화면 위에 크게 알린다(아래쪽 안내는 눈에 잘 띄지 않았다) */}
               {status === 'streaming' && isSurveillanceLostState && (
                 <div className={cx('lostOverlay')} role="alert">
@@ -905,10 +910,6 @@ export function CameraRegisterModal({
                   휴대폰을 가로로 두셨는데 화면이 세로로 보이면 휴대폰 설정에서 <strong>&apos;자동 회전&apos;</strong>을 켜 주세요.
                 </span>
               </p>
-            )}
-
-            {status === 'streaming' && isUnstable && !isSurveillanceLostState && (
-              <p className={cx('error')}>송출이 끊기고 있어요. 화면을 켜 둔 채 잠시 기다려 주세요. 연결되면 자동으로 이어집니다.</p>
             )}
 
             {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
