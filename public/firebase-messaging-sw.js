@@ -26,6 +26,8 @@ function getNotificationPath(data) {
       return '/';
     case 'WARD_SOS':
       return '/guardian/sos';
+    case 'CAMERA_LINK_LOST':
+      return '/guardian/detection';
     default:
       return '/';
   }
