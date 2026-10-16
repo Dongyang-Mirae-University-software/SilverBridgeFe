@@ -6,10 +6,15 @@ export const SESSION_NOT_FOUND_CODE = 'STREAM_SESSION_NOT_FOUND';
 export const SURVEILLANCE_LOST_MS = 30_000;
 const RECREATE_BACKOFF_MS = [2_000, 4_000, 8_000, 30_000];
 
-// 프록시 자체의 404(허용되지 않는 요청)는 errorCode 가 없어 상태만으로는 구분되지 않는다
+// 프레임 업로드의 404 = 세션이 없다. AI 서버는 errorCode 가 든 JSON 으로 답하지만, 앞단 프록시(nginx)가 404 를
+// HTML 페이지로 바꿔 돌려주어 브라우저에는 errorCode 가 없는 404 가 온다(2026-10-16 gosky 실측). 그래서 404 면서
+// errorCode 가 없거나 SESSION_NOT_FOUND 일 때를 모두 '세션 없음'으로 본다. 다른 errorCode 가 든 404 는 제외.
+// 업로드 경로 자체는 허용 경로뿐이라 다른 원인의 404 가 와도 재생성은 멱등이고 대기 시간(백오프)이 있어 해가 없다.
 export function isSessionNotFound(error: unknown): boolean {
-  const response = (error as { response?: { status?: number; data?: { errorCode?: unknown } } })?.response;
-  return response?.status === 404 && response.data?.errorCode === SESSION_NOT_FOUND_CODE;
+  const response = (error as { response?: { status?: number; data?: unknown } })?.response;
+  if (response?.status !== 404) return false;
+  const errorCode = (response.data as { errorCode?: unknown } | null | undefined)?.errorCode;
+  return errorCode === undefined || errorCode === SESSION_NOT_FOUND_CODE;
 }
 
 // attempt 0 → 2초, 1 → 4초, 2 → 8초, 3 이상 → 30초
