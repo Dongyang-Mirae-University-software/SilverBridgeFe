@@ -11,13 +11,18 @@ import {
 const err = (status: number, errorCode?: string) => ({ response: { status, data: errorCode ? { errorCode } : {} } });
 
 describe('isSessionNotFound', () => {
-  it('404 + STREAM_SESSION_NOT_FOUND 만 true', () => {
+  it('404 + STREAM_SESSION_NOT_FOUND 는 true', () => {
     expect(isSessionNotFound(err(404, 'STREAM_SESSION_NOT_FOUND'))).toBe(true);
   });
-  it('코드 없는 404(프록시 거절)·다른 상태·네트워크 오류는 false', () => {
-    expect(isSessionNotFound(err(404))).toBe(false);
+  it('errorCode 가 없는 404(앞단 프록시가 HTML 로 바꾼 경우 포함)도 true', () => {
+    expect(isSessionNotFound(err(404))).toBe(true);
+    expect(isSessionNotFound({ response: { status: 404, data: '<!doctype html><title>404</title>' } })).toBe(true);
+    expect(isSessionNotFound({ response: { status: 404, data: null } })).toBe(true);
+  });
+  it('다른 errorCode 의 404·다른 상태·네트워크 오류는 false', () => {
     expect(isSessionNotFound(err(404, 'HTTP_ERROR'))).toBe(false);
     expect(isSessionNotFound(err(500, 'STREAM_SESSION_NOT_FOUND'))).toBe(false);
+    expect(isSessionNotFound(err(429))).toBe(false);
     expect(isSessionNotFound(new Error('Network Error'))).toBe(false);
     expect(isSessionNotFound(undefined)).toBe(false);
   });
