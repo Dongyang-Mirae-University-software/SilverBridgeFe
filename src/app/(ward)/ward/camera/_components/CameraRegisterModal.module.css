@@ -484,3 +484,15 @@
     font-size: 17px;
   }
 }
+
+.lostBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 12px;
+  background: #fff7f5;
+  color: var(--sb-warn);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 16px;
+}

@@ -8,6 +8,7 @@ import { createStreamSession, stopStreamSession, uploadFrame } from '@/service/a
 import { getWardCameras } from '@/service/api/ward/camera';
 import { Icon } from '@/components/Icon';
 import { getHttpStatus, getRetryAfterMs } from '@/lib/api/streamClient';
+import { canRecreateSession, getRecreateBackoffMs, isSessionNotFound, isSurveillanceLost } from './streamRecovery';
 import { getStoredDeviceId, setStoredDeviceId } from '@/lib/device/deviceId';
 import { showToast } from '@/store/toastStore';
 import {
@@ -108,6 +109,7 @@ export function CameraRegisterModal({
   isOpen,
   onClose,
   onUnstableChange,
+  onSurveillanceLostChange,
   onStartingChange,
   onStreamingChange,
   ref,
@@ -126,6 +128,8 @@ export function CameraRegisterModal({
   onClose: () => void;
   // 송출 업로드가 계속 실패 중인지 알린다(모달이 닫혀 있어도 페이지가 안내할 수 있게)
   onUnstableChange?: (unstable: boolean) => void;
+  // 업로드가 30초 넘게 실패하면 true(복구되면 false) - '다시 연결 중입니다' 안내용
+  onSurveillanceLostChange?: (lost: boolean) => void;
   // 이 기기가 송출을 시작하는 중인지 알린다(카드의 '연결하는 중' 표시용)
   onStartingChange?: (starting: boolean) => void;
   // 이 탭이 송출 중인지 알린다(송출 직후 서버가 'running'이 되기 전까지 카드가 '연결하는 중'을 보이게)
@@ -137,6 +141,7 @@ export function CameraRegisterModal({
   const [errorMessage, setErrorMessage] = useState('');
   const [isStartingStream, setIsStartingStream] = useState(false);
   const [isUnstable, setIsUnstable] = useState(false);
+  const [isSurveillanceLostState, setIsSurveillanceLostState] = useState(false);
   // 지금 카메라 영상이 세로인지(자동 회전 안내용)
   const [isPortrait, setIsPortrait] = useState(false);
   // 이미 카메라가 있으면 설정 단계를 줄이고 전송 화면은 기본으로 접는다. 새로 등록할 때는 확인이 필요해 펼친다.
@@ -177,6 +182,13 @@ export function CameraRegisterModal({
   const failSinceRef = useRef<number | null>(null);
   const onUnstableChangeRef = useRef(onUnstableChange);
   onUnstableChangeRef.current = onUnstableChange;
+  const onSurveillanceLostChangeRef = useRef(onSurveillanceLostChange);
+  onSurveillanceLostChangeRef.current = onSurveillanceLostChange;
+  // 세션 자동 복구: 송출 중인 카메라 정보, 진행 중 플래그(동시 404 중복 호출 방지), 다음 시도 허용 시각, 연속 시도 횟수
+  const streamCameraRef = useRef<WardCamera | null>(null);
+  const recreatingRef = useRef(false);
+  const nextRecreateAtRef = useRef(0);
+  const recreateAttemptRef = useRef(0);
   const onStartingChangeRef = useRef(onStartingChange);
   onStartingChangeRef.current = onStartingChange;
   const onStreamingChangeRef = useRef(onStreamingChange);
@@ -392,14 +404,54 @@ export function CameraRegisterModal({
     });
   };
 
+  const updateSurveillanceLost = (lost: boolean) => {
+    setIsSurveillanceLostState(prev => {
+      if (prev !== lost) onSurveillanceLostChangeRef.current?.(lost);
+      return lost;
+    });
+  };
+
+  // AI 서버 재시작 등으로 세션이 사라졌을 때 같은 카메라 정보로 세션을 다시 만든다(사용자 조작 없이).
+  // 송출을 끈 뒤에는 하지 않고, 만드는 사이 껐다면 되살아난 세션을 바로 중지한다.
+  const recreateSession = async (sessionId: string) => {
+    const camera = streamCameraRef.current;
+    const now = Date.now();
+    if (
+      !camera ||
+      !canRecreateSession({
+        now,
+        nextAllowedAt: nextRecreateAtRef.current,
+        recreating: recreatingRef.current,
+        isStillStreaming: liveSessionIdRef.current === sessionId,
+      })
+    ) {
+      return;
+    }
+    recreatingRef.current = true;
+    nextRecreateAtRef.current = now + getRecreateBackoffMs(recreateAttemptRef.current);
+    recreateAttemptRef.current += 1;
+    try {
+      await createStreamSession({ sessionId: camera.sessionId, cameraIdentifier: camera.deviceId, deviceType: 'web' });
+      if (liveSessionIdRef.current === null) await stopStreamSession(sessionId).catch(() => {});
+      else console.info('[stream] 송출 세션을 다시 만들었습니다.');
+    } catch (error) {
+      console.warn('[stream] 송출 세션 재생성 실패', getHttpStatus(error) ?? 'network');
+    } finally {
+      recreatingRef.current = false;
+    }
+  };
+
   const resetUploadHealth = () => {
     pausedUntilRef.current = 0;
     failCountRef.current = 0;
     failSinceRef.current = null;
+    recreateAttemptRef.current = 0;
+    nextRecreateAtRef.current = 0;
     updateUnstable(false);
+    updateSurveillanceLost(false);
   };
 
-  const handleUploadFailure = (error: unknown) => {
+  const handleUploadFailure = (error: unknown, sessionId: string) => {
     // 429: 서버가 쉬라고 한 시간만큼 업로드를 멈춘다(새 프레임은 계속 최신으로 덮어쓴다)
     if (getHttpStatus(error) === 429) pausedUntilRef.current = Date.now() + getRetryAfterMs(error);
 
@@ -409,6 +461,8 @@ export function CameraRegisterModal({
     if (failCountRef.current >= UNSTABLE_FAIL_COUNT || now - failSinceRef.current >= UNSTABLE_FAIL_MS) {
       updateUnstable(true);
     }
+    if (isSurveillanceLost(failSinceRef.current, now)) updateSurveillanceLost(true);
+    if (isSessionNotFound(error)) void recreateSession(sessionId);
   };
 
   // 업로드 중인 프레임이 끝나기를 기다린다(최대 STOP_DRAIN_TIMEOUT_MS - 업로드가 멈춰 있어도 끄기는 진행한다)
@@ -425,6 +479,7 @@ export function CameraRegisterModal({
     staleSinceRef.current = null;
     const sessionId = liveSessionIdRef.current;
     liveSessionIdRef.current = null;
+    streamCameraRef.current = null;
     captureWorkerRef.current?.terminate();
     captureWorkerRef.current = null;
     if (previewTimerRef.current) {
@@ -479,7 +534,7 @@ export function CameraRegisterModal({
             void queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey });
           }
         })
-        .catch(handleUploadFailure)
+        .catch(error => handleUploadFailure(error, sessionId))
         .finally(() => {
           inFlightRef.current -= 1;
           void drainQueue();
@@ -542,6 +597,7 @@ export function CameraRegisterModal({
     });
     resetUploadHealth();
     liveSessionIdRef.current = session.session_id ?? camera.sessionId;
+    streamCameraRef.current = camera;
     setStatus('streaming');
     startCaptureLoop(camera.recommendedFps);
     void requestScreenWakeLock();
@@ -829,7 +885,13 @@ export function CameraRegisterModal({
               </p>
             )}
 
-            {status === 'streaming' && isUnstable && (
+            {status === 'streaming' && isSurveillanceLostState && (
+              <div className={cx('lostBanner')} role="alert">
+                다시 연결 중입니다. 화면을 켜 둔 채 잠시 기다려 주세요.
+              </div>
+            )}
+
+            {status === 'streaming' && isUnstable && !isSurveillanceLostState && (
               <p className={cx('error')}>송출이 끊기고 있어요. 화면을 켜 둔 채 잠시 기다려 주세요. 연결되면 자동으로 이어집니다.</p>
             )}
 
