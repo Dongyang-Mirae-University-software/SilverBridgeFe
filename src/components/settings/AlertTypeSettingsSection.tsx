@@ -51,7 +51,7 @@ export function AlertTypeSettingsSection() {
             </label>
           </div>
 
-          <div className={cx('row')}>
+          <div className={cx('row', 'groupHead')}>
             <div className={cx('meta')}>
               <div className={cx('titleRow')}>
                 <span className={cx('label')}>이상 감지 알림</span>
@@ -67,7 +67,7 @@ export function AlertTypeSettingsSection() {
             </label>
           </div>
 
-          <div className={cx('row')}>
+          <div className={cx('row', 'subRow')}>
             <div className={cx('meta')}>
               <div className={cx('titleRow')}>
                 <span className={cx('label')}>이상 감지 확인 요청</span>
@@ -88,25 +88,7 @@ export function AlertTypeSettingsSection() {
             </label>
           </div>
 
-          <div className={cx('row')}>
-            <div className={cx('meta')}>
-              <div className={cx('titleRow')}>
-                <span className={cx('label')}>복약 알림</span>
-              </div>
-              <span className={cx('desc')}>피보호자가 정해진 시간에 약을 먹지 않으면 알려 드려요</span>
-            </div>
-            <label className={cx('toggle')} aria-label="복약 알림 설정">
-              <input
-                type="checkbox"
-                checked={setting.medication.enabled}
-                disabled={updateMutation.isPending}
-                onChange={event => handleToggle('medication', event.target.checked)}
-              />
-              <span className={cx('toggleThumb')} />
-            </label>
-          </div>
-
-          <div className={cx('row')}>
+          <div className={cx('row', 'subRow')}>
             <div className={cx('meta')}>
               <div className={cx('titleRow')}>
                 <span className={cx('label')}>카메라 연결 끊김 안내</span>
@@ -121,6 +103,24 @@ export function AlertTypeSettingsSection() {
                 checked={setting.cameraLinkLost?.enabled ?? true}
                 disabled={updateMutation.isPending}
                 onChange={event => handleToggle('cameraLinkLost', event.target.checked)}
+              />
+              <span className={cx('toggleThumb')} />
+            </label>
+          </div>
+
+          <div className={cx('row')}>
+            <div className={cx('meta')}>
+              <div className={cx('titleRow')}>
+                <span className={cx('label')}>복약 알림</span>
+              </div>
+              <span className={cx('desc')}>피보호자가 정해진 시간에 약을 먹지 않으면 알려 드려요</span>
+            </div>
+            <label className={cx('toggle')} aria-label="복약 알림 설정">
+              <input
+                type="checkbox"
+                checked={setting.medication.enabled}
+                disabled={updateMutation.isPending}
+                onChange={event => handleToggle('medication', event.target.checked)}
               />
               <span className={cx('toggleThumb')} />
             </label>
