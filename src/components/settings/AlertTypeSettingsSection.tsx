@@ -12,13 +12,14 @@ import styles from './AlertTypeSettingsSection.module.css';
 
 const cx = classNames.bind(styles);
 
-type ToggleableKey = 'anomalyReviewReminder' | 'medication';
+type ToggleableKey = 'anomalyReviewReminder' | 'medication' | 'cameraLinkLost';
 
 const DEFAULT_SETTING: GuardianNotificationTypeSetting = {
   sos: { enabled: true, required: true },
   anomalyDetection: { enabled: true, required: true },
   anomalyReviewReminder: { enabled: true, required: false },
   medication: { enabled: true, required: false },
+  cameraLinkLost: { enabled: true, required: false },
 };
 
 export function AlertTypeSettingsSection() {
@@ -100,6 +101,26 @@ export function AlertTypeSettingsSection() {
                 checked={setting.medication.enabled}
                 disabled={updateMutation.isPending}
                 onChange={event => handleToggle('medication', event.target.checked)}
+              />
+              <span className={cx('toggleThumb')} />
+            </label>
+          </div>
+
+          <div className={cx('row')}>
+            <div className={cx('meta')}>
+              <div className={cx('titleRow')}>
+                <span className={cx('label')}>카메라 연결 끊김 안내</span>
+              </div>
+              <span className={cx('desc')}>
+                카메라가 2분 넘게 연결되지 않을 때 알려 드려요. 이상 감지 알림 자체는 이 설정과 무관하게 항상 와요
+              </span>
+            </div>
+            <label className={cx('toggle')} aria-label="카메라 연결 끊김 안내 설정">
+              <input
+                type="checkbox"
+                checked={setting.cameraLinkLost?.enabled ?? true}
+                disabled={updateMutation.isPending}
+                onChange={event => handleToggle('cameraLinkLost', event.target.checked)}
               />
               <span className={cx('toggleThumb')} />
             </label>

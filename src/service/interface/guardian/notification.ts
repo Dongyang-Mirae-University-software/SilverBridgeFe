@@ -12,9 +12,12 @@ export interface GuardianNotificationTypeSetting {
   anomalyDetection: GuardianNotificationTypeItem;
   anomalyReviewReminder: GuardianNotificationTypeItem;
   medication: GuardianNotificationTypeItem;
+  // 카메라 연결 끊김 안내(BE V61). 옛 서버 응답에는 없을 수 있어 선택값으로 둔다 - 없으면 켜진 것으로 본다
+  cameraLinkLost?: GuardianNotificationTypeItem;
 }
 
 export interface UpdateGuardianNotificationTypeSettingReq {
   anomalyReviewReminder?: boolean;
   medication?: boolean;
+  cameraLinkLost?: boolean;
 }
