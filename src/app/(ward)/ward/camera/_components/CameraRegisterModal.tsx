@@ -190,7 +190,6 @@ export function CameraRegisterModal({
   // 세션 자동 복구: 송출 중인 카메라 정보, 진행 중 플래그(동시 404 중복 호출 방지), 다음 시도 허용 시각, 연속 시도 횟수
   const streamCameraRef = useRef<WardCamera | null>(null);
   const recreatingRef = useRef(false);
-  const lastFailLogAtRef = useRef(0);
   const nextRecreateAtRef = useRef(0);
   const recreateAttemptRef = useRef(0);
   const onStartingChangeRef = useRef(onStartingChange);
@@ -453,20 +452,6 @@ export function CameraRegisterModal({
     failSinceRef.current ??= now;
     if (isUploadUnstable(failSinceRef.current, now)) updateUnstable(true);
     if (isSurveillanceLost(failSinceRef.current, now)) updateSurveillanceLost(true);
-    // 업로드 실패 원인을 운영에서 볼 수 있게 10초에 한 번만 남긴다(토큰·세션 ID·응답 본문은 남기지 않는다)
-    if (now - lastFailLogAtRef.current >= 10_000) {
-      lastFailLogAtRef.current = now;
-      const data = (error as { response?: { data?: unknown } })?.response?.data;
-      console.warn(
-        '[stream] 업로드 실패',
-        `status=${getHttpStatus(error) ?? 'network'}`,
-        `body=${typeof data === 'string' ? 'text' : data ? 'json' : 'none'}`,
-        `notFound=${isSessionNotFound(error)}`,
-        `hasCamera=${Boolean(streamCameraRef.current)}`,
-        `recreating=${recreatingRef.current}`,
-        `waitMs=${Math.max(nextRecreateAtRef.current - now, 0)}`,
-      );
-    }
     if (isSessionNotFound(error)) void recreateSession(sessionId);
   };
 
