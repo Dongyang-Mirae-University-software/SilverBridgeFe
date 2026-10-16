@@ -68,6 +68,7 @@ function getPushRoute(data?: MessagePayload['data'], role?: ConnectionTargetRole
     case 'ANOMALY_REVIEW_REQUIRED':
     case 'ANOMALY_REVIEW_SUMMARY':
     case 'ANOMALY_REVIEW_CONFLICTED':
+    case 'CAMERA_LINK_LOST':
       return '/guardian/detection';
     default:
       return role === 'WARD' ? '/ward' : '/guardian';
@@ -128,6 +129,12 @@ function getConnectionPushNotification(data?: MessagePayload['data'], role?: Con
       return {
         body: `${data?.wardName ?? '피보호자'}님의 ${data?.detectedTypeLabel ?? '이상감지'} 감지에 대해 다른 보호자와 판정이 다릅니다. 다시 확인해 주세요.`,
         title: '판정 확인 요청',
+      };
+    case 'CAMERA_LINK_LOST':
+      // 원인을 단정하지 않는 문구(BE 푸시 본문과 같은 톤) - '꺼졌다'가 아니라 '확인되지 않는다'
+      return {
+        body: `${data?.wardName ?? '피보호자'}님 댁 ${data?.location ?? ''} 카메라의 영상이 확인되지 않아 감시가 멈춰 있을 수 있습니다. 카메라 기기의 송출 상태를 확인해 주세요.`,
+        title: '카메라 연결 확인 필요',
       };
     default:
       return { body: '', title: '알림' };
