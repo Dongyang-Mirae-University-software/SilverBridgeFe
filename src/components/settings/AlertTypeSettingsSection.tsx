@@ -67,45 +67,47 @@ export function AlertTypeSettingsSection() {
             </label>
           </div>
 
-          <div className={cx('row', 'subRow')}>
-            <div className={cx('meta')}>
-              <div className={cx('titleRow')}>
-                <span className={cx('label')}>이상 감지 확인 요청</span>
+          <div className={cx('subGroup')}>
+            <div className={cx('row', 'subRow')}>
+              <div className={cx('meta')}>
+                <div className={cx('titleRow')}>
+                  <span className={cx('label')}>이상 감지 확인 요청</span>
+                </div>
+                <span className={cx('desc')}>
+                  이상 감지에 실제 위험인지 응답하지 않으면 다시 확인을 요청해요. 발생 알림 자체는 이 설정과 무관하게 항상
+                  와요
+                </span>
               </div>
-              <span className={cx('desc')}>
-                이상 감지에 실제 위험인지 응답하지 않으면 다시 확인을 요청해요. 발생 알림 자체는 이 설정과 무관하게 항상
-                와요
-              </span>
+              <label className={cx('toggle')} aria-label="이상 감지 확인 요청 알림 설정">
+                <input
+                  type="checkbox"
+                  checked={setting.anomalyReviewReminder.enabled}
+                  disabled={updateMutation.isPending}
+                  onChange={event => handleToggle('anomalyReviewReminder', event.target.checked)}
+                />
+                <span className={cx('toggleThumb')} />
+              </label>
             </div>
-            <label className={cx('toggle')} aria-label="이상 감지 확인 요청 알림 설정">
-              <input
-                type="checkbox"
-                checked={setting.anomalyReviewReminder.enabled}
-                disabled={updateMutation.isPending}
-                onChange={event => handleToggle('anomalyReviewReminder', event.target.checked)}
-              />
-              <span className={cx('toggleThumb')} />
-            </label>
-          </div>
 
-          <div className={cx('row', 'subRow')}>
-            <div className={cx('meta')}>
-              <div className={cx('titleRow')}>
-                <span className={cx('label')}>카메라 연결 끊김 안내</span>
+            <div className={cx('row', 'subRow')}>
+              <div className={cx('meta')}>
+                <div className={cx('titleRow')}>
+                  <span className={cx('label')}>카메라 연결 끊김 안내</span>
+                </div>
+                <span className={cx('desc')}>
+                  카메라가 2분 넘게 연결되지 않을 때 알려 드려요. 이상 감지 알림 자체는 이 설정과 무관하게 항상 와요
+                </span>
               </div>
-              <span className={cx('desc')}>
-                카메라가 2분 넘게 연결되지 않을 때 알려 드려요. 이상 감지 알림 자체는 이 설정과 무관하게 항상 와요
-              </span>
+              <label className={cx('toggle')} aria-label="카메라 연결 끊김 안내 설정">
+                <input
+                  type="checkbox"
+                  checked={setting.cameraLinkLost?.enabled ?? true}
+                  disabled={updateMutation.isPending}
+                  onChange={event => handleToggle('cameraLinkLost', event.target.checked)}
+                />
+                <span className={cx('toggleThumb')} />
+              </label>
             </div>
-            <label className={cx('toggle')} aria-label="카메라 연결 끊김 안내 설정">
-              <input
-                type="checkbox"
-                checked={setting.cameraLinkLost?.enabled ?? true}
-                disabled={updateMutation.isPending}
-                onChange={event => handleToggle('cameraLinkLost', event.target.checked)}
-              />
-              <span className={cx('toggleThumb')} />
-            </label>
           </div>
 
           <div className={cx('row')}>
