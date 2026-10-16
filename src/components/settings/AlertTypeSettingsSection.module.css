@@ -112,18 +112,36 @@
   opacity: 0.55;
 }
 
-/* 이상 감지 알림 아래에 묶이는 하위 설정(확인 요청·카메라 연결 끊김 안내) - 끌 수 있는 별개 설정이라 토글은 그대로 둔다 */
+/* 이상 감지 알림 아래에 묶이는 하위 설정(확인 요청·카메라 연결 끊김 안내) - 끌 수 있는 별개 설정이라 토글은 그대로 둔다.
+   연한 배경 패널로 들여써서 '이 카드의 하위 설정'으로 읽히게 한다 */
 .groupHead {
   border-bottom: none;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
 }
 
-.subRow {
-  margin-left: 6px;
-  padding-left: 16px;
-  border-left: 3px solid var(--sb-line-soft);
+.subGroup {
+  margin: 0 0 14px 16px;
+  padding: 0 18px;
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  border-bottom: none;
+}
+
+.subGroup .row {
+  padding: 14px 0;
+}
+
+.subGroup .row:last-child {
+  border-bottom: none;
 }
 
 .subRow .label {
   font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  .subGroup {
+    margin-left: 8px;
+    padding: 0 14px;
+  }
 }
