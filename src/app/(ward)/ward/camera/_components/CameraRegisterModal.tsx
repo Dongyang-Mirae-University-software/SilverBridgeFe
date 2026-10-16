@@ -398,19 +398,10 @@ export function CameraRegisterModal({
     }
   };
 
-  const updateUnstable = (unstable: boolean) => {
-    setIsUnstable(prev => {
-      if (prev !== unstable) onUnstableChangeRef.current?.(unstable);
-      return unstable;
-    });
-  };
-
-  const updateSurveillanceLost = (lost: boolean) => {
-    setIsSurveillanceLostState(prev => {
-      if (prev !== lost) onSurveillanceLostChangeRef.current?.(lost);
-      return lost;
-    });
-  };
+  // 부모에게 알리는 일은 아래 effect 가 한다 - setState 업데이터 안에서 부모 setState 를 부르면
+  // '다른 컴포넌트를 그리는 중 상태를 바꿨다'는 React 경고(개발 화면의 1 Issue)가 났다
+  const updateUnstable = (unstable: boolean) => setIsUnstable(unstable);
+  const updateSurveillanceLost = (lost: boolean) => setIsSurveillanceLostState(lost);
 
   // AI 서버 재시작 등으로 세션이 사라졌을 때 같은 카메라 정보로 세션을 다시 만든다(사용자 조작 없이).
   // 송출을 끈 뒤에는 하지 않고, 만드는 사이 껐다면 되살아난 세션을 바로 중지한다.
@@ -669,6 +660,14 @@ export function CameraRegisterModal({
   };
 
   useImperativeHandle(ref, () => ({ turnOn: turnOnCamera, turnOff: turnOffCamera }));
+
+  useEffect(() => {
+    onUnstableChangeRef.current?.(isUnstable);
+  }, [isUnstable]);
+
+  useEffect(() => {
+    onSurveillanceLostChangeRef.current?.(isSurveillanceLostState);
+  }, [isSurveillanceLostState]);
 
   useEffect(() => {
     onStartingChangeRef.current?.(isStartingStream);
