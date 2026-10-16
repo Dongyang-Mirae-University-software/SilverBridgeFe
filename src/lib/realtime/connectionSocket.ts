@@ -1,5 +1,7 @@
 import { Client, IMessage } from '@stomp/stompjs';
 
+import { refreshAccessToken } from '@/lib/api/apiClient';
+import { isAccessTokenExpired } from '@/lib/auth/tokenExpiry';
 import { AuthRole, getAccessToken } from '@/lib/auth/tokenStore';
 import { savePendingConnectionRequest } from './pendingConnectionRequests';
 
@@ -52,6 +54,10 @@ interface ConnectConnectionSocketOptions {
 
 const DEFAULT_SOCKET_URL = 'wss://api.devdmu.gosky.kr/ws';
 const RECONNECT_DELAY_MS = 5000;
+// 서버가 정지·비밀번호 변경·역할 변경 등으로 세션을 닫을 때의 close 사유(close code 1008)
+const AUTH_INVALIDATED_REASON = 'AUTH_INVALIDATED';
+// 연결에 성공하지 못한 채 같은 토큰으로 이만큼 연속 실패하면 토큰을 갱신한 뒤 다시 붙는다
+const MAX_FAILURES_WITH_SAME_TOKEN = 2;
 
 const WARD_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
   { destination: 'connection-request', type: 'CONNECTION_REQUEST' },
@@ -168,14 +174,31 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
 
   let currentAccessToken = accessToken;
   let currentBrokerURL = getSocketUrl(accessToken);
+  // 이 토큰으로는 다시 붙지 않고 먼저 갱신해야 하는지(서버가 세션을 끊었거나 연결에 계속 실패한 경우)
+  let mustRefreshToken = false;
+  let failuresWithSameToken = 0;
   const client = new Client({
     brokerURL: currentBrokerURL,
     reconnectDelay: RECONNECT_DELAY_MS,
-    beforeConnect: () => {
-      const latestAccessToken = getAccessToken();
+    beforeConnect: async () => {
+      let latestAccessToken = getAccessToken();
       if (!latestAccessToken) {
         void client.deactivate();
         return;
+      }
+
+      // 만료된 토큰으로 핸드셰이크를 반복하지 않는다. 갱신이 거절되면(refreshAccessToken 이 세션을 지우고
+      // 로그인 화면으로 보낸다) 재시도를 멈춘다
+      if (mustRefreshToken || isAccessTokenExpired(latestAccessToken)) {
+        try {
+          latestAccessToken = await refreshAccessToken();
+          mustRefreshToken = false;
+          failuresWithSameToken = 0;
+        } catch {
+          console.warn('[WS] 토큰을 갱신하지 못해 연결을 멈췄습니다.');
+          void client.deactivate();
+          return;
+        }
       }
 
       currentAccessToken = latestAccessToken;
@@ -188,6 +211,7 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
   });
 
   client.onConnect = () => {
+    failuresWithSameToken = 0;
     console.info('[WS] CONNECTED - 구독 시작:', maskSocketUrl(currentBrokerURL), '| userId:', userId);
 
     const topics = role === 'WARD' ? WARD_CONNECTION_TOPICS : role === 'GUARDIAN' ? GUARDIAN_CONNECTION_TOPICS : [];
@@ -215,6 +239,16 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
 
   client.onWebSocketClose = event => {
     console.warn('[WS] 연결 종료 — code:', event.code, '| wasClean:', event.wasClean, '| reason:', event.reason || '(없음)');
+
+    if (event.code === 1008 && event.reason === AUTH_INVALIDATED_REASON) {
+      mustRefreshToken = true;
+      return;
+    }
+    // 연결되지 못한 채 닫혔다(핸드셰이크 거절 등) - 같은 토큰으로 계속 두드리지 않고 갱신해 본다
+    if (!client.connected) {
+      failuresWithSameToken += 1;
+      if (failuresWithSameToken >= MAX_FAILURES_WITH_SAME_TOKEN) mustRefreshToken = true;
+    }
   };
 
   client.activate();
