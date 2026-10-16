@@ -128,7 +128,7 @@ export function CameraRegisterModal({
   onClose: () => void;
   // 송출 업로드가 계속 실패 중인지 알린다(모달이 닫혀 있어도 페이지가 안내할 수 있게)
   onUnstableChange?: (unstable: boolean) => void;
-  // 업로드가 30초 넘게 실패하면 true(복구되면 false) - '감시가 멈췄습니다' 안내용
+  // 업로드가 30초 넘게 실패하면 true(복구되면 false) - '다시 연결 중입니다' 안내용
   onSurveillanceLostChange?: (lost: boolean) => void;
   // 이 기기가 송출을 시작하는 중인지 알린다(카드의 '연결하는 중' 표시용)
   onStartingChange?: (starting: boolean) => void;
@@ -887,8 +887,7 @@ export function CameraRegisterModal({
 
             {status === 'streaming' && isSurveillanceLostState && (
               <div className={cx('lostBanner')} role="alert">
-                <strong>감시가 멈췄습니다</strong>
-                <span>다시 연결 중입니다. 화면을 켜 둔 채 잠시 기다려 주세요.</span>
+                다시 연결 중입니다. 화면을 켜 둔 채 잠시 기다려 주세요.
               </div>
             )}
 
