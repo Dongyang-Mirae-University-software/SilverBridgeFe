@@ -19,7 +19,7 @@ export async function getGuardianNotificationTypeSetting() {
   return getResponseData<GuardianNotificationTypeSetting>(response);
 }
 
-// anomalyReviewReminder·medication만 변경 가능 — sos·anomalyDetection을 보내도 무시됨(저장 안 됨, 에러도 아님)
+// anomalyReviewReminder·medication·cameraLinkLost만 변경 가능 — sos·anomalyDetection을 보내도 무시됨(저장 안 됨, 에러도 아님)
 export async function updateGuardianNotificationTypeSetting(body: UpdateGuardianNotificationTypeSettingReq) {
   const response = await apiClient.put<CommonResponse<GuardianNotificationTypeSetting>>(
     GUARDIAN_NOTIFICATION_TYPE_SETTING_PATH,
