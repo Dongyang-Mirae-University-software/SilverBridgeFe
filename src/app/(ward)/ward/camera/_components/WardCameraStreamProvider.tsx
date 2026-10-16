@@ -24,6 +24,7 @@ type WardCameraStream = {
   isConnecting: boolean;
   isPrimaryBusy: boolean;
   isStreamUnstable: boolean;
+  isSurveillanceLost: boolean;
   onPrimary: () => Promise<void>;
   openRegister: () => void;
   onThisDeviceDeleted: () => void;
@@ -43,6 +44,7 @@ export function useWardCameraStream(): WardCameraStream {
 export function WardCameraStreamProvider({ children }: { children: ReactNode }) {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isStreamUnstable, setIsStreamUnstable] = useState(false);
+  const [isSurveillanceLost, setIsSurveillanceLost] = useState(false);
   const [isTurningOn, setIsTurningOn] = useState(false);
   const [isModalStarting, setIsModalStarting] = useState(false);
   // 이 탭이 송출을 시작했고 서버가 아직 'running'을 알려 주지 않은 동안(최대 AWAIT_RUNNING_MS)
@@ -107,6 +109,7 @@ export function WardCameraStreamProvider({ children }: { children: ReactNode }) 
     isConnecting,
     isPrimaryBusy,
     isStreamUnstable,
+    isSurveillanceLost,
     onPrimary,
     openRegister: () => setIsRegisterOpen(true),
     onThisDeviceDeleted: () => {
@@ -127,6 +130,7 @@ export function WardCameraStreamProvider({ children }: { children: ReactNode }) 
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
         onUnstableChange={setIsStreamUnstable}
+        onSurveillanceLostChange={setIsSurveillanceLost}
         onStartingChange={setIsModalStarting}
         onStreamingChange={handleStreamingChange}
       />

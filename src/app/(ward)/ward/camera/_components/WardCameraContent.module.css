@@ -37,3 +37,20 @@
   color: var(--sb-ink-mute);
   cursor: not-allowed;
 }
+
+.lostBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 14px;
+  background: #fff7f5;
+  color: var(--sb-warn);
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 16px 20px;
+}
+
+.lostBanner strong {
+  font-size: 1.25rem;
+  font-weight: 900;
+}
