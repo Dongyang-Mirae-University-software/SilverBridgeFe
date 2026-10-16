@@ -873,6 +873,14 @@ export function CameraRegisterModal({
                   {status === 'streaming' ? '지금 촬영 중' : '미리보기'}
                 </span>
               )}
+              {/* 30초 넘게 끊기면 촬영 화면 위에 크게 알린다(아래쪽 안내는 눈에 잘 띄지 않았다) */}
+              {status === 'streaming' && isSurveillanceLostState && (
+                <div className={cx('lostOverlay')} role="alert">
+                  <span className={cx('lostSpinner')} aria-hidden="true" />
+                  <strong>다시 연결 중입니다</strong>
+                  <span>화면을 켜 둔 채 잠시 기다려 주세요</span>
+                </div>
+              )}
             </div>
 
             {isWizard && wizardStep === 4 && (
@@ -897,12 +905,6 @@ export function CameraRegisterModal({
                   휴대폰을 가로로 두셨는데 화면이 세로로 보이면 휴대폰 설정에서 <strong>&apos;자동 회전&apos;</strong>을 켜 주세요.
                 </span>
               </p>
-            )}
-
-            {status === 'streaming' && isSurveillanceLostState && (
-              <div className={cx('lostBanner')} role="alert">
-                다시 연결 중입니다. 화면을 켜 둔 채 잠시 기다려 주세요.
-              </div>
             )}
 
             {status === 'streaming' && isUnstable && !isSurveillanceLostState && (

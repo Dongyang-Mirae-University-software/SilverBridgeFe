@@ -485,14 +485,47 @@
   }
 }
 
-.lostBanner {
+/* 30초 넘게 끊겼을 때 촬영 화면 위에 덮는 안내 */
+.lostOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  border-radius: 12px;
-  background: #fff7f5;
-  color: var(--sb-warn);
-  font-size: 15px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(31, 26, 22, 0.78);
+  color: #fff;
+  font-size: 16px;
   font-weight: 700;
-  padding: 14px 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.lostOverlay strong {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.lostSpinner {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 4px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: lostSpin 1s linear infinite;
+}
+
+@keyframes lostSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lostSpinner {
+    animation: none;
+  }
 }
