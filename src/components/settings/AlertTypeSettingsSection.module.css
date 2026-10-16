@@ -111,3 +111,19 @@
   cursor: not-allowed;
   opacity: 0.55;
 }
+
+/* 이상 감지 알림 아래에 묶이는 하위 설정(확인 요청·카메라 연결 끊김 안내) - 끌 수 있는 별개 설정이라 토글은 그대로 둔다 */
+.groupHead {
+  border-bottom: none;
+  padding-bottom: 8px;
+}
+
+.subRow {
+  margin-left: 6px;
+  padding-left: 16px;
+  border-left: 3px solid var(--sb-line-soft);
+}
+
+.subRow .label {
+  font-size: 13px;
+}
