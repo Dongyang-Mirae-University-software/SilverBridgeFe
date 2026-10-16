@@ -2,7 +2,7 @@
 // 404 STREAM_SESSION_NOT_FOUND 를 받는다 - 이때만 같은 카메라 정보로 세션을 다시 만든다.
 
 export const SESSION_NOT_FOUND_CODE = 'STREAM_SESSION_NOT_FOUND';
-// 업로드가 이 시간 넘게 계속 실패하면 '감시가 멈췄습니다' 안내를 띄운다
+// 업로드가 이 시간 넘게 계속 실패하면 '다시 연결 중입니다' 안내를 띄운다
 export const SURVEILLANCE_LOST_MS = 30_000;
 const RECREATE_BACKOFF_MS = [2_000, 4_000, 8_000, 30_000];
 
