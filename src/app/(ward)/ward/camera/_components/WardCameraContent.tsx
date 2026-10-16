@@ -33,7 +33,7 @@ export function WardCameraContent() {
           다시 연결 중입니다. 화면을 켜 둔 채 잠시 기다려 주세요.
         </div>
       )}
-      {isStreamUnstable && !isSurveillanceLost && <p className={cx('registerHint')}>송출이 끊기고 있어요. 화면을 켜 둔 채 잠시 기다려 주세요.</p>}
+      {isStreamUnstable && !isSurveillanceLost && <p className={cx('registerHint')}>연결이 불안정해요. 화면을 켜 둔 채 잠시 기다려 주세요.</p>}
       {isLiveError && cameras.length === 0 && <p className={cx('registerHint')}>카메라 연결 상태를 확인하는 중이에요. 잠시만 기다려 주세요.</p>}
       {cameras.length > 0 && !myCamera && (
         <div className={cx('registerRow')}>

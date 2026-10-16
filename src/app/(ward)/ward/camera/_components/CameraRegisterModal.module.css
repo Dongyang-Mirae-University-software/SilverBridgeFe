@@ -278,6 +278,19 @@
   padding: 6px 12px;
 }
 
+.unstableBadge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
+  border-radius: 8px;
+  background: #f2a93b;
+  color: #2b1d05;
+  font-size: 14px;
+  font-weight: 900;
+  padding: 6px 12px;
+}
+
 .liveBadge.live {
   background: var(--sb-brand);
 }

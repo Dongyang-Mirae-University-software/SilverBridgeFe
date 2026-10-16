@@ -5,7 +5,9 @@ import {
   getRecreateBackoffMs,
   isSessionNotFound,
   isSurveillanceLost,
+  isUploadUnstable,
   SURVEILLANCE_LOST_MS,
+  UNSTABLE_MS,
 } from './streamRecovery';
 
 const err = (status: number, errorCode?: string) => ({ response: { status, data: errorCode ? { errorCode } : {} } });
@@ -40,6 +42,14 @@ describe('canRecreateSession', () => {
   it('진행 중이면 중복 호출하지 않는다', () => expect(canRecreateSession({ ...base, recreating: true })).toBe(false));
   it('끈 뒤에는 재생성하지 않는다', () => expect(canRecreateSession({ ...base, isStillStreaming: false })).toBe(false));
   it('대기 시간 전에는 하지 않는다', () => expect(canRecreateSession({ ...base, nextAllowedAt: 2000 })).toBe(false));
+});
+
+describe('isUploadUnstable', () => {
+  it('10초 이상 실패가 이어질 때만 true', () => {
+    expect(isUploadUnstable(null, 99999)).toBe(false);
+    expect(isUploadUnstable(1000, 1000 + UNSTABLE_MS - 1)).toBe(false);
+    expect(isUploadUnstable(1000, 1000 + UNSTABLE_MS)).toBe(true);
+  });
 });
 
 describe('isSurveillanceLost', () => {

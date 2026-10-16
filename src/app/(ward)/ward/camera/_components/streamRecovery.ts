@@ -2,7 +2,9 @@
 // 404 STREAM_SESSION_NOT_FOUND 를 받는다 - 이때만 같은 카메라 정보로 세션을 다시 만든다.
 
 export const SESSION_NOT_FOUND_CODE = 'STREAM_SESSION_NOT_FOUND';
-// 업로드가 이 시간 넘게 계속 실패하면 '다시 연결 중입니다' 안내를 띄운다
+// 업로드가 이 시간 넘게 계속 실패하면 '연결이 불안정해요' 표시를, 더 길어지면 '다시 연결 중입니다' 덮개를 띄운다
+// (잠깐의 흔들림에는 아무것도 띄우지 않는다 - 프레임은 초당 10장 넘게 올라가 몇 장 실패는 흔하다)
+export const UNSTABLE_MS = 10_000;
 export const SURVEILLANCE_LOST_MS = 30_000;
 const RECREATE_BACKOFF_MS = [2_000, 4_000, 8_000, 30_000];
 
@@ -29,6 +31,10 @@ export function canRecreateSession(params: {
   isStillStreaming: boolean;
 }): boolean {
   return params.isStillStreaming && !params.recreating && params.now >= params.nextAllowedAt;
+}
+
+export function isUploadUnstable(failSince: number | null, now: number): boolean {
+  return failSince !== null && now - failSince >= UNSTABLE_MS;
 }
 
 export function isSurveillanceLost(failSince: number | null, now: number): boolean {
