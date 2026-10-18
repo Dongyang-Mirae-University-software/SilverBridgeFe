@@ -12,7 +12,7 @@
 .modal {
   display: flex;
   flex-direction: column;
-  width: min(880px, 100%);
+  width: min(1100px, 100%);
   max-height: calc(100vh - 48px);
   overflow: hidden auto;
   border: 1px solid #e7d1c0;
@@ -97,6 +97,8 @@
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   aspect-ratio: 16 / 9;
+  /* 낮은 화면에서 창이 넘치지 않게 영상 높이를 제한한다(머리글·카메라 선택·닫기 영역을 뺀 값, 가로가 남으면 검은 여백) */
+  max-height: max(280px, calc(100dvh - 340px));
   place-items: center;
   margin: 0 21px;
   border-radius: 14px;
