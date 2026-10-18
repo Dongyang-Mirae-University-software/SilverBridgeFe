@@ -88,7 +88,7 @@ export function AnomalyClipModal({ incident, onClose }: { incident: AnomalyIncid
     <div className={cx('overlay')} role="presentation" onClick={onClose}>
       <div className={cx('modal')} role="dialog" aria-modal="true" aria-label="감지 영상" onClick={event => event.stopPropagation()}>
         <div className={cx('videoArea')}>
-          <span className={cx('recBadge')}>● REC · {formatDateTime(incident.startedAt)}</span>
+          <span className={cx('timeBadge')}>{formatDateTime(incident.startedAt)}</span>
           {playback ? (
             <video key={playback.clipId} src={playback.url} controls playsInline autoPlay className={cx('video')} />
           ) : (
@@ -110,7 +110,7 @@ export function AnomalyClipModal({ incident, onClose }: { incident: AnomalyIncid
           <a
             className={cx('downloadButton', { disabled: !playback })}
             href={playback?.url}
-            download={playback ? `anomaly-${playback.clipId}.mp4` : undefined}
+            download={playback ? `anomaly-${playback.clipId}.webm` : undefined}
             aria-disabled={!playback}
             onClick={event => {
               if (!playback) event.preventDefault();
