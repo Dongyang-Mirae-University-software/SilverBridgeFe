@@ -8,11 +8,13 @@ export async function createStreamSession(body: CreateStreamSessionReq): Promise
   return raw as unknown as StreamSession;
 }
 
-export async function uploadFrame(sessionId: string, jpeg: Blob): Promise<void> {
+// timeoutMs: 이 시간 안에 끝나지 않으면 끊고 실패로 처리한다(막힌 연결에 오래된 프레임이 매달리지 않게)
+export async function uploadFrame(sessionId: string, jpeg: Blob, timeoutMs?: number): Promise<void> {
   const form = new FormData();
   form.append('frame', jpeg, 'frame.jpg');
   await streamClient.post(`/v1/stream-sessions/${sessionId}/frame`, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    ...(timeoutMs ? { timeout: timeoutMs } : {}),
   });
 }
 

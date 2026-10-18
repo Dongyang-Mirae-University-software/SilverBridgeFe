@@ -54,6 +54,8 @@ type WakeLockSentinelLike = { released: boolean; release: () => Promise<void> };
 const LEGACY_ROTATION_STORAGE_KEY = 'silverbridge_ward_camera_rotation';
 const CAMERA_FACING_STORAGE_KEY = 'silverbridge_ward_camera_facing';
 const MAX_IN_FLIGHT = 2;
+// 한 장 업로드가 이 시간 안에 끝나지 않으면 끊는다(정상은 0.1~0.5초, 막힌 연결은 수십 초 걸려 두 자리를 계속 차지했다)
+const UPLOAD_TIMEOUT_MS = 5000;
 const STOP_DRAIN_TIMEOUT_MS = 3000;
 // 연속 업로드 실패가 이 횟수 또는 시간을 넘으면 사용자에게 알린다
 const MEDIA_PERMISSION_MESSAGE = '카메라를 켜지 못했어요. 브라우저의 카메라 권한을 확인해 주세요.';
@@ -605,7 +607,7 @@ export function CameraRegisterModal({
         stats.sumMs += elapsed;
         stats.maxMs = Math.max(stats.maxMs, elapsed);
       };
-      void uploadFrame(sessionId, blob)
+      void uploadFrame(sessionId, blob, UPLOAD_TIMEOUT_MS)
         .then(() => {
           finishUpload(true);
           resetUploadHealth();

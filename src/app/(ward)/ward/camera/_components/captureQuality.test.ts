@@ -4,6 +4,7 @@ import {
   BASE_UP_HOLD_MS,
   CAPTURE_LEVELS,
   DOWN_INTERVAL_MS,
+  STALL_MS,
   MAX_UP_HOLD_MS,
   decideCaptureLevel,
   nextUpHoldMs,
@@ -24,8 +25,12 @@ describe('decideCaptureLevel', () => {
   it('업로드가 느리면 한 단계 내린다', () => {
     expect(decideCaptureLevel({ ...base, ewmaMs: 900 })).toBe(1);
   });
-  it('끝나지 않는 업로드도 느린 것으로 본다(표본이 안 쌓여도)', () => {
-    expect(decideCaptureLevel({ ...base, ewmaMs: null, samples: 0, oldestInFlightMs: 2500 })).toBe(1);
+  it('끝나지 않는 업로드가 막힌 것으로 볼 만큼 오래되면 내린다(표본이 안 쌓여도)', () => {
+    expect(decideCaptureLevel({ ...base, ewmaMs: null, samples: 0, oldestInFlightMs: STALL_MS + 1 })).toBe(1);
+  });
+  it('순간의 지연(진행 중 업로드 400~1500ms)과 정상 평균으로는 내리지 않는다', () => {
+    expect(decideCaptureLevel({ ...base, level: 2, ewmaMs: 73, oldestInFlightMs: 428 })).toBe(2);
+    expect(decideCaptureLevel({ ...base, ewmaMs: 100, oldestInFlightMs: STALL_MS })).toBe(0);
   });
   it('하한에서는 더 내리지 않는다', () => {
     const last = CAPTURE_LEVELS.length - 1;
