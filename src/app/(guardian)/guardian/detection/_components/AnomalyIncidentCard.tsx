@@ -9,6 +9,7 @@ import { AnomalyIncident, AnomalyVerdict } from '@/service/interface/guardian/an
 import { useAnomalyFeedbackMutation } from '@/service/query/guardian/anomaly';
 import { showToast } from '@/store/toastStore';
 import { AnomalyClipModal } from './AnomalyClipModal';
+import { useClipThumbnail } from './clipThumbnail';
 import styles from './AnomalyIncidentCard.module.css';
 
 const cx = classNames.bind(styles);
@@ -37,6 +38,7 @@ function formatDuration(durationMs: number | null) {
 export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident }) {
   const feedbackMutation = useAnomalyFeedbackMutation();
   const [isClipModalOpen, setIsClipModalOpen] = useState(false);
+  const { src: thumbSrc, attach: attachThumb } = useClipThumbnail(incident.clip?.clipId);
 
   const handleFeedback = (verdict: AnomalyVerdict) => {
     if (feedbackMutation.isPending) return;
@@ -59,11 +61,14 @@ export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident })
     <li className={cx('card')}>
       <button
         type="button"
-        className={cx('thumbnail', incident.detectedType.toLowerCase())}
+        ref={attachThumb}
+        className={cx('thumbnail', incident.detectedType.toLowerCase(), { hasImage: Boolean(thumbSrc) })}
         disabled={!incident.clip}
         onClick={() => setIsClipModalOpen(true)}
       >
-        <span className={cx('recBadge')}>● REC · {dayjs(incident.startedAt).format('MM.DD HH:mm')}</span>
+        {/* 클립의 첫 화면. 못 받으면 유형별 단색 배경 그대로 */}
+        {thumbSrc && incident.clip && <img className={cx('thumbImage')} src={thumbSrc} alt="" />}
+        <span className={cx('timeBadge')}>{dayjs(incident.startedAt).format('MM.DD HH:mm')}</span>
         <span className={cx('typeBadge')}>
           {typeMeta.icon} {incident.detectedTypeLabel}
         </span>
