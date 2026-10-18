@@ -8,6 +8,7 @@ import { createStreamSession, stopStreamSession, uploadFrame } from '@/service/a
 import { getWardCameras } from '@/service/api/ward/camera';
 import { Icon } from '@/components/Icon';
 import { getHttpStatus, getRetryAfterMs } from '@/lib/api/streamClient';
+import { CAPTURE_LEVELS, decideCaptureLevel, nextUpHoldMs, updateEwma, BASE_UP_HOLD_MS } from './captureQuality';
 import {
   canRecreateSession,
   getRecreateBackoffMs,
@@ -190,6 +191,14 @@ export function CameraRegisterModal({
   // 세션 자동 복구: 송출 중인 카메라 정보, 진행 중 플래그(동시 404 중복 호출 방지), 다음 시도 허용 시각, 연속 시도 횟수
   const streamCameraRef = useRef<WardCamera | null>(null);
   const recreatingRef = useRef(false);
+  // 송출 화질 자동 조절(captureQuality.ts) - 업로드가 느려지면 해상도·품질을 단계적으로 낮춘다
+  const captureLevelRef = useRef(0);
+  const uploadEwmaRef = useRef<number | null>(null);
+  const uploadSamplesRef = useRef(0);
+  const levelChangedAtRef = useRef(0);
+  const levelUpAtRef = useRef(0);
+  const upHoldRef = useRef(BASE_UP_HOLD_MS);
+  const inFlightStartsRef = useRef<number[]>([]);
   // [임시 진단] 송출 단계별 통계 - 5초마다 한 줄로 남긴다(토큰·세션 ID·영상 내용 없음)
   const captureStatsRef = useRef({
     startedAt: 0, ticks: 0, stale: 0, drawFail: 0, blobNull: 0, queued: 0, overwritten: 0,
@@ -506,6 +515,35 @@ export function CameraRegisterModal({
     onClose();
   };
 
+  // 업로드 속도에 맞춰 화질 단계를 정한다(바뀌면 지난 표본은 버리고 새 화질의 결과를 다시 본다)
+  const evaluateCaptureLevel = () => {
+    const now = Date.now();
+    const oldest = inFlightStartsRef.current.length > 0 ? now - Math.min(...inFlightStartsRef.current) : 0;
+    const previous = captureLevelRef.current;
+    const next = decideCaptureLevel({
+      level: previous,
+      ewmaMs: uploadEwmaRef.current,
+      samples: uploadSamplesRef.current,
+      oldestInFlightMs: oldest,
+      now,
+      lastChangeAt: levelChangedAtRef.current,
+      upHoldMs: upHoldRef.current,
+    });
+    if (next === previous) return;
+    const wentDown = next > previous;
+    if (wentDown) upHoldRef.current = nextUpHoldMs(upHoldRef.current, true, now - levelUpAtRef.current);
+    else levelUpAtRef.current = now;
+    console.info(
+      '[capture] 화질 단계 변경',
+      `${previous}->${next} (${CAPTURE_LEVELS[next].maxWidth}px q${CAPTURE_LEVELS[next].quality})`,
+      `ewmaMs=${Math.round(uploadEwmaRef.current ?? 0)} oldestInFlightMs=${oldest}`,
+    );
+    captureLevelRef.current = next;
+    levelChangedAtRef.current = now;
+    uploadEwmaRef.current = null;
+    uploadSamplesRef.current = 0;
+  };
+
   const flushCaptureStats = (force: boolean) => {
     const stats = captureStatsRef.current;
     const now = Date.now();
@@ -522,6 +560,7 @@ export function CameraRegisterModal({
       `up=${stats.upOk}ok/${stats.upFail}fail started=${stats.upStarted} inflight=${inFlightRef.current}`,
       `avgMs=${done ? Math.round(stats.sumMs / done) : 0} maxMs=${stats.maxMs} avgKB=${stats.upStarted ? Math.round(stats.sumBytes / stats.upStarted / 1024) : 0}`,
       `vis=${document.visibilityState} paused=${Boolean(video?.paused)} ready=${video?.readyState ?? -1} size=${video?.videoWidth ?? 0}x${video?.videoHeight ?? 0}`,
+      `lvl=${captureLevelRef.current}`,
       `track=${track?.readyState ?? 'none'}${track?.muted ? '/muted' : ''} paused429=${Date.now() < pausedUntilRef.current}`,
       `rtt=${connection?.rtt ?? '-'} downlink=${connection?.downlink ?? '-'}`,
     );
@@ -549,11 +588,18 @@ export function CameraRegisterModal({
 
       inFlightRef.current += 1;
       const uploadStartedAt = Date.now();
+      inFlightStartsRef.current.push(uploadStartedAt);
       const stats = captureStatsRef.current;
       stats.upStarted += 1;
       stats.sumBytes += blob.size;
       const finishUpload = (ok: boolean) => {
         const elapsed = Date.now() - uploadStartedAt;
+        const startIndex = inFlightStartsRef.current.indexOf(uploadStartedAt);
+        if (startIndex >= 0) inFlightStartsRef.current.splice(startIndex, 1);
+        if (ok) {
+          uploadEwmaRef.current = updateEwma(uploadEwmaRef.current, elapsed);
+          uploadSamplesRef.current += 1;
+        }
         if (ok) stats.upOk += 1;
         else stats.upFail += 1;
         stats.sumMs += elapsed;
@@ -585,7 +631,7 @@ export function CameraRegisterModal({
     if (!video || !canvas || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return false;
 
     // 찍힌 그대로 보낸다(회전 없음). 가로가 1280을 넘을 때만 비율대로 줄인다
-    const { width, height } = getCaptureSize(video.videoWidth, video.videoHeight);
+    const { width, height } = getCaptureSize(video.videoWidth, video.videoHeight, CAPTURE_LEVELS[captureLevelRef.current].maxWidth);
     const context = canvas.getContext('2d');
     if (!context) return false;
 
@@ -612,6 +658,7 @@ export function CameraRegisterModal({
       captureWorkerRef.current = new Worker('/capture-timer.js');
       captureWorkerRef.current.onmessage = () => {
         flushCaptureStats(false);
+        evaluateCaptureLevel();
         captureStatsRef.current.ticks += 1;
         // 카메라가 새 프레임을 주지 않으면 보내지 않는다(멈춘 장면을 '연결됨'으로 계속 보내지 않게)
         if (!isCaptureSourceFresh()) {
@@ -630,7 +677,7 @@ export function CameraRegisterModal({
             else enqueueLatestFrame(blob);
           },
           'image/jpeg',
-          0.8,
+          CAPTURE_LEVELS[captureLevelRef.current].quality,
         );
       };
     }
@@ -646,6 +693,12 @@ export function CameraRegisterModal({
       deviceType: 'web',
     });
     resetUploadHealth();
+    captureLevelRef.current = 0;
+    uploadEwmaRef.current = null;
+    uploadSamplesRef.current = 0;
+    levelChangedAtRef.current = 0;
+    upHoldRef.current = BASE_UP_HOLD_MS;
+    inFlightStartsRef.current = [];
     liveSessionIdRef.current = session.session_id ?? camera.sessionId;
     streamCameraRef.current = camera;
     setStatus('streaming');

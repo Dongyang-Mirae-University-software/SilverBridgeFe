@@ -105,6 +105,8 @@ describe('getCaptureSize', () => {
   });
   it('영상 크기를 아직 모르면(0) 1280x720 기준', () => {
     expect(getCaptureSize(0, 0)).toEqual({ width: 1280, height: 720 });
+    expect(getCaptureSize(1920, 1080, 640)).toEqual({ width: 640, height: 360 });
+    expect(getCaptureSize(640, 480, 800)).toEqual({ width: 640, height: 480 });
   });
 });
 
