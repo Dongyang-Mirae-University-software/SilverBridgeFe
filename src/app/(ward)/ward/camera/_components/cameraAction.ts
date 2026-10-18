@@ -33,10 +33,14 @@ export function getModalTitle(initialRoom: string | undefined, isStreamingHere: 
 // (화면 공유는 getDisplayMedia에 크기 제한이 없어 원본 해상도가 그대로 올라온다).
 export const MAX_CAPTURE_WIDTH = 1280;
 
-export function getCaptureSize(videoWidth: number, videoHeight: number): { width: number; height: number } {
+export function getCaptureSize(
+  videoWidth: number,
+  videoHeight: number,
+  maxWidth: number = MAX_CAPTURE_WIDTH,
+): { width: number; height: number } {
   const srcWidth = videoWidth || 1280;
   const srcHeight = videoHeight || 720;
-  const scale = Math.min(1, MAX_CAPTURE_WIDTH / srcWidth);
+  const scale = Math.min(1, maxWidth / srcWidth);
   return { width: Math.round(srcWidth * scale), height: Math.round(srcHeight * scale) };
 }
 
