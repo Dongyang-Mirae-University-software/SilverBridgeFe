@@ -190,6 +190,11 @@ export function CameraRegisterModal({
   // 세션 자동 복구: 송출 중인 카메라 정보, 진행 중 플래그(동시 404 중복 호출 방지), 다음 시도 허용 시각, 연속 시도 횟수
   const streamCameraRef = useRef<WardCamera | null>(null);
   const recreatingRef = useRef(false);
+  // [임시 진단] 송출 단계별 통계 - 5초마다 한 줄로 남긴다(토큰·세션 ID·영상 내용 없음)
+  const captureStatsRef = useRef({
+    startedAt: 0, ticks: 0, stale: 0, drawFail: 0, blobNull: 0, queued: 0, overwritten: 0,
+    upStarted: 0, upOk: 0, upFail: 0, sumMs: 0, maxMs: 0, sumBytes: 0,
+  });
   const nextRecreateAtRef = useRef(0);
   const recreateAttemptRef = useRef(0);
   const onStartingChangeRef = useRef(onStartingChange);
@@ -501,8 +506,35 @@ export function CameraRegisterModal({
     onClose();
   };
 
+  const flushCaptureStats = (force: boolean) => {
+    const stats = captureStatsRef.current;
+    const now = Date.now();
+    if (!stats.startedAt) stats.startedAt = now;
+    if (!force && now - stats.startedAt < 5000) return;
+    const done = stats.upOk + stats.upFail;
+    const video = videoRef.current;
+    const track = mediaStreamRef.current?.getVideoTracks()[0];
+    const connection = (navigator as Navigator & { connection?: { rtt?: number; downlink?: number } }).connection;
+    console.info(
+      '[capture]',
+      `ticks=${stats.ticks} stale=${stats.stale} drawFail=${stats.drawFail} blobNull=${stats.blobNull}`,
+      `queued=${stats.queued} overwritten=${stats.overwritten}`,
+      `up=${stats.upOk}ok/${stats.upFail}fail started=${stats.upStarted} inflight=${inFlightRef.current}`,
+      `avgMs=${done ? Math.round(stats.sumMs / done) : 0} maxMs=${stats.maxMs} avgKB=${stats.upStarted ? Math.round(stats.sumBytes / stats.upStarted / 1024) : 0}`,
+      `vis=${document.visibilityState} paused=${Boolean(video?.paused)} ready=${video?.readyState ?? -1} size=${video?.videoWidth ?? 0}x${video?.videoHeight ?? 0}`,
+      `track=${track?.readyState ?? 'none'}${track?.muted ? '/muted' : ''} paused429=${Date.now() < pausedUntilRef.current}`,
+      `rtt=${connection?.rtt ?? '-'} downlink=${connection?.downlink ?? '-'}`,
+    );
+    captureStatsRef.current = {
+      startedAt: now, ticks: 0, stale: 0, drawFail: 0, blobNull: 0, queued: 0, overwritten: 0,
+      upStarted: 0, upOk: 0, upFail: 0, sumMs: 0, maxMs: 0, sumBytes: 0,
+    };
+  };
+
   const enqueueLatestFrame = (blob: Blob) => {
     if (!liveSessionIdRef.current) return;
+    captureStatsRef.current.queued += 1;
+    if (frameQueueRef.current.length > 0) captureStatsRef.current.overwritten += 1;
     frameQueueRef.current = [blob];
     if (Date.now() < pausedUntilRef.current) return;
     void drainQueue();
@@ -516,15 +548,30 @@ export function CameraRegisterModal({
       if (!blob || !sessionId) return;
 
       inFlightRef.current += 1;
+      const uploadStartedAt = Date.now();
+      const stats = captureStatsRef.current;
+      stats.upStarted += 1;
+      stats.sumBytes += blob.size;
+      const finishUpload = (ok: boolean) => {
+        const elapsed = Date.now() - uploadStartedAt;
+        if (ok) stats.upOk += 1;
+        else stats.upFail += 1;
+        stats.sumMs += elapsed;
+        stats.maxMs = Math.max(stats.maxMs, elapsed);
+      };
       void uploadFrame(sessionId, blob)
         .then(() => {
+          finishUpload(true);
           resetUploadHealth();
           if (refreshOnFirstUploadRef.current) {
             refreshOnFirstUploadRef.current = false;
             void queryClient.invalidateQueries({ queryKey: wardLiveCamerasQueryKey });
           }
         })
-        .catch(error => handleUploadFailure(error, sessionId))
+        .catch(error => {
+          finishUpload(false);
+          handleUploadFailure(error, sessionId);
+        })
         .finally(() => {
           inFlightRef.current -= 1;
           void drainQueue();
@@ -564,14 +611,27 @@ export function CameraRegisterModal({
     if (!captureWorkerRef.current) {
       captureWorkerRef.current = new Worker('/capture-timer.js');
       captureWorkerRef.current.onmessage = () => {
+        flushCaptureStats(false);
+        captureStatsRef.current.ticks += 1;
         // 카메라가 새 프레임을 주지 않으면 보내지 않는다(멈춘 장면을 '연결됨'으로 계속 보내지 않게)
         if (!isCaptureSourceFresh()) {
+          captureStatsRef.current.stale += 1;
           handleStaleSource();
           return;
         }
         staleSinceRef.current = null;
-        if (!drawFrameToCanvas()) return;
-        canvasRef.current?.toBlob(blob => blob && enqueueLatestFrame(blob), 'image/jpeg', 0.8);
+        if (!drawFrameToCanvas()) {
+          captureStatsRef.current.drawFail += 1;
+          return;
+        }
+        canvasRef.current?.toBlob(
+          blob => {
+            if (!blob) captureStatsRef.current.blobNull += 1;
+            else enqueueLatestFrame(blob);
+          },
+          'image/jpeg',
+          0.8,
+        );
       };
     }
 
