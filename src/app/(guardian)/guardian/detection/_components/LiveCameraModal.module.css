@@ -140,42 +140,17 @@
   font-size: 14px;
 }
 
-.recBadge {
+.timeBadge {
   position: absolute;
   top: 12px;
   left: 12px;
-  display: grid;
-  gap: 2px;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.72);
-  color: #fff;
-  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.62);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.8125rem;
   font-family: monospace;
   letter-spacing: 0.03em;
-  padding: 9px 12px;
-}
-
-.recBadge strong {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #ff6b6b;
-  font-weight: 800;
-}
-
-.recBadge > span {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.recBadge > span:last-child {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.recDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #e0392f;
+  padding: 7px 12px;
 }
 
 .switchRow {
