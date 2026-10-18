@@ -11,6 +11,7 @@ export const CAPTURE_LEVELS: CaptureLevel[] = [
 ];
 
 export const SLOW_UPLOAD_MS = 400; // 업로드 한 장이 이보다 오래 걸리면 한 단계 내린다
+export const STALL_MS = 1500; // 끝나지 않은 업로드가 이만큼 지나면 '막혔다'고 본다(순간의 지연으로는 내리지 않는다)
 export const FAST_UPLOAD_MS = 150; // 이보다 빠르게 이어지면 한 단계 올린다
 export const MIN_SAMPLES = 3;
 export const DOWN_INTERVAL_MS = 2000; // 단계를 연달아 내리기까지 최소 간격(바뀐 화질의 결과를 보고 판단하도록)
@@ -26,17 +27,18 @@ export function decideCaptureLevel(input: {
   level: number;
   ewmaMs: number | null;
   samples: number;
-  // 아직 끝나지 않은 업로드 중 가장 오래된 것의 경과 시간 - 업로드가 아예 끝나지 않으면 표본이 안 쌓이므로 이것도 본다
+  // 아직 끝나지 않은 업로드 중 가장 오래된 것의 경과 시간 - 업로드가 아예 끝나지 않으면 표본이 안 쌓이므로 STALL_MS 넘게 걸리면 막힌 것으로 본다
   oldestInFlightMs: number;
   now: number;
   lastChangeAt: number;
   upHoldMs: number;
 }): number {
   const last = CAPTURE_LEVELS.length - 1;
-  const slowness = Math.max(input.ewmaMs ?? 0, input.oldestInFlightMs);
+  const isStalled = input.oldestInFlightMs > STALL_MS;
+  const isSlow = (input.ewmaMs ?? 0) > SLOW_UPLOAD_MS;
   const sinceChange = input.now - input.lastChangeAt;
 
-  if (slowness > SLOW_UPLOAD_MS && input.level < last && sinceChange >= DOWN_INTERVAL_MS) {
+  if ((isSlow || isStalled) && input.level < last && sinceChange >= DOWN_INTERVAL_MS) {
     return input.level + 1;
   }
   if (
