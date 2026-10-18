@@ -157,13 +157,7 @@ export function LiveCameraModal({
             />
           )}
 
-          <div className={cx('recBadge')}>
-            <strong>
-              <span className={cx('recDot')} />
-              REC
-            </strong>
-            <span>{now ? formatLiveDateTime(now) : '-'}</span>
-          </div>
+          <div className={cx('timeBadge')}>{now ? formatLiveDateTime(now) : '-'}</div>
         </div>
 
         {selectedWardGroup && (
