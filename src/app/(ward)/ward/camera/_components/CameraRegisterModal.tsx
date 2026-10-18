@@ -765,7 +765,7 @@ export function CameraRegisterModal({
       <video ref={videoRef} className={cx('sourceVideo')} autoPlay muted playsInline aria-hidden="true" />
       <div className={cx('overlay', { hidden: !isOpen })} role="presentation" aria-hidden={!isOpen} onClick={handleClose}>
         <div
-          className={cx('modal')}
+          className={cx('modal', { wideView: isViewOnly })}
           role="dialog"
           aria-modal={isOpen || undefined}
           aria-label={title}
