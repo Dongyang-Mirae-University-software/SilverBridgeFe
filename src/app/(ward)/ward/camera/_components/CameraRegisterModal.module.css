@@ -25,6 +25,20 @@
   box-shadow: 0 22px 56px rgba(15, 23, 42, 0.12);
 }
 
+/* 송출 중 '카메라 화면 보기'는 영상을 크게 보여 준다(보호자 실시간 카메라 창과 같은 크기). 등록 마법사는 그대로 */
+.modal.wideView {
+  width: min(1100px, 100%);
+}
+
+.modal.wideView .previewBox {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  height: auto;
+  aspect-ratio: 16 / 9;
+  /* 낮은 화면에서 창이 넘치지 않게 영상 높이를 제한한다(머리글·버튼 영역을 뺀 값, 가로가 남으면 검은 여백) */
+  max-height: max(260px, calc(100svh - 300px));
+}
+
 .header {
   display: flex;
   flex-shrink: 0;
