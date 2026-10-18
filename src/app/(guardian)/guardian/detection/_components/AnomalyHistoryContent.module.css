@@ -176,3 +176,35 @@
   font-size: 0.8125rem;
   font-weight: 700;
 }
+
+/* 삭제된 카메라 기록 숨김 토글 */
+.deletedRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 12px;
+}
+
+.deletedToggle {
+  border: 1px dashed var(--sb-line-soft, #e7d1c0);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-ink-mute, #766e69);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+}
+
+.deletedToggle.on {
+  border-style: solid;
+  background: #fff8f2;
+  color: var(--sb-brand);
+}
+
+.deletedNote {
+  color: var(--sb-warn, #b4491f);
+  font-size: 12px;
+  font-weight: 700;
+}

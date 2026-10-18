@@ -24,6 +24,8 @@ type TypeFilter = 'ALL' | AnomalyDetectedType;
 export function AnomalyHistoryContent({ onViewLive }: { onViewLive: (wardId?: string) => void }) {
   const [page, setPage] = useState(0);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('ALL');
+  // 삭제된 카메라의 기록(영상은 카메라와 함께 지워지고 이력만 남은 것)은 기본으로 숨긴다
+  const [showDeletedCamera, setShowDeletedCamera] = useState(false);
   const [selectedWardId, setSelectedWardId] = useState<string | undefined>(undefined);
 
   const { data: connectionsData } = useQuery(guardianConnectionsQueryOptions);
@@ -38,7 +40,15 @@ export function AnomalyHistoryContent({ onViewLive }: { onViewLive: (wardId?: st
   const { data: reminderSetting } = useQuery(guardianAnomalyReminderSettingQueryOptions);
   const reminderMutation = useUpdateAnomalyReminderSettingMutation();
 
-  const content = data?.content ?? [];
+  const allContent = useMemo(() => data?.content ?? [], [data]);
+  const deletedCameraIncidents = allContent.filter(incident => incident.cameraLabel === null);
+  const deletedNeedsReview = deletedCameraIncidents.filter(
+    incident => incident.reviewStatus === 'PENDING' || incident.reviewStatus === 'CONFLICTED',
+  ).length;
+  const content = useMemo(
+    () => (showDeletedCamera ? allContent : allContent.filter(incident => incident.cameraLabel !== null)),
+    [allContent, showDeletedCamera],
+  );
   const filtered = useMemo(
     () => (typeFilter === 'ALL' ? content : content.filter(incident => incident.detectedType === typeFilter)),
     [content, typeFilter],
@@ -98,11 +108,30 @@ export function AnomalyHistoryContent({ onViewLive }: { onViewLive: (wardId?: st
         </button>
       </div>
       <p className={cx('filterHint')}>필터·통계는 현재 불러온 {content.length}건 기준입니다.</p>
+      {deletedCameraIncidents.length > 0 && (
+        <div className={cx('deletedRow')}>
+          <button
+            type="button"
+            className={cx('deletedToggle', { on: showDeletedCamera })}
+            aria-pressed={showDeletedCamera}
+            onClick={() => setShowDeletedCamera(current => !current)}
+          >
+            {showDeletedCamera ? '삭제된 카메라 기록 숨기기' : '삭제된 카메라 기록 보기'} ({deletedCameraIncidents.length})
+          </button>
+          {!showDeletedCamera && deletedNeedsReview > 0 && (
+            <span className={cx('deletedNote')}>확인이 필요한 기록 {deletedNeedsReview}건이 포함돼 있어요</span>
+          )}
+        </div>
+      )}
 
       {isLoading && <p className={cx('emptyText')}>감지 이력을 불러오는 중입니다.</p>}
       {isError && <p className={cx('emptyText')}>감지 이력을 불러오지 못했습니다.</p>}
       {!isLoading && !isError && filtered.length === 0 && (
-        <p className={cx('emptyText')}>해당하는 감지 이력이 없습니다.</p>
+        <p className={cx('emptyText')}>
+          {!showDeletedCamera && deletedCameraIncidents.length > 0
+            ? '이 페이지에는 삭제된 카메라의 기록만 있어요.'
+            : '해당하는 감지 이력이 없습니다.'}
+        </p>
       )}
 
       {filtered.length > 0 && (
