@@ -60,6 +60,28 @@ export async function getGuardianAnomalyClips(incidentId: number) {
 // 클립 파일은 Authorization 헤더가 필요해서 <video src>에 직접 넣을 수 없음 —
 // fetch로 받아 blob으로 재생해야 함. 에러 응답은 파일 API도 JSON(ApiResponse)이라
 // 여기서 분기용으로 status/code/message를 추출해서 throw
+// 썸네일용: 클립 앞부분(bytes)만 받는다(Range). 서버가 Range 를 무시해 전체를 보내면 필요한 만큼만 읽고 끊는다.
+export async function fetchGuardianAnomalyClipHead(clipId: number, bytes: number): Promise<Blob> {
+  const token = getAccessToken();
+  const response = await fetch(`/api${GUARDIAN_ANOMALY_BASE}/clips/${clipId}/file`, {
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), Range: `bytes=0-${bytes - 1}` },
+    cache: 'no-store',
+  });
+  if (!response.ok || !response.body) throw new Error('clip head unavailable');
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  while (received < bytes) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+  }
+  void reader.cancel().catch(() => {});
+  return new Blob(chunks as BlobPart[], { type: 'video/webm' });
+}
+
 export async function fetchGuardianAnomalyClipFile(clipId: number): Promise<Blob> {
   const token = getAccessToken();
   const response = await fetch(`/api${GUARDIAN_ANOMALY_BASE}/clips/${clipId}/file`, {
