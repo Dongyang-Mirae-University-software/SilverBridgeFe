@@ -11,7 +11,11 @@ import styles from './FindEmailContent.module.css';
 
 const cx = classNames.bind(styles);
 
-export default function FindEmailContent() {
+interface Props {
+  onClose?: () => void;
+}
+
+export default function FindEmailContent({ onClose }: Props) {
   const flow = useFindEmailFlow();
   const router = useRouter();
 
@@ -24,7 +28,7 @@ export default function FindEmailContent() {
     <>
       <div className={cx('header')}>
         <h1 className={cx('title')}>아이디 찾기</h1>
-        <button className={cx('closeButton')} type="button" onClick={() => router.push('/login')}>
+        <button className={cx('closeButton')} type="button" onClick={onClose ?? (() => router.push('/login'))}>
           ✕
         </button>
       </div>
