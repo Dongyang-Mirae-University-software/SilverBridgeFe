@@ -18,10 +18,15 @@ const cx = classNames.bind(styles);
 
 const STEP_LIST = ['방식 선택', '정보 입력', '인증 확인', '새 비밀번호 생성'];
 
-export default function FindPasswordContent() {
+interface Props {
+  onClose?: () => void;
+}
+
+export default function FindPasswordContent({ onClose }: Props) {
   const flow = useFindPasswordFlow();
   const router = useRouter();
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+  const close = onClose ?? (() => router.push('/login'));
 
   const handleMethodSelect = (method: 'email' | 'sms') => {
     flow.setMethod(method);
@@ -78,13 +83,13 @@ export default function FindPasswordContent() {
           type="success"
           title="비밀번호가 변경되었습니다"
           message="새 비밀번호로 다시 로그인해주세요."
-          primaryButton={{ text: '로그인하기', onClick: () => router.push('/login') }}
-          onClose={() => router.push('/login')}
+          primaryButton={{ text: '로그인하기', onClick: close }}
+          onClose={close}
         />
       )}
       <div className={cx('header')}>
         <h1 className={cx('title')}>비밀번호 찾기</h1>
-        <button className={cx('closeButton')} type="button" onClick={() => router.push('/login')}>
+        <button className={cx('closeButton')} type="button" onClick={close}>
           ✕
         </button>
       </div>
