@@ -1,30 +1,11 @@
 import classNames from 'classnames/bind';
+import Image from 'next/image';
 import { ReactNode } from 'react';
 
 import { Icon } from '@/components/Icon';
 import styles from './AuthShell.module.css';
 
 const cx = classNames.bind(styles);
-
-function FriendCharacter() {
-  return (
-    <svg className={cx('character')} viewBox="0 0 200 200" aria-hidden="true">
-      <ellipse cx="100" cy="180" rx="55" ry="6" fill="#000000" opacity="0.08" />
-      <ellipse cx="72" cy="38" rx="14" ry="32" fill="#f8e0d4" stroke="#1f1916" strokeWidth="3" />
-      <ellipse cx="72" cy="42" rx="6" ry="20" fill="#f4b8a0" />
-      <ellipse cx="128" cy="38" rx="14" ry="32" fill="#f8e0d4" stroke="#1f1916" strokeWidth="3" />
-      <ellipse cx="128" cy="42" rx="6" ry="20" fill="#f4b8a0" />
-      <ellipse cx="100" cy="92" rx="58" ry="52" fill="#f8e0d4" stroke="#1f1916" strokeWidth="3.5" />
-      <ellipse cx="62" cy="106" rx="10" ry="6" fill="#f4a48a" opacity="0.65" />
-      <ellipse cx="138" cy="106" rx="10" ry="6" fill="#f4a48a" opacity="0.65" />
-      <path d="M78 88Q84 80 90 88M110 88q6-8 12 0" stroke="#1f1916" strokeWidth="3.5" fill="none" strokeLinecap="round" />
-      <path d="M92 108q8 8 16 0" stroke="#1f1916" strokeWidth="3" fill="#fff" strokeLinejoin="round" />
-      <line x1="100" y1="108" x2="100" y2="115" stroke="#1f1916" strokeWidth="1.5" />
-      <path d="M60 138q40 24 80 0l8 58H52Z" fill="#d97757" stroke="#1f1916" strokeWidth="3" />
-      <circle cx="100" cy="170" r="3" fill="#1f1916" />
-    </svg>
-  );
-}
 
 function Feature({ icon, label }: { icon: 'camera' | 'hospital' | 'messageCircle' | 'heart'; label: string }) {
   return (
@@ -49,7 +30,14 @@ export default function AuthShell({ children }: { children: ReactNode }) {
       <div className={cx('content')}>
         <section className={cx('hero')} aria-label="CareAI 소개">
           <div className={cx('heroVisual')}>
-            <FriendCharacter />
+            <Image
+              alt="CareAI 토끼 캐릭터"
+              className={cx('character')}
+              height={425}
+              priority
+              src="/images/login-bunny.png"
+              width={555}
+            />
             <span className={cx('characterShadow')} />
             <span className={cx('heart', 'heartOne')}>♥</span>
             <span className={cx('heart', 'heartTwo')}>♥</span>
