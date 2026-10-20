@@ -1,24 +1,52 @@
+# 운영(dmu.gosky.kr). NEXT_PUBLIC_* 빌드 인자를 .env.prod 에서 읽도록 --env-file 을 함께 준다:
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_DOMAIN: ${NEXT_PUBLIC_API_DOMAIN:-https://api.dmu.gosky.kr}
+        NEXT_PUBLIC_API_DOMAIN: ${NEXT_PUBLIC_API_DOMAIN}
+        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL}
+        NEXT_PUBLIC_AI_API_DOMAIN: ${NEXT_PUBLIC_AI_API_DOMAIN}
+        NEXT_PUBLIC_KAKAO_CLIENT_ID: ${NEXT_PUBLIC_KAKAO_CLIENT_ID}
+        NEXT_PUBLIC_KAKAO_REDIRECT_URI: ${NEXT_PUBLIC_KAKAO_REDIRECT_URI}
     image: silver-bridge-fe-web:prod
     container_name: silver-bridge-fe-prod-web
+    restart: unless-stopped
     env_file:
       - .env.prod
     environment:
       HOST: 0.0.0.0
       PORT: 3000
       NODE_ENV: production
+    # 호스트 루프백에만 publish. nginx(dmu.gosky.kr)가 127.0.0.1:6010으로 프록시.
     ports:
-      - "3000:3000"
-    restart: unless-stopped
+      - '127.0.0.1:6010:3000'
+    # 예약 API(reservation-api:6015)와 같은 내부 네트워크(dev와 공용). 없으면: docker network create sb-internal
     networks:
       - silver-bridge-fe-prod-net
+      - sb-internal
+    init: true
+    healthcheck:
+      test: ['CMD-SHELL', 'nc -z 127.0.0.1 3000 || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
 networks:
   silver-bridge-fe-prod-net:
     name: silver-bridge-fe-prod-net
+  sb-internal:
+    external: true
+    name: sb-internal
