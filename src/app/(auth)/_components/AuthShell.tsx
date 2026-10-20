@@ -1,7 +1,9 @@
 import classNames from 'classnames/bind';
 import { ReactNode } from 'react';
 
+import { Icon } from '@/components/Icon';
 import styles from './AuthShell.module.css';
+
 const cx = classNames.bind(styles);
 
 function FriendCharacter() {
@@ -15,47 +17,82 @@ function FriendCharacter() {
       <ellipse cx="100" cy="92" rx="58" ry="52" fill="#f8e0d4" stroke="#1f1916" strokeWidth="3.5" />
       <ellipse cx="62" cy="106" rx="10" ry="6" fill="#f4a48a" opacity="0.65" />
       <ellipse cx="138" cy="106" rx="10" ry="6" fill="#f4a48a" opacity="0.65" />
-      <path d="M 78 88 Q 84 80 90 88" stroke="#1f1916" strokeWidth="3.5" fill="none" strokeLinecap="round" />
-      <path d="M 110 88 Q 116 80 122 88" stroke="#1f1916" strokeWidth="3.5" fill="none" strokeLinecap="round" />
-      <path d="M 92 108 Q 100 116 108 108" stroke="#1f1916" strokeWidth="3" fill="#ffffff" strokeLinejoin="round" />
+      <path d="M78 88Q84 80 90 88M110 88q6-8 12 0" stroke="#1f1916" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+      <path d="M92 108q8 8 16 0" stroke="#1f1916" strokeWidth="3" fill="#fff" strokeLinejoin="round" />
       <line x1="100" y1="108" x2="100" y2="115" stroke="#1f1916" strokeWidth="1.5" />
-      <path d="M 60 138 Q 100 162 140 138 L 148 196 L 52 196 Z" fill="#d97757" stroke="#1f1916" strokeWidth="3" />
+      <path d="M60 138q40 24 80 0l8 58H52Z" fill="#d97757" stroke="#1f1916" strokeWidth="3" />
       <circle cx="100" cy="170" r="3" fill="#1f1916" />
-      <g opacity="0.85">
-        <path d="M 30 50 l 2 6 l 6 0 l -5 4 l 2 6 l -5 -4 l -5 4 l 2 -6 l -5 -4 l 6 0 z" fill="#e8b84a" />
-        <path d="M 170 60 l 1.5 4 l 4 0 l -3 3 l 1 4 l -3.5 -2.5 l -3.5 2.5 l 1 -4 l -3 -3 l 4 0 z" fill="#e8b84a" />
-      </g>
     </svg>
+  );
+}
+
+function Feature({ icon, label }: { icon: 'camera' | 'hospital' | 'messageCircle' | 'heart'; label: string }) {
+  return (
+    <div className={cx('feature')}>
+      <span className={cx('featureIcon')}>
+        <Icon name={icon} size={24} color="var(--sb-brand)" decorative />
+      </span>
+      <span>{label}</span>
+    </div>
   );
 }
 
 export default function AuthShell({ children }: { children: ReactNode }) {
   return (
     <main className={cx('shell')}>
-      <section className={cx('hero')} aria-label="SilverBridge 소개">
-        <div className={cx('warmCircle')} />
-        <div className={cx('greenCircle')} />
-        <div className={cx('heroVisual')}>
-          <FriendCharacter />
-        </div>
-        <div className={cx('copy')}>
-          <span className={cx('badge')}>SilverBridge · 시니어 케어</span>
-          <h1 className={cx('headline')}>
-            가족이 가까이 있는 것처럼,
-            <br />
-            <span>안심하고 매일을 보내요</span>
-          </h1>
-          <p className={cx('body')}>
-            낙상 감지 · AI 말벗 · 병원 예약 · 보호자 연결까지
-            <br />
-            하나의 앱에서 함께 돌봅니다.
-          </p>
-        </div>
-      </section>
+      <div className={cx('background')} aria-hidden="true">
+        <span className={cx('drift', 'driftOne')} />
+        <span className={cx('drift', 'driftTwo')} />
+        <span className={cx('drift', 'driftThree')} />
+      </div>
 
-      <section className={cx('formPane')}>
-        <div className={cx('card')}>{children}</div>
-      </section>
+      <div className={cx('content')}>
+        <section className={cx('hero')} aria-label="CareAI 소개">
+          <div className={cx('heroVisual')}>
+            <FriendCharacter />
+            <span className={cx('characterShadow')} />
+            <span className={cx('heart', 'heartOne')}>♥</span>
+            <span className={cx('heart', 'heartTwo')}>♥</span>
+            <span className={cx('star', 'starOne')}>✦</span>
+            <span className={cx('star', 'starTwo')}>✦</span>
+          </div>
+
+          <div className={cx('copy')}>
+            <div className={cx('brand')}>CareAI</div>
+            <h1 className={cx('headline')}>
+              떨어져 살아도,
+              <br />
+              <span>마음은 늘 곁에 있어요</span>
+            </h1>
+            <div className={cx('features')}>
+              <Feature icon="camera" label="AI 이상 감지" />
+              <Feature icon="hospital" label="AI 의료 챗봇" />
+              <Feature icon="messageCircle" label="AI 안부 말벗" />
+              <Feature icon="heart" label="AI 정서 분석" />
+            </div>
+          </div>
+        </section>
+
+        <section className={cx('formPane')}>
+          <div className={cx('card')}>
+            <svg className={cx('bunnyEars')} aria-hidden="true" viewBox="0 0 120 58">
+              <g className={cx('ear')}>
+                <path d="M24 58C18 30 22 6 34 4c12-2 16 26 16 54Z" />
+                <path className={cx('innerEar')} d="M31 56c-3-20-1-40 5-42 6-1 7 22 7 42Z" />
+              </g>
+              <path d="M70 58c0-28 4-52 16-52 12 0 14 26 8 52Z" />
+              <path className={cx('innerEar')} d="M77 56c0-20 3-38 9-39 6 0 6 21 2 39Z" />
+              <rect x="14" y="54" width="94" height="6" />
+            </svg>
+            {children}
+          </div>
+        </section>
+      </div>
+
+      <footer className={cx('footer')}>
+        <div>본 데모는 학습 목적으로 제작되었으며, 화면에 등장하는 환자·병원·통계는 모두 가상의 데이터입니다.</div>
+        <div>© 2026 Team SilverBridge · 학생 프로젝트</div>
+      </footer>
     </main>
   );
 }
