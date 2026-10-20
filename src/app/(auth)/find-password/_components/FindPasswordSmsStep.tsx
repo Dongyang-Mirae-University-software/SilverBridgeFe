@@ -38,7 +38,9 @@ export default function FindPasswordSmsStep({
 
   return (
     <form className={cx('form')} onSubmit={onSubmit}>
+      <p className={cx('description')}>등록한 휴대폰 번호로 인증코드를 보내드려요.</p>
       <TextInput
+        variant="auth"
         label="이름"
         name="name"
         placeholder="이름을 입력하세요"
@@ -47,6 +49,7 @@ export default function FindPasswordSmsStep({
       />
       <TextInput
         autoComplete="tel"
+        variant="auth"
         label="휴대폰 번호"
         name="phone"
         placeholder="숫자만 입력하세요"
@@ -66,7 +69,7 @@ export default function FindPasswordSmsStep({
         </button>
       )}
       <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
-        인증번호 발송
+        {isPending ? '발송 중...' : '인증코드 받기'}
       </button>
       {onResend && (
         <button className={cx('secondaryButton')} type="button" onClick={onResend}>

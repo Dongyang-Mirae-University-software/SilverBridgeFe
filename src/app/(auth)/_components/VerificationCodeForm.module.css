@@ -40,3 +40,32 @@
   cursor: not-allowed;
   box-shadow: none;
 }
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.actions.withBack {
+  grid-template-columns: 90px 1fr;
+}
+
+.backButton {
+  height: 46px;
+  border: 1.5px solid #f0d2bc;
+  border-radius: 12px;
+  background: #fff;
+  color: #5c4d3f;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* v11 비밀번호 찾기 인증 단계 전용 */
+.auth { gap: 12px; }
+.auth > div:first-child { color: #8a7868; font-size: 13px; line-height: 1.5; }
+.auth > div:first-child p { margin: 0 0 2px; }
+.auth > div:first-child span { color: var(--sb-brand); font-size: 12px; font-weight: 600; }
+.auth .primary { height: 46px; background: var(--sb-brand); box-shadow: 0 4px 12px rgba(176, 103, 77, 0.22); }
+.auth .secondary { height: auto; min-height: 32px; border: 0; color: #8a7868; font-size: 12px; text-decoration: underline; }

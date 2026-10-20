@@ -10,21 +10,25 @@ import styles from './VerificationCodeForm.module.css';
 const cx = classNames.bind(styles);
 
 interface Props {
+  variant?: 'default' | 'auth';
   codeLength?: number;
   content: string;
   errorMessage?: string;
   expiresInSeconds?: number;
   onResend: () => Promise<unknown>;
   onSubmit: (code: string) => Promise<unknown>;
+  onBack?: () => void;
 }
 
 export default function VerificationCodeForm({
+  variant = 'default',
   codeLength = 6,
   content,
   errorMessage,
   expiresInSeconds = 300,
   onResend,
   onSubmit,
+  onBack,
 }: Props) {
   const [code, setCode] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -60,18 +64,32 @@ export default function VerificationCodeForm({
   };
 
   return (
-    <div className={cx('wrap')}>
+    <div className={cx('wrap', { auth: variant === 'auth' })}>
       <AuthTimer content={content} isExpired={isExpired} time={formattedTime} />
-      <TextInput inputMode="numeric" label="인증번호" maxLength={codeLength} value={code} onChange={handleCode} />
+      <TextInput
+        inputMode="numeric"
+        label="인증번호"
+        maxLength={codeLength}
+        value={code}
+        variant={variant}
+        onChange={handleCode}
+      />
       {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
-      <button
-        className={cx('primary')}
-        disabled={code.length !== codeLength || isExpired || isSubmitting}
-        type="button"
-        onClick={handleSubmit}
-      >
-        {isSubmitting ? '확인 중...' : '인증 확인'}
-      </button>
+      <div className={cx('actions', { withBack: Boolean(onBack) })}>
+        {onBack && (
+          <button className={cx('backButton')} type="button" onClick={onBack}>
+            이전
+          </button>
+        )}
+        <button
+          className={cx('primary')}
+          disabled={code.length !== codeLength || isExpired || isSubmitting}
+          type="button"
+          onClick={handleSubmit}
+        >
+          {isSubmitting ? '확인 중...' : '확인'}
+        </button>
+      </div>
       <button className={cx('secondary')} disabled={isSending} type="button" onClick={handleResend}>
         {isSending ? '재전송 중...' : '인증번호 재전송'}
       </button>

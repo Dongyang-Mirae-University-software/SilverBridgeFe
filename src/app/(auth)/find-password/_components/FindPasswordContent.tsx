@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
-import Step from '@/app/(auth)/_components/Step';
+// LEGACY_VISUAL: v11 모달에서는 단계 라벨을 노출하지 않는다.
+// import Step from '@/app/(auth)/_components/Step';
 import useFindPasswordFlow from '../_hooks/useFindPasswordFlow';
 import FindPasswordMethodStep from './FindPasswordMethodStep';
 import FindPasswordEmailStep from './FindPasswordEmailStep';
@@ -16,7 +17,8 @@ import styles from './FindPasswordContent.module.css';
 
 const cx = classNames.bind(styles);
 
-const STEP_LIST = ['방식 선택', '정보 입력', '인증 확인', '새 비밀번호 생성'];
+// LEGACY_VISUAL: <Step step={flow.step} stepList={STEP_LIST} />에 사용하던 단계명이다.
+// const STEP_LIST = ['방식 선택', '정보 입력', '인증 확인', '새 비밀번호 생성'];
 
 interface Props {
   onClose?: () => void;
@@ -93,7 +95,8 @@ export default function FindPasswordContent({ onClose }: Props) {
           ✕
         </button>
       </div>
-      <Step step={flow.step} stepList={STEP_LIST} />
+      {/* LEGACY_VISUAL: v11 모달은 단계 라벨 대신 각 단계의 안내 문구를 사용한다.
+      <Step step={flow.step} stepList={STEP_LIST} /> */}
       {flow.step === 1 && <FindPasswordMethodStep onSelectMethod={handleMethodSelect} />}
       {flow.step === 2 && flow.method === 'email' && (
         <FindPasswordEmailStep
@@ -126,6 +129,7 @@ export default function FindPasswordContent({ onClose }: Props) {
           errorMessage={flow.errorMessage}
           codeLength={flow.verificationConfig.codeLength}
           expiresInSeconds={flow.verificationConfig.expiresInSeconds}
+          onBack={() => flow.setStep(2)}
           onResend={flow.method === 'email' ? () => flow.resendEmail({ email: flow.email }) : () => flow.resendSms({ name: flow.name, phone: flow.phone })}
           onSubmit={handleVerifySubmit}
         />

@@ -33,7 +33,7 @@ export default function FindPasswordResetStep({ errorMessage, isPending, onSubmi
   return (
     <form className={cx('form')} onSubmit={handleSubmit}>
       <div className={cx('resetIntro')}>
-        <h2 className={cx('resetTitle')}>새 비밀번호 생성</h2>
+        <h2 className={cx('resetTitle')}>새 비밀번호</h2>
         <p className={cx('description')}>새로운 비밀번호를 설정해 주세요.</p>
       </div>
       <div className={cx('passwordFields')}>
@@ -43,6 +43,7 @@ export default function FindPasswordResetStep({ errorMessage, isPending, onSubmi
           label="새 비밀번호"
           name="newPassword"
           type="password"
+          variant="auth"
           placeholder="8자 이상"
           value={newPassword}
           onChange={event => setNewPassword(event.target.value)}
@@ -53,6 +54,7 @@ export default function FindPasswordResetStep({ errorMessage, isPending, onSubmi
           label="비밀번호 확인"
           name="confirmPassword"
           type="password"
+          variant="auth"
           placeholder="다시 입력"
           value={confirmPassword}
           onChange={event => setConfirmPassword(event.target.value)}
@@ -60,7 +62,7 @@ export default function FindPasswordResetStep({ errorMessage, isPending, onSubmi
       </div>
       {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
       <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
-        {isPending ? '생성 중...' : '새 비밀번호 생성'}
+        {isPending ? '변경 중...' : '비밀번호 변경'}
       </button>
     </form>
   );

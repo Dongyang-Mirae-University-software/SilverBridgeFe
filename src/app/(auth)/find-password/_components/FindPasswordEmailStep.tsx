@@ -37,7 +37,9 @@ export default function FindPasswordEmailStep({
 
   return (
     <form className={cx('form')} onSubmit={onSubmit}>
+      <p className={cx('description')}>가입한 이메일로 인증코드를 보내드려요.</p>
       <TextInput
+        variant="auth"
         label="이메일"
         name="email"
         type="email"
@@ -62,7 +64,7 @@ export default function FindPasswordEmailStep({
         </div>
       )}
       <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
-        이메일 발송
+        {isPending ? '발송 중...' : '인증코드 받기'}
       </button>
       {onResend && (
         <button className={cx('secondaryButton')} type="button" onClick={onResend}>

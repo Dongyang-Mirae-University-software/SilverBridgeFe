@@ -12,18 +12,21 @@ interface Props {
   expiresInSeconds: number;
   onResend: () => Promise<unknown>;
   onSubmit: (code: string) => Promise<unknown>;
+  onBack: () => void;
 }
 
-export default function FindPasswordVerifyStep({ codeLength, errorMessage, expiresInSeconds, onResend, onSubmit }: Props) {
+export default function FindPasswordVerifyStep({ codeLength, errorMessage, expiresInSeconds, onBack, onResend, onSubmit }: Props) {
   return (
     <div className={cx('section')}>
       <VerificationCodeForm
-        content="받은 인증코드를 입력하세요."
+        content="받은 인증코드를 입력해 주세요. (유효시간 5분)"
         codeLength={codeLength}
         errorMessage={errorMessage}
         expiresInSeconds={expiresInSeconds}
         onResend={onResend}
         onSubmit={onSubmit}
+        onBack={onBack}
+        variant="auth"
       />
     </div>
   );
