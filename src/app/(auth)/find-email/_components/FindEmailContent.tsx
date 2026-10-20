@@ -21,7 +21,11 @@ export default function FindEmailContent({ onClose }: Props) {
 
   const handleInfoSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await flow.requestEmail(flow.form);
+    try {
+      await flow.requestEmail(flow.form);
+    } catch {
+      // useFindEmailFlow가 오류 문구를 화면에 표시한다.
+    }
   };
 
   return (
