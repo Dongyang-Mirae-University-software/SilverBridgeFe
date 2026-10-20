@@ -112,6 +112,7 @@ export default function LoginContent() {
             required={false}
             type="email"
             value={email}
+            variant="auth"
             onChange={event => setEmail(event.target.value)}
           />
           <TextInput
@@ -121,6 +122,7 @@ export default function LoginContent() {
             required={false}
             type="password"
             value={password}
+            variant="auth"
             onChange={event => setPassword(event.target.value)}
           />
         </div>

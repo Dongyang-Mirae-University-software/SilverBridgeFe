@@ -70,3 +70,18 @@
   font-weight: 600;
   line-height: 1.4;
 }
+
+/* v11 인증 화면에서만 사용하는 따뜻한 입력 필드 톤 */
+.auth .input-area {
+  border-color: #f0d2bc;
+  background: var(--sb-bg);
+}
+
+.auth .input-area:hover,
+.auth .input-area:focus-within {
+  border-color: var(--sb-brand);
+}
+
+.auth .input-label {
+  color: #5c4d3f;
+}

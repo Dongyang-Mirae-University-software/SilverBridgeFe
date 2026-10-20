@@ -10,14 +10,15 @@ interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
   errorText?: string;
   required?: boolean;
   label?: string;
+  variant?: 'default' | 'auth';
 }
 
 function TextInput(
-  { label, required = false, errorText, error, ...props }: TextInputProps,
+  { label, required = false, errorText, error, variant = 'default', ...props }: TextInputProps,
   ref: ForwardedRef<HTMLInputElement>,
 ) {
   return (
-    <div className={cx('field')}>
+    <div className={cx('field', { auth: variant === 'auth' })}>
       {label && (
         <div className={cx('label-wrapper')}>
           <label className={cx('input-label')}>{label}</label>
