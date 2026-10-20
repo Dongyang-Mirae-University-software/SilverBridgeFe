@@ -49,7 +49,7 @@
 .remember input {
   width: 16px;
   height: 16px;
-  accent-color: #d97757;
+  accent-color: var(--sb-brand);
 }
 
 .findLinks {
@@ -75,13 +75,13 @@
 
 .accentTextButton,
 .signupLink {
-  color: #d97757;
+  color: var(--sb-brand);
 }
 
 .separator {
   width: 1px;
   height: 11px;
-  background: #e5d8c5;
+  background: #f0d2bc;
 }
 
 .errorMessage {
@@ -104,9 +104,9 @@
 }
 
 .submitButton {
-  background: #d97757;
+  background: var(--sb-brand);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.3);
+  box-shadow: 0 4px 12px rgba(176, 103, 77, 0.22);
 }
 
 .submitButton:disabled {
@@ -128,7 +128,7 @@
 .divider span {
   flex: 1;
   height: 1px;
-  background: #efe3d2;
+  background: #f4dccb;
 }
 
 .kakaoButton {
@@ -149,7 +149,7 @@
 }
 
 .signupLink {
-  color: #d97757;
+  color: var(--sb-brand);
   font-size: 0.8125rem;
   font-weight: 700;
 }
@@ -181,7 +181,7 @@
 }
 
 .submitButton:hover:not(:disabled) {
-  box-shadow: 0 8px 18px rgba(217, 119, 87, 0.26);
+  box-shadow: 0 8px 18px rgba(176, 103, 77, 0.26);
   filter: saturate(1.03);
 }
 
