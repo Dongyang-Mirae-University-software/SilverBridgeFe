@@ -127,10 +127,18 @@ export function GuardianHospitalContent() {
     setNotice(null);
   };
 
-  const canSubmit =
-    Boolean(ward && hospital && department && date && time) &&
-    PHONE_PATTERN.test(patientPhone) &&
-    !createMutation.isPending;
+  const phoneValid = PHONE_PATTERN.test(patientPhone);
+  const canSubmit = Boolean(ward && hospital && department && date && time) && phoneValid && !createMutation.isPending;
+  // 버튼이 왜 비활성인지 한 줄로 알려준다. 다 채웠으면 예약 내용을 확인 문장으로 보여준다.
+  const submitHint = !department
+    ? '진료과를 선택해 주세요.'
+    : !date
+      ? '날짜를 선택해 주세요.'
+      : !time
+        ? '시간을 선택해 주세요.'
+        : !phoneValid
+          ? '환자 연락처를 확인해 주세요.'
+          : `${hospital?.name} · ${department} · ${date} ${time} · ${ward?.partnerName} 님`;
 
   const submit = () => {
     if (!ward || !hospital) return;
@@ -195,7 +203,7 @@ export function GuardianHospitalContent() {
       </header>
 
       <Tabs items={TABS} value={tab} onChange={setTab} ariaLabel="예약 메뉴" />
-      {notice && <p className={cx('notice', notice.tone)}>{notice.text}</p>}
+      {notice && tab === 'history' && <p className={cx('notice', notice.tone)}>{notice.text}</p>}
 
       {tab === 'book' ? (
         <div className={cx('booking')}>
@@ -216,9 +224,13 @@ export function GuardianHospitalContent() {
                     type="button"
                     className={cx('hospitalCard', { active: item.id === hospitalId })}
                     disabled={!item.bookingAvailable}
+                    aria-pressed={item.id === hospitalId}
                     onClick={() => selectHospital(item)}
                   >
-                    <span className={cx('hospitalName')}>{item.name}</span>
+                    <span className={cx('hospitalName')}>
+                      {item.name}
+                      {!item.bookingAvailable && ' · 예약 불가'}
+                    </span>
                     <span className={cx('hospitalMeta')}>
                       {item.region} · {item.departments.join(', ')}
                     </span>
@@ -255,6 +267,7 @@ export function GuardianHospitalContent() {
                       key={name}
                       type="button"
                       className={cx('chip', { active: name === department })}
+                      aria-pressed={name === department}
                       onClick={() => setDepartment(name)}
                     >
                       {name}
@@ -282,7 +295,7 @@ export function GuardianHospitalContent() {
                 {isSlotsLoading ? (
                   <span className={cx('hospitalMeta')}>예약 가능 시간을 확인하는 중입니다.</span>
                 ) : visibleSlots.length === 0 ? (
-                  <span className={cx('hospitalMeta')}>예약 가능한 시간이 없습니다.</span>
+                  <span className={cx('hospitalMeta')}>예약 가능한 시간이 없습니다. 다른 날짜를 선택해 주세요.</span>
                 ) : (
                   <div className={cx('chips')}>
                     {visibleSlots.map(slot => (
@@ -290,6 +303,7 @@ export function GuardianHospitalContent() {
                         key={slot}
                         type="button"
                         className={cx('chip', { active: slot === time })}
+                        aria-pressed={slot === time}
                         onClick={() => setTime(slot)}
                       >
                         {slot}
@@ -306,8 +320,14 @@ export function GuardianHospitalContent() {
                   type="tel"
                   placeholder="010-0000-0000"
                   value={patientPhone}
+                  aria-invalid={!phoneValid}
                   onChange={event => setPhoneInput(event.target.value)}
                 />
+                {!phoneValid && (
+                  <span className={cx('hospitalMeta')}>
+                    {patientPhone ? '010-0000-0000 형식으로 입력해 주세요.' : '예약 확인 연락을 받을 번호를 입력해 주세요.'}
+                  </span>
+                )}
               </label>
 
               <label className={cx('field')}>
@@ -319,6 +339,10 @@ export function GuardianHospitalContent() {
                 />
               </label>
 
+              {notice && <p className={cx('notice', notice.tone)}>{notice.text}</p>}
+              <p className={cx('hospitalMeta')} aria-live="polite">
+                {submitHint}
+              </p>
               <button type="submit" className={cx('submit')} disabled={!canSubmit}>
                 {createMutation.isPending ? '예약 중입니다' : `${ward?.partnerName ?? ''} 님 예약하기`}
               </button>
