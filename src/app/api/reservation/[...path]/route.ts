@@ -5,10 +5,9 @@
 // 피보호자 웹은 헤더 없이 자기 계정으로 같은 내역을 본다.
 import { createHmac } from 'crypto';
 import { NextRequest } from 'next/server';
+import { readReservationConfig, type ReservationConfig } from '@/lib/server/reservationConfig';
 
-const RESERVATION_API = `${(process.env.RESERVATION_API_URL ?? 'https://reservation.dmu.gosky.kr').replace(/\/$/, '')}/api/v1`;
-// ponytail: 예약 서비스 계정 비밀번호 파생용. 운영에서는 RESERVATION_ACCOUNT_SECRET로 반드시 덮어쓸 것.
-const ACCOUNT_SECRET = process.env.RESERVATION_ACCOUNT_SECRET ?? 'silverbridge-reservation-dev-secret';
+// 예약 서비스 주소·계정 비밀번호 파생 비밀은 환경변수로만 받는다(기본값 없음). 비어 있으면 예약 기능만 503.
 const PHONE_PATTERN = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
 const WARD_HEADER = 'x-sb-ward-id';
 
@@ -51,8 +50,8 @@ async function getWardProfile(token: string, wardId: string): Promise<Profile | 
   return ward ? { id: ward.partnerUserId, name: ward.partnerName, phone: ward.partnerPhone ?? undefined } : null;
 }
 
-async function postJson(path: string, body: unknown) {
-  return fetch(`${RESERVATION_API}${path}`, {
+async function postJson(config: ReservationConfig, path: string, body: unknown) {
+  return fetch(`${config.apiBase}${path}`, {
     body: JSON.stringify(body),
     cache: 'no-store',
     headers: { 'content-type': 'application/json' },
@@ -60,17 +59,17 @@ async function postJson(path: string, body: unknown) {
   });
 }
 
-async function getReservationToken(profile: Profile) {
+async function getReservationToken(config: ReservationConfig, profile: Profile) {
   const cached = tokenCache.get(profile.id);
   if (cached && cached.expiresAt > Date.now()) return cached.token;
 
   const email = `sb-${profile.id}@silverbridge.local`;
-  const password = createHmac('sha256', ACCOUNT_SECRET).update(profile.id).digest('hex');
+  const password = createHmac('sha256', config.accountSecret).update(profile.id).digest('hex');
 
-  let response = await postJson('/auth/login', { email, password });
+  let response = await postJson(config, '/auth/login', { email, password });
   if (response.status === 401) {
     const phone = profile.phone && PHONE_PATTERN.test(profile.phone) ? profile.phone : '010-0000-0000';
-    response = await postJson('/auth/signup', { email, password, name: profile.name || '사용자', phone });
+    response = await postJson(config, '/auth/signup', { email, password, name: profile.name || '사용자', phone });
   }
   if (!response.ok) throw new Error('예약 서비스 계정을 준비하지 못했습니다.');
 
@@ -80,6 +79,9 @@ async function getReservationToken(profile: Profile) {
 }
 
 async function proxyReservationRequest(request: NextRequest, context: RouteContext) {
+  const config = readReservationConfig();
+  if (!config) return fail(503, '예약 서비스 설정이 되어 있지 않습니다.');
+
   const sbToken = getSbToken(request);
   const me = sbToken ? await getCurrentProfile(sbToken) : null;
   if (!sbToken || !me) return fail(401, '로그인이 필요해요.');
@@ -90,7 +92,7 @@ async function proxyReservationRequest(request: NextRequest, context: RouteConte
 
   let token: string;
   try {
-    token = await getReservationToken(profile);
+    token = await getReservationToken(config, profile);
   } catch (error) {
     return fail(502, error instanceof Error ? error.message : '예약 서비스에 연결하지 못했습니다.');
   }
@@ -98,7 +100,7 @@ async function proxyReservationRequest(request: NextRequest, context: RouteConte
   const { path } = await context.params;
   const method = request.method.toUpperCase();
   const body = method === 'GET' || method === 'HEAD' ? undefined : await request.text();
-  const targetUrl = `${RESERVATION_API}/${path.map(encodeURIComponent).join('/')}${request.nextUrl.search}`;
+  const targetUrl = `${config.apiBase}/${path.map(encodeURIComponent).join('/')}${request.nextUrl.search}`;
 
   const response = await fetch(targetUrl, {
     body,
