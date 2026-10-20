@@ -106,7 +106,6 @@ export default function LoginContent() {
           <TextInput
             autoComplete="email"
             error={Boolean(errorMessage)}
-            errorText={errorMessage}
             label="이메일"
             name="email"
             required={false}
