@@ -112,3 +112,12 @@ http://localhost:6510
 npm run build
 npm run start
 ```
+
+### 5. 테스트
+
+```bash
+npm test              # 단위 테스트 (node 환경, *.test.ts)
+npm run test:browser  # 컴포넌트 테스트 - 설치된 Google Chrome에서 실행 (*.browser.test.tsx)
+```
+
+`test:browser`는 PC에 설치된 Google Chrome을 그대로 쓴다(브라우저를 따로 내려받지 않는다). Chrome이 없으면 실행되지 않는다.

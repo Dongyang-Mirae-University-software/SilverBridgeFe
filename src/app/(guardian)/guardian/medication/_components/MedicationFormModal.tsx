@@ -3,6 +3,8 @@
 import { FormEvent, useState } from 'react';
 import classNames from 'classnames/bind';
 
+import { useModalDialog } from '@/hooks/useModalDialog';
+
 import { MedicationItem, MedicationTimeSlot } from '@/service/interface/medication';
 import { getMedicationTimeSlotLabel } from '@/utils/format/medication';
 import {
@@ -47,6 +49,15 @@ function toFormValue(initial: MedicationItem): MedicationFormValue {
 
 export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSubmit, onClose }: MedicationFormModalProps) {
   const [value, setValue] = useState<MedicationFormValue>(() => toFormValue(initial));
+  // 저장 중에 닫으면 실패 안내를 볼 수 없다 - 저장이 끝날 때까지 닫지 않는다
+  const requestClose = () => {
+    if (isSubmitting) return;
+    onClose();
+  };
+  const { dialogRef, onDialogKeyDown, overlayProps } = useModalDialog<HTMLFormElement>({
+    onRequestClose: requestClose,
+    initialFocusSelector: 'input',
+  });
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -63,18 +74,19 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
   };
 
   return (
-    <div className={cx('overlay')} role="presentation" onClick={onClose}>
+    <div className={cx('overlay')} role="presentation" {...overlayProps}>
       <form
+        ref={dialogRef}
         className={cx('modal')}
         role="dialog"
         aria-modal="true"
         aria-label="약 수정"
-        onClick={event => event.stopPropagation()}
         onSubmit={handleSubmit}
+        onKeyDown={onDialogKeyDown}
       >
         <header className={cx('header')}>
           <h3>약 수정</h3>
-          <button type="button" className={cx('close')} onClick={onClose} aria-label="닫기">
+          <button type="button" className={cx('close')} onClick={requestClose} disabled={isSubmitting} aria-label="닫기">
             ×
           </button>
         </header>
