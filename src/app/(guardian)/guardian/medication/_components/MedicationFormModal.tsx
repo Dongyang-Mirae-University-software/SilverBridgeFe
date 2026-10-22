@@ -28,26 +28,25 @@ interface MedicationFormValue {
 
 interface MedicationFormModalProps {
   wardName: string;
-  initial?: MedicationItem;
+  initial: MedicationItem;
   isSubmitting: boolean;
   errorMessage?: string;
   onSubmit: (value: MedicationFormValue) => void;
   onClose: () => void;
 }
 
-function toFormValue(initial?: MedicationItem): MedicationFormValue {
+function toFormValue(initial: MedicationItem): MedicationFormValue {
   return {
-    name: initial?.name ?? '',
-    timeSlot: initial?.timeSlot ?? 'MORNING',
-    doseTime: initial ? initial.doseTime.slice(0, 5) : '',
-    doseAmount: initial?.doseAmount ?? 1,
-    memo: initial?.memo ?? '',
+    name: initial.name,
+    timeSlot: initial.timeSlot,
+    doseTime: initial.doseTime.slice(0, 5),
+    doseAmount: initial.doseAmount,
+    memo: initial.memo ?? '',
   };
 }
 
 export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSubmit, onClose }: MedicationFormModalProps) {
   const [value, setValue] = useState<MedicationFormValue>(() => toFormValue(initial));
-  const isEdit = Boolean(initial);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -69,12 +68,12 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
         className={cx('modal')}
         role="dialog"
         aria-modal="true"
-        aria-label={isEdit ? '약 수정' : '약 추가'}
+        aria-label="약 수정"
         onClick={event => event.stopPropagation()}
         onSubmit={handleSubmit}
       >
         <header className={cx('header')}>
-          <h3>{isEdit ? '약 수정' : '약 추가'}</h3>
+          <h3>약 수정</h3>
           <button type="button" className={cx('close')} onClick={onClose} aria-label="닫기">
             ×
           </button>
@@ -160,7 +159,7 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
             취소
           </button>
           <button type="submit" className={cx('submitButton')} disabled={!value.name.trim() || isSubmitting}>
-            {isSubmitting ? '저장 중...' : isEdit ? '수정' : '등록'}
+            {isSubmitting ? '저장 중...' : '수정'}
           </button>
         </footer>
       </form>

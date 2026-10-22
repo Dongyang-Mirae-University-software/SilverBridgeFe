@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 
 import { MedicationItem } from '@/service/interface/medication';
 import { Icon } from '@/components/Icon';
-import { formatDoseTime, getMedicationTimeSlotLabel } from '@/utils/format/medication';
+import { formatDoseAmount, formatDoseTime, getMedicationTimeSlotLabel } from '@/utils/format/medication';
 import styles from './WardMedicationCard.module.css';
 import { useMedicationIntakeMutation } from '@/service/query/ward';
 
@@ -29,7 +29,7 @@ export function WardMedicationCard({ medication }: WardMedicationCardProps) {
       <div className={cx('cardMeta')}>
         <strong className={cx('name')}>{medication.name}</strong>
         <span className={cx('detail')}>
-          {medication.doseAmount}정{medication.memo ? ` · ${medication.memo}` : ''}
+          {formatDoseAmount(medication.doseAmount)}{medication.memo ? ` · ${medication.memo}` : ''}
         </span>
       </div>
       <button

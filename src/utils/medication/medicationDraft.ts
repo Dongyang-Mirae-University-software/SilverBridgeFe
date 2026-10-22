@@ -114,13 +114,18 @@ export function formatDoseLabel(value: number) {
   return value - whole === 0.5 ? `${whole}알 반` : `${whole}알`;
 }
 
+export interface OcrDraftResult {
+  draft: MedicationDraft;
+  truncated: boolean; // 약이 MAX_DRUGS개를 넘어 앞의 것만 가져왔다
+  timingVaries: boolean; // 약마다 복용 안내가 달라 메모를 비워 두었다
+}
+
 // 인식 결과 → 양식 초안. 약이 0개면 null(읽지 못함으로 안내)
-export function ocrResultToDraft(result: MedicationOcrResponse | null): MedicationDraft | null {
+export function ocrResultToDraft(result: MedicationOcrResponse | null): OcrDraftResult | null {
   if (!result || !result.readable) return null;
-  const drugs = result.drugs
-    .filter(drug => drug.name && drug.name.trim())
-    .slice(0, MAX_DRUGS);
-  if (drugs.length === 0) return null;
+  const named = result.drugs.filter(drug => drug.name && drug.name.trim());
+  if (named.length === 0) return null;
+  const drugs = named.slice(0, MAX_DRUGS);
 
   const slotSet = new Set(drugs.flatMap(drug => drug.slots ?? []));
   let slots = SLOT_ORDER.filter(slot => slotSet.has(slot));
@@ -129,26 +134,43 @@ export function ocrResultToDraft(result: MedicationOcrResponse | null): Medicati
     slots = SLOTS_BY_TIMES_PER_DAY[Math.min(timesPerDay, 4)] ?? ['MORNING'];
   }
 
-  const memo = drugs.map(drug => drug.timing?.trim()).find(Boolean) ?? '';
+  // 메모는 모든 약에 붙으므로, 약마다 안내가 다르면(일부만 있는 경우 포함) 한 약의 안내를 전부에 붙이지 않는다
+  const timings = new Set(drugs.map(drug => drug.timing?.trim() ?? ''));
+  const timingVaries = timings.size > 1;
+  const memo = timingVaries ? '' : ([...timings][0] ?? '');
 
   return {
-    drugs: drugs.map(drug => ({
-      key: createDraftKey(),
-      name: drug.name.trim().slice(0, MAX_NAME_LENGTH),
-      doseAmount: normalizeDoseAmount(drug.perDose),
-      lowConfidence: drug.confidence === 'low',
-    })),
-    times: slots.map(slot => ({ key: createDraftKey(), time: SLOT_DEFAULT_TIME[slot] })),
-    memo: memo.slice(0, MAX_MEMO_LENGTH),
+    draft: {
+      drugs: drugs.map(drug => ({
+        key: createDraftKey(),
+        name: drug.name.trim().slice(0, MAX_NAME_LENGTH),
+        doseAmount: normalizeDoseAmount(drug.perDose),
+        lowConfidence: drug.confidence === 'low',
+      })),
+      times: slots.map(slot => ({ key: createDraftKey(), time: SLOT_DEFAULT_TIME[slot] })),
+      memo: memo.slice(0, MAX_MEMO_LENGTH),
+    },
+    truncated: named.length > MAX_DRUGS,
+    timingVaries,
   };
 }
 
-// 같은 이름(공백 정리·대소문자 무시)이 두 번 이상 있는 약 key 목록 - BE도 400으로 막는다
+// BE 중복 판정(TextSanitizer.sanitize + 소문자)과 같은 기준: NFC → 제어·서식 문자 제거 → 공백 묶기 → trim → 소문자
+export function normalizeDrugName(name: string) {
+  return name
+    .normalize('NFC')
+    .replace(/[\p{Cc}\p{Cf}]/gu, '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+// 같은 이름(공백·보이지 않는 문자 정리, 대소문자 무시)이 두 번 이상 있는 약 key 목록 - BE도 400으로 막는다
 export function findDuplicateDrugKeys(drugs: DraftDrug[]) {
   const seen = new Map<string, string>();
   const duplicates = new Set<string>();
   drugs.forEach(drug => {
-    const normalized = drug.name.trim().toLowerCase();
+    const normalized = normalizeDrugName(drug.name);
     if (!normalized) return;
     const first = seen.get(normalized);
     if (first) {
@@ -171,7 +193,7 @@ export function canSubmitDraft(draft: MedicationDraft) {
     draft.drugs.length <= MAX_DRUGS &&
     draft.times.length >= 1 &&
     draft.times.length <= MAX_TIMES &&
-    draft.drugs.every(drug => drug.name.trim().length > 0) &&
+    draft.drugs.every(drug => normalizeDrugName(drug.name).length > 0) &&
     findDuplicateDrugKeys(draft.drugs).size === 0 &&
     !hasDuplicateTimes(draft.times)
   );

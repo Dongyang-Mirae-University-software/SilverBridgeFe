@@ -3,7 +3,6 @@
 import { QueryClient, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {
-  addWardMedication,
   addWardMedicationBatch,
   deleteGuardianMedication,
   getGuardianMedications,
@@ -15,7 +14,6 @@ import {
 } from '@/service/api/guardian/medication';
 import {
   AddMedicationBatchReq,
-  AddMedicationReq,
   UpdateMedicationAlertSettingReq,
   UpdateMedicationReq,
   UpdateMedicationSettingReq,
@@ -58,15 +56,6 @@ export function applyMedicationTakenToGuardianCache(
 function useInvalidateGuardianMedication() {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: guardianMedicationQueryKey });
-}
-
-export function useAddWardMedicationMutation() {
-  const invalidate = useInvalidateGuardianMedication();
-  return useMutation({
-    mutationKey: ['guardian-medication-add'],
-    mutationFn: ({ wardId, body }: { wardId: string; body: AddMedicationReq }) => addWardMedication(wardId, body),
-    onSuccess: () => invalidate(),
-  });
 }
 
 export function useAddWardMedicationBatchMutation() {

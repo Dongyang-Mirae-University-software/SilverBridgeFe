@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import classNames from 'classnames/bind';
 
 import {
@@ -35,6 +36,8 @@ interface MedicationDraftFormProps {
 // "약 추가" 등록 양식 - 카메라로 찍기·직접 쓰기 두 탭이 함께 쓴다(약 목록 × 드시는 시간 목록)
 export function MedicationDraftForm({ draft, disabled, onChange }: MedicationDraftFormProps) {
   const duplicateKeys = findDuplicateDrugKeys(draft.drugs);
+  const lowConfidenceHintId = useId();
+  const hasLowConfidence = draft.drugs.some(drug => drug.lowConfidence);
 
   const updateDrug = (key: string, patch: Partial<DraftDrug>) =>
     onChange({ ...draft, drugs: draft.drugs.map(drug => (drug.key === key ? { ...drug, ...patch } : drug)) });
@@ -68,6 +71,7 @@ export function MedicationDraftForm({ draft, disabled, onChange }: MedicationDra
                 placeholder="약 이름 입력"
                 aria-label={`${index + 1}번째 약 이름`}
                 aria-invalid={duplicateKeys.has(drug.key) || undefined}
+                aria-describedby={drug.lowConfidence ? lowConfidenceHintId : undefined}
                 disabled={disabled}
               />
               <div className={cx('stepper')}>
@@ -101,6 +105,11 @@ export function MedicationDraftForm({ draft, disabled, onChange }: MedicationDra
             </li>
           ))}
         </ul>
+        {hasLowConfidence && (
+          <p id={lowConfidenceHintId} className={cx('lowConfidenceHint')}>
+            노란 칸은 글자를 정확히 읽지 못했을 수 있어요. 한 번 더 확인해 주세요
+          </p>
+        )}
         {duplicateKeys.size > 0 && <p className={cx('hint')}>같은 이름의 약이 두 번 들어 있어요. 하나를 빼 주세요</p>}
         <button
           type="button"

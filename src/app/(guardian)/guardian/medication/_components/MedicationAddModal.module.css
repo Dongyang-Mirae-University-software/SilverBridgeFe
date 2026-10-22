@@ -265,6 +265,8 @@
 }
 
 .resultBanner {
+  display: grid;
+  gap: 4px;
   margin: 0;
   border-radius: 10px;
   background: var(--sb-safe-soft);
@@ -272,6 +274,16 @@
   font-size: 14px;
   font-weight: 800;
   padding: 12px 14px;
+}
+
+.resultBanner p {
+  margin: 0;
+}
+
+.resultNote {
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .draftForm {
@@ -386,6 +398,25 @@
   opacity: 0.5;
 }
 
+.lowConfidenceHint {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lowConfidenceHint::before {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border: 1px solid var(--sb-sun);
+  border-radius: 3px;
+  background: var(--sb-sun-soft);
+  content: '';
+  vertical-align: -1px;
+}
+
 .hint {
   margin: 0;
   color: var(--sb-warn);
@@ -399,6 +430,15 @@
   color: var(--sb-ink);
   font-size: 13px;
   font-weight: 800;
+}
+
+/* 키보드 사용자에게 포커스 위치를 보인다(입력 칸은 테두리 색만 바뀌어 잘 안 보였다) */
+.modal button:focus-visible,
+.nameInput:focus-visible,
+.timeSelect:focus-visible,
+.memoField input:focus-visible {
+  outline: 2px solid var(--sb-brand);
+  outline-offset: 2px;
 }
 
 @media (max-width: 480px) {

@@ -50,6 +50,9 @@ export async function prepareOcrImage(file: File): Promise<Blob> {
     canvas.height = size.height;
     const context = canvas.getContext('2d');
     if (!context) throw new OcrImageError('사진을 처리할 수 없습니다.');
+    // JPEG에는 투명이 없어 그대로 그리면 투명 PNG(스크린샷 등)의 배경이 검게 된다 - 흰 바탕을 먼저 깐다
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, size.width, size.height);
     context.drawImage(image.source, 0, 0, size.width, size.height);
 
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', OCR_JPEG_QUALITY));
@@ -68,12 +71,18 @@ const OCR_UNAVAILABLE_MESSAGE = '지금은 인식할 수 없어요. 직접 써 �
 // 인식 실패 → 화면 안내 문구. 403(연결되지 않은 피보호자)은 서버 문구를 그대로 쓴다
 export function getOcrErrorMessage(error: unknown) {
   if (error instanceof OcrImageError) return '사진을 열 수 없어요. 다시 찍어 주세요';
-  if (!axios.isAxiosError(error)) return OCR_UNAVAILABLE_MESSAGE;
+  if (!axios.isAxiosError<{ code?: string }>(error)) return OCR_UNAVAILABLE_MESSAGE;
 
   const status = error.response?.status;
   if (status === 403) return error.message || '연결된 피보호자의 약만 등록할 수 있어요';
   if (status === 413) return '사진이 너무 커요. 다시 찍어 주세요';
   if (status === 400) return '사진을 읽을 수 없어요. 다시 찍어 주세요';
-  if (status === 429) return '잠시 후 다시 시도해 주세요';
+  if (status === 429) {
+    // 1인 동시 1건 - 앞서 보낸 사진(닫은 창 포함)을 서버가 아직 읽는 중이다(최대 40초)
+    if (error.response?.data?.code === 'MEDICATION_OCR_LIMIT_EXCEEDED') {
+      return '앞서 보낸 사진을 아직 읽고 있어요. 잠시 후 다시 찍어 주세요';
+    }
+    return '잠시 후 다시 시도해 주세요';
+  }
   return OCR_UNAVAILABLE_MESSAGE; // 503·504·시간 초과(45초)·네트워크 오류
 }
