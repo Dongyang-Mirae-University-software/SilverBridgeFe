@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, FormEvent, KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, KeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import classNames from 'classnames/bind';
 
@@ -13,11 +13,11 @@ import {
   createEmptyDrug,
   defaultSlotsForGroup,
   DraftDrug,
-  getGroupTitle,
-  groupDrugsByTimesPerDay,
+  getMixedTimesNote,
   groupToBatchRequest,
   MAX_DRUGS,
   ocrResultToDraft,
+  toDoseGroup,
 } from '@/utils/medication/medicationDraft';
 import { getOcrErrorMessage, OCR_NOT_FOUND_MESSAGE, prepareOcrImage } from '@/utils/medication/ocrImage';
 import { MedicationDoseTimeStep } from './MedicationDoseTimeStep';
@@ -45,6 +45,10 @@ type CameraState =
 
 const UNCERTAIN_MESSAGE = '등록됐는지 확인하지 못했어요. 약 목록에서 확인한 뒤, 빠진 약만 다시 추가해 주세요';
 
+// 2/2에 들어온 직후·화면이 다시 켜진 직후에는 [등록]을 잠깐 막는다 - [다음]을 한 번 더 누른 탭이나
+// 꺼지려던 화면을 깨우려고 누른 탭이 [등록]에 닿아, 누르지 않은 약이 등록된 일이 있었다(2026-10-22 gosky)
+const SUBMIT_GUARD_MS = 1000;
+
 interface MedicationAddModalProps {
   wardId: string;
   onClose: () => void;
@@ -61,17 +65,18 @@ function PillIcon() {
   );
 }
 
-// 보호자 "약 추가" - 1/2 약(봉투를 찍어 채우거나 직접 쓴다) → 2/2 언제 드세요?(칩 선택)
-// 하루 횟수가 다른 약은 2/2에서 줄을 나누고, 줄마다 일괄 등록 API를 1번씩 부른다(줄 안은 전부 성공 또는 전부 실패)
+// 보호자 "약 추가" - 1/2 약(봉투를 찍어 채우거나 직접 쓴다) → 2/2 언제 드세요?(칩 선택, 모든 약에 같은 시간)
+// 등록은 일괄 등록 API 1번(전부 성공 또는 전부 실패). 하루 횟수가 다른 약이 섞이면 안내만 한다
 // 사진·인식 결과는 화면 상태로만 다루고 저장하지 않는다. 인식 결과는 언제나 초안이라 자동 등록하지 않는다
 export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps) {
   const [tab, setTab] = useState<AddTab>('camera');
   const [camera, setCamera] = useState<CameraState>({ phase: 'idle' });
   const [step, setStep] = useState<Step>(1);
   const [drugs, setDrugs] = useState<DraftDrug[]>(() => [createEmptyDrug()]);
-  const [selections, setSelections] = useState<Record<string, MedicationTimeSlot[]>>({});
-  const [doneKeys, setDoneKeys] = useState<ReadonlySet<string>>(() => new Set());
-  const [uncertainKeys, setUncertainKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const [selected, setSelected] = useState<MedicationTimeSlot[] | null>(null); // null = 아직 2/2에 가지 않음
+  // 응답 전에 끊겨 등록됐는지 모른다 - BE는 다른 요청의 같은 이름을 막지 않아 다시 보내면 중복 등록이므로 다시 보내지 않는다
+  const [uncertain, setUncertain] = useState(false);
+  const [isGuarded, setIsGuarded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,6 +84,8 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
   const stepTitleRef = useRef<HTMLHeadingElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const movedStepRef = useRef(false);
+  const stepRef = useRef<Step>(1);
+  const guardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const batchMutation = useAddWardMedicationBatchMutation();
   const idPrefix = useId();
   const tabId = (value: AddTab) => `${idPrefix}-tab-${value}`;
@@ -86,6 +93,24 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
 
   // 모달을 닫으면 진행 중인 인식 요청을 끊는다
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  const startGuard = useCallback(() => {
+    setIsGuarded(true);
+    if (guardTimerRef.current) clearTimeout(guardTimerRef.current);
+    guardTimerRef.current = setTimeout(() => setIsGuarded(false), SUBMIT_GUARD_MS);
+  }, []);
+
+  // 화면이 다시 켜지면(탭이 다시 보이면) 2/2의 [등록]을 잠깐 막는다
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && stepRef.current === 2) startGuard();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (guardTimerRef.current) clearTimeout(guardTimerRef.current);
+    };
+  }, [startGuard]);
 
   // 단계를 옮기면 새 단계 제목으로 포커스를 옮긴다(화면 읽기 프로그램이 바뀐 화면을 알 수 있게)
   useEffect(() => {
@@ -98,22 +123,18 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
     if (submitError && !isSubmitting) errorRef.current?.focus();
   }, [submitError, isSubmitting]);
 
-  const groups = useMemo(() => groupDrugsByTimesPerDay(drugs), [drugs]);
-  const pendingGroups = groups.filter(group => !doneKeys.has(group.key) && !uncertainKeys.has(group.key));
-  // 서버에 보낸 줄(등록됨·확인 필요)이 있으면 처음부터 다시 쓰다 같은 약을 또 등록하지 않게 [이전]·탭을 잠근다
-  const hasDone = doneKeys.size > 0 || uncertainKeys.size > 0;
+  const group = useMemo(() => toDoseGroup(drugs), [drugs]);
+  const mixedNote = useMemo(() => getMixedTimesNote(drugs), [drugs]);
+  const hasLowConfidence = drugs.some(drug => drug.lowConfidence);
+  const lowConfidenceHintId = `${idPrefix}-low-confidence`;
 
   const isReading = camera.phase === 'reading';
   const showForm = tab === 'manual' || camera.phase === 'result';
   const canProceed = step === 1 && showForm && canProceedDrugs(drugs);
-  const canSubmit =
-    step === 2 &&
-    !isSubmitting &&
-    pendingGroups.length > 0 &&
-    pendingGroups.every(group => (selections[group.key]?.length ?? 0) > 0);
+  const canSubmit = step === 2 && !isSubmitting && !uncertain && !isGuarded && (selected?.length ?? 0) > 0;
   // 읽는 중에 탭을 바꾸면 뒤늦게 온 인식 결과가 직접 쓴 내용을 덮는다 - 읽는 동안은 탭을 잠근다
-  // 일부 줄이 이미 등록됐으면 탭을 바꿔 처음부터 다시 쓰다가 같은 약을 또 등록하지 않게 잠근다
-  const isTabLocked = isReading || isSubmitting || hasDone;
+  // 등록됐는지 모르는 상태면 탭을 바꿔 처음부터 다시 쓰다가 같은 약을 또 등록하지 않게 잠근다
+  const isTabLocked = isReading || isSubmitting || uncertain;
 
   // 등록 중에 닫으면 결과(실패 안내)를 볼 수 없다 - 등록이 끝날 때까지 닫지 않는다
   const requestClose = () => {
@@ -127,8 +148,10 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
 
   const moveStep = (next: Step) => {
     movedStepRef.current = true;
+    stepRef.current = next;
     setStep(next);
     setSubmitError(undefined);
+    if (next === 2) startGuard();
   };
 
   const changeDrugs = (next: DraftDrug[]) => {
@@ -143,8 +166,9 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
     setTab(next);
     setCamera({ phase: 'idle' });
     setStep(1);
+    stepRef.current = 1;
     setDrugs([createEmptyDrug()]);
-    setSelections({});
+    setSelected(null);
     setSubmitError(undefined);
   };
 
@@ -177,7 +201,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
       }
       // 다시 찍으면 전에 고른 시간도 새 봉투 기준으로 다시 정한다
       setDrugs(recognized.drugs);
-      setSelections({});
+      setSelected(null);
       setCamera({ phase: 'result', count: recognized.drugs.length, truncated: recognized.truncated });
     } catch (error) {
       if (controller.signal.aborted || axios.isCancel(error)) return;
@@ -185,54 +209,33 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
     }
   };
 
-  // 1/2 → 2/2: 처음 보는 줄만 기본 선택을 채운다(이전으로 돌아갔다 와도 고른 값은 그대로)
+  // 1/2 → 2/2: 처음 갈 때만 기본 선택을 채운다(이전으로 돌아갔다 와도 고른 값은 그대로)
   const goNext = () => {
     if (!canProceed) return;
-    setSelections(current => {
-      const next = { ...current };
-      groups.forEach(group => {
-        if (!next[group.key]) next[group.key] = defaultSlotsForGroup(group, drugs);
-      });
-      return next;
-    });
+    setSelected(current => current ?? defaultSlotsForGroup(group));
     moveStep(2);
   };
 
-  const changeSelection = (groupKey: string, slots: MedicationTimeSlot[]) => {
-    setSelections(current => ({ ...current, [groupKey]: slots }));
+  const changeSelection = (slots: MedicationTimeSlot[]) => {
+    setSelected(slots);
     setSubmitError(undefined);
   };
 
-  // 줄마다 1번씩 차례로 등록한다. 실패하면 거기서 멈추고, 성공한 줄은 "등록됨"으로 잠가 다시 보내지 않는다
-  // 응답 전에 끊긴 실패(시간 초과·네트워크)는 서버에 등록됐을 수 있다 - BE는 다른 요청의 같은 이름을 막지 않으므로
-  // 그 줄은 "확인 필요"로 잠그고 다시 보내지 않는다(목록은 mutation이 새로고침한다)
+  // 응답 전에 끊긴 실패(시간 초과·네트워크)는 서버에 등록됐을 수 있다 - "확인 필요"로 막고 다시 보내지 않는다
+  // (목록은 mutation이 실패에도 새로고침한다). 서버가 거절한 실패(4xx·5xx)는 고쳐서 다시 등록할 수 있다
   const submit = async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !selected) return;
     setIsSubmitting(true);
     setSubmitError(undefined);
-    const done = new Set(doneKeys);
     try {
-      for (const group of pendingGroups) {
-        try {
-          await batchMutation.mutateAsync({ wardId, body: groupToBatchRequest(group, selections[group.key]) });
-          done.add(group.key);
-          setDoneKeys(new Set(done));
-        } catch (error) {
-          const noResponse = axios.isAxiosError(error) && !error.response;
-          if (noResponse) setUncertainKeys(current => new Set(current).add(group.key));
-          const message = noResponse
-            ? UNCERTAIN_MESSAGE
-            : (error instanceof Error && error.message) || '등록에 실패했어요. 다시 시도해 주세요';
-          setSubmitError(groups.length > 1 ? `${getGroupTitle(group)} - ${message}` : message);
-          return;
-        }
-      }
-      // 등록됐는지 모르는 줄이 남아 있으면 닫지 않는다 - 목록에서 확인하라는 안내를 볼 수 있어야 한다
-      if (uncertainKeys.size > 0) {
-        setSubmitError(`나머지 약은 등록됐어요. ${UNCERTAIN_MESSAGE}`);
-        return;
-      }
+      await batchMutation.mutateAsync({ wardId, body: groupToBatchRequest(group, selected) });
       onClose();
+    } catch (error) {
+      const noResponse = axios.isAxiosError(error) && !error.response;
+      if (noResponse) setUncertain(true);
+      setSubmitError(
+        noResponse ? UNCERTAIN_MESSAGE : (error instanceof Error && error.message) || '등록에 실패했어요. 다시 시도해 주세요',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -259,7 +262,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
     document.getElementById(tabId(next))?.focus();
   };
 
-  const submitLabel = isSubmitting ? '등록 중…' : hasDone ? '남은 약 다시 등록' : '등록';
+  const submitLabel = isSubmitting ? '등록 중…' : '등록';
 
   return (
     <div className={cx('overlay')} role="presentation" {...overlayProps}>
@@ -389,15 +392,27 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
             </div>
           )}
 
-          {showForm && step === 1 && <MedicationDraftForm drugs={drugs} disabled={false} onChange={changeDrugs} />}
+          {step === 1 && showForm && hasLowConfidence && (
+            <p id={lowConfidenceHintId} className={cx('checkBox')}>
+              노란 칸의 약 이름을 한 번 더 확인해 주세요. 맞나요?
+            </p>
+          )}
+
+          {showForm && step === 1 && (
+            <MedicationDraftForm
+              drugs={drugs}
+              disabled={false}
+              lowConfidenceHintId={hasLowConfidence ? lowConfidenceHintId : undefined}
+              onChange={changeDrugs}
+            />
+          )}
 
           {showForm && step === 2 && (
             <MedicationDoseTimeStep
-              groups={groups}
-              selections={selections}
-              doneKeys={doneKeys}
-              uncertainKeys={uncertainKeys}
-              disabled={isSubmitting}
+              group={group}
+              selected={selected ?? []}
+              mixedNote={mixedNote}
+              disabled={isSubmitting || uncertain}
               onChange={changeSelection}
             />
           )}
@@ -405,9 +420,6 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
           {submitError && (
             <p ref={errorRef} className={cx('error')} role="alert" tabIndex={-1}>
               {submitError}
-              {hasDone && (
-                <span className={cx('errorNote')}>등록됨·확인 필요 표시가 있는 약은 다시 보내지 않아요</span>
-              )}
             </p>
           )}
         </div>
@@ -434,7 +446,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
                 type="button"
                 className={cx('cancelButton')}
                 onClick={() => moveStep(1)}
-                disabled={isSubmitting || hasDone}
+                disabled={isSubmitting || uncertain}
               >
                 이전
               </button>

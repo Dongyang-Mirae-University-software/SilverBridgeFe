@@ -1,5 +1,5 @@
 // 보호자 "약 추가"(1/2 약 → 2/2 언제 드세요?)의 순수 로직
-// - 카메라 인식 결과(OCR)를 약 목록 초안으로 옮기고, 하루 횟수별 줄마다 일괄 등록 요청으로 바꾼다
+// - 카메라 인식 결과(OCR)를 약 목록 초안으로 옮기고, 고른 시간으로 일괄 등록 요청을 만든다
 // - 인식 결과는 언제나 초안이다. 보호자가 확인한 뒤 등록 버튼으로만 저장된다
 
 import { AddMedicationBatchReq, MedicationOcrResponse, MedicationTimeSlot } from '@/service/interface/medication';
@@ -147,7 +147,6 @@ export function findDuplicateDrugKeys(drugs: DraftDrug[]) {
 }
 
 // 1/2 → 2/2: 약 1~20개, 이름이 모두 있고 겹치지 않아야 한다
-// (줄을 나눠 따로 보내도 같은 이름이 두 번 등록되지 않게 줄이 아니라 전체에서 본다)
 export function canProceedDrugs(drugs: DraftDrug[]) {
   return (
     drugs.length >= 1 &&
@@ -157,54 +156,47 @@ export function canProceedDrugs(drugs: DraftDrug[]) {
   );
 }
 
-// 2/2의 칩 줄 1개 = 일괄 등록 1번
+// 2/2 "언제 드세요?" - 모든 약이 같은 시간을 쓴다(일괄 등록 1번)
+// 하루 횟수별로 줄을 나누던 화면(FE #86)은 고르기가 어려워 통합했다(2026-10-22 사용자 결정) - 횟수가 다른 약은 안내만 한다
 export interface DoseGroup {
-  key: string;
-  timesPerDay: number | null; // 이 줄 약들의 하루 횟수. 모르면 null
+  timesPerDay: number | null; // 약들의 하루 횟수가 모두 같을 때 그 값. 다르거나 모르면 null
   drugs: DraftDrug[];
 }
 
-export const SINGLE_GROUP_KEY = 'all';
-const UNKNOWN_GROUP_KEY = 'unknown';
-
-// 약들의 하루 횟수가 모두 같거나 모르면 한 줄. 서로 다르면 횟수별로 나눈다(많은 횟수 먼저)
-// 하루 2번 약을 3번 줄에 섞으면 과다 복용 안내가 된다(2026-10-22 실제 봉투 시험)
-// 줄을 나눌 때 횟수를 모르는 약은 다른 줄에 섞지 않고 "하루 횟수 모름" 줄로 따로 둔다
-export function groupDrugsByTimesPerDay(drugs: DraftDrug[]): DoseGroup[] {
-  const known = [...new Set(drugs.map(drug => drug.timesPerDay).filter((n): n is number => n !== null))];
-  if (known.length <= 1) {
-    return [{ key: SINGLE_GROUP_KEY, timesPerDay: known[0] ?? null, drugs }];
-  }
-
-  const groups: DoseGroup[] = known
-    .sort((a, b) => b - a)
-    .map(timesPerDay => ({
-      key: `times-${timesPerDay}`,
-      timesPerDay,
-      drugs: drugs.filter(drug => drug.timesPerDay === timesPerDay),
-    }));
-  const unknown = drugs.filter(drug => drug.timesPerDay === null);
-  if (unknown.length > 0) groups.push({ key: UNKNOWN_GROUP_KEY, timesPerDay: null, drugs: unknown });
-  return groups;
+function knownCounts(drugs: DraftDrug[]) {
+  return drugs.map(drug => drug.timesPerDay).filter((n): n is number => n !== null);
 }
 
-// 줄 제목: "하루 3번 · 신일이부프로펜정 외 4개" (줄이 하나일 때는 쓰지 않는다)
-export function getGroupTitle(group: DoseGroup) {
-  const [first, ...rest] = group.drugs;
-  const names = `${first?.name.trim() ?? ''}${rest.length > 0 ? ` 외 ${rest.length}개` : ''}`;
-  const times = group.timesPerDay === null ? '하루 횟수 모름' : `하루 ${group.timesPerDay}번`;
-  return `${times} · ${names}`;
+export function toDoseGroup(drugs: DraftDrug[]): DoseGroup {
+  const known = [...new Set(knownCounts(drugs))];
+  return { timesPerDay: known.length === 1 ? known[0] : null, drugs };
 }
 
-// 기본 선택: 봉투 시간대 표시가 있고 그 개수가 이 줄의 하루 횟수와 같으면(횟수를 모르면 표시만으로) 그대로,
-// 아니면 하루 횟수로(1 아침 / 2 아침·저녁 / 3 아침·점심·저녁 / 4 이상 네 칸), 정보가 없으면 아침
-// 시간대 표시는 이 줄 약들의 것을 먼저 보고, 없으면 봉투 전체(모든 약)의 것을 본다
-export function defaultSlotsForGroup(group: DoseGroup, allDrugs: DraftDrug[]): MedicationTimeSlot[] {
-  const own = orderSlots(group.drugs.flatMap(drug => drug.slots));
-  const marked = own.length > 0 ? own : orderSlots(allDrugs.flatMap(drug => drug.slots));
+// 약마다 봉투의 하루 횟수가 다르면 한 줄로 알린다(막지 않는다) - 모두 같은 시간으로 등록되므로 과다 복용 안내를 알아차리게
+// 가장 많은 약의 횟수(같으면 큰 쪽)와 다른 약만 적는다: "코싹엘정 하루 2번 - 다른 약과 하루 횟수가 달라요. …"
+export function getMixedTimesNote(drugs: DraftDrug[]) {
+  const counts = knownCounts(drugs);
+  if (new Set(counts).size <= 1) return null;
+  const tally = new Map<number, number>();
+  counts.forEach(n => tally.set(n, (tally.get(n) ?? 0) + 1));
+  const common = [...tally.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
+  const differing = drugs.filter(drug => drug.timesPerDay !== null && drug.timesPerDay !== common);
+  const parts = [...new Set(differing.map(drug => drug.timesPerDay as number))].sort((a, b) => b - a).map(n => {
+    const named = differing.filter(drug => drug.timesPerDay === n);
+    const rest = named.length > 1 ? ` 외 ${named.length - 1}개` : '';
+    return `${named[0].name.trim()}${rest} 하루 ${n}번`;
+  });
+  return `${parts.join(', ')} - 다른 약과 하루 횟수가 달라요. 다르게 드시는 약은 등록 후 시간을 고쳐 주세요`;
+}
+
+// 기본 선택: 봉투 시간대 표시가 있고 그 개수가 약들의 하루 횟수와 같으면(횟수가 섞였거나 모르면 표시만으로) 그대로,
+// 아니면 하루 횟수로(1 아침 / 2 아침·저녁 / 3 아침·점심·저녁 / 4 이상 네 칸, 섞였으면 가장 큰 횟수), 정보가 없으면 아침
+export function defaultSlotsForGroup(group: DoseGroup): MedicationTimeSlot[] {
+  const marked = orderSlots(group.drugs.flatMap(drug => drug.slots));
   if (marked.length > 0 && (group.timesPerDay === null || marked.length === group.timesPerDay)) return marked;
-  if (group.timesPerDay === null) return ['MORNING'];
-  return SLOTS_BY_TIMES_PER_DAY[Math.min(group.timesPerDay, 4)];
+  const count = group.timesPerDay ?? Math.max(0, ...knownCounts(group.drugs));
+  if (count < 1) return ['MORNING'];
+  return SLOTS_BY_TIMES_PER_DAY[Math.min(count, 4)];
 }
 
 // 고른 칸 수가 봉투의 하루 횟수와 다르면 알린다(막지는 않는다). 칩은 4개라 5번 이상은 그 사실도 알린다
