@@ -1,9 +1,10 @@
 'use client';
 
-import { ChangeEvent, FormEvent, KeyboardEvent, MouseEvent, useEffect, useId, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
 import axios from 'axios';
 import classNames from 'classnames/bind';
 
+import { useModalDialog } from '@/hooks/useModalDialog';
 import { recognizeMedicationEnvelope } from '@/service/api/guardian/medication';
 import { useAddWardMedicationBatchMutation } from '@/service/query/guardian/medication';
 import {
@@ -33,9 +34,6 @@ type CameraState =
   | { phase: 'result'; count: number; truncated: boolean; timingVaries: boolean }
   | { phase: 'error'; message: string };
 
-const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), input:not([disabled]):not([type="file"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
 interface MedicationAddModalProps {
   wardId: string;
   onClose: () => void;
@@ -59,24 +57,15 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
   const [camera, setCamera] = useState<CameraState>({ phase: 'idle' });
   const [draft, setDraft] = useState<MedicationDraft>(createEmptyDraft);
   const [submitError, setSubmitError] = useState<string>();
-  const dialogRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const overlayPressRef = useRef(false);
   const batchMutation = useAddWardMedicationBatchMutation();
   const idPrefix = useId();
   const tabId = (value: AddTab) => `${idPrefix}-tab-${value}`;
   const panelId = `${idPrefix}-panel`;
 
-  // 모달을 닫으면 진행 중인 인식 요청을 끊고, 열기 전에 있던 곳으로 포커스를 돌려준다
-  useEffect(() => {
-    const previousFocus = document.activeElement as HTMLElement | null;
-    dialogRef.current?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus();
-    return () => {
-      abortRef.current?.abort();
-      previousFocus?.focus?.();
-    };
-  }, []);
+  // 모달을 닫으면 진행 중인 인식 요청을 끊는다
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const isReading = camera.phase === 'reading';
   const isSubmitting = batchMutation.isPending;
@@ -90,6 +79,10 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
     if (isSubmitting) return;
     onClose();
   };
+  const { dialogRef, onDialogKeyDown, overlayProps } = useModalDialog<HTMLFormElement>({
+    onRequestClose: requestClose,
+    initialFocusSelector: '[role="tab"][aria-selected="true"]',
+  });
 
   const changeDraft = (next: MedicationDraft) => {
     setDraft(next);
@@ -168,41 +161,10 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
     document.getElementById(tabId(next))?.focus();
   };
 
-  // Esc로 닫기 + Tab 키 포커스를 모달 안에 가둔다
-  const handleDialogKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      requestClose();
-      return;
-    }
-    if (event.key !== 'Tab' || !dialogRef.current) return;
-    const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
-
-  // 바깥 클릭 닫기는 누르기·떼기가 모두 바깥일 때만(입력 칸에서 드래그하다 바깥에서 떼면 닫히지 않게)
-  const handleOverlayMouseDown = (event: MouseEvent<HTMLDivElement>) => {
-    overlayPressRef.current = event.target === event.currentTarget;
-  };
-  const handleOverlayClick = (event: MouseEvent<HTMLDivElement>) => {
-    const pressedOutside = overlayPressRef.current;
-    overlayPressRef.current = false;
-    if (pressedOutside && event.target === event.currentTarget) requestClose();
-  };
-
   const submitLabel = isSubmitting ? '등록 중…' : getSubmitLabel(draft.drugs.length);
 
   return (
-    <div className={cx('overlay')} role="presentation" onMouseDown={handleOverlayMouseDown} onClick={handleOverlayClick}>
+    <div className={cx('overlay')} role="presentation" {...overlayProps}>
       <form
         ref={dialogRef}
         className={cx('modal')}
@@ -210,7 +172,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
         aria-modal="true"
         aria-label="약 추가"
         onSubmit={handleSubmit}
-        onKeyDown={handleDialogKeyDown}
+        onKeyDown={onDialogKeyDown}
       >
         <header className={cx('header')}>
           <h3>약 추가</h3>
