@@ -11,7 +11,7 @@ import {
   wardTodayMedicationQueryKey,
   wardTodayMedicationQueryOptions,
 } from '@/service/query/ward/medication';
-import { formatDoseTime, getMedicationTimeSlotLabel, sortMedicationsByDoseTime } from '@/utils/format/medication';
+import { formatDoseAmount, formatDoseTime, getMedicationTimeSlotLabel, sortMedicationsByDoseTime } from '@/utils/format/medication';
 import { WardMedicationCard } from './WardMedicationCard';
 import styles from './WardMedicationContent.module.css';
 
@@ -62,7 +62,7 @@ export function WardMedicationContent() {
                   {formatDoseTime(nextMedication.doseTime)}
                 </span>
                 <strong>
-                  {nextMedication.name} {nextMedication.doseAmount}정
+                  {nextMedication.name} {formatDoseAmount(nextMedication.doseAmount)}
                 </strong>
                 {nextMedication.memo && <em>{nextMedication.memo}에 드세요</em>}
               </div>

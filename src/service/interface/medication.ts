@@ -37,15 +37,6 @@ export interface TodayMedicationResponse {
   medications: MedicationItem[];
 }
 
-// 보호자: POST /api/guardian/ward/{wardId}/medication
-export interface AddMedicationReq {
-  name: string;
-  timeSlot: MedicationTimeSlot;
-  doseTime?: string;
-  doseAmount?: number;
-  memo?: string;
-}
-
 // 보호자: PATCH /api/guardian/medication/{medicationId} — 보낸 필드만 갱신(부분 수정)
 export interface UpdateMedicationReq {
   name?: string;

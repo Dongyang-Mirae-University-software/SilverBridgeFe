@@ -16,9 +16,16 @@ export function formatDoseTime(doseTime: string) {
   return doseTime.slice(0, 5);
 }
 
+// 목록·피보호자 화면의 복용량 표시 - BE 알림 문구(DoseAmounts.label)와 같다: 0.5 → "반 알", 1.5 → "1정 반", 2 → "2정"
+export function formatDoseAmount(doseAmount: number) {
+  if (doseAmount === 0.5) return '반 알';
+  const whole = Math.floor(doseAmount);
+  return doseAmount - whole === 0.5 ? `${whole}정 반` : `${doseAmount}정`;
+}
+
 // "아침 08:00 · 1정 · 식후 30분" 같은 목록 표시용 문구 조립
 export function getMedicationSummaryText(medication: MedicationItem) {
-  const parts = [`${getMedicationTimeSlotLabel(medication.timeSlot)} ${formatDoseTime(medication.doseTime)}`, `${medication.doseAmount}정`];
+  const parts = [`${getMedicationTimeSlotLabel(medication.timeSlot)} ${formatDoseTime(medication.doseTime)}`, formatDoseAmount(medication.doseAmount)];
   if (medication.memo) parts.push(medication.memo);
   return parts.join(' · ');
 }

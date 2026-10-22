@@ -7,7 +7,6 @@ import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import {
   AddMedicationBatchReq,
-  AddMedicationReq,
   GuardianMedicationAlertSetting,
   MedicationItem,
   MedicationOcrResponse,
@@ -24,15 +23,6 @@ const GUARDIAN_BASE = '/guardian';
 export async function getGuardianMedications() {
   const response = await apiClient.get<CommonResponse<WardMedicationSummary[]>>(`${GUARDIAN_BASE}/medication`);
   return getResponseData<WardMedicationSummary[]>(response) ?? [];
-}
-
-// 약 추가. doseTime 생략 시 슬롯 기본 시각, doseAmount 생략 시 1
-export async function addWardMedication(wardId: string, body: AddMedicationReq) {
-  const response = await apiClient.post<CommonResponse<MedicationItem>>(
-    `${GUARDIAN_BASE}/ward/${wardId}/medication`,
-    body,
-  );
-  return getResponseData<MedicationItem>(response);
 }
 
 // 약 여러 개 × 시각 여러 개 한 번에 추가 — 전부 성공 또는 전부 실패(일부만 등록되지 않는다)

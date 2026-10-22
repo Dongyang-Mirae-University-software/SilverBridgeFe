@@ -6,7 +6,7 @@ import classNames from 'classnames/bind';
 import { useQuery } from '@tanstack/react-query';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
-import { formatDoseTime, getMedicationTimeSlotLabel, sortMedicationsByDoseTime } from '@/utils/format/medication';
+import { formatDoseAmount, formatDoseTime, getMedicationTimeSlotLabel, sortMedicationsByDoseTime } from '@/utils/format/medication';
 import {
   useDeleteGuardianMedicationMutation,
   useUpdateGuardianMedicationMutation,
@@ -160,7 +160,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                 <button type="button" className={cx('medicationInfo')} onClick={() => openEditMedication(medication)}>
                   <strong className={cx('medicationName')}>{medication.name}</strong>
                   <span className={cx('medicationDetail')}>
-                    {medication.doseAmount}정{medication.memo ? ` · ${medication.memo}` : ''}
+                    {formatDoseAmount(medication.doseAmount)}{medication.memo ? ` · ${medication.memo}` : ''}
                   </span>
                 </button>
                 <span className={cx('statusBadge', status)}>{STATUS_LABEL[status]}</span>
