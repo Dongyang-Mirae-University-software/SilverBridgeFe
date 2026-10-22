@@ -15,6 +15,7 @@ interface UseModalDialogOptions {
 // 모달 대화상자 공통 동작
 // - 열리면 안쪽으로 포커스를 옮기고, 닫히면 열기 전 요소로 돌려준다
 // - Esc로 닫기, Tab 키 포커스를 대화상자 안에 가두기
+//   누른 버튼이 비활성화되면 Chrome이 포커스를 body로 옮긴다 - 그때도 Esc·Tab이 동작하도록 document에서도 받는다
 // - 바깥 클릭 닫기는 누르기·떼기가 모두 바깥일 때만(입력 칸에서 드래그하다 바깥에서 떼면 닫히지 않게)
 export function useModalDialog<T extends HTMLElement>({ onRequestClose, initialFocusSelector }: UseModalDialogOptions) {
   const dialogRef = useRef<T>(null);
@@ -35,6 +36,27 @@ export function useModalDialog<T extends HTMLElement>({ onRequestClose, initialF
     return () => previousFocus?.focus?.();
     // 열릴 때 한 번만
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 포커스가 body로 빠졌을 때만 처리한다(대화상자 안이면 onDialogKeyDown이 받는다)
+  useEffect(() => {
+    const onDocumentKeyDown = (event: globalThis.KeyboardEvent) => {
+      const dialog = dialogRef.current;
+      const active = document.activeElement;
+      if (!dialog || (active && active !== document.body)) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        requestCloseRef.current();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      if (focusable.length === 0) return;
+      event.preventDefault();
+      (event.shiftKey ? focusable[focusable.length - 1] : focusable[0]).focus();
+    };
+    document.addEventListener('keydown', onDocumentKeyDown);
+    return () => document.removeEventListener('keydown', onDocumentKeyDown);
   }, []);
 
   const onDialogKeyDown = (event: KeyboardEvent<T>) => {

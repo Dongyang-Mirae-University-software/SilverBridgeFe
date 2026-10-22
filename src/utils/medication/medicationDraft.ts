@@ -207,10 +207,11 @@ export function defaultSlotsForGroup(group: DoseGroup, allDrugs: DraftDrug[]): M
   return SLOTS_BY_TIMES_PER_DAY[Math.min(group.timesPerDay, 4)];
 }
 
-// 고른 칸 수가 봉투의 하루 횟수와 다르면 알린다(막지는 않는다)
+// 고른 칸 수가 봉투의 하루 횟수와 다르면 알린다(막지는 않는다). 칩은 4개라 5번 이상은 그 사실도 알린다
 export function getTimesMismatchHint(group: DoseGroup, selected: MedicationTimeSlot[]) {
   if (group.timesPerDay === null || selected.length === group.timesPerDay) return null;
-  return `봉투에는 하루 ${group.timesPerDay}번이에요`;
+  const base = `봉투에는 하루 ${group.timesPerDay}번이에요`;
+  return group.timesPerDay > SLOT_ORDER.length ? `${base}. 여기서는 ${SLOT_ORDER.length}번까지 고를 수 있어요` : base;
 }
 
 export function toggleSlot(selected: MedicationTimeSlot[], slot: MedicationTimeSlot) {

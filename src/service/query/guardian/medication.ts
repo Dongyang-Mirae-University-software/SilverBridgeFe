@@ -64,7 +64,8 @@ export function useAddWardMedicationBatchMutation() {
     mutationKey: ['guardian-medication-add-batch'],
     mutationFn: ({ wardId, body }: { wardId: string; body: AddMedicationBatchReq }) =>
       addWardMedicationBatch(wardId, body),
-    onSuccess: () => invalidate(),
+    // 실패해도 새로고침한다 - 응답 전에 끊긴 요청은 서버에 등록됐을 수 있다(약 추가 모달이 목록에서 확인하라고 안내)
+    onSettled: () => invalidate(),
   });
 }
 
