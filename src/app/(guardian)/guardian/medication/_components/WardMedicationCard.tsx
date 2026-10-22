@@ -6,7 +6,14 @@ import classNames from 'classnames/bind';
 import { useQuery } from '@tanstack/react-query';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
-import { formatDoseAmount, formatDoseTime, getMedicationTimeSlotLabel, sortMedicationsByDoseTime } from '@/utils/format/medication';
+import {
+  DoseStatus,
+  formatDoseAmount,
+  formatDoseTime,
+  getDoseStatus,
+  getMedicationTimeSlotLabel,
+  sortMedicationsByDoseTime,
+} from '@/utils/format/medication';
 import {
   useDeleteGuardianMedicationMutation,
   useUpdateGuardianMedicationMutation,
@@ -24,18 +31,12 @@ interface WardMedicationCardProps {
   summary: WardMedicationSummary;
 }
 
-type DoseStatus = 'done' | 'miss' | 'later';
-
 const STATUS_LABEL: Record<DoseStatus, string> = {
   done: '드셨어요',
   miss: '아직 체크 전이에요',
   later: '드실 시간 전',
+  beforeRegistered: '오늘은 등록 전이었어요',
 };
-
-function getDoseStatus(medication: MedicationItem, nowHHmm: string): DoseStatus {
-  if (medication.taken) return 'done';
-  return formatDoseTime(medication.doseTime) <= nowHHmm ? 'miss' : 'later';
-}
 
 function toUpdateBody(value: MedicationFormValue) {
   return {
@@ -93,7 +94,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     hour12: false,
     timeZone: 'Asia/Seoul',
   }).format(new Date());
-  const missCount = medications.filter(medication => getDoseStatus(medication, nowHHmm) === 'miss').length;
+  const missCount = medications.filter(medication => getDoseStatus(medication, nowHHmm, summary.doseDate) === 'miss').length;
 
   const handleDelete = (medication: MedicationItem) => {
     if (!window.confirm(`${medication.name} 일정을 삭제할까요? 지난 복용 이력은 남습니다.`)) return;
@@ -128,7 +129,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
               <span
                 key={medication.medicationId}
                 title={medication.name}
-                className={cx('todayDot', getDoseStatus(medication, nowHHmm))}
+                className={cx('todayDot', getDoseStatus(medication, nowHHmm, summary.doseDate))}
               />
             ))}
           </div>
@@ -150,7 +151,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           <p className={cx('emptyText')}>등록된 약이 없어요. 약을 추가해 주세요.</p>
         ) : (
           medications.map(medication => {
-            const status = getDoseStatus(medication, nowHHmm);
+            const status = getDoseStatus(medication, nowHHmm, summary.doseDate);
             return (
               <div key={medication.medicationId} className={cx('medicationItem')}>
                 <button type="button" className={cx('medicationTime')} onClick={() => openEditMedication(medication)}>
