@@ -65,11 +65,6 @@
 
 
 
-.optional {
-  color: var(--sb-ink-mute);
-  font-weight: 400;
-}
-
 .stepper {
   display: flex;
   align-items: center;
@@ -286,21 +281,138 @@
   font-weight: 600;
 }
 
-.draftForm {
-  display: grid;
-  gap: 18px;
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.group {
+.progressBar {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.progressFill {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--sb-brand);
+}
+
+.progressFill.empty {
+  background: var(--sb-line);
+}
+
+.progressText {
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.stepTitle {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.stepTitle:focus {
+  outline: none;
+}
+
+.drugCard {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--sb-line);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+/* 2/2 언제 드세요? - 줄(하루 횟수)마다 칩 4개 */
+.doseGroups {
+  display: grid;
+  gap: 20px;
+}
+
+.doseGroup {
   display: grid;
   gap: 8px;
 }
 
-.groupTitle {
+.doseGroupTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   color: var(--sb-ink);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
+  word-break: keep-all;
+}
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.chip {
+  display: grid;
+  gap: 2px;
+  min-height: 64px;
+  border: 2px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  padding: 10px 4px;
+  text-align: center;
+}
+
+.chip.selected {
+  border-color: var(--sb-brand);
+  background: var(--sb-brand-soft);
+}
+
+.chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.chipLabel {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.chipTime {
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.timesHint {
+  margin: 0;
+  color: #8a5f12;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.doneBadge {
+  border-radius: 6px;
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 2px 8px;
+}
+
+.errorNote {
+  display: block;
+  margin-top: 4px;
+  color: var(--sb-ink-soft);
+  font-weight: 600;
 }
 
 .rows {
@@ -318,16 +430,7 @@
   gap: 6px;
 }
 
-.timeRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 6px;
-}
-
-.nameInput,
-.timeSelect,
-.memoField input {
+.nameInput {
   width: 100%;
   min-width: 0;
   height: 42px;
@@ -341,9 +444,7 @@
   padding: 0 12px;
 }
 
-.nameInput:focus,
-.timeSelect:focus,
-.memoField input:focus {
+.nameInput:focus {
   border-color: var(--sb-brand);
   outline: none;
 }
@@ -424,19 +525,9 @@
   font-weight: 600;
 }
 
-.memoField {
-  display: grid;
-  gap: 6px;
-  color: var(--sb-ink);
-  font-size: 13px;
-  font-weight: 800;
-}
-
 /* 키보드 사용자에게 포커스 위치를 보인다(입력 칸은 테두리 색만 바뀌어 잘 안 보였다) */
 .modal button:focus-visible,
-.nameInput:focus-visible,
-.timeSelect:focus-visible,
-.memoField input:focus-visible {
+.nameInput:focus-visible {
   outline: 2px solid var(--sb-brand);
   outline-offset: 2px;
 }

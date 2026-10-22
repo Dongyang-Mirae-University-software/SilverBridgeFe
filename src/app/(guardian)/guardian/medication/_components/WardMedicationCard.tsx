@@ -28,7 +28,7 @@ type DoseStatus = 'done' | 'miss' | 'later';
 
 const STATUS_LABEL: Record<DoseStatus, string> = {
   done: '드셨어요',
-  miss: '아직 안 드셨어요',
+  miss: '아직 체크 전이에요',
   later: '드실 시간 전',
 };
 
@@ -118,7 +118,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
               {summary.totalCount}번 중 <span className={cx('todayTaken')}>{summary.takenCount}번</span> 드셨어요
             </div>
             {missCount > 0 ? (
-              <div className={cx('todayMiss')}>드실 시간이 지난 약 {missCount}개를 아직 안 드셨어요</div>
+              <div className={cx('todayMiss')}>드실 시간이 지난 약 {missCount}개가 아직 체크 전이에요</div>
             ) : (
               <div className={cx('todayAllDone')}>지금까지 드실 약은 모두 드셨어요</div>
             )}
