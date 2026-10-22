@@ -1,3 +1,4 @@
+import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it } from 'vitest';
 
 import { MedicationOcrDrug, MedicationOcrResponse } from '@/service/interface/medication';
@@ -13,6 +14,7 @@ import {
   getTimesMismatchHint,
   groupToBatchRequest,
   increaseDose,
+  isUncertainFailure,
   MAX_DRUGS,
   normalizeDoseAmount,
   normalizeDrugName,
@@ -119,6 +121,26 @@ describe('통합 "언제 드세요?" (2026-10-22 사용자 결정 - 줄 나눔 �
     );
   });
 
+  it('최빈 횟수와 최대 횟수가 다르면 최빈을 기준으로 본다(2·2·3이면 하루 3번 약을 알린다) (점검 L-4)', () => {
+    expect(
+      getMixedTimesNote([
+        draftDrug({ name: 'A', timesPerDay: 2 }),
+        draftDrug({ name: 'B', timesPerDay: 2 }),
+        draftDrug({ name: 'C', timesPerDay: 3 }),
+      ]),
+    ).toMatch(/^C 하루 3번 - /);
+  });
+
+  it('가장 많은 약의 횟수가 5번 이상이면 4번까지만 고를 수 있다고 덧붙인다 (점검 L-5)', () => {
+    expect(
+      getMixedTimesNote([
+        draftDrug({ name: 'A', timesPerDay: 5 }),
+        draftDrug({ name: 'B', timesPerDay: 5 }),
+        draftDrug({ name: 'C', timesPerDay: 2 }),
+      ]),
+    ).toBe('C 하루 2번 - 다른 약과 하루 횟수가 달라요. 다르게 드시는 약은 등록 후 시간을 고쳐 주세요. 여기서는 4번까지 고를 수 있어요');
+  });
+
   it('횟수가 같거나 모르면 안내하지 않는다', () => {
     expect(getMixedTimesNote([draftDrug({ timesPerDay: 3 }), draftDrug({ timesPerDay: 3 }), draftDrug()])).toBeNull();
     expect(getMixedTimesNote([draftDrug(), draftDrug()])).toBeNull();
@@ -167,6 +189,10 @@ describe('2/2 칩', () => {
     );
     const unknown = toDoseGroup([draftDrug()]);
     expect(getTimesMismatchHint(unknown, ['MORNING', 'LUNCH'])).toBeNull();
+    // 직접 넣은 약(횟수 모름)이 섞이면 봉투에 적힌 약에만 해당한다고 밝힌다 (점검 L-5)
+    expect(getTimesMismatchHint(toDoseGroup([draftDrug({ timesPerDay: 2 }), draftDrug()]), ['MORNING'])).toBe(
+      '봉투에 적힌 약은 하루 2번이에요',
+    );
     // 횟수가 섞이면(통합 줄) 이 안내 대신 getMixedTimesNote가 알린다
     expect(getTimesMismatchHint(toDoseGroup([draftDrug({ timesPerDay: 3 }), draftDrug({ timesPerDay: 2 })]), ['MORNING'])).toBeNull();
   });
@@ -244,3 +270,25 @@ describe('1/2 검증', () => {
     expect(canProceedDrugs([draftDrug({ name: '​​' })])).toBe(false);
   });
 });
+
+describe('등록 실패 - 결과를 모르는가 (점검 M-1)', () => {
+  const withStatus = (status: number) =>
+    new AxiosError('fail', 'ERR_BAD_RESPONSE', undefined, undefined, {
+      status,
+      statusText: '',
+      headers: {},
+      config: { headers: new AxiosHeaders() },
+      data: {},
+    });
+
+  it('응답 없음·408·5xx는 결과를 모른다(다시 보내면 중복 등록일 수 있다)', () => {
+    expect(isUncertainFailure(new AxiosError('timeout', 'ECONNABORTED'))).toBe(true);
+    [408, 500, 502, 503, 504].forEach(status => expect(isUncertainFailure(withStatus(status))).toBe(true));
+  });
+
+  it('4xx는 BE가 처리 전에 거절한 것이라 다시 등록할 수 있다', () => {
+    [400, 401, 403, 404, 409, 429].forEach(status => expect(isUncertainFailure(withStatus(status))).toBe(false));
+    expect(isUncertainFailure(new Error('그 밖의 오류'))).toBe(false);
+  });
+});
+

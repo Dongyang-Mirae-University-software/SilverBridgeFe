@@ -15,6 +15,7 @@ import {
   DraftDrug,
   getMixedTimesNote,
   groupToBatchRequest,
+  isUncertainFailure,
   MAX_DRUGS,
   ocrResultToDraft,
   toDoseGroup,
@@ -83,6 +84,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
   const abortRef = useRef<AbortController | null>(null);
   const stepTitleRef = useRef<HTMLHeadingElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const submitRef = useRef<HTMLButtonElement>(null);
   const movedStepRef = useRef(false);
   const stepRef = useRef<Step>(1);
   const guardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,6 +97,8 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const startGuard = useCallback(() => {
+    // 잠금으로 [등록]이 꺼지면 Chrome이 포커스를 body로 옮긴다 - 화면 읽기 위치를 잃지 않게 단계 제목으로 옮겨 둔다
+    if (document.activeElement === submitRef.current) stepTitleRef.current?.focus();
     setIsGuarded(true);
     if (guardTimerRef.current) clearTimeout(guardTimerRef.current);
     guardTimerRef.current = setTimeout(() => setIsGuarded(false), SUBMIT_GUARD_MS);
@@ -221,8 +225,8 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
     setSubmitError(undefined);
   };
 
-  // 응답 전에 끊긴 실패(시간 초과·네트워크)는 서버에 등록됐을 수 있다 - "확인 필요"로 막고 다시 보내지 않는다
-  // (목록은 mutation이 실패에도 새로고침한다). 서버가 거절한 실패(4xx·5xx)는 고쳐서 다시 등록할 수 있다
+  // 결과를 모르는 실패(응답 없음·408·5xx)는 서버에 등록됐을 수 있다 - "확인 필요"로 막고 다시 보내지 않는다
+  // (목록은 mutation이 실패에도 새로고침한다). BE가 처리 전에 거절한 4xx는 고쳐서 다시 등록할 수 있다
   const submit = async () => {
     if (!canSubmit || !selected) return;
     setIsSubmitting(true);
@@ -231,10 +235,10 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
       await batchMutation.mutateAsync({ wardId, body: groupToBatchRequest(group, selected) });
       onClose();
     } catch (error) {
-      const noResponse = axios.isAxiosError(error) && !error.response;
-      if (noResponse) setUncertain(true);
+      const unknownResult = isUncertainFailure(error);
+      if (unknownResult) setUncertain(true);
       setSubmitError(
-        noResponse ? UNCERTAIN_MESSAGE : (error instanceof Error && error.message) || '등록에 실패했어요. 다시 시도해 주세요',
+        unknownResult ? UNCERTAIN_MESSAGE : (error instanceof Error && error.message) || '등록에 실패했어요. 다시 시도해 주세요',
       );
     } finally {
       setIsSubmitting(false);
@@ -401,7 +405,6 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
           {showForm && step === 1 && (
             <MedicationDraftForm
               drugs={drugs}
-              disabled={false}
               lowConfidenceHintId={hasLowConfidence ? lowConfidenceHintId : undefined}
               onChange={changeDrugs}
             />
@@ -450,7 +453,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
               >
                 이전
               </button>
-              <button type="submit" className={cx('submitButton')} disabled={!canSubmit}>
+              <button ref={submitRef} type="submit" className={cx('submitButton')} disabled={!canSubmit}>
                 {submitLabel}
               </button>
             </>

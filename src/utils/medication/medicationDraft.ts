@@ -2,6 +2,8 @@
 // - 카메라 인식 결과(OCR)를 약 목록 초안으로 옮기고, 고른 시간으로 일괄 등록 요청을 만든다
 // - 인식 결과는 언제나 초안이다. 보호자가 확인한 뒤 등록 버튼으로만 저장된다
 
+import axios from 'axios';
+
 import { AddMedicationBatchReq, MedicationOcrResponse, MedicationTimeSlot } from '@/service/interface/medication';
 
 // BE 일괄 등록 한도(MedicationBatchCreateRequest)
@@ -186,7 +188,9 @@ export function getMixedTimesNote(drugs: DraftDrug[]) {
     const rest = named.length > 1 ? ` 외 ${named.length - 1}개` : '';
     return `${named[0].name.trim()}${rest} 하루 ${n}번`;
   });
-  return `${parts.join(', ')} - 다른 약과 하루 횟수가 달라요. 다르게 드시는 약은 등록 후 시간을 고쳐 주세요`;
+  const base = `${parts.join(', ')} - 다른 약과 하루 횟수가 달라요. 다르게 드시는 약은 등록 후 시간을 고쳐 주세요`;
+  // 가장 많은 약의 횟수가 칩 수(4)보다 많으면 그 사실도 알린다
+  return common > SLOT_ORDER.length ? `${base}. 여기서는 ${SLOT_ORDER.length}번까지 고를 수 있어요` : base;
 }
 
 // 기본 선택: 봉투 시간대 표시가 있고 그 개수가 약들의 하루 횟수와 같으면(횟수가 섞였거나 모르면 표시만으로) 그대로,
@@ -202,12 +206,23 @@ export function defaultSlotsForGroup(group: DoseGroup): MedicationTimeSlot[] {
 // 고른 칸 수가 봉투의 하루 횟수와 다르면 알린다(막지는 않는다). 칩은 4개라 5번 이상은 그 사실도 알린다
 export function getTimesMismatchHint(group: DoseGroup, selected: MedicationTimeSlot[]) {
   if (group.timesPerDay === null || selected.length === group.timesPerDay) return null;
-  const base = `봉투에는 하루 ${group.timesPerDay}번이에요`;
+  // 직접 넣은 약(횟수 모름)이 섞여 있으면 봉투에 적힌 약에만 해당한다는 것을 밝힌다
+  const hasUnknown = group.drugs.some(drug => drug.timesPerDay === null);
+  const base = `${hasUnknown ? '봉투에 적힌 약은' : '봉투에는'} 하루 ${group.timesPerDay}번이에요`;
   return group.timesPerDay > SLOT_ORDER.length ? `${base}. 여기서는 ${SLOT_ORDER.length}번까지 고를 수 있어요` : base;
 }
 
 export function toggleSlot(selected: MedicationTimeSlot[], slot: MedicationTimeSlot) {
   return selected.includes(slot) ? selected.filter(item => item !== slot) : orderSlots([...selected, slot]);
+}
+
+// 등록 실패가 "결과를 모르는" 실패인지 - 서버에 이미 등록됐을 수 있어 다시 보내면 중복 등록된다(BE는 다른 요청의 같은 이름을 막지 않는다)
+// 응답 없음(시간 초과·네트워크) / 408 / 5xx(FE 중계가 BE 응답 전에 끊긴 500, 앞단 nginx 504 등)
+// 4xx는 BE가 처리 전에 거절한 것(검증 400·인가 403 - 일괄 등록은 한 트랜잭션)이라 고쳐서 다시 등록할 수 있다
+export function isUncertainFailure(error: unknown) {
+  if (!axios.isAxiosError(error)) return false;
+  const status = error.response?.status;
+  return status === undefined || status === 408 || status >= 500;
 }
 
 export function groupToBatchRequest(group: DoseGroup, selected: MedicationTimeSlot[]): AddMedicationBatchReq {
