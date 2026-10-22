@@ -2,7 +2,7 @@
 // API는 모듈 목으로 바꾸고, 사진 처리(createImageBitmap·canvas)는 Chrome 것을 그대로 쓴다
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { userEvent } from '@vitest/browser/context';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -91,6 +91,23 @@ async function choosePhoto() {
 
 const chip = (screen: Screen, name: string) => screen.getByRole('button', { name, exact: true });
 
+// 화면이 꺼지고 켜지는 것을 흉내 낸다(visibilityState를 명시해야 브라우저 기본값에 기대지 않는다)
+function setVisibility(state: 'visible' | 'hidden') {
+  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => state });
+  document.dispatchEvent(new Event('visibilitychange'));
+}
+
+// 서버가 응답한 실패(apiClient는 AxiosError를 그대로 넘기고 message만 서버 문구로 바꾼다)
+function httpError(status: number, message = '오류') {
+  return new AxiosError(message, 'ERR_BAD_RESPONSE', undefined, undefined, {
+    status,
+    statusText: '',
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+    data: {},
+  });
+}
+
 describe('MedicationAddModal (Chrome)', () => {
   beforeEach(() => {
     api.recognizeMedicationEnvelope.mockReset();
@@ -98,6 +115,7 @@ describe('MedicationAddModal (Chrome)', () => {
   });
   afterEach(() => {
     document.body.innerHTML = '';
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
   });
 
   it('인식 결과는 1/2 약 초안으로만 채우고 자동 등록하지 않는다', async () => {
@@ -245,9 +263,97 @@ describe('MedicationAddModal (Chrome)', () => {
     const submit = screen.getByRole('button', { name: '등록', exact: true });
     await expect.element(submit, { timeout: 3000 }).toBeEnabled();
 
-    document.dispatchEvent(new Event('visibilitychange'));
+    // 화면이 꺼질 때(hidden)는 잠그지 않고, 다시 켜질 때(visible) 잠근다 (점검 L-4: 상태를 명시)
+    setVisibility('hidden');
+    await new Promise(resolve => setTimeout(resolve, 50));
+    expect((submit.element() as HTMLButtonElement).disabled).toBe(false);
+    setVisibility('visible');
     await expect.element(submit).toBeDisabled();
     await expect.element(submit, { timeout: 3000 }).toBeEnabled();
+    expect(api.addWardMedicationBatch).not.toHaveBeenCalled();
+  });
+
+  it('서버 응답이 504여도 결과를 모르므로 다시 보내지 않는다 (점검 #89 M-1)', async () => {
+    api.addWardMedicationBatch.mockRejectedValueOnce(httpError(504));
+    const { screen } = renderModal();
+    await screen.getByRole('tab', { name: '직접 쓰기' }).click();
+    await screen.getByLabelText('1번째 약 이름').fill('혈압약');
+    await screen.getByRole('button', { name: '다음' }).click();
+    await screen.getByRole('button', { name: '등록', exact: true }).click();
+
+    await expect.element(screen.getByText(/등록됐는지 확인하지 못했어요/)).toBeVisible();
+    await new Promise(resolve => setTimeout(resolve, 1200)); // 잠금이 풀린 뒤에도
+    await expect.element(screen.getByRole('button', { name: '등록', exact: true })).toBeDisabled();
+    expect(api.addWardMedicationBatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('400(서버가 처리 전에 거절)은 고쳐서 다시 등록할 수 있다', async () => {
+    api.addWardMedicationBatch.mockRejectedValueOnce(httpError(400, '같은 이름의 약이 두 번 들어 있습니다.')).mockResolvedValueOnce([]);
+    const { screen, onClose } = renderModal();
+    await screen.getByRole('tab', { name: '직접 쓰기' }).click();
+    await screen.getByLabelText('1번째 약 이름').fill('혈압약');
+    await screen.getByRole('button', { name: '다음' }).click();
+    await screen.getByRole('button', { name: '등록', exact: true }).click();
+    await expect.element(screen.getByText('같은 이름의 약이 두 번 들어 있습니다.')).toBeVisible();
+
+    await screen.getByRole('button', { name: '등록', exact: true }).click();
+    await vi.waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(api.addWardMedicationBatch).toHaveBeenCalledTimes(2);
+  });
+
+  it('칩을 모두 끄면 "시간을 하나 이상 골라 주세요" (점검 L-2)', async () => {
+    const { screen } = renderModal();
+    await screen.getByRole('tab', { name: '직접 쓰기' }).click();
+    await screen.getByLabelText('1번째 약 이름').fill('혈압약');
+    await screen.getByRole('button', { name: '다음' }).click();
+    await chip(screen, '아침 오전 8시').click();
+    await expect.element(screen.getByText('시간을 하나 이상 골라 주세요')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '등록', exact: true })).toBeDisabled();
+  });
+
+  it('잠금이 [등록]을 끌 때 포커스는 단계 제목으로 간다 (점검 L-3)', async () => {
+    const { screen } = renderModal();
+    await screen.getByRole('tab', { name: '직접 쓰기' }).click();
+    await screen.getByLabelText('1번째 약 이름').fill('혈압약');
+    await screen.getByRole('button', { name: '다음' }).click();
+    const submit = screen.getByRole('button', { name: '등록', exact: true });
+    await expect.element(submit, { timeout: 3000 }).toBeEnabled();
+    (submit.element() as HTMLButtonElement).focus();
+
+    setVisibility('visible');
+    await expect.element(submit).toBeDisabled();
+    await expect.element(screen.getByRole('heading', { name: '언제 드세요?' })).toHaveFocus();
+  });
+
+  it('다시 찍으면 2/2 기본 선택을 새 봉투로 다시 정한다 (점검 L-4)', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValueOnce(OCR_TWO_DRUGS).mockResolvedValueOnce({
+      readable: true,
+      drugs: [{ name: '아스피린', perDose: 1, timesPerDay: 1, days: 3, slots: [], timing: null, confidence: 'high' }],
+    });
+    const { screen } = renderModal();
+    await choosePhoto();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await chip(screen, '점심 낮 12시').click();
+    await screen.getByRole('button', { name: '이전' }).click();
+
+    await screen.getByRole('button', { name: '다시 찍기' }).click();
+    await choosePhoto();
+    await expect.element(screen.getByText('✓ 약 1개를 찾았어요. 맞는지 확인해 주세요')).toBeVisible();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await expect.element(chip(screen, '아침 오전 8시')).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(chip(screen, '점심 낮 12시')).toHaveAttribute('aria-pressed', 'false');
+    await expect.element(chip(screen, '저녁 오후 7시')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('1/2 이름 칸에서 Enter는 2/2로 넘어가기만 하고 등록하지 않는다 (점검 L-4)', async () => {
+    api.addWardMedicationBatch.mockResolvedValue([]);
+    const { screen } = renderModal();
+    await screen.getByRole('tab', { name: '직접 쓰기' }).click();
+    await screen.getByLabelText('1번째 약 이름').fill('혈압약');
+    await userEvent.keyboard('{Enter}');
+    await expect.element(screen.getByText('2 / 2')).toBeVisible();
+    await userEvent.keyboard('{Enter}');
+    await new Promise(resolve => setTimeout(resolve, 300));
     expect(api.addWardMedicationBatch).not.toHaveBeenCalled();
   });
 

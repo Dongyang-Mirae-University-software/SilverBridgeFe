@@ -20,13 +20,12 @@ const cx = classNames.bind(styles);
 
 interface MedicationDraftFormProps {
   drugs: DraftDrug[];
-  disabled: boolean;
   lowConfidenceHintId?: string; // 노란 칸 안내 박스(모달이 결과 문구 아래에 그린다)의 id
   onChange: (drugs: DraftDrug[]) => void;
 }
 
 // "약 추가" 1/2 약 - 카메라로 찍기·직접 쓰기 두 탭이 함께 쓴다(약 이름 × 1회 복용량)
-export function MedicationDraftForm({ drugs, disabled, lowConfidenceHintId, onChange }: MedicationDraftFormProps) {
+export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: MedicationDraftFormProps) {
   const duplicateKeys = findDuplicateDrugKeys(drugs);
 
   const updateDrug = (key: string, patch: Partial<DraftDrug>) =>
@@ -51,13 +50,12 @@ export function MedicationDraftForm({ drugs, disabled, lowConfidenceHintId, onCh
               aria-label={`${index + 1}번째 약 이름`}
               aria-invalid={duplicateKeys.has(drug.key) || undefined}
               aria-describedby={drug.lowConfidence ? lowConfidenceHintId : undefined}
-              disabled={disabled}
             />
             <div className={cx('stepper')}>
               <button
                 type="button"
                 onClick={() => updateDrug(drug.key, { doseAmount: decreaseDose(drug.doseAmount) })}
-                disabled={disabled || drug.doseAmount <= MIN_DOSE_AMOUNT}
+                disabled={drug.doseAmount <= MIN_DOSE_AMOUNT}
                 aria-label={`${index + 1}번째 약 복용량 줄이기`}
               >
                 −
@@ -66,7 +64,7 @@ export function MedicationDraftForm({ drugs, disabled, lowConfidenceHintId, onCh
               <button
                 type="button"
                 onClick={() => updateDrug(drug.key, { doseAmount: increaseDose(drug.doseAmount) })}
-                disabled={disabled || drug.doseAmount >= MAX_DOSE_AMOUNT}
+                disabled={drug.doseAmount >= MAX_DOSE_AMOUNT}
                 aria-label={`${index + 1}번째 약 복용량 늘리기`}
               >
                 +
@@ -76,7 +74,7 @@ export function MedicationDraftForm({ drugs, disabled, lowConfidenceHintId, onCh
               type="button"
               className={cx('removeButton')}
               onClick={() => removeDrug(drug.key)}
-              disabled={disabled || drugs.length <= 1}
+              disabled={drugs.length <= 1}
               aria-label={`${index + 1}번째 약 빼기`}
             >
               ×
@@ -89,7 +87,7 @@ export function MedicationDraftForm({ drugs, disabled, lowConfidenceHintId, onCh
         type="button"
         className={cx('addRowButton')}
         onClick={addDrug}
-        disabled={disabled || drugs.length >= MAX_DRUGS}
+        disabled={drugs.length >= MAX_DRUGS}
       >
         + 약 더 넣기
       </button>
