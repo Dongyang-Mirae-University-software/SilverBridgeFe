@@ -1,32 +1,30 @@
-// 보호자 "약 추가" 양식(약 목록 × 드시는 시간 목록)의 순수 로직
-// - 카메라 인식 결과(OCR)를 양식 초안으로 옮기고, 일괄 등록 요청으로 바꾼다
+// 보호자 "약 추가"(1/2 약 → 2/2 언제 드세요?)의 순수 로직
+// - 카메라 인식 결과(OCR)를 약 목록 초안으로 옮기고, 하루 횟수별 줄마다 일괄 등록 요청으로 바꾼다
 // - 인식 결과는 언제나 초안이다. 보호자가 확인한 뒤 등록 버튼으로만 저장된다
 
 import { AddMedicationBatchReq, MedicationOcrResponse, MedicationTimeSlot } from '@/service/interface/medication';
-import { formatMedicationAlertTime } from '@/utils/format/medication';
 
 // BE 일괄 등록 한도(MedicationBatchCreateRequest)
 export const MAX_DRUGS = 20;
-export const MAX_TIMES = 6;
 export const MAX_NAME_LENGTH = 100;
-export const MAX_MEMO_LENGTH = 100;
 
 // 복용량: 0.5 단위, 0.5~99 (BE DoseAmounts와 같은 범위)
 export const MIN_DOSE_AMOUNT = 0.5;
 export const MAX_DOSE_AMOUNT = 99;
 export const DEFAULT_DOSE_AMOUNT = 1;
 
-// 시간대 기본 시각 - BE MedicationTimeSlot.defaultTime과 같다(저녁 18:00)
-export const SLOT_DEFAULT_TIME: Record<MedicationTimeSlot, string> = {
-  MORNING: '08:00',
-  LUNCH: '13:00',
-  DINNER: '18:00',
-  BEDTIME: '22:00',
+export const SLOT_ORDER: MedicationTimeSlot[] = ['MORNING', 'LUNCH', 'DINNER', 'BEDTIME'];
+
+// "언제 드세요?" 선택 칩. 시각은 BE MedicationTimeSlot.fromDoseTime이 같은 시간대로 받는 값이다
+// (04~10시 아침 / 11~15시 점심 / 16~20시 저녁 / 그 외 취침 전)
+export const DOSE_CHIPS: Record<MedicationTimeSlot, { label: string; timeLabel: string; time: string }> = {
+  MORNING: { label: '아침', timeLabel: '오전 8시', time: '08:00' },
+  LUNCH: { label: '점심', timeLabel: '낮 12시', time: '12:00' },
+  DINNER: { label: '저녁', timeLabel: '오후 7시', time: '19:00' },
+  BEDTIME: { label: '자기 전', timeLabel: '오후 9시', time: '21:00' },
 };
 
-const SLOT_ORDER: MedicationTimeSlot[] = ['MORNING', 'LUNCH', 'DINNER', 'BEDTIME'];
-
-// 하루 N번만 읽혔을 때의 시간대(시간대 표시가 없는 봉투)
+// 하루 N번만 알 때의 기본 선택(시간대 표시가 없는 봉투). 4번 이상은 네 칸 모두
 const SLOTS_BY_TIMES_PER_DAY: Record<number, MedicationTimeSlot[]> = {
   1: ['MORNING'],
   2: ['MORNING', 'DINNER'],
@@ -39,17 +37,8 @@ export interface DraftDrug {
   name: string;
   doseAmount: number;
   lowConfidence: boolean; // 인식 확신이 낮은 약 - 이름 칸을 옅게 강조한다
-}
-
-export interface DraftTime {
-  key: string;
-  time: string; // "HH:mm"
-}
-
-export interface MedicationDraft {
-  drugs: DraftDrug[];
-  times: DraftTime[];
-  memo: string;
+  timesPerDay: number | null; // 봉투에 적힌 하루 횟수. 모르면(직접 쓴 약 포함) null
+  slots: MedicationTimeSlot[]; // 봉투에 표시된 시간대. 없으면 빈 배열
 }
 
 let keySeq = 0;
@@ -59,33 +48,14 @@ export function createDraftKey() {
 }
 
 export function createEmptyDrug(): DraftDrug {
-  return { key: createDraftKey(), name: '', doseAmount: DEFAULT_DOSE_AMOUNT, lowConfidence: false };
-}
-
-export function createEmptyDraft(): MedicationDraft {
   return {
-    drugs: [createEmptyDrug()],
-    times: [{ key: createDraftKey(), time: SLOT_DEFAULT_TIME.MORNING }],
-    memo: '',
+    key: createDraftKey(),
+    name: '',
+    doseAmount: DEFAULT_DOSE_AMOUNT,
+    lowConfidence: false,
+    timesPerDay: null,
+    slots: [],
   };
-}
-
-// 30분 간격 시각 선택지 "00:00" ~ "23:30"
-export const TIME_OPTIONS: string[] = Array.from({ length: 48 }, (_, index) => {
-  const hour = String(Math.floor(index / 2)).padStart(2, '0');
-  const minute = index % 2 === 0 ? '00' : '30';
-  return `${hour}:${minute}`;
-});
-
-// "08:00" -> "오전 8:00"
-export function formatTimeOption(time: string) {
-  return formatMedicationAlertTime(time);
-}
-
-// "+ 시간 더 넣기": 아직 안 쓴 기본 시각(아침→점심→저녁→자기 전) 먼저, 다 쓰였으면 비어 있는 첫 시각
-export function nextUnusedTime(used: string[]) {
-  const preferred = SLOT_ORDER.map(slot => SLOT_DEFAULT_TIME[slot]).find(time => !used.includes(time));
-  return preferred ?? TIME_OPTIONS.find(time => !used.includes(time)) ?? TIME_OPTIONS[0];
 }
 
 // 0.5 단위로 맞추고 범위 안으로 자른다. 읽지 못했거나 이상한 값은 1알
@@ -114,44 +84,37 @@ export function formatDoseLabel(value: number) {
   return value - whole === 0.5 ? `${whole}알 반` : `${whole}알`;
 }
 
-export interface OcrDraftResult {
-  draft: MedicationDraft;
-  truncated: boolean; // 약이 MAX_DRUGS개를 넘어 앞의 것만 가져왔다
-  timingVaries: boolean; // 약마다 복용 안내가 달라 메모를 비워 두었다
+// 하루 횟수: 1 이상의 정수만 아는 값으로 본다
+function knownTimesPerDay(value: number | null | undefined) {
+  return value !== null && value !== undefined && Number.isInteger(value) && value >= 1 ? value : null;
 }
 
-// 인식 결과 → 양식 초안. 약이 0개면 null(읽지 못함으로 안내)
+function orderSlots(slots: Iterable<MedicationTimeSlot>) {
+  const set = new Set(slots);
+  return SLOT_ORDER.filter(slot => set.has(slot));
+}
+
+export interface OcrDraftResult {
+  drugs: DraftDrug[];
+  truncated: boolean; // 약이 MAX_DRUGS개를 넘어 앞의 것만 가져왔다
+}
+
+// 인식 결과 → 약 목록 초안. 약이 0개면 null(읽지 못함으로 안내)
 export function ocrResultToDraft(result: MedicationOcrResponse | null): OcrDraftResult | null {
   if (!result || !result.readable) return null;
   const named = result.drugs.filter(drug => drug.name && drug.name.trim());
   if (named.length === 0) return null;
-  const drugs = named.slice(0, MAX_DRUGS);
-
-  const slotSet = new Set(drugs.flatMap(drug => drug.slots ?? []));
-  let slots = SLOT_ORDER.filter(slot => slotSet.has(slot));
-  if (slots.length === 0) {
-    const timesPerDay = Math.max(0, ...drugs.map(drug => drug.timesPerDay ?? 0));
-    slots = SLOTS_BY_TIMES_PER_DAY[Math.min(timesPerDay, 4)] ?? ['MORNING'];
-  }
-
-  // 메모는 모든 약에 붙으므로, 약마다 안내가 다르면(일부만 있는 경우 포함) 한 약의 안내를 전부에 붙이지 않는다
-  const timings = new Set(drugs.map(drug => drug.timing?.trim() ?? ''));
-  const timingVaries = timings.size > 1;
-  const memo = timingVaries ? '' : ([...timings][0] ?? '');
 
   return {
-    draft: {
-      drugs: drugs.map(drug => ({
-        key: createDraftKey(),
-        name: drug.name.trim().slice(0, MAX_NAME_LENGTH),
-        doseAmount: normalizeDoseAmount(drug.perDose),
-        lowConfidence: drug.confidence === 'low',
-      })),
-      times: slots.map(slot => ({ key: createDraftKey(), time: SLOT_DEFAULT_TIME[slot] })),
-      memo: memo.slice(0, MAX_MEMO_LENGTH),
-    },
+    drugs: named.slice(0, MAX_DRUGS).map(drug => ({
+      key: createDraftKey(),
+      name: drug.name.trim().slice(0, MAX_NAME_LENGTH),
+      doseAmount: normalizeDoseAmount(drug.perDose),
+      lowConfidence: drug.confidence === 'low',
+      timesPerDay: knownTimesPerDay(drug.timesPerDay),
+      slots: orderSlots(drug.slots ?? []),
+    })),
     truncated: named.length > MAX_DRUGS,
-    timingVaries,
   };
 }
 
@@ -183,32 +146,80 @@ export function findDuplicateDrugKeys(drugs: DraftDrug[]) {
   return duplicates;
 }
 
-export function hasDuplicateTimes(times: DraftTime[]) {
-  return new Set(times.map(time => time.time)).size !== times.length;
-}
-
-export function canSubmitDraft(draft: MedicationDraft) {
+// 1/2 → 2/2: 약 1~20개, 이름이 모두 있고 겹치지 않아야 한다
+// (줄을 나눠 따로 보내도 같은 이름이 두 번 등록되지 않게 줄이 아니라 전체에서 본다)
+export function canProceedDrugs(drugs: DraftDrug[]) {
   return (
-    draft.drugs.length >= 1 &&
-    draft.drugs.length <= MAX_DRUGS &&
-    draft.times.length >= 1 &&
-    draft.times.length <= MAX_TIMES &&
-    draft.drugs.every(drug => normalizeDrugName(drug.name).length > 0) &&
-    findDuplicateDrugKeys(draft.drugs).size === 0 &&
-    !hasDuplicateTimes(draft.times)
+    drugs.length >= 1 &&
+    drugs.length <= MAX_DRUGS &&
+    drugs.every(drug => normalizeDrugName(drug.name).length > 0) &&
+    findDuplicateDrugKeys(drugs).size === 0
   );
 }
 
-// 약 1개면 "등록", 여러 개면 "약 N개 등록"
-export function getSubmitLabel(drugCount: number) {
-  return drugCount > 1 ? `약 ${drugCount}개 등록` : '등록';
+// 2/2의 칩 줄 1개 = 일괄 등록 1번
+export interface DoseGroup {
+  key: string;
+  timesPerDay: number | null; // 이 줄 약들의 하루 횟수. 모르면 null
+  drugs: DraftDrug[];
 }
 
-export function draftToBatchRequest(draft: MedicationDraft): AddMedicationBatchReq {
-  const memo = draft.memo.trim();
+export const SINGLE_GROUP_KEY = 'all';
+const UNKNOWN_GROUP_KEY = 'unknown';
+
+// 약들의 하루 횟수가 모두 같거나 모르면 한 줄. 서로 다르면 횟수별로 나눈다(많은 횟수 먼저)
+// 하루 2번 약을 3번 줄에 섞으면 과다 복용 안내가 된다(2026-10-22 실제 봉투 시험)
+// 줄을 나눌 때 횟수를 모르는 약은 다른 줄에 섞지 않고 "하루 횟수 모름" 줄로 따로 둔다
+export function groupDrugsByTimesPerDay(drugs: DraftDrug[]): DoseGroup[] {
+  const known = [...new Set(drugs.map(drug => drug.timesPerDay).filter((n): n is number => n !== null))];
+  if (known.length <= 1) {
+    return [{ key: SINGLE_GROUP_KEY, timesPerDay: known[0] ?? null, drugs }];
+  }
+
+  const groups: DoseGroup[] = known
+    .sort((a, b) => b - a)
+    .map(timesPerDay => ({
+      key: `times-${timesPerDay}`,
+      timesPerDay,
+      drugs: drugs.filter(drug => drug.timesPerDay === timesPerDay),
+    }));
+  const unknown = drugs.filter(drug => drug.timesPerDay === null);
+  if (unknown.length > 0) groups.push({ key: UNKNOWN_GROUP_KEY, timesPerDay: null, drugs: unknown });
+  return groups;
+}
+
+// 줄 제목: "하루 3번 · 신일이부프로펜정 외 4개" (줄이 하나일 때는 쓰지 않는다)
+export function getGroupTitle(group: DoseGroup) {
+  const [first, ...rest] = group.drugs;
+  const names = `${first?.name.trim() ?? ''}${rest.length > 0 ? ` 외 ${rest.length}개` : ''}`;
+  const times = group.timesPerDay === null ? '하루 횟수 모름' : `하루 ${group.timesPerDay}번`;
+  return `${times} · ${names}`;
+}
+
+// 기본 선택: 봉투 시간대 표시가 있고 그 개수가 이 줄의 하루 횟수와 같으면(횟수를 모르면 표시만으로) 그대로,
+// 아니면 하루 횟수로(1 아침 / 2 아침·저녁 / 3 아침·점심·저녁 / 4 이상 네 칸), 정보가 없으면 아침
+// 시간대 표시는 이 줄 약들의 것을 먼저 보고, 없으면 봉투 전체(모든 약)의 것을 본다
+export function defaultSlotsForGroup(group: DoseGroup, allDrugs: DraftDrug[]): MedicationTimeSlot[] {
+  const own = orderSlots(group.drugs.flatMap(drug => drug.slots));
+  const marked = own.length > 0 ? own : orderSlots(allDrugs.flatMap(drug => drug.slots));
+  if (marked.length > 0 && (group.timesPerDay === null || marked.length === group.timesPerDay)) return marked;
+  if (group.timesPerDay === null) return ['MORNING'];
+  return SLOTS_BY_TIMES_PER_DAY[Math.min(group.timesPerDay, 4)];
+}
+
+// 고른 칸 수가 봉투의 하루 횟수와 다르면 알린다(막지는 않는다)
+export function getTimesMismatchHint(group: DoseGroup, selected: MedicationTimeSlot[]) {
+  if (group.timesPerDay === null || selected.length === group.timesPerDay) return null;
+  return `봉투에는 하루 ${group.timesPerDay}번이에요`;
+}
+
+export function toggleSlot(selected: MedicationTimeSlot[], slot: MedicationTimeSlot) {
+  return selected.includes(slot) ? selected.filter(item => item !== slot) : orderSlots([...selected, slot]);
+}
+
+export function groupToBatchRequest(group: DoseGroup, selected: MedicationTimeSlot[]): AddMedicationBatchReq {
   return {
-    drugs: draft.drugs.map(drug => ({ name: drug.name.trim(), doseAmount: drug.doseAmount })),
-    times: draft.times.map(time => ({ doseTime: `${time.time}:00` })),
-    ...(memo ? { memo } : {}),
+    drugs: group.drugs.map(drug => ({ name: drug.name.trim(), doseAmount: drug.doseAmount })),
+    times: orderSlots(selected).map(slot => ({ doseTime: `${DOSE_CHIPS[slot].time}:00` })),
   };
 }

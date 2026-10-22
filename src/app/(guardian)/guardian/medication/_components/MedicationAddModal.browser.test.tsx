@@ -29,6 +29,18 @@ const OCR_TWO_DRUGS: MedicationOcrResponse = {
   ],
 };
 
+// 하루 횟수가 다른 봉투(2026-10-22 실제 시험과 같은 모양 - 코싹엘정만 하루 2번)
+const OCR_MIXED_TIMES: MedicationOcrResponse = {
+  readable: true,
+  drugs: [
+    { name: '신일이부프로펜정', perDose: 1, timesPerDay: 3, days: 3, slots: ['MORNING', 'LUNCH', 'DINNER'], timing: null, confidence: 'high' },
+    { name: '코싹엘정', perDose: 1, timesPerDay: 2, days: 3, slots: ['MORNING', 'LUNCH', 'DINNER'], timing: null, confidence: 'high' },
+    { name: '뮤테란캡슐', perDose: 1, timesPerDay: 3, days: 3, slots: ['MORNING', 'LUNCH', 'DINNER'], timing: null, confidence: 'high' },
+  ],
+};
+const ROW_3 = '하루 3번 · 신일이부프로펜정 외 1개';
+const ROW_2 = '하루 2번 · 코싹엘정';
+
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason: unknown) => void;
@@ -62,6 +74,8 @@ function renderModal(onClose = vi.fn()) {
   return { screen, onClose };
 }
 
+type Screen = ReturnType<typeof renderModal>['screen'];
+
 // 휴대폰 카메라로 찍은 사진을 고른 것처럼 파일 입력에 넣는다
 // (브라우저 안에서 만든 File은 userEvent.upload로 넘기면 내용이 전달되지 않아 DataTransfer로 직접 넣는다)
 async function choosePhoto() {
@@ -72,6 +86,8 @@ async function choosePhoto() {
   input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+const chip = (screen: Screen, name: string) => screen.getByRole('button', { name, exact: true });
+
 describe('MedicationAddModal (Chrome)', () => {
   beforeEach(() => {
     api.recognizeMedicationEnvelope.mockReset();
@@ -81,18 +97,29 @@ describe('MedicationAddModal (Chrome)', () => {
     document.body.innerHTML = '';
   });
 
-  it('인식 결과는 초안으로만 채우고 자동 등록하지 않는다', async () => {
+  it('인식 결과는 1/2 약 초안으로만 채우고 자동 등록하지 않는다', async () => {
     api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
     const { screen } = renderModal();
     await choosePhoto();
 
     await expect.element(screen.getByText('✓ 약 2개를 찾았어요. 맞는지 확인해 주세요')).toBeVisible();
+    await expect.element(screen.getByText('1 / 2')).toBeVisible();
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정');
     await expect.element(screen.getByText('반알')).toBeVisible();
-    await expect.element(screen.getByText('드시는 시간 · 하루 2번')).toBeVisible();
-    await expect.element(screen.getByPlaceholder('예) 식후 30분')).toHaveValue('식후 30분');
     await expect.element(screen.getByText(/노란 칸은 글자를 정확히 읽지 못했을 수 있어요/)).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '다시 찍기' })).toBeVisible();
+    // 시간 드롭다운·메모 칸은 없다
+    expect(document.querySelector('select')).toBeNull();
+    expect(screen.getByPlaceholder('예) 식후 30분').query()).toBeNull();
     expect(api.addWardMedicationBatch).not.toHaveBeenCalled();
+  });
+
+  it('확신 low가 없으면 노란 칸 안내를 띄우지 않는다', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_MIXED_TIMES);
+    const { screen } = renderModal();
+    await choosePhoto();
+    await expect.element(screen.getByText(/약 3개를 찾았어요/)).toBeVisible();
+    expect(screen.getByText(/노란 칸은/).query()).toBeNull();
   });
 
   it('보내는 사진은 Chrome에서 JPEG로 바뀐다', async () => {
@@ -133,58 +160,152 @@ describe('MedicationAddModal (Chrome)', () => {
     expect(signal.aborted).toBe(true);
   });
 
-  it('등록에 실패하면 양식을 그대로 두고, 양식을 고치면 실패 문구를 지운다', async () => {
+  it('2/2로 갔다 [이전]으로 돌아와도 고친 약·고른 시간이 그대로다', async () => {
     api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
-    api.addWardMedicationBatch.mockRejectedValue(new Error('같은 이름의 약이 두 번 들어 있습니다.'));
-    const { screen, onClose } = renderModal();
+    const { screen } = renderModal();
     await choosePhoto();
-
-    await screen.getByRole('button', { name: '약 2개 등록' }).click();
-    await expect.element(screen.getByText('같은 이름의 약이 두 번 들어 있습니다.')).toBeVisible();
-    await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정');
-    expect(onClose).not.toHaveBeenCalled();
 
     await screen.getByLabelText('1번째 약 이름').fill('타이레놀정500');
-    await expect.element(screen.getByText('같은 이름의 약이 두 번 들어 있습니다.')).not.toBeInTheDocument();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await expect.element(screen.getByText('2 / 2')).toBeVisible();
+    await expect.element(screen.getByRole('heading', { name: '언제 드세요?' })).toHaveFocus();
+    // 봉투 표시(아침·저녁)가 하루 2번과 맞아 그대로 고른다
+    await expect.element(chip(screen, '아침 오전 8시')).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(chip(screen, '점심 낮 12시')).toHaveAttribute('aria-pressed', 'false');
+    await expect.element(chip(screen, '저녁 오후 7시')).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(screen.getByText('봉투에는 하루 2번이에요')).not.toBeInTheDocument();
+
+    await chip(screen, '자기 전 오후 9시').click();
+    await expect.element(screen.getByText('봉투에는 하루 2번이에요')).toBeVisible();
+
+    await screen.getByRole('button', { name: '이전' }).click();
+    await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정500');
+    await screen.getByRole('button', { name: '다음' }).click();
+    await expect.element(chip(screen, '자기 전 오후 9시')).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('등록 요청은 약 × 시간 일괄 1회이고, 성공하면 닫힌다', async () => {
-    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
-    api.addWardMedicationBatch.mockResolvedValue([]);
+  it('하루 횟수가 다른 약은 줄을 나누고 줄마다 기본 선택을 따로 한다', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_MIXED_TIMES);
+    const { screen } = renderModal();
+    await choosePhoto();
+    await screen.getByRole('button', { name: '다음' }).click();
+
+    await expect.element(screen.getByText(ROW_3)).toBeVisible();
+    await expect.element(screen.getByText(ROW_2)).toBeVisible();
+    // 하루 3번 줄: 봉투 표시(아침·점심·저녁) 그대로
+    await expect.element(chip(screen, `${ROW_3} - 점심 낮 12시`)).toHaveAttribute('aria-pressed', 'true');
+    // 하루 2번 줄: 표시가 3칸이라 맞지 않아 횟수로(아침·저녁)
+    await expect.element(chip(screen, `${ROW_2} - 아침 오전 8시`)).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(chip(screen, `${ROW_2} - 점심 낮 12시`)).toHaveAttribute('aria-pressed', 'false');
+    await expect.element(chip(screen, `${ROW_2} - 저녁 오후 7시`)).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('줄마다 1번씩 등록하고, 뒤 줄이 실패하면 실패한 줄만 다시 보낸다', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_MIXED_TIMES);
+    api.addWardMedicationBatch.mockResolvedValueOnce([]).mockRejectedValueOnce(new Error('잠시 후 다시 시도해 주세요.'));
     const { screen, onClose } = renderModal();
     await choosePhoto();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await screen.getByRole('button', { name: '등록', exact: true }).click();
 
-    await screen.getByRole('button', { name: '약 2개 등록' }).click();
-    await vi.waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
-    expect(api.addWardMedicationBatch).toHaveBeenCalledTimes(1);
+    await expect.element(screen.getByText(`${ROW_2} - 잠시 후 다시 시도해 주세요.`)).toBeVisible();
+    await expect.element(screen.getByText('등록됨', { exact: true })).toBeVisible();
+    await expect.element(chip(screen, `${ROW_3} - 아침 오전 8시`)).toBeDisabled();
+    await expect.element(screen.getByRole('button', { name: '이전' })).toBeDisabled();
+    await expect.element(screen.getByRole('tab', { name: '직접 쓰기' })).toBeDisabled();
+    expect(onClose).not.toHaveBeenCalled();
+
     expect(api.addWardMedicationBatch.mock.calls[0]).toEqual([
       'W1',
       {
         drugs: [
-          { name: '타이레놀정', doseAmount: 0.5 },
-          { name: '무코스타정', doseAmount: 1 },
+          { name: '신일이부프로펜정', doseAmount: 1 },
+          { name: '뮤테란캡슐', doseAmount: 1 },
         ],
-        times: [{ doseTime: '08:00:00' }, { doseTime: '18:00:00' }],
-        memo: '식후 30분',
+        times: [{ doseTime: '08:00:00' }, { doseTime: '12:00:00' }, { doseTime: '19:00:00' }],
       },
     ]);
+    const secondBody = {
+      drugs: [{ name: '코싹엘정', doseAmount: 1 }],
+      times: [{ doseTime: '08:00:00' }, { doseTime: '19:00:00' }],
+    };
+    expect(api.addWardMedicationBatch.mock.calls[1]).toEqual(['W1', secondBody]);
+
+    api.addWardMedicationBatch.mockResolvedValueOnce([]);
+    await screen.getByRole('button', { name: '남은 약 다시 등록' }).click();
+    await vi.waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(api.addWardMedicationBatch).toHaveBeenCalledTimes(3);
+    expect(api.addWardMedicationBatch.mock.calls[2]).toEqual(['W1', secondBody]);
   });
 
-  it('등록 버튼: 빈 이름·같은 이름이면 비활성, 1개면 "등록"', async () => {
+  it('고른 칩이 없는 줄이 있으면 등록할 수 없다', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
     const { screen } = renderModal();
-    await screen.getByRole('tab', { name: '직접 쓰기' }).click();
+    await choosePhoto();
+    await screen.getByRole('button', { name: '다음' }).click();
 
     const submit = screen.getByRole('button', { name: '등록', exact: true });
+    await expect.element(submit).toBeEnabled();
+    await chip(screen, '아침 오전 8시').click();
+    await chip(screen, '저녁 오후 7시').click();
     await expect.element(submit).toBeDisabled();
+  });
+
+  it('등록에 실패하면 2/2에 그대로 남고, 칩을 고치면 실패 문구를 지운다', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
+    api.addWardMedicationBatch.mockRejectedValue(new Error('같은 이름의 약이 두 번 들어 있습니다.'));
+    const { screen, onClose } = renderModal();
+    await choosePhoto();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await screen.getByRole('button', { name: '등록', exact: true }).click();
+
+    await expect.element(screen.getByText('같은 이름의 약이 두 번 들어 있습니다.')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '이전' })).toBeEnabled();
+    expect(onClose).not.toHaveBeenCalled();
+
+    await chip(screen, '점심 낮 12시').click();
+    await expect.element(screen.getByText('같은 이름의 약이 두 번 들어 있습니다.')).not.toBeInTheDocument();
+  });
+
+  it('직접 쓰기: 이름이 비거나 겹치면 [다음] 비활성, 기본은 아침, 등록 1회 후 닫힌다', async () => {
+    api.addWardMedicationBatch.mockResolvedValue([]);
+    const { screen, onClose } = renderModal();
+    await screen.getByRole('tab', { name: '직접 쓰기' }).click();
+
+    const next = screen.getByRole('button', { name: '다음' });
+    await expect.element(next).toBeDisabled();
+    await expect.element(screen.getByPlaceholder('약 이름을 써 주세요')).toBeVisible();
     await expect.element(screen.getByRole('button', { name: '1번째 약 빼기' })).toBeDisabled();
 
     await screen.getByLabelText('1번째 약 이름').fill('혈압약');
-    await expect.element(submit).toBeEnabled();
-
+    await expect.element(next).toBeEnabled();
     await screen.getByRole('button', { name: '+ 약 더 넣기' }).click();
     await screen.getByLabelText('2번째 약 이름').fill(' 혈압약 ');
     await expect.element(screen.getByText(/같은 이름의 약이 두 번 들어 있어요/)).toBeVisible();
-    await expect.element(screen.getByRole('button', { name: '약 2개 등록' })).toBeDisabled();
+    await expect.element(next).toBeDisabled();
+    await screen.getByRole('button', { name: '2번째 약 빼기' }).click();
+
+    await next.click();
+    await expect.element(chip(screen, '아침 오전 8시')).toHaveAttribute('aria-pressed', 'true');
+    await screen.getByRole('button', { name: '등록', exact: true }).click();
+    await vi.waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(api.addWardMedicationBatch.mock.calls).toEqual([
+      ['W1', { drugs: [{ name: '혈압약', doseAmount: 1 }], times: [{ doseTime: '08:00:00' }] }],
+    ]);
+  });
+
+  it('탭을 바꾸면 처음부터 다시 쓴다', async () => {
+    const { screen } = renderModal();
+    await screen.getByRole('tab', { name: '직접 쓰기' }).click();
+    await screen.getByLabelText('1번째 약 이름').fill('혈압약');
+    await screen.getByRole('button', { name: '다음' }).click();
+    await expect.element(screen.getByText('2 / 2')).toBeVisible();
+
+    await screen.getByRole('tab', { name: '카메라로 찍기' }).click();
+    await expect.element(screen.getByText('약 봉투를 카메라에 대주세요')).toBeVisible();
+    await screen.getByRole('tab', { name: '직접 쓰기' }).click();
+    await expect.element(screen.getByText('1 / 2')).toBeVisible();
+    await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('');
   });
 
   it('등록 중에는 Esc·닫기로 닫히지 않고, 끝나면 닫힌다 (점검 L-1)', async () => {
@@ -193,10 +314,12 @@ describe('MedicationAddModal (Chrome)', () => {
     const { screen, onClose } = renderModal();
     await screen.getByRole('tab', { name: '직접 쓰기' }).click();
     await screen.getByLabelText('1번째 약 이름').fill('혈압약');
+    await screen.getByRole('button', { name: '다음' }).click();
     await screen.getByRole('button', { name: '등록', exact: true }).click();
 
     await expect.element(screen.getByRole('button', { name: '등록 중…' })).toBeVisible();
     await expect.element(screen.getByRole('button', { name: '닫기' })).toBeDisabled();
+    await expect.element(screen.getByRole('tab', { name: '카메라로 찍기' })).toBeDisabled();
     await userEvent.keyboard('{Escape}');
     expect(onClose).not.toHaveBeenCalled();
 
@@ -224,5 +347,6 @@ describe('MedicationAddModal (Chrome)', () => {
     await expect.element(screen.getByText(/약 봉투를 찾지 못했어요/)).toBeVisible();
     await screen.getByRole('button', { name: '직접 쓰기로' }).click();
     await expect.element(screen.getByRole('tab', { name: '직접 쓰기' })).toHaveAttribute('aria-selected', 'true');
+    await expect.element(screen.getByText('1 / 2')).toBeVisible();
   });
 });

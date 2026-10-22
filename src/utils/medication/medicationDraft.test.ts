@@ -2,21 +2,24 @@ import { describe, expect, it } from 'vitest';
 
 import { MedicationOcrDrug, MedicationOcrResponse } from '@/service/interface/medication';
 import {
-  canSubmitDraft,
-  createEmptyDraft,
+  canProceedDrugs,
+  createEmptyDrug,
   decreaseDose,
-  draftToBatchRequest,
+  defaultSlotsForGroup,
+  DraftDrug,
   findDuplicateDrugKeys,
   formatDoseLabel,
-  formatTimeOption,
+  getGroupTitle,
+  getTimesMismatchHint,
+  groupDrugsByTimesPerDay,
+  groupToBatchRequest,
   increaseDose,
-  nextUnusedTime,
-  normalizeDoseAmount,
-  ocrResultToDraft,
-  getSubmitLabel,
   MAX_DRUGS,
+  normalizeDoseAmount,
   normalizeDrugName,
-  TIME_OPTIONS,
+  ocrResultToDraft,
+  SINGLE_GROUP_KEY,
+  toggleSlot,
 } from './medicationDraft';
 
 function drug(overrides: Partial<MedicationOcrDrug> = {}): MedicationOcrDrug {
@@ -36,6 +39,10 @@ function ocr(drugs: MedicationOcrDrug[], readable = true): MedicationOcrResponse
   return { readable, drugs };
 }
 
+function draftDrug(overrides: Partial<DraftDrug> = {}): DraftDrug {
+  return { ...createEmptyDrug(), name: '약', ...overrides };
+}
+
 describe('ocrResultToDraft', () => {
   it('읽지 못했거나 약이 없으면 null', () => {
     expect(ocrResultToDraft(null)).toBeNull();
@@ -45,71 +52,141 @@ describe('ocrResultToDraft', () => {
   });
 
   it('반 알은 0.5, 복용량을 못 읽으면 1알', () => {
-    const draft = ocrResultToDraft(ocr([drug({ perDose: 0.5 }), drug({ name: '아스피린', perDose: null })]))!.draft;
-    expect(draft.drugs.map(d => d.doseAmount)).toEqual([0.5, 1]);
+    const { drugs } = ocrResultToDraft(ocr([drug({ perDose: 0.5 }), drug({ name: '아스피린', perDose: null })]))!;
+    expect(drugs.map(d => d.doseAmount)).toEqual([0.5, 1]);
   });
 
-  it('시간대가 있으면 약들의 시간대를 합쳐 순서대로 1행씩', () => {
-    const draft = ocrResultToDraft(
-      ocr([drug({ slots: ['BEDTIME', 'MORNING'] }), drug({ name: '아스피린', slots: ['DINNER'] })]),
-    )!.draft;
-    expect(draft.times.map(t => t.time)).toEqual(['08:00', '18:00', '22:00']);
+  it('약마다 하루 횟수·시간대를 그대로 갖고 있는다(0·소수는 모름)', () => {
+    const { drugs } = ocrResultToDraft(
+      ocr([
+        drug({ timesPerDay: 3, slots: ['DINNER', 'MORNING'] }),
+        drug({ name: '아스피린', timesPerDay: 0 }),
+        drug({ name: '코싹엘정', timesPerDay: 1.5 }),
+      ]),
+    )!;
+    expect(drugs.map(d => d.timesPerDay)).toEqual([3, null, null]);
+    expect(drugs[0].slots).toEqual(['MORNING', 'DINNER']);
   });
 
-  it('시간대가 없으면 하루 횟수로 정한다', () => {
-    const times = (n: number | null) => ocrResultToDraft(ocr([drug({ timesPerDay: n })]))!.draft.times.map(t => t.time);
-    expect(times(1)).toEqual(['08:00']);
-    expect(times(2)).toEqual(['08:00', '18:00']);
-    expect(times(3)).toEqual(['08:00', '13:00', '18:00']);
-    expect(times(null)).toEqual(['08:00']);
-  });
-
-  it('확신 낮은 약 표시, 복용 안내는 메모로', () => {
-    const { draft } = ocrResultToDraft(ocr([drug({ confidence: 'low', timing: '식후 30분' })]))!;
-    expect(draft.drugs[0].lowConfidence).toBe(true);
-    expect(draft.memo).toBe('식후 30분');
-  });
-});
-
-describe('ocrResultToDraft 경계 (2026-10-22 점검 M-4·M-5)', () => {
-  it('약마다 복용 안내가 다르면 메모를 비우고 알린다', () => {
-    const differ = ocrResultToDraft(ocr([drug({ timing: '식후 30분' }), drug({ name: '아스피린', timing: '취침 전' })]))!;
-    expect(differ.draft.memo).toBe('');
-    expect(differ.timingVaries).toBe(true);
-
-    // 일부 약만 안내가 있어도 다른 약에 붙이지 않는다
-    const partial = ocrResultToDraft(ocr([drug({ timing: '식후 30분' }), drug({ name: '아스피린', timing: null })]))!;
-    expect(partial.draft.memo).toBe('');
-    expect(partial.timingVaries).toBe(true);
-
-    const same = ocrResultToDraft(ocr([drug({ timing: '식후 30분' }), drug({ name: '아스피린', timing: ' 식후 30분 ' })]))!;
-    expect(same.draft.memo).toBe('식후 30분');
-    expect(same.timingVaries).toBe(false);
-
-    const none = ocrResultToDraft(ocr([drug(), drug({ name: '아스피린' })]))!;
-    expect(none.timingVaries).toBe(false);
+  it('확신 낮은 약 표시', () => {
+    expect(ocrResultToDraft(ocr([drug({ confidence: 'low' })]))!.drugs[0].lowConfidence).toBe(true);
   });
 
   it(`약이 ${MAX_DRUGS}개를 넘으면 앞의 ${MAX_DRUGS}개만 가져오고 알린다`, () => {
     const many = Array.from({ length: MAX_DRUGS + 3 }, (_, i) => drug({ name: `약${i}` }));
     const result = ocrResultToDraft(ocr(many))!;
-    expect(result.draft.drugs).toHaveLength(MAX_DRUGS);
-    expect(result.draft.drugs[0].name).toBe('약0');
+    expect(result.drugs).toHaveLength(MAX_DRUGS);
+    expect(result.drugs[0].name).toBe('약0');
     expect(result.truncated).toBe(true);
     expect(ocrResultToDraft(ocr(many.slice(0, MAX_DRUGS)))!.truncated).toBe(false);
   });
 
-  it('긴 이름·안내는 100자로 자른다', () => {
-    const { draft } = ocrResultToDraft(ocr([drug({ name: '가'.repeat(150), timing: '나'.repeat(150) })]))!;
-    expect(draft.drugs[0].name).toHaveLength(100);
-    expect(draft.memo).toHaveLength(100);
+  it('긴 이름은 100자로 자른다', () => {
+    expect(ocrResultToDraft(ocr([drug({ name: '가'.repeat(150) })]))!.drugs[0].name).toHaveLength(100);
+  });
+});
+
+describe('하루 횟수별 줄 나누기 (2026-10-22 실제 봉투: 하루 2번 약이 3번으로 등록됨)', () => {
+  it('모두 같거나 모르면 한 줄', () => {
+    const same = groupDrugsByTimesPerDay([draftDrug({ timesPerDay: 3 }), draftDrug({ timesPerDay: 3 })]);
+    expect(same).toHaveLength(1);
+    expect(same[0]).toMatchObject({ key: SINGLE_GROUP_KEY, timesPerDay: 3 });
+
+    const unknown = groupDrugsByTimesPerDay([draftDrug(), draftDrug()]);
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].timesPerDay).toBeNull();
+
+    // 아는 횟수가 하나뿐이면 모르는 약이 섞여도 한 줄
+    expect(groupDrugsByTimesPerDay([draftDrug({ timesPerDay: 3 }), draftDrug()])).toHaveLength(1);
   });
 
-  it('하루 횟수 0은 아침, 4 이상은 네 번', () => {
-    const times = (n: number) => ocrResultToDraft(ocr([drug({ timesPerDay: n })]))!.draft.times.map(t => t.time);
-    expect(times(0)).toEqual(['08:00']);
-    expect(times(4)).toEqual(['08:00', '13:00', '18:00', '22:00']);
-    expect(times(6)).toEqual(['08:00', '13:00', '18:00', '22:00']);
+  it('서로 다르면 횟수별로 나누고(많은 횟수 먼저) 모르는 약은 따로 둔다', () => {
+    const drugs = [
+      draftDrug({ name: '신일이부프로펜정', timesPerDay: 3 }),
+      draftDrug({ name: '코싹엘정', timesPerDay: 2 }),
+      draftDrug({ name: '뮤테란캡슐', timesPerDay: 3 }),
+      draftDrug({ name: '직접 쓴 약' }),
+    ];
+    const groups = groupDrugsByTimesPerDay(drugs);
+    expect(groups.map(g => [g.timesPerDay, g.drugs.map(d => d.name)])).toEqual([
+      [3, ['신일이부프로펜정', '뮤테란캡슐']],
+      [2, ['코싹엘정']],
+      [null, ['직접 쓴 약']],
+    ]);
+    expect(groups.map(getGroupTitle)).toEqual([
+      '하루 3번 · 신일이부프로펜정 외 1개',
+      '하루 2번 · 코싹엘정',
+      '하루 횟수 모름 · 직접 쓴 약',
+    ]);
+  });
+});
+
+describe('기본 선택', () => {
+  const pick = (drugs: DraftDrug[]) => {
+    const groups = groupDrugsByTimesPerDay(drugs);
+    return groups.map(group => defaultSlotsForGroup(group, drugs));
+  };
+
+  it('봉투 시간대 표시 개수가 하루 횟수와 같은 줄에만 표시를 쓴다', () => {
+    const slots = ['MORNING', 'LUNCH', 'DINNER'] as const;
+    expect(
+      pick([
+        draftDrug({ timesPerDay: 3, slots: [...slots] }),
+        draftDrug({ timesPerDay: 2, slots: [...slots] }),
+      ]),
+    ).toEqual([
+      ['MORNING', 'LUNCH', 'DINNER'],
+      ['MORNING', 'DINNER'],
+    ]);
+  });
+
+  it('줄의 약에 표시가 없으면 봉투 전체의 표시를 본다', () => {
+    expect(
+      pick([draftDrug({ timesPerDay: 2, slots: ['MORNING', 'BEDTIME'] }), draftDrug({ timesPerDay: 1 })]),
+    ).toEqual([['MORNING', 'BEDTIME'], ['MORNING']]);
+  });
+
+  it('표시가 없으면 하루 횟수로, 정보가 없으면 아침', () => {
+    const one = (timesPerDay: number | null) => pick([draftDrug({ timesPerDay })])[0];
+    expect(one(1)).toEqual(['MORNING']);
+    expect(one(2)).toEqual(['MORNING', 'DINNER']);
+    expect(one(3)).toEqual(['MORNING', 'LUNCH', 'DINNER']);
+    expect(one(4)).toEqual(['MORNING', 'LUNCH', 'DINNER', 'BEDTIME']);
+    expect(one(6)).toEqual(['MORNING', 'LUNCH', 'DINNER', 'BEDTIME']);
+    expect(one(null)).toEqual(['MORNING']);
+  });
+
+  it('하루 횟수를 모르면 봉투 표시를 그대로 쓴다', () => {
+    expect(pick([draftDrug({ slots: ['LUNCH'] })])).toEqual([['LUNCH']]);
+  });
+});
+
+describe('2/2 칩', () => {
+  it('고른 칸 수가 하루 횟수와 다르면 안내(모르면 안내 없음)', () => {
+    const [group] = groupDrugsByTimesPerDay([draftDrug({ timesPerDay: 2 })]);
+    expect(getTimesMismatchHint(group, ['MORNING', 'DINNER'])).toBeNull();
+    expect(getTimesMismatchHint(group, ['MORNING', 'LUNCH', 'DINNER'])).toBe('봉투에는 하루 2번이에요');
+    const [unknown] = groupDrugsByTimesPerDay([draftDrug()]);
+    expect(getTimesMismatchHint(unknown, ['MORNING', 'LUNCH'])).toBeNull();
+  });
+
+  it('칩을 누르면 넣고 빼며 순서는 아침→자기 전', () => {
+    expect(toggleSlot(['DINNER'], 'MORNING')).toEqual(['MORNING', 'DINNER']);
+    expect(toggleSlot(['MORNING', 'DINNER'], 'MORNING')).toEqual(['DINNER']);
+  });
+
+  it('줄 하나를 일괄 등록 요청으로 바꾼다(아침 08·점심 12·저녁 19·자기 전 21시)', () => {
+    const [group] = groupDrugsByTimesPerDay([
+      draftDrug({ name: ' 타이레놀 ', doseAmount: 0.5 }),
+      draftDrug({ name: '무코스타정', doseAmount: 1 }),
+    ]);
+    expect(groupToBatchRequest(group, ['BEDTIME', 'MORNING', 'LUNCH', 'DINNER'])).toEqual({
+      drugs: [
+        { name: '타이레놀', doseAmount: 0.5 },
+        { name: '무코스타정', doseAmount: 1 },
+      ],
+      times: [{ doseTime: '08:00:00' }, { doseTime: '12:00:00' }, { doseTime: '19:00:00' }, { doseTime: '21:00:00' }],
+    });
   });
 });
 
@@ -143,58 +220,26 @@ describe('복용량', () => {
   });
 });
 
-describe('양식 검증·요청', () => {
-  it('이름이 빈 행이 있거나 이름·시각이 겹치면 등록 불가', () => {
-    const draft = createEmptyDraft();
-    expect(canSubmitDraft(draft)).toBe(false);
-    draft.drugs[0].name = '타이레놀';
-    expect(canSubmitDraft(draft)).toBe(true);
+describe('1/2 검증', () => {
+  it('이름이 빈 행이 있거나 이름이 겹치면 다음으로 갈 수 없다', () => {
+    expect(canProceedDrugs([createEmptyDrug()])).toBe(false);
+    expect(canProceedDrugs([draftDrug({ name: '타이레놀' })])).toBe(true);
+    expect(canProceedDrugs([])).toBe(false);
 
-    const dupName = { ...draft, drugs: [...draft.drugs, { ...draft.drugs[0], key: 'x', name: ' 타이레놀 ' }] };
-    expect(findDuplicateDrugKeys(dupName.drugs).size).toBe(2);
-    expect(canSubmitDraft(dupName)).toBe(false);
+    const dup = [draftDrug({ name: '타이레놀' }), draftDrug({ name: ' 타이레놀 ' })];
+    expect(findDuplicateDrugKeys(dup).size).toBe(2);
+    expect(canProceedDrugs(dup)).toBe(false);
 
-    const dupTime = { ...draft, times: [...draft.times, { key: 'y', time: '08:00' }] };
-    expect(canSubmitDraft(dupTime)).toBe(false);
+    // 줄이 달라도(하루 횟수가 달라도) 같은 이름은 막는다
+    expect(canProceedDrugs([draftDrug({ name: 'A', timesPerDay: 3 }), draftDrug({ name: 'a', timesPerDay: 2 })])).toBe(
+      false,
+    );
   });
 
   it('이름 중복은 BE와 같은 기준(공백 묶기·보이지 않는 문자 제거·대소문자 무시)으로 본다 (점검 L-4)', () => {
-    expect(normalizeDrugName(' Tylenol  정\u200b ')).toBe('tylenol 정');
-    const draft = createEmptyDraft();
-    draft.drugs = [
-      { key: 'a', name: '타이레놀 정', doseAmount: 1, lowConfidence: false },
-      { key: 'b', name: '타이레놀\u200b  정', doseAmount: 1, lowConfidence: false },
-    ];
-    expect(findDuplicateDrugKeys(draft.drugs).size).toBe(2);
-    expect(canSubmitDraft(draft)).toBe(false);
-
+    expect(normalizeDrugName(' Tylenol  정​ ')).toBe('tylenol 정');
+    expect(canProceedDrugs([draftDrug({ name: '타이레놀 정' }), draftDrug({ name: '타이레놀​  정' })])).toBe(false);
     // 보이지 않는 문자만 있는 이름은 빈 이름이다
-    draft.drugs = [{ key: 'c', name: '\u200b\u200b', doseAmount: 1, lowConfidence: false }];
-    expect(canSubmitDraft(draft)).toBe(false);
-  });
-
-  it('일괄 등록 요청으로 바꾼다', () => {
-    const draft = createEmptyDraft();
-    draft.drugs[0] = { ...draft.drugs[0], name: ' 타이레놀 ', doseAmount: 0.5 };
-    draft.times.push({ key: 'z', time: '18:00' });
-    expect(draftToBatchRequest(draft)).toEqual({
-      drugs: [{ name: '타이레놀', doseAmount: 0.5 }],
-      times: [{ doseTime: '08:00:00' }, { doseTime: '18:00:00' }],
-    });
-    expect(draftToBatchRequest({ ...draft, memo: ' 식후 ' }).memo).toBe('식후');
-  });
-
-  it('버튼 문구', () => {
-    expect(getSubmitLabel(1)).toBe('등록');
-    expect(getSubmitLabel(3)).toBe('약 3개 등록');
-  });
-
-  it('시간 선택지는 30분 간격, 다음 시각은 안 쓴 기본 시각부터', () => {
-    expect(TIME_OPTIONS).toHaveLength(48);
-    expect(TIME_OPTIONS[17]).toBe('08:30');
-    expect(formatTimeOption('08:00')).toBe('오전 8:00');
-    expect(formatTimeOption('18:30')).toBe('오후 6:30');
-    expect(nextUnusedTime(['08:00'])).toBe('13:00');
-    expect(nextUnusedTime(['08:00', '13:00', '18:00', '22:00'])).toBe('00:00');
+    expect(canProceedDrugs([draftDrug({ name: '​​' })])).toBe(false);
   });
 });
