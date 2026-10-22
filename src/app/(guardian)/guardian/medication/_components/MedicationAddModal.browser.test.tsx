@@ -2,6 +2,7 @@
 // API는 모듈 목으로 바꾸고, 사진 처리(createImageBitmap·canvas)는 Chrome 것을 그대로 쓴다
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { userEvent } from '@vitest/browser/context';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -65,10 +66,14 @@ async function makePhoto(width = 400, height = 300) {
   return new File([blob], 'memo.png', { type: 'image/png' });
 }
 
-function renderModal(onClose = vi.fn()) {
+// withPageBehind: 모달 앞에 뒤 페이지의 버튼을 둔다(실제 화면에는 머리글·메뉴가 있다 - 없으면 body에서 Tab이 원래 모달로 간다)
+function renderModal(onClose = vi.fn(), withPageBehind = false) {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      {withPageBehind && <button type="button">뒤 페이지 버튼</button>}
+      {children}
+    </QueryClientProvider>
   );
   const screen = render(<MedicationAddModal wardId="W1" onClose={onClose} />, { wrapper });
   return { screen, onClose };
@@ -236,6 +241,77 @@ describe('MedicationAddModal (Chrome)', () => {
     await vi.waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
     expect(api.addWardMedicationBatch).toHaveBeenCalledTimes(3);
     expect(api.addWardMedicationBatch.mock.calls[2]).toEqual(['W1', secondBody]);
+  });
+
+  it('응답 전에 끊긴 줄은 "확인 필요"로 잠그고 다시 보내지 않는다 (점검 M-1)', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_MIXED_TIMES);
+    // 앞 줄은 응답 없이 끊김(시간 초과) - 서버에는 등록됐을 수 있다
+    api.addWardMedicationBatch.mockRejectedValueOnce(new AxiosError('timeout of 10000ms exceeded', 'ECONNABORTED'));
+    const { screen, onClose } = renderModal();
+    await choosePhoto();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await screen.getByRole('button', { name: '등록', exact: true }).click();
+
+    await expect.element(screen.getByText(/등록됐는지 확인하지 못했어요/)).toBeVisible();
+    await expect.element(screen.getByText('확인 필요', { exact: true })).toBeVisible();
+    await expect.element(chip(screen, `${ROW_3} - 아침 오전 8시`)).toBeDisabled();
+    await expect.element(screen.getByRole('button', { name: '이전' })).toBeDisabled();
+    expect(api.addWardMedicationBatch).toHaveBeenCalledTimes(1);
+
+    // 남은 줄(하루 2번)만 보낸다 - 끊긴 줄은 다시 보내지 않는다
+    api.addWardMedicationBatch.mockResolvedValueOnce([]);
+    await screen.getByRole('button', { name: '남은 약 다시 등록' }).click();
+    await vi.waitFor(() => expect(api.addWardMedicationBatch).toHaveBeenCalledTimes(2));
+    expect(api.addWardMedicationBatch.mock.calls[1][1].drugs).toEqual([{ name: '코싹엘정', doseAmount: 1 }]);
+    // 확인 필요 줄이 남아 있으므로 닫지 않고 안내를 남기며, 더 보낼 줄이 없어 버튼은 비활성
+    await expect.element(screen.getByText(/나머지 약은 등록됐어요. 등록됐는지 확인하지 못했어요/)).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '남은 약 다시 등록' })).toBeDisabled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('등록이 오래 걸린 뒤 실패해도 포커스가 모달 안(실패 문구)에 있고 Esc로 닫힌다 (점검 M-2)', async () => {
+    api.addWardMedicationBatch.mockImplementation(
+      () => new Promise((_, reject) => setTimeout(() => reject(new Error('잠시 후 다시 시도해 주세요.')), 600)),
+    );
+    const { screen, onClose } = renderModal(vi.fn(), true);
+    await screen.getByRole('tab', { name: '직접 쓰기' }).click();
+    await screen.getByLabelText('1번째 약 이름').fill('혈압약');
+    await screen.getByRole('button', { name: '다음' }).click();
+    await screen.getByRole('button', { name: '등록', exact: true }).click();
+
+    // 등록 중: 버튼이 비활성화돼 포커스가 body로 빠져도 Tab은 모달 안으로 들어온다(닫기는 등록 중이라 막힘)
+    await expect.element(screen.getByRole('button', { name: '등록 중…' })).toBeVisible();
+    expect(document.activeElement).toBe(document.body);
+    await userEvent.keyboard('{Tab}');
+    expect(document.querySelector('[role="dialog"]')!.contains(document.activeElement)).toBe(true);
+    await userEvent.keyboard('{Escape}');
+    expect(onClose).not.toHaveBeenCalled();
+
+    await expect.element(screen.getByText('잠시 후 다시 시도해 주세요.')).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('다시 찍기가 실패해도 "전에 찍은 결과로" 고쳐 둔 초안으로 돌아간다 (점검 L-1)', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValueOnce(OCR_TWO_DRUGS).mockResolvedValueOnce({ readable: false, drugs: [] });
+    const { screen } = renderModal();
+    await choosePhoto();
+    await screen.getByLabelText('1번째 약 이름').fill('타이레놀정500');
+
+    await screen.getByRole('button', { name: '다시 찍기' }).click();
+    await choosePhoto();
+    await expect.element(screen.getByText(/약 봉투를 찾지 못했어요/)).toBeVisible();
+    await screen.getByRole('button', { name: '전에 찍은 결과로' }).click();
+    await expect.element(screen.getByText('✓ 약 2개를 찾았어요. 맞는지 확인해 주세요')).toBeVisible();
+    await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정500');
+  });
+
+  it('처음 찍기가 실패하면 "전에 찍은 결과로" 버튼이 없다', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue({ readable: false, drugs: [] });
+    const { screen } = renderModal();
+    await choosePhoto();
+    await expect.element(screen.getByText(/약 봉투를 찾지 못했어요/)).toBeVisible();
+    expect(screen.getByRole('button', { name: '전에 찍은 결과로' }).query()).toBeNull();
   });
 
   it('고른 칩이 없는 줄이 있으면 등록할 수 없다', async () => {

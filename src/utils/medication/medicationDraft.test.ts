@@ -166,6 +166,11 @@ describe('2/2 칩', () => {
     const [group] = groupDrugsByTimesPerDay([draftDrug({ timesPerDay: 2 })]);
     expect(getTimesMismatchHint(group, ['MORNING', 'DINNER'])).toBeNull();
     expect(getTimesMismatchHint(group, ['MORNING', 'LUNCH', 'DINNER'])).toBe('봉투에는 하루 2번이에요');
+    // 칩은 4개라 하루 5번 이상이면 그 사실도 알린다 (점검 L-4)
+    const [five] = groupDrugsByTimesPerDay([draftDrug({ timesPerDay: 5 })]);
+    expect(getTimesMismatchHint(five, ['MORNING', 'LUNCH', 'DINNER', 'BEDTIME'])).toBe(
+      '봉투에는 하루 5번이에요. 여기서는 4번까지 고를 수 있어요',
+    );
     const [unknown] = groupDrugsByTimesPerDay([draftDrug()]);
     expect(getTimesMismatchHint(unknown, ['MORNING', 'LUNCH'])).toBeNull();
   });

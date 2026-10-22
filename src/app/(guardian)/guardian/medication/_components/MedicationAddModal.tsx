@@ -35,11 +35,15 @@ const TABS: { value: AddTab; label: string }[] = [
 type Step = 1 | 2;
 const STEP_TITLE: Record<Step, string> = { 1: '약', 2: '언제 드세요?' };
 
+type CameraResult = { count: number; truncated: boolean };
+// previous: 다시 찍기 전의 인식 결과 - 다시 찍기가 실패해도 고쳐 둔 1/2 초안으로 돌아갈 수 있게 남겨 둔다
 type CameraState =
   | { phase: 'idle' }
-  | { phase: 'reading' }
-  | { phase: 'result'; count: number; truncated: boolean }
-  | { phase: 'error'; message: string };
+  | { phase: 'reading'; previous?: CameraResult }
+  | ({ phase: 'result' } & CameraResult)
+  | { phase: 'error'; message: string; previous?: CameraResult };
+
+const UNCERTAIN_MESSAGE = '등록됐는지 확인하지 못했어요. 약 목록에서 확인한 뒤, 빠진 약만 다시 추가해 주세요';
 
 interface MedicationAddModalProps {
   wardId: string;
@@ -67,11 +71,13 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
   const [drugs, setDrugs] = useState<DraftDrug[]>(() => [createEmptyDrug()]);
   const [selections, setSelections] = useState<Record<string, MedicationTimeSlot[]>>({});
   const [doneKeys, setDoneKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const [uncertainKeys, setUncertainKeys] = useState<ReadonlySet<string>>(() => new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const stepTitleRef = useRef<HTMLHeadingElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
   const movedStepRef = useRef(false);
   const batchMutation = useAddWardMedicationBatchMutation();
   const idPrefix = useId();
@@ -87,9 +93,15 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
     stepTitleRef.current?.focus();
   }, [step]);
 
+  // 등록이 끝나 실패 문구가 보이면 그 문구로 포커스를 옮긴다(비활성화된 등록 버튼에서 빠진 포커스를 되찾는다)
+  useEffect(() => {
+    if (submitError && !isSubmitting) errorRef.current?.focus();
+  }, [submitError, isSubmitting]);
+
   const groups = useMemo(() => groupDrugsByTimesPerDay(drugs), [drugs]);
-  const pendingGroups = groups.filter(group => !doneKeys.has(group.key));
-  const hasDone = doneKeys.size > 0;
+  const pendingGroups = groups.filter(group => !doneKeys.has(group.key) && !uncertainKeys.has(group.key));
+  // 서버에 보낸 줄(등록됨·확인 필요)이 있으면 처음부터 다시 쓰다 같은 약을 또 등록하지 않게 [이전]·탭을 잠근다
+  const hasDone = doneKeys.size > 0 || uncertainKeys.size > 0;
 
   const isReading = camera.phase === 'reading';
   const showForm = tab === 'manual' || camera.phase === 'result';
@@ -149,7 +161,9 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    setCamera({ phase: 'reading' });
+    const previous: CameraResult | undefined =
+      camera.phase === 'result' ? { count: camera.count, truncated: camera.truncated } : camera.phase === 'idle' ? undefined : camera.previous;
+    setCamera({ phase: 'reading', previous });
     setSubmitError(undefined);
 
     try {
@@ -158,7 +172,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
       if (controller.signal.aborted) return;
       const recognized = ocrResultToDraft(result);
       if (!recognized) {
-        setCamera({ phase: 'error', message: OCR_NOT_FOUND_MESSAGE });
+        setCamera({ phase: 'error', message: OCR_NOT_FOUND_MESSAGE, previous });
         return;
       }
       // 다시 찍으면 전에 고른 시간도 새 봉투 기준으로 다시 정한다
@@ -167,7 +181,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
       setCamera({ phase: 'result', count: recognized.drugs.length, truncated: recognized.truncated });
     } catch (error) {
       if (controller.signal.aborted || axios.isCancel(error)) return;
-      setCamera({ phase: 'error', message: getOcrErrorMessage(error) });
+      setCamera({ phase: 'error', message: getOcrErrorMessage(error), previous });
     }
   };
 
@@ -190,6 +204,8 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
   };
 
   // 줄마다 1번씩 차례로 등록한다. 실패하면 거기서 멈추고, 성공한 줄은 "등록됨"으로 잠가 다시 보내지 않는다
+  // 응답 전에 끊긴 실패(시간 초과·네트워크)는 서버에 등록됐을 수 있다 - BE는 다른 요청의 같은 이름을 막지 않으므로
+  // 그 줄은 "확인 필요"로 잠그고 다시 보내지 않는다(목록은 mutation이 새로고침한다)
   const submit = async () => {
     if (!canSubmit) return;
     setIsSubmitting(true);
@@ -202,10 +218,19 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
           done.add(group.key);
           setDoneKeys(new Set(done));
         } catch (error) {
-          const message = (error instanceof Error && error.message) || '등록에 실패했어요. 다시 시도해 주세요';
+          const noResponse = axios.isAxiosError(error) && !error.response;
+          if (noResponse) setUncertainKeys(current => new Set(current).add(group.key));
+          const message = noResponse
+            ? UNCERTAIN_MESSAGE
+            : (error instanceof Error && error.message) || '등록에 실패했어요. 다시 시도해 주세요';
           setSubmitError(groups.length > 1 ? `${getGroupTitle(group)} - ${message}` : message);
           return;
         }
+      }
+      // 등록됐는지 모르는 줄이 남아 있으면 닫지 않는다 - 목록에서 확인하라는 안내를 볼 수 있어야 한다
+      if (uncertainKeys.size > 0) {
+        setSubmitError(`나머지 약은 등록됐어요. ${UNCERTAIN_MESSAGE}`);
+        return;
       }
       onClose();
     } finally {
@@ -318,6 +343,15 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
                     <button type="button" className={cx('cameraButton')} onClick={openCamera}>
                       다시 찍기
                     </button>
+                    {camera.previous && (
+                      <button
+                        type="button"
+                        className={cx('cameraButton', 'ghost')}
+                        onClick={() => camera.previous && setCamera({ phase: 'result', ...camera.previous })}
+                      >
+                        전에 찍은 결과로
+                      </button>
+                    )}
                     <button type="button" className={cx('cameraButton', 'ghost')} onClick={() => selectTab('manual')}>
                       직접 쓰기로
                     </button>
@@ -362,15 +396,18 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
               groups={groups}
               selections={selections}
               doneKeys={doneKeys}
+              uncertainKeys={uncertainKeys}
               disabled={isSubmitting}
               onChange={changeSelection}
             />
           )}
 
           {submitError && (
-            <p className={cx('error')} role="alert">
+            <p ref={errorRef} className={cx('error')} role="alert" tabIndex={-1}>
               {submitError}
-              {hasDone && <span className={cx('errorNote')}>등록됨 표시가 있는 약은 다시 보내지 않아요</span>}
+              {hasDone && (
+                <span className={cx('errorNote')}>등록됨·확인 필요 표시가 있는 약은 다시 보내지 않아요</span>
+              )}
             </p>
           )}
         </div>

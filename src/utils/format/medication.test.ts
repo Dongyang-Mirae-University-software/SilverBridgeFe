@@ -44,8 +44,16 @@ describe('오늘 등록 전에 지난 복용 시각 (BE MedicationClock.register
     expect(getDoseStatus(med({ createdAt: 'not-a-date' }), '15:00', TODAY)).toBe('miss');
   });
 
-  it('정각에서 조금이라도 늦으면 뺀다(BE는 초 이하까지 비교)', () => {
+  it('정각에서 조금이라도 늦으면 뺀다(밀리초까지 맞춘다 - BE는 나노초까지라 그 아래 차이는 무시)', () => {
     expect(isRegisteredAfterDose(med({ createdAt: '2026-10-22T08:00:00.500+09:00' }), TODAY)).toBe(true);
+  });
+
+  it('자정 경계: 어제 23:59 등록은 오늘 센다, 오늘 00:00 직후 등록은 00:00 약을 뺀다 (점검 L-3)', () => {
+    const midnight = med({ doseTime: '00:00:00' });
+    expect(isRegisteredAfterDose({ ...midnight, createdAt: '2026-10-21T23:59:59+09:00' }, TODAY)).toBe(false);
+    expect(isRegisteredAfterDose({ ...midnight, createdAt: '2026-10-22T00:00:01+09:00' }, TODAY)).toBe(true);
+    // 23:30 약을 23:59에 등록 - 그날은 뺀다
+    expect(isRegisteredAfterDose(med({ doseTime: '23:30:00', createdAt: '2026-10-22T23:59:00+09:00' }), TODAY)).toBe(true);
   });
 
   it('UTC로 와도 KST로 비교한다(10/21 23:30 UTC = 10/22 08:30 KST)', () => {

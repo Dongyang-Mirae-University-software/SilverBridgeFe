@@ -95,6 +95,8 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     timeZone: 'Asia/Seoul',
   }).format(new Date());
   const missCount = medications.filter(medication => getDoseStatus(medication, nowHHmm, summary.doseDate) === 'miss').length;
+  // 체크한 약이 하나도 없는데 "모두 드셨어요"라고 하지 않는다(아직 시간 전이거나 오늘은 등록 전인 약뿐인 경우)
+  const hasTaken = medications.some(medication => medication.taken);
 
   const handleDelete = (medication: MedicationItem) => {
     if (!window.confirm(`${medication.name} 일정을 삭제할까요? 지난 복용 이력은 남습니다.`)) return;
@@ -121,7 +123,9 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             {missCount > 0 ? (
               <div className={cx('todayMiss')}>드실 시간이 지난 약 {missCount}개가 아직 체크 전이에요</div>
             ) : (
-              <div className={cx('todayAllDone')}>지금까지 드실 약은 모두 드셨어요</div>
+              <div className={cx('todayAllDone')}>
+                {hasTaken ? '지금까지 드실 약은 모두 드셨어요' : '지금 체크할 약은 없어요'}
+              </div>
             )}
           </div>
           <div className={cx('todayDots')}>
