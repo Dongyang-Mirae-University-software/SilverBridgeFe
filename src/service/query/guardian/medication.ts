@@ -4,6 +4,7 @@ import { QueryClient, queryOptions, useMutation, useQueryClient } from '@tanstac
 
 import {
   addWardMedication,
+  addWardMedicationBatch,
   deleteGuardianMedication,
   getGuardianMedications,
   getMedicationAlertSetting,
@@ -13,6 +14,7 @@ import {
   updateMedicationSetting,
 } from '@/service/api/guardian/medication';
 import {
+  AddMedicationBatchReq,
   AddMedicationReq,
   UpdateMedicationAlertSettingReq,
   UpdateMedicationReq,
@@ -63,6 +65,16 @@ export function useAddWardMedicationMutation() {
   return useMutation({
     mutationKey: ['guardian-medication-add'],
     mutationFn: ({ wardId, body }: { wardId: string; body: AddMedicationReq }) => addWardMedication(wardId, body),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export function useAddWardMedicationBatchMutation() {
+  const invalidate = useInvalidateGuardianMedication();
+  return useMutation({
+    mutationKey: ['guardian-medication-add-batch'],
+    mutationFn: ({ wardId, body }: { wardId: string; body: AddMedicationBatchReq }) =>
+      addWardMedicationBatch(wardId, body),
     onSuccess: () => invalidate(),
   });
 }

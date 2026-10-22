@@ -5,13 +5,18 @@ import classNames from 'classnames/bind';
 
 import { MedicationItem, MedicationTimeSlot } from '@/service/interface/medication';
 import { getMedicationTimeSlotLabel } from '@/utils/format/medication';
+import {
+  decreaseDose,
+  formatDoseLabel,
+  increaseDose,
+  MAX_DOSE_AMOUNT,
+  MIN_DOSE_AMOUNT,
+} from '@/utils/medication/medicationDraft';
 import styles from './MedicationFormModal.module.css';
 
 const cx = classNames.bind(styles);
 
 const TIME_SLOTS: MedicationTimeSlot[] = ['MORNING', 'LUNCH', 'DINNER', 'BEDTIME'];
-const MIN_DOSE_AMOUNT = 1;
-const MAX_DOSE_AMOUNT = 10;
 
 interface MedicationFormValue {
   name: string;
@@ -50,10 +55,11 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
     onSubmit(value);
   };
 
-  const adjustDoseAmount = (delta: number) => {
+  // 반알(0.5) → 1알 → 2알 … (등록과 같은 0.5 단위 규칙)
+  const adjustDoseAmount = (direction: 1 | -1) => {
     setValue(current => ({
       ...current,
-      doseAmount: Math.min(MAX_DOSE_AMOUNT, Math.max(MIN_DOSE_AMOUNT, current.doseAmount + delta)),
+      doseAmount: direction > 0 ? increaseDose(current.doseAmount) : decreaseDose(current.doseAmount),
     }));
   };
 
@@ -124,7 +130,7 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
               >
                 −
               </button>
-              <span>{value.doseAmount}알</span>
+              <span>{formatDoseLabel(value.doseAmount)}</span>
               <button
                 type="button"
                 onClick={() => adjustDoseAmount(1)}
