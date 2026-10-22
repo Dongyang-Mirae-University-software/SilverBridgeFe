@@ -8,13 +8,13 @@ import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import { formatDoseTime, getMedicationTimeSlotLabel, sortMedicationsByDoseTime } from '@/utils/format/medication';
 import {
-  useAddWardMedicationMutation,
   useDeleteGuardianMedicationMutation,
   useUpdateGuardianMedicationMutation,
   useUpdateMedicationAlertSettingMutation,
   useUpdateMedicationSettingMutation,
 } from '@/service/query/guardian/medication';
 import { guardianNotificationTypeSettingQueryOptions } from '@/service/query/guardian/notification';
+import { MedicationAddModal } from './MedicationAddModal';
 import { MedicationFormModal, MedicationFormValue } from './MedicationFormModal';
 import styles from './WardMedicationCard.module.css';
 
@@ -47,40 +47,26 @@ function toUpdateBody(value: MedicationFormValue) {
   };
 }
 
-type MedicationFormTarget = 'add' | MedicationItem;
-
 interface MedicationFormModalContainerProps {
-  wardId: string;
   wardName: string;
-  target: MedicationFormTarget;
+  target: MedicationItem;
   onCloseModal: () => void;
 }
 
-function MedicationFormModalContainer({ wardId, wardName, target, onCloseModal }: MedicationFormModalContainerProps) {
-  const addMutation = useAddWardMedicationMutation();
+// 약 수정(단건). 약 추가는 MedicationAddModal(카메라로 찍기·직접 쓰기, 일괄 등록)이 맡는다
+function MedicationFormModalContainer({ wardName, target, onCloseModal }: MedicationFormModalContainerProps) {
   const updateMutation = useUpdateGuardianMedicationMutation();
 
   const handleSubmitForm = (value: MedicationFormValue) => {
-    const body = toUpdateBody(value);
-
-    if (target === 'add') {
-      addMutation.mutate({ wardId, body }, { onSuccess: onCloseModal });
-      return;
-    }
-
-    updateMutation.mutate({ medicationId: target.medicationId, body }, { onSuccess: onCloseModal });
+    updateMutation.mutate({ medicationId: target.medicationId, body: toUpdateBody(value) }, { onSuccess: onCloseModal });
   };
-
-  const isFormSubmitting = addMutation.isPending || updateMutation.isPending;
-  const formError =
-    addMutation.isError || updateMutation.isError ? '저장에 실패했습니다. 다시 시도해 주세요.' : undefined;
 
   return (
     <MedicationFormModal
       wardName={wardName}
-      initial={target === 'add' ? undefined : target}
-      isSubmitting={isFormSubmitting}
-      errorMessage={formError}
+      initial={target}
+      isSubmitting={updateMutation.isPending}
+      errorMessage={updateMutation.isError ? '저장에 실패했습니다. 다시 시도해 주세요.' : undefined}
       onSubmit={handleSubmitForm}
       onClose={onCloseModal}
     />
@@ -114,10 +100,12 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     deleteMutation.mutate(medication.medicationId);
   };
 
-  const openMedicationForm = (target: MedicationFormTarget) => {
-    openModal(
-      <MedicationFormModalContainer wardId={summary.wardId} wardName={wardName} target={target} onCloseModal={onCloseModal} />,
-    );
+  const openAddMedication = () => {
+    openModal(<MedicationAddModal wardId={summary.wardId} onClose={onCloseModal} />);
+  };
+
+  const openEditMedication = (target: MedicationItem) => {
+    openModal(<MedicationFormModalContainer wardName={wardName} target={target} onCloseModal={onCloseModal} />);
   };
 
   return (
@@ -153,7 +141,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             <strong className={cx('sectionTitle')}>오늘 드실 약</strong>
             <span className={cx('sectionMeta')}>약을 드셨는지는 {wardName} 님이 직접 체크해요</span>
           </div>
-          <button type="button" className={cx('addButton')} onClick={() => openMedicationForm('add')}>
+          <button type="button" className={cx('addButton')} onClick={openAddMedication}>
             + 약 추가
           </button>
         </div>
@@ -165,11 +153,11 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             const status = getDoseStatus(medication, nowHHmm);
             return (
               <div key={medication.medicationId} className={cx('medicationItem')}>
-                <button type="button" className={cx('medicationTime')} onClick={() => openMedicationForm(medication)}>
+                <button type="button" className={cx('medicationTime')} onClick={() => openEditMedication(medication)}>
                   <strong>{getMedicationTimeSlotLabel(medication.timeSlot)}</strong>
                   <span>{formatDoseTime(medication.doseTime)}</span>
                 </button>
-                <button type="button" className={cx('medicationInfo')} onClick={() => openMedicationForm(medication)}>
+                <button type="button" className={cx('medicationInfo')} onClick={() => openEditMedication(medication)}>
                   <strong className={cx('medicationName')}>{medication.name}</strong>
                   <span className={cx('medicationDetail')}>
                     {medication.doseAmount}정{medication.memo ? ` · ${medication.memo}` : ''}

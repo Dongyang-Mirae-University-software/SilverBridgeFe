@@ -1,0 +1,412 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 16, 12, 0.5);
+  backdrop-filter: blur(3px);
+  padding: 20px;
+}
+
+.modal {
+  position: relative;
+  width: min(480px, 100%);
+  max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-lg);
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.header h3 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.close {
+  display: grid;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.close:hover {
+  background: var(--sb-bg-soft);
+}
+
+.body {
+  display: grid;
+  gap: 14px;
+}
+
+
+
+
+
+.optional {
+  color: var(--sb-ink-mute);
+  font-weight: 400;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.stepper button {
+  width: 34px;
+  height: 100%;
+  border: none;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.stepper button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.stepper span {
+  flex: 1;
+  text-align: center;
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.error {
+  margin: 0;
+  color: var(--sb-warn);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.cancelButton,
+.submitButton {
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 16px;
+}
+
+.cancelButton {
+  flex: 1;
+  border: 1px solid var(--sb-line);
+  background: #fff;
+  color: var(--sb-ink-soft);
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: var(--sb-bg-soft);
+}
+
+.submitButton {
+  flex: 2;
+  background: var(--sb-brand);
+  color: #fff;
+  font-weight: 800;
+}
+
+.submitButton:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.submitButton:disabled,
+.cancelButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ── 약 추가(카메라로 찍기·직접 쓰기) ── */
+
+.body {
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  padding: 4px;
+}
+
+.tab {
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 8px;
+}
+
+.tab.active {
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  color: var(--sb-ink);
+  font-weight: 800;
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+}
+
+.fileInput {
+  display: none;
+}
+
+.cameraBox {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 14px;
+  min-height: 220px;
+  border: 3px solid transparent;
+  border-radius: 16px;
+  background: #1f1b17;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.cameraBox.reading {
+  border-color: var(--sb-sun);
+}
+
+.cameraText {
+  margin: 0;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.pillIcon {
+  width: 44px;
+  height: 44px;
+  color: var(--sb-sun);
+}
+
+.cameraActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cameraButton {
+  min-width: 132px;
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 11px 18px;
+}
+
+.cameraButton.ghost {
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
+  color: #fff;
+}
+
+.cameraButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.resultBanner {
+  margin: 0;
+  border-radius: 10px;
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
+  font-size: 14px;
+  font-weight: 800;
+  padding: 12px 14px;
+}
+
+.draftForm {
+  display: grid;
+  gap: 18px;
+}
+
+.group {
+  display: grid;
+  gap: 8px;
+}
+
+.groupTitle {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.rows {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.drugRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.timeRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.nameInput,
+.timeSelect,
+.memoField input {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 12px;
+}
+
+.nameInput:focus,
+.timeSelect:focus,
+.memoField input:focus {
+  border-color: var(--sb-brand);
+  outline: none;
+}
+
+/* 인식 확신이 낮은 약 - 확인을 권하는 정도로만 옅게 */
+.nameInput.lowConfidence {
+  border-color: var(--sb-sun);
+  background: var(--sb-sun-soft);
+}
+
+.nameInput.duplicated {
+  border-color: var(--sb-warn);
+}
+
+.drugRow .stepper {
+  width: 118px;
+}
+
+.removeButton {
+  display: grid;
+  width: 34px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.removeButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.addRowButton {
+  justify-self: start;
+  border: 1px dashed var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-brand);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 9px 14px;
+}
+
+.addRowButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.hint {
+  margin: 0;
+  color: var(--sb-warn);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.memoField {
+  display: grid;
+  gap: 6px;
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@media (max-width: 480px) {
+  .modal {
+    padding: 20px 16px;
+  }
+
+  .drugRow .stepper {
+    width: 104px;
+  }
+}

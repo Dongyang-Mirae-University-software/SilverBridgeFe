@@ -78,3 +78,27 @@ export interface UpdateMedicationAlertSettingReq {
   missedAlertEnabled?: boolean;
   missedAlertTime?: string;
 }
+
+// 보호자: POST /api/guardian/ward/{wardId}/medication/batch — drugs × times 만큼 등록, 전부 성공 또는 전부 실패
+// 시간대(timeSlot)는 서버가 시각으로 정한다(04~10 아침 / 11~15 점심 / 16~20 저녁 / 그 외 취침 전)
+export interface AddMedicationBatchReq {
+  drugs: { name: string; doseAmount?: number }[]; // 1~20개, 같은 이름 중복 불가. doseAmount는 0.5 단위(반 알 = 0.5)
+  times: { doseTime: string }[]; // 1~6개, "HH:mm:ss", 같은 시각 중복 불가
+  memo?: string;
+}
+
+// 보호자: POST /api/guardian/ward/{wardId}/medication/ocr — 약 봉투 사진 인식 결과(등록 초안, 서버에 저장되지 않음)
+export interface MedicationOcrDrug {
+  name: string;
+  perDose: number | null; // 1회 복용량(정), 반 알은 0.5
+  timesPerDay: number | null;
+  days: number | null;
+  slots: MedicationTimeSlot[]; // 봉투에 표시된 시간대. 없으면 빈 배열
+  timing: string | null; // 예) 식후 30분
+  confidence: 'high' | 'low' | null; // 화면 강조용. high라도 보호자 확인은 필요
+}
+
+export interface MedicationOcrResponse {
+  readable: boolean; // false면 drugs는 빈 배열
+  drugs: MedicationOcrDrug[];
+}

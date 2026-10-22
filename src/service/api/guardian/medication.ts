@@ -6,9 +6,11 @@ import { apiClient } from '@/lib/api/apiClient';
 import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import {
+  AddMedicationBatchReq,
   AddMedicationReq,
   GuardianMedicationAlertSetting,
   MedicationItem,
+  MedicationOcrResponse,
   MedicationSettingResponse,
   UpdateMedicationAlertSettingReq,
   UpdateMedicationReq,
@@ -31,6 +33,28 @@ export async function addWardMedication(wardId: string, body: AddMedicationReq) 
     body,
   );
   return getResponseData<MedicationItem>(response);
+}
+
+// 약 여러 개 × 시각 여러 개 한 번에 추가 — 전부 성공 또는 전부 실패(일부만 등록되지 않는다)
+export async function addWardMedicationBatch(wardId: string, body: AddMedicationBatchReq) {
+  const response = await apiClient.post<CommonResponse<MedicationItem[]>>(
+    `${GUARDIAN_BASE}/ward/${wardId}/medication/batch`,
+    body,
+  );
+  return getResponseData<MedicationItem[]>(response) ?? [];
+}
+
+// 약 봉투 사진 인식(등록 초안). 서버는 사진·결과를 저장하지 않는다. AI 처리 상한 40초라 45초까지 기다린다
+export async function recognizeMedicationEnvelope(wardId: string, image: Blob, signal?: AbortSignal) {
+  const formData = new FormData();
+  formData.append('image', image, 'envelope.jpg');
+
+  const response = await apiClient.post<CommonResponse<MedicationOcrResponse>>(
+    `${GUARDIAN_BASE}/ward/${wardId}/medication/ocr`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 45_000, signal },
+  );
+  return getResponseData<MedicationOcrResponse>(response);
 }
 
 // 약 수정(부분 수정). timeSlot만 보내면 doseTime이 그 슬롯 기본 시각으로 갱신되므로,
