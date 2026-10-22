@@ -329,26 +329,10 @@
   padding: 12px;
 }
 
-/* 2/2 언제 드세요? - 줄(하루 횟수)마다 칩 4개 */
-.doseGroups {
-  display: grid;
-  gap: 20px;
-}
-
+/* 2/2 언제 드세요? - 칩 4개 한 줄 */
 .doseGroup {
   display: grid;
   gap: 8px;
-}
-
-.doseGroupTitle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 800;
-  word-break: keep-all;
 }
 
 .chips {
@@ -512,23 +496,18 @@
   opacity: 0.5;
 }
 
-.lowConfidenceHint {
+/* 확신 낮은 약이 있을 때 결과 문구 바로 아래 - 작은 안내는 잘 안 보여 노란 박스로 크게(2026-10-22) */
+.checkBox {
   margin: 0;
-  color: var(--sb-ink-soft);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.lowConfidenceHint::before {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  margin-right: 6px;
-  border: 1px solid var(--sb-sun);
-  border-radius: 3px;
+  border: 2px solid var(--sb-sun);
+  border-radius: 10px;
   background: var(--sb-sun-soft);
-  content: '';
-  vertical-align: -1px;
+  color: #6b4a0d;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.5;
+  padding: 12px 14px;
+  word-break: keep-all;
 }
 
 .hint {
