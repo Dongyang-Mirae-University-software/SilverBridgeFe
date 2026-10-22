@@ -12,6 +12,9 @@ export interface MedicationItem {
   memo: string | null;
   taken: boolean; // 오늘 체크 여부
   takenAt: string | null; // ISO 8601 (+09:00)
+  // 약을 등록한 시각 ISO 8601(+09:00). 오늘 등록 전에 복용 시각이 지난 약은 미체크로 세지 않는다(BE 미복용 요약과 같은 기준)
+  // 옛 BE 응답에는 없다 - 없으면 예전처럼 센다
+  createdAt?: string | null;
 }
 
 // 보호자: GET /api/guardian/medication 응답의 피보호자별 카드 1건
