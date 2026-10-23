@@ -61,6 +61,7 @@ export default function LoginContent() {
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
           role: data.role,
+          remember,
         });
       }
 

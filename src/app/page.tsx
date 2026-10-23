@@ -1,35 +1,17 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-import { getRoleHomePath } from '@/utils/auth/routes';
-import type { AuthRole } from '@/lib/auth/tokenStore';
+import SessionRestore from '@/components/auth/SessionRestore';
+import { resolveEntry } from '@/lib/auth/sessionEntry';
 
 const ACCESS_TOKEN_KEY = 'careai_access_token';
+const REFRESH_TOKEN_KEY = 'careai_refresh_token';
 
 export default async function Home() {
-  const accessToken = (await cookies()).get(ACCESS_TOKEN_KEY)?.value;
-  const role = getRoleFromAccessToken(accessToken);
+  const cookieStore = await cookies();
+  const entry = resolveEntry(cookieStore.get(ACCESS_TOKEN_KEY)?.value, cookieStore.get(REFRESH_TOKEN_KEY)?.value);
 
-  redirect(role ? getRoleHomePath(role) : '/login');
-}
+  if (entry.kind === 'restore') return <SessionRestore />;
 
-function getRoleFromAccessToken(token?: string): AuthRole | null {
-  const payload = token?.split('.')[1];
-  if (!payload) return null;
-
-  try {
-    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, '=');
-    const decodedPayload = JSON.parse(Buffer.from(paddedPayload, 'base64').toString('utf8')) as {
-      exp?: unknown;
-      role?: unknown;
-    };
-
-    if (typeof decodedPayload.exp === 'number' && decodedPayload.exp * 1000 <= Date.now()) return null;
-    if (decodedPayload.role === 'WARD' || decodedPayload.role === 'GUARDIAN' || decodedPayload.role === 'ADMIN') return decodedPayload.role;
-  } catch {
-    return null;
-  }
-
-  return null;
+  redirect(entry.path);
 }
