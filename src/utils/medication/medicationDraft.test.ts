@@ -16,9 +16,11 @@ import {
   increaseDose,
   isUncertainFailure,
   MAX_DRUGS,
+  needsNameCheck,
   normalizeDoseAmount,
   normalizeDrugName,
   ocrResultToDraft,
+  renameDrug,
   toDoseGroup,
   toggleSlot,
 } from './medicationDraft';
@@ -71,6 +73,43 @@ describe('ocrResultToDraft', () => {
 
   it('확신 낮은 약 표시', () => {
     expect(ocrResultToDraft(ocr([drug({ confidence: 'low' })]))!.drugs[0].lowConfidence).toBe(true);
+  });
+
+  it('허가 목록에 없는 이름(inList=false)만 표시하고 제안을 붙인다 - 대조 못 함(null)·옛 응답은 경고하지 않는다', () => {
+    const { drugs } = ocrResultToDraft(
+      ocr([
+        drug({ name: '슈다페트정', inList: false, suggestions: ['슈다페드정', '슈도에페드린정'] }),
+        drug({ name: '아스피린', inList: null, suggestions: [] }),
+        drug({ name: '코싹엘정' }), // 칸이 없는 옛 응답
+        drug({ name: '타이레놀정', inList: true, suggestions: ['무시됨'] }),
+      ]),
+    )!;
+    expect(drugs.map(d => d.notInList)).toEqual([true, false, false, false]);
+    expect(drugs.map(d => d.suggestions)).toEqual([['슈다페드정', '슈도에페드린정'], [], [], []]);
+    // 확신(confidence)과 별개다 - high여도 목록에 없으면 확인 대상
+    expect(drugs.map(needsNameCheck)).toEqual([true, false, false, false]);
+  });
+
+  it('제안은 공백·빈 값·100자 초과·중복을 빼고 최대 3개', () => {
+    const [first] = ocrResultToDraft(
+      ocr([drug({ inList: false, suggestions: [' 가정 ', '', '  ', '나'.repeat(101), '가정', '다정', '라정', '마정'] })]),
+    )!.drugs;
+    expect(first.suggestions).toEqual(['가정', '다정', '라정']);
+    expect(ocrResultToDraft(ocr([drug({ inList: false })]))!.drugs[0].suggestions).toEqual([]);
+  });
+
+  it('확신 low 또는 목록에 없는 이름이면 이름 확인 대상', () => {
+    expect(needsNameCheck(draftDrug({ lowConfidence: true }))).toBe(true);
+    expect(needsNameCheck(draftDrug({ notInList: true }))).toBe(true);
+    expect(needsNameCheck(draftDrug())).toBe(false);
+  });
+
+  it('이름을 고치면(직접·제안 칩) 강조·안내·제안을 끈다', () => {
+    const flagged = draftDrug({ lowConfidence: true, notInList: true, suggestions: ['가정'] });
+    const renamed = { ...flagged, ...renameDrug('가정') };
+    expect(renamed).toMatchObject({ name: '가정', lowConfidence: false, notInList: false, suggestions: [] });
+    expect(needsNameCheck(renamed)).toBe(false);
+    expect(createEmptyDrug()).toMatchObject({ notInList: false, suggestions: [] });
   });
 
   it(`약이 ${MAX_DRUGS}개를 넘으면 앞의 ${MAX_DRUGS}개만 가져오고 알린다`, () => {

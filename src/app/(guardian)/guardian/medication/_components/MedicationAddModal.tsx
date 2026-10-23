@@ -17,6 +17,7 @@ import {
   groupToBatchRequest,
   isUncertainFailure,
   MAX_DRUGS,
+  needsNameCheck,
   ocrResultToDraft,
   toDoseGroup,
 } from '@/utils/medication/medicationDraft';
@@ -129,7 +130,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
 
   const group = useMemo(() => toDoseGroup(drugs), [drugs]);
   const mixedNote = useMemo(() => getMixedTimesNote(drugs), [drugs]);
-  const hasLowConfidence = drugs.some(drug => drug.lowConfidence);
+  const hasLowConfidence = drugs.some(needsNameCheck); // 확신 low 또는 허가 목록에 없는 이름
   const lowConfidenceHintId = `${idPrefix}-low-confidence`;
 
   const isReading = camera.phase === 'reading';
