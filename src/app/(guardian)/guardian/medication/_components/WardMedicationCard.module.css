@@ -21,7 +21,7 @@
 
 .todayLabel {
   color: var(--sb-ink-mute);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -39,14 +39,14 @@
 .todayMiss {
   margin-top: 6px;
   color: #8a5f12;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .todayAllDone {
   margin-top: 6px;
   color: var(--sb-ink-soft);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -90,7 +90,7 @@
 .sectionTitle {
   display: block;
   color: var(--sb-ink);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 800;
 }
 
@@ -98,7 +98,7 @@
   display: block;
   margin-top: 2px;
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .addButton {
@@ -111,7 +111,7 @@
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   padding: 10px 16px;
   white-space: nowrap;
@@ -120,47 +120,104 @@
 .emptyText {
   margin: 0;
   color: var(--sb-ink-mute);
-  font-size: 14px;
+  font-size: 15px;
   padding: 36px 0;
   text-align: center;
 }
 
-.medicationItem {
-  display: grid;
-  grid-template-columns: 110px minmax(0, 1fr) auto 36px;
-  align-items: center;
-  gap: 16px;
+/* 시간대 묶음 한 줄(누르면 그 시간 약이 펼쳐진다) - 2026-10-23 */
+.groupList,
+.groupMedications {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.groupItem + .groupItem {
   border-top: 1px solid var(--sb-line-soft);
-  padding: 14px 24px;
 }
 
-.medicationItem:first-child {
-  border-top: 0;
-}
-
-.medicationTime {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.groupHeader {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto 20px;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
   border: 0;
   background: transparent;
   color: inherit;
   cursor: pointer;
-  padding: 0;
+  font: inherit;
+  padding: 16px 24px;
   text-align: left;
 }
 
-.medicationTime strong {
+.groupTime {
+  display: flex;
+  flex-direction: column;
+}
+
+.groupTime strong {
   color: var(--sb-ink);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
 }
 
-.medicationTime span {
+.groupTime span {
   margin-top: 2px;
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 15px;
   white-space: nowrap;
+}
+
+.groupInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.groupInfo strong {
+  color: var(--sb-ink);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.groupInfo span {
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: var(--sb-ink-mute);
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+
+.chevron.open {
+  transform: rotate(90deg);
+}
+
+.groupMedications {
+  border-top: 1px dashed var(--sb-line-soft);
+  background: var(--sb-bg-soft);
+}
+
+.medicationItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px 12px 134px;
+}
+
+.medicationItem + .medicationItem {
+  border-top: 1px solid var(--sb-line-soft);
 }
 
 .medicationInfo {
@@ -176,7 +233,7 @@
   display: block;
   overflow: hidden;
   color: var(--sb-ink);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -187,7 +244,7 @@
   overflow: hidden;
   margin-top: 2px;
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 15px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -201,7 +258,7 @@
   border-radius: 999px;
   background: var(--sb-bg-soft);
   color: var(--sb-ink-soft);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
   padding: 6px 12px;
   white-space: nowrap;
@@ -219,19 +276,26 @@
   color: #8a5f12;
 }
 
+.statusBadge.small {
+  font-size: 14px;
+  padding: 4px 10px;
+}
+
 .deleteButton {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 36px;
+  min-width: 52px;
   height: 36px;
+  padding: 0 10px;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
   color: var(--sb-ink-mute);
   cursor: pointer;
-  font-size: 16px;
+  font: inherit;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1;
 }
@@ -257,7 +321,7 @@
   margin: 0;
   background: var(--sb-warn-soft);
   color: var(--sb-warn);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   padding: 10px 24px;
   border-top: 1px solid var(--sb-line-soft);
@@ -275,7 +339,7 @@
 .settingsTitle {
   display: block;
   color: var(--sb-ink);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
 }
 
@@ -283,7 +347,7 @@
   display: block;
   margin-top: 2px;
   color: var(--sb-ink-mute);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .timeField {
@@ -291,7 +355,7 @@
   align-items: center;
   gap: 8px;
   color: var(--sb-ink-soft);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -379,31 +443,51 @@
     align-self: flex-end;
   }
 
-  .medicationItem {
-    grid-template-columns: 1fr auto;
-    grid-template-areas: 'time delete' 'info info' 'status status';
+  .groupHeader {
+    grid-template-columns: minmax(0, 1fr) 20px;
+    grid-template-areas: 'time chevron' 'info info' 'status status';
     row-gap: 6px;
+    padding: 16px;
   }
 
-  .medicationTime {
+  .groupTime {
     grid-area: time;
     flex-direction: row;
-    gap: 6px;
     align-items: baseline;
+    gap: 8px;
   }
 
-  .medicationInfo {
+  .groupInfo {
     grid-area: info;
   }
 
-  .statusBadge {
+  .groupHeader .statusBadge {
     grid-area: status;
     justify-self: start;
   }
 
-  .deleteButton {
+  .chevron {
+    grid-area: chevron;
+  }
+
+  .medicationItem {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'info delete' 'status status';
+    row-gap: 6px;
+    padding: 12px 16px;
+  }
+
+  .medicationItem .medicationInfo {
+    grid-area: info;
+  }
+
+  .medicationItem .statusBadge {
+    grid-area: status;
+    justify-self: start;
+  }
+
+  .medicationItem .deleteButton {
     grid-area: delete;
-    justify-self: end;
   }
 
   .timeField {

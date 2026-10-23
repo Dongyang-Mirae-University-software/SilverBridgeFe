@@ -33,7 +33,7 @@
 .header h3 {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 800;
 }
 
@@ -48,7 +48,7 @@
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
 }
 
@@ -94,14 +94,14 @@
   flex: 1;
   text-align: center;
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .error {
   margin: 0;
   color: var(--sb-warn);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -117,7 +117,7 @@
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   padding: 11px 16px;
 }
@@ -176,7 +176,7 @@
   color: var(--sb-ink-soft);
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   padding: 10px 8px;
 }
@@ -216,7 +216,7 @@
 .cameraText {
   margin: 0;
   color: #fff;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
   word-break: keep-all;
@@ -243,7 +243,7 @@
   color: var(--sb-ink);
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   padding: 11px 18px;
 }
@@ -266,7 +266,7 @@
   border-radius: 10px;
   background: var(--sb-safe-soft);
   color: var(--sb-safe);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   padding: 12px 14px;
 }
@@ -277,7 +277,7 @@
 
 .resultNote {
   color: var(--sb-ink-soft);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -306,14 +306,14 @@
 
 .progressText {
   color: var(--sb-ink-soft);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
 }
 
 .stepTitle {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
 }
 
@@ -366,20 +366,20 @@
 }
 
 .chipLabel {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
 }
 
 .chipTime {
   color: var(--sb-ink-soft);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
 }
 
 .timesHint {
   margin: 0;
   color: #8a5f12;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -392,29 +392,55 @@
 
 .rows {
   display: grid;
-  gap: 8px;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* 약 한 개 = 두 줄: 이름은 한 줄을 다 쓰고(긴 이름이 잘리지 않게), 복용량·빼기는 아랫줄 (2026-10-23) */
 .drugRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: 'name name' 'check check' 'dose remove';
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding: 12px 0;
+}
+
+.drugRow:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.drugRow .nameInput {
+  grid-area: name;
+}
+
+.drugRow .nameCheck {
+  grid-area: check;
+}
+
+.drugRow .stepper {
+  grid-area: dose;
+  justify-self: start;
+}
+
+.drugRow .removeButton {
+  grid-area: remove;
 }
 
 .nameInput {
   width: 100%;
   min-width: 0;
-  height: 42px;
+  height: 48px;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
   color: var(--sb-ink);
   font: inherit;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
   padding: 0 12px;
 }
@@ -439,7 +465,7 @@
   gap: 4px 6px;
   min-width: 0;
   color: #6b4a0d;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.4;
   word-break: keep-all;
@@ -457,7 +483,7 @@
 /* "비슷한 이름:" - 칩이 누르면 이름을 바꾸는 버튼임을 알린다 */
 .suggestionLabel {
   color: #6b4a0d;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -472,7 +498,7 @@
   color: var(--sb-ink);
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.3;
   overflow-wrap: anywhere;
@@ -490,20 +516,23 @@
 }
 
 .drugRow .stepper {
-  width: 118px;
+  width: 140px;
 }
 
 .removeButton {
   display: grid;
-  width: 34px;
+  min-width: 64px;
   height: 42px;
   place-items: center;
+  padding: 0 12px;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 16px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .removeButton:disabled {
@@ -519,7 +548,7 @@
   color: var(--sb-brand);
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   padding: 9px 14px;
 }
@@ -536,7 +565,7 @@
   border-radius: 10px;
   background: var(--sb-sun-soft);
   color: #6b4a0d;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   line-height: 1.5;
   padding: 12px 14px;
@@ -546,7 +575,7 @@
 .hint {
   margin: 0;
   color: var(--sb-warn);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -560,9 +589,5 @@
 @media (max-width: 480px) {
   .modal {
     padding: 20px 16px;
-  }
-
-  .drugRow .stepper {
-    width: 104px;
   }
 }

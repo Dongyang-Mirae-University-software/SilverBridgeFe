@@ -86,7 +86,7 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
               disabled={drugs.length <= 1}
               aria-label={`${index + 1}번째 약 빼기`}
             >
-              ×
+              빼기
             </button>
             {drug.notInList && (
               <div id={notInListId(drug)} className={cx('nameCheck')}>
