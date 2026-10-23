@@ -62,6 +62,16 @@ export async function deleteGuardianMedication(medicationId: number) {
   return apiClient.delete<CommonResponse<null>>(`${GUARDIAN_BASE}/medication/${medicationId}`);
 }
 
+// 약 여러 개 삭제(BE #371) - "아침 약 모두 삭제"·"약 전부 삭제". 화면에 보이는 약 ID를 보낸다(전부 성공 또는 전부 실패,
+// 이미 지워진 약은 건너뜀, 지난 복용 이력은 남음). data: 이번에 삭제한 수
+export async function deleteWardMedicationBatch(wardId: string, medicationIds: number[]) {
+  const response = await apiClient.post<CommonResponse<number>>(
+    `${GUARDIAN_BASE}/ward/${wardId}/medication/delete-batch`,
+    { medicationIds },
+  );
+  return getResponseData<number>(response);
+}
+
 // 그 피보호자에게 보낼 알림 설정(복용 알림/재알림 ON-OFF) — 보호자들이 공유하는 값
 export async function getMedicationSetting(wardId: string) {
   const response = await apiClient.get<CommonResponse<MedicationSettingResponse>>(

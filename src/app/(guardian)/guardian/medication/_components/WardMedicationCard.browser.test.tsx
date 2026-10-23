@@ -8,6 +8,14 @@ import { render } from 'vitest-browser-react';
 import type { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import { WardMedicationCard } from './WardMedicationCard';
 
+const api = vi.hoisted(() => ({ deleteWardMedicationBatch: vi.fn(), getGuardianMedications: vi.fn() }));
+
+vi.mock('@/service/api/guardian/medication', async importOriginal => ({
+  ...(await importOriginal<object>()),
+  deleteWardMedicationBatch: api.deleteWardMedicationBatch,
+  getGuardianMedications: api.getGuardianMedications,
+}));
+
 vi.mock('@/service/query/guardian/notification', () => ({
   guardianNotificationTypeSettingQueryOptions: { queryKey: ['guardian-notification-type-test'], queryFn: () => null },
 }));
@@ -53,6 +61,9 @@ function renderCard(medications: MedicationItem[]) {
 describe('WardMedicationCard (Chrome)', () => {
   afterEach(() => {
     document.body.innerHTML = '';
+    vi.restoreAllMocks();
+    api.deleteWardMedicationBatch.mockReset();
+    api.getGuardianMedications.mockReset();
   });
 
   it('오늘 등록 전에 지난 약은 "오늘은 등록 전이었어요"로, 지난 약 개수에서 뺀다', async () => {
@@ -94,7 +105,8 @@ describe('WardMedicationCard (Chrome)', () => {
     expect(screen.getByRole('button', { name: '코싹열정 삭제' }).query()).toBeNull();
 
     await screen.getByRole('button', { name: /점심/ }).click();
-    await expect.element(screen.getByRole('button', { name: /점심/ })).toHaveAttribute('aria-expanded', 'true');
+    // 펼친 뒤에는 "점심 약 모두 삭제"도 있어 펼침 머리(aria-expanded가 있는 버튼)만 고른다
+    await expect.element(screen.getByRole('button', { name: /점심/, expanded: true })).toBeVisible();
     // 펼친 시간대의 약만 수정·삭제 버튼이 보인다
     expect(screen.getByRole('button', { name: '코싹열정 삭제' }).elements()).toHaveLength(1);
     await expect.element(screen.getByRole('button', { name: '신일이부프로펜정400mg 수정' })).toBeVisible();
@@ -111,5 +123,49 @@ describe('WardMedicationCard (Chrome)', () => {
   it('체크한 약이 있고 지난 약이 없으면 "모두 드셨어요"', async () => {
     const screen = renderCard([med(1, { taken: true }), med(2, { createdAt: `${TODAY}T00:30:00+09:00` })]);
     await expect.element(screen.getByText('지금까지 드실 약은 모두 드셨어요')).toBeVisible();
+  });
+
+  // ─── 여러 개 삭제 (2026-10-23, BE #371) ───────────────────────────
+  function threeSlots() {
+    const names = ['코싹열정', '알마겔정'];
+    let id = 0;
+    return (['MORNING', 'LUNCH', 'DINNER'] as const).flatMap((timeSlot, index) =>
+      names.map(name => med(++id, { name, timeSlot, doseTime: `0${index}:00:00` })),
+    );
+  }
+
+  it('펼친 시간대의 "점심 약 모두 삭제" - 확인하면 그 시간 약 ID만 보내고, 취소하면 보내지 않는다', async () => {
+    api.deleteWardMedicationBatch.mockResolvedValue(2);
+    api.getGuardianMedications.mockResolvedValue([]);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    const screen = renderCard(threeSlots());
+
+    await screen.getByRole('button', { name: /점심/ }).first().click();
+    const groupDelete = screen.getByRole('button', { name: '점심 약 모두 삭제' });
+    await groupDelete.click();
+    expect(confirm).toHaveBeenLastCalledWith('점심 약 2개를 모두 삭제할까요? 지난 복용 이력은 남습니다.');
+    expect(api.deleteWardMedicationBatch).not.toHaveBeenCalled();
+
+    await groupDelete.click();
+    await vi.waitFor(() => expect(api.deleteWardMedicationBatch).toHaveBeenCalledWith('W1', [3, 4]));
+  });
+
+  it('"약 전부 삭제" - 화면의 약 전부를 보내고, 실패하면 안내한다', async () => {
+    api.deleteWardMedicationBatch.mockRejectedValue(new Error('network'));
+    api.getGuardianMedications.mockResolvedValue([]);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const screen = renderCard(threeSlots());
+
+    await screen.getByRole('button', { name: '약 전부 삭제' }).click();
+    expect(confirm).toHaveBeenCalledWith('김순자 님의 약 6개를 모두 삭제할까요? 지난 복용 이력은 남습니다.');
+    await vi.waitFor(() => expect(api.deleteWardMedicationBatch).toHaveBeenCalledWith('W1', [1, 2, 3, 4, 5, 6]));
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('삭제하지 못했어요');
+  });
+
+  it('약이 하나뿐이면 묶음 삭제·전부 삭제 버튼을 두지 않는다(단건 삭제로 충분)', async () => {
+    const screen = renderCard([med(1, { name: '혈압약' })]);
+    await screen.getByRole('button', { name: /아침/ }).first().click();
+    await expect.element(screen.getByRole('button', { name: '혈압약 삭제' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /모두 삭제|전부 삭제/ }).query()).toBeNull();
   });
 });

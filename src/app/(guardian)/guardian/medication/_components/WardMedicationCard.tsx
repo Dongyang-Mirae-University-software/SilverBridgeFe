@@ -19,6 +19,7 @@ import {
 } from '@/utils/format/medication';
 import {
   useDeleteGuardianMedicationMutation,
+  useDeleteWardMedicationBatchMutation,
   useUpdateGuardianMedicationMutation,
   useUpdateMedicationAlertSettingMutation,
   useUpdateMedicationSettingMutation,
@@ -83,6 +84,8 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     onCloseModal: state.onCloseModal,
   }));
   const deleteMutation = useDeleteGuardianMedicationMutation();
+  const deleteBatchMutation = useDeleteWardMedicationBatchMutation();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const settingMutation = useUpdateMedicationSettingMutation();
   const alertSettingMutation = useUpdateMedicationAlertSettingMutation();
   const { data: notificationTypeSetting } = useQuery(guardianNotificationTypeSettingQueryOptions);
@@ -111,6 +114,16 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const handleDelete = (medication: MedicationItem) => {
     if (!window.confirm(`${medication.name} 일정을 삭제할까요? 지난 복용 이력은 남습니다.`)) return;
     deleteMutation.mutate(medication.medicationId);
+  };
+
+  // 여러 개 삭제 - 시간대 묶음("아침 약 모두 삭제") 또는 전부. 화면에 보이는 약만 보낸다(2026-10-23)
+  const handleDeleteMany = (targets: MedicationItem[], question: string) => {
+    if (targets.length === 0 || !window.confirm(`${question} 지난 복용 이력은 남습니다.`)) return;
+    setDeleteError(null);
+    deleteBatchMutation.mutate(
+      { wardId: summary.wardId, medicationIds: targets.map(medication => medication.medicationId) },
+      { onError: () => setDeleteError('삭제하지 못했어요. 목록을 다시 불러왔으니 확인 후 다시 시도해 주세요.') },
+    );
   };
 
   const openAddMedication = () => {
@@ -220,12 +233,48 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                           </li>
                         );
                       })}
+                      {group.medications.length > 1 && (
+                        <li className={cx('groupActions')}>
+                          <button
+                            type="button"
+                            className={cx('dangerTextButton')}
+                            disabled={deleteBatchMutation.isPending}
+                            onClick={() =>
+                              handleDeleteMany(
+                                group.medications,
+                                `${group.label} 약 ${group.medications.length}개를 모두 삭제할까요?`,
+                              )
+                            }
+                          >
+                            {group.label} 약 모두 삭제
+                          </button>
+                        </li>
+                      )}
                     </ul>
                   )}
                 </li>
               );
             })}
           </ul>
+        )}
+        {deleteError && (
+          <p className={cx('deleteError')} role="alert">
+            {deleteError}
+          </p>
+        )}
+        {medications.length > 1 && (
+          <div className={cx('listFooter')}>
+            <button
+              type="button"
+              className={cx('dangerTextButton')}
+              disabled={deleteBatchMutation.isPending}
+              onClick={() =>
+                handleDeleteMany(medications, `${wardName} 님의 약 ${medications.length}개를 모두 삭제할까요?`)
+              }
+            >
+              약 전부 삭제
+            </button>
+          </div>
         )}
       </section>
 
