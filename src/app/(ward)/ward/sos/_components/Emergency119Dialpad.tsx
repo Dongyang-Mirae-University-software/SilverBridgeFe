@@ -4,7 +4,6 @@ import { useEffect, useId, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
-import { type GuardianNotifyStatus, useGuardianNotifyStatus } from './guardianNotifyStatus';
 import styles from './Emergency119Dialpad.module.css';
 
 const cx = classNames.bind(styles);
@@ -30,12 +29,6 @@ const MAX_DIGITS = 15;
 
 export const DEMO_CALL_NOTICE = '시연 화면이라 실제로 전화가 걸리지 않아요';
 
-const GUARDIAN_NOTIFY_TEXT: Record<Exclude<GuardianNotifyStatus, null>, string> = {
-  sending: '보호자에게 알리는 중이에요…',
-  sent: '보호자에게도 알렸어요',
-  failed: '보호자에게 알리지 못했어요',
-};
-
 const FOCUSABLE = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 // 키패드 위에 다른 모달(전송 실패 안내 등)이 떠 있으면 Tab 순환은 그 모달에 맡긴다
@@ -47,7 +40,6 @@ function isTopModal(dialog: HTMLElement) {
 export function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
   const [digits, setDigits] = useState('119');
   const [callNoticeShown, setCallNoticeShown] = useState(false);
-  const guardianNotifyStatus = useGuardianNotifyStatus();
   const dialogRef = useRef<HTMLDivElement>(null);
   const callNoticeRef = useRef<HTMLParagraphElement>(null);
   const noticeId = useId();
@@ -113,12 +105,6 @@ export function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
             <span>닫기</span>
           </button>
         </div>
-
-        {guardianNotifyStatus && (
-          <p className={cx('guardianNotice', guardianNotifyStatus)} role="status">
-            {GUARDIAN_NOTIFY_TEXT[guardianNotifyStatus]}
-          </p>
-        )}
 
         <div className={cx('displayRow')}>
           <span className={cx('displaySpacer')} aria-hidden="true" />

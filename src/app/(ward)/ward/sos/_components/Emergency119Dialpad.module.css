@@ -70,21 +70,6 @@
   font-weight: 700;
 }
 
-.guardianNotice {
-  margin: 0;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 10px 18px;
-  font-size: min(1.0625rem, 20px);
-  font-weight: 700;
-  text-align: center;
-}
-
-.guardianNotice.failed {
-  background: rgba(214, 69, 69, 0.28);
-  color: #ffd6d6;
-}
-
 .displayRow {
   width: 100%;
   display: grid;
