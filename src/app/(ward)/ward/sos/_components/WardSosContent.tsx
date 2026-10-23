@@ -11,60 +11,11 @@ import useModalStore from '@/store/modalStore';
 import { useWardSosMutation } from '@/service/query/ward';
 import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
 import type { WardSosResponse } from '@/service/interface/ward/sos';
+import { Emergency119Dialpad } from './Emergency119Dialpad';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
 
 const cx = classNames.bind(styles);
-
-const DIAL_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
-
-function Emergency119Dialpad({ guardianNotified, onClose }: { guardianNotified?: boolean; onClose: () => void }) {
-  const [digits, setDigits] = useState('119');
-
-  return (
-    <div className={cx('dialOverlay')} role="dialog" aria-modal="true" aria-label="119 신고 키패드">
-      <div className={cx('dialCard')}>
-        <div className={cx('dialHeader')}>
-          <span className={cx('dialNotice')}>학생 프로젝트 화면입니다 · 실제로 신고 전화가 발신되지 않습니다</span>
-          <button className={cx('dialClose')} type="button" onClick={onClose} aria-label="닫기">
-            ×
-          </button>
-        </div>
-
-        {guardianNotified && <p className={cx('dialGuardianNotice')}>보호자에게도 알렸습니다.</p>}
-
-        <div className={cx('dialDisplay')}>{digits || ' '}</div>
-
-        <div className={cx('dialPad')}>
-          {DIAL_KEYS.map(key => (
-            <button
-              key={key}
-              type="button"
-              className={cx('dialKey')}
-              onClick={() => setDigits(prev => (prev + key).slice(0, 15))}
-            >
-              {key}
-            </button>
-          ))}
-        </div>
-
-        <div className={cx('dialActions')}>
-          <button
-            className={cx('dialBackspace')}
-            type="button"
-            onClick={() => setDigits(prev => prev.slice(0, -1))}
-            aria-label="한 글자 지우기"
-          >
-            ⌫
-          </button>
-          <button className={cx('dialCallButton')} type="button" disabled aria-label="발신 불가(테스트 화면)">
-            <Icon name="phone" size={26} decorative />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function WardSosContent() {
   const { wardSettings } = useDashboard();
