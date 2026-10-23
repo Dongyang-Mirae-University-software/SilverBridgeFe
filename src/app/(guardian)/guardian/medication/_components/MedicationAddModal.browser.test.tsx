@@ -309,10 +309,10 @@ describe('MedicationAddModal (Chrome)', () => {
     await expect.element(chip(screen, '아침 오전 8시')).toHaveAttribute('aria-pressed', 'true');
     await expect.element(chip(screen, '점심 낮 12시')).toHaveAttribute('aria-pressed', 'false');
     await expect.element(chip(screen, '저녁 오후 7시')).toHaveAttribute('aria-pressed', 'true');
-    await expect.element(screen.getByText('봉투에는 하루 2번이에요')).not.toBeInTheDocument();
 
+    // 봉투 횟수와 다르게 골라도 칩 아래에 안내 문구를 붙이지 않는다(2026-10-23 사용자 결정)
     await chip(screen, '자기 전 오후 9시').click();
-    await expect.element(screen.getByText('봉투에는 하루 2번이에요')).toBeVisible();
+    expect(screen.getByText(/봉투에는 하루|봉투에 적힌 약은/).query()).toBeNull();
 
     await screen.getByRole('button', { name: '이전' }).click();
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정500');
@@ -320,7 +320,7 @@ describe('MedicationAddModal (Chrome)', () => {
     await expect.element(chip(screen, '자기 전 오후 9시')).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('하루 횟수가 다른 약도 "언제 드세요?" 한 줄로 고르고, 다른 약은 한 줄로 알린다', async () => {
+  it('하루 횟수가 다른 약도 "언제 드세요?" 한 줄로 고른다 - 칩 아래 횟수 안내 문구는 없다', async () => {
     api.recognizeMedicationEnvelope.mockResolvedValue(OCR_MIXED_TIMES);
     api.addWardMedicationBatch.mockResolvedValue([]);
     const { screen, onClose } = renderModal();
@@ -332,7 +332,7 @@ describe('MedicationAddModal (Chrome)', () => {
     await expect.element(chip(screen, '아침 오전 8시')).toHaveAttribute('aria-pressed', 'true');
     await expect.element(chip(screen, '점심 낮 12시')).toHaveAttribute('aria-pressed', 'true');
     await expect.element(chip(screen, '저녁 오후 7시')).toHaveAttribute('aria-pressed', 'true');
-    await expect.element(screen.getByText(/코싹엘정 하루 2번 - 다른 약과 하루 횟수가 달라요/)).toBeVisible();
+    expect(screen.getByText(/다른 약과 하루 횟수가 달라요/).query()).toBeNull();
 
     await screen.getByRole('button', { name: '등록', exact: true }).click();
     await vi.waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
