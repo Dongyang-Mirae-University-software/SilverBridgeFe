@@ -125,6 +125,19 @@
   font-weight: 800;
   white-space: nowrap;
 }
+.intakeError {
+  margin: 0;
+  border: 2px solid var(--sb-warn);
+  border-radius: var(--sb-radius);
+  background: var(--sb-warn-soft);
+  color: var(--sb-warn);
+  font-size: 18px;
+  font-weight: 800;
+  padding: 14px 18px;
+  text-align: center;
+  word-break: keep-all;
+}
+
 .toggleHint { margin: -4px 0 0; color: var(--sb-ink-mute); font-size: 15px; text-align: center; }
 
 @media (max-width: 640px) {

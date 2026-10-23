@@ -1,6 +1,6 @@
 'use client';
 
-import { useIsMutating, useQuery } from '@tanstack/react-query';
+import { useIsMutating, useMutationState, useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
@@ -37,6 +37,12 @@ export function WardMedicationContent() {
   const batchMutation = useMedicationIntakeBatchMutation();
   // 약 하나 체크와 묶음 체크가 겹치지 않게 둘 중 하나라도 처리 중이면 모든 체크 버튼을 잠근다
   const isChanging = useIsMutating({ mutationKey: ['ward-medication-intake'] }) > 0;
+  // 가장 최근 체크(묶음·단건)가 실패했으면 안내한다 - 전에는 실패해도 화면에 아무 반응이 없었다(점검 M-1)
+  const intakeStatuses = useMutationState({
+    filters: { mutationKey: ['ward-medication-intake'] },
+    select: mutation => mutation.state.status,
+  });
+  const lastIntakeFailed = intakeStatuses.at(-1) === 'error';
   const isAllTaken = totalCount > 0 && takenCount === totalCount;
 
   return (
@@ -77,7 +83,10 @@ export function WardMedicationContent() {
                   </strong>
                 ) : (
                   <>
-                    <strong>약 {nextUntaken.length}개</strong>
+                    {/* 일부를 먹었으면 남은 수라고 밝힌다 - 아래 묶음 머리 "약 6개"와 숫자가 달라 보였다(점검 L-1) */}
+                    <strong>
+                      {nextUntaken.length < nextGroup.medications.length ? '남은 약' : '약'} {nextUntaken.length}개
+                    </strong>
                     <em>{summarizeMedicationNames(nextUntaken)}</em>
                   </>
                 )}
@@ -96,6 +105,12 @@ export function WardMedicationContent() {
               </button>
             </section>
           ) : null}
+
+          {lastIntakeFailed && (
+            <p className={cx('intakeError')} role="alert">
+              체크하지 못했어요. 목록을 다시 불러왔으니 한 번 더 눌러 주세요
+            </p>
+          )}
 
           {groups.map(group => {
             const untaken = group.medications.filter(medication => !medication.taken);
@@ -118,6 +133,7 @@ export function WardMedicationContent() {
                         type="button"
                         className={cx('groupButton')}
                         disabled={isChanging}
+                        aria-label={`${group.label} 약 다 먹었어요`}
                         onClick={() =>
                           batchMutation.mutate({ medicationIds: untaken.map(medication => medication.medicationId), taken: true })
                         }

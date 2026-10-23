@@ -69,7 +69,11 @@ export function useMedicationIntakeMutation() {
     mutationFn: ({ medicationId, taken }: { medicationId: number; taken: boolean }) =>
       taken ? checkMedicationIntake(medicationId) : uncheckMedicationIntake(medicationId),
     onSuccess: item => replaceMedicationInCache(queryClient, item),
-    onError: error => reportNonApiError('복용 체크 변경 실패:', error),
+    onError: error => {
+      // 실패하면 오늘 일정을 다시 불러온다 - 그 사이 보호자가 약을 지웠다면 목록에서 빠져 다시 누를 수 있다(점검 M-1)
+      void queryClient.invalidateQueries({ queryKey: wardTodayMedicationQueryKey });
+      reportNonApiError('복용 체크 변경 실패:', error);
+    },
   });
 }
 
@@ -82,6 +86,10 @@ export function useMedicationIntakeBatchMutation() {
     mutationFn: ({ medicationIds, taken }: { medicationIds: number[]; taken: boolean }) =>
       setMedicationIntakeBatch(medicationIds, taken),
     onSuccess: items => replaceMedicationsInCache(queryClient, items ?? []),
-    onError: error => reportNonApiError('복용 묶음 체크 실패:', error),
+    // 묶음은 약 하나(그 사이 지워진 약 등)만 거절돼도 전부 체크되지 않는다 - 다시 불러와 다시 누를 수 있게(점검 M-1)
+    onError: error => {
+      void queryClient.invalidateQueries({ queryKey: wardTodayMedicationQueryKey });
+      reportNonApiError('복용 묶음 체크 실패:', error);
+    },
   });
 }
