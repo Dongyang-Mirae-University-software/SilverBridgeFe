@@ -83,11 +83,54 @@
   box-shadow: var(--sb-shadow-sm);
 }
 
-.list { display: grid; margin: 0; padding: 0; list-style: none; }
+.list { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--sb-line-soft); }
+
+/* 시간대 묶음 머리 - "아침 08:00 · 약 6개" + [다 먹었어요] (2026-10-23) */
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--sb-bg-soft);
+  padding: 14px 24px;
+}
+
+.groupTitle { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-width: 0; }
+.groupTitle strong { color: var(--sb-ink); font-size: 21px; font-weight: 800; }
+.groupTitle span { color: var(--sb-ink-soft); font-size: 17px; font-weight: 600; }
+
+.groupButton {
+  min-height: 52px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 14px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 800;
+  padding: 0 20px;
+  white-space: nowrap;
+}
+
+.groupButton:disabled { cursor: not-allowed; opacity: 0.6; }
+
+.groupDone {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--sb-safe);
+  font-size: 18px;
+  font-weight: 800;
+  white-space: nowrap;
+}
 .toggleHint { margin: -4px 0 0; color: var(--sb-ink-mute); font-size: 15px; text-align: center; }
 
 @media (max-width: 640px) {
   .summaryCard { align-items: flex-start; padding: 20px; }
   .summaryCopy strong { font-size: 22px; }
   .summaryButton { width: 100%; min-height: 56px; }
+  .groupHeader { padding: 14px 16px; }
+  .groupButton { min-height: 48px; font-size: 16px; padding: 0 16px; }
 }

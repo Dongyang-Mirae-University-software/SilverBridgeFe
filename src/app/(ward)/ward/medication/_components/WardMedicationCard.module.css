@@ -1,6 +1,6 @@
 .card {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
   border-top: 1px solid var(--sb-line-soft);
@@ -11,10 +11,6 @@
 .card:first-child { border-top: 0; }
 .card.taken { background: var(--sb-bg-soft); }
 
-.slot { display: grid; width: 96px; flex: 0 0 auto; }
-.slot strong { color: var(--sb-ink); font-size: 19px; font-weight: 800; }
-.taken .slot strong { color: var(--sb-ink-mute); }
-.slot span { margin-top: 2px; color: var(--sb-ink-mute); font-size: 15px; white-space: nowrap; }
 
 .cardMeta { display: grid; min-width: 0; gap: 2px; }
 .name { overflow: hidden; color: var(--sb-ink); font-size: 19px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
@@ -43,10 +39,7 @@
 .checkButton:disabled { cursor: not-allowed; opacity: 0.7; }
 
 @media (max-width: 640px) {
-  .card { grid-template-columns: 1fr auto; grid-template-areas: 'slot button' 'info info'; gap: 8px 12px; padding: 16px; }
-  .slot { grid-area: slot; width: auto; display: flex; align-items: baseline; gap: 6px; }
-  .slot span { margin: 0; }
-  .cardMeta { grid-area: info; }
-  .checkButton { grid-area: button; min-width: 112px; min-height: 48px; font-size: 15px; }
+  .card { gap: 12px; padding: 16px; }
+  .checkButton { min-width: 112px; min-height: 48px; font-size: 16px; }
   .name { font-size: 17px; }
 }
