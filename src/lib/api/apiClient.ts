@@ -9,7 +9,14 @@ import axios, { AxiosError, AxiosHeaders, InternalAxiosRequestConfig } from 'axi
 import { resolveError, ServerErrorBody } from './errorHandler';
 import { CommonResponse } from '@/service/interface/common';
 import { IAuthTokenResponse } from '@/service/interface/auth/auth';
-import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthTokens } from '@/lib/auth/tokenStore';
+import {
+  clearAuthTokens,
+  getAccessToken,
+  getRefreshToken,
+  reloadAuthTokensFromStorage,
+  setAuthTokens,
+} from '@/lib/auth/tokenStore';
+import { isAccessTokenExpired } from '@/lib/auth/tokenExpiry';
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -98,35 +105,74 @@ function shouldRefreshOnUnauthorized(config?: RetryableRequestConfig): config is
   return true;
 }
 
+// 서버가 이 세션을 받아 주지 않는 경우(refresh 토큰 없음·만료·폐기). 이때만 세션을 지우고 로그인 화면으로 보낸다
+export class SessionRejectedError extends Error {}
+
+const SESSION_REJECTED_STATUSES = new Set([401, 403, 404]);
+const REFRESH_LOCK_NAME = 'careai-token-refresh';
+
+// 갱신 실패 중 세션을 지워야 하는 것만 true. 429·5xx·시간 초과·네트워크 오류는 일시 장애라
+// 세션을 남겨 두고 다시 시도하게 한다(일시 장애로 로그아웃시키지 않는다)
+export function isSessionRejected(error: unknown) {
+  if (error instanceof SessionRejectedError) return true;
+
+  const status = (error as AxiosError | undefined)?.response?.status;
+  return status !== undefined && SESSION_REJECTED_STATUSES.has(status);
+}
+
+// BE는 refresh 토큰을 회전하고 재사용을 감지한다. 같은 토큰으로 두 번 부르면 세션이 끊기므로
+// 탭끼리도 한 번에 하나만 갱신한다(Web Locks). 지원하지 않는 브라우저는 탭 안 직렬화(refreshRequest)만 남는다
+async function withRefreshLock<T>(task: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
+  if (!locks?.request) return task();
+
+  let result!: T;
+  await locks.request(REFRESH_LOCK_NAME, async () => {
+    result = await task();
+  });
+  return result;
+}
+
+async function requestTokenRefresh(knownRefreshToken: string) {
+  // 락을 기다리는 사이 다른 탭이 먼저 갱신했으면 쿠키의 refresh 토큰이 바뀌어 있다.
+  // 회전된 옛 토큰으로 다시 부르지 않고 그 탭이 받은 토큰을 쓴다(그 access 토큰도 만료됐으면 새 refresh 토큰으로 갱신)
+  const stored = reloadAuthTokensFromStorage();
+  if (!stored.refreshToken) throw new SessionRejectedError('리프레시 토큰이 없습니다.');
+  if (stored.refreshToken !== knownRefreshToken && stored.accessToken && !isAccessTokenExpired(stored.accessToken)) {
+    return stored.accessToken;
+  }
+
+  const response = await refreshClient.post<CommonResponse<IAuthTokenResponse>>('/auth/refresh', {
+    refreshToken: stored.refreshToken,
+  });
+  const responseBody = response.data;
+  const tokens = responseBody.data;
+  const isSuccess = responseBody.success === true || responseBody.code === 200;
+
+  if (!isSuccess || !tokens?.accessToken || !tokens.refreshToken) {
+    throw new SessionRejectedError(responseBody.message || '토큰 재발급에 실패했습니다.');
+  }
+
+  setAuthTokens({
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+  });
+
+  return tokens.accessToken;
+}
+
 export async function refreshAccessToken() {
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {
     clearSession();
-    throw new Error('리프레시 토큰이 없습니다.');
+    throw new SessionRejectedError('리프레시 토큰이 없습니다.');
   }
 
   if (!refreshRequest) {
-    refreshRequest = refreshClient
-      .post<CommonResponse<IAuthTokenResponse>>('/auth/refresh', { refreshToken })
-      .then(response => {
-        const responseBody = response.data;
-        const tokens = responseBody.data;
-        const isSuccess = responseBody.success === true || responseBody.code === 200;
-
-        if (!isSuccess || !tokens?.accessToken || !tokens.refreshToken) {
-          throw new Error(responseBody.message || '토큰 재발급에 실패했습니다.');
-        }
-
-        setAuthTokens({
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-        });
-
-        return tokens.accessToken;
-      })
+    refreshRequest = withRefreshLock(() => requestTokenRefresh(refreshToken))
       .catch(error => {
-        clearSession();
+        if (isSessionRejected(error)) clearSession();
         throw error;
       })
       .finally(() => {
