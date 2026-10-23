@@ -8,11 +8,16 @@ import { render } from 'vitest-browser-react';
 import type { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import { WardMedicationCard } from './WardMedicationCard';
 
-const api = vi.hoisted(() => ({ deleteWardMedicationBatch: vi.fn(), getGuardianMedications: vi.fn() }));
+const api = vi.hoisted(() => ({
+  deleteWardMedicationBatch: vi.fn(),
+  deleteGuardianMedication: vi.fn(),
+  getGuardianMedications: vi.fn(),
+}));
 
 vi.mock('@/service/api/guardian/medication', async importOriginal => ({
   ...(await importOriginal<object>()),
   deleteWardMedicationBatch: api.deleteWardMedicationBatch,
+  deleteGuardianMedication: api.deleteGuardianMedication,
   getGuardianMedications: api.getGuardianMedications,
 }));
 
@@ -63,6 +68,7 @@ describe('WardMedicationCard (Chrome)', () => {
     document.body.innerHTML = '';
     vi.restoreAllMocks();
     api.deleteWardMedicationBatch.mockReset();
+    api.deleteGuardianMedication.mockReset();
     api.getGuardianMedications.mockReset();
   });
 
@@ -167,5 +173,21 @@ describe('WardMedicationCard (Chrome)', () => {
     await screen.getByRole('button', { name: /아침/ }).first().click();
     await expect.element(screen.getByRole('button', { name: '혈압약 삭제' })).toBeVisible();
     expect(screen.getByRole('button', { name: /모두 삭제|전부 삭제/ }).query()).toBeNull();
+  });
+
+  it('약 하나 삭제가 실패해도 안내하고 목록을 다시 불러온다 (점검 L-2)', async () => {
+    api.deleteGuardianMedication.mockRejectedValue(new Error('network'));
+    api.getGuardianMedications.mockResolvedValue([]);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    // 이 카드는 목록을 props로 받아 쿼리를 구독하지 않으므로, 재조회 대신 목록 무효화 호출을 본다
+    const invalidate = vi.spyOn(QueryClient.prototype, 'invalidateQueries');
+    const screen = renderCard([med(1, { name: '혈압약' })]);
+
+    await screen.getByRole('button', { name: /아침/ }).first().click();
+    await screen.getByRole('button', { name: '혈압약 삭제' }).click();
+
+    await vi.waitFor(() => expect(api.deleteGuardianMedication).toHaveBeenCalledWith(1));
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('삭제하지 못했어요');
+    await vi.waitFor(() => expect(invalidate).toHaveBeenCalled());
   });
 });
