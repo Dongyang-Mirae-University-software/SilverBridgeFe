@@ -35,6 +35,8 @@ interface WardMedicationCardProps {
   summary: WardMedicationSummary;
 }
 
+const DELETE_FAILED_MESSAGE = '삭제하지 못했어요. 목록을 다시 불러왔으니 확인 후 다시 시도해 주세요.';
+
 const STATUS_LABEL: Record<DoseStatus, string> = {
   done: '드셨어요',
   miss: '아직 체크 전이에요',
@@ -113,7 +115,9 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
 
   const handleDelete = (medication: MedicationItem) => {
     if (!window.confirm(`${medication.name} 일정을 삭제할까요? 지난 복용 이력은 남습니다.`)) return;
-    deleteMutation.mutate(medication.medicationId);
+    setDeleteError(null);
+    // 실패하면 여러 개 삭제와 같은 안내 - 전에는 아무 반응이 없었다(점검 L-2)
+    deleteMutation.mutate(medication.medicationId, { onError: () => setDeleteError(DELETE_FAILED_MESSAGE) });
   };
 
   // 여러 개 삭제 - 시간대 묶음("아침 약 모두 삭제") 또는 전부. 화면에 보이는 약만 보낸다(2026-10-23)
@@ -122,7 +126,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     setDeleteError(null);
     deleteBatchMutation.mutate(
       { wardId: summary.wardId, medicationIds: targets.map(medication => medication.medicationId) },
-      { onError: () => setDeleteError('삭제하지 못했어요. 목록을 다시 불러왔으니 확인 후 다시 시도해 주세요.') },
+      { onError: () => setDeleteError(DELETE_FAILED_MESSAGE) },
     );
   };
 

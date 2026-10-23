@@ -96,7 +96,8 @@ export function useDeleteGuardianMedicationMutation() {
   return useMutation({
     mutationKey: ['guardian-medication-delete'],
     mutationFn: (medicationId: number) => deleteGuardianMedication(medicationId),
-    onSuccess: () => invalidate(),
+    // 실패해도 다시 불러온다 - 다른 보호자가 그 사이 지웠다면 목록에서 빠진다(여러 개 삭제와 같게, 점검 L-2)
+    onSettled: () => invalidate(),
   });
 }
 
