@@ -6,10 +6,12 @@
 import { createHmac } from 'crypto';
 import { NextRequest } from 'next/server';
 import { readReservationConfig, type ReservationConfig } from '@/lib/server/reservationConfig';
+import { matchReservationRoute } from '@/lib/server/reservationRoutes';
 
 // 예약 서비스 주소·계정 비밀번호 파생 비밀은 환경변수로만 받는다(기본값 없음). 비어 있으면 예약 기능만 503.
 const PHONE_PATTERN = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
 const WARD_HEADER = 'x-sb-ward-id';
+const UPSTREAM_FAILED_MESSAGE = '예약 서비스에 연결하지 못했습니다.';
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 type Profile = { id: string; name?: string; phone?: string };
@@ -78,49 +80,78 @@ async function getReservationToken(config: ReservationConfig, profile: Profile) 
   return accessToken;
 }
 
+// 연결 실패는 원문(예외 메시지·응답 본문)을 내보내지 않고 고정 문구만 준다. 로그에도 고정 코드만 남긴다.
+function upstreamFailed(code: string) {
+  console.warn(`[RESERVATION-PROXY] ${code}`);
+  return fail(502, UPSTREAM_FAILED_MESSAGE);
+}
+
 async function proxyReservationRequest(request: NextRequest, context: RouteContext) {
   const config = readReservationConfig();
   if (!config) return fail(503, '예약 서비스 설정이 되어 있지 않습니다.');
 
+  // 허용 목록 밖은 로그인 확인·예약 서비스 호출 없이 404
+  const { path } = await context.params;
+  const route = matchReservationRoute(request.method, path, request.nextUrl.searchParams);
+  if (!route) return fail(404, '찾을 수 없는 요청입니다.');
+
   const sbToken = getSbToken(request);
-  const me = sbToken ? await getCurrentProfile(sbToken) : null;
+  let me: Profile | null;
+  try {
+    me = sbToken ? await getCurrentProfile(sbToken) : null;
+  } catch {
+    return upstreamFailed('PROFILE_LOOKUP_FAILED');
+  }
   if (!sbToken || !me) return fail(401, '로그인이 필요해요.');
 
+  // 예약을 만들고 취소하는 건 보호자가 피보호자 대신 할 때뿐이다(피보호자 화면은 조회 전용).
   const wardId = request.headers.get(WARD_HEADER);
-  const profile = wardId ? await getWardProfile(sbToken, wardId) : me;
+  if (route.write && !wardId) return fail(403, '보호자만 예약하거나 취소할 수 있어요.');
+
+  let profile: Profile | null;
+  try {
+    profile = wardId ? await getWardProfile(sbToken, wardId) : me;
+  } catch {
+    return upstreamFailed('WARD_LOOKUP_FAILED');
+  }
   if (!profile) return fail(403, '연결된 피보호자가 아니에요.');
 
   let token: string;
   try {
     token = await getReservationToken(config, profile);
-  } catch (error) {
-    return fail(502, error instanceof Error ? error.message : '예약 서비스에 연결하지 못했습니다.');
+  } catch {
+    return upstreamFailed('ACCOUNT_FAILED');
   }
 
-  const { path } = await context.params;
-  const method = request.method.toUpperCase();
-  const body = method === 'GET' || method === 'HEAD' ? undefined : await request.text();
-  const targetUrl = `${config.apiBase}/${path.map(encodeURIComponent).join('/')}${request.nextUrl.search}`;
-
-  const response = await fetch(targetUrl, {
-    body,
-    cache: 'no-store',
-    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-    method,
-  });
+  const body = route.write ? await request.text() : undefined;
+  let response: Response;
+  try {
+    response = await fetch(`${config.apiBase}${route.path}${route.search}`, {
+      body,
+      cache: 'no-store',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      method: request.method.toUpperCase(),
+    });
+  } catch {
+    return upstreamFailed('FETCH_FAILED');
+  }
 
   // 예약 서비스 토큰 만료 등은 SB 세션 만료(401)와 구분해야 apiClient가 로그아웃 처리하지 않는다.
   if (response.status === 401) {
     tokenCache.delete(profile.id);
-    return fail(502, '예약 서비스 인증이 만료되었습니다. 다시 시도해주세요.');
+    return upstreamFailed('UPSTREAM_UNAUTHORIZED');
   }
 
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  let data: unknown;
+  try {
+    const text = await response.text();
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    return upstreamFailed('UPSTREAM_BODY_INVALID');
+  }
   return Response.json(response.ok ? { success: true, data } : data, { status: response.status });
 }
 
 export const GET = (req: NextRequest, ctx: RouteContext) => proxyReservationRequest(req, ctx);
 export const POST = (req: NextRequest, ctx: RouteContext) => proxyReservationRequest(req, ctx);
 export const PATCH = (req: NextRequest, ctx: RouteContext) => proxyReservationRequest(req, ctx);
-export const DELETE = (req: NextRequest, ctx: RouteContext) => proxyReservationRequest(req, ctx);
