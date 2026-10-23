@@ -1,0 +1,213 @@
+/* 피보호자 병원 예약 현황 - 7080 기준 큰 글씨, 보기 전용 */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.nextCard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px 30px;
+  border: 1.5px solid var(--sb-brand-soft);
+}
+
+.nextTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nextLabel {
+  color: var(--sb-ink-soft);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.dday {
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.bigDate {
+  color: var(--sb-ink);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.25;
+  word-break: keep-all;
+}
+
+.bigTime {
+  color: var(--sb-brand);
+}
+
+.place {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hospital {
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 800;
+  word-break: keep-all;
+}
+
+.dept {
+  color: var(--sb-ink-soft);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.address {
+  color: var(--sb-ink-soft);
+  font-size: 18px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.emptyBig {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.listCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.listHead {
+  margin: 0;
+  padding: 18px 26px;
+  border-bottom: 1px solid var(--sb-line-soft);
+  color: var(--sb-ink);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 18px 26px;
+}
+
+.row + .row {
+  border-top: 1px solid var(--sb-line-soft);
+}
+
+.rowDate {
+  flex-shrink: 0;
+  color: var(--sb-ink-soft);
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.pastDate {
+  width: 96px;
+}
+
+.rowName {
+  flex: 1;
+  min-width: 0;
+  color: var(--sb-ink);
+  font-size: 19px;
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+.rowDept {
+  color: var(--sb-ink-mute);
+  font-weight: 600;
+}
+
+.canceled .rowDate,
+.canceled .rowName {
+  color: var(--sb-ink-mute);
+}
+
+.tag {
+  color: var(--sb-ink-mute);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.emptyRow {
+  margin: 0;
+  padding: 24px 26px;
+  color: var(--sb-ink-mute);
+  font-size: 18px;
+}
+
+.footnote {
+  margin: 0;
+  color: var(--sb-ink-mute);
+  font-size: 16px;
+  text-align: center;
+}
+
+.messageCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+}
+
+.message {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 18px;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.retry {
+  min-height: 56px;
+  padding: 0 28px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .nextCard {
+    padding: 22px 20px;
+  }
+
+  .row,
+  .listHead {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .bigDate {
+    font-size: 30px;
+  }
+}
