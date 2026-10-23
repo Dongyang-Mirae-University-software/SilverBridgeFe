@@ -5,7 +5,6 @@ import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
 import { formatDateTime } from '@/utils/format/date';
-import { Icon } from '@/components/Icon';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import useModalStore from '@/store/modalStore';
 import { useWardSosMutation } from '@/service/query/ward';
@@ -116,13 +115,10 @@ export default function WardSosContent() {
 
   return (
     <div className={cx('page')}>
+      {/* 디자인 SOS 화면(2026-10-23): 큰 빨간 버튼에 "SOS"와 안내 한 줄 */}
       <button className={cx('hero')} type="button" disabled={isSending} onClick={handleHeroPress}>
-        <div className={cx('heroIcon')}>
-          <Icon name="alert" size={48} decorative />
-        </div>
-        <span className={cx('heroEyebrow')}>SOS</span>
-        <h2>긴급 SOS</h2>
-        <p>{isSending ? '전송 중...' : '탭하여 즉시 도움 요청'}</p>
+        <span className={cx('heroTitle')}>SOS</span>
+        <span className={cx('heroSub')}>{isSending ? '보내는 중이에요…' : '도움이 필요하면 누르세요'}</span>
       </button>
 
       <WardGuardianCallSection

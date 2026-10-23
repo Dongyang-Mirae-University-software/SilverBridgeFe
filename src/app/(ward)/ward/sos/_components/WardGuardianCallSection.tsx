@@ -4,8 +4,7 @@ import Link from 'next/link';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
-import { UserAvatar } from '@/components/UserAvatar';
-import { formatPhoneText, makeTelHref } from '@/utils/format/phone';
+import { makeTelHref } from '@/utils/format/phone';
 import type { IConnectionItem } from '@/service/interface/connection';
 import styles from './WardGuardianCallSection.module.css';
 
@@ -18,25 +17,30 @@ interface Props {
   onGuardianCall: () => void;
 }
 
-function GuardianCard({ connection, onCall, tone }: { connection: IConnectionItem; onCall: () => void; tone: 'primary' | 'secondary' }) {
+// 디자인 SOS 화면(2026-10-23): 흰 카드에 "이름 (관계)"와 초록 원 전화 버튼. 카드 전체가 실제 가족 전화(tel:)이며
+// 누르면 SOS 이력에 GUARDIAN_CALL로 남긴다(onCall) - 119 키패드와 달리 실제로 걸리는 것이 의도다
+function GuardianCard({ connection, onCall }: { connection: IConnectionItem; onCall: () => void }) {
   const telHref = makeTelHref(connection.partnerPhone);
+  const relation = connection.relation?.trim();
 
   return (
-    <article className={cx('guardianCard', tone)}>
-      <div className={cx('guardianBody')}>
-        <UserAvatar imageUrl={connection.partnerProfileImage} size="w-38" />
-        <div className={cx('guardianInfo')}>
-          <strong>{connection.partnerName}</strong>
-          <span className={cx('guardianPhoneNumber')}>{formatPhoneText(connection.partnerPhone)}</span>
-        </div>
-        <Icon name="phone" size={18} className={cx('callIcon')} decorative />
+    <article className={cx('guardianCard', { noPhone: !telHref })}>
+      <div className={cx('guardianInfo')}>
+        <strong className={cx('guardianName')}>
+          {connection.partnerName}
+          {relation && <span className={cx('guardianRelation')}> ({relation})</span>}
+        </strong>
+        {!telHref && <span className={cx('noPhoneText')}>전화번호가 없어요</span>}
       </div>
+      <span className={cx('callCircle')} aria-hidden="true">
+        <Icon name="phone" size={34} decorative />
+      </span>
 
       {telHref ? (
         <a
           className={cx('cardLink')}
           href={telHref}
-          aria-label={`${connection.partnerName}에게 전화하기`}
+          aria-label={`${connection.partnerName}${relation ? `(${relation})` : ''}에게 전화하기`}
           onClick={onCall}
         />
       ) : null}
@@ -57,11 +61,7 @@ export function WardGuardianCallSection({
     );
 
   return (
-    <section className={cx('phoneSection')}>
-      <div className={cx('sectionHeader')}>
-        <h3>보호자에게 직접 전화하기</h3>
-      </div>
-
+    <section className={cx('phoneSection')} aria-label="보호자에게 직접 전화하기">
       {isGuardiansError ? (
         <div className={cx('emptyState')}>
           <div className={cx('emptyIcon')}>
@@ -84,8 +84,8 @@ export function WardGuardianCallSection({
         </div>
       ) : currentGuardians.length > 0 ? (
         <div className={cx('guardianGrid')}>
-          {currentGuardians.map((connection, index) => (
-            <GuardianCard key={connection.id} connection={connection} onCall={onGuardianCall} tone={index % 2 === 0 ? 'primary' : 'secondary'} />
+          {currentGuardians.map(connection => (
+            <GuardianCard key={connection.id} connection={connection} onCall={onGuardianCall} />
           ))}
         </div>
       ) : (
