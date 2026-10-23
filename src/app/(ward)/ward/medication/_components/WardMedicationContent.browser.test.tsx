@@ -2,6 +2,7 @@
 // 같은 시간대 약은 한 묶음, "아침 약 다 먹었어요" 한 번으로 체크(2026-10-23, BE #369 묶음 체크 API)
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -61,11 +62,16 @@ describe('WardMedicationContent (Chrome)', () => {
     const screen = renderContent();
 
     await expect.element(screen.getByText('다음에 드실 약 · 아침 08:00')).toBeVisible();
-    await expect.element(screen.getByText('약 5개')).toBeVisible();
+    // 일부를 먹었으니 "남은 약"(점검 L-1)
+    await expect.element(screen.getByText('남은 약 5개')).toBeVisible();
+    // 묶음 머리 버튼도 시간대가 이름에 들어간다(점검 L-2)
+    await expect
+      .element(screen.getByRole('region', { name: '점심 약' }).getByRole('button', { name: '점심 약 다 먹었어요' }))
+      .toBeVisible();
     await expect.element(screen.getByRole('region', { name: '아침 약' })).toBeVisible();
     await expect.element(screen.getByRole('region', { name: '점심 약' })).toBeVisible();
 
-    await screen.getByRole('button', { name: '아침 약 다 먹었어요' }).click();
+    await screen.getByRole('button', { name: '아침 약 다 먹었어요' }).first().click();
 
     await vi.waitFor(() => expect(api.setMedicationIntakeBatch).toHaveBeenCalledTimes(1));
     // 이미 먹은 1번은 빼고 나머지 5개만, 단건 API는 부르지 않는다
@@ -76,6 +82,34 @@ describe('WardMedicationContent (Chrome)', () => {
     await expect.element(screen.getByRole('region', { name: '아침 약' }).getByText('다 드셨어요')).toBeVisible();
     // 375px에서 가로 넘침 없음
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+  });
+
+  it('묶음 체크가 실패하면(그 사이 지워진 약) 일정을 다시 불러오고 안내한다 - 다시 누르면 된다 (점검 M-1)', async () => {
+    const morning = [med('혈압약', '08:00:00', 'MORNING'), med('위장약', '08:00:00', 'MORNING')];
+    api.getTodayMedication
+      .mockResolvedValueOnce(today(morning))
+      .mockResolvedValue(today([morning[0]])); // 보호자가 위장약을 지웠다
+    api.setMedicationIntakeBatch
+      .mockRejectedValueOnce(
+        new AxiosError('복약 정보를 찾을 수 없습니다.', 'ERR_BAD_REQUEST', undefined, undefined, {
+          status: 404,
+          statusText: '',
+          headers: {},
+          config: { headers: new AxiosHeaders() },
+          data: {},
+        }),
+      )
+      .mockResolvedValueOnce([{ ...morning[0], taken: true }]);
+    const screen = renderContent();
+
+    await screen.getByRole('button', { name: '아침 약 다 먹었어요' }).first().click();
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('체크하지 못했어요');
+    await vi.waitFor(() => expect(api.getTodayMedication).toHaveBeenCalledTimes(2));
+    // 다시 불러온 목록에는 혈압약만 - 이제 [먹었어요]로 체크된다
+    await expect.element(screen.getByText('혈압약 1정')).toBeVisible();
+    await screen.getByRole('button', { name: '먹었어요', exact: true }).click();
+    await vi.waitFor(() => expect(api.setMedicationIntakeBatch).toHaveBeenLastCalledWith([1], true));
+    await expect.element(screen.getByRole('alert')).not.toBeInTheDocument();
   });
 
   it('잘못 누른 약 하나는 그 약의 버튼으로 푼다(단건 API) - "전체 풀기" 버튼은 없다', async () => {

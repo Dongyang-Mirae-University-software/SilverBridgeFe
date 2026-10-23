@@ -28,6 +28,9 @@ function getNotificationPath(data) {
       return '/guardian/sos';
     case 'CAMERA_LINK_LOST':
       return '/guardian/detection';
+    // 복약 알림은 피보호자에게만 간다 - 누르면 "아침 약 다 먹었어요"가 있는 복약 화면으로(점검 L-4)
+    case 'MEDICATION_REMINDER':
+      return '/ward/medication';
     default:
       return '/';
   }
