@@ -75,7 +75,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.triggerSosAsync.mockReturnValue(new Promise(resolve => (resolveSos = resolve)));
     const screen = renderPage();
 
-    await screen.getByRole('button', { name: /긴급 SOS/ }).click();
+    await screen.getByRole('button', { name: /도움이 필요하면 누르세요/ }).click();
 
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
     await expect.element(screen.getByLabelText('입력된 번호')).toHaveTextContent('119');
@@ -92,7 +92,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.triggerSosAsync.mockRejectedValue({ message: '서버 오류' });
     const screen = renderPage();
 
-    await screen.getByRole('button', { name: /긴급 SOS/ }).click();
+    await screen.getByRole('button', { name: /도움이 필요하면 누르세요/ }).click();
 
     await expect.element(screen.getByText('SOS 전송 실패')).toBeVisible();
     await expect.element(screen.getByText('보호자에게 알리지 못했어요')).toBeInTheDocument();
@@ -103,7 +103,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
     const screen = renderPage();
 
-    await screen.getByRole('button', { name: /긴급 SOS/ }).click();
+    await screen.getByRole('button', { name: /도움이 필요하면 누르세요/ }).click();
 
     await expect.element(screen.getByText('SOS 전송 완료')).toBeVisible();
     expect(screen.getByRole('dialog', { name: /119 신고 키패드/ }).query()).toBeNull();
@@ -119,7 +119,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.hasActiveGuardians = false;
     const screen = renderPage();
 
-    await screen.getByRole('button', { name: /긴급 SOS/ }).click();
+    await screen.getByRole('button', { name: /도움이 필요하면 누르세요/ }).click();
 
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
     expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1);
@@ -132,7 +132,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.triggerSosAsync.mockRejectedValue({ message: '서버 오류' });
     const screen = renderPage();
 
-    await screen.getByRole('button', { name: /긴급 SOS/ }).click();
+    await screen.getByRole('button', { name: /도움이 필요하면 누르세요/ }).click();
 
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
     await vi.waitFor(() => expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1));
