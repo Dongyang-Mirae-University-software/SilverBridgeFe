@@ -10,8 +10,6 @@ import {
   DraftDrug,
   findDuplicateDrugKeys,
   formatDoseLabel,
-  getMixedTimesNote,
-  getTimesMismatchHint,
   groupToBatchRequest,
   increaseDose,
   isUncertainFailure,
@@ -134,56 +132,6 @@ describe('통합 "언제 드세요?" (2026-10-22 사용자 결정 - 줄 나눔 �
     expect(toDoseGroup([draftDrug(), draftDrug()]).timesPerDay).toBeNull();
   });
 
-  it('횟수가 섞이면 가장 많은 약의 횟수와 다른 약을 한 줄로 알린다', () => {
-    const drugs = [
-      draftDrug({ name: '신일이부프로펜정', timesPerDay: 3 }),
-      draftDrug({ name: '코싹엘정', timesPerDay: 2 }),
-      draftDrug({ name: '뮤테란캡슐', timesPerDay: 3 }),
-      draftDrug({ name: '직접 쓴 약' }),
-    ];
-    expect(getMixedTimesNote(drugs)).toBe(
-      '코싹엘정 하루 2번 - 다른 약과 하루 횟수가 달라요. 다르게 드시는 약은 등록 후 시간을 고쳐 주세요',
-    );
-    // 다른 약이 여럿이면 "외 N개", 횟수가 여럿이면 큰 횟수부터
-    expect(
-      getMixedTimesNote([
-        draftDrug({ name: 'A', timesPerDay: 3 }),
-        draftDrug({ name: 'B', timesPerDay: 3 }),
-        draftDrug({ name: 'C', timesPerDay: 1 }),
-        draftDrug({ name: 'D', timesPerDay: 1 }),
-        draftDrug({ name: 'E', timesPerDay: 2 }),
-      ]),
-    ).toBe('E 하루 2번, C 외 1개 하루 1번 - 다른 약과 하루 횟수가 달라요. 다르게 드시는 약은 등록 후 시간을 고쳐 주세요');
-    // 같은 수로 갈리면 큰 횟수를 기준으로 본다
-    expect(getMixedTimesNote([draftDrug({ name: 'A', timesPerDay: 3 }), draftDrug({ name: 'B', timesPerDay: 2 })])).toMatch(
-      /^B 하루 2번/,
-    );
-  });
-
-  it('최빈 횟수와 최대 횟수가 다르면 최빈을 기준으로 본다(2·2·3이면 하루 3번 약을 알린다) (점검 L-4)', () => {
-    expect(
-      getMixedTimesNote([
-        draftDrug({ name: 'A', timesPerDay: 2 }),
-        draftDrug({ name: 'B', timesPerDay: 2 }),
-        draftDrug({ name: 'C', timesPerDay: 3 }),
-      ]),
-    ).toMatch(/^C 하루 3번 - /);
-  });
-
-  it('가장 많은 약의 횟수가 5번 이상이면 4번까지만 고를 수 있다고 덧붙인다 (점검 L-5)', () => {
-    expect(
-      getMixedTimesNote([
-        draftDrug({ name: 'A', timesPerDay: 5 }),
-        draftDrug({ name: 'B', timesPerDay: 5 }),
-        draftDrug({ name: 'C', timesPerDay: 2 }),
-      ]),
-    ).toBe('C 하루 2번 - 다른 약과 하루 횟수가 달라요. 다르게 드시는 약은 등록 후 시간을 고쳐 주세요. 여기서는 4번까지 고를 수 있어요');
-  });
-
-  it('횟수가 같거나 모르면 안내하지 않는다', () => {
-    expect(getMixedTimesNote([draftDrug({ timesPerDay: 3 }), draftDrug({ timesPerDay: 3 }), draftDrug()])).toBeNull();
-    expect(getMixedTimesNote([draftDrug(), draftDrug()])).toBeNull();
-  });
 });
 
 describe('기본 선택', () => {
@@ -217,25 +165,6 @@ describe('기본 선택', () => {
 });
 
 describe('2/2 칩', () => {
-  it('고른 칸 수가 하루 횟수와 다르면 안내(모르면 안내 없음)', () => {
-    const group = toDoseGroup([draftDrug({ timesPerDay: 2 })]);
-    expect(getTimesMismatchHint(group, ['MORNING', 'DINNER'])).toBeNull();
-    expect(getTimesMismatchHint(group, ['MORNING', 'LUNCH', 'DINNER'])).toBe('봉투에는 하루 2번이에요');
-    // 칩은 4개라 하루 5번 이상이면 그 사실도 알린다 (점검 L-4)
-    const five = toDoseGroup([draftDrug({ timesPerDay: 5 })]);
-    expect(getTimesMismatchHint(five, ['MORNING', 'LUNCH', 'DINNER', 'BEDTIME'])).toBe(
-      '봉투에는 하루 5번이에요. 여기서는 4번까지 고를 수 있어요',
-    );
-    const unknown = toDoseGroup([draftDrug()]);
-    expect(getTimesMismatchHint(unknown, ['MORNING', 'LUNCH'])).toBeNull();
-    // 직접 넣은 약(횟수 모름)이 섞이면 봉투에 적힌 약에만 해당한다고 밝힌다 (점검 L-5)
-    expect(getTimesMismatchHint(toDoseGroup([draftDrug({ timesPerDay: 2 }), draftDrug()]), ['MORNING'])).toBe(
-      '봉투에 적힌 약은 하루 2번이에요',
-    );
-    // 횟수가 섞이면(통합 줄) 이 안내 대신 getMixedTimesNote가 알린다
-    expect(getTimesMismatchHint(toDoseGroup([draftDrug({ timesPerDay: 3 }), draftDrug({ timesPerDay: 2 })]), ['MORNING'])).toBeNull();
-  });
-
   it('칩을 누르면 넣고 빼며 순서는 아침→자기 전', () => {
     expect(toggleSlot(['DINNER'], 'MORNING')).toEqual(['MORNING', 'DINNER']);
     expect(toggleSlot(['MORNING', 'DINNER'], 'MORNING')).toEqual(['DINNER']);

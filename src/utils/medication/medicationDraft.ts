@@ -202,25 +202,6 @@ export function toDoseGroup(drugs: DraftDrug[]): DoseGroup {
   return { timesPerDay: known.length === 1 ? known[0] : null, drugs };
 }
 
-// 약마다 봉투의 하루 횟수가 다르면 한 줄로 알린다(막지 않는다) - 모두 같은 시간으로 등록되므로 과다 복용 안내를 알아차리게
-// 가장 많은 약의 횟수(같으면 큰 쪽)와 다른 약만 적는다: "코싹엘정 하루 2번 - 다른 약과 하루 횟수가 달라요. …"
-export function getMixedTimesNote(drugs: DraftDrug[]) {
-  const counts = knownCounts(drugs);
-  if (new Set(counts).size <= 1) return null;
-  const tally = new Map<number, number>();
-  counts.forEach(n => tally.set(n, (tally.get(n) ?? 0) + 1));
-  const common = [...tally.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
-  const differing = drugs.filter(drug => drug.timesPerDay !== null && drug.timesPerDay !== common);
-  const parts = [...new Set(differing.map(drug => drug.timesPerDay as number))].sort((a, b) => b - a).map(n => {
-    const named = differing.filter(drug => drug.timesPerDay === n);
-    const rest = named.length > 1 ? ` 외 ${named.length - 1}개` : '';
-    return `${named[0].name.trim()}${rest} 하루 ${n}번`;
-  });
-  const base = `${parts.join(', ')} - 다른 약과 하루 횟수가 달라요. 다르게 드시는 약은 등록 후 시간을 고쳐 주세요`;
-  // 가장 많은 약의 횟수가 칩 수(4)보다 많으면 그 사실도 알린다
-  return common > SLOT_ORDER.length ? `${base}. 여기서는 ${SLOT_ORDER.length}번까지 고를 수 있어요` : base;
-}
-
 // 기본 선택: 봉투 시간대 표시가 있고 그 개수가 약들의 하루 횟수와 같으면(횟수가 섞였거나 모르면 표시만으로) 그대로,
 // 아니면 하루 횟수로(1 아침 / 2 아침·저녁 / 3 아침·점심·저녁 / 4 이상 네 칸, 섞였으면 가장 큰 횟수), 정보가 없으면 아침
 export function defaultSlotsForGroup(group: DoseGroup): MedicationTimeSlot[] {
@@ -229,15 +210,6 @@ export function defaultSlotsForGroup(group: DoseGroup): MedicationTimeSlot[] {
   const count = group.timesPerDay ?? Math.max(0, ...knownCounts(group.drugs));
   if (count < 1) return ['MORNING'];
   return SLOTS_BY_TIMES_PER_DAY[Math.min(count, 4)];
-}
-
-// 고른 칸 수가 봉투의 하루 횟수와 다르면 알린다(막지는 않는다). 칩은 4개라 5번 이상은 그 사실도 알린다
-export function getTimesMismatchHint(group: DoseGroup, selected: MedicationTimeSlot[]) {
-  if (group.timesPerDay === null || selected.length === group.timesPerDay) return null;
-  // 직접 넣은 약(횟수 모름)이 섞여 있으면 봉투에 적힌 약에만 해당한다는 것을 밝힌다
-  const hasUnknown = group.drugs.some(drug => drug.timesPerDay === null);
-  const base = `${hasUnknown ? '봉투에 적힌 약은' : '봉투에는'} 하루 ${group.timesPerDay}번이에요`;
-  return group.timesPerDay > SLOT_ORDER.length ? `${base}. 여기서는 ${SLOT_ORDER.length}번까지 고를 수 있어요` : base;
 }
 
 export function toggleSlot(selected: MedicationTimeSlot[], slot: MedicationTimeSlot) {

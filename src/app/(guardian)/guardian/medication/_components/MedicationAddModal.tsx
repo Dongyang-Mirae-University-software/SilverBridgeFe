@@ -13,7 +13,6 @@ import {
   createEmptyDrug,
   defaultSlotsForGroup,
   DraftDrug,
-  getMixedTimesNote,
   groupToBatchRequest,
   isUncertainFailure,
   MAX_DRUGS,
@@ -129,7 +128,6 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
   }, [submitError, isSubmitting]);
 
   const group = useMemo(() => toDoseGroup(drugs), [drugs]);
-  const mixedNote = useMemo(() => getMixedTimesNote(drugs), [drugs]);
   const hasLowConfidence = drugs.some(needsNameCheck); // 확신 low 또는 허가 목록에 없는 이름
   const lowConfidenceHintId = `${idPrefix}-low-confidence`;
 
@@ -413,9 +411,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
 
           {showForm && step === 2 && (
             <MedicationDoseTimeStep
-              group={group}
               selected={selected ?? []}
-              mixedNote={mixedNote}
               disabled={isSubmitting || uncertain}
               onChange={changeSelection}
             />
