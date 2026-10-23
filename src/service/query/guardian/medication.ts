@@ -5,6 +5,7 @@ import { QueryClient, queryOptions, useMutation, useQueryClient } from '@tanstac
 import {
   addWardMedicationBatch,
   deleteGuardianMedication,
+  deleteWardMedicationBatch,
   getGuardianMedications,
   getMedicationAlertSetting,
   getMedicationSetting,
@@ -76,6 +77,17 @@ export function useUpdateGuardianMedicationMutation() {
     mutationFn: ({ medicationId, body }: { medicationId: number; body: UpdateMedicationReq }) =>
       updateGuardianMedication(medicationId, body),
     onSuccess: () => invalidate(),
+  });
+}
+
+// 실패해도 목록을 다시 불러온다 - 다른 보호자가 그 사이 바꿨다면 바뀐 목록에서 다시 고를 수 있게
+export function useDeleteWardMedicationBatchMutation() {
+  const invalidate = useInvalidateGuardianMedication();
+  return useMutation({
+    mutationKey: ['guardian-medication-delete'],
+    mutationFn: ({ wardId, medicationIds }: { wardId: string; medicationIds: number[] }) =>
+      deleteWardMedicationBatch(wardId, medicationIds),
+    onSettled: () => invalidate(),
   });
 }
 
