@@ -448,15 +448,25 @@
 .suggestionChips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
   max-width: 100%;
 }
 
+/* "비슷한 이름:" - 칩이 누르면 이름을 바꾸는 버튼임을 알린다 */
+.suggestionLabel {
+  color: #6b4a0d;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* 테두리는 흰 배경 대비 3:1 이상(--sb-warn 4.9:1, --sb-sun은 2.8:1이라 부족), 높이 32px(최소 24px 이상, 행 높이는 크게 늘지 않게) */
 .suggestionChip {
   max-width: 100%;
-  min-height: 26px;
-  border: 1px solid var(--sb-sun);
+  min-height: 32px;
+  border: 1px solid var(--sb-warn);
   border-radius: 999px;
   background: #fff;
   color: var(--sb-ink);

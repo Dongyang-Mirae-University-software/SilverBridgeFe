@@ -180,6 +180,10 @@ describe('MedicationAddModal (Chrome)', () => {
     // 1번은 제안 3개, 2번(제안 0개)은 문구만
     expect(rowSuggestionChips(screen, 1).map(button => button.textContent)).toEqual(['슈다페드정', '슈다펜정', LONG_SUGGESTION]);
     expect(rowSuggestionChips(screen, 2)).toHaveLength(0);
+    // 칩 앞 머리말은 제안이 있을 때만(점검 L-2), 칩은 손가락으로 누를 만한 높이(점검 L-3)
+    expect(drugRow(screen, 1).textContent).toContain('비슷한 이름:');
+    expect(drugRow(screen, 2).textContent).not.toContain('비슷한 이름:');
+    expect(rowSuggestionChips(screen, 1).every(button => button.getBoundingClientRect().height >= 32)).toBe(true);
     // 자동으로 바꾸거나 미리 고르지 않는다
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('슈다페트정');
     // 375px에서 긴 제안 칩이 줄바꿈되어도 가로로 넘치지 않는다
@@ -201,6 +205,25 @@ describe('MedicationAddModal (Chrome)', () => {
     await screen.getByLabelText('2번째 약 이름').fill('무코스타정');
     expect(isHighlighted(screen, 2)).toBe(false);
     expect(drugRow(screen, 2).textContent).not.toContain(NOT_IN_LIST_TEXT);
+    await expect.element(screen.getByText(CHECK_BOX_TEXT)).not.toBeInTheDocument();
+  });
+
+  it('다시 찍으면 목록에 없는 이름 안내·칩도 새 결과로 바뀐다', async () => {
+    api.recognizeMedicationEnvelope
+      .mockResolvedValueOnce(OCR_NAME_CHECK)
+      .mockResolvedValueOnce({ readable: true, drugs: [{ ...OCR_NAME_CHECK.drugs[2] }] });
+    const { screen } = renderModal();
+    await choosePhoto();
+    await expect.element(screen.getByText(/약 4개를 찾았어요/)).toBeVisible();
+    await expect.element(screen.getByText(CHECK_BOX_TEXT)).toBeVisible();
+
+    await screen.getByRole('button', { name: '다시 찍기' }).click();
+    await choosePhoto();
+    await expect.element(screen.getByText(/약 1개를 찾았어요/)).toBeVisible();
+    await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('아스피린정');
+    expect(isHighlighted(screen, 1)).toBe(false);
+    expect(screen.getByText(NOT_IN_LIST_TEXT).query()).toBeNull();
+    expect(rowSuggestionChips(screen, 1)).toHaveLength(0);
     await expect.element(screen.getByText(CHECK_BOX_TEXT)).not.toBeInTheDocument();
   });
 

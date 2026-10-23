@@ -93,12 +93,13 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
                 <span>목록에 없는 이름이에요. 봉투와 다시 확인해 주세요</span>
                 {drug.suggestions.length > 0 && (
                   <span className={cx('suggestionChips')}>
+                    <span className={cx('suggestionLabel')}>비슷한 이름:</span>
                     {drug.suggestions.map(suggestion => (
                       <button
                         key={suggestion}
                         type="button"
                         className={cx('suggestionChip')}
-                        onClick={() => updateDrug(drug.key, renameDrug(suggestion.slice(0, MAX_NAME_LENGTH)))}
+                        onClick={() => updateDrug(drug.key, renameDrug(suggestion))}
                         aria-label={`${index + 1}번째 약을 ${suggestion}(으)로 바꾸기`}
                       >
                         {suggestion}
