@@ -95,3 +95,69 @@ export function formatMedicationAlertTime(value: string) {
   const displayHour = hour % 12 || 12;
   return `${period} ${displayHour}:${minuteValue}`;
 }
+
+// 보호자 카드: 같은 시간대·시각의 약을 한 번으로 묶는다(약 6개 × 하루 3번이면 "18번"이 아니라 "3번") - 2026-10-23
+// 오늘 등록 전이었던 약(beforeRegistered)은 그 묶음의 판정·개수에서 뺀다(그날은 먹을 기회가 없었다)
+export interface MedicationTimeGroup {
+  key: string;
+  timeSlot: MedicationTimeSlot;
+  doseTime: string;
+  label: string; // "아침" - 같은 시간대가 둘 이상이면 "저녁 19:00"처럼 시각을 붙인다
+  medications: MedicationItem[];
+  takenCount: number; // 판정에 드는 약 중 체크한 수
+  countedCount: number; // 판정에 드는 약 수(오늘 등록 전이었던 약 제외)
+  status: DoseStatus;
+}
+
+export function groupMedicationsByTime(medications: MedicationItem[], nowHHmm: string, doseDate: string) {
+  const groups = new Map<string, MedicationItem[]>();
+  sortMedicationsByDoseTime(medications).forEach(medication => {
+    const key = `${medication.timeSlot}-${formatDoseTime(medication.doseTime)}`;
+    groups.set(key, [...(groups.get(key) ?? []), medication]);
+  });
+  const slotCounts = new Map<MedicationTimeSlot, number>();
+  groups.forEach(items => slotCounts.set(items[0].timeSlot, (slotCounts.get(items[0].timeSlot) ?? 0) + 1));
+
+  return [...groups.entries()].map(([key, items]): MedicationTimeGroup => {
+    const { timeSlot, doseTime } = items[0];
+    const statuses = items.map(medication => getDoseStatus(medication, nowHHmm, doseDate));
+    const counted = items.filter((_, index) => statuses[index] !== 'beforeRegistered');
+    const takenCount = counted.filter(medication => medication.taken).length;
+    let status: DoseStatus;
+    if (counted.length === 0) status = 'beforeRegistered';
+    else if (takenCount === counted.length) status = 'done';
+    else status = statuses.includes('miss') ? 'miss' : 'later';
+    const slotLabel = getMedicationTimeSlotLabel(timeSlot);
+    return {
+      key,
+      timeSlot,
+      doseTime,
+      label: (slotCounts.get(timeSlot) ?? 0) > 1 ? `${slotLabel} ${formatDoseTime(doseTime)}` : slotLabel,
+      medications: items,
+      takenCount,
+      countedCount: counted.length,
+      status,
+    };
+  });
+}
+
+// 묶음 상태 문구: "다 드셨어요" / "6개 중 4개 드셨어요" / "아직 체크 전이에요" / "드실 시간 전" / "오늘은 등록 전이었어요"
+export function getTimeGroupStatusLabel(group: MedicationTimeGroup) {
+  switch (group.status) {
+    case 'done':
+      return '다 드셨어요';
+    case 'miss':
+      return group.takenCount > 0 ? `${group.countedCount}개 중 ${group.takenCount}개 드셨어요` : '아직 체크 전이에요';
+    case 'later':
+      return '드실 시간 전';
+    default:
+      return '오늘은 등록 전이었어요';
+  }
+}
+
+// "코싹열정, 신일이부프로펜정 외 4개"
+export function summarizeMedicationNames(medications: MedicationItem[], shown = 2) {
+  const names = medications.map(medication => medication.name);
+  const rest = names.length - shown;
+  return rest > 0 ? `${names.slice(0, shown).join(', ')} 외 ${rest}개` : names.join(', ');
+}

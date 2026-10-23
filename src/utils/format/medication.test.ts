@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import type { MedicationItem } from '@/service/interface/medication';
-import { formatDoseAmount, getDoseStatus, isRegisteredAfterDose, toKstDateTime } from './medication';
+import {
+  formatDoseAmount,
+  getDoseStatus,
+  getTimeGroupStatusLabel,
+  groupMedicationsByTime,
+  isRegisteredAfterDose,
+  summarizeMedicationNames,
+  toKstDateTime,
+} from './medication';
 
 describe('formatDoseAmount (2026-10-22 점검 M-3)', () => {
   it('BE 알림 문구와 같게 - 0.5는 "반 알", 1.5는 "1정 반", 정수는 "N정"', () => {
@@ -70,5 +78,64 @@ describe('오늘 등록 전에 지난 복용 시각 (BE MedicationClock.register
     );
     // 복용 시각 정각은 지난 것으로 본다(기존 동작)
     expect(getDoseStatus(med(), '08:00', TODAY)).toBe('miss');
+  });
+});
+
+describe('시간대 묶음 - 약 6개 × 하루 3번은 "18번"이 아니라 "3번" (2026-10-23)', () => {
+  let id = 100;
+  const item = (overrides: Partial<MedicationItem>) => ({ ...med(overrides), medicationId: ++id });
+
+  it('같은 시간대·시각끼리 묶고, 시각 순서를 지킨다', () => {
+    const meds = ['08:00:00', '12:00:00', '19:00:00'].flatMap((doseTime, slot) =>
+      ['코싹열정', '알마겔정'].map(name =>
+        item({ name, doseTime, timeSlot: (['MORNING', 'LUNCH', 'DINNER'] as const)[slot] }),
+      ),
+    );
+    const groups = groupMedicationsByTime(meds, '13:00', TODAY);
+    expect(groups.map(g => [g.label, g.medications.length])).toEqual([
+      ['아침', 2],
+      ['점심', 2],
+      ['저녁', 2],
+    ]);
+    expect(groups.map(g => g.status)).toEqual(['miss', 'miss', 'later']);
+  });
+
+  it('같은 시간대에 시각이 다르면 따로 묶고 이름에 시각을 붙인다', () => {
+    const groups = groupMedicationsByTime(
+      [item({ timeSlot: 'DINNER', doseTime: '19:00:00' }), item({ timeSlot: 'DINNER', doseTime: '20:00:00' })],
+      '21:00',
+      TODAY,
+    );
+    expect(groups.map(g => g.label)).toEqual(['저녁 19:00', '저녁 20:00']);
+  });
+
+  it('모두 체크하면 "다 드셨어요", 일부만이면 "N개 중 M개", 하나도 안 했으면 "아직 체크 전"', () => {
+    const at8 = { doseTime: '08:00:00' };
+    const [done] = groupMedicationsByTime([item({ ...at8, taken: true }), item({ ...at8, taken: true })], '09:00', TODAY);
+    const [partial] = groupMedicationsByTime([item({ ...at8, taken: true }), item(at8), item(at8)], '09:00', TODAY);
+    const [none] = groupMedicationsByTime([item(at8)], '09:00', TODAY);
+    const [later] = groupMedicationsByTime([item(at8)], '07:00', TODAY);
+    expect([done, partial, none, later].map(getTimeGroupStatusLabel)).toEqual([
+      '다 드셨어요',
+      '3개 중 1개 드셨어요',
+      '아직 체크 전이에요',
+      '드실 시간 전',
+    ]);
+  });
+
+  it('오늘 등록 전이었던 약은 묶음 판정에서 뺀다 - 나머지를 다 드셨으면 "다 드셨어요"', () => {
+    const at8 = { doseTime: '08:00:00' };
+    const lateRegistered = { ...at8, createdAt: `${TODAY}T10:00:00+09:00` };
+    const [mixed] = groupMedicationsByTime([item({ ...at8, taken: true }), item(lateRegistered)], '11:00', TODAY);
+    expect(mixed).toMatchObject({ status: 'done', takenCount: 1, countedCount: 1 });
+    const [onlyLate] = groupMedicationsByTime([item(lateRegistered)], '11:00', TODAY);
+    expect(getTimeGroupStatusLabel(onlyLate)).toBe('오늘은 등록 전이었어요');
+  });
+
+  it('이름 요약: 두 개까지 보이고 나머지는 "외 N개"', () => {
+    expect(summarizeMedicationNames([item({ name: '가' }), item({ name: '나' }), item({ name: '다' }), item({ name: '라' })])).toBe(
+      '가, 나 외 2개',
+    );
+    expect(summarizeMedicationNames([item({ name: '가' })])).toBe('가');
   });
 });

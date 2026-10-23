@@ -60,8 +60,46 @@ describe('WardMedicationCard (Chrome)', () => {
       med(1, { createdAt: `${TODAY}T00:30:00+09:00` }),
       med(2, { createdAt: '2026-01-01T09:00:00+09:00' }),
     ]);
+    // 두 약은 같은 아침 묶음 - 등록 전이었던 약은 묶음 판정에서 빠져 "1번 중 0번"
+    await expect.element(screen.getByText('아침 약이 아직 다 체크되지 않았어요')).toBeVisible();
+    await expect.element(screen.getByText(/1번 중/)).toBeVisible();
+    await screen.getByRole('button', { name: /아침/ }).click();
     await expect.element(screen.getByText('오늘은 등록 전이었어요')).toBeVisible();
-    await expect.element(screen.getByText('드실 시간이 지난 약 1개가 아직 체크 전이에요')).toBeVisible();
+  });
+
+  it('약 6개 × 하루 3번은 "3번 중"으로 세고, 시간대 한 줄을 누르면 그 시간 약이 펼쳐진다 (2026-10-23)', async () => {
+    const names = ['코싹열정', '신일이부프로펜정400mg', '알마겔정', '소말겐정', '엘도스캡슐', '코푸시럽'];
+    const slots = [
+      { timeSlot: 'MORNING', doseTime: '00:00:00' },
+      { timeSlot: 'LUNCH', doseTime: '00:01:00' },
+      { timeSlot: 'DINNER', doseTime: '00:02:00' },
+    ] as const;
+    let id = 0;
+    const meds = slots.flatMap((slot, index) =>
+      names.map(name => med(++id, { name, ...slot, taken: index === 0 || (index === 1 && name !== '코푸시럽') })),
+    );
+    const screen = renderCard(meds);
+
+    await expect.element(screen.getByText(/3번 중/)).toBeVisible();
+    await expect.element(screen.getByText('1번', { exact: true })).toBeVisible();
+    expect(screen.getByText(/18번/).query()).toBeNull();
+    await expect.element(screen.getByText('점심·저녁 약이 아직 다 체크되지 않았어요')).toBeVisible();
+
+    // 처음에는 시간대 한 줄씩 - 약 이름은 요약만
+    const morning = screen.getByRole('button', { name: /아침/ });
+    await expect.element(morning).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(screen.getByText('다 드셨어요')).toBeVisible();
+    await expect.element(screen.getByText('6개 중 5개 드셨어요')).toBeVisible();
+    await expect.element(screen.getByText('아직 체크 전이에요')).toBeVisible();
+    expect(screen.getByRole('button', { name: '코싹열정 삭제' }).query()).toBeNull();
+
+    await screen.getByRole('button', { name: /점심/ }).click();
+    await expect.element(screen.getByRole('button', { name: /점심/ })).toHaveAttribute('aria-expanded', 'true');
+    // 펼친 시간대의 약만 수정·삭제 버튼이 보인다
+    expect(screen.getByRole('button', { name: '코싹열정 삭제' }).elements()).toHaveLength(1);
+    await expect.element(screen.getByRole('button', { name: '신일이부프로펜정400mg 수정' })).toBeVisible();
+    // 375px에서 가로 넘침 없음
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
   it('체크한 약이 없고 체크할 약도 없으면 "모두 드셨어요"라고 하지 않는다 (점검 L-2)', async () => {

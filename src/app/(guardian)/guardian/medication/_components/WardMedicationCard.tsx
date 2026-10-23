@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +12,10 @@ import {
   formatDoseTime,
   getDoseStatus,
   getMedicationTimeSlotLabel,
+  getTimeGroupStatusLabel,
+  groupMedicationsByTime,
   sortMedicationsByDoseTime,
+  summarizeMedicationNames,
 } from '@/utils/format/medication';
 import {
   useDeleteGuardianMedicationMutation,
@@ -94,9 +97,16 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     hour12: false,
     timeZone: 'Asia/Seoul',
   }).format(new Date());
-  const missCount = medications.filter(medication => getDoseStatus(medication, nowHHmm, summary.doseDate) === 'miss').length;
+  // 같은 시간대·시각의 약은 한 번으로 센다(약 6개 × 하루 3번 = "3번 중"). 오늘 등록 전이었던 묶음은 세지 않는다
+  const groups = groupMedicationsByTime(medications, nowHHmm, summary.doseDate);
+  const countedGroups = groups.filter(group => group.status !== 'beforeRegistered');
+  const doneGroupCount = countedGroups.filter(group => group.status === 'done').length;
+  const missGroups = groups.filter(group => group.status === 'miss');
   // 체크한 약이 하나도 없는데 "모두 드셨어요"라고 하지 않는다(아직 시간 전이거나 오늘은 등록 전인 약뿐인 경우)
   const hasTaken = medications.some(medication => medication.taken);
+  const [openGroupKeys, setOpenGroupKeys] = useState<string[]>([]);
+  const toggleGroup = (key: string) =>
+    setOpenGroupKeys(keys => (keys.includes(key) ? keys.filter(item => item !== key) : [...keys, key]));
 
   const handleDelete = (medication: MedicationItem) => {
     if (!window.confirm(`${medication.name} 일정을 삭제할까요? 지난 복용 이력은 남습니다.`)) return;
@@ -117,24 +127,24 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         <section className={cx('card', 'todayCard')}>
           <div>
             <div className={cx('todayLabel')}>오늘</div>
-            <div className={cx('todayCount')}>
-              {summary.totalCount}번 중 <span className={cx('todayTaken')}>{summary.takenCount}번</span> 드셨어요
-            </div>
-            {missCount > 0 ? (
-              <div className={cx('todayMiss')}>드실 시간이 지난 약 {missCount}개가 아직 체크 전이에요</div>
+            {countedGroups.length > 0 && (
+              <div className={cx('todayCount')}>
+                {countedGroups.length}번 중 <span className={cx('todayTaken')}>{doneGroupCount}번</span> 드셨어요
+              </div>
+            )}
+            {missGroups.length > 0 ? (
+              <div className={cx('todayMiss')}>
+                {missGroups.map(group => group.label).join('·')} 약이 아직 다 체크되지 않았어요
+              </div>
             ) : (
               <div className={cx('todayAllDone')}>
                 {hasTaken ? '지금까지 드실 약은 모두 드셨어요' : '지금 체크할 약은 없어요'}
               </div>
             )}
           </div>
-          <div className={cx('todayDots')}>
-            {medications.map(medication => (
-              <span
-                key={medication.medicationId}
-                title={medication.name}
-                className={cx('todayDot', getDoseStatus(medication, nowHHmm, summary.doseDate))}
-              />
+          <div className={cx('todayDots')} aria-hidden="true">
+            {groups.map(group => (
+              <span key={group.key} title={group.label} className={cx('todayDot', group.status)} />
             ))}
           </div>
         </section>
@@ -154,32 +164,68 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         {!hasMedications ? (
           <p className={cx('emptyText')}>등록된 약이 없어요. 약을 추가해 주세요.</p>
         ) : (
-          medications.map(medication => {
-            const status = getDoseStatus(medication, nowHHmm, summary.doseDate);
-            return (
-              <div key={medication.medicationId} className={cx('medicationItem')}>
-                <button type="button" className={cx('medicationTime')} onClick={() => openEditMedication(medication)}>
-                  <strong>{getMedicationTimeSlotLabel(medication.timeSlot)}</strong>
-                  <span>{formatDoseTime(medication.doseTime)}</span>
-                </button>
-                <button type="button" className={cx('medicationInfo')} onClick={() => openEditMedication(medication)}>
-                  <strong className={cx('medicationName')}>{medication.name}</strong>
-                  <span className={cx('medicationDetail')}>
-                    {formatDoseAmount(medication.doseAmount)}{medication.memo ? ` · ${medication.memo}` : ''}
-                  </span>
-                </button>
-                <span className={cx('statusBadge', status)}>{STATUS_LABEL[status]}</span>
-                <button
-                  type="button"
-                  className={cx('deleteButton')}
-                  onClick={() => handleDelete(medication)}
-                  aria-label={`${medication.name} 삭제`}
-                >
-                  ×
-                </button>
-              </div>
-            );
-          })
+          <ul className={cx('groupList')}>
+            {groups.map(group => {
+              const isOpen = openGroupKeys.includes(group.key);
+              const panelId = `medication-group-${summary.wardId}-${group.key}`;
+              return (
+                <li key={group.key} className={cx('groupItem')}>
+                  <button
+                    type="button"
+                    className={cx('groupHeader')}
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    onClick={() => toggleGroup(group.key)}
+                  >
+                    <span className={cx('groupTime')}>
+                      <strong>{getMedicationTimeSlotLabel(group.timeSlot)}</strong>
+                      <span>{formatDoseTime(group.doseTime)}</span>
+                    </span>
+                    <span className={cx('groupInfo')}>
+                      <strong>약 {group.medications.length}개</strong>
+                      <span>{summarizeMedicationNames(group.medications)}</span>
+                    </span>
+                    <span className={cx('statusBadge', group.status)}>{getTimeGroupStatusLabel(group)}</span>
+                    <span className={cx('chevron', { open: isOpen })} aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <ul id={panelId} className={cx('groupMedications')}>
+                      {group.medications.map(medication => {
+                        const status = getDoseStatus(medication, nowHHmm, summary.doseDate);
+                        return (
+                          <li key={medication.medicationId} className={cx('medicationItem')}>
+                            <button
+                              type="button"
+                              className={cx('medicationInfo')}
+                              onClick={() => openEditMedication(medication)}
+                              aria-label={`${medication.name} 수정`}
+                            >
+                              <strong className={cx('medicationName')}>{medication.name}</strong>
+                              <span className={cx('medicationDetail')}>
+                                {formatDoseAmount(medication.doseAmount)}
+                                {medication.memo ? ` · ${medication.memo}` : ''}
+                              </span>
+                            </button>
+                            <span className={cx('statusBadge', 'small', status)}>{STATUS_LABEL[status]}</span>
+                            <button
+                              type="button"
+                              className={cx('deleteButton')}
+                              onClick={() => handleDelete(medication)}
+                              aria-label={`${medication.name} 삭제`}
+                            >
+                              삭제
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         )}
       </section>
 
