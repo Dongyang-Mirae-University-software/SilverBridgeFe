@@ -39,6 +39,8 @@ export interface DraftDrug {
   name: string;
   doseAmount: number;
   lowConfidence: boolean; // 인식 확신이 낮은 약 - 이름 칸을 옅게 강조한다
+  notInList: boolean; // 식약처 허가 목록에 없는 이름(inList=false) - 강조하고 행 아래에 안내한다. 대조 못 함(null)은 false
+  suggestions: string[]; // notInList일 때만: 비슷한 허가 품목명(최대 3개). 보호자가 골라야만 이름이 바뀐다
   timesPerDay: number | null; // 봉투에 적힌 하루 횟수. 모르면(직접 쓴 약 포함) null
   slots: MedicationTimeSlot[]; // 봉투에 표시된 시간대. 없으면 빈 배열
 }
@@ -55,9 +57,33 @@ export function createEmptyDrug(): DraftDrug {
     name: '',
     doseAmount: DEFAULT_DOSE_AMOUNT,
     lowConfidence: false,
+    notInList: false,
+    suggestions: [],
     timesPerDay: null,
     slots: [],
   };
+}
+
+// 이름을 한 번 더 확인해야 하는 약 - 노란 칸과 결과 아래 확인 박스가 같은 기준을 쓴다
+export function needsNameCheck(drug: DraftDrug) {
+  return drug.lowConfidence || drug.notInList;
+}
+
+// 보호자가 이름을 고치면(직접 쓰기·제안 칩) 그 약의 강조·안내·제안을 끈다. 다시 대조하지 않는다
+export function renameDrug(name: string): Pick<DraftDrug, 'name' | 'lowConfidence' | 'notInList' | 'suggestions'> {
+  return { name, lowConfidence: false, notInList: false, suggestions: [] };
+}
+
+export const MAX_SUGGESTIONS = 3;
+
+// 제안 이름 정리: 목록에 없는 약만, 빈 값·이름 상한(100자) 초과·중복은 빼고 최대 3개
+function cleanSuggestions(notInList: boolean, suggestions: string[] | null | undefined) {
+  if (!notInList || !Array.isArray(suggestions)) return [];
+  const cleaned = suggestions
+    .filter((value): value is string => typeof value === 'string')
+    .map(value => value.trim())
+    .filter(value => value.length > 0 && value.length <= MAX_NAME_LENGTH);
+  return [...new Set(cleaned)].slice(0, MAX_SUGGESTIONS);
 }
 
 // 0.5 단위로 맞추고 범위 안으로 자른다. 읽지 못했거나 이상한 값은 1알
@@ -113,6 +139,8 @@ export function ocrResultToDraft(result: MedicationOcrResponse | null): OcrDraft
       name: drug.name.trim().slice(0, MAX_NAME_LENGTH),
       doseAmount: normalizeDoseAmount(drug.perDose),
       lowConfidence: drug.confidence === 'low',
+      notInList: drug.inList === false,
+      suggestions: cleanSuggestions(drug.inList === false, drug.suggestions),
       timesPerDay: knownTimesPerDay(drug.timesPerDay),
       slots: orderSlots(drug.slots ?? []),
     })),

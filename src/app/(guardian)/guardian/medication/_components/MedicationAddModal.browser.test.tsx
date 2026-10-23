@@ -40,6 +40,22 @@ const OCR_MIXED_TIMES: MedicationOcrResponse = {
   ],
 };
 
+// 약 이름 대조(BE #367): 1번 = 목록에 없음 + 제안 3개(오독이 confidence high로 온 실측과 같은 모양), 2번 = 목록에 없음 + 제안 0개,
+// 3번 = 대조 못 함(null), 4번 = 칸이 없는 옛 응답
+const LONG_SUGGESTION = '슈도에페드린염산염·트리프롤리딘염산염복합제피린정'.repeat(2);
+const OCR_NAME_CHECK: MedicationOcrResponse = {
+  readable: true,
+  drugs: [
+    { name: '슈다페트정', perDose: 1, timesPerDay: 3, days: 3, slots: [], timing: null, confidence: 'high', inList: false, suggestions: ['슈다페드정', '슈다펜정', LONG_SUGGESTION] },
+    { name: '무명약정', perDose: 1, timesPerDay: 3, days: 3, slots: [], timing: null, confidence: 'high', inList: false, suggestions: [] },
+    { name: '아스피린정', perDose: 1, timesPerDay: 3, days: 3, slots: [], timing: null, confidence: 'high', inList: null, suggestions: [] },
+    { name: '코싹엘정', perDose: 1, timesPerDay: 3, days: 3, slots: [], timing: null, confidence: 'high' },
+  ],
+};
+
+const NOT_IN_LIST_TEXT = '목록에 없는 이름이에요. 봉투와 다시 확인해 주세요';
+const CHECK_BOX_TEXT = '노란 칸의 약 이름을 한 번 더 확인해 주세요. 맞나요?';
+
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason: unknown) => void;
@@ -88,6 +104,12 @@ async function choosePhoto() {
   input.files = transfer.files;
   input.dispatchEvent(new Event('change', { bubbles: true }));
 }
+
+// 약 행(<li>)과 그 안의 강조·안내·제안 칩
+const drugRow = (screen: Screen, n: number) => (screen.getByLabelText(`${n}번째 약 이름`).element() as HTMLElement).closest('li')!;
+const isHighlighted = (screen: Screen, n: number) => screen.getByLabelText(`${n}번째 약 이름`).element().className.includes('lowConfidence');
+const rowSuggestionChips = (screen: Screen, n: number) =>
+  [...drugRow(screen, n).querySelectorAll('button')].filter(button => button.getAttribute('aria-label')?.includes('(으)로 바꾸기'));
 
 const chip = (screen: Screen, name: string) => screen.getByRole('button', { name, exact: true });
 
@@ -143,6 +165,74 @@ describe('MedicationAddModal (Chrome)', () => {
     await choosePhoto();
     await expect.element(screen.getByText(/약 3개를 찾았어요/)).toBeVisible();
     expect(screen.getByText(/노란 칸의 약 이름/).query()).toBeNull();
+  });
+
+  it('목록에 없는 이름: 강조·안내·제안 칩, 칩을 누르면 그 행 이름만 바뀌고 강조가 풀린다 (BE #367)', async () => {
+    const { screen } = renderModal();
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_NAME_CHECK);
+    await choosePhoto();
+    await expect.element(screen.getByText(/약 4개를 찾았어요/)).toBeVisible();
+
+    // confidence high여도 목록에 없으면 노란 칸 + 확인 박스
+    await expect.element(screen.getByText(CHECK_BOX_TEXT)).toBeVisible();
+    expect([1, 2, 3, 4].map(n => isHighlighted(screen, n))).toEqual([true, true, false, false]);
+    expect([1, 2, 3, 4].map(n => drugRow(screen, n).textContent?.includes(NOT_IN_LIST_TEXT))).toEqual([true, true, false, false]);
+    // 1번은 제안 3개, 2번(제안 0개)은 문구만
+    expect(rowSuggestionChips(screen, 1).map(button => button.textContent)).toEqual(['슈다페드정', '슈다펜정', LONG_SUGGESTION]);
+    expect(rowSuggestionChips(screen, 2)).toHaveLength(0);
+    // 자동으로 바꾸거나 미리 고르지 않는다
+    await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('슈다페트정');
+    // 375px에서 긴 제안 칩이 줄바꿈되어도 가로로 넘치지 않는다
+    const dialog = screen.getByRole('dialog').element() as HTMLElement;
+    expect(dialog.scrollWidth).toBeLessThanOrEqual(dialog.clientWidth);
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+
+    await screen.getByRole('button', { name: '1번째 약을 슈다펜정(으)로 바꾸기' }).click();
+    await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('슈다펜정');
+    expect(isHighlighted(screen, 1)).toBe(false);
+    expect(drugRow(screen, 1).textContent).not.toContain(NOT_IN_LIST_TEXT);
+    expect(rowSuggestionChips(screen, 1)).toHaveLength(0);
+    // 다른 행은 그대로
+    await expect.element(screen.getByLabelText('2번째 약 이름')).toHaveValue('무명약정');
+    expect(isHighlighted(screen, 2)).toBe(true);
+    await expect.element(screen.getByText(CHECK_BOX_TEXT)).toBeVisible();
+
+    // 남은 행을 직접 고치면 그 행의 강조·안내도 풀리고, 확인할 약이 없으니 박스도 사라진다
+    await screen.getByLabelText('2번째 약 이름').fill('무코스타정');
+    expect(isHighlighted(screen, 2)).toBe(false);
+    expect(drugRow(screen, 2).textContent).not.toContain(NOT_IN_LIST_TEXT);
+    await expect.element(screen.getByText(CHECK_BOX_TEXT)).not.toBeInTheDocument();
+  });
+
+  it('대조 못 함(inList=null)·옛 응답은 경고하지 않고, 목록에 있음 + 확신 low는 노란 칸만', async () => {
+    const { screen } = renderModal();
+    api.recognizeMedicationEnvelope.mockResolvedValue({
+      readable: true,
+      drugs: [
+        { ...OCR_NAME_CHECK.drugs[2] },
+        { ...OCR_NAME_CHECK.drugs[3] },
+        { ...OCR_TWO_DRUGS.drugs[1], inList: true, suggestions: [] }, // 무코스타정, low
+      ],
+    } satisfies MedicationOcrResponse);
+    await choosePhoto();
+    await expect.element(screen.getByText(/약 3개를 찾았어요/)).toBeVisible();
+    expect([1, 2, 3].map(n => isHighlighted(screen, n))).toEqual([false, false, true]);
+    expect(screen.getByText(NOT_IN_LIST_TEXT).query()).toBeNull();
+    await expect.element(screen.getByText(CHECK_BOX_TEXT)).toBeVisible();
+  });
+
+  it('제안 칩을 누르지 않으면 인식된 이름 그대로 등록한다', async () => {
+    api.addWardMedicationBatch.mockResolvedValue([]);
+    const { screen, onClose } = renderModal();
+    api.recognizeMedicationEnvelope.mockResolvedValue({ readable: true, drugs: [OCR_NAME_CHECK.drugs[0]] });
+    await choosePhoto();
+    await expect.element(screen.getByText(NOT_IN_LIST_TEXT)).toBeVisible();
+    await screen.getByRole('button', { name: '다음' }).click();
+    const submit = screen.getByRole('button', { name: '등록', exact: true });
+    await expect.element(submit, { timeout: 3000 }).toBeEnabled();
+    await submit.click();
+    await vi.waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(api.addWardMedicationBatch.mock.calls[0][1].drugs).toEqual([{ name: '슈다페트정', doseAmount: 1 }]);
   });
 
   it('보내는 사진은 Chrome에서 JPEG로 바뀐다', async () => {

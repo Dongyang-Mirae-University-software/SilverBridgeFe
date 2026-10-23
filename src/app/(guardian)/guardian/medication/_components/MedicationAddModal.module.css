@@ -430,6 +430,51 @@
   background: var(--sb-sun-soft);
 }
 
+/* 허가 목록에 없는 이름 - 행 바로 아래 한 줄 안내 + 제안 칩(고르는 건 보호자) */
+.nameCheck {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+  color: #6b4a0d;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.suggestionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.suggestionChip {
+  max-width: 100%;
+  min-height: 26px;
+  border: 1px solid var(--sb-sun);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  padding: 3px 10px;
+  text-align: left;
+  word-break: break-all;
+}
+
+.suggestionChip:hover {
+  background: var(--sb-sun-soft);
+}
+
 .nameInput.duplicated {
   border-color: var(--sb-warn);
 }

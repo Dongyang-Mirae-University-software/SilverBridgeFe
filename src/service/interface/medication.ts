@@ -90,6 +90,10 @@ export interface MedicationOcrDrug {
   slots: MedicationTimeSlot[]; // 봉투에 표시된 시간대. 없으면 빈 배열
   timing: string | null; // 예) 식후 30분
   confidence: 'high' | 'low' | null; // 화면 강조용. high라도 보호자 확인은 필요
+  // 식약처 허가 목록 대조(BE #367). true 있음 / false 없음(확인 강조) / null 대조 못 함(경고 안 함). 칸이 없는 옛 응답은 null로 본다
+  // confidence와 별개다 - 오독 이름이 confidence high로 온 적이 있다
+  inList?: boolean | null;
+  suggestions?: string[]; // 비슷한 허가 품목명(최대 3개). inList=false일 때만 채워지고 그 밖은 빈 배열. 참고용 - 자동으로 바꾸지 않는다
 }
 
 export interface MedicationOcrResponse {
