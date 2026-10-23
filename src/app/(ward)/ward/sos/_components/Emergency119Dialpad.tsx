@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import { type GuardianNotifyStatus, useGuardianNotifyStatus } from './guardianNotifyStatus';
 import styles from './Emergency119Dialpad.module.css';
 
 const cx = classNames.bind(styles);
 
 // 학생 프로젝트라 실제 신고가 나가면 안 된다(2026-08-26). 휴대폰 다이얼러를 여는 전화 링크·OS 다이얼러 호출을
-// 쓰지 않고 앱 안에서 그린 키패드만 쓴다 - 통화 버튼은 안내만 띄운다(Emergency119Dialpad.browser.test.tsx 가드)
+// 쓰지 않고 앱 안에서 그린 키패드만 쓴다 - 통화 버튼은 안내만 띄운다(Emergency119Dialpad.guard.test.ts 가드)
 const DIAL_KEYS: { key: string; letters?: string }[] = [
   { key: '1' },
   { key: '2', letters: 'ABC' },
@@ -29,26 +30,60 @@ const MAX_DIGITS = 15;
 
 export const DEMO_CALL_NOTICE = '시연 화면이라 실제로 전화가 걸리지 않아요';
 
-export function Emergency119Dialpad({
-  guardianNotified,
-  onClose,
-}: {
-  guardianNotified?: boolean;
-  onClose: () => void;
-}) {
+const GUARDIAN_NOTIFY_TEXT: Record<Exclude<GuardianNotifyStatus, null>, string> = {
+  sending: '보호자에게 알리는 중이에요…',
+  sent: '보호자에게도 알렸어요',
+  failed: '보호자에게 알리지 못했어요',
+};
+
+const FOCUSABLE = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+// 키패드 위에 다른 모달(전송 실패 안내 등)이 떠 있으면 Tab 순환은 그 모달에 맡긴다
+function isTopModal(dialog: HTMLElement) {
+  const modals = document.querySelectorAll('[aria-modal="true"]');
+  return modals[modals.length - 1] === dialog;
+}
+
+export function Emergency119Dialpad({ onClose }: { onClose: () => void }) {
   const [digits, setDigits] = useState('119');
   const [callNoticeShown, setCallNoticeShown] = useState(false);
+  const guardianNotifyStatus = useGuardianNotifyStatus();
   const dialogRef = useRef<HTMLDivElement>(null);
   const callNoticeRef = useRef<HTMLParagraphElement>(null);
+  const noticeId = useId();
 
   useEffect(() => {
+    // 닫으면 열기 전 포커스(보통 SOS 버튼)로 돌려보낸다
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     dialogRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        onClose();
+        return;
+      }
+      const dialog = dialogRef.current;
+      if (event.key !== 'Tab' || !dialog || !isTopModal(dialog)) return;
+
+      // 포커스 가둠 - 뒤에 가려진 SOS 버튼으로 빠져 SOS가 한 번 더 나가지 않게 한다
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !dialog.contains(active) || active === dialog)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !dialog.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
     }
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
   }, [onClose]);
 
   // 작은 화면·큰 글씨에서는 안내가 통화 버튼 아래로 밀려 안 보일 수 있어 보이는 곳까지 내린다
@@ -63,11 +98,14 @@ export function Emergency119Dialpad({
       role="dialog"
       aria-modal="true"
       aria-label="119 신고 키패드(시연 화면)"
+      aria-describedby={noticeId}
       tabIndex={-1}
     >
       <div className={cx('screen')}>
         <div className={cx('header')}>
-          <p className={cx('notice')}>학생 프로젝트 화면 · 실제로 신고 전화가 발신되지 않습니다</p>
+          <p id={noticeId} className={cx('notice')}>
+            학생 프로젝트 화면 · 실제로 신고 전화가 발신되지 않습니다
+          </p>
           <button className={cx('close')} type="button" onClick={onClose} aria-label="119 화면 닫기">
             <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
               <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
@@ -76,7 +114,11 @@ export function Emergency119Dialpad({
           </button>
         </div>
 
-        {guardianNotified && <p className={cx('guardianNotice')}>보호자에게도 알렸어요</p>}
+        {guardianNotifyStatus && (
+          <p className={cx('guardianNotice', guardianNotifyStatus)} role="status">
+            {GUARDIAN_NOTIFY_TEXT[guardianNotifyStatus]}
+          </p>
+        )}
 
         <div className={cx('displayRow')}>
           <span className={cx('displaySpacer')} aria-hidden="true" />

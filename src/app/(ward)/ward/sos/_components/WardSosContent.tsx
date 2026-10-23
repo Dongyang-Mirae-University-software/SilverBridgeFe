@@ -12,6 +12,7 @@ import { useWardSosMutation } from '@/service/query/ward';
 import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
 import type { WardSosResponse } from '@/service/interface/ward/sos';
 import { Emergency119Dialpad } from './Emergency119Dialpad';
+import { setGuardianNotifyStatus } from './guardianNotifyStatus';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
 
@@ -28,8 +29,8 @@ export default function WardSosContent() {
   const { mutate: triggerSos, mutateAsync: triggerSosAsync } = useWardSosMutation();
   const [isSending, setIsSending] = useState(false);
 
-  function openDialModal(guardianNotified?: boolean) {
-    openModal(<Emergency119Dialpad guardianNotified={guardianNotified} onClose={onCloseModal} />);
+  function openDialModal() {
+    openModal(<Emergency119Dialpad onClose={onCloseModal} />);
   }
 
   function openErrorModal(error: unknown) {
@@ -79,21 +80,33 @@ export default function WardSosContent() {
 
   // 2026-10-07: 확인 창 없이 탭하면 바로 전송한다. 활성 보호자가 있으면 설정값에 따라
   // 119 화면을 먼저 열거나(응답을 기다리지 않음) 완료 안내를 보여준다
+  // 2026-10-23: 연결된 보호자가 없어도 SOS를 보내 이력을 남긴다(BE는 알림 대상 0명이면 이력만 저장).
+  // 119 화면은 기다리지 않고 바로 열고, 알릴 사람이 없으니 실패해도 오류 창은 띄우지 않는다
   function handleHeroPress() {
+    if (isSending) return;
+    setIsSending(true);
+
     if (!isLoadingGuardians && !hasActiveGuardians) {
+      setGuardianNotifyStatus(null);
       openDialModal();
+      triggerSosAsync(undefined)
+        .catch(() => {})
+        .finally(() => setIsSending(false));
       return;
     }
-    if (isSending) return;
 
-    setIsSending(true);
+    setGuardianNotifyStatus('sending');
     if (wardSettings.sosAction === 'CALL_119_AND_NOTIFY') openDialModal();
 
     triggerSosAsync(undefined)
       .then(data => {
+        setGuardianNotifyStatus('sent');
         if (wardSettings.sosAction === 'NOTIFY_GUARDIAN_FIRST') openSuccessModal(data);
       })
-      .catch(openErrorModal)
+      .catch(error => {
+        setGuardianNotifyStatus('failed');
+        openErrorModal(error);
+      })
       .finally(() => setIsSending(false));
   }
 

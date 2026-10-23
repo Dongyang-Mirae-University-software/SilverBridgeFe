@@ -1,16 +1,21 @@
 // 119 키패드 컴포넌트 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`)
 // 학생 프로젝트라 통화 버튼은 아무 데도 걸지 않고 안내만 띄운다(2026-10-23, 휴대폰 키패드 모양으로 교체)
+// 점검 반영(2026-10-23): 보호자 알림 전송 상태 표시·포커스 가둠/복귀·가로 화면 키 최소 48px
 
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
-import { userEvent } from '@vitest/browser/context';
+import { page, userEvent } from '@vitest/browser/context';
 
 import { DEMO_CALL_NOTICE, Emergency119Dialpad } from './Emergency119Dialpad';
+import { setGuardianNotifyStatus } from './guardianNotifyStatus';
 
 describe('Emergency119Dialpad (Chrome)', () => {
-  afterEach(() => {
+  afterEach(async () => {
     document.body.innerHTML = '';
+    setGuardianNotifyStatus(null);
     vi.restoreAllMocks();
+    await page.viewport(375, 812);
   });
 
   it('열리면 119가 입력돼 있고, 키 입력·지우기가 된다', async () => {
@@ -19,9 +24,12 @@ describe('Emergency119Dialpad (Chrome)', () => {
 
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
     await expect.element(display).toHaveTextContent('119');
-    await expect.element(screen.getByText('학생 프로젝트 화면 · 실제로 신고 전화가 발신되지 않습니다')).toBeVisible();
-    // 보호자 알림 안내는 guardianNotified 일 때만
-    expect(screen.getByText('보호자에게도 알렸어요').query()).toBeNull();
+    // 상단 안내는 대화상자 설명으로 연결돼 화면 낭독기가 함께 읽는다
+    await expect
+      .element(screen.getByRole('dialog'))
+      .toHaveAccessibleDescription('학생 프로젝트 화면 · 실제로 신고 전화가 발신되지 않습니다');
+    // 보호자 알림 상태가 없으면(보호자 없음) 아무 안내도 없다
+    expect(screen.getByText(/보호자에게/).query()).toBeNull();
 
     await screen.getByRole('button', { name: '2' }).click();
     await screen.getByRole('button', { name: '별표' }).click();
@@ -32,12 +40,26 @@ describe('Emergency119Dialpad (Chrome)', () => {
     await expect.element(display).toHaveTextContent('119');
   });
 
+  it('보호자 알림은 전송 결과를 따라 바뀐다 - "알렸어요"는 성공한 뒤에만', async () => {
+    setGuardianNotifyStatus('sending');
+    const screen = render(<Emergency119Dialpad onClose={() => {}} />);
+
+    await expect.element(screen.getByText('보호자에게 알리는 중이에요…')).toBeVisible();
+    expect(screen.getByText('보호자에게도 알렸어요').query()).toBeNull();
+
+    setGuardianNotifyStatus('sent');
+    await expect.element(screen.getByText('보호자에게도 알렸어요')).toBeVisible();
+
+    setGuardianNotifyStatus('failed');
+    await expect.element(screen.getByText('보호자에게 알리지 못했어요')).toBeVisible();
+    expect(screen.getByText('보호자에게도 알렸어요').query()).toBeNull();
+  });
+
   it('통화 버튼은 안내만 띄우고 이동·새 창·링크가 없다', async () => {
     const openSpy = vi.spyOn(window, 'open');
     const hrefBefore = window.location.href;
-    const screen = render(<Emergency119Dialpad guardianNotified onClose={() => {}} />);
+    const screen = render(<Emergency119Dialpad onClose={() => {}} />);
 
-    await expect.element(screen.getByText('보호자에게도 알렸어요')).toBeVisible();
     const call = screen.getByRole('button', { name: /실제로 걸리지 않음/ });
     await expect.element(call).toBeEnabled();
     expect(screen.getByText(DEMO_CALL_NOTICE).query()).toBeNull();
@@ -62,8 +84,40 @@ describe('Emergency119Dialpad (Chrome)', () => {
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 
+  it('Tab을 여러 번 눌러도 포커스가 키패드 밖(가려진 SOS 버튼)으로 나가지 않고, 닫으면 SOS 버튼으로 돌아온다', async () => {
+    function Page() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            긴급 SOS
+          </button>
+          {open && <Emergency119Dialpad onClose={() => setOpen(false)} />}
+        </>
+      );
+    }
+    const screen = render(<Page />);
+    const sos = screen.getByRole('button', { name: '긴급 SOS' });
+    await sos.click();
+    const dialog = screen.getByRole('dialog', { name: /119 신고 키패드/ });
+    await expect.element(dialog).toBeVisible();
+
+    for (let i = 0; i < 20; i += 1) {
+      await userEvent.keyboard('{Tab}');
+      expect(dialog.element().contains(document.activeElement)).toBe(true);
+    }
+    for (let i = 0; i < 5; i += 1) {
+      await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
+      expect(dialog.element().contains(document.activeElement)).toBe(true);
+    }
+
+    await userEvent.keyboard('{Escape}');
+    await expect.element(dialog).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(sos.element());
+  });
+
   it('375px 화면에서 키·통화 버튼이 화면 안에 있고 가로로 넘치지 않는다', async () => {
-    const screen = render(<Emergency119Dialpad guardianNotified onClose={() => {}} />);
+    const screen = render(<Emergency119Dialpad onClose={() => {}} />);
     const call = screen.getByRole('button', { name: /실제로 걸리지 않음/ });
     await expect.element(call).toBeVisible();
 
@@ -72,6 +126,22 @@ describe('Emergency119Dialpad (Chrome)', () => {
     expect(rect.width).toBeGreaterThanOrEqual(64);
     const keyRect = screen.getByRole('button', { name: '5' }).element().getBoundingClientRect();
     expect(keyRect.width).toBeGreaterThanOrEqual(64);
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+  });
+
+  it('가로 화면(812×375)에서도 키 지름이 48px 이상이고, 통화 버튼은 스크롤로 닿는다', async () => {
+    await page.viewport(812, 375);
+    const screen = render(<Emergency119Dialpad onClose={() => {}} />);
+    const call = screen.getByRole('button', { name: /실제로 걸리지 않음/ });
+    await expect.element(call).toBeInTheDocument();
+
+    for (const name of ['1', '5', '샵']) {
+      const width = screen.getByRole('button', { name, exact: true }).element().getBoundingClientRect().width;
+      expect(width).toBeGreaterThanOrEqual(48);
+    }
+    expect(call.element().getBoundingClientRect().width).toBeGreaterThanOrEqual(48);
+    call.element().scrollIntoView({ block: 'nearest' });
+    expect(call.element().getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 });

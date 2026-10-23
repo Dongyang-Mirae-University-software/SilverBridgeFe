@@ -5,9 +5,11 @@
   --dial-bg: #1a2530;
   --dial-key: rgba(255, 255, 255, 0.14);
   --dial-key-active: rgba(255, 255, 255, 0.32);
-  --dial-call: #2fb45a;
-  --dial-call-active: #26954a;
-  --dial-key-size: min(80px, 22vw, 9.6dvh);
+  /* 흰 아이콘 대비 3.79:1 (그래픽 기준 3:1) */
+  --dial-call: #25964a;
+  --dial-call-active: #1e7d3d;
+  /* 터치 영역 최소 48px - 가로 화면처럼 낮은 화면은 줄이지 않고 세로 스크롤로 받는다 */
+  --dial-key-size: max(48px, min(80px, 22vw, 9.6dvh));
 
   position: fixed;
   inset: 0;
@@ -76,6 +78,11 @@
   font-size: min(1.0625rem, 20px);
   font-weight: 700;
   text-align: center;
+}
+
+.guardianNotice.failed {
+  background: rgba(214, 69, 69, 0.28);
+  color: #ffd6d6;
 }
 
 .displayRow {
