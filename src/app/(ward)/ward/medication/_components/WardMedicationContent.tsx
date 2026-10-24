@@ -1,6 +1,7 @@
 'use client';
 
 import { useIsMutating, useMutationState, useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
@@ -34,6 +35,11 @@ export function WardMedicationContent() {
   const groups = groupMedicationsByTime(medications, '00:00', data?.doseDate ?? '');
   const nextGroup = groups.find(group => group.medications.some(medication => !medication.taken));
   const nextUntaken = nextGroup?.medications.filter(medication => !medication.taken) ?? [];
+  // 펼침: 기본은 지금 먹을 시간대 하나만(다 먹은·나중 시간대는 머리만) - 핸드폰에서 18줄이 한꺼번에 보였다(2026-10-24).
+  // 머리를 누르면 그 시간대만 펼치고 접는다(잘못 누른 약을 풀 때도)
+  const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  const isOpen = (key: string) => toggled[key] ?? key === nextGroup?.key;
+  const toggleGroup = (key: string) => setToggled(current => ({ ...current, [key]: !isOpen(key) }));
   const batchMutation = useMedicationIntakeBatchMutation();
   // 약 하나 체크와 묶음 체크가 겹치지 않게 둘 중 하나라도 처리 중이면 모든 체크 버튼을 잠근다
   const isChanging = useIsMutating({ mutationKey: ['ward-medication-intake'] }) > 0;
@@ -114,21 +120,36 @@ export function WardMedicationContent() {
 
           {groups.map(group => {
             const untaken = group.medications.filter(medication => !medication.taken);
+            const open = isOpen(group.key);
+            const panelId = `ward-medication-group-${group.key}`;
             return (
               <section key={group.key} className={cx('listCard')} aria-label={`${group.label} 약`}>
                 <header className={cx('groupHeader')}>
-                  <div className={cx('groupTitle')}>
-                    <strong>{getMedicationTimeSlotLabel(group.timeSlot)}</strong>
-                    <span>
-                      {formatDoseTime(group.doseTime)} · 약 {group.medications.length}개
+                  <button
+                    type="button"
+                    className={cx('groupToggle')}
+                    aria-expanded={open}
+                    aria-controls={panelId}
+                    onClick={() => toggleGroup(group.key)}
+                  >
+                    <span className={cx('groupTitle')}>
+                      <strong>{getMedicationTimeSlotLabel(group.timeSlot)}</strong>
+                      <span>
+                        {formatDoseTime(group.doseTime)} · 약 {group.medications.length}개
+                      </span>
                     </span>
-                  </div>
+                    <span className={cx('chevron', { open })} aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
                   {untaken.length === 0 ? (
                     <span className={cx('groupDone')}>
                       <Icon name="check" size={20} decorative />다 드셨어요
                     </span>
                   ) : (
-                    group.medications.length > 1 && (
+                    // 지금 먹을 시간대는 위 카드에 같은 버튼이 있어 두지 않는다
+                    group.medications.length > 1 &&
+                    group.key !== nextGroup?.key && (
                       <button
                         type="button"
                         className={cx('groupButton')}
@@ -143,11 +164,13 @@ export function WardMedicationContent() {
                     )
                   )}
                 </header>
-                <ul className={cx('list')}>
-                  {group.medications.map(medication => (
-                    <WardMedicationCard key={medication.medicationId} medication={medication} disabled={isChanging} />
-                  ))}
-                </ul>
+                {open && (
+                  <ul id={panelId} className={cx('list')}>
+                    {group.medications.map(medication => (
+                      <WardMedicationCard key={medication.medicationId} medication={medication} disabled={isChanging} />
+                    ))}
+                  </ul>
+                )}
               </section>
             );
           })}
