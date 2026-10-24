@@ -12,6 +12,7 @@ import { guardianConnectionRequestsQueryKey, guardianConnectionsQueryKey } from 
 import { guardianSosHistoryQueryKey } from '@/service/query/guardian/sosHistory';
 import { guardianMedicationQueryKey } from '@/service/query/guardian/medication';
 import { guardianAnomalyHistoryQueryKey } from '@/service/query/guardian/anomaly';
+import { guardianDashboardQueryKey } from '@/service/query/guardian/dashboard';
 import { wardConnectionsQueryKey } from '@/service/query/ward';
 import { wardTodayMedicationQueryKey } from '@/service/query/ward/medication';
 import { CommonResponse } from '@/service/interface/common';
@@ -365,6 +366,7 @@ export default function PushNotificationListener() {
 
   const refreshAnomalyPage = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: guardianAnomalyHistoryQueryKey });
+    await queryClient.invalidateQueries({ queryKey: guardianDashboardQueryKey });
     await queryClient.refetchQueries({ queryKey: guardianAnomalyHistoryQueryKey, type: 'active' });
     router.refresh();
   }, [queryClient, router]);

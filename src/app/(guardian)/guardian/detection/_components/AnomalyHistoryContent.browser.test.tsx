@@ -116,6 +116,20 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     await vi.waitFor(() => expect(api.submitAnomalyFeedback).toHaveBeenCalledWith(7, { verdict: 'REAL' }));
   });
 
+  it('판정이 성공하면 대시보드 "확인이 필요한 일" 캐시도 무효화한다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(12)]));
+    api.submitAnomalyFeedback.mockResolvedValue({ incidentId: 12, reviewStatus: 'REAL', myVerdict: 'REAL' });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(['guardian-dashboard', 'all'], { total: 1 });
+    const screen = render(
+      <AnomalyHistoryContent wards={[{ wardId: 'W1', wardName: '김순자' }]} selectedWardId="W1" onSelectWard={() => undefined} />,
+      { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> },
+    );
+
+    await screen.getByRole('button', { name: '실제 위험이에요' }).click();
+    await vi.waitFor(() => expect(client.getQueryState(['guardian-dashboard', 'all'])?.isInvalidated).toBe(true));
+  });
+
   it('판정이 난 뒤에도 "판정 바꾸기"로 다시 고를 수 있다(덮어쓰기)', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(8, { reviewStatus: 'REAL', myVerdict: 'REAL' })]));
     api.submitAnomalyFeedback.mockResolvedValue({ incidentId: 8, reviewStatus: 'FALSE_ALARM', myVerdict: 'FALSE_ALARM' });
@@ -208,6 +222,20 @@ describe('AnomalyClipModal (Chrome)', () => {
     const screen = render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, { wrapper });
 
     await expect.element(screen.getByText('연결된 피보호자의 기록만 볼 수 있습니다.')).toBeInTheDocument();
+  });
+
+  it('재생 중이던 클립이 다시 받은 목록에서 빠지면(오탐으로 숨겨짐) 영상을 내리고 안내한다', async () => {
+    api.getGuardianAnomalyClips.mockResolvedValueOnce([clip]).mockResolvedValue([]);
+    api.fetchGuardianAnomalyClipFile.mockResolvedValue(new Blob(['x'], { type: 'video/webm' }));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const screen = render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, {
+      wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
+    });
+    await vi.waitFor(() => expect(document.querySelector('video')).not.toBeNull());
+
+    await client.invalidateQueries({ queryKey: ['guardian-anomaly-clips', 1] });
+    await expect.element(screen.getByText(CLIP_UNAVAILABLE_MESSAGE)).toBeInTheDocument();
+    expect(document.querySelector('video')).toBeNull();
   });
 
   it('blob URL로 재생하고, 닫으면 blob URL을 해제한다 - 다운로드 링크는 없다', async () => {

@@ -15,6 +15,7 @@ import {
   GetAnomalyHistoryParams,
   UpdateAnomalyReminderSettingReq,
 } from '@/service/interface/guardian/anomaly';
+import { guardianDashboardQueryKey } from './dashboard';
 
 export const guardianAnomalyHistoryQueryKey = ['guardian-anomaly-history'] as const;
 export const guardianAnomalyReminderSettingQueryKey = ['guardian-anomaly-reminder-setting'] as const;
@@ -59,6 +60,8 @@ export function useAnomalyFeedbackMutation() {
       submitAnomalyFeedback(incidentId, body),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: guardianAnomalyHistoryQueryKey });
+      // 대시보드 '확인이 필요한 일'도 이상감지 PENDING·CONFLICTED를 센다
+      queryClient.invalidateQueries({ queryKey: guardianDashboardQueryKey });
       queryClient.invalidateQueries({ queryKey: [...guardianAnomalyClipsQueryKey, variables.incidentId] });
     },
   });

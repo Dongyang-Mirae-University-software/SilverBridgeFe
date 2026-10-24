@@ -6,7 +6,7 @@ import classNames from 'classnames/bind';
 
 import { fetchGuardianAnomalyClipFile } from '@/service/api/guardian/anomaly';
 import { guardianAnomalyClipsQueryOptions } from '@/service/query/guardian/anomaly';
-import { AnomalyClipFileError, AnomalyIncident } from '@/service/interface/guardian/anomaly';
+import { AnomalyClip, AnomalyClipFileError, AnomalyIncident } from '@/service/interface/guardian/anomaly';
 import { AnomalyVerdictPanel } from './AnomalyVerdictPanel';
 import { formatClipDuration, formatIncidentDate, formatIncidentTime } from './anomalyFormat';
 import styles from './AnomalyClipModal.module.css';
@@ -15,6 +15,8 @@ const cx = classNames.bind(styles);
 
 // 오탐으로 판정된 상황의 클립은 숨겨졌다가 24시간 뒤 지워진다 - 서버는 이유를 가리지 않고 404로 답한다
 export const CLIP_UNAVAILABLE_MESSAGE = '볼 수 없는 영상이에요. 오탐으로 판정된 영상은 24시간 뒤 지워져요.';
+
+const NO_CLIPS: AnomalyClip[] = [];
 
 interface Playback {
   clipId: number;
@@ -25,7 +27,8 @@ interface Playback {
 // 영상은 메모리에만 두고, 다른 클립으로 바꾸거나 닫으면 blob URL을 해제한다. 다운로드는 두지 않는다.
 export function AnomalyClipModal({ incident, onClose }: { incident: AnomalyIncident; onClose: () => void }) {
   const incidentId = incident.incidentId;
-  const { data: clips = [], isLoading, isError } = useQuery(guardianAnomalyClipsQueryOptions(incidentId));
+  const { data: clipsData, isLoading, isError } = useQuery(guardianAnomalyClipsQueryOptions(incidentId));
+  const clips = clipsData ?? NO_CLIPS;
   const [playback, setPlayback] = useState<Playback | null>(null);
   // 누른 즉시 "선택됨"을 보이려는 상태 - playback은 fetch가 끝나야 채워진다
   const [selectedClipId, setSelectedClipId] = useState<number | null>(null);
@@ -81,9 +84,14 @@ export function AnomalyClipModal({ incident, onClose }: { incident: AnomalyIncid
   }, [clips]);
 
   const selectedError = selectedClipId !== null ? clipErrors[selectedClipId] : undefined;
+  // 목록을 다시 받았는데 재생 중이던 클립이 빠졌으면(이 화면에서 '괜찮아요'를 골라 숨겨짐) 받아 둔 영상도 내린다.
+  // blob은 닫거나 다른 클립을 고를 때 해제된다
+  const isPlaybackHidden = Boolean(playback && clipsData && !clipsData.some(clip => clip.clipId === playback.clipId));
   const videoMessage = isError
     ? '영상 목록을 불러오지 못했어요.'
-    : !isLoading && clips.length === 0
+    : isPlaybackHidden
+      ? CLIP_UNAVAILABLE_MESSAGE
+      : !isLoading && clips.length === 0
       ? '볼 수 있는 영상이 없어요.'
       : selectedError ?? '영상을 불러오는 중이에요.';
 
@@ -105,7 +113,7 @@ export function AnomalyClipModal({ incident, onClose }: { incident: AnomalyIncid
         </header>
 
         <div className={cx('videoArea')}>
-          {playback && !selectedError ? (
+          {playback && !selectedError && !isPlaybackHidden ? (
             <video key={playback.clipId} src={playback.url} controls playsInline autoPlay className={cx('video')} />
           ) : (
             <div className={cx('placeholder', { error: Boolean(selectedError) })}>{videoMessage}</div>
