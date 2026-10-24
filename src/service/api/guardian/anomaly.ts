@@ -11,6 +11,7 @@ import {
   AnomalyFeedbackReq,
   AnomalyFeedbackRes,
   AnomalyHistoryPage,
+  AnomalyHistorySummary,
   AnomalyReminderSetting,
   GetAnomalyHistoryParams,
   UpdateAnomalyReminderSettingReq,
@@ -24,6 +25,15 @@ export async function getGuardianAnomalyHistory(params: GetAnomalyHistoryParams 
     params,
   });
   return getResponseData<AnomalyHistoryPage>(response);
+}
+
+// 이력 건수 요약(유형별·확인 필요). wardId 생략 시 연결된 피보호자 전원
+export async function getGuardianAnomalyHistorySummary(wardId?: string) {
+  const response = await apiClient.get<CommonResponse<AnomalyHistorySummary>>(
+    `${GUARDIAN_ANOMALY_BASE}/history/summary`,
+    { params: wardId ? { wardId } : undefined },
+  );
+  return getResponseData<AnomalyHistorySummary>(response);
 }
 
 // 실제 위험(REAL)/오탐(FALSE_ALARM) 응답. 1인 1표, 다시 호출하면 이전 응답을 덮어씀
