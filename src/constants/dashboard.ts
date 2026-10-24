@@ -1,4 +1,4 @@
-import { NavItem, PageKey } from '@/components/layout/dashboard/types';
+import { NavItem } from '@/components/layout/dashboard/types';
 
 export const WARD_NAV: NavItem[] = [
   { href: '/ward', icon: 'dashboard', label: '홈', key: 'home' },
@@ -26,28 +26,6 @@ export const GUARDIAN_NAV: NavItem[] = [
   { href: '/guardian/wards/register', icon: 'plus', label: '가족 등록', key: 'ward-register' },
   { href: '/guardian/settings', icon: 'settings', label: '환경설정', key: 'settings' },
 ];
-
-export const PAGE_TITLES: Record<PageKey, string> = {
-  home: '홈',
-  sos: '긴급 전화',
-  chatbot: 'AI 의료 챗봇',
-  game: '치매 예방 게임',
-  hospital: '병원 예약하기',
-  medication: '복약 알림',
-  notices: '공지사항',
-  guardians: '내 가족',
-  settings: '환경설정',
-  dashboard: '대시보드',
-  detection: '이상감지',
-  emotion: '정서 상태 체크',
-  wards: '연결된 가족',
-  'ward-register': '가족 등록',
-  inquiries: '문의하기',
-  'sos-history': 'SOS 이력',
-  'medication-management': '복약 관리',
-  'game-management': '게임 관리',
-  'camera-register': '카메라 등록',
-};
 
 export const WARD_ACTIONS = [
   { href: '/ward/sos', label: '긴급전화' },

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import type { IConnectionItem } from '@/service/interface/connection';
+import { applyWardConnectionRequestCancelled } from '@/service/query/ward/connection';
 import { WardGuardiansPanel } from './WardGuardiansPanel';
 
 const api = vi.hoisted(() => ({
@@ -56,10 +57,18 @@ function ok<T>(data: T) {
   return { code: 200, success: true, data };
 }
 
+function newClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+}
+
 function wrapper({ children }: { children: ReactNode }) {
-  return (
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{children}</QueryClientProvider>
-  );
+  return <QueryClientProvider client={newClient()}>{children}</QueryClientProvider>;
+}
+
+function wrapperWith(client: QueryClient) {
+  return function ClientWrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
 }
 
 beforeEach(() => {
@@ -118,5 +127,50 @@ describe('피보호자 내 가족 (Chrome)', () => {
     await screen.getByRole('button', { name: '연결 끊기' }).click();
     await screen.getByRole('dialog').getByRole('button', { name: '끊기' }).click();
     await vi.waitFor(() => expect(api.disconnectWardConnection.mock.calls[0]?.[0]).toBe(21));
+  });
+
+  // 점검 M-2: 창이 열린 사이 마지막 보호자가 먼저 해제하면 창이 닫히고, 나중에 새 보호자가 연결돼도 옛 창이 다시 뜨지 않는다
+  it('확인 창 대상이 목록에서 사라지면 닫히고, 새 보호자가 생겨도 옛 창이 다시 뜨지 않는다', async () => {
+    const client = newClient();
+    api.getWardPendingConnections.mockResolvedValue(ok([]));
+    api.getWardActiveConnections
+      .mockResolvedValueOnce(ok([guardian()]))
+      .mockResolvedValueOnce(ok([]))
+      .mockResolvedValue(ok([guardian({ id: 22, partnerName: '박지영', relation: '딸' })]));
+    const screen = render(<WardGuardiansPanel />, { wrapper: wrapperWith(client) });
+
+    await screen.getByRole('button', { name: '연결 끊기' }).click();
+    await expect.element(screen.getByRole('dialog')).toBeInTheDocument();
+
+    await client.invalidateQueries();
+    await expect.element(screen.getByText('아직 연결된 보호자가 없어요')).toBeInTheDocument();
+
+    await client.invalidateQueries();
+    await expect.element(screen.getByText('박지영')).toBeInTheDocument();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(api.disconnectWardConnection).not.toHaveBeenCalled();
+  });
+
+  it('목록을 못 불러오면 그렇다고 알린다', async () => {
+    api.getWardPendingConnections.mockRejectedValue(new Error('x'));
+    api.getWardActiveConnections.mockRejectedValue(new Error('x'));
+    const screen = render(<WardGuardiansPanel />, { wrapper });
+
+    await expect.element(screen.getByText('받은 연결 요청을 불러오지 못했어요.')).toBeInTheDocument();
+    await expect.element(screen.getByText('보호자 목록을 불러오지 못했어요.')).toBeInTheDocument();
+  });
+});
+
+describe('보호자 요청 취소 신호 (connection-request-cancelled)', () => {
+  it('토스트 없이 받은 요청 목록만 새로 받고, 다른 신호는 넘긴다', () => {
+    const client = newClient();
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+
+    expect(applyWardConnectionRequestCancelled(client, { type: 'CONNECTION_REQUEST_CANCELLED', connectionId: '3' })).toBe(true);
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['ward-connections'] });
+
+    invalidate.mockClear();
+    expect(applyWardConnectionRequestCancelled(client, { type: 'CONNECTION_REQUEST' })).toBe(false);
+    expect(invalidate).not.toHaveBeenCalled();
   });
 });

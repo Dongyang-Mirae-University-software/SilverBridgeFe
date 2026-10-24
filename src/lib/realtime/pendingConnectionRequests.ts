@@ -1,4 +1,3 @@
-import { IConnectionItem } from '@/service/interface/connection';
 
 const PENDING_CONNECTION_REQUESTS_KEY = 'careai_pending_connection_requests';
 export const PENDING_CONNECTION_REQUESTS_EVENT = 'careai:pending-connection-requests';
@@ -52,18 +51,4 @@ export function removePendingConnectionRequest(connectionId: number) {
   const nextRequests = requests.filter(request => request.connectionId !== connectionId);
 
   writeRequests(nextRequests);
-}
-
-export function getPendingConnectionRequestItems(): IConnectionItem[] {
-  return readRequests().map(request => ({
-    connectedAt: null,
-    createdAt: request.createdAt,
-    id: request.connectionId,
-    partnerName: request.from ? `보호자 ${request.from}` : '보호자 정보 확인 전',
-    partnerProfileImage: null,
-    partnerUserId: request.from ?? '확인 전',
-    priority: 0,
-    requester: false,
-    status: 'PENDING',
-  }));
 }

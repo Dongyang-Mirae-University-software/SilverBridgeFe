@@ -1,15 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { getConnectionData, getErrorMessage } from '@/components/connections/ConnectionShared';
+import { getConnectionData } from '@/components/connections/ConnectionShared';
 import { guardianConnectionRequestsQueryOptions, useGuardianConnectionCancelMutation } from '@/service/query/guardian';
-import { formatMonthDay, formatRequestedAs } from '@/utils/connection/connectionView';
+import { formatMonthDay, formatRequestedAs, getConnectionActionErrorMessage } from '@/utils/connection/connectionView';
 import styles from './GuardianConnectionRequestHistory.module.css';
 
 const cx = classNames.bind(styles);
+
+// 취소 실패 안내는 잠시만 보여 준다 - 목록이 새로 고쳐진 뒤까지 남아 빈 칸을 붙들지 않게
+const NOTICE_MS = 6000;
 
 // 수락을 기다리는 요청 - 회원 ID·관계·요청일과 요청 취소. 수락 전이라 상대 연락처는 싣지 않는다
 export function GuardianConnectionRequestHistory() {
@@ -18,26 +21,36 @@ export function GuardianConnectionRequestHistory() {
   const [errorMessage, setErrorMessage] = useState('');
   const pendingConnections = getConnectionData(data).filter(connection => connection.status === 'PENDING');
 
+  useEffect(() => {
+    if (!errorMessage) return;
+    const timer = setTimeout(() => setErrorMessage(''), NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [errorMessage]);
+
   const handleCancel = (connectionId: number) => {
     setErrorMessage('');
     cancelMutation.mutate(connectionId, {
-      onError: error => setErrorMessage(getErrorMessage(error, '요청을 취소하지 못했어요.')),
+      // 피보호자가 먼저 수락·거절했으면 409 - 사실대로 안내하고 목록은 onSettled 재조회가 맞춘다
+      onError: error => setErrorMessage(getConnectionActionErrorMessage(error, '요청을 취소하지 못했어요.')),
     });
   };
 
+  const notice = errorMessage && (
+    <p className={cx('errorMessage')} role="alert">
+      {errorMessage}
+    </p>
+  );
+
   if (isError) return <p className={cx('loadError')}>보낸 요청을 불러오지 못했어요.</p>;
-  if (pendingConnections.length === 0 && !errorMessage) return null;
+  // 대기 요청이 없으면 칸을 그리지 않는다 - 취소 실패 안내만 한 줄 남긴다
+  if (pendingConnections.length === 0) return notice || null;
 
   return (
     <section className={cx('card')} aria-labelledby="pending-requests-title">
       <h2 id="pending-requests-title" className={cx('title')}>
         수락을 기다리는 중
       </h2>
-      {errorMessage && (
-        <p className={cx('errorMessage')} role="alert">
-          {errorMessage}
-        </p>
-      )}
+      {notice}
       <ul className={cx('list')}>
         {pendingConnections.map(connection => {
           const requestedOn = formatMonthDay(connection.createdAt);
