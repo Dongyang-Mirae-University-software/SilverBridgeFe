@@ -28,6 +28,14 @@ describe('SessionRestore', () => {
     await vi.waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/ward'));
   });
 
+  it('갱신하는 동안 확인 중 안내를 보인다', async () => {
+    mocks.restoreSession.mockReturnValue(new Promise(() => {}));
+
+    const screen = render(<SessionRestore />);
+
+    await expect.element(screen.getByText('로그인 상태를 확인하고 있어요')).toBeVisible();
+  });
+
   it('세션이 거절되면 로그인 화면으로 보낸다', async () => {
     mocks.restoreSession.mockResolvedValue({ status: 'rejected' });
 

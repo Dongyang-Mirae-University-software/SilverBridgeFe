@@ -65,6 +65,48 @@ describe('RoleRouteGuard', () => {
     expect(mocks.replace).not.toHaveBeenCalledWith('/login');
   });
 
+  it('갱신하는 동안 빈 화면 대신 확인 중 안내를 보인다', async () => {
+    document.cookie = 'careai_refresh_token=r1; path=/';
+    mocks.restoreSession.mockReturnValue(new Promise(() => {}));
+
+    const screen = renderGuard();
+
+    await expect.element(screen.getByText('로그인 상태를 확인하고 있어요')).toBeVisible();
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it('복원이 거절되면 로그인 화면으로 보낸다', async () => {
+    document.cookie = 'careai_refresh_token=r1; path=/';
+    mocks.restoreSession.mockImplementation(async () => {
+      clearAuthTokens();
+      return { status: 'rejected' };
+    });
+
+    renderGuard();
+
+    await vi.waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/login'));
+  });
+
+  it('복원이 일시 장애면 세션을 지우지 않고 다시 시도 안내 - 다시 시도해 성공하면 화면을 연다', async () => {
+    document.cookie = 'careai_refresh_token=r1; path=/';
+    mocks.restoreSession.mockResolvedValue({ status: 'unavailable' });
+    mocks.getMyProfile.mockResolvedValue(profile);
+
+    const screen = renderGuard();
+
+    await expect.element(screen.getByText('로그인 상태를 확인하지 못했어요')).toBeVisible();
+    expect(document.cookie).toContain('careai_refresh_token=r1');
+    expect(mocks.replace).not.toHaveBeenCalledWith('/login');
+
+    mocks.restoreSession.mockImplementation(async () => {
+      setAuthTokens({ accessToken: 'a2', refreshToken: 'r2' });
+      return { status: 'restored', homePath: '/guardian' };
+    });
+    await screen.getByRole('button', { name: '다시 시도' }).click();
+
+    await expect.element(screen.getByText('보호자 화면')).toBeVisible();
+  });
+
   it('refresh 토큰도 없으면 로그인 화면으로 보낸다', async () => {
     renderGuard();
 
