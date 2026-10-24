@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -25,11 +25,14 @@ import {
   formatSlot,
   formatTime,
   hospitalRows,
+  isHospitalOpenNow,
+  isSlotPassed,
   kstNowTime,
   kstToday,
   reservationErrorMessage,
   splitReservations,
 } from '@/utils/reservation/reservationView';
+import { useKstNow } from '@/utils/reservation/useKstNow';
 import styles from './GuardianHospitalContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -44,6 +47,7 @@ const STEPS: { step: Step; label: string }[] = [
   { step: 'confirm', label: '확인' },
 ];
 const PER_PAGE = 5;
+const SLOT_PASSED_MESSAGE = '고르신 시간이 이미 지났어요. 다른 시간을 골라 주세요.';
 
 // 예약 서비스가 요구하는 형식과 동일
 const PHONE_PATTERN = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
@@ -99,6 +103,8 @@ export function GuardianHospitalContent() {
   const [booked, setBooked] = useState<Booked | null>(null);
   const [cancelTarget, setCancelTarget] = useState<number | null>(null);
   const [listNotice, setListNotice] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null);
+  const [slotNotice, setSlotNotice] = useState<string | null>(null);
+  const doneTitleRef = useRef<HTMLDivElement>(null);
 
   const ward = activeWards.find(item => item.partnerUserId === wardId) ?? activeWards[0] ?? null;
   const wardPhone = ward?.partnerPhone && PHONE_PATTERN.test(ward.partnerPhone) ? ward.partnerPhone : null;
@@ -109,8 +115,12 @@ export function GuardianHospitalContent() {
   const slotsQuery = useQuery(availableSlotsQueryOptions(pick?.hospital.id ?? null, date));
   const reservationsQuery = useQuery({ ...myReservationsQueryOptions(ward?.partnerUserId), enabled: Boolean(ward) });
 
-  const today = kstToday();
-  const nowTime = kstNowTime();
+  const { today, nowTime } = useKstNow();
+
+  // 완료 화면이 뜨면 결과 제목으로 포커스를 옮겨 화면 읽기 프로그램이 바로 읽게 한다
+  useEffect(() => {
+    if (step === 'done') doneTitleRef.current?.focus();
+  }, [step]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: myReservationsQueryKey });
@@ -125,17 +135,20 @@ export function GuardianHospitalContent() {
     setQuery('');
     setHospitalPage(0);
     setPhoneInput('');
+    setSlotNotice(null);
     createMutation.reset();
   };
 
   const createMutation = useMutation({
-    mutationFn: ({ wardId, body }: { wardId: string; body: IReservationCreateReq }) => createReservation(wardId, body),
-    onSuccess: (_, { body }) => {
+    mutationFn: ({ wardId, body }: { wardId: string; body: IReservationCreateReq; hospitalName: string }) =>
+      createReservation(wardId, body),
+    // 병원 이름은 보낼 때의 값으로 - 화면 상태(pick)는 그 사이 바뀌었을 수 있다
+    onSuccess: (_, { body, hospitalName }) => {
       invalidate();
       setBooked({
         date: body.reservationDate,
         time: body.reservationTime,
-        hospitalName: pick?.hospital.name ?? '',
+        hospitalName,
         department: body.department,
         wardName: body.patientName,
       });
@@ -163,11 +176,22 @@ export function GuardianHospitalContent() {
     setPick(next);
     setDate('');
     setTime('');
+    setSlotNotice(null);
     setStep('datetime');
+  };
+
+  // 화면을 오래 열어 둔 사이 고른 시각이 지났으면 날짜·시간 단계로 되돌린다(예약 서비스도 오늘의 지난 시각은 막지 않는다)
+  const slotStillAhead = () => {
+    if (!isSlotPassed(date, time, kstToday(), kstNowTime())) return true;
+    setTime('');
+    setSlotNotice(SLOT_PASSED_MESSAGE);
+    setStep('datetime');
+    return false;
   };
 
   const submit = () => {
     if (!ward || !pick || !date || !time || !PHONE_PATTERN.test(patientPhone)) return;
+    if (!slotStillAhead()) return;
     const guardianPhone = guardian?.phone && PHONE_PATTERN.test(guardian.phone) ? guardian.phone : undefined;
     const birthDate =
       ward.partnerBirthDate && /^\d{4}-\d{2}-\d{2}/.test(ward.partnerBirthDate)
@@ -175,6 +199,7 @@ export function GuardianHospitalContent() {
         : undefined;
     createMutation.mutate({
       wardId: ward.partnerUserId,
+      hospitalName: pick.hospital.name,
       body: {
         hospitalId: pick.hospital.id,
         department: pick.department,
@@ -192,6 +217,7 @@ export function GuardianHospitalContent() {
   if (isWardsLoading) return <p className={cx('message')}>피보호자 정보를 불러오는 중이에요.</p>;
   if (!ward) return <p className={cx('message')}>연결된 피보호자가 없어요. 먼저 피보호자를 연결해 주세요.</p>;
 
+  const phoneInvalid = Boolean(phoneInput) && !PHONE_PATTERN.test(patientPhone);
   const stepIndex = STEPS.findIndex(item => item.step === step);
   const inFlow = stepIndex >= 0;
 
@@ -224,7 +250,12 @@ export function GuardianHospitalContent() {
             <span />
           )}
           {inFlow && (
-            <button type="button" className={cx('btn', 'ghost', 'headButton')} onClick={resetFlow}>
+            <button
+              type="button"
+              className={cx('btn', 'ghost', 'headButton')}
+              disabled={createMutation.isPending}
+              onClick={resetFlow}
+            >
               <XIcon />
               예약 취소
             </button>
@@ -320,10 +351,11 @@ export function GuardianHospitalContent() {
                   type="button"
                   className={cx('day', { selected: date === day.iso, sunday: day.weekday === '일' })}
                   aria-pressed={date === day.iso}
-                  aria-label={formatDateShort(day.iso)}
+                  aria-label={`${formatDateShort(day.iso)}${day.iso === today ? ' 오늘' : ''}`}
                   onClick={() => {
                     setDate(day.iso);
                     setTime('');
+                    setSlotNotice(null);
                   }}
                 >
                   <span className={cx('weekday')}>{day.weekday}</span>
@@ -346,9 +378,18 @@ export function GuardianHospitalContent() {
                 isToday={date === today}
                 nowTime={nowTime}
                 time={time}
-                onTime={setTime}
+                onTime={value => {
+                  setTime(value);
+                  setSlotNotice(null);
+                }}
               />
             </section>
+          )}
+
+          {slotNotice && (
+            <p className={cx('notice', 'bad')} role="alert">
+              {slotNotice}
+            </p>
           )}
 
           <button
@@ -356,6 +397,7 @@ export function GuardianHospitalContent() {
             className={cx('btn', 'primary', 'wide')}
             disabled={!(date && time)}
             onClick={() => {
+              if (!slotStillAhead()) return;
               createMutation.reset();
               setStep('confirm');
             }}
@@ -386,12 +428,18 @@ export function GuardianHospitalContent() {
                   inputMode="tel"
                   placeholder="010-0000-0000"
                   value={phoneInput}
-                  aria-invalid={Boolean(phoneInput) && !PHONE_PATTERN.test(patientPhone)}
+                  aria-invalid={phoneInvalid}
+                  aria-describedby={phoneInvalid ? 'hospital-phone-hint hospital-phone-error' : 'hospital-phone-hint'}
                   onChange={event => setPhoneInput(event.target.value)}
                 />
-                <span className={cx('fieldHint')}>
+                <span id="hospital-phone-hint" className={cx('fieldHint')}>
                   {ward.partnerName} 님 계정에 휴대폰 번호가 없어 예약에 쓸 번호를 적어 주세요.
                 </span>
+                {phoneInvalid && (
+                  <span id="hospital-phone-error" className={cx('fieldError')}>
+                    010-1234-5678처럼 휴대폰 번호를 적어 주세요.
+                  </span>
+                )}
               </label>
             )}
           </div>
@@ -401,7 +449,12 @@ export function GuardianHospitalContent() {
             </p>
           )}
           <div className={cx('confirmButtons')}>
-            <button type="button" className={cx('btn', 'ghost', 'tall')} onClick={() => setStep('datetime')}>
+            <button
+              type="button"
+              className={cx('btn', 'ghost', 'tall')}
+              disabled={createMutation.isPending}
+              onClick={() => setStep('datetime')}
+            >
               이전
             </button>
             <button
@@ -421,7 +474,9 @@ export function GuardianHospitalContent() {
           <span className={cx('doneCheck')}>
             <CheckIcon />
           </span>
-          <div className={cx('doneTitle')}>예약했어요</div>
+          <div ref={doneTitleRef} tabIndex={-1} className={cx('doneTitle')}>
+            예약했어요
+          </div>
           <div className={cx('doneWhen')}>
             {formatDateShort(booked.date)} {formatTime(booked.time)}
           </div>
@@ -468,6 +523,11 @@ interface ListStepProps {
 
 function ListStep(props: ListStepProps) {
   const { reservations, hospitals, today, nowTime } = props;
+  // 취소 확인으로 바뀌면 [아니요]로 포커스를 옮긴다(누른 버튼이 사라져 포커스가 길을 잃지 않게)
+  const keepRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (props.cancelTarget !== null) keepRef.current?.focus();
+  }, [props.cancelTarget]);
   const newButton = (
     <button type="button" className={cx('btn', 'primary', 'newButton')} onClick={props.onNew}>
       <PlusIcon />새 진료 예약하기
@@ -503,7 +563,7 @@ function ListStep(props: ListStepProps) {
   // 지난 예약의 병원을 다시 고를 수 있을 때만 버튼을 둔다(예약 응답엔 병원 ID가 없어 이름으로 찾는다)
   const rebookOf = (item: IReservationItem): Pick | null => {
     const hospital = findHospitalByName(hospitals, item.hospitalName);
-    return hospital?.bookingAvailable && hospital.departments.includes(item.department)
+    return hospital?.bookingAvailable && isHospitalOpenNow(hospital) && hospital.departments.includes(item.department)
       ? { hospital, department: item.department }
       : null;
   };
@@ -512,7 +572,7 @@ function ListStep(props: ListStepProps) {
     props.cancelTarget === item.reservationId ? (
       <div className={cx('cancelAsk')} role="group" aria-label="예약 취소 확인">
         <span>이 예약을 취소할까요?</span>
-        <button type="button" className={cx('btn', 'ghost', 'smallButton')} onClick={props.onKeep}>
+        <button ref={keepRef} type="button" className={cx('btn', 'ghost', 'smallButton')} onClick={props.onKeep}>
           아니요
         </button>
         <button
@@ -528,6 +588,7 @@ function ListStep(props: ListStepProps) {
       <button
         type="button"
         className={cx('btn', 'ghost', 'smallButton')}
+        aria-label={`${formatDateShort(item.reservationDate)} ${formatTime(item.reservationTime)} ${item.hospitalName} 예약 취소`}
         onClick={() => props.onAskCancel(item.reservationId)}
       >
         이 예약 취소
@@ -536,11 +597,10 @@ function ListStep(props: ListStepProps) {
 
   return (
     <>
-      {props.notice && (
-        <p className={cx('notice', props.notice.tone)} role={props.notice.tone === 'bad' ? 'alert' : 'status'}>
-          {props.notice.text}
-        </p>
-      )}
+      {/* 알림 영역은 늘 두고 내용만 바꾼다 - 새로 생기는 영역은 화면 읽기 프로그램이 놓칠 수 있다 */}
+      <div aria-live="polite">
+        {props.notice && <p className={cx('notice', props.notice.tone)}>{props.notice.text}</p>}
+      </div>
 
       <section className={cx('card', 'nextCard')} aria-label="다음 진료">
         <div className={cx('nextBody')}>
@@ -608,6 +668,7 @@ function ListStep(props: ListStepProps) {
                   <button
                     type="button"
                     className={cx('btn', 'ghost', 'smallButton')}
+                    aria-label={`${item.hospitalName} ${item.department} 다시 예약`}
                     onClick={() => props.onRebook(rebook)}
                   >
                     같은 곳 다시 예약
@@ -666,24 +727,32 @@ function SearchStep({ hospitals, isLoading, error, onRetry, query, onQuery, page
         ) : rows.length === 0 ? (
           <p className={cx('emptyRow', 'center')}>찾는 병원이 없어요</p>
         ) : (
-          rows.slice(current * PER_PAGE, (current + 1) * PER_PAGE).map(({ hospital, department }) => (
-            <button
-              key={`${hospital.id}-${department}`}
-              type="button"
-              className={cx('hospitalRow')}
-              onClick={() => onChoose({ hospital, department })}
-            >
-              <span className={cx('hospitalText')}>
-                <span className={cx('hospitalName')}>
-                  {hospital.name} <span className={cx('hospitalDept')}>· {department}</span>
+          rows.slice(current * PER_PAGE, (current + 1) * PER_PAGE).map(({ hospital, department }) => {
+            // 예약 서비스는 지금 진료 중이 아닌 병원의 예약을 거절한다 - 끝까지 고른 뒤 거절되지 않게 미리 막는다
+            const open = isHospitalOpenNow(hospital);
+            return (
+              <button
+                key={`${hospital.id}-${department}`}
+                type="button"
+                className={cx('hospitalRow', { closed: !open })}
+                disabled={!open}
+                onClick={() => onChoose({ hospital, department })}
+              >
+                <span className={cx('hospitalText')}>
+                  <span className={cx('hospitalName')}>
+                    {hospital.name} <span className={cx('hospitalDept')}>· {department}</span>
+                  </span>
+                  <span className={cx('hospitalAddress')}>{hospital.address}</span>
+                  {!open && <span className={cx('closedNote')}>지금은 예약을 받지 않아요</span>}
                 </span>
-                <span className={cx('hospitalAddress')}>{hospital.address}</span>
-              </span>
-              <span className={cx('chevron')} aria-hidden="true">
-                ›
-              </span>
-            </button>
-          ))
+                {open && (
+                  <span className={cx('chevron')} aria-hidden="true">
+                    ›
+                  </span>
+                )}
+              </button>
+            );
+          })
         )}
       </div>
       <ReservationPager page={current} total={total} onChange={onPage} label="병원 목록 페이지" />
