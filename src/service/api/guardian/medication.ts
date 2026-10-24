@@ -10,10 +10,8 @@ import {
   GuardianMedicationAlertSetting,
   MedicationItem,
   MedicationOcrResponse,
-  MedicationSettingResponse,
   UpdateMedicationAlertSettingReq,
   UpdateMedicationReq,
-  UpdateMedicationSettingReq,
   WardMedicationSummary,
 } from '../../interface/medication';
 
@@ -70,22 +68,6 @@ export async function deleteWardMedicationBatch(wardId: string, medicationIds: n
     { medicationIds },
   );
   return getResponseData<number>(response);
-}
-
-// 그 피보호자에게 보낼 알림 설정(복용 알림/재알림 ON-OFF) — 보호자들이 공유하는 값
-export async function getMedicationSetting(wardId: string) {
-  const response = await apiClient.get<CommonResponse<MedicationSettingResponse>>(
-    `${GUARDIAN_BASE}/ward/${wardId}/medication-setting`,
-  );
-  return getResponseData<MedicationSettingResponse>(response);
-}
-
-export async function updateMedicationSetting(wardId: string, body: UpdateMedicationSettingReq) {
-  const response = await apiClient.put<CommonResponse<MedicationSettingResponse>>(
-    `${GUARDIAN_BASE}/ward/${wardId}/medication-setting`,
-    body,
-  );
-  return getResponseData<MedicationSettingResponse>(response);
 }
 
 // 내가 그 피보호자 건 미복용 요약을 받을지 + 받을 시각 — 나(보호자)만의 값

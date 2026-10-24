@@ -24,7 +24,6 @@ import {
   useDeleteWardMedicationBatchMutation,
   useUpdateGuardianMedicationMutation,
   useUpdateMedicationAlertSettingMutation,
-  useUpdateMedicationSettingMutation,
 } from '@/service/query/guardian/medication';
 import { guardianNotificationTypeSettingQueryOptions } from '@/service/query/guardian/notification';
 import { MedicationAddModal } from './MedicationAddModal';
@@ -99,7 +98,6 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const deleteMutation = useDeleteGuardianMedicationMutation();
   const deleteBatchMutation = useDeleteWardMedicationBatchMutation();
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const settingMutation = useUpdateMedicationSettingMutation();
   const alertSettingMutation = useUpdateMedicationAlertSettingMutation();
   const { data: notificationTypeSetting } = useQuery(guardianNotificationTypeSettingQueryOptions);
   const isMedicationNotificationDisabled = notificationTypeSetting?.medication.enabled === false;
@@ -284,7 +282,8 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         )}
       </section>
 
-      {/* 알림 설정 - Claude Design 시안대로(2026-10-24): 어르신 기기 알림 스위치 + "이 시간까지 안 드시면 나에게 알림" 시각.
+      {/* 알림 설정 - Claude Design 시안대로(2026-10-24): "이 시간까지 안 드시면 나에게 알림" 시각.
+          어르신 기기로 가는 "약 드실 시간" 알림은 늘 보내므로 켜고 끄는 스위치가 없다(2026-10-24 사용자 결정, BE #377).
           나에게 오는 알림을 켜고 끄는 건 환경설정 > 알림 종류에서만 한다(이 화면에 같은 스위치를 두지 않는다) */}
       {hasMedications && (
         <section className={cx('card', 'settingsCard')}>
@@ -297,21 +296,6 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
               </button>
             </div>
           )}
-          <div className={cx('settingsRow')}>
-            <strong className={cx('settingsTitle')}>{wardName}에게 약 드실 시간 알려 드리기</strong>
-            <label className={cx('switchField')}>
-              <input
-                type="checkbox"
-                aria-label={`${wardName}에게 약 드실 시간 알려 드리기`}
-                checked={summary.alarmEnabled}
-                disabled={settingMutation.isPending}
-                onChange={event =>
-                  settingMutation.mutate({ wardId: summary.wardId, body: { alarmEnabled: event.target.checked } })
-                }
-              />
-              <span className={cx('switchTrack')} aria-hidden="true" />
-            </label>
-          </div>
           <div className={cx('settingsRow')}>
             <strong className={cx('settingsTitle')}>이 시간까지 안 드시면 나에게 알림</strong>
             <MissedAlertTimeSelect
