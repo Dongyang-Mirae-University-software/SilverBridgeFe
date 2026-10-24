@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import type { MedicationItem, TodayMedicationResponse } from '@/service/interface/medication';
+import { applyMedicationTakenToWardCache, wardTodayMedicationQueryKey } from '@/service/query/ward/medication';
 import { WardMedicationContent } from './WardMedicationContent';
 
 const api = vi.hoisted(() => ({
@@ -47,8 +48,11 @@ function batchReturns(all: MedicationItem[]) {
   );
 }
 
-function renderContent() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+function newQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+}
+
+function renderContent(queryClient = newQueryClient()) {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
@@ -210,5 +214,97 @@ describe('WardMedicationContent (Chrome)', () => {
 
     await expect.element(screen.getByText('지금 아침 약')).toBeVisible();
     expect(screen.getByRole('button', { name: /추가|수정|삭제|등록/ }).query()).toBeNull();
+  });
+
+  // 점검 L-4: "지금"은 지금 먹을 시간대에만 - 나중 시간대를 펼쳐도 붙지 않는다
+  it('나중 시간대를 눌러 펼치면 "지금" 없이 "저녁 약"', async () => {
+    api.getTodayMedication.mockResolvedValue(
+      today([med('혈압약', '08:00:00', 'MORNING'), med('수면제', '19:00:00', 'DINNER')]),
+    );
+    const screen = renderContent();
+
+    await expect.element(screen.getByText('지금 아침 약')).toBeVisible();
+    await screen.getByRole('button', { name: /저녁 약/, expanded: false }).click();
+    await expect.element(screen.getByText('저녁 약', { exact: true })).toBeVisible();
+    expect(screen.getByText('지금 저녁 약').query()).toBeNull();
+    await expect.element(screen.getByRole('button', { name: '저녁 약 먹었어요' })).toBeVisible();
+  });
+
+  // 점검 M-1: 체크한 시간대가 계속 펼쳐져 날이 바뀌어도 "지금" 시간대로 넘어가지 않았다
+  it('날이 바뀌면 어제 누른 시간대가 아니라 지금 먹을 시간대를 펼친다', async () => {
+    const morning = med('혈압약', '08:00:00', 'MORNING', true);
+    const bedtime = med('수면제', '22:00:00', 'BEDTIME');
+    api.getTodayMedication.mockResolvedValue(today([morning, bedtime]));
+    batchReturns([morning, bedtime]);
+    const queryClient = newQueryClient();
+    const screen = renderContent(queryClient);
+
+    await screen.getByRole('button', { name: '취침 전 약 먹었어요' }).click();
+    await expect.element(screen.getByText('취침 전 약 다 먹었어요')).toBeVisible();
+
+    api.getTodayMedication.mockResolvedValue({
+      ...today([{ ...morning, taken: false }, { ...bedtime, taken: false }]),
+      doseDate: '2026-10-24',
+    });
+    await queryClient.refetchQueries({ queryKey: wardTodayMedicationQueryKey });
+    await expect.element(screen.getByText('지금 아침 약')).toBeVisible();
+  });
+
+  it('화면을 다시 볼 때 펼쳐 둔 시간대를 이미 다 먹었으면 지금 먹을 시간대로 돌아간다 (점검 M-1)', async () => {
+    const morning = [med('혈압약', '08:00:00', 'MORNING')];
+    const dinner = [med('수면제', '19:00:00', 'DINNER')];
+    api.getTodayMedication.mockResolvedValue(today([...morning, ...dinner]));
+    batchReturns([...morning, ...dinner]);
+    const screen = renderContent();
+
+    await screen.getByRole('button', { name: '아침 약 먹었어요' }).click();
+    // 누른 직후에는 바로 되돌릴 수 있게 그대로 펼쳐 둔다
+    await expect.element(screen.getByRole('button', { name: '아침 약 되돌리기' })).toBeVisible();
+
+    document.dispatchEvent(new Event('visibilitychange'));
+    await expect.element(screen.getByText('지금 저녁 약')).toBeVisible();
+    expect(screen.getByRole('button', { name: '아침 약 되돌리기' }).query()).toBeNull();
+  });
+
+  it('되돌리기가 실패하면 "되돌리지 못했어요" (점검 L-2)', async () => {
+    const morning = [med('혈압약', '08:00:00', 'MORNING', true)];
+    api.getTodayMedication.mockResolvedValue(today(morning));
+    api.setMedicationIntakeBatch.mockRejectedValueOnce(new Error('network'));
+    const screen = renderContent();
+
+    await screen.getByRole('button', { name: /아침 약/, expanded: false }).click();
+    await screen.getByRole('button', { name: '아침 약 되돌리기' }).click();
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('되돌리지 못했어요');
+  });
+
+  // 점검 L-4: 다른 기기에서 하나를 풀면(WS) 펼친 카드가 남은 약 버튼으로 바뀐다
+  it('WS로 약 하나가 풀리면 "남은 약 1개 먹었어요"로 바뀐다', async () => {
+    const morning = [med('혈압약', '08:00:00', 'MORNING'), med('위장약', '08:00:00', 'MORNING')];
+    api.getTodayMedication.mockResolvedValue(today(morning));
+    batchReturns(morning);
+    const queryClient = newQueryClient();
+    const screen = renderContent(queryClient);
+
+    await screen.getByRole('button', { name: '아침 약 먹었어요' }).click();
+    await expect.element(screen.getByText('아침 약 다 먹었어요')).toBeVisible();
+
+    applyMedicationTakenToWardCache(queryClient, { medicationId: '2', taken: 'false', doseDate: '2026-10-23' });
+    await expect.element(screen.getByRole('button', { name: '남은 약 1개 먹었어요' })).toBeVisible();
+  });
+
+  it('모든 약이 오늘 등록 전이면 펼친 카드·완료 안내 없이 줄만 보인다 (점검 L-4)', async () => {
+    api.getTodayMedication.mockResolvedValue(
+      today([
+        med('혈압약', '08:00:00', 'MORNING', false, { createdAt: '2026-10-23T20:00:00+09:00' }),
+        med('소화제', '12:00:00', 'LUNCH', false, { createdAt: '2026-10-23T20:00:00+09:00' }),
+      ]),
+    );
+    const screen = renderContent();
+
+    await expect.element(screen.getByRole('button', { name: /아침 약.*오늘은 등록 전/ })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: /점심 약.*오늘은 등록 전/ })).toBeVisible();
+    expect(screen.getByText(/^지금/).query()).toBeNull();
+    expect(screen.getByText('오늘 약 다 먹었어요').query()).toBeNull();
+    expect(screen.getByRole('button', { name: /먹었어요$/ }).query()).toBeNull();
   });
 });

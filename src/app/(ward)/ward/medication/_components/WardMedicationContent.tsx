@@ -1,7 +1,7 @@
 'use client';
 
 import { useIsMutating, useMutationState, useQuery } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
@@ -41,25 +41,41 @@ export function WardMedicationContent() {
   const isAllTaken = slots.some(slot => slot.state === 'done') && !nowSlot;
 
   // 펼칠 시간대: 누른 것, 없으면 지금 먹을 시간대. 체크한 시간대는 그대로 펼쳐 두어 바로 되돌릴 수 있게 한다
-  const [focusKey, setFocusKey] = useState<string | null>(null);
-  const focused = slots.find(slot => slot.key === focusKey) ?? (isAllTaken ? undefined : nowSlot);
+  // 누른 시간대는 그날에만 유효하고, 화면을 다시 볼 때 이미 다 먹은 시간대면 지금 시간대로 돌아간다 -
+  // 화면을 켜 둔 채 점심이 되거나 날이 바뀌어도 "아침 약 다 먹었어요"가 펼쳐져 있었다(점검 M-1)
+  const [focus, setFocus] = useState<{ key: string; doseDate: string; stale: boolean } | null>(null);
+  const picked = focus?.doseDate === doseDate ? slots.find(slot => slot.key === focus.key) : undefined;
+  const focused = picked && !(focus?.stale && picked.state === 'done') ? picked : isAllTaken ? undefined : nowSlot;
+  const pick = (key: string) => setFocus({ key, doseDate, stale: false });
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') setFocus(current => (current ? { ...current, stale: true } : current));
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
 
   const batchMutation = useMedicationIntakeBatchMutation();
   // 처리 중이면 모든 버튼을 잠근다 - 연속 탭으로 같은 요청이 두 번 가지 않게
   const isChanging = useIsMutating({ mutationKey: ['ward-medication-intake'] }) > 0;
-  // 가장 최근 체크가 실패했으면 안내한다(점검 M-1)
-  const intakeStatuses = useMutationState({
+  // 가장 최근 체크·되돌리기가 실패했으면 안내한다(점검 M-1) - 되돌리기 실패는 문구를 따로(점검 L-2)
+  const intakeStates = useMutationState({
     filters: { mutationKey: ['ward-medication-intake'] },
-    select: mutation => mutation.state.status,
+    select: mutation => ({
+      status: mutation.state.status,
+      taken: (mutation.state.variables as { taken?: boolean } | undefined)?.taken,
+    }),
   });
-  const lastIntakeFailed = intakeStatuses.at(-1) === 'error';
+  const lastIntake = intakeStates.at(-1);
+  const lastIntakeFailed = lastIntake?.status === 'error';
 
   // isChanging은 다음 렌더에야 바뀌어 아주 빠른 두 번째 탭은 못 막는다 - 누른 즉시 잠그는 ref를 함께 쓴다
   const sendingRef = useRef(false);
   const setTaken = (key: string, medicationIds: number[], taken: boolean) => {
     if (sendingRef.current || isChanging || medicationIds.length === 0) return;
     sendingRef.current = true;
-    setFocusKey(key);
+    pick(key);
     batchMutation.mutate(
       { medicationIds, taken },
       {
@@ -92,7 +108,7 @@ export function WardMedicationContent() {
 
           {lastIntakeFailed && (
             <p className={cx('intakeError')} role="alert">
-              체크하지 못했어요. 목록을 다시 불러왔으니 한 번 더 눌러 주세요
+              {lastIntake?.taken === false ? '되돌리지 못했어요' : '체크하지 못했어요'}. 목록을 다시 불러왔으니 한 번 더 눌러 주세요
             </p>
           )}
 
@@ -106,7 +122,7 @@ export function WardMedicationContent() {
                       type="button"
                       className={cx('slotRow', { done: slot.state !== 'todo' })}
                       aria-expanded={false}
-                      onClick={() => setFocusKey(slot.key)}
+                      onClick={() => pick(slot.key)}
                     >
                       <span className={cx('slotName')}>{slot.label} 약</span>
                       {slot.state === 'done' ? (

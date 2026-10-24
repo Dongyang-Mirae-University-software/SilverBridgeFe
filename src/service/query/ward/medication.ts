@@ -42,15 +42,17 @@ function replaceMedicationsInCache(queryClient: ReturnType<typeof useQueryClient
 }
 
 // WS medication-taken 이벤트(다른 기기·탭에서 체크한 경우)로 목록을 그 자리에서 갱신
+// 다른 날의 체크는 반영하지 않는다 - 자정 직전 체크의 늦은 이벤트가 다음 날 같은 약을 체크된 것처럼 바꿨다(점검 L-1)
 export function applyMedicationTakenToWardCache(
   queryClient: QueryClient,
-  payload: { medicationId?: string; taken?: string; takenAt?: string },
+  payload: { medicationId?: string; taken?: string; takenAt?: string; doseDate?: string },
 ) {
   const medicationId = Number(payload.medicationId);
   if (!Number.isFinite(medicationId)) return;
 
   queryClient.setQueryData<TodayMedicationResponse>(wardTodayMedicationQueryKey, current => {
     if (!current) return current;
+    if (payload.doseDate && payload.doseDate !== current.doseDate) return current;
     const medications = current.medications.map(medication =>
       medication.medicationId === medicationId
         ? { ...medication, taken: payload.taken === 'true', takenAt: payload.takenAt ?? null }

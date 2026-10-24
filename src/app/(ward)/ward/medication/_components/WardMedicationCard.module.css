@@ -14,7 +14,8 @@
 .dose { flex: 0 0 auto; color: var(--sb-brand); font-size: 24px; font-weight: 800; white-space: nowrap; }
 
 .memo { color: var(--sb-ink-soft); font-size: 17px; }
-.state { display: inline-flex; align-items: center; gap: 4px; color: var(--sb-ink-mute); font-size: 17px; font-weight: 700; }
+/* "오늘은 등록 전이었어요" - 왜 체크할 수 없는지 알려 주는 문구라 흐리게 두지 않는다(ink-mute 3.66:1 → ink-soft 9.51:1, 점검 M-2) */
+.state { display: inline-flex; align-items: center; gap: 4px; color: var(--sb-ink-soft); font-size: 17px; font-weight: 700; }
 .state.done { color: var(--sb-safe); }
 
 /* 이미 먹은 약·오늘 등록 전 약은 흐리게 - 버튼이 체크할 남은 약이 눈에 먼저 들어오게 */
