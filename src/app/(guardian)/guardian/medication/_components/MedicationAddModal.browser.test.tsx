@@ -53,7 +53,8 @@ const OCR_NAME_CHECK: MedicationOcrResponse = {
   ],
 };
 
-const NOT_IN_LIST_TEXT = '목록에 없는 이름이에요. 봉투와 다시 확인해 주세요';
+// 목록에 없는 이름은 노란 칸 + "비슷한 이름:" 칩만(안내 문장은 2026-10-24 사용자 요청으로 뺐다)
+const NOT_IN_LIST_TEXT = '비슷한 이름:';
 // 결과 문구와 노란 칸 안내는 상자 하나(2026-10-24)
 const CHECK_BOX_TEXT = /노란 칸의 약 이름을 한 번 더 확인해 주세요/;
 
@@ -150,8 +151,10 @@ describe('MedicationAddModal (Chrome)', () => {
 
     // 노란 칸이 있으면 결과 문구와 확인 안내가 상자 하나
     await expect
-      .element(screen.getByText('✓ 약 2개를 찾았어요. 노란 칸의 약 이름을 한 번 더 확인해 주세요'))
+      .element(screen.getByText('✓ 약 2개를 찾았어요.'))
       .toBeVisible();
+    // "찾았어요" 다음 줄에 노란 칸 안내(2026-10-24)
+    await expect.element(screen.getByText('노란 칸의 약 이름을 한 번 더 확인해 주세요')).toBeVisible();
     await expect.element(screen.getByText('1 / 2')).toBeVisible();
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정');
     await expect.element(screen.getByText('반알')).toBeVisible();
@@ -182,7 +185,8 @@ describe('MedicationAddModal (Chrome)', () => {
     // confidence high여도 목록에 없으면 노란 칸 + 확인 박스
     await expect.element(screen.getByText(CHECK_BOX_TEXT)).toBeVisible();
     expect([1, 2, 3, 4].map(n => isHighlighted(screen, n))).toEqual([true, true, false, false]);
-    expect([1, 2, 3, 4].map(n => drugRow(screen, n).textContent?.includes(NOT_IN_LIST_TEXT))).toEqual([true, true, false, false]);
+    // 제안이 없는 2번은 노란 칸만(칩 줄 없음)
+    expect([1, 2, 3, 4].map(n => drugRow(screen, n).textContent?.includes(NOT_IN_LIST_TEXT))).toEqual([true, false, false, false]);
     // 1번은 제안 3개, 2번(제안 0개)은 문구만
     expect(rowSuggestionChips(screen, 1).map(button => button.textContent)).toEqual(['슈다페드정', '슈다펜정', LONG_SUGGESTION]);
     expect(rowSuggestionChips(screen, 2)).toHaveLength(0);
@@ -275,7 +279,7 @@ describe('MedicationAddModal (Chrome)', () => {
     expect(image.type).toBe('image/jpeg');
   });
 
-  it('핸드폰: 처음엔 탭이 보이고, 사진 결과가 나오거나 2/2에 들어가면 탭을 접는다 (2026-10-24)', async () => {
+  it('핸드폰: 모달로 보이고, 처음엔 탭이 보이며 사진 결과가 나오거나 2/2에 들어가면 탭을 접는다 (2026-10-24)', async () => {
     api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
     const { screen } = renderModal();
     await expect.element(screen.getByRole('tab', { name: '직접 쓰기' })).toBeVisible();
@@ -283,9 +287,9 @@ describe('MedicationAddModal (Chrome)', () => {
     await choosePhoto();
     await expect.element(screen.getByText(/약 2개를 찾았어요/)).toBeVisible();
     expect(screen.getByRole('tab', { name: '직접 쓰기' }).query()).toBeNull();
-    // 모달은 화면 전체, 가로 넘침 없음
+    // 핸드폰에서도 모달(화면 전체가 아니다 - 2026-10-24 사용자 요청으로 되돌림), 가로 넘침 없음
     const dialog = screen.getByRole('dialog').element() as HTMLElement;
-    expect(Math.round(dialog.getBoundingClientRect().width)).toBe(window.innerWidth);
+    expect(dialog.getBoundingClientRect().width).toBeLessThan(window.innerWidth);
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
 
     await screen.getByRole('button', { name: '다음' }).click();
@@ -293,20 +297,16 @@ describe('MedicationAddModal (Chrome)', () => {
     expect(screen.getByRole('tab', { name: '직접 쓰기' }).query()).toBeNull();
   });
 
-  it('약 한 줄: 복용량은 "1알 ✎"로 접혀 있고, 누르면 −/+가 열린다 (2026-10-24)', async () => {
+  it('복용량 −/+는 약마다 바로 보인다 - 접지 않는다 (2026-10-24 사용자 요청)', async () => {
     api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
     const { screen } = renderModal();
     await choosePhoto();
 
-    const toggle = screen.getByRole('button', { name: '1번째 약 복용량 반알, 바꾸기' });
-    await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByRole('button', { name: '1번째 약 복용량 늘리기' }).query()).toBeNull();
-
-    await toggle.click();
+    await expect.element(screen.getByRole('button', { name: '1번째 약 복용량 늘리기' })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '2번째 약 복용량 늘리기' })).toBeVisible();
     await screen.getByRole('button', { name: '1번째 약 복용량 늘리기' }).click();
-    await expect.element(screen.getByRole('button', { name: '1번째 약 복용량 1알, 바꾸기' })).toHaveAttribute('aria-expanded', 'true');
-    // 다른 약은 그대로 접혀 있다
-    expect(screen.getByRole('button', { name: '2번째 약 복용량 늘리기' }).query()).toBeNull();
+    await expect.element(screen.getByText('1알', { exact: true }).first()).toBeVisible();
+    expect(screen.getByRole('button', { name: /바꾸기$/ }).query()).toBeNull();
   });
 
   it('읽는 중에는 탭을 바꿀 수 없다 (점검 M-1)', async () => {
@@ -492,7 +492,7 @@ describe('MedicationAddModal (Chrome)', () => {
 
     await screen.getByRole('button', { name: '다시 찍기' }).click();
     await choosePhoto();
-    await expect.element(screen.getByText('✓ 약 1개를 찾았어요. 맞는지 확인해 주세요')).toBeVisible();
+    await expect.element(screen.getByText('✓ 약 1개를 찾았어요.')).toBeVisible();
     await screen.getByRole('button', { name: '다음' }).click();
     await expect.element(chip(screen, '아침 오전 8시')).toHaveAttribute('aria-pressed', 'true');
     await expect.element(chip(screen, '점심 낮 12시')).toHaveAttribute('aria-pressed', 'false');
