@@ -1,7 +1,7 @@
 // 보호자 이상감지 이력·판정·영상 화면 컴포넌트 테스트 - 실제 Chrome(375px)에서 돈다(`npm run test:browser`)
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -198,6 +198,39 @@ describe('AnomalyHistoryContent (Chrome)', () => {
 
     await expect.element(screen.getByRole('button', { name: '전체 37' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /삭제된 카메라/ }).query()).toBeNull();
+  });
+
+  it('피보호자를 바꾸면 필터(삭제된 카메라 포함)와 페이지가 처음으로 돌아간다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue({ ...page([incident(1, { cameraLabel: null })]), totalPages: 3, last: false });
+    api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 2 });
+    // 부모처럼 선택한 피보호자를 상태로 들고 있는 틀
+    function Harness() {
+      const [wardId, setWardId] = useState('W1');
+      return (
+        <AnomalyHistoryContent
+          wards={[{ wardId: 'W1', wardName: '김순자' }, { wardId: 'W2', wardName: '남궁명진' }]}
+          selectedWardId={wardId}
+          onSelectWard={setWardId}
+        />
+      );
+    }
+    const screen = render(<Harness />, { wrapper });
+
+    await screen.getByRole('button', { name: '삭제된 카메라 2' }).click();
+    await screen.getByRole('button', { name: '2', exact: true }).click();
+    await vi.waitFor(() =>
+      expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
+        expect.objectContaining({ wardId: 'W1', camera: 'DELETED', page: 1 }),
+      ),
+    );
+
+    await screen.getByRole('tab', { name: /남궁명진/ }).click();
+    await vi.waitFor(() =>
+      expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
+        expect.objectContaining({ wardId: 'W2', camera: undefined, type: undefined, page: 0 }),
+      ),
+    );
+    await expect.element(screen.getByRole('button', { name: '전체 37' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('375px에서 가로로 넘치지 않는다', async () => {
