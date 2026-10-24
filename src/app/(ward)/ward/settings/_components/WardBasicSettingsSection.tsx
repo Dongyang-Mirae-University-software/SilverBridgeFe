@@ -10,19 +10,19 @@ import styles from './WardBasicSettingsSection.module.css';
 
 const cx = classNames.bind(styles);
 
-// 2026-10-07 프로토타입: 보호자 알림은 항상 켜져 있어 끌 수 없으므로(선택지가 아님),
-// "119 화면을 언제 보여줄지" 2개만 고르게 한다. CALL_119(알림 없이 119만)는 제거됨
+// 보호자 알림은 어떤 값이든 항상 가므로(선택지가 아님) "119 화면을 언제 보여줄지" 2개만 고르게 한다.
+// BE enum의 CALL_119는 화면에서 고르지 않는다(실제 발신 없이 119 키패드 화면만 띄운다)
 const SOS_OPTIONS = [
   {
     value: 'CALL_119_AND_NOTIFY' as const,
     label: '119 화면 바로 열기',
-    hint: '보호자에게 알리고, 119가 입력된 전화 화면을 바로 열어요.',
+    hint: '보호자에게 알리고, 119 전화 화면을 바로 열어요.',
     isDefault: true,
   },
   {
     value: 'NOTIFY_GUARDIAN_FIRST' as const,
     label: '보호자 알림 먼저',
-    hint: '보호자에게 알린 뒤, 119 전화는 화면의 버튼을 눌러서 걸어요.',
+    hint: '보호자에게 알린 뒤, 버튼을 눌러 119에 전화해요.',
     isDefault: false,
   },
 ];
@@ -69,6 +69,8 @@ export function WardDisplaySettingsSection({ updateWardSettings, wardSettings }:
         <p className={cx('fontPreview')} style={{ fontSize: wardSettings.fontSize }}>
           글자가 이렇게 보여요.
         </p>
+        {/* 글자 크기·진한 글자는 서버에 저장하지 않는 화면 설정이다(기기 localStorage) */}
+        <p className={cx('localNote')}>글자 크기와 진한 글자는 이 기기에서만 적용돼요.</p>
       </div>
 
       <label className={cx('contrastRow')}>
@@ -78,11 +80,16 @@ export function WardDisplaySettingsSection({ updateWardSettings, wardSettings }:
         </span>
         <input
           type="checkbox"
+          role="switch"
+          aria-label="진한 글자로 보기"
           checked={wardSettings.highContrast}
           onChange={e => updateWardSettings({ highContrast: e.target.checked })}
         />
-        <span className={cx('bigSwitch')} aria-hidden="true">
-          <span />
+        <span className={cx('switchBox', { switchBoxOn: wardSettings.highContrast })} aria-hidden="true">
+          {wardSettings.highContrast ? '켜짐' : '꺼짐'}
+          <span className={cx('bigSwitch')}>
+            <span />
+          </span>
         </span>
       </label>
     </section>
