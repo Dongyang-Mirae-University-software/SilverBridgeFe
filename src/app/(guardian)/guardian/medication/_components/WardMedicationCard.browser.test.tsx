@@ -12,6 +12,7 @@ const api = vi.hoisted(() => ({
   deleteWardMedicationBatch: vi.fn(),
   deleteGuardianMedication: vi.fn(),
   getGuardianMedications: vi.fn(),
+  updateMedicationAlertSetting: vi.fn(),
 }));
 
 vi.mock('@/service/api/guardian/medication', async importOriginal => ({
@@ -19,10 +20,19 @@ vi.mock('@/service/api/guardian/medication', async importOriginal => ({
   deleteWardMedicationBatch: api.deleteWardMedicationBatch,
   deleteGuardianMedication: api.deleteGuardianMedication,
   getGuardianMedications: api.getGuardianMedications,
+  updateMedicationAlertSetting: api.updateMedicationAlertSetting,
 }));
 
+const nav = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: nav.push }) }));
+
+// 보호자 알림 종류 설정(환경설정) - 테스트마다 "복약 알림 꺼짐"을 바꿔 본다
+const notificationSetting = vi.hoisted(() => ({ value: null as null | { medication: { enabled: boolean } } }));
 vi.mock('@/service/query/guardian/notification', () => ({
-  guardianNotificationTypeSettingQueryOptions: { queryKey: ['guardian-notification-type-test'], queryFn: () => null },
+  guardianNotificationTypeSettingQueryOptions: {
+    queryKey: ['guardian-notification-type-test'],
+    queryFn: () => notificationSetting.value,
+  },
 }));
 
 const TODAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
@@ -77,9 +87,9 @@ describe('WardMedicationCard (Chrome)', () => {
       med(1, { createdAt: `${TODAY}T00:30:00+09:00` }),
       med(2, { createdAt: '2026-01-01T09:00:00+09:00' }),
     ]);
-    // 두 약은 같은 아침 묶음 - 등록 전이었던 약은 묶음 판정에서 빠져 "1번 중 0번"
-    await expect.element(screen.getByText('아침 약이 아직 다 체크되지 않았어요')).toBeVisible();
-    await expect.element(screen.getByText(/1번 중/)).toBeVisible();
+    // 두 약은 같은 아침 묶음 - 등록 전이었던 약은 묶음 판정에서 빠지고, 맨 위는 시간대로 한 문장(2026-10-24)
+    await expect.element(screen.getByText('아침 약이 아직 체크되지 않았어요')).toBeVisible();
+    expect(screen.getByText(/번 중/).query()).toBeNull();
     await screen.getByRole('button', { name: /아침/ }).click();
     await expect.element(screen.getByText('오늘은 등록 전이었어요')).toBeVisible();
   });
@@ -97,15 +107,17 @@ describe('WardMedicationCard (Chrome)', () => {
     );
     const screen = renderCard(meds);
 
-    await expect.element(screen.getByText(/3번 중/)).toBeVisible();
-    await expect.element(screen.getByText('1번', { exact: true })).toBeVisible();
-    expect(screen.getByText(/18번/).query()).toBeNull();
-    await expect.element(screen.getByText('점심·저녁 약이 아직 다 체크되지 않았어요')).toBeVisible();
+    // "N번 중"이 아니라 지난 마지막 시간대로 한 문장, 앞 시간대에 남은 것은 아래 줄(2026-10-24)
+    await expect.element(screen.getByText('저녁 약이 아직 체크되지 않았어요')).toBeVisible();
+    await expect.element(screen.getByText('점심 약도 아직 체크되지 않았어요')).toBeVisible();
+    expect(screen.getByText(/번 중/).query()).toBeNull();
+    // 시간대 이름표
+    await expect.element(screen.getByRole('list', { name: '시간대별 상태' })).toHaveTextContent('✓ 아침');
 
     // 처음에는 시간대 한 줄씩 - 약 이름은 요약만
     const morning = screen.getByRole('button', { name: /아침/ });
     await expect.element(morning).toHaveAttribute('aria-expanded', 'false');
-    await expect.element(screen.getByText('다 드셨어요')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: /아침/ }).getByText('다 드셨어요')).toBeVisible();
     await expect.element(screen.getByText('6개 중 5개 드셨어요')).toBeVisible();
     await expect.element(screen.getByText('아직 체크 전이에요')).toBeVisible();
     expect(screen.getByRole('button', { name: '코싹열정 삭제' }).query()).toBeNull();
@@ -118,20 +130,24 @@ describe('WardMedicationCard (Chrome)', () => {
     await expect.element(screen.getByRole('button', { name: '신일이부프로펜정400mg 수정' })).toBeVisible();
     // 펼친 약은 시간대 줄과 다른 상태만 배지를 단다 - 점심의 안 드신 코푸시럽은 줄 상태("6개 중 5개")와 같은 "체크 전"이라 없고,
     // "아직 체크 전이에요"는 저녁 줄 하나뿐(2026-10-24)
-    expect(screen.getByText('아직 체크 전이에요').elements()).toHaveLength(1);
+    const badgesInList = screen
+      .getByText('아직 체크 전이에요')
+      .elements()
+      .filter(element => !element.closest('[aria-label="시간대별 상태"]'));
+    expect(badgesInList).toHaveLength(1);
     // 375px에서 가로 넘침 없음
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
   it('체크한 약이 없고 체크할 약도 없으면 "모두 드셨어요"라고 하지 않는다 (점검 L-2)', async () => {
     const screen = renderCard([med(1, { createdAt: `${TODAY}T00:30:00+09:00` })]);
-    await expect.element(screen.getByText('지금 체크할 약은 없어요')).toBeVisible();
-    expect(screen.getByText('지금까지 드실 약은 모두 드셨어요').query()).toBeNull();
+    await expect.element(screen.getByText('오늘은 체크할 약이 없어요')).toBeVisible();
+    expect(screen.getByText('오늘 약을 모두 드셨어요').query()).toBeNull();
   });
 
   it('체크한 약이 있고 지난 약이 없으면 "모두 드셨어요"', async () => {
     const screen = renderCard([med(1, { taken: true }), med(2, { createdAt: `${TODAY}T00:30:00+09:00` })]);
-    await expect.element(screen.getByText('지금까지 드실 약은 모두 드셨어요')).toBeVisible();
+    await expect.element(screen.getByText('오늘 약을 모두 드셨어요')).toBeVisible();
   });
 
   // ─── 여러 개 삭제 (2026-10-23, BE #371) ───────────────────────────
@@ -193,11 +209,39 @@ describe('WardMedicationCard (Chrome)', () => {
     await expect.element(screen.getByRole('alert')).toHaveTextContent('삭제하지 못했어요');
     await vi.waitFor(() => expect(invalidate).toHaveBeenCalled());
   });
-  it('알림 토글 3개는 스크린리더가 읽을 이름이 있다 (2026-10-24 점검 M-1)', async () => {
+  it('알림 설정의 스위치·시간 버튼은 스크린리더가 읽을 이름이 있다 (2026-10-24 점검 M-1, 시안 반영 후 2개)', async () => {
     const screen = renderCard([med(1)]);
-    for (const name of ['복약 시간 알림', '안 드시면 나에게 알림', '15분 뒤 재알림']) {
-      await expect.element(screen.getByRole('checkbox', { name })).toBeInTheDocument();
-    }
+    await expect
+      .element(screen.getByRole('checkbox', { name: '김순자 님께 약 드실 시간 알려 드리기' }))
+      .toBeInTheDocument();
+    await expect.element(screen.getByRole('button', { name: /안 드시면 알림 받을 시각 오후 9:00/ })).toBeInTheDocument();
+    // 시안대로 재알림 줄·"안 드시면" 스위치는 없다(나에게 오는 알림은 환경설정에서)
+    expect(screen.getByRole('checkbox', { name: '15분 뒤 재알림' }).query()).toBeNull();
+  });
+
+  it('시간 고르기: 오전/오후·시·분을 고르고 "○○로 정하기"를 눌러야 저장한다(시각과 함께 이 피보호자 요약도 켠다)', async () => {
+    api.updateMedicationAlertSetting.mockResolvedValue({});
+    const screen = renderCard([med(1)]);
+    await screen.getByRole('button', { name: /안 드시면 알림 받을 시각/ }).click();
+    await screen.getByRole('group', { name: '시' }).getByRole('button', { name: '10', exact: true }).click();
+    await screen.getByRole('group', { name: '분' }).getByRole('button', { name: '30', exact: true }).click();
+    expect(api.updateMedicationAlertSetting).not.toHaveBeenCalled();
+    await screen.getByRole('button', { name: '오후 10:30로 정하기' }).click();
+    await vi.waitFor(() =>
+      expect(api.updateMedicationAlertSetting).toHaveBeenCalledWith('W1', {
+        missedAlertTime: '22:30:00',
+        missedAlertEnabled: true,
+      }),
+    );
+  });
+
+  it('나에게 오는 복약 알림이 꺼져 있으면 노란 상자와 [켜기] - 누르면 환경설정으로', async () => {
+    notificationSetting.value = { medication: { enabled: false } };
+    const screen = renderCard([med(1)]);
+    await expect.element(screen.getByText('지금 복약 알림을 받지 않고 있어요')).toBeVisible();
+    await screen.getByRole('button', { name: '켜기' }).click();
+    expect(nav.push).toHaveBeenCalledWith('/guardian/settings');
+    notificationSetting.value = null;
   });
 
   // 숨긴 토글 input이 기준을 잃으면 안쪽 스크롤 상자가 아니라 문서 기준으로 놓여
@@ -213,7 +257,7 @@ describe('WardMedicationCard (Chrome)', () => {
     scroller.append(spacer, slot);
     document.body.appendChild(scroller);
     const screen = renderCard([med(1)], slot);
-    const toggle = screen.getByRole('checkbox', { name: '15분 뒤 재알림' });
+    const toggle = screen.getByRole('checkbox', { name: '김순자 님께 약 드실 시간 알려 드리기' });
     await expect.element(toggle).toBeInTheDocument();
 
     expect(toggle.element().getBoundingClientRect().top).toBeGreaterThan(window.innerHeight);

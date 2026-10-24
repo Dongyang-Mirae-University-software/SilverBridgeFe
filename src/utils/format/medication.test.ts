@@ -4,6 +4,7 @@ import type { MedicationItem } from '@/service/interface/medication';
 import {
   formatDoseAmount,
   getDoseStatus,
+  getTodayHeadline,
   getTimeGroupStatusLabel,
   groupMedicationsByTime,
   isRegisteredAfterDose,
@@ -137,5 +138,39 @@ describe('시간대 묶음 - 약 6개 × 하루 3번은 "18번"이 아니라 "3�
       '가, 나 외 2개',
     );
     expect(summarizeMedicationNames([item({ name: '가' })])).toBe('가');
+  });
+});
+
+describe('카드 맨 위 한 문장 - "N번 중"이 아니라 시간대로 (2026-10-24)', () => {
+  let id = 500;
+  const at = (timeSlot: MedicationItem['timeSlot'], doseTime: string, taken = false) =>
+    ({ ...med({ timeSlot, doseTime, taken }), medicationId: ++id });
+  const head = (meds: MedicationItem[], now: string) => getTodayHeadline(groupMedicationsByTime(meds, now, TODAY));
+
+  it('지난 마지막 시간대를 다 드셨으면 "아침 약을 다 드셨어요"', () => {
+    expect(head([at('MORNING', '08:00:00', true), at('LUNCH', '12:00:00')], '09:00')).toEqual({
+      text: '아침 약을 다 드셨어요',
+      tone: 'done',
+      sub: null,
+    });
+  });
+
+  it('지난 마지막 시간대가 남았으면 "아직 체크되지 않았어요"(단정하지 않는다), 앞 시간대가 남았으면 아래 줄로', () => {
+    expect(head([at('MORNING', '08:00:00'), at('LUNCH', '12:00:00', true)], '13:00')).toEqual({
+      text: '점심 약을 다 드셨어요',
+      tone: 'done',
+      sub: '아침 약도 아직 체크되지 않았어요',
+    });
+    const h = head([at('MORNING', '08:00:00', true), at('LUNCH', '12:00:00')], '13:00')!;
+    expect(h.text).toBe('점심 약이 아직 체크되지 않았어요');
+    expect(h.text).not.toContain('안 드셨');
+  });
+
+  it('하루 약을 모두 드셨으면 "오늘 약을 모두 드셨어요", 아직 시간 전이면 첫 시간대 안내, 셀 약이 없으면 null', () => {
+    expect(head([at('MORNING', '08:00:00', true), at('DINNER', '19:00:00', true)], '20:00')!.text).toBe(
+      '오늘 약을 모두 드셨어요',
+    );
+    expect(head([at('MORNING', '08:00:00'), at('DINNER', '19:00:00')], '07:00')!.text).toBe('아침 약은 08:00에 드세요');
+    expect(head([], '07:00')).toBeNull();
   });
 });
