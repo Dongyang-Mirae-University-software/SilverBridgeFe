@@ -23,3 +23,10 @@ export function getAndParticle(word: string): '과' | '와' {
 export function getObjectParticle(word: string): '을' | '를' {
   return hasFinalConsonant(word) ? '을' : '를';
 }
+
+// 방향·자격 조사(으로/로): 받침이 있으면 "으로", 없거나 ㄹ 받침이면 "로" - 아들로·딸로·손자로·친구로·형으로
+export function getDirectionParticle(word: string): '으로' | '로' {
+  if (!hasFinalConsonant(word)) return '로';
+  const finalConsonant = ((word.at(-1) ?? '').charCodeAt(0) - 0xac00) % 28;
+  return finalConsonant === 8 ? '로' : '으로';
+}

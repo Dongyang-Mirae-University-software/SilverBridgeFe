@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   }>,
   refreshAccessToken: vi.fn(),
   accessToken: 'expired-token' as string | null,
+  savePending: vi.fn(),
+  removePending: vi.fn(),
 }));
 
 vi.mock('@stomp/stompjs', () => ({
@@ -21,6 +23,8 @@ vi.mock('@stomp/stompjs', () => ({
     connected = false;
     activate = vi.fn();
     deactivate = vi.fn(() => Promise.resolve());
+    subscribe = vi.fn();
+    onConnect?: () => void;
     constructor(config: { beforeConnect: () => Promise<void>; brokerURL: string }) {
       this.config = config;
       this.brokerURL = config.brokerURL;
@@ -32,6 +36,10 @@ vi.mock('@/lib/api/apiClient', () => ({
   refreshAccessToken: mocks.refreshAccessToken,
   isSessionRejected: (error: { response?: { status?: number } }) =>
     [401, 403, 404].includes(error?.response?.status ?? 0),
+}));
+vi.mock('./pendingConnectionRequests', () => ({
+  savePendingConnectionRequest: mocks.savePending,
+  removePendingConnectionRequest: mocks.removePending,
 }));
 vi.mock('@/lib/auth/tokenStore', () => ({ getAccessToken: () => mocks.accessToken }));
 // 만료 판단은 갱신 분기로 들어가게 고정한다
@@ -126,5 +134,32 @@ describe('connectConnectionSocket 토큰 갱신 실패', () => {
     await client.config.beforeConnect();
 
     expect(client.brokerURL).toContain('token=fresh-token');
+  });
+});
+
+describe('피보호자 연결 요청 취소 신호 (connection-request-cancelled)', () => {
+  it('구독하고, 받으면 저장해 둔 받은 요청에서 지운 뒤 화면에 넘긴다', () => {
+    const onMessage = vi.fn();
+    connectConnectionSocket({ onMessage, role: 'WARD', userId: 'w1' });
+    const client = mocks.clients.at(-1)! as unknown as {
+      onConnect: () => void;
+      subscribe: ReturnType<typeof vi.fn>;
+    };
+    client.onConnect();
+
+    const call = client.subscribe.mock.calls.find(([destination]) => destination === '/topic/w1/connection-request-cancelled');
+    expect(call).toBeDefined();
+
+    // BE 페이로드는 {connectionId}뿐 - 종류는 토픽에서 정한다
+    call![1]({ body: JSON.stringify({ connectionId: 12 }) });
+    expect(mocks.removePending).toHaveBeenCalledWith(12);
+    expect(onMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'CONNECTION_REQUEST_CANCELLED', connectionId: '12' }));
+  });
+
+  it('보호자는 이 토픽을 구독하지 않는다', () => {
+    connectConnectionSocket({ onMessage: () => {}, role: 'GUARDIAN', userId: 'g1' });
+    const client = mocks.clients.at(-1)! as unknown as { onConnect: () => void; subscribe: ReturnType<typeof vi.fn> };
+    client.onConnect();
+    expect(client.subscribe.mock.calls.map(([destination]) => destination)).not.toContain('/topic/g1/connection-request-cancelled');
   });
 });

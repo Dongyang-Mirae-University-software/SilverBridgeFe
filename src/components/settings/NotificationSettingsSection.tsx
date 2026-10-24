@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -9,55 +8,57 @@ import {
   useNotificationSettingsMutation,
 } from '@/service/query/user/notification-settings';
 import type { NotificationChannelType } from '@/service/interface/user/user';
+import { showToast } from '@/store/toastStore';
 import styles from './NotificationSettingsSection.module.css';
 
 const cx = classNames.bind(styles);
 
+// 순서·문구는 디자인 기준이되, 각 채널이 실제로 무엇을 보내는지는 BE 규칙에 맞춘다
+// - 푸시: SOS·이상 감지는 꺼도 항상 보낸다(강제 푸시)
+// - 문자: 켜면 설정 기반 알림도 문자로 받고, SOS·이상 감지는 푸시가 안 가면 꺼져 있어도 대신 보낸다
+// - 알림톡: 이상 감지 알림만(승인 템플릿이 이것뿐)
+// - 이메일: 안내성 알림만(SOS·이상 감지는 보내지 않는다)
 const CHANNEL_OPTIONS: Array<{
   channelType: NotificationChannelType;
   label: string;
   desc: string;
-  badge?: string;
 }> = [
   {
+    channelType: 'KAKAO_ALIMTALK',
+    label: '카카오톡 알림톡',
+    desc: '이상 감지 알림을 카카오톡 메시지로 알려 드려요.',
+  },
+  {
     channelType: 'FCM',
-    label: '앱 푸시 알림',
-    desc: '연결 요청, 이상 감지 등 주요 알림을 실시간으로 받습니다. SOS·이상 감지 발생 알림은 꺼도 항상 발송됩니다.',
-    badge: '기본값',
+    label: '푸시 알림',
+    desc: '휴대폰 앱 알림으로 바로 알려 드려요. SOS·이상 감지 알림은 꺼 두어도 항상 푸시로 보내요.',
   },
   {
     channelType: 'SMS',
     label: 'SMS 문자',
-    desc: '긴급 알림을 문자로 받습니다.',
-  },
-  {
-    channelType: 'KAKAO_ALIMTALK',
-    label: '카카오 알림톡',
-    desc: '이상 감지 발생 알림을 카카오톡으로 받습니다.',
+    desc: '켜 두면 알림을 문자로도 받아요. SOS·이상 감지는 푸시가 안 가면 꺼 두어도 문자로 대신 보내요.',
   },
   {
     channelType: 'EMAIL',
-    label: '이메일',
-    desc: '공지사항 및 서비스 안내를 이메일로 받습니다.',
-    badge: '준비 중',
+    label: '이메일 알림',
+    desc: '연결·문의 답변·복약 확인 같은 안내를 가입한 이메일로 보내 드려요. SOS·이상 감지는 이메일로 보내지 않아요.',
   },
 ];
+
+const SAVE_ERROR_MESSAGE = '알림 설정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.';
 
 export function NotificationSettingsSection() {
   const { data: notificationSettings = [], isLoading } = useQuery(userNotificationSettingsQueryOptions);
   const mutation = useNotificationSettingsMutation();
-  const [error, setError] = useState('');
 
   const enabledMap = new Map(notificationSettings.map(item => [item.channelType, item.enabled]));
 
+  // 화면 반영·실패 시 되돌림은 mutation 훅이 맡는다(onMutate·onError)
   const handleToggle = (channelType: NotificationChannelType, enabled: boolean) => {
-    if (enabledMap.get(channelType) === enabled) return;
-    setError('');
+    if (mutation.isPending || enabledMap.get(channelType) === enabled) return;
     mutation.mutate(
       { settings: [{ channelType, enabled }] },
-      {
-        onError: err => setError(err instanceof Error && err.message ? err.message : '알림 설정 변경에 실패했습니다.'),
-      },
+      { onError: () => showToast(SAVE_ERROR_MESSAGE, { variant: 'error' }) },
     );
   };
 
@@ -67,29 +68,26 @@ export function NotificationSettingsSection() {
         <p className={cx('loading')}>불러오는 중…</p>
       ) : (
         <div className={cx('list')}>
-          {error && <div className={cx('errorBanner')}>{error}</div>}
           {CHANNEL_OPTIONS.map(option => {
-            const isComingSoon = option.badge === '준비 중';
-            const enabled = isComingSoon ? false : enabledMap.get(option.channelType) ?? option.channelType === 'FCM';
+            const enabled = enabledMap.get(option.channelType) ?? option.channelType === 'FCM';
             return (
               <div key={option.channelType} className={cx('row')}>
                 <div className={cx('meta')}>
                   <div className={cx('titleRow')}>
                     <span className={cx('label')}>{option.label}</span>
-                    {option.badge && (
-                      <span className={cx('badge', { badgeMuted: option.badge === '준비 중' })}>{option.badge}</span>
-                    )}
                   </div>
                   <span className={cx('desc')}>{option.desc}</span>
                 </div>
-                <label className={cx('toggle')} aria-label={`${option.label} 설정`}>
+                <label className={cx('toggle')}>
                   <input
                     type="checkbox"
+                    role="switch"
+                    aria-label={option.label}
                     checked={enabled}
-                    disabled={isComingSoon || mutation.isPending}
+                    disabled={mutation.isPending}
                     onChange={e => handleToggle(option.channelType, e.target.checked)}
                   />
-                  <span className={cx('toggleThumb')} />
+                  <span className={cx('toggleThumb')} aria-hidden="true" />
                 </label>
               </div>
             );
