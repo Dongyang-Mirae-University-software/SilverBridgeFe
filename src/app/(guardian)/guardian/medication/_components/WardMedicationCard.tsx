@@ -225,7 +225,10 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                                 {medication.memo ? ` · ${medication.memo}` : ''}
                               </span>
                             </button>
-                            <span className={cx('statusBadge', 'small', status)}>{STATUS_LABEL[status]}</span>
+                            {/* 시간대 줄과 같은 상태면 약마다 되풀이하지 않는다 - 다른 약만 보인다(그 약만 드셨어요 등, 2026-10-24) */}
+                            {status !== group.status && (
+                              <span className={cx('statusBadge', 'small', status)}>{STATUS_LABEL[status]}</span>
+                            )}
                             <button
                               type="button"
                               className={cx('deleteButton')}

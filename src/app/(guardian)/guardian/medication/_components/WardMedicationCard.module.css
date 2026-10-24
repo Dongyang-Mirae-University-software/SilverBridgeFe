@@ -475,22 +475,26 @@
     align-items: flex-start;
   }
 
-  .sectionHeader,
+  /* 제목 줄은 한 줄: 제목·설명 왼쪽, "+ 약 추가" 오른쪽(2026-10-24) */
+  .sectionHeader {
+    padding: 14px 16px;
+  }
+
   .settingsRow {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .addButton,
   .settingsRow .switchField {
     align-self: flex-end;
   }
 
+  /* 시간대 줄은 두 줄: "아침 08:00 ··· [상태] ›" / "약 6개 · 이름…" (세 줄이던 것, 2026-10-24) */
   .groupHeader {
-    grid-template-columns: minmax(0, 1fr) 20px;
-    grid-template-areas: 'time chevron' 'info info' 'status status';
-    row-gap: 6px;
-    padding: 16px;
+    grid-template-columns: minmax(0, 1fr) auto 20px;
+    grid-template-areas: 'time status chevron' 'info info info';
+    row-gap: 4px;
+    padding: 14px 16px;
   }
 
   .groupTime {
@@ -502,22 +506,38 @@
 
   .groupInfo {
     grid-area: info;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .groupInfo strong {
+    flex-shrink: 0;
+    font-size: 16px;
   }
 
   .groupHeader .statusBadge {
     grid-area: status;
-    justify-self: start;
+    font-size: 14px;
+    padding: 4px 10px;
   }
 
   .chevron {
     grid-area: chevron;
   }
 
+  /* 펼친 약은 한 줄: 이름(1정) ··· [상태] [삭제] (세 줄이던 것) */
   .medicationItem {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: 'info delete' 'status status';
-    row-gap: 6px;
-    padding: 12px 16px;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: 'info status delete';
+    gap: 8px;
+    padding: 10px 16px;
+  }
+
+  .medicationItem .medicationName {
+    overflow: visible;
+    white-space: normal;
+    word-break: break-all;
   }
 
   .medicationItem .medicationInfo {
@@ -526,7 +546,6 @@
 
   .medicationItem .statusBadge {
     grid-area: status;
-    justify-self: start;
   }
 
   .medicationItem .deleteButton {

@@ -40,6 +40,8 @@
 
 @media (max-width: 640px) {
   .card { gap: 12px; padding: 16px; }
+  /* 핸드폰에서는 긴 약 이름을 자르지 않고 줄을 바꾼다("신일이부프로펜정400…") */
+  .name { overflow: visible; white-space: normal; word-break: break-all; }
   .checkButton { min-width: 112px; min-height: 48px; font-size: 16px; }
   .name { font-size: 17px; }
 }

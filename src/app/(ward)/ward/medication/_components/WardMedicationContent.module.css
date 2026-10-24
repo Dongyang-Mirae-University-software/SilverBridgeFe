@@ -95,6 +95,25 @@
   padding: 14px 24px;
 }
 
+.groupToggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 52px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.chevron { color: var(--sb-ink-mute); font-size: 24px; font-weight: 700; transition: transform 0.15s ease; }
+.chevron.open { transform: rotate(90deg); }
+
 .groupTitle { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-width: 0; }
 .groupTitle strong { color: var(--sb-ink); font-size: 21px; font-weight: 800; }
 .groupTitle span { color: var(--sb-ink-soft); font-size: 17px; font-weight: 600; }

@@ -121,10 +121,34 @@ describe('WardMedicationContent (Chrome)', () => {
     await expect.element(screen.getByText('오늘 약을 모두 드셨어요')).toBeVisible();
     expect(screen.getByRole('button', { name: /다 먹었어요|모두 풀기|전체 풀기/ }).query()).toBeNull();
 
+    // 다 먹은 시간대는 접혀 있다 - 머리를 눌러 펼친 뒤 하나를 푼다
+    expect(screen.getByRole('button', { name: '혈압약 먹었어요' }).query()).toBeNull();
+    await screen.getByRole('button', { name: /아침/, expanded: false }).click();
     await screen.getByRole('button', { name: '혈압약 먹었어요' }).click();
     await vi.waitFor(() => expect(api.uncheckMedicationIntake).toHaveBeenCalledWith(1));
     expect(api.setMedicationIntakeBatch).not.toHaveBeenCalled();
     await expect.element(screen.getByRole('button', { name: '혈압약 안 먹었어요' })).toBeVisible();
+  });
+
+  it('지금 먹을 시간대 하나만 펼치고, 다 먹은·나중 시간대는 머리만 - 누르면 펼친다 (2026-10-24)', async () => {
+    const morning = [med('혈압약', '08:00:00', 'MORNING', true), med('위장약', '08:00:00', 'MORNING', true)];
+    const lunch = [med('소화제', '12:00:00', 'LUNCH'), med('진통제', '12:00:00', 'LUNCH')];
+    const dinner = [med('수면제', '19:00:00', 'DINNER'), med('비타민', '19:00:00', 'DINNER')];
+    api.getTodayMedication.mockResolvedValue(today([...morning, ...lunch, ...dinner]));
+    const screen = renderContent();
+
+    await expect.element(screen.getByText('다음에 드실 약 · 점심 12:00')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '소화제 안 먹었어요' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '혈압약 먹었어요' }).query()).toBeNull();
+    expect(screen.getByRole('button', { name: '수면제 안 먹었어요' }).query()).toBeNull();
+    // 지금 시간대 머리에는 [다 먹었어요]가 없다(위 카드에 있다), 나중 시간대 머리에는 있다
+    expect(screen.getByRole('button', { name: '점심 약 다 먹었어요' }).elements()).toHaveLength(1);
+    await expect.element(screen.getByRole('button', { name: '저녁 약 다 먹었어요' })).toBeVisible();
+
+    await screen.getByRole('button', { name: /저녁/, expanded: false }).click();
+    await expect.element(screen.getByRole('button', { name: '수면제 안 먹었어요' })).toBeVisible();
+    await screen.getByRole('button', { name: /점심/, expanded: true }).click();
+    expect(screen.getByRole('button', { name: '소화제 안 먹었어요' }).query()).toBeNull();
   });
 
   it('약이 하나뿐인 시간대는 이름을 그대로 보이고 버튼은 "먹었어요"', async () => {

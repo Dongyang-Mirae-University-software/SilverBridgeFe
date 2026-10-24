@@ -116,6 +116,9 @@ describe('WardMedicationCard (Chrome)', () => {
     // 펼친 시간대의 약만 수정·삭제 버튼이 보인다
     expect(screen.getByRole('button', { name: '코싹열정 삭제' }).elements()).toHaveLength(1);
     await expect.element(screen.getByRole('button', { name: '신일이부프로펜정400mg 수정' })).toBeVisible();
+    // 펼친 약은 시간대 줄과 다른 상태만 배지를 단다 - 점심의 안 드신 코푸시럽은 줄 상태("6개 중 5개")와 같은 "체크 전"이라 없고,
+    // "아직 체크 전이에요"는 저녁 줄 하나뿐(2026-10-24)
+    expect(screen.getByText('아직 체크 전이에요').elements()).toHaveLength(1);
     // 375px에서 가로 넘침 없음
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
