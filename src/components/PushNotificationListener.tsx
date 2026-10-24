@@ -93,7 +93,7 @@ function getConnectionPushNotification(data?: MessagePayload['data'], role?: Con
       return { body: '연결이 해제되었습니다.', title: '연결 해제' };
     case 'WARD_SOS':
       return {
-        body: `${data?.wardName ?? '피보호자'}님이 긴급 도움을 요청했습니다.`,
+        body: `${data?.wardName ?? '피보호자'}${getSubjectParticle(data?.wardName ?? '피보호자')} 긴급 도움을 요청했습니다.`,
         title: '긴급 SOS',
       };
     case 'MEDICATION_REMINDER':
@@ -111,13 +111,13 @@ function getConnectionPushNotification(data?: MessagePayload['data'], role?: Con
         };
       }
       return {
-        body: `${data?.wardName ?? '피보호자'}님 댁 ${data?.location ?? ''}에서 ${detectedLabel}${getSubjectParticle(detectedLabel)} 감지되었습니다.`,
+        body: `${data?.wardName ?? '피보호자'} 댁 ${data?.location ?? ''}에서 ${detectedLabel}${getSubjectParticle(detectedLabel)} 감지되었습니다.`,
         title: '이상 상황 감지',
       };
     }
     case 'ANOMALY_REVIEW_REQUIRED':
       return {
-        body: `${data?.wardName ?? '피보호자'}님의 ${data?.detectedTypeLabel ?? '이상감지'} 감지가 실제 상황이었는지 확인해 주세요.`,
+        body: `${data?.wardName ?? '피보호자'}의 ${data?.detectedTypeLabel ?? '이상감지'} 감지가 실제 상황이었는지 확인해 주세요.`,
         title: '이상감지 확인이 필요해요',
       };
     case 'ANOMALY_REVIEW_SUMMARY':
@@ -127,13 +127,13 @@ function getConnectionPushNotification(data?: MessagePayload['data'], role?: Con
       };
     case 'ANOMALY_REVIEW_CONFLICTED':
       return {
-        body: `${data?.wardName ?? '피보호자'}님의 ${data?.detectedTypeLabel ?? '이상감지'} 감지에 대해 다른 보호자와 판정이 다릅니다. 다시 확인해 주세요.`,
+        body: `${data?.wardName ?? '피보호자'}의 ${data?.detectedTypeLabel ?? '이상감지'} 감지에 대해 다른 보호자와 판정이 다릅니다. 다시 확인해 주세요.`,
         title: '판정 확인 요청',
       };
     case 'CAMERA_LINK_LOST':
       // 원인을 단정하지 않는 문구(BE 푸시 본문과 같은 톤) - '꺼졌다'가 아니라 '확인되지 않는다'
       return {
-        body: `${data?.wardName ?? '피보호자'}님 댁 ${data?.location ?? ''} 카메라의 영상이 확인되지 않아 감시가 멈춰 있을 수 있습니다. 카메라 기기의 송출 상태를 확인해 주세요.`,
+        body: `${data?.wardName ?? '피보호자'} 댁 ${data?.location ?? ''} 카메라의 영상이 확인되지 않아 감시가 멈춰 있을 수 있습니다. 카메라 기기의 송출 상태를 확인해 주세요.`,
         title: '카메라 연결 확인 필요',
       };
     default:

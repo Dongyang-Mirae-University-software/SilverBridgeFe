@@ -13,6 +13,7 @@ import { formatDateTime } from '@/utils/format/date';
 import { formatDoseTime, getMedicationTimeSlotLabel } from '@/utils/format/medication';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import styles from './GuardianDashboardContent.module.css';
+import { getObjectParticle } from '@/utils/format/korean';
 
 const cx = classNames.bind(styles);
 const EMPTY_VALUE = '-';
@@ -85,7 +86,7 @@ export function GuardianDashboardContent() {
     },
     {
       href: '/guardian/emotion', icon: 'heart', kind: 'mood', title: '오늘의 정서', main: '정서 상태 확인하기',
-      sub: selectedWard ? `${selectedWard.partnerName} 님의 오늘 대화를 살펴보세요` : null,
+      sub: selectedWard ? `${selectedWard.partnerName}의 오늘 대화를 살펴보세요` : null,
       pill: { tone: 'ok', label: '살펴보기' },
     },
     {
@@ -113,8 +114,8 @@ export function GuardianDashboardContent() {
       sub: isSosUnavailable ? '잠시 후 다시 시도해 주세요' : sos?.latest?.location ?? null,
       pill: isSosUnavailable || !sos?.thisMonthCount ? undefined : { tone: 'warn', label: `이번 달 ${sos.thisMonthCount}건` },
     },
-    { href: '/guardian/hospital', icon: 'hospital', kind: 'hospital', title: '병원 예약', main: '병원 예약하기', sub: selectedWard ? `${selectedWard.partnerName} 님을 대신해 예약할 수 있어요` : null },
-    { href: '/guardian/game', icon: 'game', kind: 'game', title: '게임·인지 활동', main: '게임 현황 확인하기', sub: selectedWard ? `${selectedWard.partnerName} 님의 인지 활동 기록` : null },
+    { href: '/guardian/hospital', icon: 'hospital', kind: 'hospital', title: '병원 예약', main: '병원 예약하기', sub: selectedWard ? `${selectedWard.partnerName}${getObjectParticle(selectedWard.partnerName)} 대신해 예약할 수 있어요` : null },
+    { href: '/guardian/game', icon: 'game', kind: 'game', title: '게임·인지 활동', main: '게임 현황 확인하기', sub: selectedWard ? `${selectedWard.partnerName}의 인지 활동 기록` : null },
   ];
   const pendingTotal = dashboard?.pendingActions.total;
 
@@ -170,7 +171,7 @@ export function GuardianDashboardContent() {
 }
 
 function DashboardHeading({ guardianName }: { guardianName?: string }) {
-  return <header className={cx('heading')}><h1>대시보드</h1><p>{formatDashboardDate()} · 보호자 {guardianName || EMPTY_VALUE} 님</p></header>;
+  return <header className={cx('heading')}><h1>대시보드</h1><p>{formatDashboardDate()} · 보호자 {guardianName || EMPTY_VALUE}</p></header>;
 }
 
 function StatusPill({ tone, label }: { tone: 'ok' | 'care' | 'warn'; label: string }) {
