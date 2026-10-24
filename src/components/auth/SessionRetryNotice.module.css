@@ -34,3 +34,23 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+.delayed {
+  animation: appear 0.2s ease-out 0.4s both;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delayed {
+    animation-duration: 0s;
+  }
+}

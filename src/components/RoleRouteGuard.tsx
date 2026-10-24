@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useSyncExternalStore } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
@@ -11,7 +11,10 @@ import { AuthRole, clearAuthTokens, getAccessToken, getRefreshToken, setAuthRole
 import { restoreSession, shouldEndSessionAfterProfileError } from '@/lib/auth/sessionRestore';
 import { registerFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { reportNonApiError } from '@/lib/api/reportError';
+import SessionCheckingNotice from '@/components/auth/SessionCheckingNotice';
 import SessionRetryNotice from '@/components/auth/SessionRetryNotice';
+
+const subscribeNothing = () => () => {};
 
 interface Props {
   allowedRole: AuthRole;
@@ -27,6 +30,8 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [restoreUnavailable, setRestoreUnavailable] = useState(false);
   const [, setRestoredCount] = useState(0);
+  // 서버 렌더와 하이드레이션 첫 렌더는 쿠키를 모르므로(null) 둘 다 아무것도 그리지 않는다 - 그 뒤에만 안내를 그린다
+  const hydrated = useSyncExternalStore(subscribeNothing, () => true, () => false);
   const { data: profileResponse, error, isError, isLoading, refetch } = useQuery({
     ...myProfileQueryOptions,
     enabled: Boolean(accessToken),
@@ -100,6 +105,8 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
       />
     );
   }
+
+  if (needsRestore) return hydrated ? <SessionCheckingNotice /> : null;
 
   if (isError && !endsSession) return <SessionRetryNotice onRetry={() => void refetch()} />;
 
