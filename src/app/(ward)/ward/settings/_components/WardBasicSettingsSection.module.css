@@ -14,8 +14,14 @@
 .contrastRow input { position: absolute; opacity: 0; }
 .bigSwitch { display: block; width: 60px; height: 34px; flex-shrink: 0; border-radius: 999px; background: var(--sb-line); padding: 4px; transition: background 0.15s; }
 .bigSwitch > span { display: block; width: 26px; height: 26px; border-radius: 50%; background: #fff; transition: transform 0.15s; }
-.contrastRow input:checked + .bigSwitch { background: var(--sb-brand); }
-.contrastRow input:checked + .bigSwitch > span { transform: translateX(26px); }
+.localNote { margin: 12px 0 0; color: var(--sb-ink-mute); font-size: 15px; line-height: 1.5; word-break: keep-all; }
+/* 숨김 input은 positioned 부모(.contrastRow) 안에 겹쳐 둔다 - 바깥 문서가 늘어나지 않게(#114) */
+.contrastRow input { inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.switchBox { display: flex; min-height: 60px; align-items: center; flex-shrink: 0; gap: 12px; border: 2px solid var(--sb-line); border-radius: 16px; background: #fff; color: var(--sb-ink-soft); font-size: 19px; font-weight: 800; padding: 0 18px 0 22px; white-space: nowrap; }
+.switchBoxOn { border-color: var(--sb-brand); background: var(--sb-brand-50); color: var(--sb-brand); }
+.switchBoxOn .bigSwitch { background: var(--sb-brand); }
+.switchBoxOn .bigSwitch > span { transform: translateX(26px); }
+.contrastRow input:focus-visible + .switchBox { outline: 3px solid var(--sb-brand-soft); outline-offset: 2px; }
 .sosCard { display: flex; flex-direction: column; }
 .guardianNotice { display: flex; align-items: center; gap: 20px; padding: 22px 26px; }
 .guardianNoticeIcon { display: grid; width: 52px; height: 52px; flex-shrink: 0; place-items: center; border-radius: 50%; background: var(--sb-brand-50); color: var(--sb-brand); }
@@ -38,9 +44,12 @@
 @media (max-width: 640px) {
   .displayContent, .contrastRow, .guardianNotice, .sosContent { padding: 18px; }
   .displayContent h2, .sosQuestion, .contrastRow strong, .guardianNoticeTitle { font-size: 18px; }
-  .contrastRow { align-items: flex-start; gap: 12px; }
-  .contrastRow small, .guardianNoticeDesc, .sosOptionHint { font-size: 14px; }
+  .contrastRow { align-items: stretch; flex-direction: column; gap: 12px; }
+  .switchBox { justify-content: space-between; }
+  .contrastRow small, .guardianNoticeDesc, .sosOptionHint, .localNote { font-size: 14px; }
   .guardianNotice { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  /* 글 칸이 한 줄을 차지해야 배지가 다음 줄로 내려간다 - 아니면 글이 한 단어씩 쪼개진다 */
+  .guardianNoticeText { flex-basis: calc(100% - 64px); }
   .guardianNoticeBadge { min-height: 42px; margin-left: 64px; font-size: 14px; }
   .sosOption { align-items: flex-start; padding: 16px; }
   .sosRadio { width: 26px; height: 26px; }

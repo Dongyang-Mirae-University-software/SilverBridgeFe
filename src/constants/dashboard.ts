@@ -3,7 +3,7 @@ import { NavItem, PageKey } from '@/components/layout/dashboard/types';
 export const WARD_NAV: NavItem[] = [
   { href: '/ward', icon: 'dashboard', label: '홈', key: 'home' },
   // { href: '/ward/sos', icon: 'phone', label: '긴급 전화', key: 'sos' },
-  { href: '/ward/guardians', icon: 'users', label: '내 보호자', key: 'guardians' },
+  { href: '/ward/guardians', icon: 'users', label: '내 가족', key: 'guardians' },
   // 치매 예방 게임: 아직 미공개. 사이드바에서만 숨김(/ward/game 직접 접근은 가능)
   // { href: '/ward/game', icon: 'game', label: '치매 예방 게임', key: 'game' },
   { href: '/ward/notices', icon: 'bell', label: '공지사항', key: 'notices' },
@@ -22,8 +22,8 @@ export const GUARDIAN_NAV: NavItem[] = [
   { href: '/guardian/hospital', icon: 'hospital', label: '병원 예약', key: 'hospital' },
   { href: '/guardian/notices', icon: 'bell', label: '공지사항', key: 'notices' },
   { href: '/guardian/inquiries', icon: 'inquiry', label: '문의하기', key: 'inquiries' },
-  { href: '/guardian/wards', icon: 'users', label: '피보호자 리스트', key: 'wards' },
-  { href: '/guardian/wards/register', icon: 'plus', label: '피보호자 등록', key: 'ward-register' },
+  { href: '/guardian/wards', icon: 'users', label: '연결된 가족', key: 'wards' },
+  { href: '/guardian/wards/register', icon: 'plus', label: '가족 등록', key: 'ward-register' },
   { href: '/guardian/settings', icon: 'settings', label: '환경설정', key: 'settings' },
 ];
 
@@ -35,13 +35,13 @@ export const PAGE_TITLES: Record<PageKey, string> = {
   hospital: '병원 예약하기',
   medication: '복약 알림',
   notices: '공지사항',
-  guardians: '내 보호자',
+  guardians: '내 가족',
   settings: '환경설정',
   dashboard: '대시보드',
   detection: '이상감지',
   emotion: '정서 상태 체크',
-  wards: '피보호자 리스트',
-  'ward-register': '피보호자 등록',
+  wards: '연결된 가족',
+  'ward-register': '가족 등록',
   inquiries: '문의하기',
   'sos-history': 'SOS 이력',
   'medication-management': '복약 관리',

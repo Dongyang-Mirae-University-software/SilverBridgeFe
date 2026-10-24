@@ -20,6 +20,7 @@ import { getRealtimeNotification } from '@/utils/dashboard/realtime';
 import { useVisualViewportHeight } from '@/hooks/useVisualViewportHeight';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
+import { wardConnectionsQueryKey } from '@/service/query/ward/connection';
 import { applyMedicationTakenToWardCache } from '@/service/query/ward/medication';
 import { wardSosSettingQueryOptions } from '@/service/query/ward/sosSetting';
 import { WardCameraStreamProvider } from '../camera/_components/WardCameraStreamProvider';
@@ -136,6 +137,11 @@ function useWardConnectionSocket(realtimeUserId: string | undefined) {
         // 다른 기기·탭에서 체크한 경우의 동기화 — 알림 없이 조용히 갱신
         if (payload.type === 'MEDICATION_TAKEN') {
           applyMedicationTakenToWardCache(queryClient, payload);
+          return;
+        }
+        // 보호자의 요청 취소는 알림을 보내지 않는 정책이라 토스트 없이 받은 요청 목록만 새로 받는다
+        if (payload.type === 'CONNECTION_REQUEST_CANCELLED') {
+          void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
           return;
         }
 

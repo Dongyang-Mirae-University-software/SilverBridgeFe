@@ -219,3 +219,60 @@
     width: 100%;
   }
 }
+
+/* 피보호자 화면 모달 - 큰 글씨·넓은 버튼(디자인: 폭 480, 제목 24, 본문 18, 버튼 60) */
+.modal.ward {
+  width: min(480px, 100%);
+  border-radius: 20px;
+  gap: 14px;
+  padding: 32px;
+}
+
+.modal.ward .modalIcon {
+  width: 68px;
+  height: 68px;
+}
+
+.modal.ward .modalTitle {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.modal.ward .modalDesc {
+  font-size: 18px;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+.modal.ward .modalInput {
+  min-height: 60px;
+  border-radius: 14px;
+  font-size: 19px;
+}
+
+.modal.ward .modalError {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.modal.ward .modalActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.modal.ward .modalCancel,
+.modal.ward .modalDanger {
+  min-height: 60px;
+  border-radius: 16px;
+  font-size: 19px;
+  font-weight: 800;
+  padding: 0;
+}
+
+@media (max-width: 640px) {
+  .modal.ward {
+    padding: 24px 20px;
+  }
+}
