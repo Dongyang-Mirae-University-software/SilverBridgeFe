@@ -9,6 +9,7 @@ import {
   guardianAnomalyHistorySummaryQueryOptions,
 } from '@/service/query/guardian/anomaly';
 import { AnomalyDetectedType, AnomalyHistorySummary } from '@/service/interface/guardian/anomaly';
+import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { AnomalyIncidentCard } from './AnomalyIncidentCard';
 import { getPageWindow } from './anomalyFormat';
 import styles from './AnomalyHistoryContent.module.css';
@@ -67,26 +68,16 @@ export function AnomalyHistoryContent({
   return (
     <section className={cx('page')}>
       {wards.length > 0 && (
-        <div className={cx('chipRow')} role="group" aria-label="피보호자 선택">
-          {wards.map(ward => {
-            const isActive = ward.wardId === selectedWardId;
-            return (
-              <button
-                key={ward.wardId}
-                type="button"
-                className={cx('chip', 'wardChip', { active: isActive })}
-                aria-pressed={isActive}
-                onClick={() => {
-                  onSelectWard(ward.wardId);
-                  setTypeFilter('ALL');
-                  setPage(0);
-                }}
-              >
-                <span className={cx('wardInitial')}>{ward.wardName.charAt(0)}</span>
-                {ward.wardName} 님
-              </button>
-            );
-          })}
+        <div className={cx('wardSelect')}>
+          <WardSelectorTabs
+            wards={wards}
+            selectedWardId={selectedWardId}
+            onSelect={wardId => {
+              onSelectWard(wardId);
+              setTypeFilter('ALL');
+              setPage(0);
+            }}
+          />
         </div>
       )}
 
