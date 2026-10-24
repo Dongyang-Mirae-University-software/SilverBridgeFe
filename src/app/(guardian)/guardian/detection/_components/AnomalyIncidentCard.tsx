@@ -1,132 +1,63 @@
 'use client';
 
 import { useState } from 'react';
-import dayjs from 'dayjs';
 import classNames from 'classnames/bind';
 
-import { formatDateTime } from '@/utils/format/date';
-import { AnomalyIncident, AnomalyVerdict } from '@/service/interface/guardian/anomaly';
-import { useAnomalyFeedbackMutation } from '@/service/query/guardian/anomaly';
-import { showToast } from '@/store/toastStore';
+import { AnomalyIncident } from '@/service/interface/guardian/anomaly';
 import { AnomalyClipModal } from './AnomalyClipModal';
+import { AnomalyVerdictPanel } from './AnomalyVerdictPanel';
+import { formatClipDuration, formatIncidentDate } from './anomalyFormat';
 import { useClipThumbnail } from './clipThumbnail';
 import styles from './AnomalyIncidentCard.module.css';
 
 const cx = classNames.bind(styles);
 
-const REVIEW_STATUS_LABEL: Record<AnomalyIncident['reviewStatus'], string> = {
-  PENDING: '확인 필요',
-  REAL: '실제 위험',
-  FALSE_ALARM: '오탐',
-  CONFLICTED: '응답 엇갈림 · 재확인 필요',
-};
-
-const TYPE_META: Record<AnomalyIncident['detectedType'], { icon: string }> = {
-  FALL: { icon: '⚠️' },
-  FIRE: { icon: '🔥' },
-  WEAPON: { icon: '🔪' },
-};
-
-function formatDuration(durationMs: number | null) {
-  if (!durationMs) return null;
-  const totalSeconds = Math.round(durationMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
-}
-
+// 이력 목록의 한 줄 = 상황(incident) 하나. 썸네일을 누르면 영상 화면이 열린다
 export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident }) {
-  const feedbackMutation = useAnomalyFeedbackMutation();
   const [isClipModalOpen, setIsClipModalOpen] = useState(false);
   const { src: thumbSrc, attach: attachThumb } = useClipThumbnail(incident.clip?.clipId);
-
-  const handleFeedback = (verdict: AnomalyVerdict) => {
-    if (feedbackMutation.isPending) return;
-    feedbackMutation.mutate(
-      { incidentId: incident.incidentId, body: { verdict } },
-      {
-        onError: error => {
-          const message = (error as { message?: string })?.message ?? '응답을 보내지 못했습니다. 다시 시도해 주세요.';
-          showToast(message, { variant: 'error' });
-        },
-      },
-    );
-  };
-
-  const canRespond = incident.reviewStatus === 'PENDING' || incident.reviewStatus === 'CONFLICTED';
-  const typeMeta = TYPE_META[incident.detectedType] ?? { icon: '⚠️' };
-  const duration = formatDuration(incident.clip?.durationMs ?? null);
+  const duration = formatClipDuration(incident.clip?.durationMs);
 
   return (
-    <li className={cx('card')}>
+    <li className={cx('row')}>
       <button
         type="button"
         ref={attachThumb}
-        className={cx('thumbnail', incident.detectedType.toLowerCase(), { hasImage: Boolean(thumbSrc) })}
+        className={cx('thumbnail')}
         disabled={!incident.clip}
+        aria-label={incident.clip ? '영상 보기' : '영상 없음'}
         onClick={() => setIsClipModalOpen(true)}
       >
-        {/* 클립의 첫 화면. 못 받으면 유형별 단색 배경 그대로 */}
+        {/* 클립의 첫 화면. 못 받으면 어두운 배경 그대로 */}
         {thumbSrc && incident.clip && <img className={cx('thumbImage')} src={thumbSrc} alt="" />}
-        <span className={cx('timeBadge')}>{dayjs(incident.startedAt).format('MM.DD HH:mm')}</span>
-        <span className={cx('typeBadge')}>
-          {typeMeta.icon} {incident.detectedTypeLabel}
-        </span>
-        {incident.clip && (
+        {incident.clip ? (
           <span className={cx('playButton')}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--sb-brand)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--sb-brand)" aria-hidden="true">
               <path d="M8 5v14l11-7z" />
             </svg>
           </span>
+        ) : (
+          <span className={cx('noClip')}>영상 없음</span>
         )}
         {duration && <span className={cx('durationBadge')}>{duration}</span>}
       </button>
 
       <div className={cx('body')}>
         <div className={cx('bodyHead')}>
-          <strong className={cx('location')}>{incident.cameraLabel ?? '삭제된 카메라'}</strong>
-          {incident.clipCount > 1 && <span className={cx('clipCount')}>영상 {incident.clipCount}개</span>}
+          <span className={cx('typeBadge', incident.detectedType.toLowerCase())}>{incident.detectedTypeLabel}</span>
+          <strong className={cx('location', { deleted: incident.cameraLabel === null })}>
+            {incident.cameraLabel ?? '삭제된 카메라'}
+          </strong>
         </div>
-        <span className={cx('time')}>{formatDateTime(incident.startedAt)}</span>
-        <span className={cx('meta')}>
-          {incident.wardName} · {incident.eventCount}회 연속 감지 · 최고 신뢰도 {Math.round(incident.maxConfidence * 100)}%
-        </span>
+        <span className={cx('time')}>{formatIncidentDate(incident.startedAt)}</span>
+        {incident.clipCount > 1 && <span className={cx('clipCount')}>영상 {incident.clipCount}개</span>}
       </div>
 
-      <div className={cx('footer')}>
-        <span className={cx('statusBadge', incident.reviewStatus.toLowerCase())}>
-          {REVIEW_STATUS_LABEL[incident.reviewStatus]}
-        </span>
-
-        {canRespond ? (
-          <div className={cx('actions')}>
-            <button
-              type="button"
-              className={cx('actionButton', 'real')}
-              disabled={feedbackMutation.isPending}
-              onClick={() => handleFeedback('REAL')}
-            >
-              실제 위험
-            </button>
-            <button
-              type="button"
-              className={cx('actionButton', 'falseAlarm')}
-              disabled={feedbackMutation.isPending}
-              onClick={() => handleFeedback('FALSE_ALARM')}
-            >
-              오탐
-            </button>
-          </div>
-        ) : (
-          incident.myVerdict && (
-            <span className={cx('myVerdict')}>내 응답: {incident.myVerdict === 'REAL' ? '실제 위험' : '오탐'}</span>
-          )
-        )}
+      <div className={cx('verdict')}>
+        <AnomalyVerdictPanel incident={incident} />
       </div>
 
-      {isClipModalOpen && (
-        <AnomalyClipModal incident={incident} onClose={() => setIsClipModalOpen(false)} />
-      )}
+      {isClipModalOpen && <AnomalyClipModal incident={incident} onClose={() => setIsClipModalOpen(false)} />}
     </li>
   );
 }

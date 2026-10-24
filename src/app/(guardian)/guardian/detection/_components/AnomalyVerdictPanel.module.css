@@ -1,0 +1,133 @@
+.panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.panel.big {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.prompt {
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.conflicted {
+  color: var(--sb-warn);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.buttons {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.verdictButton {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.big .verdictButton {
+  min-height: 52px;
+  font-size: 16px;
+}
+
+.verdictButton.real {
+  border: 1.5px solid var(--sb-danger);
+  color: var(--sb-danger);
+}
+
+.verdictButton.falseAlarm {
+  border: 1.5px solid var(--sb-line);
+  color: var(--sb-ink);
+}
+
+/* 내가 고른 쪽(동수·판정 바꾸기 중) */
+.verdictButton.real.mine {
+  background: var(--sb-danger-soft);
+}
+
+.verdictButton.falseAlarm.mine {
+  border-color: var(--sb-ink-soft);
+  background: var(--sb-bg-soft);
+}
+
+.verdictButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.result {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.big .result {
+  font-size: 16px;
+}
+
+.result.real {
+  background: var(--sb-danger-soft);
+  color: var(--sb-danger);
+}
+
+.result.falseAlarm {
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
+}
+
+.myVerdict {
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.linkButton {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--sb-ink-mute);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .buttons {
+    flex: 1 1 100%;
+  }
+
+  .verdictButton {
+    flex: 1 1 0;
+    padding: 0 10px;
+  }
+}

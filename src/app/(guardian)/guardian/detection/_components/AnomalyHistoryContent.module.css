@@ -2,209 +2,166 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
-.header {
+.chipRow,
+.chipGroup {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.title {
-  display: block;
-  color: var(--sb-ink);
-  font-size: 26px;
-  font-weight: 800;
-}
-
-.subtitle {
-  display: block;
-  margin-top: 4px;
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-}
-
-.liveButton {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--sb-brand);
-  color: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 800;
-  padding: 12px 20px;
-  box-shadow: 0 6px 18px rgba(176, 103, 77, 0.32);
-}
-
-.liveDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #fff;
-  animation: pulse-live 1.2s infinite;
-}
-
-@keyframes pulse-live {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.45;
-    transform: scale(1.45);
-  }
-}
-
-.filterRow {
-  display: flex;
-  flex-wrap: wrap;
   gap: 8px;
 }
 
 .chip {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
   border: 1px solid var(--sb-line);
   border-radius: 999px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  padding: 10px 18px;
-}
-
-.chip span {
-  border-radius: 999px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  padding: 2px 8px;
+  white-space: nowrap;
 }
 
 .chip.active {
-  border: none;
+  border: 1.5px solid var(--sb-brand);
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.chipCount {
+  font-weight: 800;
+}
+
+.wardChip {
+  padding-left: 6px;
+}
+
+.wardInitial {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 800;
+  place-items: center;
+}
+
+.wardChip.active .wardInitial {
   background: var(--sb-brand);
   color: #fff;
 }
 
-.chip.active span {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-}
-
-.filterHint {
-  margin: -6px 0 0;
-  color: var(--sb-ink-mute);
-  font-size: 0.75rem;
-}
-
-.reminderBlock {
-  display: grid;
-  align-self: flex-start;
-  gap: 4px;
-}
-
-.reminderField {
+/* 확인 필요 = 건수 표시(필터 아님 - 이력 API에 상태 필터가 없다) */
+.needsReview {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
-  color: var(--sb-ink-soft);
-  font-size: 0.8125rem;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #f0c4c4;
+  border-radius: 999px;
+  background: var(--sb-danger-soft);
+  color: var(--sb-danger);
+  font-size: 14px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
-.reminderHint {
-  margin: 0;
+.needsReview.none {
+  border-color: var(--sb-line);
+  background: #fff;
   color: var(--sb-ink-mute);
-  font-size: 0.75rem;
 }
 
-.emptyText {
-  margin: 0;
+.needsReviewDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.listCard {
+  overflow: hidden;
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
   background: #fff;
-  color: var(--sb-ink-mute);
-  font-size: 0.875rem;
-  padding: 24px;
-  text-align: center;
+  box-shadow: var(--sb-shadow-sm);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+.list {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-}
-
-.pagination button {
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--sb-ink);
-  cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 800;
-  padding: 8px 16px;
-}
-
-.pagination button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.pagination span {
+.emptyText {
+  margin: 0;
+  padding: 44px 16px;
   color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-  font-weight: 700;
+  font-size: 15px;
+  text-align: center;
 }
 
-/* 삭제된 카메라 기록 숨김 토글 */
-.deletedRow {
+.pager {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin: 2px 0 12px;
+  justify-content: center;
+  gap: 6px;
 }
 
-.deletedToggle {
-  border: 1px dashed var(--sb-line-soft, #e7d1c0);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--sb-ink-mute, #766e69);
+.pageButton {
+  display: grid;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 12px;
+  font-family: inherit;
+  font-size: 14px;
   font-weight: 700;
-  padding: 6px 12px;
+  place-items: center;
 }
 
-.deletedToggle.on {
-  border-style: solid;
-  background: #fff8f2;
+.pageButton.active {
+  border: 1.5px solid var(--sb-brand);
+  background: var(--sb-brand-50);
   color: var(--sb-brand);
 }
 
-.deletedNote {
-  color: var(--sb-warn, #b4491f);
-  font-size: 12px;
-  font-weight: 700;
+.pageButton:disabled {
+  color: var(--sb-ink-mute);
+  cursor: default;
+  opacity: 0.5;
+}
+
+@media (max-width: 720px) {
+  .chip,
+  .needsReview {
+    padding: 0 14px;
+  }
+
+  .wardChip {
+    padding-left: 6px;
+  }
+
+  .pageButton {
+    min-width: 40px;
+    padding: 0 10px;
+  }
 }

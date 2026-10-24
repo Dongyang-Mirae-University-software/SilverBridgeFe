@@ -1,11 +1,15 @@
-.card {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
-  background: var(--sb-bg-soft);
+.row {
+  display: grid;
+  grid-template-areas: 'thumb body verdict';
+  grid-template-columns: 148px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 20px;
   list-style: none;
+}
+
+.row + .row {
+  border-top: 1px solid var(--sb-line-soft);
 }
 
 /* ── 썸네일 ── */
@@ -13,26 +17,19 @@
   position: relative;
   overflow: hidden;
   display: grid;
-  height: 140px;
+  grid-area: thumb;
+  width: 148px;
+  aspect-ratio: 16 / 9;
+  padding: 0;
   border: 0;
+  border-radius: 10px;
+  background: #2a231e;
   cursor: pointer;
   place-items: center;
 }
 
 .thumbnail:disabled {
   cursor: default;
-}
-
-.thumbnail.fall {
-  background: var(--sb-danger-soft);
-}
-
-.thumbnail.fire {
-  background: #fbe0ce;
-}
-
-.thumbnail.weapon {
-  background: #e5d6e0;
 }
 
 .thumbImage {
@@ -43,188 +40,125 @@
   object-fit: cover;
 }
 
-/* 첫 화면 위의 배지·재생 버튼이 잘 보이도록 아래를 살짝 어둡게 */
-.thumbnail.hasImage::after {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.32));
-  content: '';
-  pointer-events: none;
-}
-
-.timeBadge {
-  position: absolute;
-  z-index: 1;
-  top: 10px;
-  left: 10px;
-  white-space: nowrap;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  padding: 5px 9px;
-}
-
-.typeBadge {
-  position: absolute;
-  z-index: 1;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 4px 10px;
-}
-
-.thumbnail.fall .typeBadge {
-  background: var(--sb-danger-soft);
-  color: var(--sb-danger);
-}
-
-.thumbnail.fire .typeBadge {
-  background: #fbe0ce;
-  color: #c24a1f;
-}
-
-.thumbnail.weapon .typeBadge {
-  background: #e5d6e0;
-  color: #7a3e68;
-}
-
 .playButton {
   position: relative;
-  z-index: 1;
   display: grid;
-  width: 54px;
-  height: 54px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.92);
   place-items: center;
 }
 
+.noClip {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .durationBadge {
   position: absolute;
-  z-index: 1;
-  right: 10px;
-  bottom: 10px;
-  border-radius: 5px;
+  right: 6px;
+  bottom: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
   font-size: 11px;
-  padding: 3px 8px;
+  font-weight: 700;
 }
 
 /* ── 본문 ── */
 .body {
   display: flex;
+  grid-area: body;
+  min-width: 0;
   flex-direction: column;
-  gap: 4px;
-  background: #fff;
-  padding: 12px 14px;
+  gap: 5px;
 }
 
 .bodyHead {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.location {
-  color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.clipCount {
-  flex-shrink: 0;
-  color: var(--sb-ink-mute);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.time {
-  color: var(--sb-ink-mute);
-  font-size: 11px;
-}
-
-.meta {
-  color: var(--sb-ink-mute);
-  font-size: 11px;
-}
-
-.footer {
-  display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: #fff;
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 12px 14px;
+  gap: 8px;
+  min-width: 0;
 }
 
-.statusBadge {
+.typeBadge {
+  padding: 3px 10px;
   border-radius: 999px;
-  background: var(--sb-line-soft);
-  color: var(--sb-ink-mute);
-  font-size: 0.75rem;
+  font-size: 13px;
   font-weight: 800;
-  padding: 5px 10px;
+  white-space: nowrap;
 }
 
-.statusBadge.pending,
-.statusBadge.conflicted {
-  background: #fff3d7;
-  color: #b07b22;
-}
-
-.statusBadge.real {
-  background: #fbe5e0;
-  color: var(--sb-warn);
-}
-
-.statusBadge.false_alarm {
+.typeBadge.fall {
   background: var(--sb-brand-50);
   color: var(--sb-brand);
 }
 
-.actions {
-  display: flex;
-  gap: 8px;
+.typeBadge.fire {
+  background: var(--sb-sun-soft);
+  color: #8a5f12;
 }
 
-.actionButton {
-  border: 1px solid var(--sb-line);
-  border-radius: 999px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 0.75rem;
+.typeBadge.weapon {
+  background: #efe6f2;
+  color: #6e4f80;
+}
+
+.location {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--sb-ink);
+  font-size: 17px;
   font-weight: 800;
-  padding: 7px 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.actionButton.real {
-  border-color: var(--sb-warn);
-  color: var(--sb-warn);
-}
-
-.actionButton.falseAlarm {
-  border-color: var(--sb-brand);
-  color: var(--sb-brand);
-}
-
-.actionButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.myVerdict {
+.location.deleted {
   color: var(--sb-ink-mute);
-  font-size: 0.75rem;
+}
+
+.time {
+  color: var(--sb-ink-soft);
+  font-size: 15px;
   font-weight: 700;
+}
+
+.clipCount {
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.verdict {
+  grid-area: verdict;
+  min-width: 0;
+}
+
+/* 좁은 화면: 썸네일 + 본문 한 줄, 판정은 아래 줄 전체 */
+@media (max-width: 720px) {
+  .row {
+    grid-template-areas:
+      'thumb body'
+      'verdict verdict';
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 12px 14px;
+    padding: 14px 16px;
+  }
+
+  .thumbnail {
+    width: 112px;
+  }
+
+  .location {
+    font-size: 16px;
+  }
+
+  .time {
+    font-size: 14px;
+  }
 }
