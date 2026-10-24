@@ -285,7 +285,13 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
           </button>
         </header>
 
-        <div className={cx('tabs')} role="tablist" aria-label="약 추가 방법" onKeyDown={handleTabKeyDown}>
+        {/* 사진 결과가 나왔거나 2/2면 핸드폰에서는 탭을 접는다 - 탭은 처음 고를 때만 필요하다(다시 찍기는 아래 버튼) */}
+        <div
+          className={cx('tabs', { collapsible: (tab === 'camera' && camera.phase === 'result') || step === 2 })}
+          role="tablist"
+          aria-label="약 추가 방법"
+          onKeyDown={handleTabKeyDown}
+        >
           {TABS.map(item => {
             const selected = tab === item.value;
             return (
@@ -367,8 +373,12 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
             </div>
           )}
 
+          {/* 제목이 먼저(핸드폰에서 한 줄: 제목 ··· 진행). PC는 CSS가 진행 막대를 위로 올려 예전 모양 그대로 */}
           {showForm && (
-            <>
+            <div className={cx('stepHeader')}>
+              <h4 ref={stepTitleRef} className={cx('stepTitle')} tabIndex={-1}>
+                {STEP_TITLE[step]}
+              </h4>
               <div className={cx('progress')}>
                 <div className={cx('progressBar')} aria-hidden="true">
                   <span className={cx('progressFill')} />
@@ -378,15 +388,21 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
                   {step} / 2
                 </span>
               </div>
-              <h4 ref={stepTitleRef} className={cx('stepTitle')} tabIndex={-1}>
-                {STEP_TITLE[step]}
-              </h4>
-            </>
+            </div>
           )}
 
+          {/* 결과 문구와 노란 칸 안내를 상자 하나로(핸드폰에서 두 상자가 화면 위쪽을 차지했다, 2026-10-24) */}
           {step === 1 && tab === 'camera' && camera.phase === 'result' && (
-            <div className={cx('resultBanner')} role="status">
-              <p>✓ 약 {camera.count}개를 찾았어요. 맞는지 확인해 주세요</p>
+            <div
+              id={hasLowConfidence ? lowConfidenceHintId : undefined}
+              className={cx(hasLowConfidence ? 'checkBox' : 'resultBanner')}
+              role="status"
+            >
+              <p>
+                {hasLowConfidence
+                  ? `✓ 약 ${camera.count}개를 찾았어요. 노란 칸의 약 이름을 한 번 더 확인해 주세요`
+                  : `✓ 약 ${camera.count}개를 찾았어요. 맞는지 확인해 주세요`}
+              </p>
               {camera.truncated && (
                 <p className={cx('resultNote')}>
                   한 번에 {MAX_DRUGS}개까지만 가져왔어요. 나머지는 등록 후 다시 추가해 주세요
@@ -395,9 +411,9 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
             </div>
           )}
 
-          {step === 1 && showForm && hasLowConfidence && (
+          {step === 1 && showForm && hasLowConfidence && !(tab === 'camera' && camera.phase === 'result') && (
             <p id={lowConfidenceHintId} className={cx('checkBox')}>
-              노란 칸의 약 이름을 한 번 더 확인해 주세요. 맞나요?
+              노란 칸의 약 이름을 한 번 더 확인해 주세요
             </p>
           )}
 
