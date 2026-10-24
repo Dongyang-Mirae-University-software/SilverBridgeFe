@@ -591,6 +591,15 @@
   -webkit-line-clamp: 3;
 }
 
+/* 응급·위기 경고 문구는 잘리지 않게 (답변 문단의 3줄 자르기를 풀고 빨간 글씨로) */
+.historyItem .historyWarning {
+  display: block;
+  overflow: visible;
+  color: #c0392b;
+  font-weight: 600;
+  -webkit-line-clamp: unset;
+}
+
 .historyState {
   margin: 24px 0;
   color: var(--sb-ink-mute);

@@ -121,6 +121,8 @@ export interface ChatLogItem {
   type?: string;
   toolData?: unknown;
   ui?: ChatUiPromptData;
+  // 응급·위기 응답의 빨간 경고 박스 문구. 기록을 다시 열어도 119·109 안내가 보이게 BE가 내려준다(2026-10-24)
+  emergencyWarning?: string[] | null;
   createdAt?: string;
 }
 
