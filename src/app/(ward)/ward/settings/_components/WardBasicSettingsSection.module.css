@@ -7,7 +7,7 @@
 .fontChoice > strong { font-size: 17px; font-weight: 800; }
 .fontChoiceActive { border: 2.5px solid var(--sb-brand); background: var(--sb-brand-50); color: var(--sb-brand); }
 .fontPreview { margin: 16px 0 0; border-radius: 14px; background: var(--sb-bg-soft); color: var(--sb-ink); font-weight: 600; line-height: 1.5; padding: 16px 18px; }
-.contrastRow { display: flex; align-items: center; gap: 20px; border-top: 1px solid var(--sb-line-soft); cursor: pointer; padding: 22px 26px; }
+.contrastRow { position: relative; display: flex; align-items: center; gap: 20px; border-top: 1px solid var(--sb-line-soft); cursor: pointer; padding: 22px 26px; }
 .contrastRow > span:first-child { display: flex; min-width: 0; flex: 1; flex-direction: column; }
 .contrastRow strong { color: var(--sb-ink); font-size: 21px; font-weight: 800; }
 .contrastRow small { margin-top: 6px; color: var(--sb-ink-soft); font-size: 17px; line-height: 1.5; }

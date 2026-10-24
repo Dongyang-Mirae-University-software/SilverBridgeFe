@@ -21,7 +21,7 @@
 }
 
 .button.inline {
-  position: static;
+  position: relative;
   width: 32px;
   min-width: 32px;
   height: 32px;

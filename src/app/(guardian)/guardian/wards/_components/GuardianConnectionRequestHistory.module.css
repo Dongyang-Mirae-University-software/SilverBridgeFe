@@ -75,6 +75,10 @@
     display: block;
   }
 
+  .table {
+    position: relative;
+  }
+
   .table thead tr {
     position: absolute;
     left: -9999px;
