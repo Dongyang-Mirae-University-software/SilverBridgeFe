@@ -169,4 +169,97 @@ describe('GuardianInquiryContent (Chrome)', () => {
     await expect.element(screen.getByText('답변 완료')).toBeInTheDocument();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
+
+  // 점검 L-2: 같은 순간 두 번 눌러도(다시 그리기 전) 한 번만 보낸다 - ref 가드
+  it('같은 순간 연속 클릭도 한 번만 보낸다', async () => {
+    api.getGuardianInquiries.mockResolvedValue([]);
+    api.createGuardianInquiry.mockReturnValue(new Promise(() => undefined));
+    const screen = renderContent();
+    await openFormAndFill(screen);
+
+    const submit = screen.getByRole('button', { name: '보내기' }).element() as HTMLButtonElement;
+    submit.click();
+    submit.click();
+    await expect.element(screen.getByRole('button', { name: '보내는 중...' })).toBeDisabled();
+    expect(api.createGuardianInquiry).toHaveBeenCalledTimes(1);
+  });
+
+  // 점검 L-2: 분류·제목이 있어도 내용이 공백뿐이면 보내지 못한다
+  it('내용이 공백뿐이면 보내기가 꺼진다', async () => {
+    api.getGuardianInquiries.mockResolvedValue([]);
+    const screen = renderContent();
+    await openFormAndFill(screen);
+    await screen.getByRole('textbox', { name: /내용/ }).fill('   \n  ');
+    await expect.element(screen.getByRole('button', { name: '보내기' })).toBeDisabled();
+  });
+
+  // 점검 L-2·L-3: 2페이지에서 등록하면 1페이지로 돌아가고, 넘긴 빈 페이지는 "더 이상 없음"
+  it('2페이지 빈 목록은 끝이라고 알리고, 거기서 등록하면 1페이지를 다시 받는다', async () => {
+    const twenty = Array.from({ length: 20 }, (_, i) => ({ ...WAITING, id: 100 + i, title: `문의 ${i}` }));
+    api.getGuardianInquiries.mockImplementation(({ page }: { page: number }) => Promise.resolve(page === 0 ? twenty : []));
+    api.createGuardianInquiry.mockResolvedValue(WAITING);
+    const screen = renderContent();
+
+    await screen.getByRole('button', { name: '다음' }).click();
+    await expect.element(screen.getByText('더 이상 문의가 없어요')).toBeInTheDocument();
+    expect(api.getGuardianInquiries).toHaveBeenLastCalledWith({ page: 1, size: 20 });
+
+    await openFormAndFill(screen);
+    await screen.getByRole('button', { name: '보내기' }).click();
+    await expect.element(screen.getByRole('status')).toHaveTextContent('문의를 남겼어요');
+    await expect.element(screen.getByText('문의 0')).toBeInTheDocument();
+    expect(api.getGuardianInquiries).toHaveBeenLastCalledWith({ page: 0, size: 20 });
+  });
+
+  // 점검 L-1: 입력 검증 실패는 BE의 칸별 문구를 보여 주고, 입력을 고치면 지운다
+  it('400 INVALID_INPUT이면 서버 문구를 보여 주고 입력을 고치면 지운다', async () => {
+    api.getGuardianInquiries.mockResolvedValue([]);
+    api.createGuardianInquiry.mockRejectedValue({ status: 400, code: 'INVALID_INPUT', message: '제목을 입력해주세요.' });
+    const screen = renderContent();
+    await openFormAndFill(screen);
+    await screen.getByRole('button', { name: '보내기' }).click();
+
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('제목을 입력해주세요.');
+    await screen.getByRole('textbox', { name: /제목/ }).fill('다시 쓴 제목');
+    await expect.element(screen.getByRole('alert')).not.toBeInTheDocument();
+  });
+
+  // 점검 L-5: 분류 칩은 Tab이 한 번만 멈추고 방향키로 고른다
+  it('분류 칩은 방향키로 이동하며 고른다', async () => {
+    api.getGuardianInquiries.mockResolvedValue([]);
+    const screen = renderContent();
+    await screen.getByRole('button', { name: '문의 남기기' }).click();
+
+    const radios = screen.getByRole('radio').elements();
+    expect(radios.map(radio => radio.getAttribute('tabindex'))).toEqual(['0', '-1', '-1', '-1', '-1']);
+
+    (radios[0] as HTMLElement).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect.element(screen.getByRole('radio', { name: '병원' })).toHaveAttribute('aria-checked', 'true');
+    expect(document.activeElement).toBe(radios[1]);
+
+    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+    await expect.element(screen.getByRole('radio', { name: '기타' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: '기타' }).element().getAttribute('tabindex')).toBe('0');
+  });
+
+  // 점검 L-4: 상세는 열리면 포커스를 받고, Esc로 닫으면 카드로 돌려준다. Tab은 모달 안에서 돈다
+  it('상세 모달은 포커스를 가두고 Esc로 닫힌다', async () => {
+    api.getGuardianInquiries.mockResolvedValue([WAITING]);
+    api.getGuardianInquiryDetail.mockResolvedValue(WAITING);
+    const screen = renderContent();
+
+    const card = screen.getByRole('button', { name: /자세히 보기/ });
+    await card.click();
+    const dialog = screen.getByRole('dialog', { name: '문의 상세' });
+    await expect.element(dialog.getByRole('button', { name: '닫기', exact: true })).toBeInTheDocument();
+    expect(document.activeElement).toBe(dialog.element());
+
+    await userEvent.keyboard('{Tab}{Tab}{Tab}');
+    expect(dialog.element().contains(document.activeElement)).toBe(true);
+
+    await userEvent.keyboard('{Escape}');
+    await expect.element(screen.getByRole('dialog')).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(card.element());
+  });
 });

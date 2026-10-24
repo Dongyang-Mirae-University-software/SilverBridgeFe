@@ -1,5 +1,6 @@
 'use client';
 
+import { KeyboardEvent, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -13,6 +14,39 @@ const cx = classNames.bind(styles);
 
 export function GuardianInquiryDetailModal({ inquiryId, onClose }: { inquiryId: number; onClose: () => void }) {
   const { data: inquiry, isLoading, isError, error } = useQuery(guardianInquiryDetailQueryOptions(inquiryId));
+  const dialogRef = useRef<HTMLElement>(null);
+
+  // 열 때 모달로 포커스를 옮기고, 닫으면 연 버튼(카드)으로 돌려준다
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.focus();
+    return () => opener?.focus();
+  }, []);
+
+  // Esc로 닫고, Tab은 모달 안에서만 돈다
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      onClose();
+      return;
+    }
+    if (event.key !== 'Tab' || !dialogRef.current) return;
+    const focusables = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), [href]'));
+    if (focusables.length === 0) {
+      event.preventDefault();
+      return;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || active === dialogRef.current)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   return (
     <div className={cx('overlay')} role="presentation" onClick={onClose}>
@@ -21,6 +55,9 @@ export function GuardianInquiryDetailModal({ inquiryId, onClose }: { inquiryId: 
         role="dialog"
         aria-modal="true"
         aria-label="문의 상세"
+        ref={dialogRef}
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
         onClick={event => event.stopPropagation()}
       >
         {isLoading && <p className={cx('status')}>불러오는 중이에요.</p>}

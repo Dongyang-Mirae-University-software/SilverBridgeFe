@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useRef, useState } from 'react';
+import { FormEvent, KeyboardEvent, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { useCreateGuardianInquiryMutation } from '@/service/query/guardian/inquiry';
@@ -29,7 +29,31 @@ export function GuardianInquiryForm({ onCancel, onSubmitted }: GuardianInquiryFo
   const createMutation = useCreateGuardianInquiryMutation();
   const submittingRef = useRef(false);
 
+  const chipRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
   const isPending = createMutation.isPending;
+
+  const selectCategory = (value: InquiryCategory) => {
+    setCategory(value);
+    setErrorMessage(null);
+  };
+
+  // 라디오 그룹 키보드: 방향키로 이동하며 고르고, Tab은 그룹에 한 번만 멈춘다
+  const handleChipKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+    const target =
+      step != null
+        ? (index + step + CATEGORIES.length) % CATEGORIES.length
+        : event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? CATEGORIES.length - 1
+            : null;
+    if (target == null) return;
+    event.preventDefault();
+    selectCategory(CATEGORIES[target]);
+    chipRefs.current[target]?.focus();
+  };
   const canSubmit = Boolean(category) && title.trim().length > 0 && content.trim().length > 0 && !isPending;
 
   const handleSubmit = (event: FormEvent) => {
@@ -60,14 +84,19 @@ export function GuardianInquiryForm({ onCancel, onSubmitted }: GuardianInquiryFo
           어떤 내용인가요?
         </span>
         <div className={cx('chips')} role="radiogroup" aria-labelledby="inquiry-category-label">
-          {CATEGORIES.map(value => (
+          {CATEGORIES.map((value, index) => (
             <button
               key={value}
+              ref={element => {
+                chipRefs.current[index] = element;
+              }}
               type="button"
               role="radio"
               aria-checked={category === value}
+              tabIndex={(category ?? CATEGORIES[0]) === value ? 0 : -1}
               className={cx('chip', { active: category === value })}
-              onClick={() => setCategory(value)}
+              onClick={() => selectCategory(value)}
+              onKeyDown={event => handleChipKeyDown(event, index)}
             >
               {INQUIRY_CATEGORY_LABEL[value]}
             </button>
@@ -85,7 +114,10 @@ export function GuardianInquiryForm({ onCancel, onSubmitted }: GuardianInquiryFo
         <input
           className={cx('input')}
           value={title}
-          onChange={event => setTitle(event.target.value)}
+          onChange={event => {
+            setTitle(event.target.value);
+            setErrorMessage(null);
+          }}
           maxLength={TITLE_MAX_LENGTH}
           placeholder="예) 낙상 알림이 너무 자주 와요"
           autoFocus
@@ -102,7 +134,10 @@ export function GuardianInquiryForm({ onCancel, onSubmitted }: GuardianInquiryFo
         <textarea
           className={cx('textarea')}
           value={content}
-          onChange={event => setContent(event.target.value)}
+          onChange={event => {
+            setContent(event.target.value);
+            setErrorMessage(null);
+          }}
           maxLength={CONTENT_MAX_LENGTH}
           placeholder="언제, 어떤 일이 있었는지 적어 주시면 더 빨리 도와드릴 수 있어요"
           rows={5}
