@@ -17,6 +17,13 @@ export function resolveChatBasePath(role: string | null | undefined): string {
   throw new ChatRoleUnknownError();
 }
 
+// 기록 목록에 보일 경고 문구. 답변 문단은 3줄에서 잘려 끝의 119·109 안내가 가려질 수 있어 따로 한 줄로 보인다
+export function getHistoryWarning(warnings: readonly unknown[] | null | undefined): string | null {
+  if (!Array.isArray(warnings)) return null;
+  const texts = warnings.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+  return texts.length > 0 ? texts.join(' ') : null;
+}
+
 const GENERIC = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
 const BUSY = '이전 상담의 답변을 기다리고 있어요. 잠시 후 다시 시도해 주세요.';
 const TIMEOUT = '답변이 오래 걸리고 있어요. 다시 시도해 주세요.';

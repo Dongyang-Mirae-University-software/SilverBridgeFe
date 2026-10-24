@@ -1,7 +1,20 @@
 import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it } from 'vitest';
 
-import { ChatRoleUnknownError, getChatErrorMessage, resolveChatBasePath } from './chatPolicy';
+import { ChatRoleUnknownError, getChatErrorMessage, getHistoryWarning, resolveChatBasePath } from './chatPolicy';
+
+describe('getHistoryWarning', () => {
+  it('경고 문구가 있으면 한 줄로 합쳐 돌려준다', () => {
+    expect(getHistoryWarning(['지금 위험하다고 느끼시면 바로 119에 전화하세요.'])).toBe('지금 위험하다고 느끼시면 바로 119에 전화하세요.');
+    expect(getHistoryWarning(['a', 'b'])).toBe('a b');
+  });
+
+  it('비었거나 옛 기록(필드 없음)·형식이 다르면 표시하지 않는다', () => {
+    for (const value of [undefined, null, [], [''], ['  '], [1, null]]) {
+      expect(getHistoryWarning(value as unknown[] | null | undefined)).toBeNull();
+    }
+  });
+});
 
 function axiosError(status: number, code?: string, headers: Record<string, string> = {}) {
   return new AxiosError('x', 'ERR_BAD_RESPONSE', undefined, undefined, {
