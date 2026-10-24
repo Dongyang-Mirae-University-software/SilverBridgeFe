@@ -1,4 +1,5 @@
 import { ConnectionRealtimePayload } from '@/lib/realtime/connectionSocket';
+import { getAnomalyAlertText } from '@/utils/anomaly/alertText';
 import { getSubjectParticle } from '@/utils/format/korean';
 
 export function getRealtimeNotification(payload: ConnectionRealtimePayload, role?: 'WARD' | 'GUARDIAN') {
@@ -34,21 +35,15 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload, role
         title: payload.title ?? '복약 일정 중지',
       };
     case 'ANOMALY_DETECTED': {
-      const detectedLabel = payload.detectedTypeLabel ?? '이상 상황';
-      if (role === 'WARD') {
-        return {
-          body:
-            payload.body ??
-            `${payload.location ?? '집'}에서 ${detectedLabel}${getSubjectParticle(detectedLabel)} 감지되었습니다. 안전한 곳으로 대피해 주세요.`,
-          title: payload.title ?? '이상 상황 감지',
-        };
-      }
-      return {
-        body:
-          payload.body ??
-          `${payload.wardName ?? '피보호자'} 댁 ${payload.location ?? ''}에서 ${detectedLabel}${getSubjectParticle(detectedLabel)} 감지되었습니다.`,
-        title: payload.title ?? '이상 상황 감지',
-      };
+      // BE가 보낸 제목·본문이 우선이고, 없을 때만 BE와 같은 종류별 예비 문구를 쓴다
+      const fallback = getAnomalyAlertText({
+        role,
+        detectedType: payload.detectedType,
+        detectedTypeLabel: payload.detectedTypeLabel,
+        wardName: payload.wardName,
+        location: payload.location,
+      });
+      return { body: payload.body ?? fallback.body, title: payload.title ?? fallback.title };
     }
     default:
       return {

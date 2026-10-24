@@ -19,6 +19,7 @@ import { CommonResponse } from '@/service/interface/common';
 import { IConnectionItem } from '@/service/interface/connection';
 import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/ward/connection';
 import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
+import { getAnomalyAlertText } from '@/utils/anomaly/alertText';
 import { getSubjectParticle } from '@/utils/format/korean';
 import styles from './PushNotificationListener.module.css';
 
@@ -103,19 +104,15 @@ function getConnectionPushNotification(data?: MessagePayload['data'], role?: Con
       return { body: '체크되지 않은 복약이 있습니다.', title: '복약 확인 요청' };
     case 'MEDICATION_STOPPED':
       return { body: '복약 일정이 중지되었습니다. 다시 등록해 주세요.', title: '복약 일정 중지' };
-    case 'ANOMALY_DETECTED': {
-      const detectedLabel = data?.detectedTypeLabel ?? '이상 상황';
-      if (role === 'WARD') {
-        return {
-          body: `${data?.location ?? '집'}에서 ${detectedLabel}${getSubjectParticle(detectedLabel)} 감지되었습니다. 안전한 곳으로 대피해 주세요.`,
-          title: '이상 상황 감지',
-        };
-      }
-      return {
-        body: `${data?.wardName ?? '피보호자'} 댁 ${data?.location ?? ''}에서 ${detectedLabel}${getSubjectParticle(detectedLabel)} 감지되었습니다.`,
-        title: '이상 상황 감지',
-      };
-    }
+    case 'ANOMALY_DETECTED':
+      // FCM 알림 제목·본문이 없을 때만 쓰는 예비 문구 - BE와 같은 종류별 안내
+      return getAnomalyAlertText({
+        role,
+        detectedType: data?.detectedType,
+        detectedTypeLabel: data?.detectedTypeLabel,
+        wardName: data?.wardName,
+        location: data?.location,
+      });
     case 'ANOMALY_REVIEW_REQUIRED':
       return {
         body: `${data?.wardName ?? '피보호자'}의 ${data?.detectedTypeLabel ?? '이상감지'} 감지가 실제 상황이었는지 확인해 주세요.`,
