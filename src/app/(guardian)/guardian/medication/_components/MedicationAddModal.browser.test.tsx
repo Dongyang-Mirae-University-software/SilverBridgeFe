@@ -53,8 +53,8 @@ const OCR_NAME_CHECK: MedicationOcrResponse = {
   ],
 };
 
-// 목록에 없는 이름은 노란 칸 + "비슷한 이름:" 칩만(안내 문장은 2026-10-24 사용자 요청으로 뺐다)
-const NOT_IN_LIST_TEXT = '비슷한 이름:';
+// 목록에 없는 이름은 노란 상자에 안내 한 줄 + 비슷한 이름 칩(Claude Design 2026-10-24에 문장을 되살림)
+const NOT_IN_LIST_TEXT = '약 목록에 없는 이름이에요';
 // 결과 문구와 노란 칸 안내는 상자 하나(2026-10-24)
 const CHECK_BOX_TEXT = /노란 칸의 약 이름을 한 번 더 확인해 주세요/;
 
@@ -185,15 +185,15 @@ describe('MedicationAddModal (Chrome)', () => {
     // confidence high여도 목록에 없으면 노란 칸 + 확인 박스
     await expect.element(screen.getByText(CHECK_BOX_TEXT)).toBeVisible();
     expect([1, 2, 3, 4].map(n => isHighlighted(screen, n))).toEqual([true, true, false, false]);
-    // 제안이 없는 2번은 노란 칸만(칩 줄 없음)
-    expect([1, 2, 3, 4].map(n => drugRow(screen, n).textContent?.includes(NOT_IN_LIST_TEXT))).toEqual([true, false, false, false]);
+    // 목록에 없는 1·2번만 안내 한 줄(제안이 없는 2번은 "한 번 더 확인", 칩 없음)
+    expect([1, 2, 3, 4].map(n => drugRow(screen, n).textContent?.includes(NOT_IN_LIST_TEXT))).toEqual([true, true, false, false]);
     // 1번은 제안 3개, 2번(제안 0개)은 문구만
     expect(rowSuggestionChips(screen, 1).map(button => button.textContent)).toEqual(['슈다페드정', '슈다펜정', LONG_SUGGESTION]);
     expect(rowSuggestionChips(screen, 2)).toHaveLength(0);
-    // 칩 앞 머리말은 제안이 있을 때만(점검 L-2), 칩은 손가락으로 누를 만한 높이(점검 L-3)
-    expect(drugRow(screen, 1).textContent).toContain('비슷한 이름:');
-    expect(drugRow(screen, 2).textContent).not.toContain('비슷한 이름:');
-    expect(rowSuggestionChips(screen, 1).every(button => button.getBoundingClientRect().height >= 32)).toBe(true);
+    // 칩이 있을 때만 "누르거나 직접 고쳐 주세요"(점검 L-2), 칩은 손가락으로 누를 만한 높이(점검 L-3)
+    expect(drugRow(screen, 1).textContent).toContain('맞는 이름을 누르거나 직접 고쳐 주세요');
+    expect(drugRow(screen, 2).textContent).toContain('이름을 한 번 더 확인해 주세요');
+    expect(rowSuggestionChips(screen, 1).every(button => button.getBoundingClientRect().height >= 44)).toBe(true);
     // 자동으로 바꾸거나 미리 고르지 않는다
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('슈다페트정');
     // 375px에서 긴 제안 칩이 줄바꿈되어도 가로로 넘치지 않는다
@@ -641,7 +641,7 @@ describe('MedicationAddModal (Chrome)', () => {
     await expect.element(screen.getByText('2 / 2')).toBeVisible();
 
     await screen.getByRole('tab', { name: '카메라로 찍기' }).click();
-    await expect.element(screen.getByText('약 봉투를 카메라에 대주세요')).toBeVisible();
+    await expect.element(screen.getByText('복약 안내문을 비춰 주세요')).toBeVisible();
     await screen.getByRole('tab', { name: '직접 쓰기' }).click();
     await expect.element(screen.getByText('1 / 2')).toBeVisible();
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('');

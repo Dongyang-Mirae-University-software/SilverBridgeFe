@@ -5,56 +5,7 @@
   box-shadow: var(--sb-shadow-sm);
 }
 
-/* ── 오늘 요약 카드 ── */
-.todayCard {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 18px;
-  padding: 20px 24px;
-}
-
-.todayCard > div:first-child {
-  flex: 1;
-  min-width: 220px;
-}
-
-.todayLabel {
-  color: var(--sb-ink-mute);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.todayCount {
-  margin-top: 4px;
-  color: var(--sb-ink);
-  font-size: 24px;
-  font-weight: 800;
-}
-
-.todayTaken {
-  color: var(--sb-safe);
-}
-
-.todayMiss {
-  margin-top: 6px;
-  color: #8a5f12;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.todayAllDone {
-  margin-top: 6px;
-  color: var(--sb-ink-soft);
-  font-size: 16px;
-  font-weight: 600;
-}
-
-
-
-
-
-/* ── 약 목록 카드 ── */
+/* ── 오늘 약 카드: 맨 위 한 문장 + [약 추가], 그 아래 시간대 줄(Claude Design 2026-10-24) ── */
 .listCard {
   overflow: hidden;
   padding: 0;
@@ -66,22 +17,47 @@
   justify-content: space-between;
   gap: 12px;
   border-bottom: 1px solid var(--sb-line-soft);
-  padding: 16px 24px;
+  padding: 18px 24px;
 }
 
-.sectionTitle {
+.headline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sectionTitle,
+.todayCount {
   display: block;
   color: var(--sb-ink);
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
+  word-break: keep-all;
 }
 
+/* 맨 위 한 문장의 색: 다 드셨으면 초록, 체크 전이면 갈색 */
+.todayCount.done {
+  color: var(--sb-safe);
+}
+
+.todayCount.miss {
+  color: #8a5f12;
+}
+
+.todayMiss {
+  color: #8a5f12;
+  font-size: 15px;
+  font-weight: 700;
+  word-break: keep-all;
+}
 
 .addButton {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   gap: 6px;
+  min-height: 44px;
   border: none;
   border-radius: 10px;
   background: var(--sb-brand);
@@ -89,7 +65,7 @@
   cursor: pointer;
   font-size: 16px;
   font-weight: 700;
-  padding: 10px 16px;
+  padding: 0 16px;
   white-space: nowrap;
 }
 
@@ -101,7 +77,7 @@
   text-align: center;
 }
 
-/* 시간대 묶음 한 줄(누르면 그 시간 약이 펼쳐진다) - 2026-10-23 */
+/* 시간대 한 줄 - 누르면 그 시간 약이 펼쳐진다(한 번에 하나) */
 .groupList,
 .groupMedications {
   margin: 0;
@@ -113,115 +89,120 @@
   border-top: 1px solid var(--sb-line-soft);
 }
 
+.groupItem.open {
+  background: var(--sb-bg-soft);
+}
+
 .groupHeader {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr) auto 20px;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
   width: 100%;
+  min-height: 60px;
   border: 0;
   background: transparent;
-  color: inherit;
+  color: var(--sb-ink);
   cursor: pointer;
   font: inherit;
-  padding: 16px 24px;
+  padding: 0 24px;
   text-align: left;
 }
 
-.groupTime {
-  display: flex;
-  flex-direction: column;
-}
-
-.groupTime strong {
-  color: var(--sb-ink);
-  font-size: 18px;
+.groupLabel {
+  font-size: 17px;
   font-weight: 800;
-}
-
-.groupTime span {
-  margin-top: 2px;
-  color: var(--sb-ink-mute);
-  font-size: 15px;
   white-space: nowrap;
 }
 
 .groupInfo {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.groupInfo strong {
-  color: var(--sb-ink);
-  font-size: 17px;
-  font-weight: 800;
-}
-
-.groupInfo span {
   overflow: hidden;
-  margin-top: 2px;
-  color: var(--sb-ink-soft);
+  color: var(--sb-ink-mute);
   font-size: 15px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.chevron {
+.groupStatus {
   color: var(--sb-ink-mute);
-  font-size: 22px;
-  font-weight: 700;
-  text-align: center;
-  transition: transform 0.15s ease;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-.chevron.open {
-  transform: rotate(90deg);
+.groupStatus.done {
+  color: var(--sb-safe);
 }
 
-.groupMedications {
-  border-top: 1px dashed var(--sb-line-soft);
-  background: var(--sb-bg-soft);
+.groupStatus.miss {
+  color: #8a5f12;
+}
+
+.groupStatus.next {
+  color: var(--sb-brand);
+}
+
+/* 펼친 약 - 시간대 이름 칸(64px) 오른쪽에 맞춘다 */
+.groupPanel {
+  padding: 0 24px 12px 102px;
 }
 
 .medicationItem {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
   align-items: center;
-  gap: 12px;
-  padding: 12px 24px 12px 134px;
-}
-
-.medicationItem + .medicationItem {
-  border-top: 1px solid var(--sb-line-soft);
+  gap: 10px;
+  min-height: 40px;
 }
 
 .medicationInfo {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   border: 0;
   background: transparent;
-  cursor: pointer;
+  color: inherit;
+  font: inherit;
   padding: 0;
   text-align: left;
 }
 
+.medicationInfo.editable {
+  min-height: 44px;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.medicationInfo.editable .medicationName {
+  text-decoration: underline;
+  text-decoration-color: var(--sb-line);
+  text-underline-offset: 3px;
+}
+
 .medicationName {
-  display: block;
   overflow: hidden;
   color: var(--sb-ink);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .medicationDetail {
-  display: block;
   overflow: hidden;
-  margin-top: 2px;
   color: var(--sb-ink-mute);
-  font-size: 15px;
+  font-size: 14px;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.medicationAmount {
+  color: var(--sb-ink-soft);
+  font-size: 16px;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -229,14 +210,13 @@
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 6px;
   border: 1px solid var(--sb-line);
   border-radius: 999px;
-  background: var(--sb-bg-soft);
+  background: #fff;
   color: var(--sb-ink-soft);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
-  padding: 6px 12px;
+  padding: 4px 10px;
   white-space: nowrap;
 }
 
@@ -252,36 +232,44 @@
   color: #8a5f12;
 }
 
-.statusBadge.small {
-  font-size: 14px;
-  padding: 4px 10px;
-}
-
 .deleteButton {
-  display: inline-flex;
+  display: grid;
   flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  min-width: 52px;
-  height: 36px;
-  padding: 0 10px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
   color: var(--sb-ink-mute);
   cursor: pointer;
   font: inherit;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 22px;
   line-height: 1;
 }
 
-/* 여러 개 삭제 - 되돌릴 수 없는 동작이라 눈에 덜 띄는 글자 버튼으로(2026-10-23) */
 .groupActions {
   display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 10px 24px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.editToggle {
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--sb-ink-mute);
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
 }
 
 .listFooter {
@@ -291,8 +279,9 @@
   padding: 12px 24px;
 }
 
+/* 여러 개 삭제 - 되돌릴 수 없는 동작이라 눈에 덜 띄는 글자 버튼으로(2026-10-23) */
 .dangerTextButton {
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
@@ -317,58 +306,6 @@
   font-size: 15px;
   font-weight: 700;
   padding: 12px 24px;
-}
-
-/* 맨 위 한 문장의 색: 다 드셨으면 초록, 체크 전이면 갈색 */
-.todayCount.done {
-  color: var(--sb-safe);
-}
-
-.todayCount.miss {
-  color: #8a5f12;
-}
-
-/* 시간대 이름표(✓ 아침 · 점심 · 저녁) */
-.todaySlots {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.todaySlot {
-  /* 안의 숨김 글자(srOnly)가 문서 기준으로 놓여 바깥 문서를 늘리지 않게(FE #114와 같은 함정) */
-  position: relative;
-  border: 1px solid var(--sb-line);
-  border-radius: 999px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-soft);
-  font-size: 15px;
-  font-weight: 800;
-  padding: 5px 12px;
-}
-
-.todaySlot.done {
-  border-color: var(--sb-safe);
-  background: var(--sb-safe-soft);
-  color: var(--sb-safe);
-}
-
-.todaySlot.miss {
-  border-color: #e2c48a;
-  background: var(--sb-sun-soft);
-  color: #8a5f12;
-}
-
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }
 
 /* ── 알림 설정 카드 ── */
@@ -537,6 +474,7 @@
 
 .settingsRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 16px;
   padding: 16px 24px;
@@ -549,13 +487,27 @@
 
 
 
+.settingsText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 200px;
+}
+
 .settingsTitle {
   display: block;
-  flex: 1;
-  min-width: 0;
   color: var(--sb-ink);
+  word-break: keep-all;
   font-size: 17px;
   font-weight: 800;
+}
+
+.settingsDescription {
+  color: var(--sb-ink-mute);
+  font-size: 15px;
+  line-height: 1.45;
+  word-break: keep-all;
 }
 
 
@@ -620,18 +572,29 @@
 }
 
 @media (max-width: 720px) {
-  .todayCard {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .todayCount {
-    font-size: 21px;
-  }
-
-  /* 제목 줄은 한 줄: 제목·설명 왼쪽, "+ 약 추가" 오른쪽(2026-10-24) */
   .sectionHeader {
     padding: 14px 16px;
+  }
+
+  .sectionTitle,
+  .todayCount {
+    font-size: 18px;
+  }
+
+  .groupHeader {
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 0 16px;
+  }
+
+  .groupPanel {
+    padding: 0 16px 12px;
+  }
+
+  .medicationItem .medicationName {
+    overflow: visible;
+    white-space: normal;
+    word-break: break-all;
   }
 
   .settingsRow {
@@ -646,70 +609,6 @@
     margin: 8px 16px 2px;
   }
 
-  /* 시간대 줄은 두 줄: "아침 08:00 ··· [상태] ›" / "약 6개 · 이름…" (세 줄이던 것, 2026-10-24) */
-  .groupHeader {
-    grid-template-columns: minmax(0, 1fr) auto 20px;
-    grid-template-areas: 'time status chevron' 'info info info';
-    row-gap: 4px;
-    padding: 14px 16px;
-  }
-
-  .groupTime {
-    grid-area: time;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 8px;
-  }
-
-  .groupInfo {
-    grid-area: info;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 6px;
-  }
-
-  .groupInfo strong {
-    flex-shrink: 0;
-    font-size: 16px;
-  }
-
-  .groupHeader .statusBadge {
-    grid-area: status;
-    font-size: 14px;
-    padding: 4px 10px;
-  }
-
-  .chevron {
-    grid-area: chevron;
-  }
-
-  /* 펼친 약은 한 줄: 이름(1정) ··· [상태] [삭제] (세 줄이던 것) */
-  .medicationItem {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    grid-template-areas: 'info status delete';
-    gap: 8px;
-    padding: 10px 16px;
-  }
-
-  .medicationItem .medicationName {
-    overflow: visible;
-    white-space: normal;
-    word-break: break-all;
-  }
-
-  .medicationItem .medicationInfo {
-    grid-area: info;
-  }
-
-  .medicationItem .statusBadge {
-    grid-area: status;
-  }
-
-  .medicationItem .deleteButton {
-    grid-area: delete;
-  }
-
-  .groupActions,
   .listFooter,
   .deleteError {
     padding-right: 16px;
