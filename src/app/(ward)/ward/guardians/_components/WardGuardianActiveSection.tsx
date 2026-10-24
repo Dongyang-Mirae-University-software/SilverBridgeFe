@@ -1,75 +1,112 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 
-import { CommonModal } from '@/components/CommonModal';
-import { ConnectionList } from '@/components/connections/ConnectionCard';
-import { EmptyState, getConnectionData } from '@/components/connections/ConnectionShared';
-import { RefreshButton } from '@/components/RefreshButton';
+import { UserAvatar } from '@/components/UserAvatar';
+import { getConnectionData } from '@/components/connections/ConnectionShared';
+import { IConnectionItem } from '@/service/interface/connection';
 import { useWardConnectionDisconnectMutation, useWardGuardianActiveConnectionsQuery } from '@/service/query/ward';
-import useModalStore from '@/store/modalStore';
+import { formatKoreanDate } from '@/utils/connection/connectionView';
+import { getAndParticle } from '@/utils/format/korean';
+import { formatPhoneNumber } from '@/utils/format/phone';
 import styles from './WardGuardianActiveSection.module.css';
 
 const cx = classNames.bind(styles);
 
+// 값이 없는 줄은 "정보 없음"으로 채우지 않고 뺀다
+function getGuardianRows(connection: IConnectionItem): Array<[string, string]> {
+  const rows: Array<[string, string | null | undefined]> = [
+    ['전화번호', connection.partnerPhone ? formatPhoneNumber(connection.partnerPhone) : null],
+    ['이메일', connection.partnerEmail],
+    ['회원 ID', connection.partnerUserId],
+    ['연결한 날', formatKoreanDate(connection.connectedAt)],
+  ];
+  return rows.filter((row): row is [string, string] => Boolean(row[1]));
+}
+
 export function WardGuardianActiveSection() {
-  const { openModal, onCloseModal } = useModalStore(state => ({
-    openModal: state.openModal,
-    onCloseModal: state.onCloseModal,
-  }));
   const activeQuery = useWardGuardianActiveConnectionsQuery();
   const disconnectMutation = useWardConnectionDisconnectMutation();
-  const activeConnections = getConnectionData(activeQuery.data);
+  const [confirmTarget, setConfirmTarget] = useState<IConnectionItem | null>(null);
+  const guardians = getConnectionData(activeQuery.data);
 
-  const handleDisconnect = (connectionId: number) => {
-    openModal(
-      <CommonModal
-        type="warning"
-        tone="guardian"
-        title="보호자 연결 해제"
-        message="이 보호자와의 연결을 해제할까요?"
-        primaryButton={{
-          text: '해제',
-          onClick: () => {
-            onCloseModal();
-            disconnectMutation.mutate(connectionId);
-          },
-        }}
-        secondaryButton={{ text: '취소', onClick: onCloseModal }}
-        onClose={onCloseModal}
-      />,
-    );
+  useEffect(() => {
+    if (!confirmTarget) return;
+    const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && setConfirmTarget(null);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [confirmTarget]);
+
+  const handleDisconnect = () => {
+    if (!confirmTarget) return;
+    disconnectMutation.mutate(confirmTarget.id);
+    setConfirmTarget(null);
   };
 
-  return (
-    <section className={cx('connectionSection')}>
-      <header className={cx('sectionHeader')}>
-        <div>
-          <h3>내 보호자 리스트</h3>
-          <span>{activeConnections.length}건</span>
-        </div>
-        <RefreshButton
-          ariaLabel="내 보호자 리스트 새로고침"
-          disabled={activeQuery.isLoading}
-          placement="inline"
-          onRefresh={() => activeQuery.refetch()}
-        />
-      </header>
+  if (activeQuery.isLoading) return <p className={cx('emptyCard')}>보호자 목록을 불러오는 중이에요.</p>;
+  if (activeQuery.isError) return <p className={cx('emptyCard')}>보호자 목록을 불러오지 못했어요.</p>;
+  if (guardians.length === 0) return <p className={cx('emptyCard')}>아직 연결된 보호자가 없어요</p>;
 
-      <div className={cx('sectionBody')}>
-        {activeQuery.isError ? (
-          <EmptyState message="내 보호자 목록을 불러오지 못했습니다." />
-        ) : activeConnections.length > 0 ? (
-          <ConnectionList
-            connections={activeConnections}
-            isPending={disconnectMutation.isPending}
-            role="ward"
-            getActions={connection => [{ label: '연결 해제', onClick: () => handleDisconnect(connection.id) }]}
-          />
-        ) : (
-          !activeQuery.isLoading && <EmptyState message="연결된 보호자가 없습니다." />
-        )}
-      </div>
-    </section>
+  return (
+    <>
+      <ul className={cx('guardianGrid')} aria-label="연결된 보호자">
+        {guardians.map(guardian => (
+          <li key={guardian.id} className={cx('guardianCard')}>
+            <div className={cx('guardianHead')}>
+              <UserAvatar imageUrl={guardian.partnerProfileImage} size="w-72" userName={guardian.partnerName} />
+              <strong className={cx('guardianName')}>
+                {guardian.partnerName || '이름 확인 전'}
+                {guardian.relation && <span className={cx('relation')}> ({guardian.relation})</span>}
+              </strong>
+            </div>
+            <dl className={cx('rows')}>
+              {getGuardianRows(guardian).map(([label, value]) => (
+                <div key={label} className={cx('row')}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className={cx('cardFooter')}>
+              <button
+                className={cx('disconnectButton')}
+                type="button"
+                disabled={disconnectMutation.isPending}
+                onClick={() => setConfirmTarget(guardian)}
+              >
+                연결 끊기
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {confirmTarget && (
+        <div className={cx('overlay')} onClick={() => setConfirmTarget(null)}>
+          <div
+            className={cx('modal')}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ward-disconnect-title"
+            onClick={event => event.stopPropagation()}
+          >
+            <h2 id="ward-disconnect-title" className={cx('modalTitle')}>
+              {confirmTarget.partnerName}
+              {getAndParticle(confirmTarget.partnerName)} 연결을 끊을까요?
+            </h2>
+            <p className={cx('modalDesc')}>끊으면 SOS를 눌러도 이 분께 알림이 가지 않아요</p>
+            <div className={cx('modalActions')}>
+              <button className={cx('keepButton')} type="button" autoFocus onClick={() => setConfirmTarget(null)}>
+                그대로 두기
+              </button>
+              <button className={cx('confirmButton')} type="button" onClick={handleDisconnect}>
+                끊기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
