@@ -22,7 +22,6 @@ export interface WardMedicationSummary {
   wardId: string;
   wardName: string | null;
   age: number | null; // 만 나이. 생년월일 미등록이면 null
-  alarmEnabled: boolean; // 피보호자에게 보낼 복용 알림 (보호자들이 공유)
   remindAgainEnabled: boolean; // 15분 뒤 재알림 (보호자들이 공유)
   missedAlertEnabled: boolean; // 내가 이 피보호자 건 요약을 받을지 (나만의 값)
   missedAlertTime: string; // "22:30:00" — 받을 시각 = 집계 상한 (나만의 값)
@@ -47,18 +46,6 @@ export interface UpdateMedicationReq {
   doseTime?: string;
   doseAmount?: number;
   memo?: string;
-}
-
-// GET|PUT /api/guardian/ward/{wardId}/medication-setting — 피보호자 단위(공유) 설정
-export interface MedicationSettingResponse {
-  wardId: string;
-  alarmEnabled: boolean;
-  remindAgainEnabled: boolean;
-}
-
-export interface UpdateMedicationSettingReq {
-  alarmEnabled?: boolean;
-  remindAgainEnabled?: boolean;
 }
 
 // GET|PUT /api/guardian/ward/{wardId}/medication-alert-setting — (보호자, 피보호자) 단위 설정

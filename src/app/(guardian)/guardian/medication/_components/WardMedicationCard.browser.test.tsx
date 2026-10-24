@@ -58,7 +58,6 @@ function renderCard(medications: MedicationItem[], container?: HTMLElement) {
     wardId: 'W1',
     wardName: '김순자',
     age: 80,
-    alarmEnabled: true,
     remindAgainEnabled: true,
     missedAlertEnabled: true,
     missedAlertTime: '21:00:00',
@@ -209,14 +208,11 @@ describe('WardMedicationCard (Chrome)', () => {
     await expect.element(screen.getByRole('alert')).toHaveTextContent('삭제하지 못했어요');
     await vi.waitFor(() => expect(invalidate).toHaveBeenCalled());
   });
-  it('알림 설정의 스위치·시간 버튼은 스크린리더가 읽을 이름이 있다 (2026-10-24 점검 M-1, 시안 반영 후 2개)', async () => {
+  it('알림 설정: 시간 버튼은 읽을 이름이 있고, 어르신 기기 알림을 끄는 스위치는 없다 (2026-10-24, BE #377 늘 보냄)', async () => {
     const screen = renderCard([med(1)]);
-    await expect
-      .element(screen.getByRole('checkbox', { name: '김순자에게 약 드실 시간 알려 드리기' }))
-      .toBeInTheDocument();
     await expect.element(screen.getByRole('button', { name: /안 드시면 알림 받을 시각 오후 9:00/ })).toBeInTheDocument();
-    // 시안대로 재알림 줄·"안 드시면" 스위치는 없다(나에게 오는 알림은 환경설정에서)
-    expect(screen.getByRole('checkbox', { name: '15분 뒤 재알림' }).query()).toBeNull();
+    expect(screen.getByRole('checkbox').query()).toBeNull();
+    expect(screen.getByText(/약 드실 시간 알려 드리기/).query()).toBeNull();
   });
 
   it('시간 고르기: 오전/오후·시·분을 고르고 "○○로 정하기"를 눌러야 저장한다(시각과 함께 이 피보호자 요약도 켠다)', async () => {
@@ -257,7 +253,8 @@ describe('WardMedicationCard (Chrome)', () => {
     scroller.append(spacer, slot);
     document.body.appendChild(scroller);
     const screen = renderCard([med(1)], slot);
-    const toggle = screen.getByRole('checkbox', { name: '김순자에게 약 드실 시간 알려 드리기' });
+    // 스위치가 없어져 알림 설정 카드의 시간 버튼으로 본다(숨김 입력·절대 위치 요소가 문서를 늘리지 않는지)
+    const toggle = screen.getByRole('button', { name: /안 드시면 알림 받을 시각/ });
     await expect.element(toggle).toBeInTheDocument();
 
     expect(toggle.element().getBoundingClientRect().top).toBeGreaterThan(window.innerHeight);

@@ -8,16 +8,13 @@ import {
   deleteWardMedicationBatch,
   getGuardianMedications,
   getMedicationAlertSetting,
-  getMedicationSetting,
   updateGuardianMedication,
   updateMedicationAlertSetting,
-  updateMedicationSetting,
 } from '@/service/api/guardian/medication';
 import {
   AddMedicationBatchReq,
   UpdateMedicationAlertSettingReq,
   UpdateMedicationReq,
-  UpdateMedicationSettingReq,
   WardMedicationSummary,
 } from '@/service/interface/medication';
 
@@ -98,26 +95,6 @@ export function useDeleteGuardianMedicationMutation() {
     mutationFn: (medicationId: number) => deleteGuardianMedication(medicationId),
     // 실패해도 다시 불러온다 - 다른 보호자가 그 사이 지웠다면 목록에서 빠진다(여러 개 삭제와 같게, 점검 L-2)
     onSettled: () => invalidate(),
-  });
-}
-
-// 카드 목록(guardianMedicationQueryOptions) 응답에 alarmEnabled/remindAgainEnabled 초기값이
-// 이미 포함되어 있으므로 이 조회는 설정 화면을 별도로 열 때만 필요하다
-export function medicationSettingQueryOptions(wardId: string) {
-  return queryOptions({
-    queryKey: [...guardianMedicationQueryKey, 'setting', wardId] as const,
-    queryFn: () => getMedicationSetting(wardId),
-    enabled: Boolean(wardId),
-  });
-}
-
-export function useUpdateMedicationSettingMutation() {
-  const invalidate = useInvalidateGuardianMedication();
-  return useMutation({
-    mutationKey: ['guardian-medication-setting-update'],
-    mutationFn: ({ wardId, body }: { wardId: string; body: UpdateMedicationSettingReq }) =>
-      updateMedicationSetting(wardId, body),
-    onSuccess: () => invalidate(),
   });
 }
 
