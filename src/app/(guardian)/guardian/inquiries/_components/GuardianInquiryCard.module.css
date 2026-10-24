@@ -1,51 +1,39 @@
 .card {
   display: block;
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
+  color: inherit;
   cursor: pointer;
-  padding: 18px;
+  font: inherit;
+  padding: 20px;
   text-align: left;
 }
 
-.row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.main {
-  display: flex;
-  flex: 1;
-  min-width: 0;
-  flex-direction: column;
-  gap: 6px;
+.card:hover {
+  border-color: var(--sb-line);
 }
 
 .head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-}
-
-.categoryBadge {
-  border-radius: 999px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-soft);
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
+  gap: 6px 10px;
+  margin-bottom: 8px;
 }
 
 .statusBadge {
   border-radius: 999px;
-  background: var(--sb-sun-soft);
-  color: #b07f1f;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 10px;
+  white-space: nowrap;
 }
 
 .statusBadge.answered {
@@ -53,37 +41,69 @@
   color: var(--sb-safe);
 }
 
-.title {
-  color: var(--sb-ink);
+.date,
+.category {
+  color: var(--sb-ink-mute);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.date {
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  margin-top: 4px;
+.category::before {
+  content: '·';
+  margin-right: 10px;
 }
 
 .chevron {
   flex-shrink: 0;
+  margin-left: auto;
   color: var(--sb-ink-mute);
+}
+
+.title {
+  display: block;
+  color: var(--sb-ink);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.preview {
+  display: -webkit-box;
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .replyBox {
   margin-top: 12px;
-  border-left: 3px solid var(--sb-brand);
-  border-radius: 10px;
-  background: var(--sb-brand-50);
-  color: var(--sb-ink);
-  font-size: 13px;
-  line-height: 1.6;
-  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  padding: 14px 16px;
 }
 
 .replyLabel {
   margin-bottom: 4px;
   color: var(--sb-brand);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.replyText {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--sb-ink);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }

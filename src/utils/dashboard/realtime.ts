@@ -25,7 +25,7 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload, role
       };
     case 'SOS_TRIGGERED':
       return {
-        body: payload.body ?? `${payload.wardName ?? '피보호자'}님이 긴급 도움을 요청했습니다.`,
+        body: payload.body ?? `${payload.wardName ?? '피보호자'}${getSubjectParticle(payload.wardName ?? '피보호자')} 긴급 도움을 요청했습니다.`,
         title: payload.title ?? '긴급 SOS',
       };
     case 'MEDICATION_STOPPED':
@@ -46,7 +46,7 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload, role
       return {
         body:
           payload.body ??
-          `${payload.wardName ?? '피보호자'}님 댁 ${payload.location ?? ''}에서 ${detectedLabel}${getSubjectParticle(detectedLabel)} 감지되었습니다.`,
+          `${payload.wardName ?? '피보호자'} 댁 ${payload.location ?? ''}에서 ${detectedLabel}${getSubjectParticle(detectedLabel)} 감지되었습니다.`,
         title: payload.title ?? '이상 상황 감지',
       };
     }
