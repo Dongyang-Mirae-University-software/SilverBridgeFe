@@ -59,6 +59,11 @@
   padding: 0 16px;
 }
 
+.chip:focus-visible {
+  outline: 3px solid var(--sb-brand);
+  outline-offset: 2px;
+}
+
 .chip.active {
   border: 1.5px solid var(--sb-brand);
   background: var(--sb-brand-50);

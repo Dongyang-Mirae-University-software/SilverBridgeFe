@@ -9,7 +9,11 @@ const STATUS_MESSAGES: Record<number, string> = {
   429: '문의를 너무 자주 보냈어요. 잠시 후 다시 보내 주세요.',
 };
 
+// 입력 검증 실패는 BE가 칸별 문구를 준다("제목을 입력해주세요.") - 코드로 확인하고 그 문구를 쓴다
+const VALIDATION_CODE = 'INVALID_INPUT';
+
 export function inquiryErrorMessage(error: unknown, fallback: string) {
-  const status = (error as Partial<ApiErrorShape> | null)?.status;
+  const { status, code, message } = (error as Partial<ApiErrorShape> | null) ?? {};
+  if (status === 400 && code === VALIDATION_CODE && message) return message;
   return (status != null && STATUS_MESSAGES[status]) || fallback;
 }

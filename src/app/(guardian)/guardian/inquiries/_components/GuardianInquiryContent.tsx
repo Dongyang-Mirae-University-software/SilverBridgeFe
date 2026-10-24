@@ -71,7 +71,8 @@ export function GuardianInquiryContent() {
         {isLoading && <p className={cx('emptyText')}>문의 내역을 불러오는 중이에요.</p>}
         {isError && <p className={cx('emptyText')}>문의 내역을 불러오지 못했어요.</p>}
         {!isLoading && !isError && inquiries.length === 0 && (
-          <p className={cx('emptyText')}>아직 남긴 문의가 없어요</p>
+          // 목록에 전체 건수가 없어 정확히 20건이면 "다음"이 보인다 - 넘긴 뒤 빈 페이지는 끝이라는 뜻
+          <p className={cx('emptyText')}>{page > 0 ? '더 이상 문의가 없어요' : '아직 남긴 문의가 없어요'}</p>
         )}
 
         {inquiries.length > 0 && (

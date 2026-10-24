@@ -20,6 +20,7 @@
   background: #fff;
   box-shadow: var(--sb-shadow-lg);
   padding: 24px;
+  outline: none;
 }
 
 .status {
