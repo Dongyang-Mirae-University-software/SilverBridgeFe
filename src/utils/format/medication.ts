@@ -16,6 +16,13 @@ export function formatDoseTime(doseTime: string) {
   return doseTime.slice(0, 5);
 }
 
+// 피보호자 화면의 복용 시각 - 시니어가 읽기 쉽게 "오전 8시"·"오후 1시 30분"(Claude Design 2026-10-24)
+export function formatDoseTimeKorean(doseTime: string) {
+  const [hour, minute] = doseTime.split(':').map(Number);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return formatDoseTime(doseTime);
+  return `${hour < 12 ? '오전' : '오후'} ${hour % 12 || 12}시${minute ? ` ${minute}분` : ''}`;
+}
+
 // 목록·피보호자 화면의 복용량 표시 - BE 알림 문구(DoseAmounts.label)와 같다: 0.5 → "반 알", 1.5 → "1정 반", 2 → "2정"
 export function formatDoseAmount(doseAmount: number) {
   if (doseAmount === 0.5) return '반 알';

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { MedicationItem } from '@/service/interface/medication';
 import {
   formatDoseAmount,
+  formatDoseTimeKorean,
   getDoseStatus,
   getTodayHeadline,
   getTimeGroupStatusLabel,
@@ -172,5 +173,14 @@ describe('카드 맨 위 한 문장 - "N번 중"이 아니라 시간대로 (2026
     );
     expect(head([at('MORNING', '08:00:00'), at('DINNER', '19:00:00')], '07:00')!.text).toBe('아침 약은 08:00에 드세요');
     expect(head([], '07:00')).toBeNull();
+  });
+});
+
+describe('피보호자 화면 복용 시각 "오전 8시" (2026-10-24 디자인)', () => {
+  it('정각은 분을 빼고, 낮 12시는 오후, 자정은 오전 12시', () => {
+    expect(formatDoseTimeKorean('08:00:00')).toBe('오전 8시');
+    expect(formatDoseTimeKorean('13:30:00')).toBe('오후 1시 30분');
+    expect(formatDoseTimeKorean('12:00:00')).toBe('오후 12시');
+    expect(formatDoseTimeKorean('00:05:00')).toBe('오전 12시 5분');
   });
 });

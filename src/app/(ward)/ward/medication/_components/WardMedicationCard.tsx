@@ -4,42 +4,32 @@ import { MedicationItem } from '@/service/interface/medication';
 import { Icon } from '@/components/Icon';
 import { formatDoseAmount } from '@/utils/format/medication';
 import styles from './WardMedicationCard.module.css';
-import { useMedicationIntakeMutation } from '@/service/query/ward';
 
 const cx = classNames.bind(styles);
 
 interface WardMedicationCardProps {
   medication: MedicationItem;
-  disabled?: boolean; // 묶음 체크 등 다른 체크가 처리 중일 때
+  beforeRegistered?: boolean; // 오늘 복용 시각이 지난 뒤 등록된 약 - 그날은 체크 대상이 아니다
 }
 
-// 약 하나 - 시간대는 묶음 머리(WardMedicationContent)에 있다. 잘못 누른 약 하나만 풀 때도 이 버튼을 쓴다
-export function WardMedicationCard({ medication, disabled = false }: WardMedicationCardProps) {
-  const intakeMutation = useMedicationIntakeMutation();
-
-  const handleToggle = (medication: MedicationItem) => {
-    if (intakeMutation.isPending || disabled) return;
-    intakeMutation.mutate({ medicationId: medication.medicationId, taken: !medication.taken });
-  };
-
+// 펼친 시간대 카드 안의 약 한 줄 - 체크는 시간대 버튼으로만 한다(2026-10-24 디자인, 약마다 누르던 버튼 대신)
+export function WardMedicationCard({ medication, beforeRegistered = false }: WardMedicationCardProps) {
   return (
-    <li className={cx('card', { taken: medication.taken })}>
-      <div className={cx('cardMeta')}>
+    <li className={cx('row', { taken: medication.taken, muted: beforeRegistered && !medication.taken })}>
+      <div className={cx('meta')}>
         <strong className={cx('name')}>{medication.name}</strong>
-        <span className={cx('detail')}>
-          {formatDoseAmount(medication.doseAmount)}{medication.memo ? ` · ${medication.memo}` : ''}
-        </span>
+        {medication.taken ? (
+          <span className={cx('state', 'done')}>
+            <Icon name="check" size={18} decorative />
+            먹었어요
+          </span>
+        ) : beforeRegistered ? (
+          <span className={cx('state')}>오늘은 등록 전이었어요</span>
+        ) : medication.memo ? (
+          <span className={cx('memo')}>{medication.memo}</span>
+        ) : null}
       </div>
-      <button
-        type="button"
-        className={cx('checkButton', { checked: medication.taken })}
-        disabled={intakeMutation.isPending || disabled}
-        onClick={() => handleToggle(medication)}
-        aria-pressed={medication.taken}
-        aria-label={`${medication.name} ${medication.taken ? '먹었어요' : '안 먹었어요'}`}
-      >
-        {medication.taken ? <><Icon name="check" size={22} decorative />먹었어요</> : '안 먹었어요'}
-      </button>
+      <span className={cx('dose')}>{formatDoseAmount(medication.doseAmount)}</span>
     </li>
   );
 }

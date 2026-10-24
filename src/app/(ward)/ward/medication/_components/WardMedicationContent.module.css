@@ -1,4 +1,4 @@
-.page { display: grid; width: 100%; align-content: start; gap: 18px; }
+.page { display: grid; width: 100%; min-width: 0; align-content: start; gap: 16px; }
 
 .toolbar { display: flex; justify-content: flex-end; min-height: 0; }
 
@@ -13,137 +13,125 @@
   text-align: center;
 }
 
-.summaryCard {
+/* 오늘 약을 다 먹으면 맨 위에 한 번 */
+.allTaken {
   display: flex;
   align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-  border: 1.5px solid var(--sb-brand-soft);
-  border-radius: var(--sb-radius);
+  justify-content: center;
+  gap: 10px;
+  border: 2px solid var(--sb-safe);
+  border-radius: 16px;
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
+  font-size: 30px;
+  font-weight: 800;
+  padding: 28px;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.slots { display: grid; min-width: 0; gap: 8px; }
+
+/* 접힌 시간대 한 줄 - 누르면 그 시간대를 펼친다 */
+.slotRow {
+  display: flex;
+  width: 100%;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  padding: 0 26px;
+  text-align: left;
+}
+
+.slotRow.done { border-color: transparent; background: transparent; color: var(--sb-ink-mute); }
+.slotName { font-size: 22px; font-weight: 800; }
+.slotTime { color: var(--sb-ink-mute); font-size: 20px; font-weight: 700; white-space: nowrap; }
+.slotDone { display: inline-flex; align-items: center; gap: 6px; color: var(--sb-safe); font-size: 20px; font-weight: 800; white-space: nowrap; }
+
+/* 펼친 시간대 - 지금 먹을 약 */
+.nowCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 2.5px solid var(--sb-brand);
+  border-radius: 16px;
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
-  padding: 24px 28px;
+  padding: 22px 28px 26px;
 }
 
-.summaryIcon,
-.summaryCheck {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 18px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-}
+.nowHead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; }
+.nowHead strong { color: var(--sb-ink); font-size: 32px; font-weight: 800; line-height: 1.25; }
+.nowHead span { color: var(--sb-ink-soft); font-size: 22px; font-weight: 700; }
 
-.summaryCheck {
-  border-radius: 50%;
-  background: var(--sb-safe);
-  color: #fff;
-  font-size: 30px;
-  font-weight: 900;
-}
+.medList { display: grid; margin: 0; padding: 0; list-style: none; }
 
-.summaryCopy { display: grid; min-width: 200px; flex: 1; gap: 4px; }
-.summaryCopy > span { color: var(--sb-brand); font-size: 17px; font-weight: 700; }
-.summaryCopy strong { color: var(--sb-ink); font-size: 26px; font-weight: 800; line-height: 1.25; }
-.summaryCopy em { color: var(--sb-ink-soft); font-size: 17px; font-style: normal; }
-
-.summaryButton {
-  display: inline-flex;
-  min-height: 64px;
-  flex: 0 0 auto;
+.takeButton {
+  display: flex;
+  min-height: 76px;
   align-items: center;
   justify-content: center;
   gap: 10px;
   border: 0;
-  border-radius: 16px;
+  border-radius: 18px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 20px;
-  font-weight: 800;
-  padding: 0 32px;
-  white-space: nowrap;
-}
-
-.summaryButton:disabled { cursor: not-allowed; opacity: 0.6; }
-
-.allTaken { border-color: var(--sb-safe); background: var(--sb-safe-soft); gap: 18px; }
-.allTaken > div { display: grid; gap: 4px; }
-.allTaken strong { color: var(--sb-safe); font-size: 24px; font-weight: 800; }
-.allTaken span { color: var(--sb-ink-soft); font-size: 17px; }
-
-.listCard {
-  overflow: hidden;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
-  background: #fff;
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.list { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--sb-line-soft); }
-
-/* 시간대 묶음 머리 - "아침 08:00 · 약 6개" + [다 먹었어요] (2026-10-23) */
-.groupHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: var(--sb-bg-soft);
-  padding: 14px 24px;
-}
-
-.groupToggle {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  min-height: 52px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  padding: 0;
-  text-align: left;
-}
-
-.chevron { color: var(--sb-ink-mute); font-size: 24px; font-weight: 700; transition: transform 0.15s ease; }
-.chevron.open { transform: rotate(90deg); }
-
-.groupTitle { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-width: 0; }
-.groupTitle strong { color: var(--sb-ink); font-size: 21px; font-weight: 800; }
-.groupTitle span { color: var(--sb-ink-soft); font-size: 17px; font-weight: 600; }
-
-.groupButton {
-  min-height: 52px;
-  flex: 0 0 auto;
-  border: 0;
-  border-radius: 14px;
-  background: var(--sb-brand);
-  color: #fff;
-  cursor: pointer;
-  font-size: 18px;
+  font-size: 26px;
   font-weight: 800;
   padding: 0 20px;
-  white-space: nowrap;
+  word-break: keep-all;
 }
 
-.groupButton:disabled { cursor: not-allowed; opacity: 0.6; }
+.takeButton:disabled,
+.undoButton:disabled { cursor: not-allowed; opacity: 0.6; }
 
-.groupDone {
-  display: inline-flex;
-  flex: 0 0 auto;
+.skippedText { margin: 0; color: var(--sb-ink-soft); font-size: 18px; font-weight: 700; word-break: keep-all; }
+
+/* 펼친 시간대 - 다 먹음, 바로 되돌릴 수 있다 */
+.doneCard {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  color: var(--sb-safe);
-  font-size: 18px;
-  font-weight: 800;
-  white-space: nowrap;
+  gap: 18px;
+  border: 2px solid var(--sb-safe);
+  border-radius: 16px;
+  background: var(--sb-safe-soft);
+  padding: 24px 28px;
 }
+
+.doneIcon {
+  display: grid;
+  width: 60px;
+  height: 60px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sb-safe);
+}
+
+.doneText { min-width: 0; flex: 1 1 180px; color: var(--sb-safe); font-size: 28px; font-weight: 800; word-break: keep-all; }
+
+.undoButton {
+  min-height: 52px;
+  flex: 0 0 auto;
+  border: 1.5px solid var(--sb-safe);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--sb-safe);
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 0 18px;
+}
+
 .intakeError {
   margin: 0;
   border: 2px solid var(--sb-warn);
@@ -157,12 +145,18 @@
   word-break: keep-all;
 }
 
-.toggleHint { margin: -4px 0 0; color: var(--sb-ink-mute); font-size: 15px; text-align: center; }
-
 @media (max-width: 640px) {
-  .summaryCard { align-items: flex-start; padding: 20px; }
-  .summaryCopy strong { font-size: 22px; }
-  .summaryButton { width: 100%; min-height: 56px; }
-  .groupHeader { padding: 14px 16px; }
-  .groupButton { min-height: 48px; font-size: 16px; padding: 0 16px; }
+  .allTaken { font-size: 24px; padding: 22px 16px; }
+  .slotRow { padding: 0 18px; }
+  .slotName { font-size: 20px; }
+  .slotTime,
+  .slotDone { font-size: 18px; }
+  .nowCard { padding: 18px 16px 20px; }
+  .nowHead strong { font-size: 26px; }
+  .nowHead span { font-size: 19px; }
+  .takeButton { min-height: 68px; font-size: 22px; }
+  .doneCard { gap: 14px; padding: 18px 16px; }
+  .doneIcon { width: 48px; height: 48px; }
+  .doneText { font-size: 23px; }
+  .undoButton { width: 100%; }
 }

@@ -1,47 +1,29 @@
-.card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+.row {
+  display: flex;
   align-items: center;
-  gap: 18px;
+  justify-content: space-between;
+  gap: 16px;
   border-top: 1px solid var(--sb-line-soft);
-  background: #fff;
-  padding: 18px 24px;
+  padding: 12px 0;
 }
 
-.card:first-child { border-top: 0; }
-.card.taken { background: var(--sb-bg-soft); }
+.row:first-child { border-top: 0; }
 
+.meta { display: grid; min-width: 0; gap: 2px; }
+.name { color: var(--sb-ink); font-size: 24px; font-weight: 800; line-height: 1.3; word-break: keep-all; overflow-wrap: anywhere; }
+.dose { flex: 0 0 auto; color: var(--sb-brand); font-size: 24px; font-weight: 800; white-space: nowrap; }
 
-.cardMeta { display: grid; min-width: 0; gap: 2px; }
-.name { overflow: hidden; color: var(--sb-ink); font-size: 19px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
-.taken .name { color: var(--sb-ink-mute); }
-.detail { color: var(--sb-ink-soft); font-size: 15px; }
+.memo { color: var(--sb-ink-soft); font-size: 17px; }
+.state { display: inline-flex; align-items: center; gap: 4px; color: var(--sb-ink-mute); font-size: 17px; font-weight: 700; }
+.state.done { color: var(--sb-safe); }
 
-.checkButton {
-  display: inline-flex;
-  min-width: 132px;
-  min-height: 56px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 2px solid var(--sb-line);
-  border-radius: 14px;
-  background: #fff;
-  color: var(--sb-ink);
-  cursor: pointer;
-  font-size: 18px;
-  font-weight: 800;
-  padding: 0 18px;
-  white-space: nowrap;
-}
-
-.checkButton.checked { border-color: var(--sb-safe); background: var(--sb-safe-soft); color: var(--sb-safe); }
-.checkButton:disabled { cursor: not-allowed; opacity: 0.7; }
+/* 이미 먹은 약·오늘 등록 전 약은 흐리게 - 버튼이 체크할 남은 약이 눈에 먼저 들어오게 */
+.taken .name,
+.taken .dose,
+.muted .name,
+.muted .dose { color: var(--sb-ink-mute); }
 
 @media (max-width: 640px) {
-  .card { gap: 12px; padding: 16px; }
-  /* 핸드폰에서는 긴 약 이름을 자르지 않고 줄을 바꾼다("신일이부프로펜정400…") */
-  .name { overflow: visible; white-space: normal; word-break: break-all; }
-  .checkButton { min-width: 112px; min-height: 48px; font-size: 16px; }
-  .name { font-size: 17px; }
+  .name,
+  .dose { font-size: 21px; }
 }
