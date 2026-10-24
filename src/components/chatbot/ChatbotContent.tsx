@@ -26,13 +26,13 @@ function makeSessionId() {
 }
 
 function buildWelcomeMessage(name?: string, isGuardian = false): ChatMessage {
-  const title = name ? `${name}, 안녕하세요 😊` : '안녕하세요 😊';
+  const title = name ? `${name}님 안녕하세요 😊` : '안녕하세요 😊';
 
   if (isGuardian && name) {
     return {
       id: 'welcome',
       role: 'assistant',
-      content: `${name}의 건강에 대해 무엇이 궁금하신가요?\n복약·혈압·증상·병원 예약을 도와드릴게요.`,
+      content: `${name} 님의 건강에 대해 무엇이 궁금하신가요?\n복약·혈압·증상·병원 예약을 도와드릴게요.`,
       timestamp: new Date().toISOString(),
     };
   }
