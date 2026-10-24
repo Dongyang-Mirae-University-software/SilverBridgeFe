@@ -89,7 +89,8 @@ describe('WardMedicationCard (Chrome)', () => {
     // 두 약은 같은 아침 묶음 - 등록 전이었던 약은 묶음 판정에서 빠지고, 맨 위는 시간대로 한 문장(2026-10-24)
     await expect.element(screen.getByText('아침 약이 아직 체크되지 않았어요')).toBeVisible();
     expect(screen.getByText(/번 중/).query()).toBeNull();
-    await screen.getByRole('button', { name: /아침/ }).click();
+    // 체크 전인 아침이 다음 차례라 처음부터 펼쳐져 있다(Claude Design 2026-10-24)
+    await expect.element(screen.getByRole('button', { name: /아침/, expanded: true })).toBeVisible();
     await expect.element(screen.getByText('오늘은 등록 전이었어요')).toBeVisible();
   });
 
@@ -110,30 +111,32 @@ describe('WardMedicationCard (Chrome)', () => {
     await expect.element(screen.getByText('저녁 약이 아직 체크되지 않았어요')).toBeVisible();
     await expect.element(screen.getByText('점심 약도 아직 체크되지 않았어요')).toBeVisible();
     expect(screen.getByText(/번 중/).query()).toBeNull();
-    // 시간대 이름표
-    await expect.element(screen.getByRole('list', { name: '시간대별 상태' })).toHaveTextContent('✓ 아침');
-
-    // 처음에는 시간대 한 줄씩 - 약 이름은 요약만
-    const morning = screen.getByRole('button', { name: /아침/ });
-    await expect.element(morning).toHaveAttribute('aria-expanded', 'false');
+    // 시간대 줄: "아침 │ 오전 12:00 · 6가지 │ 상태" - 시간대 이름표 줄은 없앴다(Claude Design 2026-10-24)
+    expect(screen.getByRole('list', { name: '시간대별 상태' }).query()).toBeNull();
+    await expect.element(screen.getByRole('button', { name: /아침/ })).toHaveTextContent('6가지');
     await expect.element(screen.getByRole('button', { name: /아침/ }).getByText('다 드셨어요')).toBeVisible();
     await expect.element(screen.getByText('6개 중 5개 드셨어요')).toBeVisible();
     await expect.element(screen.getByText('아직 체크 전이에요')).toBeVisible();
-    expect(screen.getByRole('button', { name: '코싹열정 삭제' }).query()).toBeNull();
 
-    await screen.getByRole('button', { name: /점심/ }).click();
-    // 펼친 뒤에는 "점심 약 모두 삭제"도 있어 펼침 머리(aria-expanded가 있는 버튼)만 고른다
+    // 처음에는 다음 차례(체크 전인 첫 시간대 = 점심)만 펼쳐져 있다. 다 드신 아침은 접혀 있다
+    await expect.element(screen.getByRole('button', { name: /아침/ })).toHaveAttribute('aria-expanded', 'false');
     await expect.element(screen.getByRole('button', { name: /점심/, expanded: true })).toBeVisible();
-    // 펼친 시간대의 약만 수정·삭제 버튼이 보인다
+    // 펼쳐 보기만 할 때는 수정·삭제가 없다 - [약 고치기]를 눌러야 나온다
+    expect(screen.getByRole('button', { name: '코싹열정 삭제' }).query()).toBeNull();
+    expect(screen.getByRole('button', { name: /수정$/ }).query()).toBeNull();
+    await screen.getByRole('button', { name: '약 고치기' }).click();
     expect(screen.getByRole('button', { name: '코싹열정 삭제' }).elements()).toHaveLength(1);
     await expect.element(screen.getByRole('button', { name: '신일이부프로펜정400mg 수정' })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '다 고쳤어요' })).toBeVisible();
     // 펼친 약은 시간대 줄과 다른 상태만 배지를 단다 - 점심의 안 드신 코푸시럽은 줄 상태("6개 중 5개")와 같은 "체크 전"이라 없고,
     // "아직 체크 전이에요"는 저녁 줄 하나뿐(2026-10-24)
-    const badgesInList = screen
-      .getByText('아직 체크 전이에요')
-      .elements()
-      .filter(element => !element.closest('[aria-label="시간대별 상태"]'));
-    expect(badgesInList).toHaveLength(1);
+    expect(screen.getByText('아직 체크 전이에요').elements()).toHaveLength(1);
+
+    // 한 번에 한 시간대만 - 저녁을 펼치면 점심은 접히고 고치기 모드도 풀린다
+    await screen.getByRole('button', { name: /저녁/ }).click();
+    await expect.element(screen.getByRole('button', { name: /저녁/, expanded: true })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: /점심/ })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: '코싹열정 삭제' }).query()).toBeNull();
     // 375px에서 가로 넘침 없음
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
@@ -165,6 +168,7 @@ describe('WardMedicationCard (Chrome)', () => {
     const screen = renderCard(threeSlots());
 
     await screen.getByRole('button', { name: /점심/ }).first().click();
+    await screen.getByRole('button', { name: '약 고치기' }).click();
     const groupDelete = screen.getByRole('button', { name: '점심 약 모두 삭제' });
     await groupDelete.click();
     expect(confirm).toHaveBeenLastCalledWith('점심 약 2개를 모두 삭제할까요? 지난 복용 이력은 남습니다.');
@@ -180,6 +184,9 @@ describe('WardMedicationCard (Chrome)', () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     const screen = renderCard(threeSlots());
 
+    // 시안에 없는 기능이라 고치기 모드에서만 보인다
+    expect(screen.getByRole('button', { name: '약 전부 삭제' }).query()).toBeNull();
+    await screen.getByRole('button', { name: '약 고치기' }).click();
     await screen.getByRole('button', { name: '약 전부 삭제' }).click();
     expect(confirm).toHaveBeenCalledWith('김순자의 약 6개를 모두 삭제할까요? 지난 복용 이력은 남습니다.');
     await vi.waitFor(() => expect(api.deleteWardMedicationBatch).toHaveBeenCalledWith('W1', [1, 2, 3, 4, 5, 6]));
@@ -188,7 +195,7 @@ describe('WardMedicationCard (Chrome)', () => {
 
   it('약이 하나뿐이면 묶음 삭제·전부 삭제 버튼을 두지 않는다(단건 삭제로 충분)', async () => {
     const screen = renderCard([med(1, { name: '혈압약' })]);
-    await screen.getByRole('button', { name: /아침/ }).first().click();
+    await screen.getByRole('button', { name: '약 고치기' }).click();
     await expect.element(screen.getByRole('button', { name: '혈압약 삭제' })).toBeVisible();
     expect(screen.getByRole('button', { name: /모두 삭제|전부 삭제/ }).query()).toBeNull();
   });
@@ -201,7 +208,7 @@ describe('WardMedicationCard (Chrome)', () => {
     const invalidate = vi.spyOn(QueryClient.prototype, 'invalidateQueries');
     const screen = renderCard([med(1, { name: '혈압약' })]);
 
-    await screen.getByRole('button', { name: /아침/ }).first().click();
+    await screen.getByRole('button', { name: '약 고치기' }).click();
     await screen.getByRole('button', { name: '혈압약 삭제' }).click();
 
     await vi.waitFor(() => expect(api.deleteGuardianMedication).toHaveBeenCalledWith(1));
@@ -213,6 +220,18 @@ describe('WardMedicationCard (Chrome)', () => {
     await expect.element(screen.getByRole('button', { name: /안 드시면 알림 받을 시각 오후 9:00/ })).toBeInTheDocument();
     expect(screen.getByRole('checkbox').query()).toBeNull();
     expect(screen.getByText(/약 드실 시간 알려 드리기/).query()).toBeNull();
+    // 시각이 곧 집계 상한이라는 뜻을 짧게 알린다
+    await expect.element(screen.getByText('이 시각까지 체크되지 않은 약을 알려 드려요')).toBeVisible();
+    await expect.element(screen.getByText('나에게 오는 알림을 켜고 끄는 건 환경설정에서 해요')).toBeVisible();
+  });
+
+  it('보호자 화면에는 복용 체크 버튼이 없고, "안 드셨어요"로 단정하지 않는다', async () => {
+    const screen = renderCard([med(1, { name: '혈압약' }), med(2, { name: '위장약', taken: true })]);
+    await expect.element(screen.getByRole('button', { name: /아침/, expanded: true })).toBeVisible();
+    await screen.getByRole('button', { name: '약 고치기' }).click();
+    const buttons = screen.getByRole('button').elements().map(element => element.textContent ?? '');
+    expect(buttons.some(text => /드셨어요|먹었어요|체크하기/.test(text) && !/^아침/.test(text))).toBe(false);
+    expect(document.body.textContent).not.toMatch(/안 드셨/);
   });
 
   it('시간 고르기: 오전/오후·시·분을 고르고 "○○로 정하기"를 눌러야 저장한다(시각과 함께 이 피보호자 요약도 켠다)', async () => {

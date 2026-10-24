@@ -329,7 +329,7 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
             <div className={cx('cameraBox', { reading: isReading, failed: camera.phase === 'error' })}>
               {camera.phase === 'idle' && (
                 <>
-                  <p className={cx('cameraText')}>약 봉투를 카메라에 대주세요</p>
+                  <p className={cx('cameraText')}>복약 안내문을 비춰 주세요</p>
                   <button type="button" className={cx('cameraButton')} onClick={openCamera}>
                     카메라 열기
                   </button>

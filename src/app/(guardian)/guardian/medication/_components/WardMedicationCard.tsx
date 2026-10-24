@@ -17,7 +17,6 @@ import {
   getTimeGroupStatusLabel,
   groupMedicationsByTime,
   sortMedicationsByDoseTime,
-  summarizeMedicationNames,
 } from '@/utils/format/medication';
 import {
   useDeleteGuardianMedicationMutation,
@@ -38,14 +37,6 @@ interface WardMedicationCardProps {
 }
 
 const DELETE_FAILED_MESSAGE = '삭제하지 못했어요. 목록을 다시 불러왔으니 확인 후 다시 시도해 주세요.';
-
-// 맨 위 시간대 이름표의 스크린리더용 짧은 상태(목록의 상태 문구와 겹치지 않게 짧게)
-const SLOT_STATUS_SHORT: Record<DoseStatus, string> = {
-  done: '다 드심',
-  miss: '체크 전',
-  later: '시간 전',
-  beforeRegistered: '등록 전',
-};
 
 const STATUS_LABEL: Record<DoseStatus, string> = {
   done: '드셨어요',
@@ -116,9 +107,22 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   // 맨 위 한 문장: "N번 중 M번" 대신 시간대로("아침 약을 다 드셨어요") - 약이 많으면 횟수가 무슨 뜻인지 알기 어렵다(2026-10-24)
   const headline = getTodayHeadline(groups);
   const router = useRouter();
-  const [openGroupKeys, setOpenGroupKeys] = useState<string[]>([]);
-  const toggleGroup = (key: string) =>
-    setOpenGroupKeys(keys => (keys.includes(key) ? keys.filter(item => item !== key) : [...keys, key]));
+  // 한 번에 한 시간대만 펼친다(Claude Design 2026-10-24). null = 처음 상태(다음 차례 시간대를 펼침), '' = 모두 접음
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  // [약 고치기]를 누른 시간대 - 그때만 약 이름(수정)·×(삭제)·모두 삭제가 나온다
+  const [editKey, setEditKey] = useState<string | null>(null);
+  // 다음 차례 = 아직 체크 전이거나 시간 전인 첫 시간대(등록 전·다 드신 시간대는 건너뛴다)
+  const nextGroup = groups.find(group => group.status === 'miss' || group.status === 'later');
+  const nextLaterKey = groups.find(group => group.status === 'later')?.key;
+  const isGroupOpen = (key: string) => (openKey === null ? nextGroup?.key === key : openKey === key);
+  const toggleGroup = (key: string) => {
+    setOpenKey(isGroupOpen(key) ? '' : key);
+    setEditKey(null);
+  };
+  // 고치던 시간대의 약을 다 지워 줄이 사라지면 고치기 모드도 끝난 것으로 본다
+  const isEditing = editKey !== null && groups.some(group => group.key === editKey && isGroupOpen(group.key));
+  const groupStatusText = (group: (typeof groups)[number]) =>
+    group.status === 'later' && group.key === nextLaterKey ? '다음 약' : getTimeGroupStatusLabel(group);
 
   const handleDelete = (medication: MedicationItem) => {
     if (!window.confirm(`${medication.name} 일정을 삭제할까요? 지난 복용 이력은 남습니다.`)) return;
@@ -147,29 +151,19 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
 
   return (
     <Fragment>
-      {hasMedications && (
-        <section className={cx('card', 'todayCard')}>
-          <div>
-            <div className={cx('todayLabel')}>오늘</div>
-            <div className={cx('todayCount', headline?.tone)}>{headline?.text ?? '오늘은 체크할 약이 없어요'}</div>
-            {headline?.sub && <div className={cx('todayMiss')}>{headline.sub}</div>}
-          </div>
-          {/* 시간대마다 이름표 - 점만으로는 무엇인지 알 수 없었다 */}
-          <ul className={cx('todaySlots')} aria-label="시간대별 상태">
-            {groups.map(group => (
-              <li key={group.key} className={cx('todaySlot', group.status)}>
-                {group.status === 'done' && <span aria-hidden="true">✓ </span>}
-                {group.label}
-                <span className={cx('srOnly')}> {SLOT_STATUS_SHORT[group.status]}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
+      {/* 오늘 약 - 카드 하나: 맨 위 한 문장 + [약 추가], 그 아래 시간대 줄(Claude Design 2026-10-24) */}
       <section className={cx('card', 'listCard')}>
         <div className={cx('sectionHeader')}>
-          <strong className={cx('sectionTitle')}>오늘 드실 약</strong>
+          <div className={cx('headline')}>
+            {hasMedications ? (
+              <>
+                <strong className={cx('todayCount', headline?.tone)}>{headline?.text ?? '오늘은 체크할 약이 없어요'}</strong>
+                {headline?.sub && <span className={cx('todayMiss')}>{headline.sub}</span>}
+              </>
+            ) : (
+              <strong className={cx('sectionTitle')}>오늘 드실 약</strong>
+            )}
+          </div>
           <button type="button" className={cx('addButton')} onClick={openAddMedication}>
             + 약 추가
           </button>
@@ -180,10 +174,11 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         ) : (
           <ul className={cx('groupList')}>
             {groups.map(group => {
-              const isOpen = openGroupKeys.includes(group.key);
+              const isOpen = isGroupOpen(group.key);
+              const isEdit = isOpen && editKey === group.key;
               const panelId = `medication-group-${summary.wardId}-${group.key}`;
               return (
-                <li key={group.key} className={cx('groupItem')}>
+                <li key={group.key} className={cx('groupItem', { open: isOpen })}>
                   <button
                     type="button"
                     className={cx('groupHeader')}
@@ -191,54 +186,68 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                     aria-controls={panelId}
                     onClick={() => toggleGroup(group.key)}
                   >
-                    <span className={cx('groupTime')}>
-                      <strong>{getMedicationTimeSlotLabel(group.timeSlot)}</strong>
-                      <span>{formatDoseTime(group.doseTime)}</span>
-                    </span>
+                    <strong className={cx('groupLabel')}>{getMedicationTimeSlotLabel(group.timeSlot)}</strong>
                     <span className={cx('groupInfo')}>
-                      <strong>약 {group.medications.length}개</strong>
-                      <span>{summarizeMedicationNames(group.medications)}</span>
+                      {formatDoseTime(group.doseTime)} · {group.medications.length}가지
                     </span>
-                    <span className={cx('statusBadge', group.status)}>{getTimeGroupStatusLabel(group)}</span>
-                    <span className={cx('chevron', { open: isOpen })} aria-hidden="true">
-                      ›
+                    <span className={cx('groupStatus', group.status, { next: group.key === nextLaterKey })}>
+                      {group.status === 'done' && <span aria-hidden="true">✓ </span>}
+                      {groupStatusText(group)}
                     </span>
                   </button>
                   {isOpen && (
-                    <ul id={panelId} className={cx('groupMedications')}>
-                      {group.medications.map(medication => {
-                        const status = getDoseStatus(medication, nowHHmm, summary.doseDate);
-                        return (
-                          <li key={medication.medicationId} className={cx('medicationItem')}>
-                            <button
-                              type="button"
-                              className={cx('medicationInfo')}
-                              onClick={() => openEditMedication(medication)}
-                              aria-label={`${medication.name} 수정`}
-                            >
-                              <strong className={cx('medicationName')}>{medication.name}</strong>
-                              <span className={cx('medicationDetail')}>
-                                {formatDoseAmount(medication.doseAmount)}
-                                {medication.memo ? ` · ${medication.memo}` : ''}
-                              </span>
-                            </button>
-                            {/* 시간대 줄과 같은 상태면 약마다 되풀이하지 않는다 - 다른 약만 보인다(그 약만 드셨어요 등, 2026-10-24) */}
-                            {status !== group.status && (
-                              <span className={cx('statusBadge', 'small', status)}>{STATUS_LABEL[status]}</span>
-                            )}
-                            <button
-                              type="button"
-                              className={cx('deleteButton')}
-                              onClick={() => handleDelete(medication)}
-                              aria-label={`${medication.name} 삭제`}
-                            >
-                              삭제
-                            </button>
-                          </li>
-                        );
-                      })}
-                      {group.medications.length > 1 && (
-                        <li className={cx('groupActions')}>
+                    <div id={panelId} className={cx('groupPanel')}>
+                      <ul className={cx('groupMedications')}>
+                        {group.medications.map(medication => {
+                          const status = getDoseStatus(medication, nowHHmm, summary.doseDate);
+                          return (
+                            <li key={medication.medicationId} className={cx('medicationItem')}>
+                              {/* 고치기 모드일 때만 이름을 눌러 수정한다 - 펼쳐 보다가 잘못 눌러 수정 창이 뜨지 않게 */}
+                              {isEdit ? (
+                                <button
+                                  type="button"
+                                  className={cx('medicationInfo', 'editable')}
+                                  onClick={() => openEditMedication(medication)}
+                                  aria-label={`${medication.name} 수정`}
+                                >
+                                  <span className={cx('medicationName')}>{medication.name}</span>
+                                  {medication.memo && <span className={cx('medicationDetail')}>{medication.memo}</span>}
+                                </button>
+                              ) : (
+                                <span className={cx('medicationInfo')}>
+                                  <span className={cx('medicationName')}>{medication.name}</span>
+                                  {medication.memo && <span className={cx('medicationDetail')}>{medication.memo}</span>}
+                                </span>
+                              )}
+                              <span className={cx('medicationAmount')}>{formatDoseAmount(medication.doseAmount)}</span>
+                              {/* 시간대 줄과 같은 상태면 약마다 되풀이하지 않는다 - 다른 약만 보인다(그 약만 드셨어요 등, 2026-10-24) */}
+                              {status !== group.status && (
+                                <span className={cx('statusBadge', 'small', status)}>{STATUS_LABEL[status]}</span>
+                              )}
+                              {isEdit && (
+                                <button
+                                  type="button"
+                                  className={cx('deleteButton')}
+                                  onClick={() => handleDelete(medication)}
+                                  aria-label={`${medication.name} 삭제`}
+                                >
+                                  <span aria-hidden="true">×</span>
+                                </button>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <div className={cx('groupActions')}>
+                        <button
+                          type="button"
+                          className={cx('editToggle')}
+                          aria-pressed={isEdit}
+                          onClick={() => setEditKey(isEdit ? null : group.key)}
+                        >
+                          {isEdit ? '다 고쳤어요' : '약 고치기'}
+                        </button>
+                        {isEdit && group.medications.length > 1 && (
                           <button
                             type="button"
                             className={cx('dangerTextButton')}
@@ -252,9 +261,9 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                           >
                             {group.label} 약 모두 삭제
                           </button>
-                        </li>
-                      )}
-                    </ul>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </li>
               );
@@ -266,7 +275,8 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             {deleteError}
           </p>
         )}
-        {medications.length > 1 && (
+        {/* 약 전부 삭제는 시안에 없어 고치기 모드에서만 보인다(기존 기능 유지, 2026-10-24) */}
+        {isEditing && medications.length > 1 && (
           <div className={cx('listFooter')}>
             <button
               type="button"
@@ -297,7 +307,12 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             </div>
           )}
           <div className={cx('settingsRow')}>
-            <strong className={cx('settingsTitle')}>이 시간까지 안 드시면 나에게 알림</strong>
+            <div className={cx('settingsText')}>
+              <strong className={cx('settingsTitle')}>이 시간까지 안 드시면 나에게 알림</strong>
+              {/* 시각이 곧 집계 상한 - 이 시각까지 복용 시각이 지난 약만 센다(BE 미복용 요약) */}
+              <span className={cx('settingsDescription')}>이 시각까지 체크되지 않은 약을 알려 드려요</span>
+              <span className={cx('settingsDescription')}>나에게 오는 알림을 켜고 끄는 건 환경설정에서 해요</span>
+            </div>
             <MissedAlertTimeSelect
               value={summary.missedAlertTime}
               disabled={alertSettingMutation.isPending}

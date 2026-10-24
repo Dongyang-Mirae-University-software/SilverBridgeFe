@@ -35,7 +35,7 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
   const hasSuggestions = (drug: DraftDrug) => drug.notInList && drug.suggestions.length > 0;
   const notInListId = (drug: DraftDrug) => `${idPrefix}-${drug.key}-not-in-list`;
   const describedBy = (drug: DraftDrug) =>
-    [needsNameCheck(drug) && lowConfidenceHintId, hasSuggestions(drug) && notInListId(drug)].filter(Boolean).join(' ') ||
+    [needsNameCheck(drug) && lowConfidenceHintId, drug.notInList && notInListId(drug)].filter(Boolean).join(' ') ||
     undefined;
 
   const updateDrug = (key: string, patch: Partial<DraftDrug>) =>
@@ -90,23 +90,30 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
                 +
               </button>
             </div>
-            {/* 허가 목록에 없는 이름 - 노란 칸 + 비슷한 이름 칩만(안내 문장은 2026-10-24 사용자 요청으로 뺐다) */}
-            {hasSuggestions(drug) && (
+            {/* 허가 목록에 없는 이름 - 노란 상자에 안내 한 줄 + 비슷한 이름 칩(Claude Design 2026-10-24에 문장을 되살림).
+                칩은 참고용이라 [다음]을 막지 않고, 직접 고쳐도 강조가 풀린다 */}
+            {drug.notInList && (
               <div id={notInListId(drug)} className={cx('nameCheck')}>
-                <span className={cx('suggestionChips')}>
-                  <span className={cx('suggestionLabel')}>비슷한 이름:</span>
-                  {drug.suggestions.map(suggestion => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      className={cx('suggestionChip')}
-                      onClick={() => updateDrug(drug.key, renameDrug(suggestion))}
-                      aria-label={`${index + 1}번째 약을 ${suggestion}(으)로 바꾸기`}
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </span>
+                <p className={cx('nameCheckText')}>
+                  {hasSuggestions(drug)
+                    ? '약 목록에 없는 이름이에요. 맞는 이름을 누르거나 직접 고쳐 주세요'
+                    : '약 목록에 없는 이름이에요. 이름을 한 번 더 확인해 주세요'}
+                </p>
+                {hasSuggestions(drug) && (
+                  <span className={cx('suggestionChips')}>
+                    {drug.suggestions.map(suggestion => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        className={cx('suggestionChip')}
+                        onClick={() => updateDrug(drug.key, renameDrug(suggestion))}
+                        aria-label={`${index + 1}번째 약을 ${suggestion}(으)로 바꾸기`}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </span>
+                )}
               </div>
             )}
           </li>
