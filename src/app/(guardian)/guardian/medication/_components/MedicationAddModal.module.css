@@ -406,11 +406,11 @@
   list-style: none;
 }
 
-/* 약 한 개: 이름(한 줄 전체) / 비슷한 이름 칩(있을 때) / [− 1알 +] ··· × (2026-10-24 사용자 요청으로 −/+는 늘 보임) */
+/* 약 한 개: 이름 ··· [− 1알 +] [×] 한 줄 / 비슷한 이름 칩(있을 때) - 복용량은 이름 오른쪽(2026-10-24 사용자 요청) */
 .drugRow {
   display: grid;
-  grid-template-areas: 'name name' 'check check' 'stepper remove';
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name stepper remove' 'check check check';
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   /* 세로 간격은 0 - 비어 있는 안내·복용량 행에도 간격이 생겨 약 사이가 벌어졌다. 그 행에만 위 여백을 준다 */
   gap: 0 6px;
@@ -434,8 +434,6 @@
 
 .drugRow .stepper {
   grid-area: stepper;
-  justify-self: start;
-  margin-top: 8px;
 }
 
 .drugRow .removeButton {
@@ -527,15 +525,14 @@
 }
 
 .drugRow .stepper {
-  width: 132px;
-  height: 40px;
+  width: 124px;
+  height: 48px;
 }
 
 .removeButton {
   display: grid;
   width: 40px;
-  height: 40px;
-  margin-top: 8px;
+  height: 48px;
   place-items: center;
   padding: 0;
   border: 1px solid var(--sb-line);
@@ -623,5 +620,22 @@
   .drugCard {
     border: 0;
     padding: 0;
+  }
+
+  /* 핸드폰은 이름 칸을 넓히려고 −/+·×를 조금 줄인다 */
+  .drugRow .stepper {
+    width: 104px;
+  }
+
+  .drugRow .stepper button {
+    width: 30px;
+  }
+
+  .removeButton {
+    width: 34px;
+  }
+
+  .nameInput {
+    padding: 0 10px;
   }
 }
