@@ -6,6 +6,7 @@ import {
   formatRequestedAs,
   formatRetryAfter,
   getAgeFromBirthDate,
+  getConnectionActionErrorMessage,
   getConnectionRequestErrorMessage,
   isValidMemberId,
   sanitizeMemberId,
@@ -28,6 +29,16 @@ describe('연결 요청 오류 문구 - code로 분기한다', () => {
       '1시간 30분 뒤에',
     );
     expect(getConnectionRequestErrorMessage(apiError('CONNECTION_REQUEST_COOLDOWN', {}, { 'retry-after': '120' }))).toContain('2분 뒤에');
+  });
+
+  it('남은 시간을 모르면 단정하지 않는다("내일" 아님)', () => {
+    expect(getConnectionRequestErrorMessage(apiError('CONNECTION_REQUEST_COOLDOWN'))).toContain('잠시 뒤에 다시 요청할 수 있어요');
+  });
+
+  it('이미 처리된 연결 조작은 사실대로', () => {
+    expect(getConnectionActionErrorMessage(apiError('CONNECTION_NOT_PENDING'), '실패')).toBe('이미 수락되었거나 거절된 요청이에요.');
+    expect(getConnectionActionErrorMessage(apiError('CONNECTION_NOT_ACTIVE'), '실패')).toBe('이미 연결이 해제됐어요.');
+    expect(getConnectionActionErrorMessage(new Error(''), '실패')).toBe('실패');
   });
 
   it('모르는 코드는 서버 문구를 그대로', () => {

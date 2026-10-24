@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { UserAvatar } from '@/components/UserAvatar';
+import { useModalDialog } from '@/hooks/useModalDialog';
 import { getConnectionData } from '@/components/connections/ConnectionShared';
 import { IConnectionItem } from '@/service/interface/connection';
 import { useWardConnectionDisconnectMutation, useWardGuardianActiveConnectionsQuery } from '@/service/query/ward';
@@ -25,23 +26,62 @@ function getGuardianRows(connection: IConnectionItem): Array<[string, string]> {
   return rows.filter((row): row is [string, string] => Boolean(row[1]));
 }
 
+// 연결 끊기 확인 창 - 열릴 때만 그려서 포커스 가두기·복귀·Esc를 useModalDialog에 맡긴다
+function WardDisconnectDialog({
+  guardian,
+  onCancel,
+  onConfirm,
+}: {
+  guardian: IConnectionItem;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const { dialogRef, onDialogKeyDown, overlayProps } = useModalDialog<HTMLDivElement>({
+    onRequestClose: onCancel,
+    initialFocusSelector: '[data-autofocus]',
+  });
+
+  return (
+    <div className={cx('overlay')} {...overlayProps}>
+      <div
+        ref={dialogRef}
+        className={cx('modal')}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ward-disconnect-title"
+        onKeyDown={onDialogKeyDown}
+      >
+        <h2 id="ward-disconnect-title" className={cx('modalTitle')}>
+          {guardian.partnerName}
+          {getAndParticle(guardian.partnerName)} 연결을 끊을까요?
+        </h2>
+        <p className={cx('modalDesc')}>끊으면 SOS를 눌러도 이 분께 알림이 가지 않아요</p>
+        <div className={cx('modalActions')}>
+          <button className={cx('keepButton')} type="button" data-autofocus onClick={onCancel}>
+            그대로 두기
+          </button>
+          <button className={cx('confirmButton')} type="button" onClick={onConfirm}>
+            끊기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function WardGuardianActiveSection() {
   const activeQuery = useWardGuardianActiveConnectionsQuery();
   const disconnectMutation = useWardConnectionDisconnectMutation();
-  const [confirmTarget, setConfirmTarget] = useState<IConnectionItem | null>(null);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
   const guardians = getConnectionData(activeQuery.data);
-
-  useEffect(() => {
-    if (!confirmTarget) return;
-    const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && setConfirmTarget(null);
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [confirmTarget]);
+  // 창은 id로 목록에서 다시 찾는다 - 열린 사이 상대가 먼저 해제해 목록에서 빠지면 창도 닫히고,
+  // 새 연결은 새 id라 나중에 옛 창이 다시 뜨지 않는다
+  const confirmTarget = guardians.find(guardian => guardian.id === confirmId) ?? null;
 
   const handleDisconnect = () => {
     if (!confirmTarget) return;
     disconnectMutation.mutate(confirmTarget.id);
-    setConfirmTarget(null);
+    setConfirmId(null);
   };
 
   if (activeQuery.isLoading) return <p className={cx('emptyCard')}>보호자 목록을 불러오는 중이에요.</p>;
@@ -73,7 +113,7 @@ export function WardGuardianActiveSection() {
                 className={cx('disconnectButton')}
                 type="button"
                 disabled={disconnectMutation.isPending}
-                onClick={() => setConfirmTarget(guardian)}
+                onClick={() => setConfirmId(guardian.id)}
               >
                 연결 끊기
               </button>
@@ -83,29 +123,7 @@ export function WardGuardianActiveSection() {
       </ul>
 
       {confirmTarget && (
-        <div className={cx('overlay')} onClick={() => setConfirmTarget(null)}>
-          <div
-            className={cx('modal')}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="ward-disconnect-title"
-            onClick={event => event.stopPropagation()}
-          >
-            <h2 id="ward-disconnect-title" className={cx('modalTitle')}>
-              {confirmTarget.partnerName}
-              {getAndParticle(confirmTarget.partnerName)} 연결을 끊을까요?
-            </h2>
-            <p className={cx('modalDesc')}>끊으면 SOS를 눌러도 이 분께 알림이 가지 않아요</p>
-            <div className={cx('modalActions')}>
-              <button className={cx('keepButton')} type="button" autoFocus onClick={() => setConfirmTarget(null)}>
-                그대로 두기
-              </button>
-              <button className={cx('confirmButton')} type="button" onClick={handleDisconnect}>
-                끊기
-              </button>
-            </div>
-          </div>
-        </div>
+        <WardDisconnectDialog guardian={confirmTarget} onCancel={() => setConfirmId(null)} onConfirm={handleDisconnect} />
       )}
     </>
   );

@@ -24,11 +24,11 @@
 .feedback {
   margin: 0;
   border-radius: 10px;
-  background: #dceee3;
-  color: var(--sb-safe);
-  font-size: 13px;
+  background: var(--sb-danger-soft);
+  color: var(--sb-danger);
+  font-size: 14px;
   font-weight: 700;
-  padding: 9px 14px;
+  padding: 10px 14px;
 }
 
 /* ── 연결된 가족 카드 그리드 ── */

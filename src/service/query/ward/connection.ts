@@ -1,7 +1,7 @@
 'use client';
 
 import { createElement } from 'react';
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   acceptWardConnection,
@@ -12,8 +12,10 @@ import {
   refuseWardConnectionRequest,
 } from '@/service/api/ward/connection';
 import { CommonModal } from '@/components/CommonModal';
+import type { ConnectionRealtimePayload } from '@/lib/realtime/connectionSocket';
 import { removePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import useModalStore from '@/store/modalStore';
+import { getConnectionActionErrorMessage } from '@/utils/connection/connectionView';
 
 export const wardConnectionsQueryKey = ['ward-connections'] as const;
 export const wardGuardianActiveConnectionsQueryKey = [...wardConnectionsQueryKey, 'active'] as const;
@@ -46,6 +48,14 @@ export const wardGuardianPendingConnectionsQueryOptions = queryOptions({
   retry: false,
 });
 
+// 보호자의 요청 취소 신호(WS connection-request-cancelled). 취소는 알림을 보내지 않는 정책이라
+// 토스트 없이 받은 요청 목록만 새로 받는다. 처리했으면 true(호출자는 알림 흐름으로 넘기지 않는다)
+export function applyWardConnectionRequestCancelled(queryClient: QueryClient, payload: ConnectionRealtimePayload) {
+  if (payload.type !== 'CONNECTION_REQUEST_CANCELLED') return false;
+  void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
+  return true;
+}
+
 interface WardConnectionMutationOptions {
   errorMessage?: string;
   errorTitle?: string;
@@ -74,6 +84,7 @@ export function useWardConnectionAcceptMutation(options?: WardConnectionMutation
       await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
     },
     onError: error => {
+      void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
       openFeedbackModal(
         'error',
         options?.errorTitle ?? '요청 수락 실패',
@@ -96,6 +107,7 @@ export function useWardConnectionRefuseMutation(options?: WardConnectionMutation
       await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
     },
     onError: error => {
+      void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
       openFeedbackModal(
         'error',
         options?.errorTitle ?? '요청 거절 실패',
@@ -117,6 +129,7 @@ export function useWardConnectionDisconnectMutation(options?: WardConnectionMuta
       await queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
     },
     onError: error => {
+      void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
       openFeedbackModal(
         'error',
         options?.errorTitle ?? '연결 해제 실패',
@@ -146,6 +159,7 @@ function useWardConnectionFeedbackModal() {
   };
 }
 
+// 상대가 먼저 처리한 경우(409 등)는 code로 사실대로 안내하고, 실패해도 목록을 새로 받아 낡은 항목을 치운다
 function getWardConnectionErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error && error.message ? error.message : fallback;
+  return getConnectionActionErrorMessage(error, fallback);
 }

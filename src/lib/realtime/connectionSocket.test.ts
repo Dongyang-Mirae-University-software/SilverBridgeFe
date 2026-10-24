@@ -156,6 +156,16 @@ describe('피보호자 연결 요청 취소 신호 (connection-request-cancelled
     expect(onMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'CONNECTION_REQUEST_CANCELLED', connectionId: '12' }));
   });
 
+  it('connectionId가 없는 신호는 저장소를 건드리지 않는다', () => {
+    connectConnectionSocket({ onMessage: () => {}, role: 'WARD', userId: 'w1' });
+    const client = mocks.clients.at(-1)! as unknown as { onConnect: () => void; subscribe: ReturnType<typeof vi.fn> };
+    client.onConnect();
+    mocks.removePending.mockClear();
+    const call = client.subscribe.mock.calls.find(([destination]) => destination === '/topic/w1/connection-request-cancelled');
+    call![1]({ body: '{}' });
+    expect(mocks.removePending).not.toHaveBeenCalled();
+  });
+
   it('보호자는 이 토픽을 구독하지 않는다', () => {
     connectConnectionSocket({ onMessage: () => {}, role: 'GUARDIAN', userId: 'g1' });
     const client = mocks.clients.at(-1)! as unknown as { onConnect: () => void; subscribe: ReturnType<typeof vi.fn> };
