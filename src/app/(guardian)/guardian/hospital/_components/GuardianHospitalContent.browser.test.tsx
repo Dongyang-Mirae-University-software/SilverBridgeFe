@@ -20,8 +20,14 @@ const api = vi.hoisted(() => ({
   cancelReservation: vi.fn(),
 }));
 const wards = vi.hoisted(() => ({ list: [] as unknown[] }));
+const clock = vi.hoisted(() => ({ today: '2026-10-23', now: '00:00' }));
 
 vi.mock('@/service/api/guardian/reservation', () => api);
+vi.mock('@/utils/reservation/reservationView', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/utils/reservation/reservationView')>()),
+  kstToday: () => clock.today,
+  kstNowTime: () => clock.now,
+}));
 vi.mock('@/hooks/useActiveConnections', () => ({
   useGuardianActiveWards: () => ({ activeWards: wards.list, hasActiveWards: wards.list.length > 0, isLoading: false }),
 }));
@@ -48,7 +54,12 @@ function ward(id: string, name: string, phone: string | null = '010-1234-5678'):
   };
 }
 
-function hospital(id: number, name: string, departments: string[]): IHospital {
+function hospital(
+  id: number,
+  name: string,
+  departments: string[],
+  operationStatus: IHospital['operationStatus'] = 'OPEN',
+): IHospital {
   return {
     id,
     name,
@@ -56,7 +67,7 @@ function hospital(id: number, name: string, departments: string[]): IHospital {
     address: `서울 강남구 ${name}로 ${id}`,
     phone: '02-000-0000',
     departments,
-    operationStatus: 'OPEN',
+    operationStatus,
     congestionLevel: 'LOW',
     bookingAvailable: true,
     description: '',
@@ -106,6 +117,7 @@ function renderContent() {
 describe('GuardianHospitalContent (Chrome)', () => {
   beforeEach(() => {
     Object.values(api).forEach(fn => fn.mockReset());
+    clock.now = '00:00';
     wards.list = [ward('ward01', '김영희')];
     api.getHospitals.mockResolvedValue([hospital(1, '강남내과', ['내과', '가정의학과']), hospital(2, '푸른안과', ['안과'])]);
     api.getMyReservations.mockResolvedValue([]);
@@ -215,7 +227,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     await expect.element(screen.getByText('1일 남음')).toBeVisible();
     await expect.element(screen.getByText(`${formatDateShort(TOMORROW)} 오전 10시`)).toBeVisible();
-    await screen.getByRole('button', { name: '이 예약 취소' }).click();
+    await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
     await expect.element(screen.getByText('이 예약을 취소할까요?')).toBeVisible();
     await screen.getByRole('button', { name: '예약 취소하기' }).click();
 
@@ -237,8 +249,8 @@ describe('GuardianHospitalContent (Chrome)', () => {
     );
     const past = screen.getByRole('region', { name: '지난 진료' });
     // 병원 목록에 없는 병원은 다시 예약 버튼이 없다
-    expect(past.getByRole('button', { name: '같은 곳 다시 예약' }).elements()).toHaveLength(1);
-    await past.getByRole('button', { name: '같은 곳 다시 예약' }).click();
+    expect(past.getByRole('button', { name: /다시 예약$/ }).elements()).toHaveLength(1);
+    await past.getByRole('button', { name: '강남내과 내과 다시 예약' }).click();
 
     await expect.element(step(screen, '2. 날짜·시간')).toHaveAttribute('aria-current', 'step');
     await expect.element(screen.getByText('강남내과', { exact: false })).toBeVisible();
@@ -253,7 +265,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     await expect.element(screen.getByRole('button', { name: /병원5 · 내과/ })).toBeVisible();
     expect(screen.getByRole('button', { name: /병원6/ }).elements()).toHaveLength(0);
-    await screen.getByRole('navigation', { name: '병원 목록 페이지' }).getByRole('button', { name: '2' }).click();
+    await screen.getByRole('navigation', { name: '병원 목록 페이지' }).getByRole('button', { name: '2페이지' }).click();
     await expect.element(screen.getByRole('button', { name: /병원7 · 내과/ })).toBeVisible();
   });
 
@@ -289,5 +301,93 @@ describe('GuardianHospitalContent (Chrome)', () => {
     const screen = renderContent();
     await expect.element(screen.getByText(/연결된 피보호자가 없어요/)).toBeVisible();
     expect(api.getMyReservations).not.toHaveBeenCalled();
+  });
+
+  it('M-3 예약하는 중에는 [예약 취소]·[이전]이 잠기고, 끝나면 보낸 병원 이름으로 완료를 보여 준다', async () => {
+    let finish: (value: unknown) => void = () => {};
+    api.createReservation.mockReturnValue(new Promise(resolve => (finish = resolve)));
+    const screen = renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    await screen.getByRole('button', { name: /푸른안과/ }).click();
+    await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
+    await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await screen.getByRole('button', { name: '예약하기' }).click();
+
+    await expect.element(screen.getByRole('button', { name: '예약하는 중' })).toBeDisabled();
+    await expect.element(screen.getByRole('button', { name: '예약 취소' })).toBeDisabled();
+    await expect.element(screen.getByRole('button', { name: '이전' })).toBeDisabled();
+
+    finish({ data: { success: true } });
+    await expect.element(screen.getByText('예약했어요')).toHaveFocus();
+    await expect.element(screen.getByText('푸른안과 · 안과')).toBeVisible();
+  });
+
+  it('M-4 지금 진료 중이 아닌 병원은 흐리게 "지금은 예약을 받지 않아요"이고 누를 수 없다', async () => {
+    api.getHospitals.mockResolvedValue([hospital(1, '강남내과', ['내과'], 'HOLIDAY'), hospital(2, '푸른안과', ['안과'])]);
+    api.getMyReservations.mockResolvedValue([reservation(3, addDays(TODAY, -5), '10:00', 'COMPLETED')]);
+    const screen = renderContent();
+
+    // 지난 진료의 휴진 병원은 [같은 곳 다시 예약]을 두지 않는다
+    await expect.element(screen.getByRole('region', { name: '지난 진료' })).toHaveTextContent('강남내과');
+    expect(screen.getByRole('button', { name: /다시 예약$/ }).elements()).toHaveLength(0);
+
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    const closed = screen.getByRole('button', { name: /강남내과 · 내과/ });
+    await expect.element(closed).toBeDisabled();
+    await expect.element(closed).toHaveTextContent('지금은 예약을 받지 않아요');
+    await expect.element(screen.getByRole('button', { name: /푸른안과 · 안과/ })).toBeEnabled();
+  });
+
+  it('L-6 고른 시각이 그사이 지나면 [다음]에서 날짜·시간 단계에 머물고 다시 고르게 한다', async () => {
+    const screen = renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    await screen.getByRole('button', { name: /푸른안과/ }).click();
+    await screen.getByRole('button', { name: `${formatDateShort(TODAY)} 오늘` }).click();
+    await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
+
+    clock.now = '09:10';
+    await screen.getByRole('button', { name: '다음' }).click();
+
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('고르신 시간이 이미 지났어요.');
+    await expect.element(step(screen, '2. 날짜·시간')).toHaveAttribute('aria-current', 'step');
+    await expect.element(screen.getByRole('button', { name: '다음' })).toBeDisabled();
+    expect(api.createReservation).not.toHaveBeenCalled();
+  });
+
+  it('L-6 확인 단계에서 [예약하기]를 누를 때 시각이 지났으면 보내지 않는다', async () => {
+    const screen = renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    await screen.getByRole('button', { name: /푸른안과/ }).click();
+    await screen.getByRole('button', { name: `${formatDateShort(TODAY)} 오늘` }).click();
+    await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
+    await screen.getByRole('button', { name: '다음' }).click();
+
+    clock.now = '09:00';
+    await screen.getByRole('button', { name: '예약하기' }).click();
+
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('고르신 시간이 이미 지났어요.');
+    expect(api.createReservation).not.toHaveBeenCalled();
+  });
+
+  it('L-5 번호 형식이 틀리면 이유를 글로 알려 준다', async () => {
+    wards.list = [ward('ward01', '김영희', null)];
+    const screen = renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    await screen.getByRole('button', { name: /푸른안과/ }).click();
+    await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
+    await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await screen.getByRole('textbox', { name: /병원 연락을 받을 번호/ }).fill('12345');
+
+    await expect.element(screen.getByText('010-1234-5678처럼 휴대폰 번호를 적어 주세요.')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '예약하기' })).toBeDisabled();
+  });
+
+  it('L-5 예약 취소를 누르면 확인의 [아니요]로 포커스가 간다', async () => {
+    api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
+    const screen = renderContent();
+    await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
+    await expect.element(screen.getByRole('button', { name: '아니요' })).toHaveFocus();
   });
 });

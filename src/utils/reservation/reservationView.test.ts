@@ -13,6 +13,8 @@ import {
   formatSlot,
   formatTime,
   hospitalRows,
+  isHospitalOpenNow,
+  isSlotPassed,
   kstNowTime,
   kstToday,
   reservationErrorMessage,
@@ -145,5 +147,23 @@ describe('reservationView', () => {
     expect(reservationErrorMessage(axiosError(503))).toContain('병원 예약 서비스를 쓸 수 없어요');
     expect(reservationErrorMessage(axiosError(502))).toContain('연결하지 못했어요');
     expect(reservationErrorMessage(axiosError(409, '이미 예약된 시간입니다.'))).toBe('이미 예약된 시간입니다.');
+  });
+});
+
+describe('reservationView - 점검 반영', () => {
+  it('지난 시각 - 어제·오늘 지난 시각·지금 시각은 지남, 오늘 나중·내일은 아님', () => {
+    expect(isSlotPassed('2026-10-22', '15:00', '2026-10-23', '12:00')).toBe(true);
+    expect(isSlotPassed('2026-10-23', '11:30', '2026-10-23', '12:00')).toBe(true);
+    expect(isSlotPassed('2026-10-23', '12:00', '2026-10-23', '12:00')).toBe(true);
+    expect(isSlotPassed('2026-10-23', '12:30', '2026-10-23', '12:00')).toBe(false);
+    expect(isSlotPassed('2026-10-24', '09:00', '2026-10-23', '23:59')).toBe(false);
+  });
+
+  it('지금 예약을 받는 병원은 진료 중(OPEN)일 때만', () => {
+    const base = hospital(1, 'a', ['내과']);
+    expect(isHospitalOpenNow({ ...base, operationStatus: 'OPEN' })).toBe(true);
+    expect(isHospitalOpenNow({ ...base, operationStatus: 'CLOSED' })).toBe(false);
+    expect(isHospitalOpenNow({ ...base, operationStatus: 'HOLIDAY' })).toBe(false);
+    expect(isHospitalOpenNow({ ...base, operationStatus: 'BREAK_TIME' })).toBe(false);
   });
 });

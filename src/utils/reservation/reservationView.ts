@@ -116,6 +116,16 @@ export function buildSlotGrid(
   }));
 }
 
+// 고른 날짜·시각이 이미 지났는가(KST). 오늘은 지금 시각과 같아도 지난 것으로 본다.
+export function isSlotPassed(date: string, time: string, today: string, nowTime: string) {
+  return date < today || (date === today && time <= nowTime);
+}
+
+// 지금은 예약을 받지 않는 병원(진료 종료·휴게·휴진). 예약 서비스가 지금 상태로 거절한다.
+export function isHospitalOpenNow(hospital: IHospital) {
+  return hospital.operationStatus === 'OPEN';
+}
+
 export function isActiveReservation(item: IReservationItem) {
   return ACTIVE_STATUS.includes(item.status);
 }

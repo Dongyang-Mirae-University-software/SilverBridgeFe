@@ -27,6 +27,7 @@ export function ReservationPager({ page, total, onChange, label }: Props) {
           type="button"
           className={cx('button', { current: i === page })}
           aria-current={i === page ? 'page' : undefined}
+          aria-label={`${i + 1}페이지`}
           onClick={() => onChange(i)}
         >
           {i + 1}

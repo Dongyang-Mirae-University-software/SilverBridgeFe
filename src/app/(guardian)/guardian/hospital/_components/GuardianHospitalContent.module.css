@@ -376,8 +376,20 @@
   border-top: 1px solid var(--sb-line-soft);
 }
 
-.hospitalRow:hover {
+.hospitalRow:hover:not(:disabled) {
   background: var(--sb-bg-soft);
+}
+
+.hospitalRow.closed {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  cursor: not-allowed;
+}
+
+.closedNote {
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .hospitalText {
@@ -616,6 +628,12 @@
   color: var(--sb-ink);
   font: inherit;
   font-size: 16px;
+}
+
+.fieldError {
+  color: var(--sb-warn);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .fieldHint {
