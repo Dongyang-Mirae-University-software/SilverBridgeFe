@@ -1,29 +1,35 @@
 .page {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 16px;
 }
 
-.tabRow {
-  display: flex;
+.writeButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
   gap: 8px;
-}
-
-.tabButton {
-  border: 1px solid var(--sb-line);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--sb-ink-soft);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 8px 16px;
-}
-
-.tabButtonActive {
-  border-color: transparent;
+  min-height: 46px;
+  border: none;
+  border-radius: 12px;
   background: var(--sb-brand);
   color: #fff;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 0 20px;
+  white-space: nowrap;
+}
+
+.sentNotice {
+  margin: 0;
+  border-radius: 12px;
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 18px;
 }
 
 .emptyText {
@@ -32,8 +38,8 @@
   border-radius: var(--sb-radius);
   background: #fff;
   color: var(--sb-ink-mute);
-  font-size: 0.875rem;
-  padding: 48px;
+  font-size: 15px;
+  padding: 40px 20px;
   text-align: center;
 }
 
@@ -53,14 +59,15 @@
 }
 
 .pagination button {
+  min-height: 44px;
   border: 1px solid var(--sb-line-soft);
   border-radius: 999px;
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
-  font-size: 0.8125rem;
+  font-size: 15px;
   font-weight: 800;
-  padding: 8px 16px;
+  padding: 0 18px;
 }
 
 .pagination button:disabled {
@@ -70,6 +77,6 @@
 
 .pagination span {
   color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
+  font-size: 15px;
   font-weight: 700;
 }
