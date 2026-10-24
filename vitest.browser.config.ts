@@ -18,6 +18,8 @@ export default defineConfig({
       'classnames/bind',
       '@tanstack/react-query',
       'axios',
+      'dayjs',
+      'dayjs/locale/ko',
     ],
   },
   esbuild: { jsx: 'automatic' },
