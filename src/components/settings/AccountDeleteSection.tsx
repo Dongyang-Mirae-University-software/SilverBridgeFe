@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import { useModalDialog } from '@/hooks/useModalDialog';
 import { clearAuthTokens } from '@/lib/auth/tokenStore';
 import { deleteMyAccount } from '@/service/api/user/user';
 import type { IUserDeleteReq } from '@/service/interface/user/user';
@@ -50,10 +51,18 @@ const COPY = {
   },
 };
 
-export function AccountDeleteSection({ isKakaoUser, variant = 'default' }: { isKakaoUser: boolean; variant?: 'default' | 'ward' }) {
+export function AccountDeleteSection({
+  isKakaoUser,
+  isAccountReady = true,
+  variant = 'default',
+}: {
+  isKakaoUser: boolean;
+  // 프로필을 받아 카카오 계정 여부를 확인했는지
+  isAccountReady?: boolean;
+  variant?: 'default' | 'ward';
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const inputRef = useRef<HTMLInputElement>(null);
   const copy = COPY[variant];
   const isWard = variant === 'ward';
 
@@ -77,7 +86,6 @@ export function AccountDeleteSection({ isKakaoUser, variant = 'default' }: { isK
     setDeleteStep('input');
     setDeleteValue('');
     setDeleteError('');
-    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   const closeDeleteModal = () => {
@@ -113,94 +121,129 @@ export function AccountDeleteSection({ isKakaoUser, variant = 'default' }: { isK
           <span className={cx('label')}>회원 탈퇴</span>
           <span className={cx('desc')}>{copy.rowDesc}</span>
         </div>
-        <button className={cx('deleteButton')} type="button" onClick={openConfirm}>
+        {/* 프로필을 확인하기 전에는 카카오 계정 여부를 몰라 엉뚱한 본인 확인 단계로 갈 수 있다 */}
+        <button className={cx('deleteButton')} type="button" disabled={!isAccountReady} onClick={openConfirm}>
           탈퇴
         </button>
       </div>
 
       {deleteStep === 'confirm' && (
-        <div className={cx('overlay')} onClick={closeDeleteModal}>
-          <div
-            className={cx('modal', { ward: isWard })}
-            onClick={e => e.stopPropagation()}
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="account-delete-confirm-title"
-          >
-            <div className={cx('modalIcon')}>
-              <Icon name="warning" size={28} />
-            </div>
-            <h3 className={cx('modalTitle')} id="account-delete-confirm-title">
-              {copy.confirmTitle}
-            </h3>
-            <p className={cx('modalDesc')}>{copy.confirmDesc}</p>
-            <div className={cx('modalActions')}>
-              <button className={cx('modalCancel')} type="button" onClick={closeDeleteModal}>
-                취소
-              </button>
-              <button className={cx('modalDanger')} type="button" onClick={proceedToInput}>
-                계속하기
-              </button>
-            </div>
+        <DeleteDialog
+          isWard={isWard}
+          role="alertdialog"
+          titleId="account-delete-confirm-title"
+          initialFocusSelector="[data-autofocus]"
+          onRequestClose={closeDeleteModal}
+        >
+          <div className={cx('modalIcon')}>
+            <Icon name="warning" size={28} />
           </div>
-        </div>
+          <h3 className={cx('modalTitle')} id="account-delete-confirm-title">
+            {copy.confirmTitle}
+          </h3>
+          <p className={cx('modalDesc')}>{copy.confirmDesc}</p>
+          <div className={cx('modalActions')}>
+            {/* 되돌릴 수 없는 작업이라 첫 포커스는 "취소"에 둔다 */}
+            <button className={cx('modalCancel')} type="button" data-autofocus onClick={closeDeleteModal}>
+              취소
+            </button>
+            <button className={cx('modalDanger')} type="button" onClick={proceedToInput}>
+              계속하기
+            </button>
+          </div>
+        </DeleteDialog>
       )}
 
       {deleteStep === 'input' && (
-        <div className={cx('overlay')} onClick={closeDeleteModal}>
-          <div
-            className={cx('modal', { ward: isWard })}
-            onClick={e => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="account-delete-input-title"
-          >
-            <h3 className={cx('modalTitle')} id="account-delete-input-title">
-              탈퇴 확인
-            </h3>
-            <p className={cx('modalDesc')}>
-              {isKakaoUser ? (
-                <>
-                  확인을 위해 <strong>탈퇴</strong>를 입력해 주세요.
-                </>
-              ) : (
-                copy.passwordGuide
-              )}
-            </p>
-            <input
-              ref={inputRef}
-              className={cx('modalInput', { error: !!deleteError })}
-              type={isKakaoUser ? 'text' : 'password'}
-              aria-label={isKakaoUser ? '탈퇴 확인 문구' : '비밀번호'}
-              placeholder={isKakaoUser ? '탈퇴' : '비밀번호'}
-              value={deleteValue}
-              autoComplete={isKakaoUser ? 'off' : 'current-password'}
+        <DeleteDialog
+          isWard={isWard}
+          role="dialog"
+          titleId="account-delete-input-title"
+          initialFocusSelector="input"
+          onRequestClose={closeDeleteModal}
+        >
+          <h3 className={cx('modalTitle')} id="account-delete-input-title">
+            탈퇴 확인
+          </h3>
+          <p className={cx('modalDesc')}>
+            {isKakaoUser ? (
+              <>
+                확인을 위해 <strong>탈퇴</strong>를 입력해 주세요.
+              </>
+            ) : (
+              copy.passwordGuide
+            )}
+          </p>
+          <input
+            className={cx('modalInput', { error: !!deleteError })}
+            type={isKakaoUser ? 'text' : 'password'}
+            aria-label={isKakaoUser ? '탈퇴 확인 문구' : '비밀번호'}
+            placeholder={isKakaoUser ? '탈퇴' : '비밀번호'}
+            value={deleteValue}
+            autoComplete={isKakaoUser ? 'off' : 'current-password'}
+            disabled={deleteMutation.isPending}
+            onChange={e => setDeleteValue(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleDeleteSubmit()}
+          />
+          {deleteError && <p className={cx('modalError')}>{deleteError}</p>}
+          <div className={cx('modalActions')}>
+            <button
+              className={cx('modalCancel')}
+              type="button"
               disabled={deleteMutation.isPending}
-              onChange={e => setDeleteValue(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleDeleteSubmit()}
-            />
-            {deleteError && <p className={cx('modalError')}>{deleteError}</p>}
-            <div className={cx('modalActions')}>
-              <button
-                className={cx('modalCancel')}
-                type="button"
-                disabled={deleteMutation.isPending}
-                onClick={closeDeleteModal}
-              >
-                취소
-              </button>
-              <button
-                className={cx('modalDanger')}
-                type="button"
-                disabled={deleteMutation.isPending}
-                onClick={handleDeleteSubmit}
-              >
-                {deleteMutation.isPending ? '처리 중…' : '탈퇴하기'}
-              </button>
-            </div>
+              onClick={closeDeleteModal}
+            >
+              취소
+            </button>
+            <button
+              className={cx('modalDanger')}
+              type="button"
+              disabled={deleteMutation.isPending}
+              onClick={handleDeleteSubmit}
+            >
+              {deleteMutation.isPending ? '처리 중…' : '탈퇴하기'}
+            </button>
           </div>
-        </div>
+        </DeleteDialog>
       )}
     </>
+  );
+}
+
+// 탈퇴 모달 틀 - 포커스 가두기·Esc·바깥 클릭 닫기는 공용 훅(useModalDialog)에 맡긴다.
+// 처리 중에는 onRequestClose(closeDeleteModal)가 무시한다
+function DeleteDialog({
+  children,
+  initialFocusSelector,
+  isWard,
+  onRequestClose,
+  role,
+  titleId,
+}: {
+  children: ReactNode;
+  initialFocusSelector: string;
+  isWard: boolean;
+  onRequestClose: () => void;
+  role: 'dialog' | 'alertdialog';
+  titleId: string;
+}) {
+  const { dialogRef, onDialogKeyDown, overlayProps } = useModalDialog<HTMLDivElement>({
+    onRequestClose,
+    initialFocusSelector,
+  });
+
+  return (
+    <div className={cx('overlay')} {...overlayProps}>
+      <div
+        ref={dialogRef}
+        className={cx('modal', { ward: isWard })}
+        role={role}
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onKeyDown={onDialogKeyDown}
+      >
+        {children}
+      </div>
+    </div>
   );
 }

@@ -7,8 +7,11 @@ import {
   userNotificationSettingsQueryOptions,
   useNotificationSettingsMutation,
 } from '@/service/query/user/notification-settings';
+import { myProfileQueryOptions } from '@/service/query/user/profile';
 import type { NotificationChannelType } from '@/service/interface/user/user';
+import { getUserProfileData } from '@/utils/auth/userProfile';
 import { showToast } from '@/store/toastStore';
+import { SettingsLoadError } from './SettingsLoadError';
 import styles from './NotificationSettingsSection.module.css';
 
 const cx = classNames.bind(styles);
@@ -45,11 +48,20 @@ const CHANNEL_OPTIONS: Array<{
   },
 ];
 
+// 이메일 없이 카카오로 가입하면 서버가 이 형식의 가상 주소를 붙인다 - 메일함이 없어 BE가 보내지 않는다
+// (BE EmailNotificationChannel·AuthInputNormalizer와 같은 패턴)
+const KAKAO_VIRTUAL_EMAIL = /^kakao_\d+@kakao\.com$/i;
+const NO_EMAIL_DESC = '카카오로 가입해 받을 이메일 주소가 없어요. 이메일 알림은 보낼 수 없어요.';
+
 const SAVE_ERROR_MESSAGE = '알림 설정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.';
 
 export function NotificationSettingsSection() {
-  const { data: notificationSettings = [], isLoading } = useQuery(userNotificationSettingsQueryOptions);
+  const { data, isLoading, isError, isFetching, refetch } = useQuery(userNotificationSettingsQueryOptions);
+  const notificationSettings = data ?? [];
   const mutation = useNotificationSettingsMutation();
+  const { data: profileResponse } = useQuery(myProfileQueryOptions);
+  const email = getUserProfileData(profileResponse)?.email ?? '';
+  const hasNoMailbox = KAKAO_VIRTUAL_EMAIL.test(email.trim());
 
   const enabledMap = new Map(notificationSettings.map(item => [item.channelType, item.enabled]));
 
@@ -66,17 +78,23 @@ export function NotificationSettingsSection() {
     <section className={cx('section')}>
       {isLoading ? (
         <p className={cx('loading')}>불러오는 중…</p>
+      ) : isError && !data ? (
+        <SettingsLoadError isRetrying={isFetching} onRetry={() => void refetch()} />
       ) : (
         <div className={cx('list')}>
           {CHANNEL_OPTIONS.map(option => {
-            const enabled = enabledMap.get(option.channelType) ?? option.channelType === 'FCM';
+            // 메일함이 없는 계정의 이메일은 켜 둬도 오지 않으므로 꺼진 채로 막아 둔다(거짓 설정 방지)
+            const isUnavailable = option.channelType === 'EMAIL' && hasNoMailbox;
+            const enabled = isUnavailable
+              ? false
+              : (enabledMap.get(option.channelType) ?? option.channelType === 'FCM');
             return (
               <div key={option.channelType} className={cx('row')}>
                 <div className={cx('meta')}>
                   <div className={cx('titleRow')}>
                     <span className={cx('label')}>{option.label}</span>
                   </div>
-                  <span className={cx('desc')}>{option.desc}</span>
+                  <span className={cx('desc')}>{isUnavailable ? NO_EMAIL_DESC : option.desc}</span>
                 </div>
                 <label className={cx('toggle')}>
                   <input
@@ -84,7 +102,7 @@ export function NotificationSettingsSection() {
                     role="switch"
                     aria-label={option.label}
                     checked={enabled}
-                    disabled={mutation.isPending}
+                    disabled={isUnavailable || mutation.isPending}
                     onChange={e => handleToggle(option.channelType, e.target.checked)}
                   />
                   <span className={cx('toggleThumb')} aria-hidden="true" />

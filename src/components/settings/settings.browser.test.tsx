@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { page } from '@vitest/browser/context';
+import { page, userEvent } from '@vitest/browser/context';
 import { render } from 'vitest-browser-react';
 
 import { AccountDeleteSection } from './AccountDeleteSection';
@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
   updateMyNotificationSettings: vi.fn(),
   deleteMyAccount: vi.fn(),
   changeMyPassword: vi.fn(),
+  getMyProfile: vi.fn(),
 }));
 
 vi.mock('@/service/api/guardian/notification', () => ({
@@ -31,6 +32,7 @@ vi.mock('@/service/api/user/notification', () => ({
 vi.mock('@/service/api/user/user', () => ({
   deleteMyAccount: api.deleteMyAccount,
   changeMyPassword: api.changeMyPassword,
+  getMyProfile: api.getMyProfile,
 }));
 
 const toast = vi.hoisted(() => ({ showToast: vi.fn() }));
@@ -80,9 +82,12 @@ function withClient(node: ReactNode) {
   return <QueryClientProvider client={client}>{node}</QueryClientProvider>;
 }
 
+const profileResponse = (email: string) => ({ data: { data: { email, provider: 'LOCAL' } } });
+
 beforeEach(() => {
   api.getGuardianNotificationTypeSetting.mockResolvedValue(TYPE_SETTING);
   api.getMyNotificationSettings.mockResolvedValue(CHANNEL_RESPONSE);
+  api.getMyProfile.mockResolvedValue(profileResponse('guardian@example.com'));
 });
 
 afterEach(() => {
@@ -289,5 +294,108 @@ describe('레이아웃 (375px)', () => {
       expect(box.right).toBeLessThanOrEqual(toggle.right);
       expect(box.bottom).toBeLessThanOrEqual(toggle.bottom);
     }
+  });
+});
+
+describe('점검 후속 (2026-10-24 audit-fe-settings-design)', () => {
+  // M-1: 카카오 가상 이메일은 메일함이 없어 BE가 보내지 않는다 - 켤 수 있으면 거짓 설정이다
+  it('카카오 가상 이메일 계정은 이메일 알림을 켤 수 없다', async () => {
+    api.getMyProfile.mockResolvedValue(profileResponse('kakao_123456@kakao.com'));
+    api.getMyNotificationSettings.mockResolvedValue({
+      data: { data: { settings: [{ channelType: 'FCM', enabled: true }, { channelType: 'EMAIL', enabled: true }] } },
+    });
+    const screen = render(withClient(<NotificationSettingsSection />));
+    const email = screen.getByRole('switch', { name: '이메일 알림' });
+
+    await expect.element(screen.getByText(/카카오로 가입해 받을 이메일 주소가 없어요/)).toBeInTheDocument();
+    await expect.element(email).toBeDisabled();
+    await expect.element(email).not.toBeChecked();
+  });
+
+  it('일반 이메일 계정은 이메일 알림을 켤 수 있다', async () => {
+    const screen = render(withClient(<NotificationSettingsSection />));
+    await expect.element(screen.getByRole('switch', { name: '이메일 알림' })).toBeEnabled();
+    expect(document.body.textContent).not.toContain('받을 이메일 주소가 없어요');
+  });
+
+  // M-2: 불러오지 못한 설정을 기본값으로 그리면 꺼 둔 알림이 켜진 것처럼 보이고 그대로 저장된다
+  it('알림 종류를 불러오지 못하면 토글 대신 다시 시도 안내를 보여 준다', async () => {
+    api.getGuardianNotificationTypeSetting.mockRejectedValueOnce(new Error('서버 오류'));
+    const screen = render(withClient(<AlertTypeSettingsSection />));
+
+    await expect.element(screen.getByText(/설정을 불러오지 못했어요/)).toBeInTheDocument();
+    expect(screen.getByRole('switch').elements()).toHaveLength(0);
+
+    await screen.getByRole('button', { name: '다시 시도' }).click();
+    await expect.element(screen.getByRole('switch', { name: '복약 알림' })).toBeChecked();
+  });
+
+  it('알림 방법을 불러오지 못하면 토글 대신 다시 시도 안내를 보여 준다', async () => {
+    api.getMyNotificationSettings.mockRejectedValueOnce(new Error('서버 오류'));
+    const screen = render(withClient(<NotificationSettingsSection />));
+
+    await expect.element(screen.getByText(/설정을 불러오지 못했어요/)).toBeInTheDocument();
+    expect(screen.getByRole('switch').elements()).toHaveLength(0);
+
+    await screen.getByRole('button', { name: '다시 시도' }).click();
+    await expect.element(screen.getByRole('switch', { name: '푸시 알림' })).toBeChecked();
+  });
+
+  // L-1: 프로필 전에는 카카오 계정인지 몰라 엉뚱한 본인 확인 단계로 갈 수 있다
+  it('계정 확인 전에는 비밀번호 변경·탈퇴 버튼이 눌리지 않는다', async () => {
+    const screen = render(
+      withClient(
+        <>
+          <PasswordChangeSection isAccountReady={false} isKakaoUser={false} />
+          <AccountDeleteSection isAccountReady={false} isKakaoUser={false} />
+        </>,
+      ),
+    );
+    await expect.element(screen.getByRole('button', { name: '변경' })).toBeDisabled();
+    await expect.element(screen.getByRole('button', { name: '탈퇴' })).toBeDisabled();
+  });
+
+  // L-3
+  it('비밀번호 칸은 현재·새 비밀번호를 구분해 자동 완성한다', async () => {
+    const screen = render(withClient(<PasswordChangeSection isKakaoUser={false} />));
+    await screen.getByRole('button', { name: '변경' }).click();
+
+    await expect.element(screen.getByLabelText('현재 비밀번호')).toHaveAttribute('autocomplete', 'current-password');
+    await expect.element(screen.getByLabelText('새 비밀번호 (8자 이상)')).toHaveAttribute('autocomplete', 'new-password');
+    await expect.element(screen.getByLabelText('새 비밀번호 확인')).toHaveAttribute('autocomplete', 'new-password');
+  });
+
+  // L-4
+  it('탈퇴 확인 창은 "취소"에 먼저 포커스를 두고, Tab은 창 안에서 돌고, Esc로 닫으면 탈퇴 버튼으로 돌아온다', async () => {
+    const screen = render(withClient(<AccountDeleteSection isKakaoUser={false} />));
+    const openButton = screen.getByRole('button', { name: '탈퇴' });
+    await openButton.click();
+
+    const cancel = screen.getByRole('button', { name: '취소' });
+    await expect.element(cancel).toHaveFocus();
+    await userEvent.keyboard('{Tab}');
+    await expect.element(screen.getByRole('button', { name: '계속하기' })).toHaveFocus();
+    await userEvent.keyboard('{Tab}');
+    await expect.element(cancel).toHaveFocus();
+
+    await userEvent.keyboard('{Escape}');
+    await expect.element(screen.getByText('정말 탈퇴하시겠습니까?')).not.toBeInTheDocument();
+    await expect.element(openButton).toHaveFocus();
+  });
+
+  it('본인 확인 단계는 입력 칸에 포커스를 두고, 처리 중에는 Esc로 닫히지 않는다', async () => {
+    api.deleteMyAccount.mockReturnValue(new Promise(() => undefined));
+    const screen = render(withClient(<AccountDeleteSection isKakaoUser={false} />));
+    await screen.getByRole('button', { name: '탈퇴' }).click();
+    await screen.getByRole('button', { name: '계속하기' }).click();
+
+    const input = screen.getByLabelText('비밀번호');
+    await expect.element(input).toHaveFocus();
+    await input.fill('my-pass-1');
+    await userEvent.keyboard('{Enter}');
+    await expect.element(screen.getByRole('button', { name: '처리 중…' })).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    await expect.element(screen.getByText('탈퇴 확인')).toBeInTheDocument();
   });
 });
