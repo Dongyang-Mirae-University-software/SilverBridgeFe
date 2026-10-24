@@ -1,7 +1,7 @@
 'use client';
 
 import classNames from 'classnames/bind';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 
 import {
   createEmptyDrug,
@@ -37,6 +37,11 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
     [needsNameCheck(drug) && lowConfidenceHintId, drug.notInList && notInListId(drug)].filter(Boolean).join(' ') ||
     undefined;
 
+  // 복용량은 평소 "1알 ✎" 작은 버튼으로 접어 두고, 누른 약만 −/+를 연다 - 대부분 1알이라 한 줄로 줄인다(2026-10-24)
+  const [openDoseKeys, setOpenDoseKeys] = useState<string[]>([]);
+  const toggleDose = (key: string) =>
+    setOpenDoseKeys(keys => (keys.includes(key) ? keys.filter(item => item !== key) : [...keys, key]));
+
   const updateDrug = (key: string, patch: Partial<DraftDrug>) =>
     onChange(drugs.map(drug => (drug.key === key ? { ...drug, ...patch } : drug)));
   const removeDrug = (key: string) => onChange(drugs.filter(drug => drug.key !== key));
@@ -60,25 +65,16 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
               aria-invalid={duplicateKeys.has(drug.key) || undefined}
               aria-describedby={describedBy(drug)}
             />
-            <div className={cx('stepper')}>
-              <button
-                type="button"
-                onClick={() => updateDrug(drug.key, { doseAmount: decreaseDose(drug.doseAmount) })}
-                disabled={drug.doseAmount <= MIN_DOSE_AMOUNT}
-                aria-label={`${index + 1}번째 약 복용량 줄이기`}
-              >
-                −
-              </button>
-              <span aria-live="polite">{formatDoseLabel(drug.doseAmount)}</span>
-              <button
-                type="button"
-                onClick={() => updateDrug(drug.key, { doseAmount: increaseDose(drug.doseAmount) })}
-                disabled={drug.doseAmount >= MAX_DOSE_AMOUNT}
-                aria-label={`${index + 1}번째 약 복용량 늘리기`}
-              >
-                +
-              </button>
-            </div>
+            <button
+              type="button"
+              className={cx('doseToggle', { open: openDoseKeys.includes(drug.key) })}
+              onClick={() => toggleDose(drug.key)}
+              aria-expanded={openDoseKeys.includes(drug.key)}
+              aria-label={`${index + 1}번째 약 복용량 ${formatDoseLabel(drug.doseAmount)}, 바꾸기`}
+            >
+              <span>{formatDoseLabel(drug.doseAmount)}</span>
+              <span aria-hidden="true">✎</span>
+            </button>
             <button
               type="button"
               className={cx('removeButton')}
@@ -86,8 +82,29 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
               disabled={drugs.length <= 1}
               aria-label={`${index + 1}번째 약 빼기`}
             >
-              빼기
+              ×
             </button>
+            {openDoseKeys.includes(drug.key) && (
+              <div className={cx('stepper')}>
+                <button
+                  type="button"
+                  onClick={() => updateDrug(drug.key, { doseAmount: decreaseDose(drug.doseAmount) })}
+                  disabled={drug.doseAmount <= MIN_DOSE_AMOUNT}
+                  aria-label={`${index + 1}번째 약 복용량 줄이기`}
+                >
+                  −
+                </button>
+                <span aria-live="polite">{formatDoseLabel(drug.doseAmount)}</span>
+                <button
+                  type="button"
+                  onClick={() => updateDrug(drug.key, { doseAmount: increaseDose(drug.doseAmount) })}
+                  disabled={drug.doseAmount >= MAX_DOSE_AMOUNT}
+                  aria-label={`${index + 1}번째 약 복용량 늘리기`}
+                >
+                  +
+                </button>
+              </div>
+            )}
             {drug.notInList && (
               <div id={notInListId(drug)} className={cx('nameCheck')}>
                 <span>목록에 없는 이름이에요. 봉투와 다시 확인해 주세요</span>

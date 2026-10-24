@@ -3,7 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
-import { userEvent } from '@vitest/browser/context';
+import { page, userEvent } from '@vitest/browser/context';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -54,7 +54,8 @@ const OCR_NAME_CHECK: MedicationOcrResponse = {
 };
 
 const NOT_IN_LIST_TEXT = '목록에 없는 이름이에요. 봉투와 다시 확인해 주세요';
-const CHECK_BOX_TEXT = '노란 칸의 약 이름을 한 번 더 확인해 주세요. 맞나요?';
+// 결과 문구와 노란 칸 안내는 상자 하나(2026-10-24)
+const CHECK_BOX_TEXT = /노란 칸의 약 이름을 한 번 더 확인해 주세요/;
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -131,7 +132,9 @@ function httpError(status: number, message = '오류') {
 }
 
 describe('MedicationAddModal (Chrome)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    // 기본은 핸드폰 폭. 탭 잠금처럼 탭이 보여야 하는 테스트는 PC 폭으로 바꿔 돈다(핸드폰은 결과 뒤 탭을 접는다)
+    await page.viewport(375, 812);
     api.recognizeMedicationEnvelope.mockReset();
     api.addWardMedicationBatch.mockReset();
   });
@@ -145,12 +148,15 @@ describe('MedicationAddModal (Chrome)', () => {
     const { screen } = renderModal();
     await choosePhoto();
 
-    await expect.element(screen.getByText('✓ 약 2개를 찾았어요. 맞는지 확인해 주세요')).toBeVisible();
+    // 노란 칸이 있으면 결과 문구와 확인 안내가 상자 하나
+    await expect
+      .element(screen.getByText('✓ 약 2개를 찾았어요. 노란 칸의 약 이름을 한 번 더 확인해 주세요'))
+      .toBeVisible();
     await expect.element(screen.getByText('1 / 2')).toBeVisible();
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정');
     await expect.element(screen.getByText('반알')).toBeVisible();
     // 확신 낮은 약이 있으면 결과 문구 바로 아래 노란 박스(작은 안내 대신)
-    await expect.element(screen.getByText('노란 칸의 약 이름을 한 번 더 확인해 주세요. 맞나요?')).toBeVisible();
+    expect(document.querySelectorAll('[role="status"]')).toHaveLength(1);
     await expect.element(screen.getByLabelText('2번째 약 이름')).toHaveAttribute('aria-describedby');
     await expect.element(screen.getByRole('button', { name: '다시 찍기' })).toBeVisible();
     // 시간 드롭다운·메모 칸은 없다
@@ -269,7 +275,42 @@ describe('MedicationAddModal (Chrome)', () => {
     expect(image.type).toBe('image/jpeg');
   });
 
+  it('핸드폰: 처음엔 탭이 보이고, 사진 결과가 나오거나 2/2에 들어가면 탭을 접는다 (2026-10-24)', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
+    const { screen } = renderModal();
+    await expect.element(screen.getByRole('tab', { name: '직접 쓰기' })).toBeVisible();
+
+    await choosePhoto();
+    await expect.element(screen.getByText(/약 2개를 찾았어요/)).toBeVisible();
+    expect(screen.getByRole('tab', { name: '직접 쓰기' }).query()).toBeNull();
+    // 모달은 화면 전체, 가로 넘침 없음
+    const dialog = screen.getByRole('dialog').element() as HTMLElement;
+    expect(Math.round(dialog.getBoundingClientRect().width)).toBe(window.innerWidth);
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+
+    await screen.getByRole('button', { name: '다음' }).click();
+    await expect.element(screen.getByRole('heading', { name: '언제 드세요?' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '직접 쓰기' }).query()).toBeNull();
+  });
+
+  it('약 한 줄: 복용량은 "1알 ✎"로 접혀 있고, 누르면 −/+가 열린다 (2026-10-24)', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
+    const { screen } = renderModal();
+    await choosePhoto();
+
+    const toggle = screen.getByRole('button', { name: '1번째 약 복용량 반알, 바꾸기' });
+    await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: '1번째 약 복용량 늘리기' }).query()).toBeNull();
+
+    await toggle.click();
+    await screen.getByRole('button', { name: '1번째 약 복용량 늘리기' }).click();
+    await expect.element(screen.getByRole('button', { name: '1번째 약 복용량 1알, 바꾸기' })).toHaveAttribute('aria-expanded', 'true');
+    // 다른 약은 그대로 접혀 있다
+    expect(screen.getByRole('button', { name: '2번째 약 복용량 늘리기' }).query()).toBeNull();
+  });
+
   it('읽는 중에는 탭을 바꿀 수 없다 (점검 M-1)', async () => {
+    await page.viewport(1280, 900);
     const pending = deferred<MedicationOcrResponse>();
     api.recognizeMedicationEnvelope.mockReturnValue(pending.promise);
     const { screen } = renderModal();
@@ -471,6 +512,7 @@ describe('MedicationAddModal (Chrome)', () => {
   });
 
   it('응답 전에 끊기면 "확인 필요"로 막고 다시 보내지 않는다 (점검 M-1)', async () => {
+    await page.viewport(1280, 900);
     api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
     api.addWardMedicationBatch.mockRejectedValueOnce(new AxiosError('timeout of 10000ms exceeded', 'ECONNABORTED'));
     const { screen, onClose } = renderModal();
@@ -488,6 +530,7 @@ describe('MedicationAddModal (Chrome)', () => {
   });
 
   it('등록이 오래 걸린 뒤 실패해도 포커스가 모달 안(실패 문구)에 있고 Esc로 닫힌다 (점검 M-2)', async () => {
+    await page.viewport(1280, 900);
     api.addWardMedicationBatch.mockImplementation(
       () => new Promise((_, reject) => setTimeout(() => reject(new Error('잠시 후 다시 시도해 주세요.')), 600)),
     );
@@ -511,6 +554,7 @@ describe('MedicationAddModal (Chrome)', () => {
   });
 
   it('다시 찍기가 실패해도 "전에 찍은 결과로" 고쳐 둔 초안으로 돌아간다 (점검 L-1)', async () => {
+    await page.viewport(1280, 900);
     api.recognizeMedicationEnvelope.mockResolvedValueOnce(OCR_TWO_DRUGS).mockResolvedValueOnce({ readable: false, drugs: [] });
     const { screen } = renderModal();
     await choosePhoto();
@@ -520,7 +564,7 @@ describe('MedicationAddModal (Chrome)', () => {
     await choosePhoto();
     await expect.element(screen.getByText(/약 봉투를 찾지 못했어요/)).toBeVisible();
     await screen.getByRole('button', { name: '전에 찍은 결과로' }).click();
-    await expect.element(screen.getByText('✓ 약 2개를 찾았어요. 맞는지 확인해 주세요')).toBeVisible();
+    await expect.element(screen.getByText(/✓ 약 2개를 찾았어요/)).toBeVisible();
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정500');
   });
 
@@ -589,6 +633,7 @@ describe('MedicationAddModal (Chrome)', () => {
   });
 
   it('탭을 바꾸면 처음부터 다시 쓴다', async () => {
+    await page.viewport(1280, 900);
     const { screen } = renderModal();
     await screen.getByRole('tab', { name: '직접 쓰기' }).click();
     await screen.getByLabelText('1번째 약 이름').fill('혈압약');
@@ -603,6 +648,7 @@ describe('MedicationAddModal (Chrome)', () => {
   });
 
   it('등록 중에는 Esc·닫기로 닫히지 않고, 끝나면 닫힌다 (점검 L-1)', async () => {
+    await page.viewport(1280, 900);
     const pending = deferred<[]>();
     api.addWardMedicationBatch.mockReturnValue(pending.promise);
     const { screen, onClose } = renderModal();

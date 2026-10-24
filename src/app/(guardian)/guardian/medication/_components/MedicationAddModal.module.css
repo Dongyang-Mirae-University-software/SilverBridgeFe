@@ -271,7 +271,8 @@
   padding: 12px 14px;
 }
 
-.resultBanner p {
+.resultBanner p,
+.checkBox p {
   margin: 0;
 }
 
@@ -308,6 +309,13 @@
   color: var(--sb-ink-soft);
   font-size: 15px;
   font-weight: 700;
+}
+
+/* 단계 제목 + 진행: 마크업은 제목이 먼저, PC는 진행 막대를 위로 올려 예전 모양 그대로(핸드폰은 한 줄 - 아래 미디어 쿼리) */
+.stepHeader {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 14px;
 }
 
 .stepTitle {
@@ -398,13 +406,14 @@
   list-style: none;
 }
 
-/* 약 한 개 = 두 줄: 이름은 한 줄을 다 쓰고(긴 이름이 잘리지 않게), 복용량·빼기는 아랫줄 (2026-10-23) */
+/* 약 한 개 = 한 줄: 이름 · "1알 ✎" · ×  (복용량을 바꿀 때만 아랫줄에 −/+, 2026-10-24) */
 .drugRow {
   display: grid;
-  grid-template-areas: 'name name' 'check check' 'dose remove';
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name dose remove' 'check check check' 'stepper stepper stepper';
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 8px;
+  /* 세로 간격은 0 - 비어 있는 안내·복용량 행에도 간격이 생겨 약 사이가 벌어졌다. 그 행에만 위 여백을 준다 */
+  gap: 0 6px;
   border-top: 1px solid var(--sb-line-soft);
   padding: 12px 0;
 }
@@ -420,11 +429,43 @@
 
 .drugRow .nameCheck {
   grid-area: check;
+  margin-top: 8px;
+}
+
+.drugRow .doseToggle {
+  grid-area: dose;
 }
 
 .drugRow .stepper {
-  grid-area: dose;
+  grid-area: stepper;
   justify-self: start;
+  margin-top: 8px;
+}
+
+.doseToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 48px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.doseToggle span[aria-hidden] {
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+}
+
+.doseToggle.open {
+  border-color: var(--sb-brand);
 }
 
 .drugRow .removeButton {
@@ -521,17 +562,17 @@
 
 .removeButton {
   display: grid;
-  min-width: 64px;
-  height: 42px;
+  width: 40px;
+  height: 48px;
   place-items: center;
-  padding: 0 12px;
+  padding: 0;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
   font: inherit;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
 }
 
@@ -586,8 +627,57 @@
   outline-offset: 2px;
 }
 
+/* 핸드폰: 화면 전체로 띄우고(아래 버튼 고정), 결과가 나오면 탭을 접고, 제목·진행을 한 줄로 - 약 목록이 더 많이 보이게(2026-10-24) */
 @media (max-width: 480px) {
+  .overlay {
+    place-items: stretch;
+    padding: 0;
+  }
+
   .modal {
-    padding: 20px 16px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    padding: 14px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .header {
+    margin-bottom: 10px;
+  }
+
+  /* 본문이 화면 높이를 채우되 내용은 위에 붙인다(그리드 행이 늘어나 2/2 칩이 세로로 길어졌다) */
+  .body {
+    flex: 1;
+    align-content: start;
+  }
+
+  .drugRow {
+    padding: 8px 0;
+  }
+
+  .footer {
+    margin-top: 10px;
+  }
+
+  .tabs.collapsible {
+    display: none;
+  }
+
+  .stepHeader {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .stepHeader .progress {
+    flex: 0 0 132px;
+  }
+
+  .drugCard {
+    border: 0;
+    padding: 0;
   }
 }
