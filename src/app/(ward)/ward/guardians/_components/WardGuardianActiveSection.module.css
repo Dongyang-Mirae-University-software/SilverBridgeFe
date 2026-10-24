@@ -1,68 +1,181 @@
-.connectionSection {
+.guardianGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  gap: 16px;
+  max-width: 1000px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guardianCard {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 0;
-  overflow: hidden;
+  min-width: 0;
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
+  padding: 24px 26px 18px;
 }
 
-.sectionHeader {
+.guardianHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--sb-line-soft);
-  padding: 18px 22px;
+  gap: 16px;
+  padding-bottom: 18px;
 }
 
-.sectionHeader > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.guardianName {
   min-width: 0;
+  color: var(--sb-ink);
+  font-size: 26px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
-.sectionHeader h3 {
+.relation {
+  color: var(--sb-ink-soft);
+  font-weight: 700;
+}
+
+.rows {
+  margin: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding: 14px 0;
+}
+
+.row dt {
+  color: var(--sb-ink-mute);
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.row dd {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.sectionHeader span {
-  border-radius: 999px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 700;
-  padding: 5px 14px;
+  overflow-wrap: anywhere;
 }
 
-.sectionBody {
-  padding: 14px 18px;
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--sb-line-soft);
+  padding-top: 10px;
 }
 
-.sectionBody :global(.connectionEmpty) {
-  border: 1px dashed var(--sb-line);
-  border-radius: 12px;
-  background: var(--sb-bg-soft);
-  padding: 28px 18px;
+.disconnectButton {
+  min-height: 52px;
+  border: none;
+  background: none;
   color: var(--sb-ink-mute);
-  font-size: 14px;
-  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 0 8px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.disconnectButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.emptyCard {
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  color: var(--sb-ink-soft);
+  font-size: 20px;
+  padding: 48px 24px;
   text-align: center;
 }
 
-@media (max-width: 640px) {
-  .sectionHeader {
-    padding: 16px;
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  background: rgba(31, 25, 22, 0.55);
+  padding: 24px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 460px;
+  border-radius: 24px;
+  background: #fff;
+  padding: 30px 28px;
+  text-align: center;
+}
+
+.modalTitle {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 26px;
+  font-weight: 900;
+  word-break: keep-all;
+}
+
+.modalDesc {
+  margin: 10px 0 0;
+  color: var(--sb-ink-soft);
+  font-size: 19px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.modalActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.keepButton,
+.confirmButton {
+  min-height: 68px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  padding: 0 12px;
+}
+
+.keepButton {
+  border: none;
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.confirmButton {
+  border: 2px solid var(--sb-line);
+  background: #fff;
+  color: var(--sb-ink-soft);
+}
+
+@media (max-width: 520px) {
+  .guardianCard {
+    padding: 20px 18px 14px;
   }
 
-  .sectionBody {
-    padding: 12px;
+  .row {
+    grid-template-columns: 88px minmax(0, 1fr);
   }
 }

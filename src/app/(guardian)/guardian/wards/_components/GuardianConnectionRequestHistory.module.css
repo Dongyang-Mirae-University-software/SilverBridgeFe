@@ -1,100 +1,85 @@
 .card {
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
-  padding: 18px;
 }
 
 .title {
-  margin: 0 0 14px;
-  color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.emptyText {
   margin: 0;
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.table thead th {
-  border-bottom: 1px solid var(--sb-line);
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 12px 16px;
-  text-align: left;
-}
-
-.table tbody td {
   border-bottom: 1px solid var(--sb-line-soft);
-  padding: 12px 16px;
+  color: var(--sb-ink);
+  font-size: 17px;
+  font-weight: 800;
+  padding: 16px 24px;
 }
 
-.table tbody tr:last-child td {
-  border-bottom: none;
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.table tbody tr:hover {
-  background: var(--sb-bg-soft);
-}
-
-.mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-weight: 700;
-}
-
-.statusBadge {
-  display: inline-flex;
+.row {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
-  border-radius: 999px;
-  background: var(--sb-sun-soft);
-  color: #b07f1f;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
+  gap: 8px 16px;
+  padding: 14px 24px;
 }
 
-@media (max-width: 640px) {
-  .table,
-  .table thead,
-  .table tbody,
-  .table tr,
-  .table th,
-  .table td {
-    display: block;
-  }
+.row + .row {
+  border-top: 1px solid var(--sb-line-soft);
+}
 
-  .table {
-    position: relative;
-  }
+.memberId {
+  color: var(--sb-ink);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
 
-  .table thead tr {
-    position: absolute;
-    left: -9999px;
-  }
+.meta {
+  flex: 1;
+  min-width: 0;
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  font-weight: 600;
+  word-break: keep-all;
+}
 
-  .table tbody tr {
-    border-bottom: 1px solid var(--sb-line-soft);
-    padding: 10px 0;
-  }
+.cancelButton {
+  min-height: 44px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 0 14px;
+}
 
-  .table tbody tr:last-child {
-    border-bottom: none;
-  }
+.cancelButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 
-  .table tbody td {
-    border-bottom: none;
-    padding: 2px 0;
-  }
+.errorMessage {
+  margin: 12px 24px 0;
+  border-radius: 10px;
+  background: var(--sb-danger-soft);
+  color: var(--sb-danger);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 12px;
+}
+
+.loadError {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
 }

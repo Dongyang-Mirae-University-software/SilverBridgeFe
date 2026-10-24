@@ -1,68 +1,110 @@
-.connectionSection {
+.requestList {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
-  background: #fff;
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--sb-line-soft);
-  padding: 18px 22px;
-}
-
-.sectionHeader > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.sectionHeader h3 {
+  gap: 14px;
   margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.requestCard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  border: 2px solid var(--sb-brand);
+  border-radius: var(--sb-radius);
+  background: var(--sb-brand-50);
+  padding: 22px 26px;
+}
+
+.requestText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.requestName {
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.relation {
+  color: var(--sb-ink-soft);
+  font-weight: 700;
+}
+
+.requestDesc {
+  color: var(--sb-ink-soft);
+  font-size: 19px;
+  font-weight: 600;
+  word-break: keep-all;
+}
+
+.requestActions {
+  display: flex;
+  gap: 10px;
+}
+
+.refuseButton,
+.acceptButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 60px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  padding: 0 26px;
+  white-space: nowrap;
+}
+
+.refuseButton {
+  border: 2px solid var(--sb-line);
+  background: #fff;
+  color: var(--sb-ink);
+}
+
+.acceptButton {
+  border: none;
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.refuseButton:disabled,
+.acceptButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.loadError {
+  margin: 0;
+  border-radius: var(--sb-radius);
+  background: var(--sb-warn-soft);
   color: var(--sb-ink);
   font-size: 18px;
-  font-weight: 800;
-}
-
-.sectionHeader span {
-  border-radius: 999px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-  font-size: 13px;
   font-weight: 700;
-  padding: 5px 14px;
+  padding: 16px 20px;
 }
 
-.sectionBody {
-  padding: 14px 18px;
-}
-
-.sectionBody :global(.connectionEmpty) {
-  border: 1px dashed var(--sb-line);
-  border-radius: 12px;
-  background: var(--sb-bg-soft);
-  padding: 28px 18px;
-  color: var(--sb-ink-mute);
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-}
-
-@media (max-width: 640px) {
-  .sectionHeader {
-    padding: 16px;
+@media (max-width: 520px) {
+  .requestCard {
+    padding: 18px;
   }
 
-  .sectionBody {
-    padding: 12px;
+  .requestActions {
+    width: 100%;
+  }
+
+  .refuseButton,
+  .acceptButton {
+    flex: 1;
   }
 }

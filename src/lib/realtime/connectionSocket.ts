@@ -3,13 +3,15 @@ import { Client, IMessage } from '@stomp/stompjs';
 import { isSessionRejected, refreshAccessToken } from '@/lib/api/apiClient';
 import { isAccessTokenExpired } from '@/lib/auth/tokenExpiry';
 import { AuthRole, getAccessToken } from '@/lib/auth/tokenStore';
-import { savePendingConnectionRequest } from './pendingConnectionRequests';
+import { removePendingConnectionRequest, savePendingConnectionRequest } from './pendingConnectionRequests';
 
 type ConnectionRealtimeType =
   | 'CONNECTION_REQUEST'
   | 'CONNECTION_ACCEPTED'
   | 'CONNECTION_CANCELLED'
   | 'CONNECTION_REFUSED'
+  // 보호자가 수락 전 요청을 취소함 - 알림(토스트·푸시) 없이 피보호자의 받은 요청 목록만 갱신한다
+  | 'CONNECTION_REQUEST_CANCELLED'
   | 'SOS_TRIGGERED'
   | 'MEDICATION_TAKEN'
   | 'MEDICATION_STOPPED'
@@ -62,6 +64,7 @@ const MAX_FAILURES_WITH_SAME_TOKEN = 2;
 const WARD_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
   { destination: 'connection-request', type: 'CONNECTION_REQUEST' },
   { destination: 'connection-cancelled', type: 'CONNECTION_CANCELLED' },
+  { destination: 'connection-request-cancelled', type: 'CONNECTION_REQUEST_CANCELLED' },
   { destination: 'medication-taken', type: 'MEDICATION_TAKEN' },
   { destination: 'anomaly-detected', type: 'ANOMALY_DETECTED' },
 ];
@@ -235,6 +238,9 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
         const payload = normalizeMessage(message, topic.type);
         console.info('[WS] 알림 받음:', payload);
         if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST') savePendingConnectionRequest(payload);
+        if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST_CANCELLED') {
+          removePendingConnectionRequest(Number(payload.connectionId));
+        }
         onMessage(payload);
       });
     });
