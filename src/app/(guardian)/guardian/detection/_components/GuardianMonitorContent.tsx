@@ -16,7 +16,8 @@ const cx = classNames.bind(styles);
 
 export default function GuardianMonitorContent() {
   const searchParams = useSearchParams();
-  const deepLinkSessionId = searchParams.get('session');
+  // 푸시로 연 카메라(?session=)는 첫 열기에만 쓴다 - 닫은 뒤 다시 열면 고른 피보호자의 카메라가 열려야 한다
+  const [deepLinkSessionId, setDeepLinkSessionId] = useState(() => searchParams.get('session'));
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(Boolean(deepLinkSessionId));
   // 실시간 영상을 열 피보호자. 모달을 연 그 순간의 선택으로 고정한다(열린 뒤 이력에서 바꿔도 영상은 그대로)
   const [liveWardId, setLiveWardId] = useState<string | undefined>(undefined);
@@ -50,7 +51,10 @@ export default function GuardianMonitorContent() {
         <LiveCameraModal
           initialSessionId={deepLinkSessionId}
           initialWardId={liveWardId}
-          onClose={() => setIsLiveModalOpen(false)}
+          onClose={() => {
+            setIsLiveModalOpen(false);
+            setDeepLinkSessionId(null);
+          }}
         />
       )}
     </PageLayout>
