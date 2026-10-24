@@ -161,3 +161,30 @@ export function summarizeMedicationNames(medications: MedicationItem[], shown = 
   const rest = names.length - shown;
   return rest > 0 ? `${names.slice(0, shown).join(', ')} 외 ${rest}개` : names.join(', ');
 }
+
+// 보호자 카드 맨 위 한 문장 - "N번 중 M번"은 약이 많으면 뜻을 알기 어려워 시간대 기준으로 말한다(2026-10-24 사용자 요청)
+// 지금까지 시간이 지난 마지막 시간대를 기준으로: 다 드셨으면 "아침 약을 다 드셨어요", 아니면 "점심 약이 아직 체크되지 않았어요"
+// ("안 드셨어요"로 단정하지 않는다 - 체크 누락과 실제 미복용을 구분할 수 없다). 그보다 앞 시간대에 남은 게 있으면 sub로 알린다
+export interface TodayHeadline {
+  text: string;
+  tone: 'done' | 'miss' | 'later';
+  sub: string | null;
+}
+
+export function getTodayHeadline(groups: MedicationTimeGroup[]): TodayHeadline | null {
+  const counted = groups.filter(group => group.status !== 'beforeRegistered');
+  if (counted.length === 0) return null;
+  if (counted.every(group => group.status === 'done')) return { text: '오늘 약을 모두 드셨어요', tone: 'done', sub: null };
+
+  const passed = counted.filter(group => group.status !== 'later');
+  if (passed.length === 0) {
+    const next = counted[0];
+    return { text: `${next.label} 약은 ${formatDoseTime(next.doseTime)}에 드세요`, tone: 'later', sub: null };
+  }
+  const current = passed[passed.length - 1];
+  const earlierMissed = passed.slice(0, -1).filter(group => group.status === 'miss');
+  const sub = earlierMissed.length > 0 ? `${earlierMissed.map(group => group.label).join('·')} 약도 아직 체크되지 않았어요` : null;
+  return current.status === 'done'
+    ? { text: `${current.label} 약을 다 드셨어요`, tone: 'done', sub }
+    : { text: `${current.label} 약이 아직 체크되지 않았어요`, tone: 'miss', sub };
+}

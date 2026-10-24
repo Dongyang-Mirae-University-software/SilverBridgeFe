@@ -4,6 +4,7 @@ import { Fragment, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import {
@@ -11,6 +12,7 @@ import {
   formatDoseAmount,
   formatDoseTime,
   getDoseStatus,
+  getTodayHeadline,
   getMedicationTimeSlotLabel,
   getTimeGroupStatusLabel,
   groupMedicationsByTime,
@@ -27,6 +29,7 @@ import {
 import { guardianNotificationTypeSettingQueryOptions } from '@/service/query/guardian/notification';
 import { MedicationAddModal } from './MedicationAddModal';
 import { MedicationFormModal, MedicationFormValue } from './MedicationFormModal';
+import { MissedAlertTimeSelect } from './MissedAlertTimeSelect';
 import styles from './WardMedicationCard.module.css';
 
 const cx = classNames.bind(styles);
@@ -36,6 +39,14 @@ interface WardMedicationCardProps {
 }
 
 const DELETE_FAILED_MESSAGE = '삭제하지 못했어요. 목록을 다시 불러왔으니 확인 후 다시 시도해 주세요.';
+
+// 맨 위 시간대 이름표의 스크린리더용 짧은 상태(목록의 상태 문구와 겹치지 않게 짧게)
+const SLOT_STATUS_SHORT: Record<DoseStatus, string> = {
+  done: '다 드심',
+  miss: '체크 전',
+  later: '시간 전',
+  beforeRegistered: '등록 전',
+};
 
 const STATUS_LABEL: Record<DoseStatus, string> = {
   done: '드셨어요',
@@ -104,11 +115,9 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   }).format(new Date());
   // 같은 시간대·시각의 약은 한 번으로 센다(약 6개 × 하루 3번 = "3번 중"). 오늘 등록 전이었던 묶음은 세지 않는다
   const groups = groupMedicationsByTime(medications, nowHHmm, summary.doseDate);
-  const countedGroups = groups.filter(group => group.status !== 'beforeRegistered');
-  const doneGroupCount = countedGroups.filter(group => group.status === 'done').length;
-  const missGroups = groups.filter(group => group.status === 'miss');
-  // 체크한 약이 하나도 없는데 "모두 드셨어요"라고 하지 않는다(아직 시간 전이거나 오늘은 등록 전인 약뿐인 경우)
-  const hasTaken = medications.some(medication => medication.taken);
+  // 맨 위 한 문장: "N번 중 M번" 대신 시간대로("아침 약을 다 드셨어요") - 약이 많으면 횟수가 무슨 뜻인지 알기 어렵다(2026-10-24)
+  const headline = getTodayHeadline(groups);
+  const router = useRouter();
   const [openGroupKeys, setOpenGroupKeys] = useState<string[]>([]);
   const toggleGroup = (key: string) =>
     setOpenGroupKeys(keys => (keys.includes(key) ? keys.filter(item => item !== key) : [...keys, key]));
@@ -144,35 +153,25 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         <section className={cx('card', 'todayCard')}>
           <div>
             <div className={cx('todayLabel')}>오늘</div>
-            {countedGroups.length > 0 && (
-              <div className={cx('todayCount')}>
-                {countedGroups.length}번 중 <span className={cx('todayTaken')}>{doneGroupCount}번</span> 드셨어요
-              </div>
-            )}
-            {missGroups.length > 0 ? (
-              <div className={cx('todayMiss')}>
-                {missGroups.map(group => group.label).join('·')} 약이 아직 다 체크되지 않았어요
-              </div>
-            ) : (
-              <div className={cx('todayAllDone')}>
-                {hasTaken ? '지금까지 드실 약은 모두 드셨어요' : '지금 체크할 약은 없어요'}
-              </div>
-            )}
+            <div className={cx('todayCount', headline?.tone)}>{headline?.text ?? '오늘은 체크할 약이 없어요'}</div>
+            {headline?.sub && <div className={cx('todayMiss')}>{headline.sub}</div>}
           </div>
-          <div className={cx('todayDots')} aria-hidden="true">
+          {/* 시간대마다 이름표 - 점만으로는 무엇인지 알 수 없었다 */}
+          <ul className={cx('todaySlots')} aria-label="시간대별 상태">
             {groups.map(group => (
-              <span key={group.key} title={group.label} className={cx('todayDot', group.status)} />
+              <li key={group.key} className={cx('todaySlot', group.status)}>
+                {group.status === 'done' && <span aria-hidden="true">✓ </span>}
+                {group.label}
+                <span className={cx('srOnly')}> {SLOT_STATUS_SHORT[group.status]}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       )}
 
       <section className={cx('card', 'listCard')}>
         <div className={cx('sectionHeader')}>
-          <div>
-            <strong className={cx('sectionTitle')}>오늘 드실 약</strong>
-            <span className={cx('sectionMeta')}>약을 드셨는지는 {wardName} 님이 직접 체크해요</span>
-          </div>
+          <strong className={cx('sectionTitle')}>오늘 드실 약</strong>
           <button type="button" className={cx('addButton')} onClick={openAddMedication}>
             + 약 추가
           </button>
@@ -285,17 +284,25 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         )}
       </section>
 
+      {/* 알림 설정 - Claude Design 시안대로(2026-10-24): 어르신 기기 알림 스위치 + "이 시간까지 안 드시면 나에게 알림" 시각.
+          나에게 오는 알림을 켜고 끄는 건 환경설정 > 알림 종류에서만 한다(이 화면에 같은 스위치를 두지 않는다) */}
       {hasMedications && (
         <section className={cx('card', 'settingsCard')}>
-          <div className={cx('settingsRow')}>
-            <div className={cx('settingsMeta')}>
-              <strong className={cx('settingsTitle')}>복약 시간 알림</strong>
-              <span className={cx('settingsDescription')}>약 드실 시간마다 {wardName} 님께 알려 드려요</span>
+          <strong className={cx('settingsCardTitle')}>알림 설정</strong>
+          {isMedicationNotificationDisabled && (
+            <div className={cx('notificationOff')}>
+              <span>지금 복약 알림을 받지 않고 있어요</span>
+              <button type="button" className={cx('notificationOffButton')} onClick={() => router.push('/guardian/settings')}>
+                켜기
+              </button>
             </div>
+          )}
+          <div className={cx('settingsRow')}>
+            <strong className={cx('settingsTitle')}>{wardName} 님께 약 드실 시간 알려 드리기</strong>
             <label className={cx('switchField')}>
               <input
                 type="checkbox"
-                aria-label="복약 시간 알림"
+                aria-label={`${wardName} 님께 약 드실 시간 알려 드리기`}
                 checked={summary.alarmEnabled}
                 disabled={settingMutation.isPending}
                 onChange={event =>
@@ -305,72 +312,19 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
               <span className={cx('switchTrack')} aria-hidden="true" />
             </label>
           </div>
-
-          <div className={cx('settingsRow', 'settingsRowWrap')}>
-            <div className={cx('settingsMeta')}>
-              <strong className={cx('settingsTitle')}>안 드시면 나에게 알림</strong>
-              <span className={cx('settingsDescription')}>정한 시각까지 안 드신 약이 있으면 알려 드려요</span>
-            </div>
-            {summary.missedAlertEnabled && (
-              <label className={cx('timeField')}>
-                매일
-                <input
-                  type="time"
-                  value={summary.missedAlertTime.slice(0, 5)}
-                  disabled={alertSettingMutation.isPending}
-                  onChange={event =>
-                    alertSettingMutation.mutate({
-                      wardId: summary.wardId,
-                      body: { missedAlertTime: `${event.target.value}:00` },
-                    })
-                  }
-                />
-                에 확인
-              </label>
-            )}
-            <label className={cx('switchField', 'gold')}>
-              <input
-                type="checkbox"
-                aria-label="안 드시면 나에게 알림"
-                checked={summary.missedAlertEnabled}
-                disabled={alertSettingMutation.isPending}
-                onChange={event =>
-                  alertSettingMutation.mutate({
-                    wardId: summary.wardId,
-                    body: { missedAlertEnabled: event.target.checked },
-                  })
-                }
-              />
-              <span className={cx('switchTrack')} aria-hidden="true" />
-            </label>
-          </div>
-
-          {isMedicationNotificationDisabled && summary.missedAlertEnabled && (
-            <p className={cx('notificationDisabledNotice')}>
-              알림 종류 설정에서 복약 알림이 꺼져 있어 미복용 요약이 가지 않아요.
-            </p>
-          )}
-
           <div className={cx('settingsRow')}>
-            <div className={cx('settingsMeta')}>
-              <strong className={cx('settingsTitle')}>15분 뒤 재알림</strong>
-              <span className={cx('settingsDescription')}>놓친 복약 알림을 15분 뒤 한 번 더 보내 드려요</span>
-            </div>
-            <label className={cx('switchField')}>
-              <input
-                type="checkbox"
-                aria-label="15분 뒤 재알림"
-                checked={summary.remindAgainEnabled}
-                disabled={settingMutation.isPending}
-                onChange={event =>
-                  settingMutation.mutate({
-                    wardId: summary.wardId,
-                    body: { remindAgainEnabled: event.target.checked },
-                  })
-                }
-              />
-              <span className={cx('switchTrack')} aria-hidden="true" />
-            </label>
+            <strong className={cx('settingsTitle')}>이 시간까지 안 드시면 나에게 알림</strong>
+            <MissedAlertTimeSelect
+              value={summary.missedAlertTime}
+              disabled={alertSettingMutation.isPending}
+              onConfirm={hhmm =>
+                // 이 화면에는 켜고 끄는 스위치가 없으므로 시각을 정하면 이 피보호자 요약도 켠다(예전에 꺼 둔 경우 다시 받게)
+                alertSettingMutation.mutate({
+                  wardId: summary.wardId,
+                  body: { missedAlertTime: `${hhmm}:00`, missedAlertEnabled: true },
+                })
+              }
+            />
           </div>
         </section>
       )}
