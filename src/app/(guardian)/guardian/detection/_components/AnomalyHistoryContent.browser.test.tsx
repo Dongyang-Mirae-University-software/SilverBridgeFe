@@ -170,6 +170,36 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     expect(screen.getByRole('button', { name: /삭제된 카메라 기록/ }).query()).toBeNull();
   });
 
+  it('삭제된 카메라 칩은 요약 건수로 보이고, 누르면 camera=DELETED, 유형 칩으로 옮기면 카메라 필터가 풀린다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1, { cameraLabel: null })]));
+    api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 2 });
+    const screen = renderHistory();
+
+    await screen.getByRole('button', { name: '삭제된 카메라 2' }).click();
+    await vi.waitFor(() =>
+      expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
+        expect.objectContaining({ camera: 'DELETED', type: undefined, page: 0 }),
+      ),
+    );
+    await expect.element(screen.getByRole('button', { name: '삭제된 카메라 2' })).toHaveAttribute('aria-pressed', 'true');
+
+    await screen.getByRole('button', { name: '화재 20' }).click();
+    await vi.waitFor(() =>
+      expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
+        expect.objectContaining({ camera: undefined, type: 'FIRE', page: 0 }),
+      ),
+    );
+  });
+
+  it('삭제된 카메라 기록이 0건이면 칩을 보이지 않는다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
+    api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 0 });
+    const screen = renderHistory();
+
+    await expect.element(screen.getByRole('button', { name: '전체 37' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /삭제된 카메라/ }).query()).toBeNull();
+  });
+
   it('375px에서 가로로 넘치지 않는다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(
       page([
@@ -178,6 +208,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
         incident(3, { cameraLabel: null, detectedType: 'FALL', detectedTypeLabel: '낙상' }),
       ]),
     );
+    api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 12 });
     const box = document.createElement('div');
     box.style.padding = '0 16px';
     document.body.appendChild(box);
