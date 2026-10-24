@@ -43,7 +43,7 @@ function med(id: number, overrides: Partial<MedicationItem> = {}): MedicationIte
   };
 }
 
-function renderCard(medications: MedicationItem[]) {
+function renderCard(medications: MedicationItem[], container?: HTMLElement) {
   const summary: WardMedicationSummary = {
     wardId: 'W1',
     wardName: '김순자',
@@ -60,7 +60,7 @@ function renderCard(medications: MedicationItem[]) {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
   );
-  return render(<WardMedicationCard summary={summary} />, { wrapper });
+  return render(<WardMedicationCard summary={summary} />, { wrapper, container });
 }
 
 describe('WardMedicationCard (Chrome)', () => {
@@ -192,5 +192,31 @@ describe('WardMedicationCard (Chrome)', () => {
     await vi.waitFor(() => expect(api.deleteGuardianMedication).toHaveBeenCalledWith(1));
     await expect.element(screen.getByRole('alert')).toHaveTextContent('삭제하지 못했어요');
     await vi.waitFor(() => expect(invalidate).toHaveBeenCalled());
+  });
+  it('알림 토글 3개는 스크린리더가 읽을 이름이 있다 (2026-10-24 점검 M-1)', async () => {
+    const screen = renderCard([med(1)]);
+    for (const name of ['복약 시간 알림', '안 드시면 나에게 알림', '15분 뒤 재알림']) {
+      await expect.element(screen.getByRole('checkbox', { name })).toBeInTheDocument();
+    }
+  });
+
+  // 숨긴 토글 input이 기준을 잃으면 안쪽 스크롤 상자가 아니라 문서 기준으로 놓여
+  // 바깥 문서가 늘고 화면 아래에 빈 띠가 생긴다 (FE #114)
+  it('position 없는 안쪽 스크롤 상자에 넣어도 바깥 문서를 늘리지 않는다 (2026-10-24 점검 L-1)', async () => {
+    const scroller = document.createElement('div');
+    scroller.style.height = '200px';
+    scroller.style.overflowY = 'auto';
+    // 카드 위를 비워 토글이 화면 아래(접힌 곳)에 놓이게 한다
+    const spacer = document.createElement('div');
+    spacer.style.height = `${window.innerHeight + 200}px`;
+    const slot = document.createElement('div');
+    scroller.append(spacer, slot);
+    document.body.appendChild(scroller);
+    const screen = renderCard([med(1)], slot);
+    const toggle = screen.getByRole('checkbox', { name: '15분 뒤 재알림' });
+    await expect.element(toggle).toBeInTheDocument();
+
+    expect(toggle.element().getBoundingClientRect().top).toBeGreaterThan(window.innerHeight);
+    expect(document.documentElement.scrollHeight).toBeLessThanOrEqual(window.innerHeight);
   });
 });

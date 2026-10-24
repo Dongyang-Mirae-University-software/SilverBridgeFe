@@ -295,6 +295,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             <label className={cx('switchField')}>
               <input
                 type="checkbox"
+                aria-label="복약 시간 알림"
                 checked={summary.alarmEnabled}
                 disabled={settingMutation.isPending}
                 onChange={event =>
@@ -330,6 +331,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             <label className={cx('switchField', 'gold')}>
               <input
                 type="checkbox"
+                aria-label="안 드시면 나에게 알림"
                 checked={summary.missedAlertEnabled}
                 disabled={alertSettingMutation.isPending}
                 onChange={event =>
@@ -357,6 +359,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             <label className={cx('switchField')}>
               <input
                 type="checkbox"
+                aria-label="15분 뒤 재알림"
                 checked={summary.remindAgainEnabled}
                 disabled={settingMutation.isPending}
                 onChange={event =>
