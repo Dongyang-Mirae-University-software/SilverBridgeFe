@@ -27,6 +27,8 @@ export function WardSettingsContent() {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const isKakaoUser = profile?.provider === 'KAKAO';
+  // 프로필을 받기 전에는 카카오 계정인지 몰라 비밀번호 변경·탈퇴 버튼을 막는다
+  const isAccountReady = Boolean(profile);
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('screen');
 
@@ -60,8 +62,8 @@ export function WardSettingsContent() {
 
       {activeTab === 'account' && (
         <section className={styles.accountCard}>
-          <PasswordChangeSection isKakaoUser={isKakaoUser} variant="ward" />
-          <AccountDeleteSection isKakaoUser={isKakaoUser} variant="ward" />
+          <PasswordChangeSection isAccountReady={isAccountReady} isKakaoUser={isKakaoUser} variant="ward" />
+          <AccountDeleteSection isAccountReady={isAccountReady} isKakaoUser={isKakaoUser} variant="ward" />
         </section>
       )}
     </div>

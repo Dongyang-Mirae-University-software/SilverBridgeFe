@@ -21,6 +21,8 @@ export default function GuardianSettingsContent() {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const isKakaoUser = profile?.provider === 'KAKAO';
+  // 프로필을 받기 전에는 카카오 계정인지 몰라 비밀번호 변경·탈퇴 버튼을 막는다
+  const isAccountReady = Boolean(profile);
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('alert');
 
@@ -45,8 +47,8 @@ export default function GuardianSettingsContent() {
 
       {activeTab === 'account' && (
         <div className={cx('card')}>
-          <PasswordChangeSection isKakaoUser={isKakaoUser} />
-          <AccountDeleteSection isKakaoUser={isKakaoUser} />
+          <PasswordChangeSection isAccountReady={isAccountReady} isKakaoUser={isKakaoUser} />
+          <AccountDeleteSection isAccountReady={isAccountReady} isKakaoUser={isKakaoUser} />
         </div>
       )}
     </div>

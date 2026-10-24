@@ -9,6 +9,7 @@ import {
 } from '@/service/query/guardian/notification';
 import { GuardianNotificationTypeSetting } from '@/service/interface/guardian/notification';
 import { showToast } from '@/store/toastStore';
+import { SettingsLoadError } from './SettingsLoadError';
 import styles from './AlertTypeSettingsSection.module.css';
 
 const cx = classNames.bind(styles);
@@ -28,22 +29,21 @@ const SAVE_ERROR_MESSAGE = '알림 설정을 저장하지 못했어요. 잠시 �
 // SOS·이상 감지 발생 알림은 BE에서 required 잠금이라 끌 수 없다 - 스위치 대신 "항상 받아요"로 보여 준다.
 // 정서 변화·병원 예약 알림은 BE가 보내지 않는 알림이라 설정을 두지 않는다(거짓 설정 방지)
 export function AlertTypeSettingsSection() {
-  const { data, isLoading } = useQuery(guardianNotificationTypeSettingQueryOptions);
+  const { data, isLoading, isError, isFetching, refetch } = useQuery(guardianNotificationTypeSettingQueryOptions);
   const setting = data ?? DEFAULT_SETTING;
   const updateMutation = useUpdateGuardianNotificationTypeSettingMutation();
 
   const handleToggle = (key: ToggleableKey, enabled: boolean) => {
     if (updateMutation.isPending) return;
-    updateMutation.mutate(
-      { [key]: enabled },
-      { onError: () => showToast(SAVE_ERROR_MESSAGE, { variant: 'error' }) },
-    );
+    updateMutation.mutate({ [key]: enabled }, { onError: () => showToast(SAVE_ERROR_MESSAGE, { variant: 'error' }) });
   };
 
   return (
     <section className={cx('section')}>
       {isLoading ? (
         <p className={cx('loading')}>불러오는 중…</p>
+      ) : isError && !data ? (
+        <SettingsLoadError isRetrying={isFetching} onRetry={() => void refetch()} />
       ) : (
         <div className={cx('list')}>
           <div className={cx('row')}>
