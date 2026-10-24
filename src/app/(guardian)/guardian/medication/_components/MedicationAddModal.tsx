@@ -398,11 +398,9 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
               className={cx(hasLowConfidence ? 'checkBox' : 'resultBanner')}
               role="status"
             >
-              <p>
-                {hasLowConfidence
-                  ? `✓ 약 ${camera.count}개를 찾았어요. 노란 칸의 약 이름을 한 번 더 확인해 주세요`
-                  : `✓ 약 ${camera.count}개를 찾았어요. 맞는지 확인해 주세요`}
-              </p>
+              {/* "찾았어요" 다음에 줄을 바꾼다(2026-10-24 사용자 요청) */}
+              <p>✓ 약 {camera.count}개를 찾았어요.</p>
+              <p>{hasLowConfidence ? '노란 칸의 약 이름을 한 번 더 확인해 주세요' : '맞는지 확인해 주세요'}</p>
               {camera.truncated && (
                 <p className={cx('resultNote')}>
                   한 번에 {MAX_DRUGS}개까지만 가져왔어요. 나머지는 등록 후 다시 추가해 주세요

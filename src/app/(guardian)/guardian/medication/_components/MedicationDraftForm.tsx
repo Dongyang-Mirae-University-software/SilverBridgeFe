@@ -1,7 +1,7 @@
 'use client';
 
 import classNames from 'classnames/bind';
-import { useId, useState } from 'react';
+import { useId } from 'react';
 
 import {
   createEmptyDrug,
@@ -32,15 +32,11 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
   const duplicateKeys = findDuplicateDrugKeys(drugs);
   const idPrefix = useId();
   // 목록에 없는 이름 안내 줄 - 이름 칸이 노란 확인 박스와 함께 이 줄을 설명으로 읽는다
+  const hasSuggestions = (drug: DraftDrug) => drug.notInList && drug.suggestions.length > 0;
   const notInListId = (drug: DraftDrug) => `${idPrefix}-${drug.key}-not-in-list`;
   const describedBy = (drug: DraftDrug) =>
-    [needsNameCheck(drug) && lowConfidenceHintId, drug.notInList && notInListId(drug)].filter(Boolean).join(' ') ||
+    [needsNameCheck(drug) && lowConfidenceHintId, hasSuggestions(drug) && notInListId(drug)].filter(Boolean).join(' ') ||
     undefined;
-
-  // 복용량은 평소 "1알 ✎" 작은 버튼으로 접어 두고, 누른 약만 −/+를 연다 - 대부분 1알이라 한 줄로 줄인다(2026-10-24)
-  const [openDoseKeys, setOpenDoseKeys] = useState<string[]>([]);
-  const toggleDose = (key: string) =>
-    setOpenDoseKeys(keys => (keys.includes(key) ? keys.filter(item => item !== key) : [...keys, key]));
 
   const updateDrug = (key: string, patch: Partial<DraftDrug>) =>
     onChange(drugs.map(drug => (drug.key === key ? { ...drug, ...patch } : drug)));
@@ -67,16 +63,6 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
             />
             <button
               type="button"
-              className={cx('doseToggle', { open: openDoseKeys.includes(drug.key) })}
-              onClick={() => toggleDose(drug.key)}
-              aria-expanded={openDoseKeys.includes(drug.key)}
-              aria-label={`${index + 1}번째 약 복용량 ${formatDoseLabel(drug.doseAmount)}, 바꾸기`}
-            >
-              <span>{formatDoseLabel(drug.doseAmount)}</span>
-              <span aria-hidden="true">✎</span>
-            </button>
-            <button
-              type="button"
               className={cx('removeButton')}
               onClick={() => removeDrug(drug.key)}
               disabled={drugs.length <= 1}
@@ -84,46 +70,43 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
             >
               ×
             </button>
-            {openDoseKeys.includes(drug.key) && (
-              <div className={cx('stepper')}>
-                <button
-                  type="button"
-                  onClick={() => updateDrug(drug.key, { doseAmount: decreaseDose(drug.doseAmount) })}
-                  disabled={drug.doseAmount <= MIN_DOSE_AMOUNT}
-                  aria-label={`${index + 1}번째 약 복용량 줄이기`}
-                >
-                  −
-                </button>
-                <span aria-live="polite">{formatDoseLabel(drug.doseAmount)}</span>
-                <button
-                  type="button"
-                  onClick={() => updateDrug(drug.key, { doseAmount: increaseDose(drug.doseAmount) })}
-                  disabled={drug.doseAmount >= MAX_DOSE_AMOUNT}
-                  aria-label={`${index + 1}번째 약 복용량 늘리기`}
-                >
-                  +
-                </button>
-              </div>
-            )}
-            {drug.notInList && (
+            {/* 복용량 −/+는 늘 보인다(접어 두던 "1알 ✎"는 2026-10-24 사용자 요청으로 되돌림) */}
+            <div className={cx('stepper')}>
+              <button
+                type="button"
+                onClick={() => updateDrug(drug.key, { doseAmount: decreaseDose(drug.doseAmount) })}
+                disabled={drug.doseAmount <= MIN_DOSE_AMOUNT}
+                aria-label={`${index + 1}번째 약 복용량 줄이기`}
+              >
+                −
+              </button>
+              <span aria-live="polite">{formatDoseLabel(drug.doseAmount)}</span>
+              <button
+                type="button"
+                onClick={() => updateDrug(drug.key, { doseAmount: increaseDose(drug.doseAmount) })}
+                disabled={drug.doseAmount >= MAX_DOSE_AMOUNT}
+                aria-label={`${index + 1}번째 약 복용량 늘리기`}
+              >
+                +
+              </button>
+            </div>
+            {/* 허가 목록에 없는 이름 - 노란 칸 + 비슷한 이름 칩만(안내 문장은 2026-10-24 사용자 요청으로 뺐다) */}
+            {hasSuggestions(drug) && (
               <div id={notInListId(drug)} className={cx('nameCheck')}>
-                <span>목록에 없는 이름이에요. 봉투와 다시 확인해 주세요</span>
-                {drug.suggestions.length > 0 && (
-                  <span className={cx('suggestionChips')}>
-                    <span className={cx('suggestionLabel')}>비슷한 이름:</span>
-                    {drug.suggestions.map(suggestion => (
-                      <button
-                        key={suggestion}
-                        type="button"
-                        className={cx('suggestionChip')}
-                        onClick={() => updateDrug(drug.key, renameDrug(suggestion))}
-                        aria-label={`${index + 1}번째 약을 ${suggestion}(으)로 바꾸기`}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </span>
-                )}
+                <span className={cx('suggestionChips')}>
+                  <span className={cx('suggestionLabel')}>비슷한 이름:</span>
+                  {drug.suggestions.map(suggestion => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      className={cx('suggestionChip')}
+                      onClick={() => updateDrug(drug.key, renameDrug(suggestion))}
+                      aria-label={`${index + 1}번째 약을 ${suggestion}(으)로 바꾸기`}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </span>
               </div>
             )}
           </li>
