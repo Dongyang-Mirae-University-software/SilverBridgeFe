@@ -154,13 +154,13 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await screen.getByRole('button', { name: '다음' }).click();
 
     await expect.element(screen.getByText('이대로 예약할까요?')).toBeVisible();
-    await expect.element(screen.getByText('진료받으실 분: 김영희 님')).toBeVisible();
+    await expect.element(screen.getByText('진료받으실 분: 김영희')).toBeVisible();
     // 피보호자 번호가 있으면 번호 칸을 띄우지 않는다
     expect(screen.getByRole('textbox').elements()).toHaveLength(0);
     await screen.getByRole('button', { name: '예약하기' }).click();
 
     await expect.element(screen.getByText('예약했어요')).toBeVisible();
-    await expect.element(screen.getByText('김영희 님 화면에서도 볼 수 있어요')).toBeVisible();
+    await expect.element(screen.getByText('김영희 화면에서도 볼 수 있어요')).toBeVisible();
     expect(api.getAvailableSlots).toHaveBeenCalledWith(1, TOMORROW);
     expect(api.createReservation).toHaveBeenCalledTimes(1);
     const [wardId, body] = api.createReservation.mock.calls[0];

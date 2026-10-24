@@ -275,7 +275,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
               className={cx('dangerTextButton')}
               disabled={deleteBatchMutation.isPending}
               onClick={() =>
-                handleDeleteMany(medications, `${wardName} 님의 약 ${medications.length}개를 모두 삭제할까요?`)
+                handleDeleteMany(medications, `${wardName}의 약 ${medications.length}개를 모두 삭제할까요?`)
               }
             >
               약 전부 삭제
@@ -298,11 +298,11 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             </div>
           )}
           <div className={cx('settingsRow')}>
-            <strong className={cx('settingsTitle')}>{wardName} 님께 약 드실 시간 알려 드리기</strong>
+            <strong className={cx('settingsTitle')}>{wardName}에게 약 드실 시간 알려 드리기</strong>
             <label className={cx('switchField')}>
               <input
                 type="checkbox"
-                aria-label={`${wardName} 님께 약 드실 시간 알려 드리기`}
+                aria-label={`${wardName}에게 약 드실 시간 알려 드리기`}
                 checked={summary.alarmEnabled}
                 disabled={settingMutation.isPending}
                 onChange={event =>

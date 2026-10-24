@@ -418,7 +418,7 @@ export function GuardianHospitalContent() {
               {pick.hospital.name} <span className={cx('pickedDept')}>· {pick.department}</span>
             </div>
             <div className={cx('confirmAddress')}>{pick.hospital.address}</div>
-            <div className={cx('confirmWho')}>진료받으실 분: {ward.partnerName} 님</div>
+            <div className={cx('confirmWho')}>진료받으실 분: {ward.partnerName}</div>
             {!wardPhone && (
               <label className={cx('phoneField')}>
                 <span>병원 연락을 받을 번호</span>
@@ -433,7 +433,7 @@ export function GuardianHospitalContent() {
                   onChange={event => setPhoneInput(event.target.value)}
                 />
                 <span id="hospital-phone-hint" className={cx('fieldHint')}>
-                  {ward.partnerName} 님 계정에 휴대폰 번호가 없어 예약에 쓸 번호를 적어 주세요.
+                  {ward.partnerName} 계정에 휴대폰 번호가 없어 예약에 쓸 번호를 적어 주세요.
                 </span>
                 {phoneInvalid && (
                   <span id="hospital-phone-error" className={cx('fieldError')}>
@@ -483,7 +483,7 @@ export function GuardianHospitalContent() {
           <div className={cx('doneWhere')}>
             {booked.hospitalName} · {booked.department}
           </div>
-          <div className={cx('doneNote')}>{booked.wardName} 님 화면에서도 볼 수 있어요</div>
+          <div className={cx('doneNote')}>{booked.wardName} 화면에서도 볼 수 있어요</div>
           <button
             type="button"
             className={cx('btn', 'primary', 'doneButton')}
@@ -538,7 +538,7 @@ function ListStep(props: ListStepProps) {
     return (
       <>
         <div className={cx('card', 'nextCard')}>
-          <p className={cx('message', 'inline')}>{props.wardName} 님의 예약을 불러오는 중이에요.</p>
+          <p className={cx('message', 'inline')}>{props.wardName}의 예약을 불러오는 중이에요.</p>
           {newButton}
         </div>
       </>

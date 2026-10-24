@@ -19,6 +19,7 @@ import {
   getPartnerPhoneValue,
 } from '@/components/connections/ConnectionShared';
 import styles from './GuardianWardsListPanel.module.css';
+import { getAndParticle } from '@/utils/format/korean';
 
 const cx = classNames.bind(styles);
 
@@ -121,7 +122,8 @@ export function GuardianWardsListPanel() {
             </div>
             <h3 className={cx('modalTitle')}>정말 연결을 해제할까요?</h3>
             <p className={cx('modalDesc')}>
-              <strong>{confirmTarget.partnerName}</strong>님과의 연결이 해제되며 되돌릴 수 없습니다.
+              <strong>{confirmTarget.partnerName}</strong>
+              {getAndParticle(confirmTarget.partnerName)}의 연결이 해제되며 되돌릴 수 없습니다.
             </p>
             <div className={cx('modalActions')}>
               <button className={cx('modalCancel')} type="button" onClick={() => setConfirmTarget(null)}>

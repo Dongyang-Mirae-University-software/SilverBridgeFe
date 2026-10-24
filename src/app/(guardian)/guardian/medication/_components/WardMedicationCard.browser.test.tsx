@@ -182,7 +182,7 @@ describe('WardMedicationCard (Chrome)', () => {
     const screen = renderCard(threeSlots());
 
     await screen.getByRole('button', { name: '약 전부 삭제' }).click();
-    expect(confirm).toHaveBeenCalledWith('김순자 님의 약 6개를 모두 삭제할까요? 지난 복용 이력은 남습니다.');
+    expect(confirm).toHaveBeenCalledWith('김순자의 약 6개를 모두 삭제할까요? 지난 복용 이력은 남습니다.');
     await vi.waitFor(() => expect(api.deleteWardMedicationBatch).toHaveBeenCalledWith('W1', [1, 2, 3, 4, 5, 6]));
     await expect.element(screen.getByRole('alert')).toHaveTextContent('삭제하지 못했어요');
   });
@@ -212,7 +212,7 @@ describe('WardMedicationCard (Chrome)', () => {
   it('알림 설정의 스위치·시간 버튼은 스크린리더가 읽을 이름이 있다 (2026-10-24 점검 M-1, 시안 반영 후 2개)', async () => {
     const screen = renderCard([med(1)]);
     await expect
-      .element(screen.getByRole('checkbox', { name: '김순자 님께 약 드실 시간 알려 드리기' }))
+      .element(screen.getByRole('checkbox', { name: '김순자에게 약 드실 시간 알려 드리기' }))
       .toBeInTheDocument();
     await expect.element(screen.getByRole('button', { name: /안 드시면 알림 받을 시각 오후 9:00/ })).toBeInTheDocument();
     // 시안대로 재알림 줄·"안 드시면" 스위치는 없다(나에게 오는 알림은 환경설정에서)
@@ -257,7 +257,7 @@ describe('WardMedicationCard (Chrome)', () => {
     scroller.append(spacer, slot);
     document.body.appendChild(scroller);
     const screen = renderCard([med(1)], slot);
-    const toggle = screen.getByRole('checkbox', { name: '김순자 님께 약 드실 시간 알려 드리기' });
+    const toggle = screen.getByRole('checkbox', { name: '김순자에게 약 드실 시간 알려 드리기' });
     await expect.element(toggle).toBeInTheDocument();
 
     expect(toggle.element().getBoundingClientRect().top).toBeGreaterThan(window.innerHeight);

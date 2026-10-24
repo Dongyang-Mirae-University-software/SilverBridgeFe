@@ -33,7 +33,7 @@ export function WardSelectorTabs({ wards, selectedWardId, onSelect, ariaLabel = 
             onClick={() => onSelect(ward.wardId)}
           >
             <span className={cx('wardTabAvatar')}>{(ward.wardName ?? '피').charAt(0)}</span>
-            {ward.wardName ?? '피보호자'} 님
+            {ward.wardName ?? '피보호자'}
           </button>
         );
       })}
