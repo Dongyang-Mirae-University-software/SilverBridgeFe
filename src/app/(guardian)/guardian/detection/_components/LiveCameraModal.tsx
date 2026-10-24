@@ -140,14 +140,31 @@ export function LiveCameraModal({
 
         <div className={cx('frameArea')}>
           {monitor.isEmpty || hasNoCameraForSelectedWard ? (
-            <div className={cx('placeholder')}>연결된 피보호자의 카메라가 없습니다.</div>
+            <div className={cx('videoUnavailable')}>
+              <strong>연결된 피보호자의 카메라가 없어요</strong>
+              <span>피보호자 기기에서 &apos;이 기기를 카메라로 등록&apos;을 하면 볼 수 있어요</span>
+            </div>
+          ) : monitor.streamErrorMessage ? (
+            // 서버 안내를 그대로 보인다(동시 시청 상한 429·영상 연결 만료 등 - 일반 문구로 덮으면 이유를 모른다)
+            <div className={cx('videoUnavailable')}>
+              <strong>영상을 열 수 없어요</strong>
+              <span>{monitor.streamErrorMessage}</span>
+            </div>
           ) : isVideoUnavailable ? (
             <div className={cx('videoUnavailable')}>
               <strong>영상이 오지 않아요</strong>
               <span>카메라로 쓰는 기기의 화면을 켜 두세요</span>
             </div>
           ) : !monitor.frameSrc ? (
-            <div className={cx('placeholder')}>{monitor.streamErrorMessage ?? '프레임을 수신하는 중입니다...'}</div>
+            cameraStatus === null ? (
+              // 상태를 모르면(AI 연결 끊김 등) 켜짐·꺼짐으로 채우지 않는다
+              <div className={cx('videoUnavailable')}>
+                <strong>연결 상태를 확인하고 있어요</strong>
+                <span>잠시 후 다시 확인해 주세요</span>
+              </div>
+            ) : (
+              <div className={cx('placeholder')}>영상을 불러오는 중이에요...</div>
+            )
           ) : (
             <MjpegFrame
               key={monitor.frameSrc}

@@ -20,6 +20,7 @@ export default defineConfig({
       'axios',
       'dayjs',
       'dayjs/locale/ko',
+      'next/link',
     ],
   },
   esbuild: { jsx: 'automatic' },

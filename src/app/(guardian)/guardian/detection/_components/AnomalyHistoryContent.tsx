@@ -1,159 +1,151 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import {
   guardianAnomalyHistoryQueryOptions,
-  guardianAnomalyReminderSettingQueryOptions,
-  useUpdateAnomalyReminderSettingMutation,
+  guardianAnomalyHistorySummaryQueryOptions,
 } from '@/service/query/guardian/anomaly';
-import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
-import { AnomalyDetectedType } from '@/service/interface/guardian/anomaly';
-import { getConnectionData } from '@/components/connections/ConnectionShared';
+import { AnomalyDetectedType, AnomalyHistorySummary } from '@/service/interface/guardian/anomaly';
 import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { AnomalyIncidentCard } from './AnomalyIncidentCard';
+import { getPageWindow } from './anomalyFormat';
 import styles from './AnomalyHistoryContent.module.css';
 
 const cx = classNames.bind(styles);
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 10;
 type TypeFilter = 'ALL' | AnomalyDetectedType;
 
-export function AnomalyHistoryContent({ onViewLive }: { onViewLive: (wardId?: string) => void }) {
+const TYPE_CHIPS: Array<{ key: TypeFilter; label: string; count: (summary: AnomalyHistorySummary) => number }> = [
+  { key: 'ALL', label: '전체', count: summary => summary.total },
+  { key: 'FIRE', label: '화재', count: summary => summary.byType.fire },
+  { key: 'WEAPON', label: '흉기', count: summary => summary.byType.weapon },
+  { key: 'FALL', label: '낙상', count: summary => summary.byType.fall },
+];
+
+export interface WardOption {
+  wardId: string;
+  wardName: string;
+}
+
+// 건수는 불러온 목록을 세지 않고 요약 API 값을 쓴다(페이지·필터와 무관한 전체 기준).
+// 유형 필터는 서버 쿼리(?type=)로 걸어 페이지·전체 건수가 필터 기준이 된다.
+// 삭제된 카메라의 기록도 목록에 그대로 섞여 "삭제된 카메라"로 보인다.
+export function AnomalyHistoryContent({
+  wards,
+  selectedWardId,
+  onSelectWard,
+}: {
+  wards: WardOption[];
+  selectedWardId?: string;
+  onSelectWard: (wardId: string) => void;
+}) {
   const [page, setPage] = useState(0);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('ALL');
-  // 삭제된 카메라의 기록(영상은 카메라와 함께 지워지고 이력만 남은 것)은 기본으로 숨긴다
-  const [showDeletedCamera, setShowDeletedCamera] = useState(false);
-  const [selectedWardId, setSelectedWardId] = useState<string | undefined>(undefined);
-
-  const { data: connectionsData } = useQuery(guardianConnectionsQueryOptions);
-  const wards = getConnectionData(connectionsData)
-    .filter(connection => connection.status === 'ACTIVE')
-    .map(connection => ({ wardId: connection.partnerUserId, wardName: connection.partnerName }));
-  const activeWardId = selectedWardId ?? wards[0]?.wardId;
 
   const { data, isLoading, isError } = useQuery(
-    guardianAnomalyHistoryQueryOptions({ page, size: PAGE_SIZE, wardId: activeWardId }),
+    guardianAnomalyHistoryQueryOptions({
+      page,
+      size: PAGE_SIZE,
+      wardId: selectedWardId,
+      type: typeFilter === 'ALL' ? undefined : typeFilter,
+    }),
   );
-  const { data: reminderSetting } = useQuery(guardianAnomalyReminderSettingQueryOptions);
-  const reminderMutation = useUpdateAnomalyReminderSettingMutation();
+  // 요약을 못 받으면 건수를 비워 둔다(0으로 채우지 않는다)
+  const { data: summary } = useQuery(guardianAnomalyHistorySummaryQueryOptions(selectedWardId));
 
-  const allContent = useMemo(() => data?.content ?? [], [data]);
-  const deletedCameraIncidents = allContent.filter(incident => incident.cameraLabel === null);
-  const deletedNeedsReview = deletedCameraIncidents.filter(
-    incident => incident.reviewStatus === 'PENDING' || incident.reviewStatus === 'CONFLICTED',
-  ).length;
-  const content = useMemo(
-    () => (showDeletedCamera ? allContent : allContent.filter(incident => incident.cameraLabel !== null)),
-    [allContent, showDeletedCamera],
-  );
-  const filtered = useMemo(
-    () => (typeFilter === 'ALL' ? content : content.filter(incident => incident.detectedType === typeFilter)),
-    [content, typeFilter],
-  );
+  const incidents = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 0;
 
-  const fallCount = content.filter(incident => incident.detectedType === 'FALL').length;
-  const fireCount = content.filter(incident => incident.detectedType === 'FIRE').length;
-  const weaponCount = content.filter(incident => incident.detectedType === 'WEAPON').length;
+  const selectType = (type: TypeFilter) => {
+    setTypeFilter(type);
+    setPage(0);
+  };
 
   return (
     <section className={cx('page')}>
-      <header className={cx('header')}>
-        {wards.length > 0 && (
+      {wards.length > 0 && (
+        <div className={cx('wardSelect')}>
           <WardSelectorTabs
             wards={wards}
-            selectedWardId={activeWardId}
+            selectedWardId={selectedWardId}
             onSelect={wardId => {
-              setSelectedWardId(wardId);
+              onSelectWard(wardId);
+              setTypeFilter('ALL');
               setPage(0);
             }}
           />
-        )}
-        <button type="button" className={cx('liveButton')} onClick={() => onViewLive(activeWardId)}>
-          <span className={cx('liveDot')} />
-          실시간 카메라 보기
-        </button>
-      </header>
-
-      <div className={cx('filterRow')}>
-        <button
-          type="button"
-          className={cx('chip', { active: typeFilter === 'ALL' })}
-          onClick={() => setTypeFilter('ALL')}
-        >
-          전체 <span>{content.length}</span>
-        </button>
-        <button
-          type="button"
-          className={cx('chip', { active: typeFilter === 'FALL' })}
-          onClick={() => setTypeFilter('FALL')}
-        >
-          낙상 <span>{fallCount}</span>
-        </button>
-        <button
-          type="button"
-          className={cx('chip', { active: typeFilter === 'FIRE' })}
-          onClick={() => setTypeFilter('FIRE')}
-        >
-          화재 <span>{fireCount}</span>
-        </button>
-        <button
-          type="button"
-          className={cx('chip', { active: typeFilter === 'WEAPON' })}
-          onClick={() => setTypeFilter('WEAPON')}
-        >
-          흉기 <span>{weaponCount}</span>
-        </button>
-      </div>
-      <p className={cx('filterHint')}>필터·통계는 현재 불러온 {content.length}건 기준입니다.</p>
-      {deletedCameraIncidents.length > 0 && (
-        <div className={cx('deletedRow')}>
-          <button
-            type="button"
-            className={cx('deletedToggle', { on: showDeletedCamera })}
-            aria-pressed={showDeletedCamera}
-            onClick={() => setShowDeletedCamera(current => !current)}
-          >
-            {showDeletedCamera ? '삭제된 카메라 기록 숨기기' : '삭제된 카메라 기록 보기'} ({deletedCameraIncidents.length})
-          </button>
-          {!showDeletedCamera && deletedNeedsReview > 0 && (
-            <span className={cx('deletedNote')}>확인이 필요한 기록 {deletedNeedsReview}건이 포함돼 있어요</span>
-          )}
         </div>
       )}
 
-      {isLoading && <p className={cx('emptyText')}>감지 이력을 불러오는 중입니다.</p>}
-      {isError && <p className={cx('emptyText')}>감지 이력을 불러오지 못했습니다.</p>}
-      {!isLoading && !isError && filtered.length === 0 && (
-        <p className={cx('emptyText')}>
-          {!showDeletedCamera && deletedCameraIncidents.length > 0
-            ? '이 페이지에는 삭제된 카메라의 기록만 있어요.'
-            : '해당하는 감지 이력이 없습니다.'}
-        </p>
-      )}
-
-      {filtered.length > 0 && (
-        <ul className={cx('grid')}>
-          {filtered.map(incident => (
-            <AnomalyIncidentCard key={incident.incidentId} incident={incident} />
+      <div className={cx('chipRow')}>
+        <div className={cx('chipGroup')} role="group" aria-label="감지 유형">
+          {TYPE_CHIPS.map(chip => (
+            <button
+              key={chip.key}
+              type="button"
+              className={cx('chip', { active: typeFilter === chip.key })}
+              aria-pressed={typeFilter === chip.key}
+              onClick={() => selectType(chip.key)}
+            >
+              {chip.label}
+              {summary && <span className={cx('chipCount')}>{chip.count(summary)}</span>}
+            </button>
           ))}
-        </ul>
-      )}
+        </div>
+        {summary && (
+          <span className={cx('needsReview', { none: summary.needsReviewCount === 0 })} role="status">
+            <span className={cx('needsReviewDot')} />
+            확인 필요 <span className={cx('chipCount')}>{summary.needsReviewCount}</span>
+          </span>
+        )}
+      </div>
 
-      {data && data.totalPages > 1 && (
-        <div className={cx('pagination')}>
-          <button type="button" disabled={page === 0} onClick={() => setPage(current => Math.max(current - 1, 0))}>
+      <div className={cx('listCard')}>
+        {isLoading && <p className={cx('emptyText')}>감지 기록을 불러오는 중이에요.</p>}
+        {isError && <p className={cx('emptyText')}>감지 기록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p>}
+        {!isLoading && !isError && incidents.length === 0 && (
+          <p className={cx('emptyText')}>
+            {typeFilter === 'ALL' ? '감지 기록이 없어요' : '이 유형의 감지 기록이 없어요'}
+          </p>
+        )}
+        {incidents.length > 0 && (
+          <ul className={cx('list')}>
+            {incidents.map(incident => (
+              <AnomalyIncidentCard key={incident.incidentId} incident={incident} />
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <nav className={cx('pager')} aria-label="페이지 이동">
+          <button type="button" className={cx('pageButton')} disabled={page === 0} onClick={() => setPage(page - 1)}>
             이전
           </button>
-          <span>
-            {data.page + 1} / {data.totalPages}
-          </span>
-          <button type="button" disabled={data.last} onClick={() => setPage(current => current + 1)}>
+          {getPageWindow(page, totalPages).map(index => (
+            <button
+              key={index}
+              type="button"
+              className={cx('pageButton', { active: index === page })}
+              aria-current={index === page ? 'page' : undefined}
+              onClick={() => setPage(index)}
+            >
+              {index + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={cx('pageButton')}
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage(page + 1)}
+          >
             다음
           </button>
-        </div>
+        </nav>
       )}
     </section>
   );
