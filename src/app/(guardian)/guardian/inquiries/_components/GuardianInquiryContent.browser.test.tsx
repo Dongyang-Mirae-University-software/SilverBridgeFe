@@ -2,6 +2,7 @@
 // API는 모듈 목으로 바꾸고 화면 흐름(작성 -> 내역, 오류 문구, 상세 답변 표시)만 본다
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { userEvent } from '@vitest/browser/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -38,6 +39,18 @@ const ANSWERED: GuardianInquiry = {
   answeredAt: '2026-08-08T09:00:00+09:00',
   createdAt: '2026-08-07T09:00:00+09:00',
 };
+
+// 서버가 응답한 실패 - apiClient는 AxiosError를 그대로 넘기고 message만 서버 문구로 바꾼다
+// (점검 후속: 평범한 객체로 흉내 내면 실제와 모양이 달라 서버 코드 분기를 검증하지 못했다)
+function httpError(status: number, data: { code?: string; message?: string } = {}) {
+  return new AxiosError(data.message ?? '서버 문구', 'ERR_BAD_REQUEST', undefined, undefined, {
+    status,
+    statusText: '',
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+    data,
+  });
+}
 
 function renderContent() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -124,7 +137,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
     [401, '다시 로그인해 주세요'],
   ])('등록이 %i이면 맞는 문구를 보여 주고 입력은 남긴다', async (status, text) => {
     api.getGuardianInquiries.mockResolvedValue([]);
-    api.createGuardianInquiry.mockRejectedValue({ status, message: '서버 문구' });
+    api.createGuardianInquiry.mockRejectedValue(httpError(status, { code: 'SOME_CODE', message: '서버 문구' }));
     const screen = renderContent();
     await openFormAndFill(screen);
     await screen.getByRole('button', { name: '보내기' }).click();
@@ -154,7 +167,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
 
   it('남의 문의 상세(403)는 본인 문의만 볼 수 있다고 안내한다', async () => {
     api.getGuardianInquiries.mockResolvedValue([WAITING]);
-    api.getGuardianInquiryDetail.mockRejectedValue({ status: 403, message: '서버 문구' });
+    api.getGuardianInquiryDetail.mockRejectedValue(httpError(403, { code: 'INQUIRY_NOT_AUTHORIZED', message: '서버 문구' }));
     const screen = renderContent();
     await screen.getByRole('button', { name: /자세히 보기/ }).click();
     await expect.element(screen.getByRole('alert')).toHaveTextContent('본인이 남긴 문의만 볼 수 있어요.');
@@ -214,7 +227,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
   // 점검 L-1: 입력 검증 실패는 BE의 칸별 문구를 보여 주고, 입력을 고치면 지운다
   it('400 INVALID_INPUT이면 서버 문구를 보여 주고 입력을 고치면 지운다', async () => {
     api.getGuardianInquiries.mockResolvedValue([]);
-    api.createGuardianInquiry.mockRejectedValue({ status: 400, code: 'INVALID_INPUT', message: '제목을 입력해주세요.' });
+    api.createGuardianInquiry.mockRejectedValue(httpError(400, { code: 'INVALID_INPUT', message: '제목을 입력해주세요.' }));
     const screen = renderContent();
     await openFormAndFill(screen);
     await screen.getByRole('button', { name: '보내기' }).click();
@@ -261,5 +274,14 @@ describe('GuardianInquiryContent (Chrome)', () => {
     await userEvent.keyboard('{Escape}');
     await expect.element(screen.getByRole('dialog')).not.toBeInTheDocument();
     expect(document.activeElement).toBe(card.element());
+  });
+
+  it('응답이 없는 실패(네트워크)는 다시 시도 문구를 보여 준다', async () => {
+    api.getGuardianInquiries.mockResolvedValue([]);
+    api.createGuardianInquiry.mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK'));
+    const screen = renderContent();
+    await openFormAndFill(screen);
+    await screen.getByRole('button', { name: '보내기' }).click();
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('문의를 보내지 못했어요. 다시 시도해 주세요.');
   });
 });
