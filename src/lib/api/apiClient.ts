@@ -209,8 +209,8 @@ apiClient.interceptors.response.use(
     return data;
   },
 
-  // ❌ 실패 (4xx, 5xx): errorHandler가 변환한 에러 객체로 reject
-  // catch 블록에서 error.message, error.status 바로 꺼내 쓸 수 있음
+  // ❌ 실패 (4xx, 5xx): AxiosError를 그대로 reject하고 message만 서버 문구(없으면 기본 문구)로 바꾼다
+  // 서버 오류 코드는 error.code(axios 코드, 예: ERR_BAD_REQUEST)가 아니라 error.response?.data?.code에 있다
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
     const isUnauthorized = error.response?.status === 401;
@@ -256,10 +256,13 @@ export { apiClient };
 //     createUser: (body: CreateUserBody) => apiClient.post<User>('/users', body),
 //   };
 //
-// 컴포넌트나 훅에서:
+// 컴포넌트나 훅에서 (reject되는 값은 ApiErrorShape가 아니라 AxiosError다):
 //   try {
 //     const user = await userService.getUser(1);
 //   } catch (error) {
-//     const { status, message } = error as ApiErrorShape;
-//     toast.error(message); // "요청한 정보를 찾을 수 없어요."
+//     const axiosError = error as AxiosError<ServerErrorBody>;
+//     const status = axiosError.response?.status;     // 404 (응답이 없으면 undefined - 네트워크 오류)
+//     const code = axiosError.response?.data?.code;   // 서버 오류 코드 (분기는 문구가 아니라 이 값으로)
+//     toast.error(axiosError.message);                // "요청한 정보를 찾을 수 없어요."
+//     // ⚠️ axiosError.code 는 axios 자체 코드(ERR_BAD_REQUEST·ERR_NETWORK 등)라 서버 코드와 다르다
 //   }
