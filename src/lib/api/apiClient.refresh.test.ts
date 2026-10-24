@@ -100,6 +100,16 @@ describe('갱신 실패 분류', () => {
     expect(jar.get(REFRESH)?.value).toBe('r1');
   });
 
+  it('200인데 토큰이 빠진 응답 → 거절로 보고 세션을 지운다', async () => {
+    store.setAuthTokens({ accessToken: expiredAccessToken(), refreshToken: 'r1', remember: true });
+    handler = config => respond(config, 200, { success: true, code: 200, data: { accessToken: validAccessToken(), refreshToken: null } });
+
+    const error = await api.refreshAccessToken().catch(reason => reason);
+
+    expect(error).toBeInstanceOf(api.SessionRejectedError);
+    expect(jar.has(REFRESH)).toBe(false);
+  });
+
   it('refresh 토큰이 없으면 거절로 본다', async () => {
     const error = await api.refreshAccessToken().catch(reason => reason);
 
@@ -138,6 +148,48 @@ describe('탭 간 직렬화', () => {
     await api.refreshAccessToken();
 
     expect(request).toHaveBeenCalledWith('careai-token-refresh', expect.any(Function));
+  });
+
+  it('Web Locks 가 없는 브라우저에서도 갱신한다(탭 안 직렬화만)', async () => {
+    vi.stubGlobal('navigator', {});
+    store.setAuthTokens({ accessToken: expiredAccessToken(), refreshToken: 'r1', remember: true });
+    handler = config => {
+      refreshCalls.push(bodyOf(config).refreshToken);
+      return respond(config, 200, refreshSucceeds(validAccessToken(), 'r2'));
+    };
+
+    await Promise.all([api.refreshAccessToken(), api.refreshAccessToken()]);
+
+    expect(refreshCalls).toEqual(['r1']);
+    expect(jar.get(REFRESH)?.value).toBe('r2');
+  });
+
+  it('락 안에서 갱신이 실패해도 락을 놓고, 다음 갱신은 다시 시도된다', async () => {
+    let held = false;
+    vi.stubGlobal('navigator', {
+      locks: {
+        // 실제 Web Locks 처럼 콜백이 끝나면(성공·실패 모두) 락을 놓는다
+        request: async (_name: string, task: () => Promise<unknown>) => {
+          expect(held).toBe(false);
+          held = true;
+          try {
+            return await task();
+          } finally {
+            held = false;
+          }
+        },
+      },
+    });
+    store.setAuthTokens({ accessToken: expiredAccessToken(), refreshToken: 'r1', remember: true });
+    handler = config => respond(config, 503, {});
+
+    const error = await api.refreshAccessToken().catch(reason => reason);
+    expect(api.isSessionRejected(error)).toBe(false);
+    expect(held).toBe(false);
+
+    handler = config => respond(config, 200, refreshSucceeds(validAccessToken(), 'r2'));
+    await api.refreshAccessToken();
+    expect(jar.get(REFRESH)?.value).toBe('r2');
   });
 
   it('락을 기다리는 사이 다른 탭이 갱신했으면 BE를 다시 부르지 않고 그 토큰을 쓴다', async () => {

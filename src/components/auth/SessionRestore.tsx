@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { restoreSession } from '@/lib/auth/sessionRestore';
+import SessionCheckingNotice from './SessionCheckingNotice';
 import SessionRetryNotice from './SessionRetryNotice';
 
 // 첫 진입에서 access 토큰이 만료됐지만 refresh 토큰이 있을 때 갱신 후 역할 홈으로 보낸다.
@@ -28,7 +29,7 @@ export default function SessionRestore() {
     };
   }, [attempt, router]);
 
-  if (!unavailable) return null;
+  if (!unavailable) return <SessionCheckingNotice />;
 
   return (
     <SessionRetryNotice
