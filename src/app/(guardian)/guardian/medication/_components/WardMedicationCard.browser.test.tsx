@@ -1,12 +1,19 @@
 // 보호자 복약 카드 컴포넌트 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`)
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode } from 'react';
+import { Fragment, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import type { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
+import useModalStore from '@/store/modalStore';
 import { WardMedicationCard } from './WardMedicationCard';
+
+// 앱의 모달 자리 대신 - 저장소에 올라간 창을 그린다
+function ModalOutlet() {
+  const modals = useModalStore(state => state.modals);
+  return modals.map(modal => <Fragment key={modal.id}>{modal.Component}</Fragment>);
+}
 
 const api = vi.hoisted(() => ({
   deleteWardMedicationBatch: vi.fn(),
@@ -53,8 +60,8 @@ function med(id: number, overrides: Partial<MedicationItem> = {}): MedicationIte
   };
 }
 
-function renderCard(medications: MedicationItem[], container?: HTMLElement) {
-  const summary: WardMedicationSummary = {
+function toSummary(medications: MedicationItem[]): WardMedicationSummary {
+  return {
     wardId: 'W1',
     wardName: '김순자',
     age: 80,
@@ -66,6 +73,10 @@ function renderCard(medications: MedicationItem[], container?: HTMLElement) {
     totalCount: medications.length,
     medications,
   };
+}
+
+function renderCard(medications: MedicationItem[], container?: HTMLElement) {
+  const summary = toSummary(medications);
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
   );
@@ -150,6 +161,75 @@ describe('WardMedicationCard (Chrome)', () => {
   it('체크한 약이 있고 지난 약이 없으면 "모두 드셨어요"', async () => {
     const screen = renderCard([med(1, { taken: true }), med(2, { createdAt: `${TODAY}T00:30:00+09:00` })]);
     await expect.element(screen.getByText('오늘 약을 모두 드셨어요')).toBeVisible();
+  });
+
+  // ─── 펼침·고치기 모드 (2026-10-24 점검 M-1·L-1·L-2) ───────────────────────────
+  it('고치는 중에 피보호자가 그 시간대 약을 다 체크해도 펼친 줄과 고치기 모드가 그대로다 (점검 M-1)', async () => {
+    const before = [med(1, { name: '혈압약' }), med(2, { name: '위장약', timeSlot: 'LUNCH', doseTime: '00:01:00' })];
+    const screen = renderCard(before);
+    await expect.element(screen.getByRole('button', { name: /아침/, expanded: true })).toBeVisible();
+    await screen.getByRole('button', { name: '약 고치기' }).click();
+
+    // WS medication-taken이 캐시를 고친 것과 같다 - 다음 차례가 점심으로 바뀐다
+    screen.rerender(<WardMedicationCard summary={toSummary([{ ...before[0], taken: true }, before[1]])} />);
+    await expect.element(screen.getByRole('button', { name: /아침/ })).toHaveTextContent('다 드셨어요');
+    await expect.element(screen.getByRole('button', { name: /아침/, expanded: true })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '혈압약 삭제' })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: /점심/ })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('고치기를 시작하지 않았으면 처음 펼친 줄은 다음 차례를 따라간다', async () => {
+    const before = [med(1), med(2, { timeSlot: 'LUNCH', doseTime: '00:01:00' })];
+    const screen = renderCard(before);
+    screen.rerender(<WardMedicationCard summary={toSummary([{ ...before[0], taken: true }, before[1]])} />);
+    await expect.element(screen.getByRole('button', { name: /점심/, expanded: true })).toBeVisible();
+  });
+
+  it('직접 연 시간대의 약을 다 지우면 다음 차례가 다시 펼쳐지고, 고치기 모드와 "약 전부 삭제"는 사라진다 (점검 L-1·L-2)', async () => {
+    // 지운 뒤에도 약이 2개 남아야 "약 전부 삭제"가 고치기 모드 여부로만 갈린다
+    const all = [
+      med(1, { name: '혈압약' }),
+      med(4, { name: '당뇨약' }),
+      med(2, { name: '위장약', timeSlot: 'LUNCH', doseTime: '00:01:00' }),
+      med(3, { name: '관절약', timeSlot: 'LUNCH', doseTime: '00:01:00' }),
+    ];
+    const screen = renderCard(all);
+    await screen.getByRole('button', { name: /점심/ }).click();
+    await screen.getByRole('button', { name: '약 고치기' }).click();
+    await expect.element(screen.getByRole('button', { name: '약 전부 삭제' })).toBeVisible();
+
+    screen.rerender(<WardMedicationCard summary={toSummary(all.slice(0, 2))} />);
+    await expect.element(screen.getByRole('button', { name: /아침/, expanded: true })).toBeVisible();
+    expect(screen.getByRole('button', { name: '혈압약 삭제' }).query()).toBeNull();
+    expect(screen.getByRole('button', { name: '약 전부 삭제' }).query()).toBeNull();
+    await expect.element(screen.getByRole('button', { name: '약 고치기' })).toBeVisible();
+  });
+
+  it('고치기 모드에서 약 이름을 누르면 그 약의 수정 창이 열린다 (점검 L-2)', async () => {
+    const screen = renderCard([med(1, { name: '혈압약' })]);
+    render(<ModalOutlet />, { wrapper: ({ children }) => <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider> });
+    await screen.getByRole('button', { name: '약 고치기' }).click();
+    await screen.getByRole('button', { name: '혈압약 수정' }).click();
+    await expect.element(screen.getByRole('dialog', { name: '약 수정' })).toBeVisible();
+    await expect.element(screen.getByRole('dialog', { name: '약 수정' }).getByRole('textbox').first()).toHaveValue('혈압약');
+    await screen.getByRole('dialog', { name: '약 수정' }).getByRole('button', { name: '닫기' }).click();
+    expect(screen.getByRole('dialog', { name: '약 수정' }).query()).toBeNull();
+  });
+
+  it('시간 전인 첫 시간대에 "다음 약"을 표시한다 (점검 L-2)', async () => {
+    const screen = renderCard([
+      med(1, { name: '혈압약', taken: true }),
+      med(2, { name: '수면제', timeSlot: 'BEDTIME', doseTime: '23:59:00' }),
+    ]);
+    await expect.element(screen.getByRole('button', { name: /취침 전|자기 전/ })).toHaveTextContent('다음 약');
+  });
+
+  it('[약 고치기]는 글자로 상태를 알려 aria-pressed를 두지 않는다 (점검 L-3)', async () => {
+    const screen = renderCard([med(1)]);
+    const toggle = screen.getByRole('button', { name: '약 고치기' });
+    await expect.element(toggle).not.toHaveAttribute('aria-pressed');
+    await toggle.click();
+    await expect.element(screen.getByRole('button', { name: '다 고쳤어요' })).not.toHaveAttribute('aria-pressed');
   });
 
   // ─── 여러 개 삭제 (2026-10-23, BE #371) ───────────────────────────

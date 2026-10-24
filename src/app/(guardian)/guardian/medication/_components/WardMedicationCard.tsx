@@ -114,7 +114,9 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   // 다음 차례 = 아직 체크 전이거나 시간 전인 첫 시간대(등록 전·다 드신 시간대는 건너뛴다)
   const nextGroup = groups.find(group => group.status === 'miss' || group.status === 'later');
   const nextLaterKey = groups.find(group => group.status === 'later')?.key;
-  const isGroupOpen = (key: string) => (openKey === null ? nextGroup?.key === key : openKey === key);
+  // 직접 연 시간대가 목록에서 사라지면(약을 다 지움) 처음 상태(다음 차례)로 돌아간다(점검 L-1)
+  const pinnedKey = openKey !== null && openKey !== '' && !groups.some(group => group.key === openKey) ? null : openKey;
+  const isGroupOpen = (key: string) => (pinnedKey === null ? nextGroup?.key === key : pinnedKey === key);
   const toggleGroup = (key: string) => {
     setOpenKey(isGroupOpen(key) ? '' : key);
     setEditKey(null);
@@ -239,11 +241,15 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                         })}
                       </ul>
                       <div className={cx('groupActions')}>
+                        {/* 고치기를 시작하면 그 시간대를 고정한다 - 피보호자가 체크해 다음 차례가 바뀌어도
+                            고치던 줄이 접히거나 고치기 모드가 풀리지 않게(점검 M-1). 글자가 바뀌므로 aria-pressed는 두지 않는다(L-3) */}
                         <button
                           type="button"
                           className={cx('editToggle')}
-                          aria-pressed={isEdit}
-                          onClick={() => setEditKey(isEdit ? null : group.key)}
+                          onClick={() => {
+                            setOpenKey(group.key);
+                            setEditKey(isEdit ? null : group.key);
+                          }}
                         >
                           {isEdit ? '다 고쳤어요' : '약 고치기'}
                         </button>
