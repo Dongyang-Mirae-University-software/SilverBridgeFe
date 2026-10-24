@@ -56,12 +56,26 @@ export function getConnectionRequestErrorMessage(error: unknown) {
 
   if (code === CONNECTION_COOLDOWN_CODE) {
     const seconds = getRetryAfterSeconds(error);
-    const wait = seconds ? `${formatRetryAfter(seconds)} 뒤에` : '내일';
+    // 남은 시간을 모르면 단정하지 않는다 - 24시간 고정 창의 남은 시간이라 몇 분 뒤일 수도 있다
+    const wait = seconds ? `${formatRetryAfter(seconds)} 뒤에` : '잠시 뒤에';
     return `같은 분께 요청을 너무 여러 번 보냈어요. ${wait} 다시 요청할 수 있어요.`;
   }
 
   if (code && REQUEST_ERROR_MESSAGES[code]) return REQUEST_ERROR_MESSAGES[code];
   return getErrorBody(error)?.message || (error as Error | null)?.message || '연결 요청에 실패했어요. 잠시 후 다시 시도해 주세요.';
+}
+
+// 이미 처리된 연결에 대한 조작(취소·수락·거절·해제) - 상대가 먼저 처리한 경우가 대부분이라 사실대로 안내한다
+const ACTION_ERROR_MESSAGES: Record<string, string> = {
+  CONNECTION_NOT_PENDING: '이미 수락되었거나 거절된 요청이에요.',
+  CONNECTION_NOT_ACTIVE: '이미 연결이 해제됐어요.',
+  CONNECTION_NOT_FOUND: '이미 정리된 연결이에요.',
+};
+
+export function getConnectionActionErrorMessage(error: unknown, fallback: string) {
+  const code = getConnectionErrorCode(error);
+  if (code && ACTION_ERROR_MESSAGES[code]) return ACTION_ERROR_MESSAGES[code];
+  return getErrorBody(error)?.message || (error as Error | null)?.message || fallback;
 }
 
 // 회원 ID 입력: 영문·숫자만, 대소문자는 그대로 둔다(서버가 대소문자를 구분한다)

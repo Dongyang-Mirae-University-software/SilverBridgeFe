@@ -238,7 +238,7 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
         const payload = normalizeMessage(message, topic.type);
         console.info('[WS] 알림 받음:', payload);
         if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST') savePendingConnectionRequest(payload);
-        if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST_CANCELLED') {
+        if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST_CANCELLED' && payload.connectionId) {
           removePendingConnectionRequest(Number(payload.connectionId));
         }
         onMessage(payload);

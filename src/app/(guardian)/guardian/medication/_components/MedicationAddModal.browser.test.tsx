@@ -193,6 +193,13 @@ describe('MedicationAddModal (Chrome)', () => {
     // 칩이 있을 때만 "누르거나 직접 고쳐 주세요"(점검 L-2), 칩은 손가락으로 누를 만한 높이(점검 L-3)
     expect(drugRow(screen, 1).textContent).toContain('맞는 이름을 누르거나 직접 고쳐 주세요');
     expect(drugRow(screen, 2).textContent).toContain('이름을 한 번 더 확인해 주세요');
+    // 이름 칸 설명은 안내 문장만 - 칩 이름까지 이어 읽히지 않는다(점검 L-4)
+    const described = (screen.getByLabelText('1번째 약 이름').element().getAttribute('aria-describedby') ?? '')
+      .split(' ')
+      .map(id => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+    expect(described).toContain('맞는 이름을 누르거나 직접 고쳐 주세요');
+    expect(described).not.toContain('슈다펜정');
     expect(rowSuggestionChips(screen, 1).every(button => button.getBoundingClientRect().height >= 44)).toBe(true);
     // 자동으로 바꾸거나 미리 고르지 않는다
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('슈다페트정');

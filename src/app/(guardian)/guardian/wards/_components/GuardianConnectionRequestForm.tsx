@@ -77,7 +77,7 @@ export function GuardianConnectionRequestForm() {
           aria-describedby="ward-member-id-help"
         />
         <p id="ward-member-id-help" className={cx('help')}>
-          어르신 화면에서 이름(프로필)을 누르면 보이는 회원 ID예요 (영문·숫자 6자리, 대소문자 구분)
+          어르신 화면 메뉴에서 이름(프로필)을 누르면 보이는 회원 ID예요. 휴대폰에서는 메뉴 버튼을 먼저 눌러 주세요 (영문·숫자 6자리, 대소문자 구분)
         </p>
       </div>
 

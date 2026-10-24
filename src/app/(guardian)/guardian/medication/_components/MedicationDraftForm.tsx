@@ -93,8 +93,9 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
             {/* 허가 목록에 없는 이름 - 노란 상자에 안내 한 줄 + 비슷한 이름 칩(Claude Design 2026-10-24에 문장을 되살림).
                 칩은 참고용이라 [다음]을 막지 않고, 직접 고쳐도 강조가 풀린다 */}
             {drug.notInList && (
-              <div id={notInListId(drug)} className={cx('nameCheck')}>
-                <p className={cx('nameCheckText')}>
+              <div className={cx('nameCheck')}>
+                {/* 이름 칸 설명은 안내 문장만 - 상자 전체를 가리키면 칩 이름까지 이어 읽힌다(점검 L-4) */}
+                <p id={notInListId(drug)} className={cx('nameCheckText')}>
                   {hasSuggestions(drug)
                     ? '약 목록에 없는 이름이에요. 맞는 이름을 누르거나 직접 고쳐 주세요'
                     : '약 목록에 없는 이름이에요. 이름을 한 번 더 확인해 주세요'}

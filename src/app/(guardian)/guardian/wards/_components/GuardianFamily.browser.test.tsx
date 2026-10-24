@@ -53,10 +53,18 @@ function apiError(status: number, code: string, data?: unknown) {
   return Object.assign(new Error('서버 문구'), { response: { status, data: { code, message: '서버 문구', data } } });
 }
 
+function newClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+}
+
 function wrapper({ children }: { children: ReactNode }) {
-  return (
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{children}</QueryClientProvider>
-  );
+  return <QueryClientProvider client={newClient()}>{children}</QueryClientProvider>;
+}
+
+function wrapperWith(client: QueryClient) {
+  return function ClientWrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
 }
 
 function expectNoHorizontalScroll() {
@@ -129,6 +137,25 @@ describe('수락을 기다리는 중 (Chrome)', () => {
     expect(api.cancelGuardianConnectionRequest.mock.calls[0]?.[0]).toEqual(3);
   });
 
+  // 점검 M-1: 피보호자가 먼저 수락·거절해 취소가 409면, 빈 칸 없이 사실대로 한 줄만 안내한다
+  it('취소 실패(409)는 빈 칸을 붙들지 않고 "이미 수락되었거나 거절된 요청"으로 안내한다', async () => {
+    api.getGuardianConnectionRequests
+      .mockResolvedValueOnce(ok([connection({ id: 3, status: 'PENDING', connectedAt: null })]))
+      .mockResolvedValue(ok([connection({ id: 3, status: 'ACTIVE' })]));
+    api.cancelGuardianConnectionRequest.mockRejectedValue(apiError(409, 'CONNECTION_NOT_PENDING'));
+    const screen = render(<GuardianConnectionRequestHistory />, { wrapper });
+
+    await screen.getByRole('button', { name: '요청 취소' }).click();
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('이미 수락되었거나 거절된 요청이에요.');
+    await expect.element(screen.getByText('수락을 기다리는 중')).not.toBeInTheDocument();
+  });
+
+  it('보낸 요청을 못 불러오면 그렇다고 알린다', async () => {
+    api.getGuardianConnectionRequests.mockRejectedValue(apiError(500, 'INTERNAL_SERVER_ERROR'));
+    const screen = render(<GuardianConnectionRequestHistory />, { wrapper });
+    await expect.element(screen.getByText('보낸 요청을 불러오지 못했어요.')).toBeInTheDocument();
+  });
+
   it('대기 요청이 없으면 칸을 그리지 않는다', async () => {
     api.getGuardianConnectionRequests.mockResolvedValue(ok([]));
     const screen = render(<GuardianConnectionRequestHistory />, { wrapper });
@@ -144,7 +171,7 @@ describe('연결된 가족 (Chrome)', () => {
     );
     const screen = render(<GuardianWardsListPanel />, { wrapper });
 
-    await expect.element(screen.getByText(/^김영희의 아들 · \d+세$/)).toBeInTheDocument();
+    await expect.element(screen.getByText(/^나는 김영희의 아들 · \d+세$/)).toBeInTheDocument();
     await expect.element(screen.getByText('(05551) 서울 송파구 올림픽로 456 102동 1503호')).toBeInTheDocument();
     expect(document.body.textContent).not.toContain('이순자');
     expectNoHorizontalScroll();
@@ -164,5 +191,47 @@ describe('연결된 가족 (Chrome)', () => {
     await screen.getByRole('button', { name: '연결 해제' }).click();
     await screen.getByRole('dialog').getByRole('button', { name: '연결 해제' }).click();
     expect(api.disconnectGuardianConnection.mock.calls[0]?.[0]).toEqual(7);
+  });
+
+  it('목록을 못 불러오면 그렇다고 알린다', async () => {
+    api.getGuardianConnections.mockRejectedValue(apiError(500, 'INTERNAL_SERVER_ERROR'));
+    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    await expect.element(screen.getByText('연결된 가족을 불러오지 못했습니다.')).toBeInTheDocument();
+  });
+
+  // 점검 L-1: 포커스는 창 안 "취소"로 들어가고, Esc로 닫으면 누른 버튼으로 돌아온다
+  it('확인 창은 포커스를 안으로 옮기고 Esc로 닫으면 연 버튼으로 돌려준다', async () => {
+    api.getGuardianConnections.mockResolvedValue(ok([connection()]));
+    const screen = render(<GuardianWardsListPanel />, { wrapper });
+
+    const opener = screen.getByRole('button', { name: '연결 해제' });
+    await opener.click();
+    await expect.element(screen.getByRole('dialog').getByRole('button', { name: '취소' })).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    await expect.element(screen.getByRole('dialog')).not.toBeInTheDocument();
+    await expect.element(opener).toHaveFocus();
+  });
+
+  // 점검 M-2: 창이 열린 사이 상대가 먼저 해제해 목록에서 빠지면 창도 닫힌다
+  it('확인 창이 열린 채 대상이 목록에서 사라지면 창을 닫는다', async () => {
+    const client = newClient();
+    api.getGuardianConnections.mockResolvedValueOnce(ok([connection()])).mockResolvedValue(ok([]));
+    const screen = render(<GuardianWardsListPanel />, { wrapper: wrapperWith(client) });
+
+    await screen.getByRole('button', { name: '연결 해제' }).click();
+    await expect.element(screen.getByRole('dialog')).toBeInTheDocument();
+    await client.invalidateQueries();
+    await expect.element(screen.getByRole('dialog')).not.toBeInTheDocument();
+    expect(api.disconnectGuardianConnection).not.toHaveBeenCalled();
+  });
+
+  it('이미 해제된 연결(409)은 사실대로 안내한다', async () => {
+    api.getGuardianConnections.mockResolvedValue(ok([connection()]));
+    api.disconnectGuardianConnection.mockRejectedValue(apiError(409, 'CONNECTION_NOT_ACTIVE'));
+    const screen = render(<GuardianWardsListPanel />, { wrapper });
+
+    await screen.getByRole('button', { name: '연결 해제' }).click();
+    await screen.getByRole('dialog').getByRole('button', { name: '연결 해제' }).click();
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('이미 연결이 해제됐어요.');
   });
 });
