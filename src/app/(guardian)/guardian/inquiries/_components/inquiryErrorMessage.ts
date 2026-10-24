@@ -1,4 +1,6 @@
-import { ApiErrorShape } from '@/lib/api/errorHandler';
+import { AxiosError } from 'axios';
+
+import { ServerErrorBody } from '@/lib/api/errorHandler';
 
 // 문의 화면 오류 문구 - 상태 코드별로 할 일을 알려 준다(서버 문구 파싱 금지)
 const STATUS_MESSAGES: Record<number, string> = {
@@ -12,8 +14,11 @@ const STATUS_MESSAGES: Record<number, string> = {
 // 입력 검증 실패는 BE가 칸별 문구를 준다("제목을 입력해주세요.") - 코드로 확인하고 그 문구를 쓴다
 const VALIDATION_CODE = 'INVALID_INPUT';
 
+// apiClient는 AxiosError를 그대로 넘긴다 - 서버 코드는 error.code(axios 코드)가 아니라 response.data.code에 있다
 export function inquiryErrorMessage(error: unknown, fallback: string) {
-  const { status, code, message } = (error as Partial<ApiErrorShape> | null) ?? {};
-  if (status === 400 && code === VALIDATION_CODE && message) return message;
+  const response = (error as AxiosError<ServerErrorBody> | null)?.response;
+  const status = response?.status;
+  const body = response?.data;
+  if (status === 400 && body?.code === VALIDATION_CODE && body.message) return body.message;
   return (status != null && STATUS_MESSAGES[status]) || fallback;
 }
