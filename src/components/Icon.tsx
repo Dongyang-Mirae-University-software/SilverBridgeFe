@@ -25,6 +25,7 @@ import HomeIcon from '@/assets/icons/home.svg';
 import HospitalIcon from '@/assets/icons/hospital.svg';
 import InquiryIcon from '@/assets/icons/inquiry.svg';
 import KakaoLogoIcon from '@/assets/icons/kakao-logo.svg';
+import LockIcon from '@/assets/icons/lock.svg';
 import MailIcon from '@/assets/icons/mail.svg';
 import MapPinIcon from '@/assets/icons/map-pin.svg';
 import MenuIcon from '@/assets/icons/menu.svg';
@@ -69,6 +70,7 @@ const ICONS = {
   hospital: HospitalIcon,
   inquiry: InquiryIcon,
   kakaoLogo: KakaoLogoIcon,
+  lock: LockIcon,
   mail: MailIcon,
   mapPin: MapPinIcon,
   menu: MenuIcon,

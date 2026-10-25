@@ -1,15 +1,17 @@
 import { Client, IMessage } from '@stomp/stompjs';
 
-import { refreshAccessToken } from '@/lib/api/apiClient';
+import { isSessionRejected, refreshAccessToken } from '@/lib/api/apiClient';
 import { isAccessTokenExpired } from '@/lib/auth/tokenExpiry';
 import { AuthRole, getAccessToken } from '@/lib/auth/tokenStore';
-import { savePendingConnectionRequest } from './pendingConnectionRequests';
+import { removePendingConnectionRequest, savePendingConnectionRequest } from './pendingConnectionRequests';
 
 type ConnectionRealtimeType =
   | 'CONNECTION_REQUEST'
   | 'CONNECTION_ACCEPTED'
   | 'CONNECTION_CANCELLED'
   | 'CONNECTION_REFUSED'
+  // 보호자가 수락 전 요청을 취소함 - 알림(토스트·푸시) 없이 피보호자의 받은 요청 목록만 갱신한다
+  | 'CONNECTION_REQUEST_CANCELLED'
   | 'SOS_TRIGGERED'
   | 'MEDICATION_TAKEN'
   | 'MEDICATION_STOPPED'
@@ -62,6 +64,7 @@ const MAX_FAILURES_WITH_SAME_TOKEN = 2;
 const WARD_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
   { destination: 'connection-request', type: 'CONNECTION_REQUEST' },
   { destination: 'connection-cancelled', type: 'CONNECTION_CANCELLED' },
+  { destination: 'connection-request-cancelled', type: 'CONNECTION_REQUEST_CANCELLED' },
   { destination: 'medication-taken', type: 'MEDICATION_TAKEN' },
   { destination: 'anomaly-detected', type: 'ANOMALY_DETECTED' },
 ];
@@ -177,6 +180,9 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
   // 이 토큰으로는 다시 붙지 않고 먼저 갱신해야 하는지(서버가 세션을 끊었거나 연결에 계속 실패한 경우)
   let mustRefreshToken = false;
   let failuresWithSameToken = 0;
+  // 토큰 갱신이 일시 장애로 실패했을 때 다시 켜는 타이머. 정리(disposed) 뒤에는 다시 켜지 않는다
+  let disposed = false;
+  let restartTimer: ReturnType<typeof setTimeout> | null = null;
   const client = new Client({
     brokerURL: currentBrokerURL,
     reconnectDelay: RECONNECT_DELAY_MS,
@@ -194,9 +200,17 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
           latestAccessToken = await refreshAccessToken();
           mustRefreshToken = false;
           failuresWithSameToken = 0;
-        } catch {
-          console.warn('[WS] 토큰을 갱신하지 못해 연결을 멈췄습니다.');
+        } catch (error) {
           void client.deactivate();
+          if (isSessionRejected(error)) {
+            console.warn('[WS] 로그인 세션이 끝나 연결을 멈췄습니다.');
+            return;
+          }
+          // 429·5xx·네트워크 같은 일시 장애 - 로그인은 유지되므로 실시간 연결을 포기하지 않는다.
+          // 만료 토큰으로 핸드셰이크를 두드리지 않도록 잠시 꺼 두었다가 다시 켜서 갱신부터 다시 한다
+          console.warn('[WS] 토큰 갱신이 일시적으로 실패해 잠시 뒤 다시 연결합니다.');
+          mustRefreshToken = true;
+          scheduleRestart();
           return;
         }
       }
@@ -224,6 +238,9 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
         const payload = normalizeMessage(message, topic.type);
         console.info('[WS] 알림 받음:', payload);
         if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST') savePendingConnectionRequest(payload);
+        if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST_CANCELLED' && payload.connectionId) {
+          removePendingConnectionRequest(Number(payload.connectionId));
+        }
         onMessage(payload);
       });
     });
@@ -251,12 +268,23 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
     }
   };
 
+  function scheduleRestart() {
+    if (disposed || restartTimer) return;
+    restartTimer = setTimeout(() => {
+      restartTimer = null;
+      if (!disposed) client.activate();
+    }, RECONNECT_DELAY_MS);
+  }
+
   client.activate();
   if (typeof window !== 'undefined') {
     (window as Window & { __connectionStompClient?: Client }).__connectionStompClient = client;
   }
 
   return () => {
+    disposed = true;
+    if (restartTimer) clearTimeout(restartTimer);
+    restartTimer = null;
     if (typeof window !== 'undefined') {
       const debugWindow = window as Window & { __connectionStompClient?: Client };
       if (debugWindow.__connectionStompClient === client) delete debugWindow.__connectionStompClient;

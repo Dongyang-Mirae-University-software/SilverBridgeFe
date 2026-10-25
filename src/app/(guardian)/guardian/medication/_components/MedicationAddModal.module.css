@@ -1,0 +1,643 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 16, 12, 0.5);
+  backdrop-filter: blur(3px);
+  padding: 20px;
+}
+
+.modal {
+  position: relative;
+  width: min(480px, 100%);
+  max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--sb-shadow-lg);
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.header h3 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.close {
+  display: grid;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.close:hover {
+  background: var(--sb-bg-soft);
+}
+
+.body {
+  display: grid;
+  gap: 14px;
+}
+
+
+
+
+
+.stepper {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.stepper button {
+  width: 34px;
+  height: 100%;
+  border: none;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.stepper button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.stepper span {
+  flex: 1;
+  text-align: center;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.error {
+  margin: 0;
+  color: var(--sb-warn);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* 아래 버튼은 같은 너비·56px(Claude Design 2026-10-24) */
+.footer {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.cancelButton,
+.submitButton {
+  min-height: 56px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 0 16px;
+}
+
+.cancelButton {
+  flex: 1;
+  border: 1px solid var(--sb-line);
+  background: #fff;
+  color: var(--sb-ink-soft);
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: var(--sb-bg-soft);
+}
+
+.submitButton {
+  flex: 2;
+  background: var(--sb-brand);
+  color: #fff;
+  font-weight: 800;
+}
+
+.submitButton:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.submitButton:disabled,
+.cancelButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ── 약 추가(카메라로 찍기·직접 쓰기) ── */
+
+.body {
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  padding: 4px;
+}
+
+.tab {
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 10px 8px;
+}
+
+.tab.active {
+  background: #fff;
+  box-shadow: var(--sb-shadow-sm);
+  color: var(--sb-ink);
+  font-weight: 800;
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+}
+
+.fileInput {
+  display: none;
+}
+
+.cameraBox {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 14px;
+  min-height: 220px;
+  border: 3px solid transparent;
+  border-radius: 16px;
+  background: #1f1b17;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.cameraBox.reading {
+  border-color: var(--sb-sun);
+}
+
+.cameraText {
+  margin: 0;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.pillIcon {
+  width: 44px;
+  height: 44px;
+  color: var(--sb-sun);
+}
+
+.cameraActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cameraButton {
+  min-width: 132px;
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  padding: 11px 18px;
+}
+
+.cameraButton.ghost {
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
+  color: #fff;
+}
+
+.cameraButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.resultBanner {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  border-radius: 10px;
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
+  font-size: 16px;
+  font-weight: 800;
+  padding: 12px 14px;
+}
+
+.resultBanner p,
+.checkBox p {
+  margin: 0;
+}
+
+.resultNote {
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progressBar {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.progressFill {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--sb-brand);
+}
+
+.progressFill.empty {
+  background: var(--sb-line);
+}
+
+.progressText {
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* 단계 제목 + 진행: 마크업은 제목이 먼저, PC는 진행 막대를 위로 올려 예전 모양 그대로(핸드폰은 한 줄 - 아래 미디어 쿼리) */
+.stepHeader {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 14px;
+}
+
+.stepTitle {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.stepTitle:focus {
+  outline: none;
+}
+
+.drugCard {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--sb-line);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+/* 2/2 언제 드세요? - 칩 4개 한 줄 */
+.doseGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.chip {
+  display: grid;
+  gap: 2px;
+  min-height: 64px;
+  border: 2px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  padding: 10px 4px;
+  text-align: center;
+}
+
+.chip.selected {
+  border-color: var(--sb-brand);
+  background: var(--sb-brand-soft);
+}
+
+.chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.chipLabel {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.chipTime {
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.timesHint {
+  margin: 0;
+  color: #8a5f12;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+
+
+.error:focus {
+  outline: none;
+}
+
+
+.rows {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 약 한 개: 이름 ··· [− 1알 +] [×] 한 줄 / 비슷한 이름 칩(있을 때) - 복용량은 이름 오른쪽(2026-10-24 사용자 요청) */
+.drugRow {
+  display: grid;
+  grid-template-areas: 'name stepper remove' 'check check check';
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  /* 세로 간격은 0 - 비어 있는 안내·복용량 행에도 간격이 생겨 약 사이가 벌어졌다. 그 행에만 위 여백을 준다 */
+  gap: 0 6px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding: 12px 0;
+}
+
+.drugRow:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.drugRow .nameInput {
+  grid-area: name;
+}
+
+.drugRow .nameCheck {
+  grid-area: check;
+  margin-top: 8px;
+}
+
+.drugRow .stepper {
+  grid-area: stepper;
+}
+
+.drugRow .removeButton {
+  grid-area: remove;
+}
+
+.nameInput {
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  padding: 0 12px;
+}
+
+.nameInput:focus {
+  border-color: var(--sb-brand);
+  outline: none;
+}
+
+/* 인식 확신이 낮은 약 - 확인을 권하는 정도로만 옅게 */
+.nameInput.lowConfidence {
+  border-color: var(--sb-sun);
+  background: var(--sb-sun-soft);
+}
+
+/* 허가 목록에 없는 이름 - 행 바로 아래 노란 상자: 안내 한 줄 + 제안 칩(고르는 건 보호자, Claude Design 2026-10-24) */
+.nameCheck {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  border: 1.5px solid #e6c98f;
+  border-radius: 10px;
+  background: var(--sb-sun-soft);
+  padding: 12px 14px;
+}
+
+.nameCheckText {
+  margin: 0;
+  color: #7a5410;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.suggestionChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 테두리는 흰 배경 대비 3:1 이상(--sb-warn 4.9:1, --sb-sun은 2.8:1이라 부족), 높이 32px(최소 24px 이상, 행 높이는 크게 늘지 않게) */
+.suggestionChip {
+  max-width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--sb-warn);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  padding: 6px 14px;
+  text-align: left;
+  word-break: break-all;
+}
+
+.suggestionChip:hover {
+  background: var(--sb-sun-soft);
+}
+
+.nameInput.duplicated {
+  border-color: var(--sb-warn);
+}
+
+.drugRow .stepper {
+  width: 124px;
+  height: 48px;
+}
+
+.removeButton {
+  display: grid;
+  width: 40px;
+  height: 48px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.removeButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.addRowButton {
+  justify-self: start;
+  border: 1px dashed var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-brand);
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 9px 14px;
+}
+
+.addRowButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* 확신 낮은 약이 있을 때 결과 문구 바로 아래 - 작은 안내는 잘 안 보여 노란 박스로 크게(2026-10-22) */
+.checkBox {
+  margin: 0;
+  border: 2px solid var(--sb-sun);
+  border-radius: 10px;
+  background: var(--sb-sun-soft);
+  color: #6b4a0d;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.5;
+  padding: 12px 14px;
+  word-break: keep-all;
+}
+
+.hint {
+  margin: 0;
+  color: var(--sb-warn);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 키보드 사용자에게 포커스 위치를 보인다(입력 칸은 테두리 색만 바뀌어 잘 안 보였다) */
+.modal button:focus-visible,
+.nameInput:focus-visible {
+  outline: 2px solid var(--sb-brand);
+  outline-offset: 2px;
+}
+
+/* 핸드폰: 결과가 나오면 탭을 접고, 제목·진행을 한 줄로(2026-10-24). 화면 전체 표시는 사용자 요청으로 되돌려 모달 그대로 */
+@media (max-width: 480px) {
+  .modal {
+    padding: 20px 16px;
+  }
+
+  .tabs.collapsible {
+    display: none;
+  }
+
+  .stepHeader {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .stepHeader .progress {
+    flex: 0 0 132px;
+  }
+
+  .drugCard {
+    border: 0;
+    padding: 0;
+  }
+
+  /* 핸드폰은 이름 칸을 넓히려고 −/+·×를 조금 줄인다 */
+  .drugRow .stepper {
+    width: 104px;
+  }
+
+  .drugRow .stepper button {
+    width: 30px;
+  }
+
+  .removeButton {
+    width: 34px;
+  }
+
+  .nameInput {
+    padding: 0 10px;
+  }
+}

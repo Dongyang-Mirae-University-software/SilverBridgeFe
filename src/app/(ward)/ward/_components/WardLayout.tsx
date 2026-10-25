@@ -20,8 +20,9 @@ import { getRealtimeNotification } from '@/utils/dashboard/realtime';
 import { useVisualViewportHeight } from '@/hooks/useVisualViewportHeight';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
+import { applyWardConnectionRequestCancelled } from '@/service/query/ward/connection';
 import { applyMedicationTakenToWardCache } from '@/service/query/ward/medication';
-import { wardSosSettingQueryOptions } from '@/service/query/ward/sosSetting';
+import { hasUserSavedWardSosSetting, wardSosSettingQueryOptions } from '@/service/query/ward/sosSetting';
 import { WardCameraStreamProvider } from '../camera/_components/WardCameraStreamProvider';
 import styles from './WardLayout.module.css';
 
@@ -113,15 +114,18 @@ function useWardSettings(
 
 // sosAction은 계정 단위로 동기화된다 — 기기별 localStorage 값은 첫 로딩까지만
 // 임시로 쓰고, 서버 응답이 오면 한 번 덮어쓴다(이후 변경은 PUT 성공 시 로컬에 바로 반영)
+// 단 첫 응답보다 사용자가 먼저 저장을 시작했으면(진행 중·성공) 늦게 온 옛 값으로 덮지 않는다
 function useWardSosSettingSync(setSettings: (updater: (current: WardSettings) => WardSettings) => void) {
   const { data } = useQuery(wardSosSettingQueryOptions);
+  const queryClient = useQueryClient();
   const didSyncRef = useRef(false);
 
   useEffect(() => {
     if (didSyncRef.current || !data) return;
     didSyncRef.current = true;
+    if (hasUserSavedWardSosSetting(queryClient)) return;
     setSettings(current => ({ ...current, sosAction: getValidSosAction(data.sosAction) }));
-  }, [data, setSettings]);
+  }, [data, queryClient, setSettings]);
 }
 
 function useWardConnectionSocket(realtimeUserId: string | undefined) {
@@ -138,6 +142,8 @@ function useWardConnectionSocket(realtimeUserId: string | undefined) {
           applyMedicationTakenToWardCache(queryClient, payload);
           return;
         }
+        // 보호자의 요청 취소는 알림을 보내지 않는 정책이라 토스트 없이 받은 요청 목록만 새로 받는다
+        if (applyWardConnectionRequestCancelled(queryClient, payload)) return;
 
         window.dispatchEvent(
           new CustomEvent('careai:push', {

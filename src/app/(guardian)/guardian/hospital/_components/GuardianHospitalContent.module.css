@@ -1,202 +1,769 @@
+/* 보호자 병원 예약하기 - 목록 → 1. 병원 고르기 → 2. 날짜·시간 → 3. 확인 → 완료 */
 .page {
-  display: grid;
-  gap: 18px;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
+  min-width: 0;
 }
 
-.toolbar {
+.card {
+  background: #fff;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  box-shadow: var(--sb-shadow-sm);
+}
+
+.pad22 {
+  padding: 22px;
+}
+
+/* 버튼 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    filter 0.12s,
+    background 0.12s;
+}
+
+.primary {
+  border: none;
+  background: var(--sb-brand);
+  color: #fff;
+  font-weight: 800;
+}
+
+.primary:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.ghost {
+  border: 1px solid var(--sb-line);
+  background: #fff;
+  color: var(--sb-ink-soft);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--sb-bg-soft);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.headButton {
+  min-height: 42px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.smallButton {
+  min-height: 42px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.newButton {
+  min-height: 52px;
+  padding: 0 24px;
+  font-size: 16px;
+}
+
+.wide {
+  width: 100%;
+  min-height: 56px;
+  font-size: 16px;
+}
+
+.tall {
+  min-height: 56px;
+  font-size: 16px;
+}
+
+.icon {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.iconLg {
+  width: 18px;
+  height: 18px;
+}
+
+.iconMute {
+  color: var(--sb-ink-mute);
+}
+
+/* 머리줄·피보호자 선택 */
+.head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 10px;
 }
 
-.toolbarTitle {
-  display: block;
-  color: var(--sb-ink);
-  font-size: 1.125rem;
-  font-weight: 900;
-}
-
-.toolbarSub {
-  display: block;
-  margin-top: 4px;
-  color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
+.wardPicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
   font-weight: 700;
 }
 
-.toolbarRight {
+.select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* 진행 막대 */
+.progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progressItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.progressBar {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--sb-line);
+}
+
+.reached .progressBar {
+  background: var(--sb-brand);
+}
+
+.progressLabel {
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 600;
+  word-break: keep-all;
+}
+
+.current .progressLabel {
+  color: var(--sb-brand);
+  font-weight: 800;
+}
+
+/* 목록: 다음 진료 */
+.nextCard {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 22px 24px;
+}
+
+.nextBody {
+  flex: 1;
+  min-width: 0;
+  flex-basis: 240px;
+}
+
+.nextTop {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.select,
-.input,
-.textarea {
-  padding: 10px 12px;
+.nextLabel {
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dday {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.nextWhen {
+  margin-top: 6px;
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 800;
+  word-break: keep-all;
+}
+
+.nextWhere {
+  margin-top: 4px;
+  color: var(--sb-ink-soft);
+  font-size: 16px;
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+.nextEmpty {
+  margin-top: 6px;
+  color: var(--sb-ink-soft);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.nextActions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.cancelAsk {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 목록 카드(그 밖의 예약·지난 진료·병원 목록) */
+.listCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.listHead {
+  margin: 0;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--sb-line-soft);
+  color: var(--sb-ink);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 14px 24px;
+}
+
+.row + .row {
+  border-top: 1px solid var(--sb-line-soft);
+}
+
+.rowDate {
+  width: 120px;
+  flex-shrink: 0;
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.rowDateWide {
+  width: auto;
+}
+
+.rowName {
+  flex: 1;
+  min-width: 160px;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+.rowDept {
+  color: var(--sb-ink-mute);
+  font-weight: 600;
+}
+
+.canceled .rowDate,
+.canceled .rowName {
+  color: var(--sb-ink-mute);
+}
+
+.tag {
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+}
+
+.emptyRow {
+  margin: 0;
+  padding: 24px;
+  color: var(--sb-ink-mute);
+  font-size: 15px;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+/* 1. 병원 고르기 */
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--sb-line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+.hospitalRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px 24px;
+  border: none;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.hospitalRow + .hospitalRow {
+  border-top: 1px solid var(--sb-line-soft);
+}
+
+.hospitalRow:hover:not(:disabled) {
+  background: var(--sb-bg-soft);
+}
+
+.hospitalRow.closed {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  cursor: not-allowed;
+}
+
+.closedNote {
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.hospitalText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.hospitalName {
+  font-size: 17px;
+  font-weight: 800;
+  word-break: keep-all;
+}
+
+.hospitalDept {
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hospitalAddress {
+  overflow: hidden;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: var(--sb-ink-mute);
+  font-size: 20px;
+}
+
+/* 2. 날짜·시간 */
+.pickedCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 22px;
+}
+
+.pickedName {
+  min-width: 0;
+  color: var(--sb-ink);
+  font-size: 18px;
+  font-weight: 800;
+  word-break: keep-all;
+}
+
+.pickedDept {
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.pickedCard .smallButton {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.cardTitle {
+  margin: 0 0 12px;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.cardTitleSub {
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 0;
   border: 1px solid var(--sb-line);
   border-radius: 12px;
   background: #fff;
   color: var(--sb-ink);
   font: inherit;
-  font-size: 0.9375rem;
+  cursor: pointer;
 }
 
-.textarea {
-  min-height: 72px;
-  resize: vertical;
-}
-
-.emptyText {
-  margin: 0;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 18px;
-  background: #fff;
+.weekday {
   color: var(--sb-ink-mute);
-  font-size: 0.875rem;
-  padding: 24px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sunday .weekday {
+  color: var(--sb-brand);
+}
+
+.dayNumber {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.day.selected {
+  border: 2px solid var(--sb-brand);
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.day.selected .weekday {
+  color: #fff;
+}
+
+.slotGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slotRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.slotLabel {
+  width: 36px;
+  flex-shrink: 0;
+  padding-top: 14px;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.slots {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.slot {
+  min-height: 48px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.slot.selected {
+  border: 2px solid var(--sb-brand);
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.slot:disabled {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  cursor: not-allowed;
+}
+
+/* 3. 확인 */
+.confirmCard {
+  padding: 24px 26px;
+}
+
+.confirmAsk {
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.confirmWhen {
+  margin-top: 8px;
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 800;
+  word-break: keep-all;
+}
+
+.confirmWhere {
+  margin-top: 6px;
+  color: var(--sb-ink);
+  font-size: 17px;
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+.confirmAddress {
+  margin-top: 4px;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  word-break: keep-all;
+}
+
+.confirmWho {
+  margin-top: 14px;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+}
+
+.phoneField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.input {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+.fieldError {
+  color: var(--sb-warn);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fieldHint {
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.confirmButtons {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 10px;
+}
+
+/* 완료 */
+.doneCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44px 28px;
   text-align: center;
 }
 
+.doneCheck {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
+}
+
+.checkIcon {
+  width: 36px;
+  height: 36px;
+  stroke-width: 3;
+}
+
+.doneTitle {
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.doneWhen {
+  margin-top: 10px;
+  color: var(--sb-ink);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.doneWhere {
+  margin-top: 4px;
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+}
+
+.doneNote {
+  margin-top: 12px;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+}
+
+.doneButton {
+  min-height: 50px;
+  margin-top: 22px;
+  padding: 0 32px;
+  font-size: 15px;
+}
+
+/* 안내 */
 .notice {
   margin: 0;
   padding: 12px 16px;
   border-radius: 12px;
-  font-size: 0.875rem;
+  font-size: 15px;
   font-weight: 700;
 }
 
-.notice.ok {
-  background: #eef8f1;
-  color: #1f7a3f;
+.ok {
+  background: var(--sb-safe-soft);
+  color: var(--sb-safe);
 }
 
-.notice.bad {
-  background: #fdf0ee;
+/* 빨간색은 SOS·이상감지 전용이라 오류도 갈색 계열로 */
+.bad {
+  background: var(--sb-warn-soft);
   color: var(--sb-warn);
 }
 
-.booking {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
-.hospitalList {
-  display: grid;
-  gap: 10px;
+.message {
   margin: 0;
-  padding: 0;
-  list-style: none;
-  max-height: 60vh;
-  overflow-y: auto;
+  color: var(--sb-ink-soft);
+  font-size: 16px;
+  word-break: keep-all;
 }
 
-.hospitalCard {
-  display: grid;
-  gap: 4px;
-  width: 100%;
-  padding: 14px 16px;
-  border: 2px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
-  background: #fff;
-  color: var(--sb-ink);
-  text-align: left;
-  cursor: pointer;
+.inline {
+  flex: 1;
+  min-width: 0;
 }
 
-.hospitalCard.active {
-  border-color: var(--sb-brand);
-  background: var(--sb-bg-soft);
-}
-
-.hospitalCard:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.hospitalName {
-  font-size: 1rem;
-  font-weight: 900;
-}
-
-.hospitalMeta {
-  color: var(--sb-ink-mute);
-  font-size: 0.8125rem;
-  font-weight: 650;
-}
-
-.form {
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: var(--sb-radius);
-  background: #fff;
-  box-shadow: var(--sb-shadow-sm);
-}
-
-.field {
-  display: grid;
-  gap: 6px;
-}
-
-.fieldLabel {
-  color: var(--sb-ink);
-  font-size: 0.875rem;
-  font-weight: 800;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  padding: 8px 14px;
-  border: 2px solid var(--sb-line-soft);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--sb-ink);
-  font-size: 0.875rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.chip.active {
-  border-color: var(--sb-brand);
-  background: var(--sb-bg-soft);
-  color: var(--sb-brand);
-}
-
-.submit {
-  padding: 14px;
-  border: 0;
-  border-radius: 14px;
-  background: var(--sb-brand);
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-@media (max-width: 900px) {
-  .booking {
-    grid-template-columns: 1fr;
+@media (max-width: 480px) {
+  .nextCard,
+  .confirmCard {
+    padding: 20px 18px;
   }
 
-  .hospitalList {
-    max-height: 40vh;
+  .row,
+  .listHead,
+  .hospitalRow {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .pad22 {
+    padding: 18px 14px;
+  }
+
+  .days {
+    gap: 4px;
+  }
+
+  .nextActions {
+    width: 100%;
+  }
+
+  .slots {
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   }
 }

@@ -6,6 +6,7 @@ import {
   getAnomalyReminderSetting,
   getGuardianAnomalyClips,
   getGuardianAnomalyHistory,
+  getGuardianAnomalyHistorySummary,
   submitAnomalyFeedback,
   updateAnomalyReminderSetting,
 } from '@/service/api/guardian/anomaly';
@@ -14,6 +15,7 @@ import {
   GetAnomalyHistoryParams,
   UpdateAnomalyReminderSettingReq,
 } from '@/service/interface/guardian/anomaly';
+import { guardianDashboardQueryKey } from './dashboard';
 
 export const guardianAnomalyHistoryQueryKey = ['guardian-anomaly-history'] as const;
 export const guardianAnomalyReminderSettingQueryKey = ['guardian-anomaly-reminder-setting'] as const;
@@ -23,6 +25,15 @@ export function guardianAnomalyHistoryQueryOptions(params: GetAnomalyHistoryPara
   return queryOptions({
     queryKey: [...guardianAnomalyHistoryQueryKey, params] as const,
     queryFn: () => getGuardianAnomalyHistory(params),
+    staleTime: 10 * 1000,
+  });
+}
+
+export function guardianAnomalyHistorySummaryQueryOptions(wardId?: string) {
+  return queryOptions({
+    // 이력 키 아래에 둔다 - 실시간 감지·푸시 수신 때 이력 키만 무효화해도 건수가 함께 갱신된다
+    queryKey: [...guardianAnomalyHistoryQueryKey, 'summary', wardId ?? null] as const,
+    queryFn: () => getGuardianAnomalyHistorySummary(wardId),
     staleTime: 10 * 1000,
   });
 }
@@ -49,6 +60,8 @@ export function useAnomalyFeedbackMutation() {
       submitAnomalyFeedback(incidentId, body),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: guardianAnomalyHistoryQueryKey });
+      // 대시보드 '확인이 필요한 일'도 이상감지 PENDING·CONFLICTED를 센다
+      queryClient.invalidateQueries({ queryKey: guardianDashboardQueryKey });
       queryClient.invalidateQueries({ queryKey: [...guardianAnomalyClipsQueryKey, variables.incidentId] });
     },
   });

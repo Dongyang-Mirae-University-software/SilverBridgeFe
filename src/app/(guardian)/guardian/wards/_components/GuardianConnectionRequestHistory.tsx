@@ -1,62 +1,78 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { guardianConnectionRequestsQueryOptions } from '@/service/query/guardian';
-import { getConnectionData, getConnectionStatusLabel } from '@/components/connections/ConnectionShared';
+import { getConnectionData } from '@/components/connections/ConnectionShared';
+import { guardianConnectionRequestsQueryOptions, useGuardianConnectionCancelMutation } from '@/service/query/guardian';
+import { formatMonthDay, formatRequestedAs, getConnectionActionErrorMessage } from '@/utils/connection/connectionView';
 import styles from './GuardianConnectionRequestHistory.module.css';
 
 const cx = classNames.bind(styles);
 
-function formatRequestDate(value: string | null) {
-  if (!value) return '확인 전';
+// 취소 실패 안내는 잠시만 보여 준다 - 목록이 새로 고쳐진 뒤까지 남아 빈 칸을 붙들지 않게
+const NOTICE_MS = 6000;
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '확인 전';
-
-  return new Intl.DateTimeFormat('ko-KR', { month: '2-digit', day: '2-digit', year: 'numeric' }).format(date);
-}
-
+// 수락을 기다리는 요청 - 회원 ID·관계·요청일과 요청 취소. 수락 전이라 상대 연락처는 싣지 않는다
 export function GuardianConnectionRequestHistory() {
-  const { data, isLoading } = useQuery(guardianConnectionRequestsQueryOptions);
+  const { data, isError } = useQuery(guardianConnectionRequestsQueryOptions);
+  const cancelMutation = useGuardianConnectionCancelMutation();
+  const [errorMessage, setErrorMessage] = useState('');
   const pendingConnections = getConnectionData(data).filter(connection => connection.status === 'PENDING');
 
+  useEffect(() => {
+    if (!errorMessage) return;
+    const timer = setTimeout(() => setErrorMessage(''), NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [errorMessage]);
+
+  const handleCancel = (connectionId: number) => {
+    setErrorMessage('');
+    cancelMutation.mutate(connectionId, {
+      // 피보호자가 먼저 수락·거절했으면 409 - 사실대로 안내하고 목록은 onSettled 재조회가 맞춘다
+      onError: error => setErrorMessage(getConnectionActionErrorMessage(error, '요청을 취소하지 못했어요.')),
+    });
+  };
+
+  const notice = errorMessage && (
+    <p className={cx('errorMessage')} role="alert">
+      {errorMessage}
+    </p>
+  );
+
+  if (isError) return <p className={cx('loadError')}>보낸 요청을 불러오지 못했어요.</p>;
+  // 대기 요청이 없으면 칸을 그리지 않는다 - 취소 실패 안내만 한 줄 남긴다
+  if (pendingConnections.length === 0) return notice || null;
+
   return (
-    <section className={cx('card')}>
-      <h2 className={cx('title')}>요청 내역</h2>
-
-      {isLoading && <p className={cx('emptyText')}>요청 내역을 불러오는 중입니다.</p>}
-      {!isLoading && pendingConnections.length === 0 && (
-        <p className={cx('emptyText')}>수락 대기 중인 요청이 없습니다.</p>
-      )}
-
-      {pendingConnections.length > 0 && (
-        <table className={cx('table')}>
-          <thead>
-            <tr>
-              <th>회원 ID</th>
-              <th>이름</th>
-              <th>관계</th>
-              <th>요청일</th>
-              <th>상태</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pendingConnections.map(connection => (
-              <tr key={connection.id}>
-                <td className={cx('mono')}>{connection.partnerUserId || '확인 전'}</td>
-                <td>{connection.partnerName || '확인 전'}</td>
-                <td>{connection.relation || '정보 없음'}</td>
-                <td>{formatRequestDate(connection.createdAt)}</td>
-                <td>
-                  <span className={cx('statusBadge')}>⏳ {getConnectionStatusLabel(connection.status)}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+    <section className={cx('card')} aria-labelledby="pending-requests-title">
+      <h2 id="pending-requests-title" className={cx('title')}>
+        수락을 기다리는 중
+      </h2>
+      {notice}
+      <ul className={cx('list')}>
+        {pendingConnections.map(connection => {
+          const requestedOn = formatMonthDay(connection.createdAt);
+          return (
+            <li key={connection.id} className={cx('row')}>
+              <span className={cx('memberId')}>{connection.partnerUserId}</span>
+              <span className={cx('meta')}>
+                {formatRequestedAs(connection.relation)}
+                {requestedOn && ` · ${requestedOn}`}
+              </span>
+              <button
+                className={cx('cancelButton')}
+                type="button"
+                disabled={cancelMutation.isPending}
+                onClick={() => handleCancel(connection.id)}
+              >
+                요청 취소
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

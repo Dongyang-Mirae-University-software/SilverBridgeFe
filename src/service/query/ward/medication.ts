@@ -2,7 +2,12 @@
 
 import { QueryClient, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { checkMedicationIntake, getTodayMedication, uncheckMedicationIntake } from '@/service/api/ward/medication';
+import {
+  checkMedicationIntake,
+  getTodayMedication,
+  setMedicationIntakeBatch,
+  uncheckMedicationIntake,
+} from '@/service/api/ward/medication';
 import { reportNonApiError } from '@/lib/api/reportError';
 import { MedicationItem, TodayMedicationResponse } from '@/service/interface/medication';
 
@@ -19,11 +24,15 @@ export const wardTodayMedicationQueryOptions = queryOptions({
 
 function replaceMedicationInCache(queryClient: ReturnType<typeof useQueryClient>, item: MedicationItem | null) {
   if (!item) return;
+  replaceMedicationsInCache(queryClient, [item]);
+}
+
+function replaceMedicationsInCache(queryClient: ReturnType<typeof useQueryClient>, items: MedicationItem[]) {
+  const byId = new Map(items.filter(Boolean).map(item => [item.medicationId, item]));
+  if (byId.size === 0) return;
   queryClient.setQueryData<TodayMedicationResponse>(wardTodayMedicationQueryKey, current => {
     if (!current) return current;
-    const medications = current.medications.map(medication =>
-      medication.medicationId === item.medicationId ? item : medication,
-    );
+    const medications = current.medications.map(medication => byId.get(medication.medicationId) ?? medication);
     return {
       ...current,
       medications,
@@ -33,15 +42,17 @@ function replaceMedicationInCache(queryClient: ReturnType<typeof useQueryClient>
 }
 
 // WS medication-taken 이벤트(다른 기기·탭에서 체크한 경우)로 목록을 그 자리에서 갱신
+// 다른 날의 체크는 반영하지 않는다 - 자정 직전 체크의 늦은 이벤트가 다음 날 같은 약을 체크된 것처럼 바꿨다(점검 L-1)
 export function applyMedicationTakenToWardCache(
   queryClient: QueryClient,
-  payload: { medicationId?: string; taken?: string; takenAt?: string },
+  payload: { medicationId?: string; taken?: string; takenAt?: string; doseDate?: string },
 ) {
   const medicationId = Number(payload.medicationId);
   if (!Number.isFinite(medicationId)) return;
 
   queryClient.setQueryData<TodayMedicationResponse>(wardTodayMedicationQueryKey, current => {
     if (!current) return current;
+    if (payload.doseDate && payload.doseDate !== current.doseDate) return current;
     const medications = current.medications.map(medication =>
       medication.medicationId === medicationId
         ? { ...medication, taken: payload.taken === 'true', takenAt: payload.takenAt ?? null }
@@ -60,6 +71,27 @@ export function useMedicationIntakeMutation() {
     mutationFn: ({ medicationId, taken }: { medicationId: number; taken: boolean }) =>
       taken ? checkMedicationIntake(medicationId) : uncheckMedicationIntake(medicationId),
     onSuccess: item => replaceMedicationInCache(queryClient, item),
-    onError: error => reportNonApiError('복용 체크 변경 실패:', error),
+    onError: error => {
+      // 실패하면 오늘 일정을 다시 불러온다 - 그 사이 보호자가 약을 지웠다면 목록에서 빠져 다시 누를 수 있다(점검 M-1)
+      void queryClient.invalidateQueries({ queryKey: wardTodayMedicationQueryKey });
+      reportNonApiError('복용 체크 변경 실패:', error);
+    },
+  });
+}
+
+// "아침 약 다 먹었어요" - 그 시간대에서 아직 체크하지 않은 약을 한 번에 체크한다(BE 한 트랜잭션)
+export function useMedicationIntakeBatchMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['ward-medication-intake'],
+    mutationFn: ({ medicationIds, taken }: { medicationIds: number[]; taken: boolean }) =>
+      setMedicationIntakeBatch(medicationIds, taken),
+    onSuccess: items => replaceMedicationsInCache(queryClient, items ?? []),
+    // 묶음은 약 하나(그 사이 지워진 약 등)만 거절돼도 전부 체크되지 않는다 - 다시 불러와 다시 누를 수 있게(점검 M-1)
+    onError: error => {
+      void queryClient.invalidateQueries({ queryKey: wardTodayMedicationQueryKey });
+      reportNonApiError('복용 묶음 체크 실패:', error);
+    },
   });
 }

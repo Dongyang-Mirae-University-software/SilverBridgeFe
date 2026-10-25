@@ -1,109 +1,120 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { FormEvent, useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 
-import { requestWardConnection } from '@/service/api/guardian/connection';
-import { guardianConnectionRequestsQueryKey, guardianConnectionsQueryKey } from '@/service/query/guardian';
-import { getErrorMessage } from '@/components/connections/ConnectionShared';
+import { useGuardianConnectionRequestMutation } from '@/service/query/guardian';
+import {
+  getConnectionRequestErrorMessage,
+  isValidMemberId,
+  sanitizeMemberId,
+} from '@/utils/connection/connectionView';
 import styles from './GuardianConnectionRequestForm.module.css';
 
 const cx = classNames.bind(styles);
 
-const RELATION_OPTIONS = ['아들', '딸', '배우자', '부모', '형제자매', '손자녀', '직접입력'] as const;
-const CUSTOM_RELATION_OPTION = '직접입력';
-type RelationOption = (typeof RELATION_OPTIONS)[number] | '';
+// 보호자(나)가 어르신에게 누구인지 - BE relation 예시와 같은 8개
+const RELATION_OPTIONS = ['아들', '딸', '며느리', '사위', '손자', '손녀', '배우자', '기타'] as const;
+type RelationOption = (typeof RELATION_OPTIONS)[number];
+
+const SENT_MESSAGE_MS = 2500;
 
 export function GuardianConnectionRequestForm() {
-  const queryClient = useQueryClient();
-  const [targetId, setTargetId] = useState('');
-  const [relation, setRelation] = useState<RelationOption>('');
-  const [customRelation, setCustomRelation] = useState('');
-  const [message, setMessage] = useState('');
+  const [memberId, setMemberId] = useState('');
+  const [relation, setRelation] = useState<RelationOption | ''>('');
+  const [sent, setSent] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const { mutate, isPending } = useGuardianConnectionRequestMutation();
 
-  const requestRelation = relation === CUSTOM_RELATION_OPTION ? customRelation.trim() : relation;
+  const canSubmit = isValidMemberId(memberId) && Boolean(relation) && !isPending;
 
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['guardian-connection-request'],
-    mutationFn: requestWardConnection,
-    onMutate: () => setMessage(''),
-    onSuccess: async () => {
-      setTargetId('');
-      setRelation('');
-      setCustomRelation('');
-      setMessage('피보호자에게 연결 요청을 보냈습니다.');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey }),
-        queryClient.invalidateQueries({ queryKey: guardianConnectionRequestsQueryKey }),
-      ]);
-    },
-    onError: error => setMessage(getErrorMessage(error, '연결 요청에 실패했습니다.')),
-  });
+  useEffect(() => {
+    if (!sent) return;
+    const timer = setTimeout(() => setSent(false), SENT_MESSAGE_MS);
+    return () => clearTimeout(timer);
+  }, [sent]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedTargetId = targetId.trim();
-    if (!trimmedTargetId || !requestRelation || isPending) return;
-    mutate({ relation: requestRelation, targetId: trimmedTargetId });
+    if (!canSubmit || !relation) return;
+    setErrorMessage('');
+    setSent(false);
+    // 회원 ID는 대소문자를 구분하므로 입력값 그대로 보낸다
+    mutate(
+      { relation, targetId: memberId },
+      {
+        onSuccess: () => {
+          setMemberId('');
+          setRelation('');
+          setSent(true);
+        },
+        onError: error => setErrorMessage(getConnectionRequestErrorMessage(error)),
+      },
+    );
   };
 
   return (
     <form className={cx('card')} onSubmit={handleSubmit}>
-      <div className={cx('formGrid')}>
-        <label className={cx('field')}>
-          피보호자 회원 ID
-          <input
-            value={targetId}
-            onChange={event => setTargetId(event.target.value)}
-            placeholder="예) abc123"
-            maxLength={20}
-            autoComplete="off"
-          />
+      <div className={cx('field')}>
+        <label className={cx('label')} htmlFor="ward-member-id">
+          <span className={cx('step')}>1</span>
+          어르신의 회원 ID
         </label>
-
-        <label className={cx('field')}>
-          피보호자와의 관계
-          <select value={relation} onChange={event => setRelation(event.target.value as RelationOption)}>
-            <option value="" disabled>
-              관계 선택
-            </option>
-            {RELATION_OPTIONS.map(option => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {relation === CUSTOM_RELATION_OPTION && (
-          <label className={cx('field', 'fieldWide')}>
-            직접입력
-            <input
-              value={customRelation}
-              onChange={event => setCustomRelation(event.target.value)}
-              placeholder="예) 며느리"
-              maxLength={10}
-              autoComplete="off"
-            />
-          </label>
-        )}
+        <input
+          id="ward-member-id"
+          className={cx('idInput')}
+          value={memberId}
+          onChange={event => {
+            setMemberId(sanitizeMemberId(event.target.value));
+            setErrorMessage('');
+          }}
+          placeholder="예) aB3x9Z"
+          // maxLength는 두지 않는다 - 붙여 넣은 "aB-3x 9Z"가 정리 전에 잘려 버린다. 길이는 sanitizeMemberId가 자른다
+          inputMode="text"
+          autoComplete="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          aria-describedby="ward-member-id-help"
+        />
+        <p id="ward-member-id-help" className={cx('help')}>
+          어르신 화면 메뉴에서 이름(프로필)을 누르면 보이는 회원 ID예요. 휴대폰에서는 메뉴 버튼을 먼저 눌러 주세요 (영문·숫자 6자리, 대소문자 구분)
+        </p>
       </div>
 
+      <fieldset className={cx('field', 'relationField')}>
+        <legend className={cx('label')}>
+          <span className={cx('step')}>2</span>
+          어르신과의 관계
+        </legend>
+        <div className={cx('chips')}>
+          {RELATION_OPTIONS.map(option => (
+            <button
+              key={option}
+              className={cx('chip', { selected: relation === option })}
+              type="button"
+              aria-pressed={relation === option}
+              onClick={() => setRelation(option)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
       <footer className={cx('footer')}>
-        <p className={cx('hint')}>
-          피보호자가 본인의 마이페이지에서 확인 가능한 회원 ID를 입력하고, 피보호자와의 관계를 선택해 주세요.
+        <p className={cx('hint')} aria-live="polite">
+          {sent ? <span className={cx('sentText')}>요청을 보냈어요. 어르신이 수락하면 연결돼요</span> : '어르신이 수락하면 연결돼요'}
         </p>
-        <button
-          className={cx('submitButton')}
-          type="submit"
-          disabled={!targetId.trim() || !requestRelation || isPending}
-        >
-          {isPending ? '요청 중...' : '승인 요청'}
+        <button className={cx('submitButton')} type="submit" disabled={!canSubmit}>
+          {isPending ? '요청 보내는 중…' : '연결 요청 보내기'}
         </button>
       </footer>
 
-      {message && <p className={cx('message')}>{message}</p>}
+      {errorMessage && (
+        <p className={cx('errorMessage')} role="alert">
+          {errorMessage}
+        </p>
+      )}
     </form>
   );
 }

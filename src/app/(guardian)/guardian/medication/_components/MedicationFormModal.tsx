@@ -3,15 +3,22 @@
 import { FormEvent, useState } from 'react';
 import classNames from 'classnames/bind';
 
+import { useModalDialog } from '@/hooks/useModalDialog';
+
 import { MedicationItem, MedicationTimeSlot } from '@/service/interface/medication';
 import { getMedicationTimeSlotLabel } from '@/utils/format/medication';
+import {
+  decreaseDose,
+  formatDoseLabel,
+  increaseDose,
+  MAX_DOSE_AMOUNT,
+  MIN_DOSE_AMOUNT,
+} from '@/utils/medication/medicationDraft';
 import styles from './MedicationFormModal.module.css';
 
 const cx = classNames.bind(styles);
 
 const TIME_SLOTS: MedicationTimeSlot[] = ['MORNING', 'LUNCH', 'DINNER', 'BEDTIME'];
-const MIN_DOSE_AMOUNT = 1;
-const MAX_DOSE_AMOUNT = 10;
 
 interface MedicationFormValue {
   name: string;
@@ -23,26 +30,34 @@ interface MedicationFormValue {
 
 interface MedicationFormModalProps {
   wardName: string;
-  initial?: MedicationItem;
+  initial: MedicationItem;
   isSubmitting: boolean;
   errorMessage?: string;
   onSubmit: (value: MedicationFormValue) => void;
   onClose: () => void;
 }
 
-function toFormValue(initial?: MedicationItem): MedicationFormValue {
+function toFormValue(initial: MedicationItem): MedicationFormValue {
   return {
-    name: initial?.name ?? '',
-    timeSlot: initial?.timeSlot ?? 'MORNING',
-    doseTime: initial ? initial.doseTime.slice(0, 5) : '',
-    doseAmount: initial?.doseAmount ?? 1,
-    memo: initial?.memo ?? '',
+    name: initial.name,
+    timeSlot: initial.timeSlot,
+    doseTime: initial.doseTime.slice(0, 5),
+    doseAmount: initial.doseAmount,
+    memo: initial.memo ?? '',
   };
 }
 
 export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSubmit, onClose }: MedicationFormModalProps) {
   const [value, setValue] = useState<MedicationFormValue>(() => toFormValue(initial));
-  const isEdit = Boolean(initial);
+  // 저장 중에 닫으면 실패 안내를 볼 수 없다 - 저장이 끝날 때까지 닫지 않는다
+  const requestClose = () => {
+    if (isSubmitting) return;
+    onClose();
+  };
+  const { dialogRef, onDialogKeyDown, overlayProps } = useModalDialog<HTMLFormElement>({
+    onRequestClose: requestClose,
+    initialFocusSelector: 'input',
+  });
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -50,26 +65,28 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
     onSubmit(value);
   };
 
-  const adjustDoseAmount = (delta: number) => {
+  // 반알(0.5) → 1알 → 2알 … (등록과 같은 0.5 단위 규칙)
+  const adjustDoseAmount = (direction: 1 | -1) => {
     setValue(current => ({
       ...current,
-      doseAmount: Math.min(MAX_DOSE_AMOUNT, Math.max(MIN_DOSE_AMOUNT, current.doseAmount + delta)),
+      doseAmount: direction > 0 ? increaseDose(current.doseAmount) : decreaseDose(current.doseAmount),
     }));
   };
 
   return (
-    <div className={cx('overlay')} role="presentation" onClick={onClose}>
+    <div className={cx('overlay')} role="presentation" {...overlayProps}>
       <form
+        ref={dialogRef}
         className={cx('modal')}
         role="dialog"
         aria-modal="true"
-        aria-label={isEdit ? '약 수정' : '약 추가'}
-        onClick={event => event.stopPropagation()}
+        aria-label="약 수정"
         onSubmit={handleSubmit}
+        onKeyDown={onDialogKeyDown}
       >
         <header className={cx('header')}>
-          <h3>{isEdit ? '약 수정' : '약 추가'}</h3>
-          <button type="button" className={cx('close')} onClick={onClose} aria-label="닫기">
+          <h3>약 수정</h3>
+          <button type="button" className={cx('close')} onClick={requestClose} disabled={isSubmitting} aria-label="닫기">
             ×
           </button>
         </header>
@@ -124,7 +141,7 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
               >
                 −
               </button>
-              <span>{value.doseAmount}알</span>
+              <span>{formatDoseLabel(value.doseAmount)}</span>
               <button
                 type="button"
                 onClick={() => adjustDoseAmount(1)}
@@ -154,7 +171,7 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
             취소
           </button>
           <button type="submit" className={cx('submitButton')} disabled={!value.name.trim() || isSubmitting}>
-            {isSubmitting ? '저장 중...' : isEdit ? '수정' : '등록'}
+            {isSubmitting ? '저장 중...' : '수정'}
           </button>
         </footer>
       </form>

@@ -11,20 +11,22 @@
 .modal {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: min(540px, 100%);
+  gap: 14px;
+  box-sizing: border-box;
+  width: min(560px, 100%);
   max-height: calc(100svh - 40px);
   overflow: hidden auto;
   border-radius: 18px;
   background: #fff;
   box-shadow: var(--sb-shadow-lg);
   padding: 24px;
+  outline: none;
 }
 
 .status {
   margin: 0;
   color: var(--sb-ink-mute);
-  font-size: 0.875rem;
+  font-size: 16px;
   text-align: center;
 }
 
@@ -50,18 +52,18 @@
   border-radius: 999px;
   background: var(--sb-bg-soft);
   color: var(--sb-ink-soft);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 3px 10px;
+  padding: 4px 10px;
 }
 
 .statusBadge {
   border-radius: 999px;
-  background: var(--sb-sun-soft);
-  color: #b07f1f;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 10px;
 }
 
 .statusBadge.answered {
@@ -72,29 +74,31 @@
 .title {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 800;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .date {
   display: block;
   margin-top: 4px;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .closeButton {
   display: grid;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   place-items: center;
   border: 1px solid var(--sb-line);
   border-radius: 8px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .closeButton:hover {
@@ -104,31 +108,59 @@
 .content {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
 .replyBox {
-  border-left: 3px solid var(--sb-brand);
   border-radius: 12px;
-  background: var(--sb-brand-50);
+  background: var(--sb-bg-soft);
   color: var(--sb-ink);
-  font-size: 14px;
-  line-height: 1.7;
   padding: 14px 16px;
+}
+
+.replyText {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
+.replyDate {
+  display: block;
+  margin-top: 8px;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+}
+
 .replyLabel {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   color: var(--sb-brand);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .answerWaiting {
   margin: 0;
-  color: var(--sb-ink-mute);
-  font-size: 13px;
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 14px 16px;
+}
+
+.footerClose {
+  min-height: 50px;
+  margin-top: 6px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
 }

@@ -1,3 +1,5 @@
+import { decodeAccessTokenClaims } from './tokenClaims';
+
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
 let authRole: AuthRole | null = null;
@@ -5,12 +7,22 @@ let authRole: AuthRole | null = null;
 const ACCESS_TOKEN_KEY = 'careai_access_token';
 const REFRESH_TOKEN_KEY = 'careai_refresh_token';
 const LEGACY_AUTH_ROLE_KEY = 'careai_auth_role';
+// "로그인 유지"를 끈 로그인 표시. 세션 쿠키라 브라우저를 닫으면 토큰 쿠키와 함께 사라진다.
+// 토큰이 아니라 따로 두는 이유: 갱신(setAuthTokens)·읽기 때 다시 쓰는 쿠키도 처음 고른 방식을 따라야 한다
+const SESSION_ONLY_KEY = 'careai_session_only';
+const PERSISTENT_MAX_AGE_SECONDS = 604800;
 
 export type AuthRole = 'WARD' | 'GUARDIAN' | 'ADMIN';
 
-function setCookie(name: string, value: string) {
+function isSessionOnlyLogin() {
+  return getCookie(SESSION_ONLY_KEY) === '1';
+}
+
+// 로그인 유지(기본)는 7일, 유지를 끈 로그인은 max-age 없는 세션 쿠키로 쓴다
+function setCookie(name: string, value: string, sessionOnly = isSessionOnlyLogin()) {
   if (typeof document === 'undefined') return;
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=604800; SameSite=Lax`;
+  const maxAge = sessionOnly ? '' : `; max-age=${PERSISTENT_MAX_AGE_SECONDS}`;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/${maxAge}; SameSite=Lax`;
 }
 
 function removeCookie(name: string) {
@@ -33,7 +45,15 @@ function getSessionStorage() {
   return window.sessionStorage;
 }
 
-export function setAuthTokens(tokens: { accessToken: string; refreshToken: string; role?: AuthRole }) {
+function setLoginPersistence(remember: boolean) {
+  if (remember) removeCookie(SESSION_ONLY_KEY);
+  else setCookie(SESSION_ONLY_KEY, '1', true);
+}
+
+// remember 는 로그인할 때만 넘긴다. 갱신은 생략해 처음 고른 방식(유지/브라우저 닫으면 로그아웃)을 그대로 쓴다
+export function setAuthTokens(tokens: { accessToken: string; refreshToken: string; role?: AuthRole; remember?: boolean }) {
+  if (tokens.remember !== undefined) setLoginPersistence(tokens.remember);
+
   accessToken = tokens.accessToken;
   refreshToken = tokens.refreshToken;
   authRole = tokens.role ?? authRole;
@@ -71,6 +91,14 @@ export function getRefreshToken() {
   return refreshToken;
 }
 
+// 다른 탭이 갱신·로그아웃하면 쿠키만 바뀌고 이 탭의 메모리 값은 그대로다. 메모리를 버리고 저장소에서 다시 읽는다
+export function reloadAuthTokensFromStorage() {
+  accessToken = null;
+  refreshToken = null;
+
+  return { accessToken: getAccessToken(), refreshToken: getRefreshToken() };
+}
+
 export function getAuthRole() {
   const storage = getSessionStorage();
   storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
@@ -81,19 +109,8 @@ export function getAuthRole() {
 export function getAccessTokenSubject() {
   if (typeof window === 'undefined') return null;
 
-  const token = getAccessToken();
-  const payload = token?.split('.')[1];
-  if (!payload) return null;
-
-  try {
-    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, '=');
-    const decodedPayload = JSON.parse(window.atob(paddedPayload)) as { sub?: unknown };
-
-    return typeof decodedPayload.sub === 'string' ? decodedPayload.sub : null;
-  } catch {
-    return null;
-  }
+  const sub = decodeAccessTokenClaims(getAccessToken())?.sub;
+  return typeof sub === 'string' ? sub : null;
 }
 
 export function clearAuthTokens() {
@@ -107,4 +124,5 @@ export function clearAuthTokens() {
   storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
   removeCookie(ACCESS_TOKEN_KEY);
   removeCookie(REFRESH_TOKEN_KEY);
+  removeCookie(SESSION_ONLY_KEY);
 }

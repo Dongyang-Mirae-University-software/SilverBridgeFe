@@ -26,3 +26,13 @@ export async function uncheckMedicationIntake(medicationId: number) {
   const response = await apiClient.delete<CommonResponse<MedicationItem>>(`${WARD_BASE}/${medicationId}/intake`);
   return getResponseData<MedicationItem>(response);
 }
+
+// 같은 시간대 약 묶음 체크·해제(BE #369) - 전부 성공 또는 전부 실패, 약마다는 단건과 같은 멱등
+// 응답은 요청 순서대로 갱신된 항목 목록
+export async function setMedicationIntakeBatch(medicationIds: number[], taken: boolean) {
+  const response = await apiClient.post<CommonResponse<MedicationItem[]>>(`${WARD_BASE}/intake/batch`, {
+    medicationIds,
+    taken,
+  });
+  return getResponseData<MedicationItem[]>(response);
+}

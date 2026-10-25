@@ -1,0 +1,205 @@
+/* 119 키패드 - 휴대폰 전화 앱 키패드 모양, 색은 디자인 SOS 화면(#1a2530)을 따른다.
+   키 크기는 화면 너비·높이 중 작은 쪽에 맞추고, 글자는 큰 글씨 설정(루트 최대 28px)에서도 키패드가
+   한 화면에 들어오도록 상한을 둔다(기본 17px보다는 크게 유지) */
+.overlay {
+  --dial-bg: #1a2530;
+  --dial-key: rgba(255, 255, 255, 0.14);
+  --dial-key-active: rgba(255, 255, 255, 0.32);
+  /* 흰 아이콘 대비 3.79:1 (그래픽 기준 3:1) */
+  --dial-call: #25964a;
+  --dial-call-active: #1e7d3d;
+  /* 터치 영역 최소 48px - 가로 화면처럼 낮은 화면은 줄이지 않고 세로 스크롤로 받는다 */
+  --dial-key-size: max(48px, min(80px, 22vw, 9.6dvh));
+
+  position: fixed;
+  inset: 0;
+  z-index: 340;
+  overflow-y: auto;
+  background: var(--dial-bg);
+  color: #fff;
+  font-family: -apple-system, system-ui, 'Pretendard', sans-serif;
+  outline: none;
+}
+
+.screen {
+  box-sizing: border-box;
+  min-height: 100%;
+  width: min(420px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: min(16px, 2dvh);
+  padding: max(16px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notice {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: min(0.8125rem, 15px);
+  font-weight: 600;
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: min(1rem, 18px);
+  font-weight: 700;
+}
+
+.displayRow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  align-items: center;
+  margin-top: auto;
+}
+
+.displaySpacer {
+  width: 56px;
+}
+
+.display {
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: min(3rem, 13vw, 6dvh);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.backspace {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+}
+
+.backspace.hidden {
+  visibility: hidden;
+}
+
+.pad {
+  display: grid;
+  grid-template-columns: repeat(3, var(--dial-key-size));
+  gap: min(14px, 1.8dvh) min(26px, 6vw);
+  justify-content: center;
+}
+
+.key {
+  width: var(--dial-key-size);
+  height: var(--dial-key-size);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--dial-key);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.key:active {
+  background: var(--dial-key-active);
+}
+
+.keyDigit {
+  font-size: calc(var(--dial-key-size) * 0.42);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.keyDigit.symbol {
+  font-size: calc(var(--dial-key-size) * 0.38);
+}
+
+.keyLetters {
+  font-size: calc(var(--dial-key-size) * 0.13);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+
+.callRow {
+  display: flex;
+  justify-content: center;
+  margin-top: min(6px, 1dvh);
+}
+
+.callButton {
+  display: grid;
+  place-items: center;
+  width: var(--dial-key-size);
+  height: var(--dial-key-size);
+  border: 0;
+  border-radius: 50%;
+  background: var(--dial-call);
+  color: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.callButton:active {
+  background: var(--dial-call-active);
+}
+
+.key:focus-visible,
+.callButton:focus-visible,
+.backspace:focus-visible,
+.close:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.callNotice {
+  min-height: 1.5em;
+  margin: 0 0 auto;
+  font-size: min(1.0625rem, 20px);
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.callNotice.visible {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 10px 16px;
+}

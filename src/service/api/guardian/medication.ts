@@ -6,13 +6,12 @@ import { apiClient } from '@/lib/api/apiClient';
 import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import {
-  AddMedicationReq,
+  AddMedicationBatchReq,
   GuardianMedicationAlertSetting,
   MedicationItem,
-  MedicationSettingResponse,
+  MedicationOcrResponse,
   UpdateMedicationAlertSettingReq,
   UpdateMedicationReq,
-  UpdateMedicationSettingReq,
   WardMedicationSummary,
 } from '../../interface/medication';
 
@@ -24,13 +23,26 @@ export async function getGuardianMedications() {
   return getResponseData<WardMedicationSummary[]>(response) ?? [];
 }
 
-// 약 추가. doseTime 생략 시 슬롯 기본 시각, doseAmount 생략 시 1
-export async function addWardMedication(wardId: string, body: AddMedicationReq) {
-  const response = await apiClient.post<CommonResponse<MedicationItem>>(
-    `${GUARDIAN_BASE}/ward/${wardId}/medication`,
+// 약 여러 개 × 시각 여러 개 한 번에 추가 — 전부 성공 또는 전부 실패(일부만 등록되지 않는다)
+export async function addWardMedicationBatch(wardId: string, body: AddMedicationBatchReq) {
+  const response = await apiClient.post<CommonResponse<MedicationItem[]>>(
+    `${GUARDIAN_BASE}/ward/${wardId}/medication/batch`,
     body,
   );
-  return getResponseData<MedicationItem>(response);
+  return getResponseData<MedicationItem[]>(response) ?? [];
+}
+
+// 약 봉투 사진 인식(등록 초안). 서버는 사진·결과를 저장하지 않는다. AI 처리 상한 40초라 45초까지 기다린다
+export async function recognizeMedicationEnvelope(wardId: string, image: Blob, signal?: AbortSignal) {
+  const formData = new FormData();
+  formData.append('image', image, 'envelope.jpg');
+
+  const response = await apiClient.post<CommonResponse<MedicationOcrResponse>>(
+    `${GUARDIAN_BASE}/ward/${wardId}/medication/ocr`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 45_000, signal },
+  );
+  return getResponseData<MedicationOcrResponse>(response);
 }
 
 // 약 수정(부분 수정). timeSlot만 보내면 doseTime이 그 슬롯 기본 시각으로 갱신되므로,
@@ -48,20 +60,14 @@ export async function deleteGuardianMedication(medicationId: number) {
   return apiClient.delete<CommonResponse<null>>(`${GUARDIAN_BASE}/medication/${medicationId}`);
 }
 
-// 그 피보호자에게 보낼 알림 설정(복용 알림/재알림 ON-OFF) — 보호자들이 공유하는 값
-export async function getMedicationSetting(wardId: string) {
-  const response = await apiClient.get<CommonResponse<MedicationSettingResponse>>(
-    `${GUARDIAN_BASE}/ward/${wardId}/medication-setting`,
+// 약 여러 개 삭제(BE #371) - "아침 약 모두 삭제"·"약 전부 삭제". 화면에 보이는 약 ID를 보낸다(전부 성공 또는 전부 실패,
+// 이미 지워진 약은 건너뜀, 지난 복용 이력은 남음). data: 이번에 삭제한 수
+export async function deleteWardMedicationBatch(wardId: string, medicationIds: number[]) {
+  const response = await apiClient.post<CommonResponse<number>>(
+    `${GUARDIAN_BASE}/ward/${wardId}/medication/delete-batch`,
+    { medicationIds },
   );
-  return getResponseData<MedicationSettingResponse>(response);
-}
-
-export async function updateMedicationSetting(wardId: string, body: UpdateMedicationSettingReq) {
-  const response = await apiClient.put<CommonResponse<MedicationSettingResponse>>(
-    `${GUARDIAN_BASE}/ward/${wardId}/medication-setting`,
-    body,
-  );
-  return getResponseData<MedicationSettingResponse>(response);
+  return getResponseData<number>(response);
 }
 
 // 내가 그 피보호자 건 미복용 요약을 받을지 + 받을 시각 — 나(보호자)만의 값

@@ -15,6 +15,7 @@ import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
 import { applyMedicationTakenToGuardianCache, guardianMedicationQueryKey } from '@/service/query/guardian/medication';
 import { guardianAnomalyHistoryQueryKey } from '@/service/query/guardian/anomaly';
+import { guardianDashboardQueryKey } from '@/service/query/guardian/dashboard';
 import styles from './GuardianLayout.module.css';
 
 const cx = classNames.bind(styles);
@@ -63,6 +64,7 @@ function useGuardianConnectionSocket(realtimeUserId: string | undefined) {
         }
         if (payload.type === 'ANOMALY_DETECTED') {
           void queryClient.invalidateQueries({ queryKey: guardianAnomalyHistoryQueryKey });
+          void queryClient.invalidateQueries({ queryKey: guardianDashboardQueryKey });
         }
 
         // 카메라 분석 상태는 화면 표시용 데이터일 뿐이라 토스트·알림음을 띄우지 않는다 —

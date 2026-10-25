@@ -21,138 +21,116 @@
   letter-spacing: -0.02em;
 }
 
-.sub {
-  margin-top: 4px;
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-}
-
 .feedback {
   margin: 0;
   border-radius: 10px;
-  background: #dceee3;
-  color: var(--sb-safe);
-  font-size: 13px;
+  background: var(--sb-danger-soft);
+  color: var(--sb-danger);
+  font-size: 14px;
   font-weight: 700;
-  padding: 9px 14px;
+  padding: 10px 14px;
 }
 
-/* ── 피보호자 카드 그리드 ── */
+/* ── 연결된 가족 카드 그리드 ── */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 360px));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 16px;
+  max-width: 1000px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .card {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
-  padding: 28px 24px 22px;
-}
-
-.avatar {
-  display: grid;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 18px;
-  border: 4px solid #fff;
-  border-radius: 50%;
-  background: var(--sb-brand-50);
-  box-shadow: 0 0 0 1px var(--sb-line);
-  color: #5c4d3f;
-  font-size: 44px;
-  font-weight: 800;
-  overflow: hidden;
-  place-items: center;
-}
-
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  padding: 22px 24px 18px;
 }
 
 .cardHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding-bottom: 6px;
+  gap: 14px;
+  padding-bottom: 16px;
+}
+
+.cardTitle {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .cardName {
-  font-size: 22px;
+  color: var(--sb-ink);
+  font-size: 21px;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
-.statusBadge {
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: var(--sb-safe-soft);
-  color: var(--sb-safe);
-  font-size: 13px;
-  font-weight: 800;
-  padding: 4px 12px;
-  white-space: nowrap;
+.cardSub {
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.rows {
+  margin: 0;
 }
 
 .row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  border-top: 1px solid var(--sb-line-soft);
   padding: 11px 0;
-  border-bottom: 1px dashed var(--sb-line);
 }
 
-.rowIcon {
-  flex-shrink: 0;
+.row dt {
   color: var(--sb-ink-mute);
-}
-
-.rowLabel {
-  flex-shrink: 0;
-  color: var(--sb-ink-soft);
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
 }
 
-.rowValue {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
+.row dd {
+  margin: 0;
   color: var(--sb-ink);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  text-align: right;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
 }
 
 .cardFooter {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding-top: 14px;
 }
 
 .disconnectButton {
+  min-height: 44px;
   border: none;
-  border-radius: 10px;
-  background: var(--sb-brand);
-  color: #fff;
+  background: none;
+  color: var(--sb-ink-mute);
   cursor: pointer;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  padding: 10px 18px;
-  transition: filter 0.12s;
-}
-
-.disconnectButton:hover {
-  filter: brightness(0.95);
+  padding: 8px 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ── 연결 해제 확인 모달 ── */
@@ -248,7 +226,7 @@
     align-items: flex-start;
   }
 
-  .grid {
-    grid-template-columns: 1fr;
+  .row {
+    grid-template-columns: 96px minmax(0, 1fr);
   }
 }

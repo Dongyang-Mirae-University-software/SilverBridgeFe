@@ -1,4 +1,6 @@
+/* 안쪽 스크롤 영역을 absolute 요소의 기준으로 둔다. 없으면 기준을 잃은 요소가 바깥 문서를 늘려 아래에 빈 띠가 생긴다. */
 .stage {
+  position: relative;
   display: flex;
   height: 100dvh;
   overflow-x: hidden;

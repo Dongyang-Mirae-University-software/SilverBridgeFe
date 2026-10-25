@@ -5,66 +5,16 @@ import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
 import { formatDateTime } from '@/utils/format/date';
-import { Icon } from '@/components/Icon';
 import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import useModalStore from '@/store/modalStore';
 import { useWardSosMutation } from '@/service/query/ward';
 import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
 import type { WardSosResponse } from '@/service/interface/ward/sos';
+import { Emergency119Dialpad } from './Emergency119Dialpad';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
 
 const cx = classNames.bind(styles);
-
-const DIAL_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
-
-function Emergency119Dialpad({ guardianNotified, onClose }: { guardianNotified?: boolean; onClose: () => void }) {
-  const [digits, setDigits] = useState('119');
-
-  return (
-    <div className={cx('dialOverlay')} role="dialog" aria-modal="true" aria-label="119 신고 키패드">
-      <div className={cx('dialCard')}>
-        <div className={cx('dialHeader')}>
-          <span className={cx('dialNotice')}>학생 프로젝트 화면입니다 · 실제로 신고 전화가 발신되지 않습니다</span>
-          <button className={cx('dialClose')} type="button" onClick={onClose} aria-label="닫기">
-            ×
-          </button>
-        </div>
-
-        {guardianNotified && <p className={cx('dialGuardianNotice')}>보호자에게도 알렸습니다.</p>}
-
-        <div className={cx('dialDisplay')}>{digits || ' '}</div>
-
-        <div className={cx('dialPad')}>
-          {DIAL_KEYS.map(key => (
-            <button
-              key={key}
-              type="button"
-              className={cx('dialKey')}
-              onClick={() => setDigits(prev => (prev + key).slice(0, 15))}
-            >
-              {key}
-            </button>
-          ))}
-        </div>
-
-        <div className={cx('dialActions')}>
-          <button
-            className={cx('dialBackspace')}
-            type="button"
-            onClick={() => setDigits(prev => prev.slice(0, -1))}
-            aria-label="한 글자 지우기"
-          >
-            ⌫
-          </button>
-          <button className={cx('dialCallButton')} type="button" disabled aria-label="발신 불가(테스트 화면)">
-            <Icon name="phone" size={26} decorative />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function WardSosContent() {
   const { wardSettings } = useDashboard();
@@ -77,8 +27,8 @@ export default function WardSosContent() {
   const { mutate: triggerSos, mutateAsync: triggerSosAsync } = useWardSosMutation();
   const [isSending, setIsSending] = useState(false);
 
-  function openDialModal(guardianNotified?: boolean) {
-    openModal(<Emergency119Dialpad guardianNotified={guardianNotified} onClose={onCloseModal} />);
+  function openDialModal() {
+    openModal(<Emergency119Dialpad onClose={onCloseModal} />);
   }
 
   function openErrorModal(error: unknown) {
@@ -128,14 +78,21 @@ export default function WardSosContent() {
 
   // 2026-10-07: 확인 창 없이 탭하면 바로 전송한다. 활성 보호자가 있으면 설정값에 따라
   // 119 화면을 먼저 열거나(응답을 기다리지 않음) 완료 안내를 보여준다
+  // 2026-10-23: 연결된 보호자가 없어도 SOS를 보내 이력을 남긴다(BE는 알림 대상 0명이면 이력만 저장).
+  // 119 화면은 기다리지 않고 바로 열고, 알릴 사람이 없으니 실패해도 오류 창은 띄우지 않는다
+  // 2026-10-23(사용자 결정): 119 키패드에는 보호자 알림 진행·결과 문구를 띄우지 않는다 - 키패드만 열고, 실패는 오류 창으로 알린다
   function handleHeroPress() {
+    if (isSending) return;
+    setIsSending(true);
+
     if (!isLoadingGuardians && !hasActiveGuardians) {
       openDialModal();
+      triggerSosAsync(undefined)
+        .catch(() => {})
+        .finally(() => setIsSending(false));
       return;
     }
-    if (isSending) return;
 
-    setIsSending(true);
     if (wardSettings.sosAction === 'CALL_119_AND_NOTIFY') openDialModal();
 
     triggerSosAsync(undefined)
@@ -152,13 +109,10 @@ export default function WardSosContent() {
 
   return (
     <div className={cx('page')}>
+      {/* 디자인 SOS 화면(2026-10-23): 큰 빨간 버튼에 "SOS"와 안내 한 줄 */}
       <button className={cx('hero')} type="button" disabled={isSending} onClick={handleHeroPress}>
-        <div className={cx('heroIcon')}>
-          <Icon name="alert" size={48} decorative />
-        </div>
-        <span className={cx('heroEyebrow')}>SOS</span>
-        <h2>긴급 SOS</h2>
-        <p>{isSending ? '전송 중...' : '탭하여 즉시 도움 요청'}</p>
+        <span className={cx('heroTitle')}>SOS</span>
+        <span className={cx('heroSub')}>{isSending ? '보내는 중이에요…' : '도움이 필요하면 누르세요'}</span>
       </button>
 
       <WardGuardianCallSection

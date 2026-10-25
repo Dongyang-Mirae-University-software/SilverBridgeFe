@@ -43,4 +43,7 @@ AGENTS.md
 core.*
 
 /silverbridge/
+CareAI v10.0.html
 CareAI v11.0.html
+# 브라우저 컴포넌트 테스트(npm run test:browser) 실패 시 스크린샷
+__screenshots__/

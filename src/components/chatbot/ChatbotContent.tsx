@@ -8,6 +8,7 @@ import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { getAuthRole } from '@/lib/auth/tokenStore';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
+import { getHistoryWarning } from '@/service/api/chatPolicy';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { calcAge, type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
@@ -418,13 +419,17 @@ export default function ChatbotContent() {
               ) : historyItems.length === 0 ? (
                 <p className={styles.historyState}>아직 상담 기록이 없습니다.</p>
               ) : (
-                historyItems.map((log, index) => (
-                  <article key={log.id ?? `${log.createdAt ?? 'log'}-${index}`} className={styles.historyItem}>
-                    <time>{formatLogDate(log.createdAt)}</time>
-                    <strong>{log.message || '선택형 상담'}</strong>
-                    {log.reply && <p>{log.reply}</p>}
-                  </article>
-                ))
+                historyItems.map((log, index) => {
+                  const warning = getHistoryWarning(log.emergencyWarning);
+                  return (
+                    <article key={log.id ?? `${log.createdAt ?? 'log'}-${index}`} className={styles.historyItem}>
+                      <time>{formatLogDate(log.createdAt)}</time>
+                      <strong>{log.message || '선택형 상담'}</strong>
+                      {log.reply && <p>{log.reply}</p>}
+                      {warning && <p className={styles.historyWarning}>{warning}</p>}
+                    </article>
+                  );
+                })
               )}
             </div>
           </section>

@@ -21,7 +21,10 @@
 }
 
 .button.inline {
-  position: static;
+  /* 숨긴 라벨을 버튼 안에 가두려고 relative로 둔다. 떠 있는 버튼의 위치값(right·bottom·z-index)은 받지 않는다 */
+  position: relative;
+  inset: auto;
+  z-index: auto;
   width: 32px;
   min-width: 32px;
   height: 32px;

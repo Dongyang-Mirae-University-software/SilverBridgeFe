@@ -3,20 +3,18 @@
 import { QueryClient, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {
-  addWardMedication,
+  addWardMedicationBatch,
   deleteGuardianMedication,
+  deleteWardMedicationBatch,
   getGuardianMedications,
   getMedicationAlertSetting,
-  getMedicationSetting,
   updateGuardianMedication,
   updateMedicationAlertSetting,
-  updateMedicationSetting,
 } from '@/service/api/guardian/medication';
 import {
-  AddMedicationReq,
+  AddMedicationBatchReq,
   UpdateMedicationAlertSettingReq,
   UpdateMedicationReq,
-  UpdateMedicationSettingReq,
   WardMedicationSummary,
 } from '@/service/interface/medication';
 
@@ -58,12 +56,14 @@ function useInvalidateGuardianMedication() {
   return () => queryClient.invalidateQueries({ queryKey: guardianMedicationQueryKey });
 }
 
-export function useAddWardMedicationMutation() {
+export function useAddWardMedicationBatchMutation() {
   const invalidate = useInvalidateGuardianMedication();
   return useMutation({
-    mutationKey: ['guardian-medication-add'],
-    mutationFn: ({ wardId, body }: { wardId: string; body: AddMedicationReq }) => addWardMedication(wardId, body),
-    onSuccess: () => invalidate(),
+    mutationKey: ['guardian-medication-add-batch'],
+    mutationFn: ({ wardId, body }: { wardId: string; body: AddMedicationBatchReq }) =>
+      addWardMedicationBatch(wardId, body),
+    // 실패해도 새로고침한다 - 응답 전에 끊긴 요청은 서버에 등록됐을 수 있다(약 추가 모달이 목록에서 확인하라고 안내)
+    onSettled: () => invalidate(),
   });
 }
 
@@ -77,32 +77,24 @@ export function useUpdateGuardianMedicationMutation() {
   });
 }
 
+// 실패해도 목록을 다시 불러온다 - 다른 보호자가 그 사이 바꿨다면 바뀐 목록에서 다시 고를 수 있게
+export function useDeleteWardMedicationBatchMutation() {
+  const invalidate = useInvalidateGuardianMedication();
+  return useMutation({
+    mutationKey: ['guardian-medication-delete'],
+    mutationFn: ({ wardId, medicationIds }: { wardId: string; medicationIds: number[] }) =>
+      deleteWardMedicationBatch(wardId, medicationIds),
+    onSettled: () => invalidate(),
+  });
+}
+
 export function useDeleteGuardianMedicationMutation() {
   const invalidate = useInvalidateGuardianMedication();
   return useMutation({
     mutationKey: ['guardian-medication-delete'],
     mutationFn: (medicationId: number) => deleteGuardianMedication(medicationId),
-    onSuccess: () => invalidate(),
-  });
-}
-
-// 카드 목록(guardianMedicationQueryOptions) 응답에 alarmEnabled/remindAgainEnabled 초기값이
-// 이미 포함되어 있으므로 이 조회는 설정 화면을 별도로 열 때만 필요하다
-export function medicationSettingQueryOptions(wardId: string) {
-  return queryOptions({
-    queryKey: [...guardianMedicationQueryKey, 'setting', wardId] as const,
-    queryFn: () => getMedicationSetting(wardId),
-    enabled: Boolean(wardId),
-  });
-}
-
-export function useUpdateMedicationSettingMutation() {
-  const invalidate = useInvalidateGuardianMedication();
-  return useMutation({
-    mutationKey: ['guardian-medication-setting-update'],
-    mutationFn: ({ wardId, body }: { wardId: string; body: UpdateMedicationSettingReq }) =>
-      updateMedicationSetting(wardId, body),
-    onSuccess: () => invalidate(),
+    // 실패해도 다시 불러온다 - 다른 보호자가 그 사이 지웠다면 목록에서 빠진다(여러 개 삭제와 같게, 점검 L-2)
+    onSettled: () => invalidate(),
   });
 }
 

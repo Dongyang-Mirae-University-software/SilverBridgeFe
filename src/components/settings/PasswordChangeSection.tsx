@@ -14,9 +14,37 @@ import styles from './PasswordChangeSection.module.css';
 
 const cx = classNames.bind(styles);
 
-export function PasswordChangeSection({ isKakaoUser, variant = 'default' }: { isKakaoUser: boolean; variant?: 'default' | 'ward' }) {
+// 피보호자 화면은 해요체로 쓴다(디자인 기준)
+const COPY = {
+  default: {
+    desc: '로그인할 때 쓰는 비밀번호를 바꿉니다',
+    kakaoDesc: '카카오로 가입한 계정은 비밀번호가 없어 바꿀 수 없습니다.',
+    confirmPlaceholder: '새 비밀번호 확인',
+    shortError: '새 비밀번호는 8자 이상이어야 합니다.',
+    mismatchError: '새 비밀번호가 서로 다릅니다.',
+  },
+  ward: {
+    desc: '로그인할 때 쓰는 비밀번호를 바꿔요',
+    kakaoDesc: '카카오로 가입한 계정은 비밀번호가 없어 바꿀 수 없어요.',
+    confirmPlaceholder: '새 비밀번호 한 번 더',
+    shortError: '새 비밀번호는 8자 이상이어야 해요.',
+    mismatchError: '새 비밀번호가 서로 달라요.',
+  },
+};
+
+export function PasswordChangeSection({
+  isKakaoUser,
+  isAccountReady = true,
+  variant = 'default',
+}: {
+  isKakaoUser: boolean;
+  // 프로필을 받아 카카오 계정 여부를 확인했는지 - 확인 전에는 버튼을 막는다
+  isAccountReady?: boolean;
+  variant?: 'default' | 'ward';
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const copy = COPY[variant];
 
   const [form, setForm] = useState<IUserPasswordChangeReq & { newPasswordConfirm: string }>({
     currentPassword: '',
@@ -84,31 +112,35 @@ export function PasswordChangeSection({ isKakaoUser, variant = 'default' }: { is
       <div className={cx('row', { ward: variant === 'ward' })}>
         <div className={cx('meta')}>
           <span className={cx('label')}>비밀번호 변경</span>
-          <span className={cx('desc')}>
-            {isKakaoUser ? '카카오 가입 계정은 비밀번호를 변경할 수 없습니다.' : '로그인할 때 쓰는 비밀번호를 바꿉니다'}
-          </span>
+          <span className={cx('desc')}>{isKakaoUser ? copy.kakaoDesc : copy.desc}</span>
         </div>
-        {!isEditing && (
-          <button className={cx('ghostButton')} type="button" disabled={isKakaoUser || mutation.isPending} onClick={openEdit}>
+        {/* 카카오 가입 계정은 비밀번호가 없으므로 버튼 자체를 두지 않는다 */}
+        {!isKakaoUser && !isEditing && (
+          <button
+            className={cx('ghostButton')}
+            type="button"
+            disabled={!isAccountReady || mutation.isPending}
+            onClick={openEdit}
+          >
             변경
           </button>
         )}
       </div>
 
-      {isEditing && (
+      {!isKakaoUser && isEditing && (
         <form className={cx('editPanel', { ward: variant === 'ward' })} onSubmit={handleSubmit}>
-          <PasswordField label="현재 비밀번호" value={form.currentPassword} onChange={v => setForm(f => ({ ...f, currentPassword: v }))} />
-          <PasswordField label="새 비밀번호 (8자 이상)" value={form.newPassword} onChange={v => setForm(f => ({ ...f, newPassword: v }))} />
-          <PasswordField label="새 비밀번호 확인" value={form.newPasswordConfirm} onChange={v => setForm(f => ({ ...f, newPasswordConfirm: v }))} />
+          <PasswordField autoComplete="current-password" label="현재 비밀번호" value={form.currentPassword} onChange={v => setForm(f => ({ ...f, currentPassword: v }))} />
+          <PasswordField autoComplete="new-password" label="새 비밀번호 (8자 이상)" value={form.newPassword} onChange={v => setForm(f => ({ ...f, newPassword: v }))} />
+          <PasswordField autoComplete="new-password" label={copy.confirmPlaceholder} value={form.newPasswordConfirm} onChange={v => setForm(f => ({ ...f, newPasswordConfirm: v }))} />
 
           {(short || mismatch) && (
             <p className={cx('formError')}>
-              {short ? '새 비밀번호는 8자 이상이어야 합니다.' : '새 비밀번호가 서로 다릅니다.'}
+              {short ? copy.shortError : copy.mismatchError}
             </p>
           )}
 
           <div className={cx('editActions')}>
-            <button className={cx('ghostButton')} type="button" onClick={closeEdit}>
+            <button className={cx('ghostButton')} type="button" disabled={mutation.isPending} onClick={closeEdit}>
               취소
             </button>
             <button className={cx('primaryButton')} type="submit" disabled={!ok || mutation.isPending}>
@@ -121,6 +153,27 @@ export function PasswordChangeSection({ isKakaoUser, variant = 'default' }: { is
   );
 }
 
-function PasswordField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <input className={cx('field')} type="password" placeholder={label} value={value} onChange={e => onChange(e.target.value)} />;
+// autoComplete로 브라우저 비밀번호 관리자가 현재·새 비밀번호를 구분해 저장할 수 있게 한다
+function PasswordField({
+  autoComplete,
+  label,
+  value,
+  onChange,
+}: {
+  autoComplete: 'current-password' | 'new-password';
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <input
+      className={cx('field')}
+      type="password"
+      aria-label={label}
+      autoComplete={autoComplete}
+      placeholder={label}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+    />
+  );
 }
