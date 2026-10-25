@@ -35,7 +35,8 @@ export interface WardOption {
 
 // 건수는 불러온 목록을 세지 않고 요약 API 값을 쓴다(페이지·필터와 무관한 전체 기준).
 // 유형 필터는 서버 쿼리(?type=)로 걸어 페이지·전체 건수가 필터 기준이 된다.
-// 삭제된 카메라의 기록은 "전체"에 섞여 "삭제된 카메라"로 보이고, 그 기록만 보는 칩(?camera=DELETED)은 1건 이상일 때 보인다.
+// 요약 건수(전체·유형·확인 필요)는 지금 등록된 카메라 기준이라(BE 2026-10-25) 전체·유형 칩도 ?camera=EXISTING으로 받아 숫자와 목록을 맞춘다.
+// 삭제된 카메라의 기록은 그 기록만 보는 칩(?camera=DELETED)에서만 보이고, 칩은 1건 이상일 때 보인다.
 export function AnomalyHistoryContent({
   wards,
   selectedWardId,
@@ -54,7 +55,7 @@ export function AnomalyHistoryContent({
       size: PAGE_SIZE,
       wardId: selectedWardId,
       type: filter === 'ALL' || filter === 'DELETED_CAMERA' ? undefined : filter,
-      camera: filter === 'DELETED_CAMERA' ? 'DELETED' : undefined,
+      camera: filter === 'DELETED_CAMERA' ? 'DELETED' : 'EXISTING',
     }),
   );
   // 요약을 못 받으면 건수를 비워 둔다(0으로 채우지 않는다)

@@ -77,7 +77,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     Object.values(api).forEach(fn => fn.mockReset());
   });
 
-  it('칩 건수는 불러온 목록이 아니라 요약 값이고, 유형을 고르면 type 쿼리로 다시 받는다', async () => {
+  it('칩 건수는 불러온 목록이 아니라 요약 값이고, 유형을 고르면 type 쿼리로 다시 받는다 - 둘 다 지금 등록된 카메라 기준', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
     const screen = renderHistory();
 
@@ -87,13 +87,15 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     await expect.element(screen.getByRole('button', { name: '낙상 9' })).toBeInTheDocument();
     await expect.element(screen.getByRole('status')).toHaveTextContent('확인 필요 5');
     expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
-      expect.objectContaining({ wardId: 'W1', page: 0, size: 10, type: undefined }),
+      expect.objectContaining({ wardId: 'W1', page: 0, size: 10, type: undefined, camera: 'EXISTING' }),
     );
     expect(api.getGuardianAnomalyHistorySummary).toHaveBeenCalledWith('W1');
 
     await screen.getByRole('button', { name: '낙상 9' }).click();
     await vi.waitFor(() =>
-      expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'FALL', page: 0 })),
+      expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
+        expect.objectContaining({ type: 'FALL', camera: 'EXISTING', page: 0 }),
+      ),
     );
   });
 
@@ -162,7 +164,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     await expect.element(screen.getByRole('button', { name: '실제 위험이에요' })).toBeInTheDocument();
   });
 
-  it('삭제된 카메라의 기록은 목록에 회색 "삭제된 카메라"로 함께 보인다', async () => {
+  it('카메라 행이 없는 기록 카드는 위치 대신 회색 "삭제된 카메라"로 보인다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(11, { cameraLabel: null })]));
     const screen = renderHistory();
 
@@ -170,7 +172,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     expect(screen.getByRole('button', { name: /삭제된 카메라 기록/ }).query()).toBeNull();
   });
 
-  it('삭제된 카메라 칩은 요약 건수로 보이고, 누르면 camera=DELETED, 유형 칩으로 옮기면 카메라 필터가 풀린다', async () => {
+  it('삭제된 카메라 칩은 요약 건수로 보이고, 누르면 camera=DELETED, 유형 칩으로 옮기면 다시 camera=EXISTING', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1, { cameraLabel: null })]));
     api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 2 });
     const screen = renderHistory();
@@ -186,7 +188,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     await screen.getByRole('button', { name: '화재 20' }).click();
     await vi.waitFor(() =>
       expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
-        expect.objectContaining({ camera: undefined, type: 'FIRE', page: 0 }),
+        expect.objectContaining({ camera: 'EXISTING', type: 'FIRE', page: 0 }),
       ),
     );
   });
@@ -227,7 +229,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     await screen.getByRole('tab', { name: /남궁명진/ }).click();
     await vi.waitFor(() =>
       expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
-        expect.objectContaining({ wardId: 'W2', camera: undefined, type: undefined, page: 0 }),
+        expect.objectContaining({ wardId: 'W2', camera: 'EXISTING', type: undefined, page: 0 }),
       ),
     );
     await expect.element(screen.getByRole('button', { name: '전체 37' })).toHaveAttribute('aria-pressed', 'true');
