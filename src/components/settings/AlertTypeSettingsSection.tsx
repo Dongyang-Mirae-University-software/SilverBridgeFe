@@ -2,7 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
+import { useId } from 'react';
 
+import { Icon } from '@/components/Icon';
 import {
   guardianNotificationTypeSettingQueryOptions,
   useUpdateGuardianNotificationTypeSettingMutation,
@@ -25,8 +27,9 @@ const DEFAULT_SETTING: GuardianNotificationTypeSetting = {
 };
 
 const SAVE_ERROR_MESSAGE = '알림 설정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.';
+const LOCKED_REASON = '안전을 위해 끌 수 없어요';
 
-// SOS·이상 감지 발생 알림은 BE에서 required 잠금이라 끌 수 없다 - 스위치 대신 "항상 받아요"로 보여 준다.
+// SOS·이상 감지 발생 알림은 BE에서 required 잠금이라 끌 수 없다 - 켜진 채 잠긴 스위치로 보여 주고 저장하지 않는다.
 // 정서 변화·병원 예약 알림은 BE가 보내지 않는 알림이라 설정을 두지 않는다(거짓 설정 방지)
 export function AlertTypeSettingsSection() {
   const { data, isLoading, isError, isFetching, refetch } = useQuery(guardianNotificationTypeSettingQueryOptions);
@@ -46,27 +49,9 @@ export function AlertTypeSettingsSection() {
         <SettingsLoadError isRetrying={isFetching} onRetry={() => void refetch()} />
       ) : (
         <div className={cx('list')}>
-          <div className={cx('row')}>
-            <div className={cx('meta')}>
-              <div className={cx('titleRow')}>
-                <span className={cx('label')}>SOS 알림</span>
-                <span className={cx('badge')}>필수</span>
-              </div>
-              <span className={cx('desc')}>가족이 SOS를 누르면 알려 드려요. 끌 수 없는 안전 알림이에요</span>
-            </div>
-            <AlwaysOn />
-          </div>
+          <LockedToggleRow label="SOS 알림" desc="가족이 SOS를 누르면 알려 드려요." />
 
-          <div className={cx('row', 'groupHead')}>
-            <div className={cx('meta')}>
-              <div className={cx('titleRow')}>
-                <span className={cx('label')}>이상 감지 알림</span>
-                <span className={cx('badge')}>필수</span>
-              </div>
-              <span className={cx('desc')}>화재·흉기·낙상이 감지되면 바로 알려 드려요. 끌 수 없는 안전 알림이에요</span>
-            </div>
-            <AlwaysOn />
-          </div>
+          <LockedToggleRow groupHead label="이상 감지 알림" desc="화재·흉기·낙상이 감지되면 바로 알려 드려요." />
 
           <div className={cx('subGroup')}>
             <ToggleRow
@@ -100,8 +85,31 @@ export function AlertTypeSettingsSection() {
   );
 }
 
-function AlwaysOn() {
-  return <span className={cx('alwaysOn')}>항상 받아요</span>;
+// 끌 수 없는 필수 알림 - 다른 줄과 같은 스위치를 켜진 채 잠가 둔다(checked + disabled, onChange 없음 = 저장 요청 없음).
+// disabled input은 클릭 이벤트가 나지 않아 눌러도 반응이 없으면 고장처럼 보이므로, 감싼 label에서 받아 이유를 안내한다
+function LockedToggleRow({ desc, groupHead = false, label }: { desc: string; groupHead?: boolean; label: string }) {
+  const reasonId = useId();
+
+  return (
+    <div className={cx('row', { groupHead })}>
+      <div className={cx('meta')}>
+        <div className={cx('titleRow')}>
+          <span className={cx('label')}>{label}</span>
+          <span className={cx('badge')}>필수</span>
+        </div>
+        <span className={cx('desc')}>
+          {desc} <span id={reasonId} className={cx('lockedReason')}>{LOCKED_REASON}</span>
+        </span>
+      </div>
+      <div className={cx('lockedControl')}>
+        <Icon name="lock" size={14} className={cx('lockIcon')} />
+        <label className={cx('toggle', 'locked')} onClick={() => showToast(`${label}은 ${LOCKED_REASON}`)}>
+          <input type="checkbox" role="switch" aria-label={label} aria-describedby={reasonId} checked disabled readOnly />
+          <span className={cx('toggleThumb')} aria-hidden="true" />
+        </label>
+      </div>
+    </div>
+  );
 }
 
 function ToggleRow({
