@@ -96,18 +96,37 @@ afterEach(() => {
 });
 
 describe('알림 종류 (보호자)', () => {
-  it('SOS·이상 감지는 끄는 스위치 없이 "항상 받아요"로만 보인다', async () => {
+  it('SOS·이상 감지는 켜진 채 잠긴 스위치로 보이고, 이유 문구가 연결된다', async () => {
     const screen = render(withClient(<AlertTypeSettingsSection />));
     await expect.element(screen.getByText('SOS 알림')).toBeInTheDocument();
 
-    expect(screen.getByText('항상 받아요').elements()).toHaveLength(2);
-    expect(screen.getByRole('switch', { name: 'SOS 알림' }).elements()).toHaveLength(0);
-    expect(screen.getByRole('switch', { name: '이상 감지 알림' }).elements()).toHaveLength(0);
-    // 끌 수 있는 것은 판정 재촉·카메라 연결 끊김·복약 셋뿐
-    expect(screen.getByRole('switch').elements()).toHaveLength(3);
+    for (const name of ['SOS 알림', '이상 감지 알림']) {
+      const locked = screen.getByRole('switch', { name });
+      await expect.element(locked).toBeChecked();
+      await expect.element(locked).toBeDisabled();
+      await expect.element(locked).toHaveAccessibleDescription('안전을 위해 끌 수 없어요');
+    }
+    expect(document.body.textContent).not.toContain('항상 받아요');
+    // 잠긴 둘 + 끌 수 있는 판정 재촉·카메라 연결 끊김·복약 셋
+    expect(screen.getByRole('switch').elements()).toHaveLength(5);
     // BE가 보내지 않는 알림은 설정을 만들지 않는다
     expect(document.body.textContent).not.toContain('정서 변화');
     expect(document.body.textContent).not.toContain('병원 예약');
+  });
+
+  it('잠긴 스위치를 눌러도 꺼지지 않고 저장 요청 없이 이유만 안내한다', async () => {
+    const screen = render(withClient(<AlertTypeSettingsSection />));
+    const sos = screen.getByRole('switch', { name: 'SOS 알림' });
+    await expect.element(sos).toBeChecked();
+
+    // 실제 포인터로 스위치 모양을 누른다 - 잠긴 input은 클릭을 통과시켜 label이 받는다
+    const thumb = sos.element().closest('label')?.querySelector('span[aria-hidden="true"]') as HTMLElement;
+    // Playwright는 disabled 컨트롤의 label 안쪽을 비활성으로 보고 기다리므로 확인만 건너뛴다(좌표 클릭은 실제와 같다)
+    await userEvent.click(thumb, { force: true });
+
+    await expect.element(sos).toBeChecked();
+    expect(api.updateGuardianNotificationTypeSetting).not.toHaveBeenCalled();
+    expect(toast.showToast).toHaveBeenCalledWith('SOS 알림은 안전을 위해 끌 수 없어요');
   });
 
   it('토글하면 바로 반영되고 그 값으로 저장한다', async () => {

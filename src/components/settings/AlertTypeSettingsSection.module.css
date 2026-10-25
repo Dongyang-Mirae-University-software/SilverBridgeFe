@@ -56,22 +56,6 @@
   padding: 2px 8px;
 }
 
-/* 끌 수 없는 필수 알림 - 스위치 대신 상태 문구로 보여 준다 */
-.alwaysOn {
-  display: inline-flex;
-  min-height: 32px;
-  align-items: center;
-  flex-shrink: 0;
-  border: 1px solid var(--sb-line);
-  border-radius: 999px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-soft);
-  font-size: 12px;
-  font-weight: 800;
-  padding: 0 12px;
-  white-space: nowrap;
-}
-
 .desc {
   margin-top: 3px;
   color: var(--sb-ink-mute);
@@ -141,6 +125,31 @@
 .toggle input:disabled + .toggleThumb {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+/* 끌 수 없는 필수 알림 - 켜진 채 잠긴 스위치(흐림은 위 disabled 규칙) + 작은 자물쇠.
+   input이 스위치 전체를 덮고 있어 disabled input에서는 클릭이 나지 않으므로, 클릭을 label로 넘겨 안내 토스트를 띄운다 */
+.lockedControl {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.lockedReason {
+  white-space: nowrap; /* 이유 문구는 중간에서 끊기지 않게 한 덩어리로 넘긴다 */
+}
+
+.lockIcon {
+  color: var(--sb-ink-mute);
+}
+
+.locked {
+  cursor: not-allowed;
+}
+
+.locked input {
+  pointer-events: none;
 }
 
 /* 이상 감지 알림 아래에 묶이는 하위 설정(확인 요청·카메라 연결 끊김 안내) - 끌 수 있는 별개 설정이라 토글은 그대로 둔다.
