@@ -18,6 +18,7 @@ describe('관리자 대시보드 탭별 쿼리', () => {
     const inactive = adminOperationDashboardQueryOptions(false);
 
     expect(active.enabled).toBe(true);
+    expect(active.staleTime).toBe(30_000);
     expect(active.refetchInterval).toBe(30_000);
     expect(inactive.enabled).toBe(false);
     expect(inactive.refetchInterval).toBe(false);
