@@ -60,6 +60,8 @@ const STOP_DRAIN_TIMEOUT_MS = 3000;
 // 연속 업로드 실패가 이 횟수 또는 시간을 넘으면 사용자에게 알린다
 const MEDIA_PERMISSION_MESSAGE = '카메라를 켜지 못했어요. 브라우저의 카메라 권한을 확인해 주세요.';
 const RESTART_FAILED_MESSAGE = '카메라를 켜지 못했어요. 잠시 후 다시 시도해 주세요.';
+// 미리보기 중 화면 공유를 '공유 중지'로 끊었거나 카메라가 꺼졌을 때(송출 전이라 송출 루프가 알아채지 못한다)
+const PREVIEW_ENDED_MESSAGE = '미리보기가 끊겼어요. 다시 켜 주세요.';
 const CAMERA_STOPPED_MESSAGE = '카메라가 멈춰서 촬영을 껐어요. "카메라 켜기"를 눌러 다시 시작해 주세요.';
 
 function getCameraConstraints(facing: Exclude<CameraFacing, 'screen'>): MediaStreamConstraints {
@@ -180,6 +182,9 @@ export function CameraRegisterModal({
   // 카메라가 새 프레임을 주는지 보는 값들(멈춘 장면을 보내지 않고, 폰을 다시 켜면 카메라를 다시 켠다)
   const facingRef = useRef<CameraFacing>(facing);
   facingRef.current = facing;
+  // 지금 4단계 미리보기를 보여 주는 중인지 - 화면 선택·권한 창이 늦게 끝났을 때 그 결과를 쓸지 판단한다
+  const wantsPreviewRef = useRef(false);
+  wantsPreviewRef.current = isOpen && isWizard && wizardStep === 4;
   const staleSinceRef = useRef<number | null>(null);
   const recoveringRef = useRef(false);
   const lastRecoverAtRef = useRef(0);
@@ -268,11 +273,12 @@ export function CameraRegisterModal({
       setIsMediaTried(false);
       return;
     }
-    if (status !== 'off' || autoPreviewTriedRef.current) return;
+    // 이전 단계로 갔다 온 사이 지난번 켜기가 아직 끝나지 않았으면, 끝난 뒤(결과를 쓰거나 버린 뒤) 다시 본다
+    if (status !== 'off' || autoPreviewTriedRef.current || isMediaStarting) return;
     autoPreviewTriedRef.current = true;
     void handleStartMedia();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, isWizard, wizardStep, status]);
+  }, [isOpen, isWizard, wizardStep, status, isMediaStarting]);
 
   // 영상 크기는 권한을 받은 뒤·기기를 돌릴 때 바뀐다 - 그때마다 세로 여부를 다시 본다
   useEffect(() => {
@@ -399,6 +405,12 @@ export function CameraRegisterModal({
           : await navigator.mediaDevices.getUserMedia(getCameraConstraints(facing));
 
       mediaStreamRef.current = stream;
+      // 미리보기 중 트랙이 끝나면(공유 중지·카메라 분리) 미리보기를 끄고 다시 켜게 안내한다. 송출 중이면 송출 루프가 맡는다
+      stream.getVideoTracks()[0]?.addEventListener('ended', () => {
+        if (mediaStreamRef.current !== stream || liveSessionIdRef.current) return;
+        void handleStopMedia();
+        setErrorMessage(PREVIEW_ENDED_MESSAGE);
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         // 자동 재생에만 맡기지 않고 직접 시작한다(재생이 멈춰 있으면 송출 루프가 멈춘 장면으로 보고 보내지 않는다)
@@ -418,8 +430,14 @@ export function CameraRegisterModal({
     setIsMediaStarting(true);
     setIsMediaTried(true);
     setErrorMessage('');
+    const requestedFacing = facingRef.current;
     try {
-      if (!(await openMedia())) setErrorMessage(MEDIA_PERMISSION_MESSAGE);
+      const opened = await openMedia();
+      // 화면 선택·권한 창이 떠 있는 동안 창을 닫았거나 이전 단계로 갔거나 촬영 방식을 바꿨으면 결과를 버린다
+      // (그대로 두면 숨은 창에서 카메라·화면 공유가 켜진 채 남고, 다시 열면 4단계가 보였다)
+      const isStale = !wantsPreviewRef.current || facingRef.current !== requestedFacing;
+      if (opened && isStale) await handleStopMedia();
+      else if (!opened && !isStale) setErrorMessage(MEDIA_PERMISSION_MESSAGE);
     } finally {
       startingRef.current = false;
       setIsMediaStarting(false);
