@@ -63,6 +63,7 @@ export default function SignupPhoneVerificationStep({
         <div className={cx('phoneActionRow')}>
           <div className={cx('fieldGrow')}>
             <TextInput
+              variant="auth"
               label="전화번호"
               placeholder="01012345678"
               required

@@ -5,18 +5,18 @@
   flex: 0 0 36px;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e5d8c5;
+  border: 1.5px solid #f0d2bc;
   border-radius: 10px;
-  background: #fbf6f0;
+  background: var(--sb-bg);
   color: #5c4d3f;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .backButton:hover {
-  border-color: #d97757;
-  background: #fff8f3;
-  color: #d97757;
+  border-color: var(--sb-brand);
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
 }
 
 .progress {
@@ -29,12 +29,12 @@
   flex: 1;
   height: 6px;
   border-radius: 3px;
-  background: #efe3d2;
+  background: #f4dccb;
   transition: background 0.2s;
 }
 
 .progress span.active {
-  background: #d97757;
+  background: var(--sb-brand);
 }
 
 .header {
@@ -75,7 +75,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: #d97757;
+  color: var(--sb-brand);
   font-family: inherit;
   font-size: 0.8125rem;
   font-weight: 700;
@@ -88,11 +88,11 @@
 }
 
 .progress span.active {
-  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.1);
+  box-shadow: 0 0 0 3px rgba(176, 103, 77, 0.1);
 }
 
 .backButton:focus-visible,
 .loginLink:focus-visible {
-  outline: 3px solid rgba(217, 119, 87, 0.2);
+  outline: 3px solid rgba(176, 103, 77, 0.2);
   outline-offset: 3px;
 }

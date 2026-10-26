@@ -23,15 +23,15 @@
   gap: 10px;
   min-height: 72px;
   padding: 12px 14px;
-  border: 1.5px solid #e5d8c5;
+  border: 1.5px solid #f0d2bc;
   border-radius: 12px;
-  background: #fbf6f0;
+  background: var(--sb-bg);
   cursor: pointer;
 }
 
 .roleCard.active {
-  border: 2px solid #d97757;
-  background: #fbe7da;
+  border: 2px solid var(--sb-brand);
+  background: #fae7d9;
 }
 
 .roleCard.wardRole.active {
@@ -40,8 +40,8 @@
 }
 
 .roleCard.guardianRole.active {
-  border-color: #d97757;
-  background: #fbe7da;
+  border-color: var(--sb-brand);
+  background: #fae7d9;
 }
 
 .roleCard input {
@@ -80,7 +80,7 @@
 }
 
 .guardianRole.active .roleCopy strong {
-  color: #d97757;
+  color: var(--sb-brand);
 }
 
 .roleCopy small {
@@ -96,7 +96,7 @@
   place-items: center;
   flex-shrink: 0;
   border-radius: 999px;
-  background: #d97757;
+  background: var(--sb-brand);
   color: #ffffff;
   font-size: 0.6875rem;
   font-weight: 800;
@@ -107,7 +107,7 @@
 }
 
 .guardianRole.active .checkMark {
-  background: #d97757;
+  background: var(--sb-brand);
 }
 
 @media (max-width: 640px) {
@@ -131,5 +131,5 @@
 }
 
 .roleCard.active {
-  box-shadow: 0 10px 24px rgba(217, 119, 87, 0.14);
+  box-shadow: 0 10px 24px rgba(176, 103, 77, 0.14);
 }

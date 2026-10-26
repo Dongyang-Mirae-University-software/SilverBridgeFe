@@ -25,7 +25,7 @@
 }
 
 .requiredMark {
-  color: #d97757;
+  color: var(--sb-brand);
   font-size: 0.6875rem;
   font-weight: 800;
   vertical-align: super;
@@ -35,9 +35,9 @@
   display: flex;
   min-height: 48px;
   align-items: center;
-  border: 1.5px solid #e5d8c5;
+  border: 1.5px solid #f0d2bc;
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--sb-bg);
   padding: 0 14px;
 }
 
@@ -79,10 +79,10 @@
 .addressSearchButton {
   min-height: 48px;
   margin-top: 25px;
-  border: 1.5px solid #e5d8c5;
+  border: 1.5px solid #f0d2bc;
   border-radius: 12px;
-  background: #ffffff;
-  color: #5c4d3f;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 800;
@@ -98,9 +98,9 @@
   cursor: pointer;
   width: 100%;
   padding: 14px;
-  background: #d97757;
+  background: var(--sb-brand);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.3);
+  box-shadow: 0 4px 12px rgba(176, 103, 77, 0.22);
 }
 
 .button:disabled {
@@ -132,11 +132,11 @@
 }
 
 .selectBox:focus-within {
-  border-color: #d97757;
-  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.12);
+  border-color: var(--sb-brand);
+  box-shadow: 0 0 0 3px rgba(176, 103, 77, 0.12);
 }
 
 .addressSearchButton:hover:not(:disabled) {
-  border-color: #d97757;
-  background: #fff8f3;
+  border-color: var(--sb-brand);
+  background: var(--sb-brand-50);
 }

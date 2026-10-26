@@ -59,6 +59,7 @@ export default function SignupBasicInfoStep({
     <>
       <SignupRoleSelector role={allValues.role} register={register} />
       <TextInput
+        variant="auth"
         label="이름"
         placeholder="홍길동"
         required
@@ -67,6 +68,7 @@ export default function SignupBasicInfoStep({
         errorText={errors.name?.message}
       />
       <TextInput
+        variant="auth"
         label="이메일"
         placeholder="example@email.com"
         required
@@ -80,6 +82,7 @@ export default function SignupBasicInfoStep({
       {!isKakaoSignup && (
         <>
           <TextInput
+            variant="auth"
             label="비밀번호"
             placeholder="8자 이상"
             required
@@ -89,6 +92,7 @@ export default function SignupBasicInfoStep({
             errorText={errors.password?.message}
           />
           <TextInput
+            variant="auth"
             label="비밀번호 확인"
             placeholder="비밀번호 다시 입력"
             required
@@ -126,6 +130,7 @@ export default function SignupBasicInfoStep({
       </div>
       <div className={cx('addressSearchRow')}>
         <TextInput
+          variant="auth"
           label="우편번호"
           placeholder="주소 검색"
           required
@@ -141,6 +146,7 @@ export default function SignupBasicInfoStep({
         </button>
       </div>
       <TextInput
+        variant="auth"
         label="주소"
         placeholder="주소 검색으로 입력하세요"
         required
@@ -150,6 +156,7 @@ export default function SignupBasicInfoStep({
         errorText={errors.address?.message}
       />
       <TextInput
+        variant="auth"
         label="상세주소"
         placeholder="상세주소를 입력하세요"
         required
