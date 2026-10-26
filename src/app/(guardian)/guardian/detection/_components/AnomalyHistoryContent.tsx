@@ -128,7 +128,10 @@ export function AnomalyHistoryContent({
         {!isLoading && !isError && incidents.length === 0 && (
           <p className={cx('emptyText')}>
             {filter === 'ALL'
-              ? '감지 기록이 없어요'
+              ? // "전체"는 지금 등록된 카메라 기록만이라, 삭제된 카메라 기록이 있으면 아예 없는 것처럼 말하지 않는다
+                deletedCameraCount > 0
+                ? '지금 카메라의 감지 기록이 없어요. 삭제된 카메라의 기록은 "삭제된 카메라"에서 볼 수 있어요'
+                : '감지 기록이 없어요'
               : filter === 'DELETED_CAMERA'
                 ? '삭제된 카메라의 기록이 없어요'
                 : '이 유형의 감지 기록이 없어요'}

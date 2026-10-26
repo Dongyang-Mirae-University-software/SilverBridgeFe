@@ -202,6 +202,18 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     expect(screen.getByRole('button', { name: /삭제된 카메라/ }).query()).toBeNull();
   });
 
+  it('"전체"가 비었는데 삭제된 카메라 기록이 있으면 없다고 하지 않고 "삭제된 카메라"로 안내한다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([]));
+    api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, total: 0, deletedCameraCount: 4 });
+    const screen = renderHistory();
+
+    await expect
+      .element(screen.getByText('지금 카메라의 감지 기록이 없어요. 삭제된 카메라의 기록은 "삭제된 카메라"에서 볼 수 있어요'))
+      .toBeInTheDocument();
+    expect(screen.getByText('감지 기록이 없어요', { exact: true }).query()).toBeNull();
+    await expect.element(screen.getByRole('button', { name: '삭제된 카메라 4' })).toBeInTheDocument();
+  });
+
   it('피보호자를 바꾸면 필터(삭제된 카메라 포함)와 페이지가 처음으로 돌아간다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue({ ...page([incident(1, { cameraLabel: null })]), totalPages: 3, last: false });
     api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 2 });
