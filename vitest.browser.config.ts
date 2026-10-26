@@ -21,6 +21,7 @@ export default defineConfig({
       'dayjs',
       'dayjs/locale/ko',
       'next/link',
+      'next/image',
     ],
   },
   esbuild: { jsx: 'automatic' },
