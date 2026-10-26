@@ -43,7 +43,7 @@ function SafetyDashboard({ data, isLoading, isError, onRetry }: DashboardState<A
   return <div className={cx('stack')}>
     <section className={cx('serviceCard', { offline: !data.aiConnected })} aria-label="AI 서비스 상태">
       <div className={cx('sectionTitleRow')}><span className={cx('serviceIcon')}><Icon name={data.aiConnected ? 'check' : 'alert'} size={18} /></span><h2>AI 서비스 상태</h2><time>30초마다 갱신</time></div>
-      <div className={cx('serviceGrid')}><Metric label="AI 수신기" value={data.aiConnected ? '정상' : '연결 끊김'} tone={data.aiConnected ? 'safe' : 'warn'} /><Metric label="구독 중 세션" value={`${data.subscribedSessions}개`} /><Metric label="스트리밍 카메라" value={data.streamingCameras === null ? '확인 불가' : `${data.streamingCameras} / ${data.totalCameras}대`} tone={data.streamingCameras === null ? 'warn' : undefined} /></div>
+      <div className={cx('serviceGrid')}><Metric label="AI 수신기" value={data.aiConnected ? '정상' : '연결 끊김'} tone={data.aiConnected ? 'safe' : 'warn'} /><Metric label="구독 중 세션" value={`${data.subscribedSessions}개`} /><Metric label="카메라 상태" value={data.streamingCameras === null ? `등록 ${data.totalCameras}대 · 스트리밍 확인 불가` : `${data.streamingCameras} / ${data.totalCameras}대`} tone={data.streamingCameras === null ? 'warn' : undefined} /></div>
     </section>
     <div className={cx('primaryGrid')}>
       <section className={cx('card')}><div className={cx('cardHeading')}><h2>안전 이벤트</h2><span>확인이 필요한 항목</span></div><div className={cx('eventList')}>{events.map(event => <article className={cx('event', { alert: event.alert })} key={event.label}><div><strong>{event.label}</strong><p>{event.description}</p></div><b>{event.value}</b><Icon name="chevronRight" size={16} /></article>)}</div></section>
@@ -75,7 +75,7 @@ function OperationsDashboard({ data, isLoading, isError, onRetry }: DashboardSta
 function Metric({ label, value, tone }: { label: string; value: string; tone?: 'safe' | 'warn' }) { return <div className={cx('serviceItem', tone)}><i /><strong>{label}</strong><span>{value}</span></div>; }
 function ReviewItem({ label, value, detail, tone }: { label: string; value: number; detail?: string; tone?: 'danger' | 'warn' }) { return <div className={cx('reviewItem', tone)}><span>{label}</span><b>{value}건</b>{detail && <small>{detail}</small>}</div>; }
 function Pending({ icon, label, value }: { icon: IconName; label: string; value: number }) { return <div><Icon name={icon} size={17} /><span>{label}</span><b>{value}건</b></div>; }
-function DashboardNotice({ children, retry }: { children: string; retry?: () => void }) { return <section className={cx('notice')}><p>{children}</p>{retry && <button type="button" onClick={retry}>다시 시도</button>}</section>; }
+function DashboardNotice({ children, retry }: { children: string; retry?: () => void }) { return <section className={cx('notice')} aria-live="polite"><p>{children}</p>{retry && <button type="button" onClick={retry}>다시 시도</button>}</section>; }
 function Donut({ items, total }: { items: AdminSafetyDashboard['todayAnomaly']['byType']; total: number }) {
   const segments = items.reduce<Array<{ item: typeof items[number]; percent: number; offset: number }>>((result, item) => {
     const offset = result.at(-1) ? result.at(-1)!.offset + result.at(-1)!.percent : 0;
