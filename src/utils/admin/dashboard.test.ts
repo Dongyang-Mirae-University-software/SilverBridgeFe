@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatNullableCount, getReviewMetrics } from './dashboard';
+import { ADMIN_ANOMALY_TYPE_META, formatAdminTrendDate, formatNullableCount, getReviewMetrics } from './dashboard';
 
 describe('관리자 대시보드 집계 표시', () => {
   it('AI 연결 상태를 알 수 없는 null을 0으로 표시하지 않는다', () => {
@@ -22,5 +22,11 @@ describe('관리자 대시보드 집계 표시', () => {
       responseRate: 0,
       falseAlarmRate: 0,
     });
+  });
+
+  it('API에서 받은 유형만 레이블로 변환하고 가입 추이 날짜도 그대로 축약한다', () => {
+    expect(ADMIN_ANOMALY_TYPE_META.FIRE.label).toBe('화재');
+    expect(ADMIN_ANOMALY_TYPE_META.FALL.label).toBe('낙상');
+    expect(formatAdminTrendDate('2026-10-26')).toBe('10.26');
   });
 });
