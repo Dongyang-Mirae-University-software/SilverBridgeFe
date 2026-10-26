@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
-import { useId } from 'react';
+import { useId, useRef } from 'react';
 
 import { Icon } from '@/components/Icon';
 import {
@@ -28,6 +28,8 @@ const DEFAULT_SETTING: GuardianNotificationTypeSetting = {
 
 const SAVE_ERROR_MESSAGE = '알림 설정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.';
 const LOCKED_REASON = '안전을 위해 끌 수 없어요';
+// 안내 토스트가 떠 있는 동안(토스트 기본 4초)은 같은 줄의 안내를 다시 띄우지 않는다 - 연속 탭에 같은 토스트가 쌓이지 않게
+const LOCKED_TOAST_INTERVAL_MS = 4000;
 
 // SOS·이상 감지 발생 알림은 BE에서 required 잠금이라 끌 수 없다 - 켜진 채 잠긴 스위치로 보여 주고 저장하지 않는다.
 // 정서 변화·병원 예약 알림은 BE가 보내지 않는 알림이라 설정을 두지 않는다(거짓 설정 방지)
@@ -86,9 +88,17 @@ export function AlertTypeSettingsSection() {
 }
 
 // 끌 수 없는 필수 알림 - 다른 줄과 같은 스위치를 켜진 채 잠가 둔다(checked + disabled, onChange 없음 = 저장 요청 없음).
-// disabled input은 클릭 이벤트가 나지 않아 눌러도 반응이 없으면 고장처럼 보이므로, 감싼 label에서 받아 이유를 안내한다
+// disabled input은 클릭 이벤트가 나지 않아 눌러도 반응이 없으면 고장처럼 보이므로, 자물쇠·스위치를 감싼 칸에서 받아 이유를 안내한다
 function LockedToggleRow({ desc, groupHead = false, label }: { desc: string; groupHead?: boolean; label: string }) {
   const reasonId = useId();
+  const lastToastAt = useRef(0);
+
+  const showLockedReason = () => {
+    const now = Date.now();
+    if (now - lastToastAt.current < LOCKED_TOAST_INTERVAL_MS) return;
+    lastToastAt.current = now;
+    showToast(`${label}은 ${LOCKED_REASON}`);
+  };
 
   return (
     <div className={cx('row', { groupHead })}>
@@ -101,9 +111,9 @@ function LockedToggleRow({ desc, groupHead = false, label }: { desc: string; gro
           {desc} <span id={reasonId} className={cx('lockedReason')}>{LOCKED_REASON}</span>
         </span>
       </div>
-      <div className={cx('lockedControl')}>
+      <div className={cx('lockedControl')} onClick={showLockedReason}>
         <Icon name="lock" size={14} className={cx('lockIcon')} />
-        <label className={cx('toggle', 'locked')} onClick={() => showToast(`${label}은 ${LOCKED_REASON}`)}>
+        <label className={cx('toggle', 'locked')}>
           <input type="checkbox" role="switch" aria-label={label} aria-describedby={reasonId} checked disabled readOnly />
           <span className={cx('toggleThumb')} aria-hidden="true" />
         </label>

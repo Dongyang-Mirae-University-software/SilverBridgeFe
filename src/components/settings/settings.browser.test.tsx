@@ -129,6 +129,46 @@ describe('알림 종류 (보호자)', () => {
     expect(toast.showToast).toHaveBeenCalledWith('SOS 알림은 안전을 위해 끌 수 없어요');
   });
 
+  it('잠긴 스위치를 연달아 눌러도 안내는 한 번만, 자물쇠를 눌러도 안내한다', async () => {
+    const screen = render(withClient(<AlertTypeSettingsSection />));
+    const sos = screen.getByRole('switch', { name: 'SOS 알림' });
+    await expect.element(sos).toBeChecked();
+    const label = sos.element().closest('label') as HTMLLabelElement;
+    const thumb = label.querySelector('span[aria-hidden="true"]') as HTMLElement;
+
+    await userEvent.click(thumb, { force: true });
+    await userEvent.click(thumb, { force: true });
+    await userEvent.click(thumb, { force: true });
+    expect(toast.showToast).toHaveBeenCalledTimes(1);
+
+    // 다른 줄(이상 감지)은 따로 안내하고, 스위치 왼쪽 자물쇠 자리도 누르는 자리에 든다
+    const anomaly = screen.getByRole('switch', { name: '이상 감지 알림' });
+    const control = anomaly.element().closest('label')?.parentElement as HTMLElement;
+    await userEvent.click(control, { force: true, position: { x: 1, y: control.getBoundingClientRect().height / 2 } });
+    expect(toast.showToast).toHaveBeenLastCalledWith('이상 감지 알림은 안전을 위해 끌 수 없어요');
+    expect(toast.showToast).toHaveBeenCalledTimes(2);
+    expect(api.updateGuardianNotificationTypeSetting).not.toHaveBeenCalled();
+  });
+
+  it('스위치는 모양보다 넓은 44px 높이를 눌러도 켜고 끌 수 있다', async () => {
+    api.updateGuardianNotificationTypeSetting.mockResolvedValue({
+      ...TYPE_SETTING,
+      medication: { enabled: false, required: false },
+    });
+    const screen = render(withClient(<AlertTypeSettingsSection />));
+    const medication = screen.getByRole('switch', { name: '복약 알림' });
+    await expect.element(medication).toBeChecked();
+    const label = medication.element().closest('label') as HTMLLabelElement;
+    const box = label.getBoundingClientRect();
+
+    // 모양(26px) 위쪽 7px - 넓힌 영역 안
+    expect(document.elementFromPoint(box.left + box.width / 2, box.top - 7)).toBe(label);
+    await userEvent.click(label, { position: { x: box.width / 2, y: -7 } });
+
+    await expect.element(medication).not.toBeChecked();
+    expect(api.updateGuardianNotificationTypeSetting).toHaveBeenCalledWith({ medication: false });
+  });
+
   it('토글하면 바로 반영되고 그 값으로 저장한다', async () => {
     api.updateGuardianNotificationTypeSetting.mockResolvedValue({
       ...TYPE_SETTING,
@@ -174,6 +214,16 @@ describe('알림 방법 (채널)', () => {
     expect(labels).toEqual(['카카오톡 알림톡', '푸시 알림', 'SMS 문자', '이메일 알림']);
     await expect.element(screen.getByRole('switch', { name: '이메일 알림' })).toBeEnabled();
     expect(document.body.textContent).not.toContain('준비 중');
+  });
+
+  it('채널 스위치도 모양보다 넓은 44px 높이를 누를 수 있다', async () => {
+    const screen = render(withClient(<NotificationSettingsSection />));
+    const toggles = screen.getByRole('switch');
+    await expect.element(toggles.first()).toBeInTheDocument();
+    const label = toggles.first().element().closest('label') as HTMLLabelElement;
+    const box = label.getBoundingClientRect();
+
+    expect(document.elementFromPoint(box.left + box.width / 2, box.bottom + 7)).toBe(label);
   });
 
   it('서버 오류면 화면 값을 되돌리고 안내한다', async () => {
