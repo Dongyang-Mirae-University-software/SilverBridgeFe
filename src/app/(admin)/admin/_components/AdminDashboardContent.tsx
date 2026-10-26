@@ -74,7 +74,13 @@ function OperationsDashboard({ data, isLoading, isError, onRetry }: DashboardSta
 
 function Metric({ label, value, tone }: { label: string; value: string; tone?: 'safe' | 'warn' }) { return <div className={cx('serviceItem', tone)}><i /><strong>{label}</strong><span>{value}</span></div>; }
 function ReviewItem({ label, value, detail, tone }: { label: string; value: number; detail?: string; tone?: 'danger' | 'warn' }) { return <div className={cx('reviewItem', tone)}><span>{label}</span><b>{value}건</b>{detail && <small>{detail}</small>}</div>; }
-function Pending({ icon, label, value }: { icon: IconName; label: string; value: number }) { return <div><Icon name={icon} size={17} /><span>{label}</span><b>{value}건</b></div>; }
+function Pending({ icon, label, value }: { icon: IconName; label: string; value: number }) {
+  return <div>
+    <span className={cx('pendingIcon')}><Icon name={icon} size={17} /></span>
+    <span className={cx('pendingLabel')}>{label}</span>
+    <b>{value}건</b>
+  </div>;
+}
 function DashboardNotice({ children, retry }: { children: string; retry?: () => void }) { return <section className={cx('notice')} aria-live="polite"><p>{children}</p>{retry && <button type="button" onClick={retry}>다시 시도</button>}</section>; }
 function Donut({ items, total }: { items: AdminSafetyDashboard['todayAnomaly']['byType']; total: number }) {
   const segments = items.reduce<Array<{ item: typeof items[number]; percent: number; offset: number }>>((result, item) => {
