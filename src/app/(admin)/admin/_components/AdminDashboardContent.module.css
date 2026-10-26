@@ -17,6 +17,7 @@
 .serviceItem span { color: var(--sb-safe); font-size: 11.5px; font-weight: 800; white-space: nowrap; }
 .serviceItem.warn { border-color: var(--sb-warn); background: var(--sb-warn-soft); }.serviceItem.warn i { background: var(--sb-warn); }.serviceItem.warn span { color: var(--sb-warn); }.serviceItem.safe i { background: var(--sb-safe); }
 .serviceCard.offline { border-color: var(--sb-warn); }
+.serviceCard.offline .serviceIcon { background: var(--sb-warn); color: #fff; }
 .primaryGrid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 14px; align-items: stretch; }
 .cardHeading { margin-bottom: 13px; }.cardHeading > span:not(.allLink) { color: var(--sb-ink-mute); font-size: 11px; font-weight: 700; }
 .allLink { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; color: var(--sb-brand); font-size: 12px; font-weight: 700; }

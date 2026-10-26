@@ -42,7 +42,7 @@ function SafetyDashboard({ data, isLoading, isError, onRetry }: DashboardState<A
   const reviewMetrics = getReviewMetrics(todayAnomaly.review, todayAnomaly.total);
   return <div className={cx('stack')}>
     <section className={cx('serviceCard', { offline: !data.aiConnected })} aria-label="AI 서비스 상태">
-      <div className={cx('sectionTitleRow')}><span className={cx('serviceIcon')}><Icon name={data.aiConnected ? 'check' : 'alert'} size={18} /></span><h2>AI 서비스 상태</h2><time>30초마다 갱신</time></div>
+      <div className={cx('sectionTitleRow')}><span className={cx('serviceIcon')}><Icon name={data.aiConnected ? 'activity' : 'alert'} size={18} /></span><h2>AI 서비스 상태</h2><time>30초마다 갱신</time></div>
       <div className={cx('serviceGrid')}><Metric label="AI 수신기" value={data.aiConnected ? '정상' : '연결 끊김'} tone={data.aiConnected ? 'safe' : 'warn'} /><Metric label="구독 중 세션" value={`${data.subscribedSessions}개`} /><Metric label="카메라 상태" value={data.streamingCameras === null ? `등록 ${data.totalCameras}대 · 스트리밍 확인 불가` : `${data.streamingCameras} / ${data.totalCameras}대`} tone={data.streamingCameras === null ? 'warn' : undefined} /></div>
     </section>
     <div className={cx('primaryGrid')}>
