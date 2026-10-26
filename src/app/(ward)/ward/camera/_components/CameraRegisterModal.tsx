@@ -68,6 +68,8 @@ function getCameraConstraints(facing: Exclude<CameraFacing, 'screen'>): MediaStr
     audio: false,
   };
 }
+// 서비스 전체 카메라 등록 상한(409 CAMERA_LIMIT_REACHED) - 서버 문구 대신 할 일을 알려 준다
+const CAMERA_LIMIT_MESSAGE = '지금은 카메라를 더 등록할 수 없어요. 쓰지 않는 카메라를 등록 해제한 뒤 다시 시도해 주세요.';
 const START_AFTER_REGISTER_FAILED_MESSAGE = '카메라는 등록됐지만 촬영을 시작하지 못했어요. 아래 버튼을 눌러 다시 시작해 주세요.';
 
 function getErrorCode(error: unknown) {
@@ -185,6 +187,10 @@ export function CameraRegisterModal({
   const refreshOnFirstUploadRef = useRef(false);
   // 권한 프롬프트·재시작 중 중복 실행 방지(state 는 비동기라 같은 틱의 두 번째 호출을 못 막는다)
   const startingRef = useRef(false);
+  // 미리보기 카메라·화면 선택 창이 떠 있는 동안 true - 버튼 문구용이라 ref 가 아니라 state 로 둔다
+  const [isMediaStarting, setIsMediaStarting] = useState(false);
+  // 4단계에서 미리보기를 한 번이라도 켜 봤는지 - 시도 전(첫 화면)에는 '다시 켜기'를 보이지 않는다
+  const [isMediaTried, setIsMediaTried] = useState(false);
   const failSinceRef = useRef<number | null>(null);
   const onUnstableChangeRef = useRef(onUnstableChange);
   onUnstableChangeRef.current = onUnstableChange;
@@ -259,6 +265,7 @@ export function CameraRegisterModal({
   useEffect(() => {
     if (!isOpen || !isWizard || wizardStep !== 4) {
       autoPreviewTriedRef.current = false;
+      setIsMediaTried(false);
       return;
     }
     if (status !== 'off' || autoPreviewTriedRef.current) return;
@@ -408,11 +415,14 @@ export function CameraRegisterModal({
   const handleStartMedia = async () => {
     if (startingRef.current) return;
     startingRef.current = true;
+    setIsMediaStarting(true);
+    setIsMediaTried(true);
     setErrorMessage('');
     try {
       if (!(await openMedia())) setErrorMessage(MEDIA_PERMISSION_MESSAGE);
     } finally {
       startingRef.current = false;
+      setIsMediaStarting(false);
     }
   };
 
@@ -809,6 +819,10 @@ export function CameraRegisterModal({
       setErrorMessage('방금 다른 기기에서 그 방을 등록했어요. 다른 방을 골라 주세요.');
       return;
     }
+    if (getErrorCode(result.error) === 'CAMERA_LIMIT_REACHED') {
+      setErrorMessage(CAMERA_LIMIT_MESSAGE);
+      return;
+    }
     setErrorMessage(getErrorMessage(result.error, '카메라 등록에 실패했습니다. 다시 시도해 주세요.'));
   };
 
@@ -826,6 +840,8 @@ export function CameraRegisterModal({
   const title = getModalTitle(initialRoom, status === 'streaming');
   const viewBadge = isViewOnly ? getCardStatus({ status: connectionStatus, isThisDevice: true, isConnecting }) : null;
   const isRegisterBusy = registerMutation.isPending || isStartingStream || isRegistering;
+  // 4단계 첫 화면·화면 선택(권한) 창이 떠 있는 동안은 '다시 켜기'가 아니라 켜는 중으로 보인다
+  const isPreviewPending = isMediaStarting || (status === 'off' && !isMediaTried);
   // 영상이 보이는 화면(미리보기·화면 보기)에서만 안내한다
   const showRotateHint = isPreviewVisible && status !== 'off' && facing !== 'screen' && isPortrait;
 
@@ -1011,9 +1027,14 @@ export function CameraRegisterModal({
                 </span>
               </p>
             )}
-
-            {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
           </div>
+
+          {/* 스크롤 영역 맨 아래에 두면 영상·요약에 밀려 보이지 않았다(등록 실패가 '반응 없음'으로 보임) - 버튼 바로 위에 둔다 */}
+          {errorMessage && (
+            <p className={cx('error')} role="alert">
+              {errorMessage}
+            </p>
+          )}
 
           <footer className={cx('footer')}>
             {isViewOnly ? (
@@ -1040,6 +1061,10 @@ export function CameraRegisterModal({
                     onClick={handleWizardNext}
                   >
                     {wizardStep === 2 ? '이렇게 놓았어요' : '다음'}
+                  </button>
+                ) : isPreviewPending ? (
+                  <button type="button" className={cx('primaryButton')} disabled>
+                    {facing === 'screen' ? '화면을 고르는 중...' : '카메라를 켜는 중...'}
                   </button>
                 ) : status === 'off' ? (
                   <button type="button" className={cx('primaryButton')} onClick={() => void handleStartMedia()}>
