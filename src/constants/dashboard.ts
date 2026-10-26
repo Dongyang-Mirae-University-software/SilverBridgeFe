@@ -27,6 +27,11 @@ export const GUARDIAN_NAV: NavItem[] = [
   { href: '/guardian/settings', icon: 'settings', label: '환경설정', key: 'settings' },
 ];
 
+// 관리자 메뉴는 관리자 API 화면이 추가되는 순서에 맞춰 확장한다. 현재는 대시보드만 제공한다.
+export const ADMIN_NAV: NavItem[] = [
+  { href: '/admin', icon: 'dashboard', label: '대시보드', key: 'dashboard' },
+];
+
 export const WARD_ACTIONS = [
   { href: '/ward/sos', label: '긴급전화' },
   { href: '/ward/medication', label: '복약 알림' },

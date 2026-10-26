@@ -4,7 +4,9 @@ export function getRoleHomePath(role: AuthRole) {
   if (role === 'WARD') return '/ward';
   if (role === 'GUARDIAN') return '/guardian';
 
-  return '/guardian';
+  if (role === 'ADMIN') return '/admin';
+
+  return '/login';
 }
 
 export function getRoleLabel(role: AuthRole) {

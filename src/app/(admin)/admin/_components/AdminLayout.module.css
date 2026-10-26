@@ -1,0 +1,24 @@
+.stage {
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  background: var(--sb-bg);
+  color: var(--sb-ink);
+}
+
+.main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+}
+
+.main > * {
+  width: 100%;
+  min-width: 0;
+  padding: 46px 32px 28px;
+}
+
+@media (max-width: 1260px) {
+  .stage { flex-direction: column; }
+  .main > * { padding: 18px 18px calc(28px + env(safe-area-inset-bottom)); }
+}
