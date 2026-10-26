@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react';
 import classNames from 'classnames/bind';
 
+import ActivityIcon from '@/assets/icons/activity.svg';
 import AlertIcon from '@/assets/icons/alert.svg';
 import ArrowLeftIcon from '@/assets/icons/arrow-left.svg';
 import AvatarEditIcon from '@/assets/icons/avatar-edit.svg';
@@ -17,6 +18,7 @@ import CheckIcon from '@/assets/icons/check.svg';
 import ChevronRightIcon from '@/assets/icons/chevron-right.svg';
 import DashboardIcon from '@/assets/icons/dashboard.svg';
 import EyeIcon from '@/assets/icons/eye.svg';
+import FileTextIcon from '@/assets/icons/file-text.svg';
 import GameIcon from '@/assets/icons/game.svg';
 import GearIcon from '@/assets/icons/gear.svg';
 import HandshakeIcon from '@/assets/icons/handshake.svg';
@@ -48,6 +50,7 @@ import styles from './Icon.module.css';
 const cx = classNames.bind(styles);
 
 const ICONS = {
+  activity: ActivityIcon,
   alert: AlertIcon,
   arrowLeft: ArrowLeftIcon,
   avatarEdit: AvatarEditIcon,
@@ -62,6 +65,7 @@ const ICONS = {
   chevronRight: ChevronRightIcon,
   dashboard: DashboardIcon,
   eye: EyeIcon,
+  fileText: FileTextIcon,
   game: GameIcon,
   gear: GearIcon,
   handshake: HandshakeIcon,
