@@ -61,14 +61,13 @@ function SafetyDashboard({ data, isLoading, isError, onRetry }: DashboardState<A
 function OperationsDashboard({ data, isLoading, isError, onRetry }: DashboardState<AdminOperationDashboard>) {
   if (isLoading) return <DashboardNotice>운영 현황을 불러오는 중입니다.</DashboardNotice>;
   if (isError || !data) return <DashboardNotice retry={onRetry}>운영 현황을 불러오지 못했습니다.</DashboardNotice>;
-  const maxTrend = Math.max(1, ...data.signupTrend.map(item => item.count));
-  const stats: Array<{ label: string; value: string; icon: IconName; note?: string }> = [
-    { label: '전체 회원', value: `${data.totalUsers}명`, icon: 'users', note: `오늘 신규 ${data.newUsersToday}명` }, { label: '연결 대기', value: `${data.pendingConnections}건`, icon: 'users' },
-    { label: '미답변 문의', value: `${data.unansweredInquiries.count}건`, icon: 'messageCircle', note: data.unansweredInquiries.longestWaitingHours === null ? '대기 문의 없음' : `최장 ${data.unansweredInquiries.longestWaitingHours}시간` }, { label: '카메라 등록', value: `${data.cameras.registered}대`, icon: 'camera', note: `${data.cameras.wards}명 사용` },
+  const stats: Array<{ label: string; value: string; icon: IconName; note?: string; tone: 'brand' | 'sun' }> = [
+    { label: '전체 회원', value: `${data.totalUsers}명`, icon: 'users', note: `오늘 신규 ${data.newUsersToday}명`, tone: 'brand' }, { label: '연결 대기', value: `${data.pendingConnections}건`, icon: 'users', tone: 'sun' },
+    { label: '미답변 문의', value: `${data.unansweredInquiries.count}건`, icon: 'messageCircle', note: data.unansweredInquiries.longestWaitingHours === null ? '대기 문의 없음' : `최장 ${data.unansweredInquiries.longestWaitingHours}시간`, tone: 'sun' }, { label: '카메라 등록', value: `${data.cameras.registered}대`, icon: 'eye', note: `${data.cameras.wards}명 사용`, tone: 'brand' },
   ];
-  return <div className={cx('stack')}><div className={cx('statGrid')}>{stats.map(stat => <section className={cx('stat')} key={stat.label}><span><Icon name={stat.icon} size={16} />{stat.label}</span><b>{stat.value}</b>{stat.note && <small>{stat.note}</small>}</section>)}</div>
-    <div className={cx('operationsGrid')}><section className={cx('card')}><div className={cx('cardHeading')}><h2>회원 구성</h2></div><div className={cx('memberTypes')}><div><span>피보호자</span><b>{data.memberComposition.wards}명</b></div><div><span>보호자</span><b>{data.memberComposition.guardians}명</b></div></div><p className={cx('recentTitle')}>최근 7일 신규 가입</p><div className={cx('trend')} aria-label="최근 7일 신규 가입 추이">{data.signupTrend.map(item => <span key={item.date} style={{ height: `${Math.max(4, item.count / maxTrend * 65)}px` }}><b>{item.count}</b><i>{formatAdminTrendDate(item.date)}</i></span>)}</div></section>
-      <section className={cx('card')}><div className={cx('cardHeading')}><h2>처리 대기 항목</h2></div><div className={cx('pendingList')}><Pending icon="users" label="피보호자 연결 요청" value={data.pendingItems.connectionRequests} /><Pending icon="messageCircle" label="오늘 접수된 문의" value={data.pendingItems.todayInquiries} /><Pending icon="bell" label="공지사항 임시저장" value={data.pendingItems.announcementDrafts} /></div></section></div>
+  return <div className={cx('stack')}><div className={cx('statGrid')}>{stats.map(stat => <section className={cx('stat')} key={stat.label}><span className={cx('statLabel')}><i className={cx('statIcon', stat.tone)}><Icon name={stat.icon} size={16} /></i>{stat.label}</span><b>{stat.value}</b>{stat.note && <small>{stat.note}</small>}</section>)}</div>
+    <div className={cx('operationsGrid')}><section className={cx('card')}><div className={cx('cardHeading')}><h2>회원 구성</h2></div><div className={cx('memberTypes')}><div><span>피보호자</span><b>{data.memberComposition.wards}명</b></div><div><span>보호자</span><b>{data.memberComposition.guardians}명</b></div></div><p className={cx('recentTitle')}>최근 7일 신규 가입</p><SignupTrendChart trend={data.signupTrend} /></section>
+      <section className={cx('card')}><div className={cx('cardHeading')}><h2>처리 대기 항목</h2></div><div className={cx('pendingList')}><Pending icon="users" label="피보호자 연결 요청" value={data.pendingItems.connectionRequests} /><Pending icon="messageCircle" label="오늘 접수된 문의" value={data.pendingItems.todayInquiries} /><Pending icon="fileText" label="공지사항 임시저장" value={data.pendingItems.announcementDrafts} /></div></section></div>
   </div>;
 }
 
@@ -80,6 +79,20 @@ function Pending({ icon, label, value }: { icon: IconName; label: string; value:
     <span className={cx('pendingLabel')}>{label}</span>
     <b>{value}건</b>
   </div>;
+}
+function SignupTrendChart({ trend }: { trend: AdminOperationDashboard['signupTrend'] }) {
+  const width = 380;
+  const height = 46;
+  const pad = 8;
+  const max = Math.max(1, ...trend.map(item => item.count));
+  const x = (index: number) => pad + index * (width - pad * 2) / Math.max(1, trend.length - 1);
+  const y = (value: number) => height - value / max * (height - 10) - 4;
+  const points = trend.map((item, index) => `${x(index)},${y(item.count)}`).join(' ');
+  const lastIndex = trend.length - 1;
+  return <svg className={cx('trendChart')} viewBox={`0 0 ${width} ${height + 16}`} role="img" aria-label="최근 7일 신규 가입 추이">
+    <polyline points={points} fill="none" stroke="var(--sb-brand-soft)" strokeWidth="2.5" />
+    {trend.map((item, index) => <g key={item.date}><circle cx={x(index)} cy={y(item.count)} r={index === lastIndex ? 4 : 2.5} fill={index === lastIndex ? 'var(--sb-brand)' : 'var(--sb-brand-soft)'} />{index === lastIndex && <text x={x(index)} y={y(item.count) - 8} textAnchor="middle">{item.count}명</text>}<text className={cx({ today: index === lastIndex })} x={x(index)} y={height + 14} textAnchor="middle">{formatAdminTrendDate(item.date)}</text></g>)}
+  </svg>;
 }
 function DashboardNotice({ children, retry }: { children: string; retry?: () => void }) { return <section className={cx('notice')} aria-live="polite"><p>{children}</p>{retry && <button type="button" onClick={retry}>다시 시도</button>}</section>; }
 function Donut({ items, total }: { items: AdminSafetyDashboard['todayAnomaly']['byType']; total: number }) {
