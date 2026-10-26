@@ -49,7 +49,7 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
       <div className={cx('mobileTopBar')}>
         <div className={cx('topBarBrand')}>
           <Link className={cx('topBarBrandLink')} href={rootPath} aria-label="대시보드로 이동">
-            <SilverBridgeLogo subtitle={`${getRoleLabel(role)} 웹`} />
+            <SilverBridgeLogo name={role === 'ADMIN' ? 'CareAI' : undefined} subtitle={`${getRoleLabel(role)} 웹`} />
           </Link>
         </div>
         <button

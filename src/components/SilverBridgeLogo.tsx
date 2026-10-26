@@ -9,14 +9,15 @@ const fredoka = Fredoka({ subsets: ['latin'], weight: ['600'] });
 
 type SilverBridgeLogoProps = {
   className?: string;
+  name?: string;
   subtitle?: string;
 };
 
-export function SilverBridgeLogo({ className, subtitle }: SilverBridgeLogoProps) {
+export function SilverBridgeLogo({ className, name = 'SilverBridge', subtitle }: SilverBridgeLogoProps) {
   return (
     <div className={cx('brand', className)}>
       <div className={cx('title', fredoka.className)}>
-        SilverBridge
+        {name}
         {subtitle && <small className={cx('subtitle')}>{subtitle}</small>}
       </div>
     </div>
