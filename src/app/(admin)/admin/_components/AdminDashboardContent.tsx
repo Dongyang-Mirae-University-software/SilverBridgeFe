@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
+import Link from 'next/link';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { AdminOperationDashboard, AdminSafetyDashboard } from '@/service/interface/admin/dashboard';
@@ -12,6 +13,8 @@ import styles from './AdminDashboardContent.module.css';
 
 const cx = classNames.bind(styles);
 const subscribeNothing = () => () => {};
+// TODO(admin-anomaly): 이상감지 로그 페이지가 추가되면 /admin/anomaly에서 period=TODAY를 처리한다.
+const ADMIN_TODAY_ANOMALY_LOG_PATH = '/admin/anomaly?period=TODAY';
 
 export function AdminDashboardContent() {
   const [tab, setTab] = useState<'safety' | 'operations'>('safety');
@@ -47,13 +50,14 @@ function SafetyDashboard({ data, isLoading, isError, onRetry }: DashboardState<A
     </section>
     <div className={cx('primaryGrid')}>
       <section className={cx('card')}><div className={cx('cardHeading')}><h2>안전 이벤트</h2><span>확인이 필요한 항목</span></div><div className={cx('eventList')}>{events.map(event => <article className={cx('event', { alert: event.alert })} key={event.label}><div><strong>{event.label}</strong><p>{event.description}</p></div><b>{event.value}</b><Icon name="chevronRight" size={16} /></article>)}</div></section>
-      <section className={cx('card', 'anomalyCard')}><div className={cx('cardHeading')}><h2>오늘 이상감지 현황</h2><span className={cx('metricNote')}>상황(incident) 기준</span></div>
+      <Link className={cx('anomalyLink')} href={ADMIN_TODAY_ANOMALY_LOG_PATH} aria-label="오늘 이상감지 로그 보기">
+      <section className={cx('card', 'anomalyCard')}><div className={cx('cardHeading')}><h2>오늘 이상감지 현황</h2><span className={cx('metricNote')}>상황(incident) 기준</span><Icon name="chevronRight" size={16} /></div>
         {todayAnomaly.total === 0 ? <div className={cx('emptyState')}><span className={cx('emptyStateIcon')}><Icon name="check" size={22} /></span><strong>오늘 감지된 이상 상황이 없습니다</strong><span>유형별 수치는 감지된 유형이 있을 때만 표시됩니다.</span></div> : <>
           <div className={cx('anomalySummary')}><Donut items={todayAnomaly.byType} total={todayAnomaly.total} /><div className={cx('legend')}>{todayAnomaly.byType.map(item => <div key={item.detectedType}><i className={cx(ADMIN_ANOMALY_TYPE_META[item.detectedType].color)} /><span>{ADMIN_ANOMALY_TYPE_META[item.detectedType].label}</span><b>{item.count}건</b></div>)}</div></div>
           <div className={cx('reviewNotice')}><strong>응답 {reviewMetrics.answered}건 ({reviewMetrics.responseRate}%)</strong><span>응답한 보호자의 판정만 오탐률 계산에 사용합니다.</span></div>
           <div className={cx('reviewGrid')}><ReviewItem label="확인 필요" value={todayAnomaly.review.pending} /><ReviewItem label="실제 위험" value={todayAnomaly.review.real} tone="danger" /><ReviewItem label="오탐" value={todayAnomaly.review.falseAlarm} detail={reviewMetrics.answered ? `응답 기준 ${reviewMetrics.falseAlarmRate}%` : '응답 없음'} /><ReviewItem label="보호자 재확인 대기" value={todayAnomaly.review.conflicted} tone="warn" /></div>
         </>}
-      </section>
+      </section></Link>
     </div>
   </div>;
 }
