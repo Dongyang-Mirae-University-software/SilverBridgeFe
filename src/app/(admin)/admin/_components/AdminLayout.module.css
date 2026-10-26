@@ -15,7 +15,8 @@
 .main > * {
   width: 100%;
   min-width: 0;
-  padding: 46px 32px 28px;
+  /* v11 admin-main: 보호자 화면보다 조밀한 20px 상단·28px 좌우 여백 */
+  padding: 20px 28px 28px;
 }
 
 @media (max-width: 1260px) {

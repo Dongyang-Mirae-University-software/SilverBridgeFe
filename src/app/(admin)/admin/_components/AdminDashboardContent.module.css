@@ -1,11 +1,11 @@
-.dashboard { width: min(100%, 1180px); margin: 0 auto; }
+.dashboard { width: 100%; }
 .heading h1 { margin: 0; font-size: 28px; font-weight: 800; line-height: 1.25; }
 .heading p { margin: 3px 0 0; color: var(--sb-ink-mute); font-size: 13px; font-weight: 600; }
-.tabs { display: flex; width: fit-content; gap: 6px; margin: 20px 0 16px; border-radius: 11px; background: var(--sb-bg-soft); padding: 4px; }
+.tabs { display: flex; width: fit-content; gap: 6px; margin: 14px 0 16px; border-radius: 11px; background: var(--sb-bg-soft); padding: 4px; }
 .tab { border: 0; border-radius: 8px; background: transparent; color: var(--sb-ink-mute); cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; padding: 8px 18px; }
 .tab.active { background: #fff; box-shadow: var(--sb-shadow-sm); color: var(--sb-ink); }
 .stack { display: grid; gap: 14px; }
-.serviceCard, .card { border: 1px solid var(--sb-line); border-radius: var(--sb-radius); background: #fff; box-shadow: var(--sb-shadow-sm); padding: 18px 20px; }
+.serviceCard, .card { border: 1px solid var(--sb-line); border-radius: var(--sb-radius); background: #fff; box-shadow: var(--sb-shadow-sm); padding: 18px; }
 .sectionTitleRow, .cardHeading { display: flex; align-items: center; gap: 8px; }
 .sectionTitleRow h2, .cardHeading h2 { margin: 0; font-size: 14px; font-weight: 800; }
 .sectionTitleRow time { margin-left: auto; color: var(--sb-ink-mute); font-size: 11.5px; font-weight: 600; }
