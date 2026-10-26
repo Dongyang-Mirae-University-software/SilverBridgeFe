@@ -202,4 +202,124 @@ describe('카메라 등록 4단계 (Chrome)', () => {
     expect(streamApi.createStreamSession).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('alert').query()).toBeNull();
   });
+
+  // 점검 M-1: 화면 선택 창이 떠 있는 동안 창을 닫으면, 나중에 고른 화면이 숨은 창에서 켜진 채 남지 않는다
+  it('화면 선택 중 창을 닫고 나중에 고르면 받은 화면을 끄고, 다시 열면 1단계부터 시작한다', async () => {
+    const picker = deferred<MediaStream>();
+    getDisplayMedia.mockReturnValue(picker.promise);
+    const onClose = vi.fn();
+    const screen = render(<CameraRegisterModal isOpen onClose={onClose} />, { wrapper });
+
+    await goToPreview(screen, '^화면');
+    await screen.getByRole('button', { name: '닫기' }).first().click();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    screen.rerender(<CameraRegisterModal isOpen={false} onClose={onClose} />);
+
+    const stream = fakeStream();
+    picker.resolve(stream);
+    await vi.waitFor(() => expect(stream.getVideoTracks()[0].readyState).toBe('ended'));
+
+    screen.rerender(<CameraRegisterModal isOpen onClose={onClose} />);
+    await expect.element(screen.getByRole('button', { name: '거실' })).toBeVisible();
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toBe('1. 방 고르기');
+    expect(screen.getByRole('alert').query()).toBeNull();
+  });
+
+  it('화면 선택 중 이전으로 가고 나중에 고르면 받은 화면을 끄고, 3단계 촬영 방식을 다시 고를 수 있다', async () => {
+    const picker = deferred<MediaStream>();
+    getDisplayMedia.mockReturnValue(picker.promise);
+    const screen = render(<CameraRegisterModal isOpen onClose={() => {}} />, { wrapper });
+
+    await goToPreview(screen, '^화면');
+    await screen.getByRole('button', { name: '이전' }).click();
+    const stream = fakeStream();
+    picker.resolve(stream);
+    await vi.waitFor(() => expect(stream.getVideoTracks()[0].readyState).toBe('ended'));
+
+    const frontCamera = screen.getByRole('radio', { name: /^전면 카메라/ });
+    await expect.element(frontCamera).toBeEnabled();
+    expect(screen.getByRole('alert').query()).toBeNull();
+
+    // 방식을 바꿔 다시 4단계로 가면 새 방식으로 켠다
+    getUserMedia.mockResolvedValue(fakeStream());
+    await frontCamera.click();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await expect.element(screen.getByRole('button', { name: '등록하고 촬영 시작' })).toBeEnabled();
+    expect(getUserMedia).toHaveBeenCalledTimes(1);
+  });
+
+  it('지난번 화면 선택이 끝나기 전에 4단계로 돌아오면, 그 결과가 끝난 뒤 이어서 미리보기를 보인다', async () => {
+    const picker = deferred<MediaStream>();
+    getDisplayMedia.mockReturnValueOnce(picker.promise);
+    const screen = render(<CameraRegisterModal isOpen onClose={() => {}} />, { wrapper });
+
+    await goToPreview(screen, '^화면');
+    await screen.getByRole('button', { name: '이전' }).click();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await expect.element(screen.getByRole('button', { name: '화면을 고르는 중...' })).toBeDisabled();
+
+    picker.resolve(fakeStream());
+    await expect.element(screen.getByRole('button', { name: '등록하고 촬영 시작' })).toBeEnabled();
+    expect(getDisplayMedia).toHaveBeenCalledTimes(1);
+  });
+
+  it('이전으로 갔다가 다시 4단계로 오면 카메라를 다시 켠다', async () => {
+    getUserMedia.mockImplementation(async () => fakeStream());
+    const screen = render(<CameraRegisterModal isOpen onClose={() => {}} />, { wrapper });
+
+    await goToPreview(screen, '전면 카메라');
+    await expect.element(screen.getByRole('button', { name: '등록하고 촬영 시작' })).toBeEnabled();
+    await screen.getByRole('button', { name: '이전' }).click();
+    await screen.getByRole('button', { name: '다음' }).click();
+    await expect.element(screen.getByRole('button', { name: '등록하고 촬영 시작' })).toBeEnabled();
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+  });
+
+  // 점검 L-1: 송출 전 미리보기에서 공유를 끊으면 끊긴 화면으로 등록하지 않게 한다
+  it('미리보기 중 화면 공유가 끊기면 "카메라 다시 켜기"와 안내가 보인다', async () => {
+    const stream = fakeStream();
+    getDisplayMedia.mockResolvedValue(stream);
+    const screen = render(<CameraRegisterModal isOpen onClose={() => {}} />, { wrapper });
+
+    await goToPreview(screen, '^화면');
+    await expect.element(screen.getByRole('button', { name: '등록하고 촬영 시작' })).toBeEnabled();
+    stream.getVideoTracks()[0].dispatchEvent(new Event('ended'));
+
+    await expect.element(screen.getByRole('button', { name: '카메라 다시 켜기' })).toBeEnabled();
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('미리보기가 끊겼어요. 다시 켜 주세요.');
+  });
+
+  it('방 중복(409 CAMERA_LABEL_DUPLICATED)이면 1단계로 돌아가고 안내가 버튼 바로 위에 보인다', async () => {
+    getUserMedia.mockResolvedValue(fakeStream());
+    api.registerWardCamera.mockRejectedValue(
+      Object.assign(new Error('같은 방에 이미 등록된 카메라가 있습니다.'), {
+        response: { status: 409, data: { code: 'CAMERA_LABEL_DUPLICATED' } },
+      }),
+    );
+    const screen = render(<CameraRegisterModal isOpen onClose={() => {}} />, { wrapper });
+
+    await goToPreview(screen, '전면 카메라');
+    await screen.getByRole('button', { name: '등록하고 촬영 시작' }).click();
+
+    const alert = screen.getByRole('alert');
+    await expect.element(alert).toHaveTextContent('방금 다른 기기에서 그 방을 등록했어요. 다른 방을 골라 주세요.');
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toBe('1. 방 고르기');
+    expect(alert.element().nextElementSibling?.tagName).toBe('FOOTER');
+    await vi.waitFor(() => expect(api.getWardCameraRooms.mock.calls.length).toBeGreaterThanOrEqual(2));
+  });
+
+  it('기존 카메라의 "카메라 켜기"가 실패해도 안내가 버튼 바로 위, 화면 안에 보인다', async () => {
+    getUserMedia.mockRejectedValue(new DOMException('denied', 'NotAllowedError'));
+    const screen = render(<CameraRegisterModal isOpen initialRoom="거실" onClose={() => {}} />, { wrapper });
+
+    await screen.getByRole('button', { name: '카메라 켜기' }).click();
+
+    const alert = screen.getByRole('alert');
+    await expect.element(alert).toHaveTextContent('카메라를 켜지 못했어요');
+    expect(alert.element().nextElementSibling?.tagName).toBe('FOOTER');
+    const rect = alert.element().getBoundingClientRect();
+    expect(rect.top).toBeGreaterThanOrEqual(0);
+    expect(rect.bottom).toBeLessThanOrEqual(window.innerHeight);
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+  });
 });
