@@ -64,6 +64,14 @@
   flex-shrink: 0;
 }
 
+/* 누를 수 있는 영역을 44px 높이로 넓힌다(모양은 46×26 그대로) - 넓힌 부분을 눌러도 label이 받아 스위치가 동작한다.
+   줄 위아래 여백(14~16px) 안에 들어가 바깥 문서 크기는 늘지 않는다 */
+.toggle::before {
+  content: '';
+  position: absolute;
+  inset: -9px -4px;
+}
+
 /* 숨김 input은 positioned 부모(.toggle) 안에 겹쳐 둔다 - 바깥 문서 높이를 늘리지 않게(#114) */
 .toggle input {
   position: absolute;

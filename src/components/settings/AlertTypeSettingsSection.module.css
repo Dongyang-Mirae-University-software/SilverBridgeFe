@@ -71,6 +71,14 @@
   flex-shrink: 0;
 }
 
+/* 누를 수 있는 영역을 44px 높이로 넓힌다(모양은 46×26 그대로) - 넓힌 부분을 눌러도 label이 받아 스위치가 동작한다.
+   줄 위아래 여백(14~16px) 안에 들어가 바깥 문서 크기는 늘지 않는다 */
+.toggle::before {
+  content: '';
+  position: absolute;
+  inset: -9px -4px;
+}
+
 /* 숨김 input은 positioned 부모(.toggle) 안에 겹쳐 둔다 - 바깥 문서 높이를 늘리지 않게(#114) */
 .toggle input {
   position: absolute;
@@ -128,8 +136,9 @@
 }
 
 /* 끌 수 없는 필수 알림 - 켜진 채 잠긴 스위치(흐림은 위 disabled 규칙) + 작은 자물쇠.
-   input이 스위치 전체를 덮고 있어 disabled input에서는 클릭이 나지 않으므로, 클릭을 label로 넘겨 안내 토스트를 띄운다 */
+   input이 스위치 전체를 덮고 있어 disabled input에서는 클릭이 나지 않으므로, 클릭을 label로 넘겨 감싼 칸(자물쇠 포함)에서 안내 토스트를 띄운다 */
 .lockedControl {
+  cursor: not-allowed;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
