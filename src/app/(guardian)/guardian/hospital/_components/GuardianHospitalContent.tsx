@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { ReservationDemoNotice } from '@/components/reservation/ReservationDemoNotice';
 import { ReservationPager } from '@/components/reservation/ReservationPager';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { cancelReservation, createReservation } from '@/service/api/guardian/reservation';
@@ -112,7 +113,7 @@ export function GuardianHospitalContent() {
 
   const hospitalsQuery = useQuery(hospitalsQueryOptions);
   const hospitals = hospitalsQuery.data ?? [];
-  const slotsQuery = useQuery(availableSlotsQueryOptions(pick?.hospital.id ?? null, date));
+  const slotsQuery = useQuery(availableSlotsQueryOptions(pick?.hospital.id ?? null, date, pick?.department ?? ''));
   const reservationsQuery = useQuery({ ...myReservationsQueryOptions(ward?.partnerUserId), enabled: Boolean(ward) });
 
   const { today, nowTime } = useKstNow();
@@ -443,6 +444,7 @@ export function GuardianHospitalContent() {
               </label>
             )}
           </div>
+          <ReservationDemoNotice />
           {createMutation.isError && (
             <p className={cx('notice', 'bad')} role="alert">
               {reservationErrorMessage(createMutation.error)}
@@ -484,6 +486,7 @@ export function GuardianHospitalContent() {
             {booked.hospitalName} · {booked.department}
           </div>
           <div className={cx('doneNote')}>{booked.wardName} 화면에서도 볼 수 있어요</div>
+          <ReservationDemoNotice />
           <button
             type="button"
             className={cx('btn', 'primary', 'doneButton')}
@@ -703,6 +706,7 @@ function SearchStep({ hospitals, isLoading, error, onRetry, query, onQuery, page
 
   return (
     <>
+      <ReservationDemoNotice />
       <label className={cx('searchBox')}>
         <SearchIcon />
         <input

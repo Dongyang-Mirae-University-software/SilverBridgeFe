@@ -7,6 +7,7 @@ import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
+import { RESERVATION_DEMO_NOTICE } from '@/constants/reservation';
 import type { IConnectionItem } from '@/service/interface/connection';
 import type { IHospital, IReservationItem } from '@/service/interface/reservation';
 import { addDays, formatDateShort, kstToday } from '@/utils/reservation/reservationView';
@@ -139,6 +140,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
 
     await expect.element(step(screen, '1. 병원 고르기')).toHaveAttribute('aria-current', 'step');
+    await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
     await screen.getByRole('searchbox', { name: '병원 찾기' }).fill('가정');
     await expect.element(screen.getByRole('button', { name: /강남내과 · 가정의학과/ })).toBeVisible();
     expect(screen.getByRole('button', { name: /푸른안과/ }).elements()).toHaveLength(0);
@@ -155,13 +157,16 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     await expect.element(screen.getByText('이대로 예약할까요?')).toBeVisible();
     await expect.element(screen.getByText('진료받으실 분: 김영희')).toBeVisible();
+    await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
     // 피보호자 번호가 있으면 번호 칸을 띄우지 않는다
     expect(screen.getByRole('textbox').elements()).toHaveLength(0);
     await screen.getByRole('button', { name: '예약하기' }).click();
 
     await expect.element(screen.getByText('예약했어요')).toBeVisible();
     await expect.element(screen.getByText('김영희 화면에서도 볼 수 있어요')).toBeVisible();
-    expect(api.getAvailableSlots).toHaveBeenCalledWith(1, TOMORROW);
+    await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
+    // 시간 칸은 진료과별 - 고른 진료과로 빈 시간을 묻는다
+    expect(api.getAvailableSlots).toHaveBeenCalledWith(1, TOMORROW, '가정의학과');
     expect(api.createReservation).toHaveBeenCalledTimes(1);
     const [wardId, body] = api.createReservation.mock.calls[0];
     expect(wardId).toBe('ward01');

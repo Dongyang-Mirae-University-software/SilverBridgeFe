@@ -14,10 +14,11 @@ export async function getHospitals() {
   return getResponseData<IHospital[]>(response) ?? [];
 }
 
-export async function getAvailableSlots(hospitalId: number, date: string) {
+// 시간 칸은 진료과마다 따로다 - 같은 병원이라도 고른 진료과의 빈 시간만 받는다
+export async function getAvailableSlots(hospitalId: number, date: string, department: string) {
   const response = await apiClient.get<CommonResponse<IAvailableSlots>>(
     `${BASE}/hospitals/${hospitalId}/available-slots`,
-    { params: { date } },
+    { params: { date, department } },
   );
   return getResponseData<IAvailableSlots>(response)?.availableSlots ?? [];
 }

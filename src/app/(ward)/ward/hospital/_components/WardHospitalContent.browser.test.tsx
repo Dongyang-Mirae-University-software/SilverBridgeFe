@@ -7,6 +7,7 @@ import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
+import { RESERVATION_DEMO_NOTICE } from '@/constants/reservation';
 import type { IHospital, IReservationItem } from '@/service/interface/reservation';
 import { addDays, formatDateLong, kstToday } from '@/utils/reservation/reservationView';
 import { WardHospitalContent } from './WardHospitalContent';
@@ -85,6 +86,7 @@ describe('WardHospitalContent (Chrome)', () => {
 
     const next = screen.getByRole('region', { name: '다음 진료' });
     await expect.element(next.getByText('2일 남았어요')).toBeVisible();
+    await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
     await expect.element(next.getByText(formatDateLong(addDays(TODAY, 2)))).toBeVisible();
     await expect.element(next.getByText('오전 10시')).toBeVisible();
     // 주소는 병원 목록에서 이름으로 찾아 붙인다
