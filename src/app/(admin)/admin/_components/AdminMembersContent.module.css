@@ -1,4 +1,4 @@
-.page { width: 100%; max-width: 1340px; margin: 0 auto; }
+.page { width: 100%; }
 .heading { margin-bottom: 18px; }
 .heading h1 { margin: 0; color: var(--sb-ink); font-size: 26px; font-weight: 900; letter-spacing: -.04em; }
 .heading p { margin: 7px 0 0; color: var(--sb-ink-mute); font-size: 13px; font-weight: 600; }
