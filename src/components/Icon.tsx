@@ -16,6 +16,7 @@ import CameraFlipIcon from '@/assets/icons/camera-flip.svg';
 import CameraIcon from '@/assets/icons/camera.svg';
 import CheckIcon from '@/assets/icons/check.svg';
 import ChevronRightIcon from '@/assets/icons/chevron-right.svg';
+import CloseIcon from '@/assets/icons/close.svg';
 import DashboardIcon from '@/assets/icons/dashboard.svg';
 import EyeIcon from '@/assets/icons/eye.svg';
 import FileTextIcon from '@/assets/icons/file-text.svg';
@@ -40,6 +41,7 @@ import PlusIcon from '@/assets/icons/plus.svg';
 import RefreshIcon from '@/assets/icons/refresh.svg';
 import RefreshDoubleIcon from '@/assets/icons/refresh-double.svg';
 import SettingsIcon from '@/assets/icons/settings.svg';
+import SearchIcon from '@/assets/icons/search.svg';
 import TagIcon from '@/assets/icons/tag.svg';
 import TrashIcon from '@/assets/icons/trash.svg';
 import UserIcon from '@/assets/icons/user.svg';
@@ -63,6 +65,7 @@ const ICONS = {
   cameraFlip: CameraFlipIcon,
   check: CheckIcon,
   chevronRight: ChevronRightIcon,
+  close: CloseIcon,
   dashboard: DashboardIcon,
   eye: EyeIcon,
   fileText: FileTextIcon,
@@ -86,6 +89,7 @@ const ICONS = {
   plus: PlusIcon,
   refresh: RefreshIcon,
   refreshDouble: RefreshDoubleIcon,
+  search: SearchIcon,
   settings: SettingsIcon,
   tag: TagIcon,
   trash: TrashIcon,

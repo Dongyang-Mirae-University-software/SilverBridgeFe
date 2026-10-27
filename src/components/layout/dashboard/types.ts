@@ -21,7 +21,8 @@ export type PageKey =
   | 'sos-history'
   | 'medication-management'
   | 'game-management'
-  | 'camera-register';
+  | 'camera-register'
+  | 'members';
 
 export type NavIconName =
   | 'home'
