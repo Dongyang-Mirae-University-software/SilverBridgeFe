@@ -1,0 +1,11 @@
+.demoNotice {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}

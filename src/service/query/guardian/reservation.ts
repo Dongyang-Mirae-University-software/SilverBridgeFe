@@ -22,11 +22,11 @@ export function myReservationsQueryOptions(wardId?: string | null) {
   });
 }
 
-export function availableSlotsQueryOptions(hospitalId: number | null, date: string) {
+export function availableSlotsQueryOptions(hospitalId: number | null, date: string, department: string) {
   return queryOptions({
-    queryKey: ['reservation-slots', hospitalId, date] as const,
-    queryFn: () => getAvailableSlots(hospitalId as number, date),
-    enabled: hospitalId !== null && Boolean(date),
+    queryKey: ['reservation-slots', hospitalId, department, date] as const,
+    queryFn: () => getAvailableSlots(hospitalId as number, date, department),
+    enabled: hospitalId !== null && Boolean(date) && Boolean(department),
     staleTime: 10 * 1000,
     retry: false,
   });

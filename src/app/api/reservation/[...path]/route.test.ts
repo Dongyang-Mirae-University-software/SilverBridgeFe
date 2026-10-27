@@ -119,6 +119,24 @@ describe('reservation BFF route', () => {
     expect(calls).toEqual([]);
   });
 
+  it('진료과는 다시 인코딩해 함께 넘긴다(시간 칸은 진료과별)', async () => {
+    const [req, ctx] = request('GET', ['hospitals', '3', 'available-slots'], {
+      search: '?date=2026-10-24&department=%EC%9D%B4%EB%B9%84%EC%9D%B8%ED%9B%84%EA%B3%BC&x=1',
+    });
+    await GET(req, ctx);
+    expect(reservationCalls()[0].url).toBe(
+      `${RES}/api/v1/hospitals/3/available-slots?date=2026-10-24&department=${encodeURIComponent('이비인후과')}`,
+    );
+  });
+
+  it.each(['내과&admin=1', '<script>', 'a'.repeat(31), '내과/../x'])('진료과 형식이 틀리면 404 (%s)', async dept => {
+    const [req, ctx] = request('GET', ['hospitals', '3', 'available-slots'], {
+      search: `?date=2026-10-24&department=${encodeURIComponent(dept)}`,
+    });
+    expect((await GET(req, ctx)).status).toBe(404);
+    expect(calls).toEqual([]);
+  });
+
   it('날짜 형식이 틀린 빈 시간 조회는 404', async () => {
     const [req, ctx] = request('GET', ['hospitals', '3', 'available-slots'], { search: '?date=tomorrow' });
     expect((await GET(req, ctx)).status).toBe(404);

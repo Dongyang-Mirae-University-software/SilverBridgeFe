@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { ReservationDemoNotice } from '@/components/reservation/ReservationDemoNotice';
 import { ReservationPager } from '@/components/reservation/ReservationPager';
 import { IReservationItem } from '@/service/interface/reservation';
 import { hospitalsQueryOptions, myReservationsQueryOptions } from '@/service/query/guardian/reservation';
@@ -52,6 +53,7 @@ export function WardHospitalContent() {
 
   return (
     <div className={cx('page')}>
+      <ReservationDemoNotice />
       {next ? (
         <NextCard item={next} today={today} address={findHospitalByName(hospitals, next.hospitalName)?.address} />
       ) : (
