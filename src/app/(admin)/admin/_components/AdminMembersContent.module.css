@@ -14,9 +14,10 @@
 .selectWrap { display: flex; align-items: center; gap: 5px; color: var(--sb-ink-mute); font-size: 11px; font-weight: 700; white-space: nowrap; }
 .selectWrap select { height: 36px; border: 1px solid var(--sb-line); border-radius: 9px; background: #fff; color: var(--sb-ink-soft); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; padding: 0 8px; }
 .tableScroll { overflow-x: auto; }
-.table { width: 100%; min-width: 1080px; border-collapse: collapse; white-space: nowrap; }
-.table th { border-bottom: 1px solid var(--sb-line-soft); background: var(--sb-bg-soft); color: var(--sb-ink-mute); font-size: 11px; font-weight: 800; text-align: left; padding: 11px 14px; }
-.table td { border-bottom: 1px solid var(--sb-line-soft); color: var(--sb-ink-soft); font-size: 12px; font-weight: 600; padding: 12px 14px; }
+.table { width: 100%; min-width: 1080px; border-collapse: collapse; table-layout: fixed; white-space: nowrap; }
+.idColumn { width: 80px; }.providerColumn { width: 76px; }.emailColumn { width: 160px; }.nameColumn { width: 70px; }.roleColumn { width: 76px; }.connectionColumn { width: 140px; }.connectionStateColumn { width: 92px; }.phoneColumn { width: 118px; }.statusColumn { width: 84px; }.actionColumn { width: 70px; }
+.table th { overflow: hidden; border-bottom: 1px solid var(--sb-line-soft); background: var(--sb-bg-soft); color: var(--sb-ink-mute); font-size: 11px; font-weight: 800; text-align: left; padding: 11px 14px; text-overflow: ellipsis; }
+.table td { overflow: hidden; height: 52px; box-sizing: border-box; border-bottom: 1px solid var(--sb-line-soft); color: var(--sb-ink-soft); font-size: 12px; font-weight: 600; padding: 12px 14px; text-overflow: ellipsis; }
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover { background: var(--sb-bg-soft); }
 .table .restricted { background: var(--sb-warn-soft); }
