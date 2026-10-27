@@ -79,7 +79,7 @@ export function AdminMembersContent() {
     </div>
     <section className={cx('card')}>
       <div className={cx('filterBar')}>
-        <label className={cx('search')}><Icon name="search" size={17} /><span className="sr-only">회원 검색</span><input value={keyword} onChange={event => { setKeyword(event.target.value); setPage(0); }} placeholder="이름 · 이메일 · 전화번호 · 연결 회원 검색" /></label>
+        <label className={cx('search')}><Icon name="search" size={17} /><span className={cx('srOnly')}>회원 검색</span><input value={keyword} onChange={event => { setKeyword(event.target.value); setPage(0); }} placeholder="이름 · 이메일 · 전화번호 · 연결 회원 검색" /></label>
         <label className={cx('selectWrap')}>계정 상태<select value={status} onChange={event => { setStatus(event.target.value as StatusFilter); setPage(0); }}><option value="ALL">전체</option><option value="ACTIVE">이용 중</option><option value="RESTRICTED">이용 제한</option></select></label>
         <label className={cx('selectWrap')}>연결 상태<select value={connection} onChange={event => { setConnection(event.target.value as ConnectionFilter); setPage(0); }}><option value="ALL">전체</option><option value="CONNECTED">연결됨</option><option value="PENDING">수락 대기</option><option value="NONE">미연결</option></select></label>
       </div>
@@ -89,7 +89,7 @@ export function AdminMembersContent() {
             <col className={cx('idColumn')} /><col className={cx('providerColumn')} /><col className={cx('emailColumn')} /><col className={cx('nameColumn')} /><col className={cx('roleColumn')} />
             <col className={cx('connectionColumn')} /><col className={cx('connectionStateColumn')} /><col className={cx('phoneColumn')} /><col className={cx('statusColumn')} /><col className={cx('actionColumn')} />
           </colgroup>
-          <thead><tr><th>회원 ID</th><th>가입</th><th>이메일</th><th>이름</th><th>역할</th><th>연결 회원</th><th>연결 상태</th><th>전화번호</th><th>계정 상태</th><th><span className="sr-only">관리</span></th></tr></thead>
+          <thead><tr><th>회원 ID</th><th>가입</th><th>이메일</th><th>이름</th><th>역할</th><th>연결 회원</th><th>연결 상태</th><th>전화번호</th><th>계정 상태</th><th><span className={cx('srOnly')}>관리</span></th></tr></thead>
           <tbody>
             {members.isLoading && <tr><td className={cx('stateCell')} colSpan={10}>회원 목록을 불러오는 중입니다.</td></tr>}
             {members.isError && <tr><td className={cx('stateCell')} colSpan={10}>회원 목록을 불러오지 못했습니다. <button type="button" onClick={() => void members.refetch()}>다시 시도</button></td></tr>}
