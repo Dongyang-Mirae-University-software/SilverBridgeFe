@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 
 import { MedicationItem } from '@/service/interface/medication';
 import { Icon } from '@/components/Icon';
-import { formatDoseAmount } from '@/utils/format/medication';
+import { formatDoseAmount, formatDoseTimeKorean } from '@/utils/format/medication';
 import styles from './WardMedicationCard.module.css';
 
 const cx = classNames.bind(styles);
@@ -10,26 +10,46 @@ const cx = classNames.bind(styles);
 interface WardMedicationCardProps {
   medication: MedicationItem;
   beforeRegistered?: boolean; // 오늘 복용 시각이 지난 뒤 등록된 약 - 그날은 체크 대상이 아니다
+  disabled?: boolean;
+  onTake: (taken: boolean) => void;
 }
 
-// 펼친 시간대 카드 안의 약 한 줄 - 체크는 시간대 버튼으로만 한다(2026-10-24 디자인, 약마다 누르던 버튼 대신)
-export function WardMedicationCard({ medication, beforeRegistered = false }: WardMedicationCardProps) {
+// v13: 오늘 약은 시간·이름·상태/동작을 한 줄에 보여 준다.
+// 체크 API는 기존 묶음 API를 약 ID 하나로 호출하므로, 서버 데이터 모델은 바꾸지 않는다.
+export function WardMedicationCard({ medication, beforeRegistered = false, disabled = false, onTake }: WardMedicationCardProps) {
   return (
     <li className={cx('row', { taken: medication.taken, muted: beforeRegistered && !medication.taken })}>
+      <time className={cx('time')}>{formatDoseTimeKorean(medication.doseTime)}</time>
       <div className={cx('meta')}>
         <strong className={cx('name')}>{medication.name}</strong>
-        {medication.taken ? (
-          <span className={cx('state', 'done')}>
-            <Icon name="check" size={18} decorative />
-            먹었어요
-          </span>
-        ) : beforeRegistered ? (
-          <span className={cx('state')}>오늘은 등록 전이었어요</span>
-        ) : medication.memo ? (
-          <span className={cx('memo')}>{medication.memo}</span>
-        ) : null}
+        <span className={cx('memo')}>
+          {formatDoseAmount(medication.doseAmount)}{medication.memo ? ` · ${medication.memo}` : ''}
+        </span>
       </div>
-      <span className={cx('dose')}>{formatDoseAmount(medication.doseAmount)}</span>
+      {medication.taken ? (
+        <button
+          type="button"
+          className={cx('stateButton', 'done')}
+          disabled={disabled}
+          onClick={() => onTake(false)}
+          aria-label={`${medication.name} 복용 체크 되돌리기`}
+        >
+          <Icon name="check" size={20} decorative />
+          먹었어요
+        </button>
+      ) : beforeRegistered ? (
+        <span className={cx('state')}>내일부터 드세요</span>
+      ) : (
+        <button
+          type="button"
+          className={cx('takeButton')}
+          disabled={disabled}
+          onClick={() => onTake(true)}
+          aria-label={`${medication.name} 먹었어요`}
+        >
+          먹었어요
+        </button>
+      )}
     </li>
   );
 }
