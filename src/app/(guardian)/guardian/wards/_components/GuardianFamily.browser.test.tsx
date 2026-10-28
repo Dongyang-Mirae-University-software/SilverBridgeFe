@@ -97,7 +97,7 @@ describe('가족 등록 폼 (Chrome)', () => {
     await submit.click();
 
     expect(api.requestWardConnection.mock.calls[0]?.[0]).toEqual({ relation: '아들', targetId: 'aB3x9Z' });
-    await expect.element(screen.getByText('요청을 보냈어요. 어르신이 수락하면 연결돼요')).toBeInTheDocument();
+    await expect.element(screen.getByText('연결 요청을 보냈어요. 어르신이 수락하면 연결돼요')).toBeInTheDocument();
     expectNoHorizontalScroll();
   });
 
@@ -129,7 +129,7 @@ describe('수락을 기다리는 중 (Chrome)', () => {
     const screen = render(<GuardianConnectionRequestHistory />, { wrapper });
 
     await expect.element(screen.getByText('aB3x9Z')).toBeInTheDocument();
-    await expect.element(screen.getByText('아들로 요청 · 5월 8일')).toBeInTheDocument();
+    await expect.element(screen.getByText('아들 · 5월 8일 요청')).toBeInTheDocument();
     expect(document.body.textContent).not.toContain('010');
     expect(screen.getByRole('button', { name: '요청 취소' }).elements()).toHaveLength(1);
 
