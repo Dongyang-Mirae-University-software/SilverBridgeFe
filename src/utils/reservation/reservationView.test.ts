@@ -13,6 +13,7 @@ import {
   formatSlot,
   formatTime,
   hospitalRows,
+  hoursForDay,
   isClosedDay,
   isHospitalOpenNow,
   isSlotPassed,
@@ -105,6 +106,15 @@ describe('reservationView', () => {
     const grid = buildSlotGrid('11:00', '14:00', ['11:00', '13:30'], { breakStart: '12:30', breakEnd: '13:30' });
     expect(grid.map(slot => slot.time)).toEqual(['11:00', '11:30', '12:00', '13:30']);
     expect(buildSlotGrid('11:00', '12:00', [], { breakStart: null, breakEnd: null })).toHaveLength(2);
+  });
+
+  it('요일별 진료 시간 - 그 요일만 덮어쓰고, 반일에는 진료 시간 밖으로 걸친 점심을 빼지 않는다', () => {
+    const h = { openTime: '09:00', closeTime: '18:00', weekdayHours: [{ weekday: 6, openTime: '09:00', closeTime: '13:00' }] };
+    expect(hoursForDay(h, '2026-10-31')).toEqual({ openTime: '09:00', closeTime: '13:00' }); // 토요일
+    expect(hoursForDay(h, '2026-11-02')).toEqual({ openTime: '09:00', closeTime: '18:00' }); // 월요일
+    expect(hoursForDay({ openTime: '09:00', closeTime: '18:00' }, '2026-10-31').closeTime).toBe('18:00'); // 옛 응답
+    const half = buildSlotGrid('09:00', '13:00', [], { breakStart: '12:30', breakEnd: '13:30' });
+    expect(half.map(slot => slot.time)).toContain('12:30');
   });
 
   it('휴진 요일 - 날짜 문자열의 요일(0=일)이 closedWeekdays 에 있으면 쉬는 날', () => {

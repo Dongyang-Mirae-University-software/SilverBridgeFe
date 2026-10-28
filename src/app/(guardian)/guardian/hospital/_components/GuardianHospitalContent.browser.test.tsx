@@ -206,6 +206,21 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await expect.element(screen.getByRole('button', { name: '오전 10시 30분', exact: true })).toBeVisible();
   });
 
+  it('요일별 진료 시간이 있는 날은 그 시간까지만 칸을 그린다(예: 반일)', async () => {
+    const [y, m, d] = TOMORROW.split('-').map(Number);
+    const tomorrowWeekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+    api.getHospitals.mockResolvedValue([
+      { ...hospital(1, '강남내과', ['내과']), weekdayHours: [{ weekday: tomorrowWeekday, openTime: '09:00', closeTime: '10:30' }] },
+    ]);
+    api.getAvailableSlots.mockResolvedValue(['09:00', '09:30', '10:00']);
+    const screen = renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    await screen.getByRole('button', { name: /강남내과 · 내과/ }).click();
+    await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
+    await expect.element(screen.getByRole('button', { name: '오전 10시', exact: true })).toBeVisible();
+    expect(screen.getByRole('button', { name: /오전 10시 30분|오전 11시/ }).elements()).toHaveLength(0);
+  });
+
   it('예약 중 [예약 취소]를 누르면 입력을 지우고 목록으로 돌아간다', async () => {
     const screen = renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();

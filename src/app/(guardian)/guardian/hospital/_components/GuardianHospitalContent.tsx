@@ -26,6 +26,7 @@ import {
   formatSlot,
   formatTime,
   hospitalRows,
+  hoursForDay,
   isClosedDay,
   isHospitalOpenNow,
   isSlotPassed,
@@ -379,6 +380,7 @@ export function GuardianHospitalContent() {
               </h2>
               <SlotPicker
                 hospital={pick.hospital}
+                date={date}
                 available={slotsQuery.data}
                 isLoading={slotsQuery.isFetching && !slotsQuery.data}
                 error={slotsQuery.isError ? slotsQuery.error : null}
@@ -772,6 +774,7 @@ function SearchStep({ hospitals, isLoading, error, onRetry, query, onQuery, page
 
 interface SlotPickerProps {
   hospital: IHospital;
+  date: string;
   available?: string[];
   isLoading: boolean;
   error: unknown;
@@ -781,11 +784,12 @@ interface SlotPickerProps {
   onTime: (time: string) => void;
 }
 
-function SlotPicker({ hospital, available, isLoading, error, isToday, nowTime, time, onTime }: SlotPickerProps) {
+function SlotPicker({ hospital, date, available, isLoading, error, isToday, nowTime, time, onTime }: SlotPickerProps) {
   if (isLoading) return <p className={cx('message', 'inline')}>예약할 수 있는 시간을 확인하는 중이에요.</p>;
   if (error) return <p className={cx('message', 'inline')}>{reservationErrorMessage(error)}</p>;
 
-  const slots = buildSlotGrid(hospital.openTime, hospital.closeTime, available ?? [], {
+  const hours = hoursForDay(hospital, date); // 요일별 진료 시간(예: 토요일 반일)
+  const slots = buildSlotGrid(hours.openTime, hours.closeTime, available ?? [], {
     isToday,
     nowTime,
     breakStart: hospital.breakStart,

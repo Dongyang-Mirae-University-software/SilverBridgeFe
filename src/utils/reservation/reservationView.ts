@@ -107,8 +107,13 @@ export function buildSlotGrid(
   const times = new Set(available);
   const open = toMinutes(openTime);
   const close = toMinutes(closeTime);
-  const breakStart = options.breakStart ? toMinutes(options.breakStart) : NaN;
-  const breakEnd = options.breakEnd ? toMinutes(options.breakEnd) : NaN;
+  // 점심시간이 그날 진료 시간 안에 다 들지 않으면 그날은 점심이 없다(예: 토요일 09:00~13:00 반일) - 예약 서비스와 같은 규칙
+  const breakInside =
+    Boolean(options.breakStart && options.breakEnd) &&
+    options.breakStart! >= openTime &&
+    options.breakEnd! <= closeTime;
+  const breakStart = breakInside ? toMinutes(options.breakStart!) : NaN;
+  const breakEnd = breakInside ? toMinutes(options.breakEnd!) : NaN;
   const inBreak = (t: number) =>
     !Number.isNaN(breakStart) && !Number.isNaN(breakEnd) && t < breakEnd && t + 30 > breakStart;
   if (!Number.isNaN(open) && !Number.isNaN(close)) {
@@ -121,10 +126,22 @@ export function buildSlotGrid(
   }));
 }
 
+function weekdayOf(iso: string) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
 // 그 병원이 쉬는 요일인가(closedWeekdays, 0=일 … 6=토). 날짜 문자열 기준이라 시간대와 무관하다.
 export function isClosedDay(hospital: Pick<IHospital, 'closedWeekdays'>, iso: string) {
-  const [y, m, d] = iso.split('-').map(Number);
-  return (hospital.closedWeekdays ?? []).includes(new Date(Date.UTC(y, m - 1, d)).getUTCDay());
+  return (hospital.closedWeekdays ?? []).includes(weekdayOf(iso));
+}
+
+// 그날의 진료 시간 - 그 요일 값(weekdayHours)이 있으면 그것, 없으면 기본 진료 시간.
+export function hoursForDay(hospital: Pick<IHospital, 'openTime' | 'closeTime' | 'weekdayHours'>, iso: string) {
+  const day = (hospital.weekdayHours ?? []).find(h => h.weekday === weekdayOf(iso));
+  return day
+    ? { openTime: day.openTime, closeTime: day.closeTime }
+    : { openTime: hospital.openTime, closeTime: hospital.closeTime };
 }
 
 // 고른 날짜·시각이 이미 지났는가(KST). 오늘은 지금 시각과 같아도 지난 것으로 본다.
