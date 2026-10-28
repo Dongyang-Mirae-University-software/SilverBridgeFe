@@ -202,10 +202,12 @@
   background: #c0392b;
 }
 
+/* v12의 세 번째 "확인 중" 상태 — v13은 켜짐/꺼짐만 사용한다.
 .switchStatusDot.checking {
   border: 1.5px dashed #c8a16e;
   background: transparent;
 }
+*/
 
 .switchStatus {
   color: #827970;

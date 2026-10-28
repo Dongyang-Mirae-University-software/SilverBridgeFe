@@ -58,12 +58,13 @@ describe('LiveCameraModal (Chrome)', () => {
     expect(img.hasAttribute('src')).toBe(false);
   });
 
-  it('상태를 모르면(status=null) "확인 중"으로 보이고 켜짐·꺼짐으로 채우지 않는다', async () => {
+  it('상태를 모르면(status=null) 세 번째 상태를 만들지 않고 영상 대기만 보인다', async () => {
     setMonitor({ status: null });
     const screen = render(<LiveCameraModal onClose={() => undefined} />);
 
-    await expect.element(screen.getByText('연결 상태를 확인하고 있어요')).toBeInTheDocument();
-    await expect.element(screen.getByRole('button', { name: /거실/ })).toHaveTextContent('확인 중');
+    await expect.element(screen.getByText('영상을 불러오는 중이에요...')).toBeInTheDocument();
+    await expect.element(screen.getByRole('button', { name: /거실/ })).toHaveTextContent('거실');
+    expect(screen.getByText('확인 중').query()).toBeNull();
     expect(screen.getByText('영상이 오지 않아요').query()).toBeNull();
   });
 
