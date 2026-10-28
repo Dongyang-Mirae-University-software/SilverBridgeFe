@@ -13,6 +13,7 @@ import {
   formatSlot,
   formatTime,
   hospitalRows,
+  isClosedDay,
   isHospitalOpenNow,
   isSlotPassed,
   kstNowTime,
@@ -98,6 +99,19 @@ describe('reservationView', () => {
       { time: '10:00', taken: true },
       { time: '10:30', taken: false },
     ]);
+  });
+
+  it('시간 칸 - 점심시간과 겹치는 칸은 그리지 않는다(경계 칸은 남긴다)', () => {
+    const grid = buildSlotGrid('11:00', '14:00', ['11:00', '13:30'], { breakStart: '12:30', breakEnd: '13:30' });
+    expect(grid.map(slot => slot.time)).toEqual(['11:00', '11:30', '12:00', '13:30']);
+    expect(buildSlotGrid('11:00', '12:00', [], { breakStart: null, breakEnd: null })).toHaveLength(2);
+  });
+
+  it('휴진 요일 - 날짜 문자열의 요일(0=일)이 closedWeekdays 에 있으면 쉬는 날', () => {
+    expect(isClosedDay({ closedWeekdays: [0] }, '2026-10-25')).toBe(true); // 일요일
+    expect(isClosedDay({ closedWeekdays: [0] }, '2026-10-26')).toBe(false);
+    expect(isClosedDay({ closedWeekdays: [6] }, '2026-10-31')).toBe(true); // 토요일
+    expect(isClosedDay({}, '2026-10-25')).toBe(false); // 옛 응답(칸 없음)은 쉬는 날 없음
   });
 
   it('시간 칸 - 오늘은 지난 시각도 마감', () => {
