@@ -129,7 +129,18 @@ describe('reservation BFF route', () => {
     );
   });
 
-  it.each(['내과&admin=1', '<script>', 'a'.repeat(31), '내과/../x'])('진료과 형식이 틀리면 404 (%s)', async dept => {
+  it.each(['내과&admin=1', '재활의학과/소아', '내과/../x'])('기호가 든 진료과도 다시 인코딩해 한 값으로만 넘긴다 (%s)', async dept => {
+    const [req, ctx] = request('GET', ['hospitals', '3', 'available-slots'], {
+      search: `?date=2026-10-24&department=${encodeURIComponent(dept)}`,
+    });
+    await GET(req, ctx);
+    const url = new URL(reservationCalls()[0].url);
+    expect(url.pathname).toBe('/api/v1/hospitals/3/available-slots');
+    expect([...url.searchParams.keys()]).toEqual(['date', 'department']);
+    expect(url.searchParams.get('department')).toBe(dept);
+  });
+
+  it.each(['a'.repeat(31), '내\n과', '내\u0000과'])('진료과가 30자를 넘거나 제어 문자가 있으면 404 (%j)', async dept => {
     const [req, ctx] = request('GET', ['hospitals', '3', 'available-slots'], {
       search: `?date=2026-10-24&department=${encodeURIComponent(dept)}`,
     });
