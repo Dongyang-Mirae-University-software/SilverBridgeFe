@@ -14,8 +14,9 @@ export type ReservationRoute = {
 // 예약 서비스 id는 int32 - 10자리는 범위를 넘어 예약 서비스가 500을 낸다
 const ID_PATTERN = /^[1-9][0-9]{0,8}$/;
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
-// 진료과 이름(내과·이비인후과 등). 시간 칸은 진료과마다 따로라 빈 시간 조회에 함께 넘긴다
-const DEPARTMENT_PATTERN = /^[0-9A-Za-z가-힣·() ]{1,30}$/;
+// 진료과 이름. 시간 칸은 진료과마다 따로라 빈 시간 조회에 함께 넘긴다.
+// 관리자가 정하는 이름이라 글자 종류로 좁히지 않고 제어 문자·30자 초과만 막는다 - 값은 URLSearchParams 로 다시 인코딩해 넘긴다
+const DEPARTMENT_PATTERN = /^[^\u0000-\u001f\u007f]{1,30}$/;
 
 // 형식과 달력이 모두 맞는 날짜만(2026-02-30·2026-99-99는 거절)
 export function isCalendarDate(value: string) {
