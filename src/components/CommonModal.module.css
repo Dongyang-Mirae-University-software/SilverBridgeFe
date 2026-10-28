@@ -98,6 +98,12 @@
   font-weight: 700;
 }
 
+/* 긴급 SOS 확인은 오동작을 막기 위해 버튼을 크게 둔다. 기본 모달은 기존 46px을 유지한다. */
+.emergencyActions .button {
+  min-height: 72px;
+  font-size: 1.0625rem;
+}
+
 .button:disabled {
   background: #cbd5e1;
   color: #64748b;
@@ -118,6 +124,10 @@
 @media (max-width: 420px) {
   .actions {
     flex-direction: column;
+  }
+
+  .emergencyActions {
+    flex-direction: row;
   }
 }
 
