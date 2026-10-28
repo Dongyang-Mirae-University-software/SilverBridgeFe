@@ -1,7 +1,7 @@
 'use client';
 
 import { useIsMutating, useMutationState, useQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
@@ -13,48 +13,23 @@ import {
   wardTodayMedicationQueryKey,
   wardTodayMedicationQueryOptions,
 } from '@/service/query/ward/medication';
-import { formatDoseTimeKorean, groupMedicationsByTime, isRegisteredAfterDose } from '@/utils/format/medication';
+import { isRegisteredAfterDose, sortMedicationsByDoseTime } from '@/utils/format/medication';
 import { WardMedicationCard } from './WardMedicationCard';
 import styles from './WardMedicationContent.module.css';
 
 const cx = classNames.bind(styles);
-
-// 시간대 상태: todo 먹을 약이 남음 / done 다 먹음 / skipped 오늘 등록 전이라 그날 먹을 약이 없음
-type SlotState = 'todo' | 'done' | 'skipped';
 
 export function WardMedicationContent() {
   const { data, isLoading, isError, refetch } = useQuery(wardTodayMedicationQueryOptions);
   useKstMidnightRefetch(wardTodayMedicationQueryKey);
 
   const doseDate = data?.doseDate ?? '';
-  const medications = data?.medications ?? [];
-  // 2026-10-24 디자인: 시간대 하나만 크게 펼치고 나머지는 한 줄. 체크·되돌리기는 시간대 단위(묶음 API)로만 한다
-  const slots = groupMedicationsByTime(medications, '00:00', doseDate).map(group => {
-    // 오늘 복용 시각이 지난 뒤 등록된 약은 그날 체크 대상이 아니다(BE 미복용 요약·보호자 카드와 같은 기준)
-    const isSkipped = (medication: MedicationItem) => !medication.taken && isRegisteredAfterDose(medication, doseDate);
-    const counted = group.medications.filter(medication => !isSkipped(medication));
-    const untaken = counted.filter(medication => !medication.taken);
-    const state: SlotState = counted.length === 0 ? 'skipped' : untaken.length === 0 ? 'done' : 'todo';
-    return { ...group, isSkipped, counted, untaken, state };
-  });
-  const nowSlot = slots.find(slot => slot.state === 'todo');
-  const isAllTaken = slots.some(slot => slot.state === 'done') && !nowSlot;
-
-  // 펼칠 시간대: 누른 것, 없으면 지금 먹을 시간대. 체크한 시간대는 그대로 펼쳐 두어 바로 되돌릴 수 있게 한다
-  // 누른 시간대는 그날에만 유효하고, 화면을 다시 볼 때 이미 다 먹은 시간대면 지금 시간대로 돌아간다 -
-  // 화면을 켜 둔 채 점심이 되거나 날이 바뀌어도 "아침 약 다 먹었어요"가 펼쳐져 있었다(점검 M-1)
-  const [focus, setFocus] = useState<{ key: string; doseDate: string; stale: boolean } | null>(null);
-  const picked = focus?.doseDate === doseDate ? slots.find(slot => slot.key === focus.key) : undefined;
-  const focused = picked && !(focus?.stale && picked.state === 'done') ? picked : isAllTaken ? undefined : nowSlot;
-  const pick = (key: string) => setFocus({ key, doseDate, stale: false });
-
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') setFocus(current => (current ? { ...current, stale: true } : current));
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-  }, []);
+  const medications = sortMedicationsByDoseTime(data?.medications ?? []);
+  // 오늘 복용 시각이 지난 뒤 등록된 약은 그날 체크 대상이 아니다.
+  const isBeforeRegistered = (medication: MedicationItem) =>
+    !medication.taken && isRegisteredAfterDose(medication, doseDate);
+  const actionableMedications = medications.filter(medication => !isBeforeRegistered(medication));
+  const isAllTaken = actionableMedications.length > 0 && actionableMedications.every(medication => medication.taken);
 
   const batchMutation = useMedicationIntakeBatchMutation();
   // 처리 중이면 모든 버튼을 잠근다 - 연속 탭으로 같은 요청이 두 번 가지 않게
@@ -72,12 +47,11 @@ export function WardMedicationContent() {
 
   // isChanging은 다음 렌더에야 바뀌어 아주 빠른 두 번째 탭은 못 막는다 - 누른 즉시 잠그는 ref를 함께 쓴다
   const sendingRef = useRef(false);
-  const setTaken = (key: string, medicationIds: number[], taken: boolean) => {
-    if (sendingRef.current || isChanging || medicationIds.length === 0) return;
+  const setTaken = (medicationId: number, taken: boolean) => {
+    if (sendingRef.current || isChanging) return;
     sendingRef.current = true;
-    pick(key);
     batchMutation.mutate(
-      { medicationIds, taken },
+      { medicationIds: [medicationId], taken },
       {
         onSettled: () => {
           sendingRef.current = false;
@@ -99,7 +73,7 @@ export function WardMedicationContent() {
       )}
       {!isLoading && !isError && medications.length > 0 && (
         <>
-          {isAllTaken && !focused && (
+          {isAllTaken && (
             <section className={cx('allTaken')}>
               <Icon name="check" size={30} decorative />
               오늘 약 다 먹었어요
@@ -112,94 +86,17 @@ export function WardMedicationContent() {
             </p>
           )}
 
-          <div className={cx('slots')}>
-            {slots.map(slot => {
-              const time = formatDoseTimeKorean(slot.doseTime);
-              if (slot.key !== focused?.key) {
-                return (
-                  <section key={slot.key} aria-label={`${slot.label} 약`}>
-                    <button
-                      type="button"
-                      className={cx('slotRow', { done: slot.state !== 'todo' })}
-                      aria-expanded={false}
-                      onClick={() => pick(slot.key)}
-                    >
-                      <span className={cx('slotName')}>{slot.label} 약</span>
-                      {slot.state === 'done' ? (
-                        <span className={cx('slotDone')}>
-                          <Icon name="check" size={22} decorative />
-                          먹었어요
-                        </span>
-                      ) : slot.state === 'skipped' ? (
-                        <span className={cx('slotTime')}>오늘은 등록 전</span>
-                      ) : (
-                        <span className={cx('slotTime')}>{time}</span>
-                      )}
-                    </button>
-                  </section>
-                );
-              }
-
-              if (slot.state === 'done') {
-                const takenIds = slot.medications.filter(m => m.taken).map(m => m.medicationId);
-                return (
-                  <section key={slot.key} className={cx('doneCard')} aria-label={`${slot.label} 약`}>
-                    <span className={cx('doneIcon')}>
-                      <Icon name="check" size={34} color="#fff" decorative />
-                    </span>
-                    <strong className={cx('doneText')}>{slot.label} 약 다 먹었어요</strong>
-                    <button
-                      type="button"
-                      className={cx('undoButton')}
-                      disabled={isChanging}
-                      aria-label={`${slot.label} 약 되돌리기`}
-                      onClick={() => setTaken(slot.key, takenIds, false)}
-                    >
-                      되돌리기
-                    </button>
-                  </section>
-                );
-              }
-
-              const partial = slot.untaken.length > 0 && slot.untaken.length < slot.counted.length;
-              return (
-                <section key={slot.key} className={cx('nowCard')} aria-label={`${slot.label} 약`}>
-                  <header className={cx('nowHead')}>
-                    <strong>{slot.key === nowSlot?.key ? `지금 ${slot.label} 약` : `${slot.label} 약`}</strong>
-                    <span>{time}</span>
-                  </header>
-                  <ul className={cx('medList')}>
-                    {slot.medications.map(medication => (
-                      <WardMedicationCard
-                        key={medication.medicationId}
-                        medication={medication}
-                        beforeRegistered={slot.isSkipped(medication)}
-                      />
-                    ))}
-                  </ul>
-                  {slot.state === 'skipped' ? (
-                    <p className={cx('skippedText')}>오늘 드실 시간이 지난 뒤 등록된 약이에요. 내일부터 드세요</p>
-                  ) : (
-                    <button
-                      type="button"
-                      className={cx('takeButton')}
-                      disabled={isChanging}
-                      onClick={() =>
-                        setTaken(
-                          slot.key,
-                          slot.untaken.map(medication => medication.medicationId),
-                          true,
-                        )
-                      }
-                    >
-                      <Icon name="check" size={28} color="#fff" decorative />
-                      {partial ? `남은 약 ${slot.untaken.length}개 먹었어요` : `${slot.label} 약 먹었어요`}
-                    </button>
-                  )}
-                </section>
-              );
-            })}
-          </div>
+          <ul className={cx('medicationList')} aria-label="오늘 드실 약">
+            {medications.map(medication => (
+              <WardMedicationCard
+                key={medication.medicationId}
+                medication={medication}
+                beforeRegistered={isBeforeRegistered(medication)}
+                disabled={isChanging}
+                onTake={taken => setTaken(medication.medicationId, taken)}
+              />
+            ))}
+          </ul>
         </>
       )}
     </section>
