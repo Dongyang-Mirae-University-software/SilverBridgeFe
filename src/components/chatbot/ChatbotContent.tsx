@@ -54,10 +54,19 @@ const QUICK_PROMPTS = [
 
 const COMPOSER_MAX_LINES = 2;
 
-export default function ChatbotContent() {
+interface ChatbotContentProps {
+  /**
+   * 기존 보호자 상담 화면은 선택 대상·상담 기록을 제공한다.
+   * 피보호자 화면은 v13의 단순하고 큰 글씨 상담 화면을 사용한다.
+   */
+  variant?: 'guardian' | 'ward';
+}
+
+export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentProps) {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const isGuardian = getAuthRole() === 'GUARDIAN';
+  const isWardChat = variant === 'ward';
   const { activeWards } = useGuardianActiveWards(isGuardian);
   const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
   const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId) ?? activeWards[0] ?? null;
@@ -66,7 +75,7 @@ export default function ChatbotContent() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
-  const [quickPromptsOpen, setQuickPromptsOpen] = useState(false);
+  const [quickPromptsOpen, setQuickPromptsOpen] = useState(() => isWardChat);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [chatLogs, setChatLogs] = useState<ChatLogItem[]>([]);
   const [isLogsLoading, setIsLogsLoading] = useState(false);
@@ -252,7 +261,7 @@ export default function ChatbotContent() {
   }
 
   return (
-    <div className={styles.chatPage}>
+    <div className={`${styles.chatPage} ${isWardChat ? styles.wardVariant : ''}`}>
       <section className={styles.shell}>
         <header className={styles.header}>
           <div className={styles.brand}>
@@ -275,17 +284,19 @@ export default function ChatbotContent() {
             <div className={styles.brandCopy}>
               <h1>AI 의료 챗봇</h1>
               <p>
-                <span className={styles.statusDot} />
-                건강 도우미 · 24시간 답변
+                {!isWardChat && <span className={styles.statusDot} />}
+                {isWardChat ? '몸이 궁금할 때 언제든 물어보세요' : '건강 도우미 · 24시간 답변'}
               </p>
             </div>
           </div>
-          <div className={styles.headerActions}>
-            <button type="button" className={styles.historyButton} onClick={() => void handleOpenHistory()}>
-              <Icon name="message" size={16} decorative />
-              상담 기록
-            </button>
-          </div>
+          {!isWardChat && (
+            <div className={styles.headerActions}>
+              <button type="button" className={styles.historyButton} onClick={() => void handleOpenHistory()}>
+                <Icon name="message" size={16} decorative />
+                상담 기록
+              </button>
+            </div>
+          )}
         </header>
 
         {isGuardian && activeWards.length > 0 && selectedWard && (
@@ -312,6 +323,7 @@ export default function ChatbotContent() {
                   onUiSelect={handleUiSelect}
                   userImageUrl={profile?.profileImage}
                   userName={profile?.name}
+                  variant={isWardChat ? 'ward' : 'guardian'}
                 />
               ))}
 
@@ -326,16 +338,20 @@ export default function ChatbotContent() {
           </section>
 
           <section className={`${styles.quickPromptPanel} ${quickPromptsOpen ? styles.quickPromptPanelOpen : ''}`} aria-label="추천 질문">
-            <button
-              type="button"
-              className={styles.quickPromptToggle}
-              aria-expanded={quickPromptsOpen}
-              aria-controls="chat-quick-prompts"
-              onClick={() => setQuickPromptsOpen(open => !open)}
-            >
-              이런 걸 물어보세요
-              <Icon name="chevronRight" size={14} className={`${styles.quickPromptChevron} ${quickPromptsOpen ? styles.quickPromptChevronOpen : ''}`} decorative />
-            </button>
+            {isWardChat ? (
+              <p className={styles.wardPromptTitle}>눌러서 물어보세요</p>
+            ) : (
+              <button
+                type="button"
+                className={styles.quickPromptToggle}
+                aria-expanded={quickPromptsOpen}
+                aria-controls="chat-quick-prompts"
+                onClick={() => setQuickPromptsOpen(open => !open)}
+              >
+                이런 걸 물어보세요
+                <Icon name="chevronRight" size={14} className={`${styles.quickPromptChevron} ${quickPromptsOpen ? styles.quickPromptChevronOpen : ''}`} decorative />
+              </button>
+            )}
             <div id="chat-quick-prompts" className={styles.quickPromptRow} hidden={!quickPromptsOpen}>
               {QUICK_PROMPTS.map(prompt => (
                 <button
@@ -343,7 +359,7 @@ export default function ChatbotContent() {
                   type="button"
                   className={styles.quickPromptButton}
                   disabled={sending}
-                  onClick={() => handleQuickPrompt(prompt)}
+                  onClick={() => (isWardChat ? void send(prompt) : handleQuickPrompt(prompt))}
                 >
                   {prompt}
                 </button>
@@ -357,7 +373,7 @@ export default function ChatbotContent() {
                 ref={textareaRef}
                 className={styles.textarea}
                 rows={1}
-                placeholder="궁금한 점을 입력하세요..."
+                placeholder={isWardChat ? '여기에 궁금한 점을 써 주세요' : '궁금한 점을 입력하세요...'}
                 value={input}
                 disabled={sending}
                 onChange={e => {
@@ -373,7 +389,7 @@ export default function ChatbotContent() {
                 onClick={() => void send(input)}
                 aria-label="전송"
               >
-                <Icon name="back" size={18} className={styles.sendIcon} decorative />
+                {isWardChat ? '보내기' : <Icon name="back" size={18} className={styles.sendIcon} decorative />}
               </button>
             </div>
           </footer>

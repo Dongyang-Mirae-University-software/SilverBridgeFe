@@ -170,6 +170,48 @@
   padding-bottom: 4px;
 }
 
+/* 피보호자 챗봇(v13): 시각 없이 큰 글씨 말풍선과 곰돌이 본인 아바타를 사용한다. */
+.wardBubble .bubbleUser,
+.wardBubble .bubbleAssistant {
+  max-width: min(75%, calc(100vw - 132px));
+}
+
+.wardBubble .bubbleUser {
+  border-radius: 18px 4px 18px 18px;
+}
+
+.wardBubble .bubbleAssistant {
+  border-radius: 4px 18px 18px;
+}
+
+.wardBubble .bubbleUser p,
+.wardBubble .replyText {
+  font-size: 21px;
+  line-height: 1.55;
+}
+
+.wardAvatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: #f5c9a8;
+}
+
+@media (max-width: 760px) {
+  .wardBubble .bubbleUser,
+  .wardBubble .bubbleAssistant {
+    max-width: calc(100vw - 116px);
+  }
+
+  .wardBubble .bubbleUser p,
+  .wardBubble .replyText {
+    font-size: 18px;
+  }
+}
+
 /* Chat bubble polish */
 .bubble {
   box-shadow: 0 8px 20px rgba(32, 39, 33, 0.07);

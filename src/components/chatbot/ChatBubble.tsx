@@ -15,28 +15,37 @@ interface Props {
   onUiSelect: (field: string, value: string, label?: string) => void;
   userImageUrl?: string | null;
   userName?: string | null;
+  variant?: 'guardian' | 'ward';
 }
 
-export default function ChatBubble({ message, isLastAssistant, onUiSelect, userImageUrl, userName }: Props) {
+export default function ChatBubble({
+  message,
+  isLastAssistant,
+  onUiSelect,
+  userImageUrl,
+  userName,
+  variant = 'guardian',
+}: Props) {
   const isUser = message.role === 'user';
+  const isWardChat = variant === 'ward';
   const timeText = dayjs(message.timestamp).format('A h:mm');
 
   if (isUser) {
     return (
-      <div className={styles.rowUser}>
-        <span className={styles.timeUser}>{timeText}</span>
+      <div className={`${styles.rowUser} ${isWardChat ? styles.wardBubble : ''}`}>
+        {!isWardChat && <span className={styles.timeUser}>{timeText}</span>}
         <div className={styles.messageColumnUser}>
           <div className={styles.bubbleUser}>
             <p>{message.content}</p>
           </div>
         </div>
-        <UserAvatar imageUrl={userImageUrl} userName={userName} size="w-38" />
+        {isWardChat ? <WardChatAvatar /> : <UserAvatar imageUrl={userImageUrl} userName={userName} size="w-38" />}
       </div>
     );
   }
 
   return (
-    <div className={styles.rowAssistant}>
+    <div className={`${styles.rowAssistant} ${isWardChat ? styles.wardBubble : ''}`}>
       <div className={styles.avatar}>AI</div>
       <div className={styles.assistantBody}>
         {/* 메시지 본문 */}
@@ -117,9 +126,26 @@ export default function ChatBubble({ message, isLastAssistant, onUiSelect, userI
             )}
             </div>
           </div>
-          <span className={styles.timeAssistant}>{timeText}</span>
+          {!isWardChat && <span className={styles.timeAssistant}>{timeText}</span>}
         </div>
       </div>
+    </div>
+  );
+}
+
+function WardChatAvatar() {
+  return (
+    <div className={styles.wardAvatar} aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 60 60">
+        <circle cx="14" cy="16" r="8" fill="#C9986A" />
+        <circle cx="46" cy="16" r="8" fill="#C9986A" />
+        <ellipse cx="30" cy="32" rx="20" ry="18" fill="#F5C9A8" />
+        <ellipse cx="30" cy="38" rx="11" ry="9" fill="#FFE4D0" />
+        <circle cx="22" cy="28" r="2" fill="#3D2A1E" />
+        <circle cx="38" cy="28" r="2" fill="#3D2A1E" />
+        <ellipse cx="30" cy="35" rx="2" ry="1.4" fill="#3D2A1E" />
+        <path d="M28 38Q30 41 32 38" fill="none" stroke="#3D2A1E" strokeLinecap="round" strokeWidth="1.4" />
+      </svg>
     </div>
   );
 }
