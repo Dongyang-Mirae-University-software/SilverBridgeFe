@@ -97,23 +97,34 @@ export interface SlotCell {
 
 // 예약 서비스와 같은 규칙(진료 시작부터 30분 단위, 끝나기 30분 전까지)으로 전체 칸을 만들고,
 // 빈 시간 목록에 없는 칸을 "마감"으로 둔다. 오늘은 지난 시각도 마감이다.
+// 점심시간과 겹치는 칸은 아예 그리지 않는다(예약 서비스도 그 칸을 빈 시간에서 뺀다).
 export function buildSlotGrid(
   openTime: string,
   closeTime: string,
   available: string[],
-  options: { isToday?: boolean; nowTime?: string } = {},
+  options: { isToday?: boolean; nowTime?: string; breakStart?: string | null; breakEnd?: string | null } = {},
 ): SlotCell[] {
   const times = new Set(available);
   const open = toMinutes(openTime);
   const close = toMinutes(closeTime);
+  const breakStart = options.breakStart ? toMinutes(options.breakStart) : NaN;
+  const breakEnd = options.breakEnd ? toMinutes(options.breakEnd) : NaN;
+  const inBreak = (t: number) =>
+    !Number.isNaN(breakStart) && !Number.isNaN(breakEnd) && t < breakEnd && t + 30 > breakStart;
   if (!Number.isNaN(open) && !Number.isNaN(close)) {
-    for (let t = open; t + 30 <= close; t += 30) times.add(toTime(t));
+    for (let t = open; t + 30 <= close; t += 30) if (!inBreak(t)) times.add(toTime(t));
   }
   const free = new Set(available);
   return [...times].sort().map(time => ({
     time,
     taken: !free.has(time) || Boolean(options.isToday && options.nowTime && time <= options.nowTime),
   }));
+}
+
+// 그 병원이 쉬는 요일인가(closedWeekdays, 0=일 … 6=토). 날짜 문자열 기준이라 시간대와 무관하다.
+export function isClosedDay(hospital: Pick<IHospital, 'closedWeekdays'>, iso: string) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return (hospital.closedWeekdays ?? []).includes(new Date(Date.UTC(y, m - 1, d)).getUTCDay());
 }
 
 // 고른 날짜·시각이 이미 지났는가(KST). 오늘은 지금 시각과 같아도 지난 것으로 본다.

@@ -16,6 +16,10 @@ export interface IHospital {
   description: string;
   openTime: string;
   closeTime: string;
+  // 점심시간(HH:mm, 없으면 null)·휴진 요일(0=일 … 6=토). 예약 서비스 2026-10-28 이전 응답에는 없다
+  breakStart?: string | null;
+  breakEnd?: string | null;
+  closedWeekdays?: number[];
 }
 
 export interface IAvailableSlots {

@@ -26,6 +26,7 @@ import {
   formatSlot,
   formatTime,
   hospitalRows,
+  isClosedDay,
   isHospitalOpenNow,
   isSlotPassed,
   kstNowTime,
@@ -346,23 +347,28 @@ export function GuardianHospitalContent() {
           <section className={cx('card', 'pad22')} aria-label="날짜">
             <h2 className={cx('cardTitle')}>날짜</h2>
             <div className={cx('days')}>
-              {buildDays(today).map(day => (
-                <button
-                  key={day.iso}
-                  type="button"
-                  className={cx('day', { selected: date === day.iso, sunday: day.weekday === '일' })}
-                  aria-pressed={date === day.iso}
-                  aria-label={`${formatDateShort(day.iso)}${day.iso === today ? ' 오늘' : ''}`}
-                  onClick={() => {
-                    setDate(day.iso);
-                    setTime('');
-                    setSlotNotice(null);
-                  }}
-                >
-                  <span className={cx('weekday')}>{day.weekday}</span>
-                  <span className={cx('dayNumber')}>{day.day}</span>
-                </button>
-              ))}
+              {buildDays(today).map(day => {
+                const closed = isClosedDay(pick.hospital, day.iso);
+                return (
+                  <button
+                    key={day.iso}
+                    type="button"
+                    className={cx('day', { selected: date === day.iso, sunday: day.weekday === '일', closed })}
+                    aria-pressed={date === day.iso}
+                    aria-label={`${formatDateShort(day.iso)}${day.iso === today ? ' 오늘' : ''}${closed ? ' 휴진' : ''}`}
+                    disabled={closed}
+                    onClick={() => {
+                      setDate(day.iso);
+                      setTime('');
+                      setSlotNotice(null);
+                    }}
+                  >
+                    <span className={cx('weekday')}>{day.weekday}</span>
+                    <span className={cx('dayNumber')}>{day.day}</span>
+                    {closed && <span className={cx('dayOff')}>휴진</span>}
+                  </button>
+                );
+              })}
             </div>
           </section>
 
@@ -779,7 +785,12 @@ function SlotPicker({ hospital, available, isLoading, error, isToday, nowTime, t
   if (isLoading) return <p className={cx('message', 'inline')}>예약할 수 있는 시간을 확인하는 중이에요.</p>;
   if (error) return <p className={cx('message', 'inline')}>{reservationErrorMessage(error)}</p>;
 
-  const slots = buildSlotGrid(hospital.openTime, hospital.closeTime, available ?? [], { isToday, nowTime });
+  const slots = buildSlotGrid(hospital.openTime, hospital.closeTime, available ?? [], {
+    isToday,
+    nowTime,
+    breakStart: hospital.breakStart,
+    breakEnd: hospital.breakEnd,
+  });
   if (slots.length === 0 || slots.every(slot => slot.taken)) {
     return <p className={cx('message', 'inline')}>이날은 예약할 수 있는 시간이 없어요. 다른 날을 골라 주세요.</p>;
   }

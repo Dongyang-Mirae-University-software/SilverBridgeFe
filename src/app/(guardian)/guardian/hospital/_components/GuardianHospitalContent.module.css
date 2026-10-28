@@ -506,6 +506,18 @@
   font-weight: 800;
 }
 
+.day.closed {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-mute);
+  cursor: not-allowed;
+}
+
+.dayOff {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sb-ink-mute);
+}
+
 .day.selected {
   border: 2px solid var(--sb-brand);
   background: var(--sb-brand);
