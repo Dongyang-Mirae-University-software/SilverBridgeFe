@@ -5,7 +5,7 @@ import styles from './page.module.css';
 
 export default function GuardianWardRegisterPage() {
   return (
-    <PageLayout title="가족 등록">
+    <PageLayout title="피보호자 등록">
       <div className={styles.stack}>
         <GuardianConnectionRequestForm />
         <GuardianConnectionRequestHistory />

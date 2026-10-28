@@ -6,7 +6,7 @@ import classNames from 'classnames/bind';
 
 import { getConnectionData } from '@/components/connections/ConnectionShared';
 import { guardianConnectionRequestsQueryOptions, useGuardianConnectionCancelMutation } from '@/service/query/guardian';
-import { formatMonthDay, formatRequestedAs, getConnectionActionErrorMessage } from '@/utils/connection/connectionView';
+import { formatMonthDay, getConnectionActionErrorMessage } from '@/utils/connection/connectionView';
 import styles from './GuardianConnectionRequestHistory.module.css';
 
 const cx = classNames.bind(styles);
@@ -58,8 +58,7 @@ export function GuardianConnectionRequestHistory() {
             <li key={connection.id} className={cx('row')}>
               <span className={cx('memberId')}>{connection.partnerUserId}</span>
               <span className={cx('meta')}>
-                {formatRequestedAs(connection.relation)}
-                {requestedOn && ` · ${requestedOn}`}
+                {[connection.relation, requestedOn && `${requestedOn} 요청`].filter(Boolean).join(' · ')}
               </span>
               <button
                 className={cx('cancelButton')}

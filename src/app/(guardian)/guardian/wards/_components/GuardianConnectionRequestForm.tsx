@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { useGuardianConnectionRequestMutation } from '@/service/query/guardian';
@@ -17,8 +17,6 @@ const cx = classNames.bind(styles);
 const RELATION_OPTIONS = ['아들', '딸', '며느리', '사위', '손자', '손녀', '배우자', '기타'] as const;
 type RelationOption = (typeof RELATION_OPTIONS)[number];
 
-const SENT_MESSAGE_MS = 2500;
-
 export function GuardianConnectionRequestForm() {
   const [memberId, setMemberId] = useState('');
   const [relation, setRelation] = useState<RelationOption | ''>('');
@@ -28,11 +26,13 @@ export function GuardianConnectionRequestForm() {
 
   const canSubmit = isValidMemberId(memberId) && Boolean(relation) && !isPending;
 
+  /* v12 보관: 성공 안내를 2.5초 뒤 자동으로 숨겼다.
   useEffect(() => {
     if (!sent) return;
     const timer = setTimeout(() => setSent(false), SENT_MESSAGE_MS);
     return () => clearTimeout(timer);
   }, [sent]);
+  */
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,6 +67,7 @@ export function GuardianConnectionRequestForm() {
           onChange={event => {
             setMemberId(sanitizeMemberId(event.target.value));
             setErrorMessage('');
+            setSent(false);
           }}
           placeholder="예) aB3x9Z"
           // maxLength는 두지 않는다 - 붙여 넣은 "aB-3x 9Z"가 정리 전에 잘려 버린다. 길이는 sanitizeMemberId가 자른다
@@ -93,7 +94,10 @@ export function GuardianConnectionRequestForm() {
               className={cx('chip', { selected: relation === option })}
               type="button"
               aria-pressed={relation === option}
-              onClick={() => setRelation(option)}
+              onClick={() => {
+                setRelation(option);
+                setSent(false);
+              }}
             >
               {option}
             </button>
@@ -103,7 +107,7 @@ export function GuardianConnectionRequestForm() {
 
       <footer className={cx('footer')}>
         <p className={cx('hint')} aria-live="polite">
-          {sent ? <span className={cx('sentText')}>요청을 보냈어요. 어르신이 수락하면 연결돼요</span> : '어르신이 수락하면 연결돼요'}
+          {sent ? <span className={cx('sentText')}>연결 요청을 보냈어요. 어르신이 수락하면 연결돼요</span> : '어르신이 수락하면 연결돼요'}
         </p>
         <button className={cx('submitButton')} type="submit" disabled={!canSubmit}>
           {isPending ? '요청 보내는 중…' : '연결 요청 보내기'}
