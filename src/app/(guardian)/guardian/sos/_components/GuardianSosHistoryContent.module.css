@@ -56,21 +56,11 @@
   box-shadow: var(--sb-shadow-sm);
 }
 
-.tableHead,
 .item {
-  display: grid;
-  grid-template-columns: minmax(150px, 1.2fr) minmax(110px, 1fr) minmax(150px, 1fr) minmax(120px, 1fr);
+  display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px 22px;
-}
-
-.tableHead {
-  border-bottom: 1px solid var(--sb-line-soft);
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-mute);
-  font-size: 13px;
-  font-weight: 700;
+  padding: 14px 24px;
 }
 
 .list {
@@ -80,78 +70,67 @@
 }
 
 .item {
-  min-height: 76px;
+  min-height: 84px;
   border-top: 1px solid var(--sb-line-soft);
-  padding-top: 16px;
-  padding-bottom: 16px;
 }
 
 .item:first-child {
   border-top: 0;
 }
 
-.dateCell {
+.eventMarker {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  place-items: center;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.eventTime {
   display: flex;
-  min-width: 0;
+  min-width: 130px;
   flex-direction: column;
 }
 
-.dateCell strong {
+.eventTime strong {
   color: var(--sb-ink);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   white-space: nowrap;
 }
 
-.dateCell span {
+.eventTime span {
   margin-top: 2px;
   color: var(--sb-ink-soft);
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
-.locationCell {
-  display: flex;
+.eventDescription {
   min-width: 0;
-  align-items: center;
-  gap: 6px;
-  color: var(--sb-ink);
+  margin-left: auto;
+  color: var(--sb-ink-soft);
   font-size: 15px;
-  font-weight: 600;
-}
-
-.locationCell span,
-.wardName {
+  font-weight: 700;
   overflow: hidden;
+  text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.contactBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 800;
-  padding: 6px 12px;
-  white-space: nowrap;
+.sos {
+  background: var(--sb-danger);
+  color: #fff;
 }
 
 .guardian {
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
-}
-
-.sos {
-  background: var(--sb-danger-soft);
-  color: var(--sb-danger);
-}
-
-.wardName {
-  color: var(--sb-ink);
-  font-size: 15px;
-  font-weight: 600;
+  background: #e6effa;
+  color: #3b7dd8;
 }
 
 .emptyState {
@@ -175,22 +154,29 @@
     padding: 2px;
   }
 
-  .tableHead {
-    display: none;
-  }
-
   .item {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px 16px;
+    gap: 12px;
     padding: 16px;
   }
 
-  .locationCell {
-    grid-column: 1 / -1;
-    grid-row: 2;
+  .eventMarker {
+    width: 48px;
+    height: 48px;
+    flex-basis: 48px;
+    border-radius: 14px;
+    font-size: 14px;
   }
 
-  .contactBadge {
-    justify-self: end;
+  .eventTime {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .eventTime strong {
+    font-size: 16px;
+  }
+
+  .eventDescription {
+    display: none;
   }
 }
