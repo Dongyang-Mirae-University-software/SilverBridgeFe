@@ -77,6 +77,34 @@
   text-align: center;
 }
 
+/* v13 약 목록: 한 약을 한 줄에 표시한다. 기존 시간대 아코디언 클래스는
+   이전 화면을 되돌려 확인할 수 있도록 아래에 남겨 두고, 새 목록에는 쓰지 않는다. */
+.medicationList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.medicationRow {
+  display: grid;
+  grid-template-columns: minmax(104px, 0.55fr) minmax(0, 1.5fr) auto 44px;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 10px 24px;
+}
+
+.medicationRow + .medicationRow {
+  border-top: 1px solid var(--sb-line-soft);
+}
+
+.medicationTime {
+  color: var(--sb-ink-soft);
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 /* 시간대 한 줄 - 누르면 그 시간 약이 펼쳐진다(한 번에 하나) */
 .groupList,
 .groupMedications {
@@ -232,6 +260,12 @@
   color: #8a5f12;
 }
 
+.statusBadge.later,
+.statusBadge.beforeRegistered {
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+}
+
 .deleteButton {
   display: grid;
   flex-shrink: 0;
@@ -246,6 +280,11 @@
   font: inherit;
   font-size: 22px;
   line-height: 1;
+}
+
+.deleteButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .groupActions {
@@ -579,6 +618,31 @@
   .sectionTitle,
   .todayCount {
     font-size: 18px;
+  }
+
+  .medicationRow {
+    grid-template-columns: minmax(76px, auto) minmax(0, 1fr) 44px;
+    gap: 8px;
+    min-height: 70px;
+    padding: 10px 16px;
+  }
+
+  .medicationTime {
+    align-self: start;
+    padding-top: 3px;
+    font-size: 14px;
+  }
+
+  .medicationRow .statusBadge {
+    grid-column: 2;
+    justify-self: start;
+    padding: 3px 8px;
+    font-size: 12px;
+  }
+
+  .medicationRow .deleteButton {
+    grid-column: 3;
+    grid-row: 1 / span 2;
   }
 
   .groupHeader {
