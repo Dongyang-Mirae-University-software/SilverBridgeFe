@@ -14,12 +14,11 @@ import type { IGuardianSosHistoryItem, SosTriggerType } from '@/service/interfac
 import styles from './GuardianSosHistoryContent.module.css';
 
 const cx = classNames.bind(styles);
-const PAGE_SIZE = 50;
-const UNKNOWN_WARD_NAME = '탈퇴한 사용자';
+const PAGE_SIZE = 5;
 
-const TRIGGER_TYPE_META: Record<SosTriggerType, { label: string; icon: 'bell' | 'phone'; tone: 'guardian' | 'sos' }> = {
-  SOS_BUTTON: { label: '긴급 SOS 버튼', icon: 'phone', tone: 'sos' },
-  GUARDIAN_CALL: { label: '보호자에게 알림', icon: 'bell', tone: 'guardian' },
+const TRIGGER_TYPE_META: Record<SosTriggerType, { filterLabel: string; description: string; tone: 'guardian' | 'sos' }> = {
+  SOS_BUTTON: { filterLabel: 'SOS 버튼', description: '긴급 SOS 버튼을 눌렀어요', tone: 'sos' },
+  GUARDIAN_CALL: { filterLabel: '직접 전화', description: '보호자에게 직접 전화했어요', tone: 'guardian' },
 };
 
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
@@ -67,7 +66,7 @@ export default function GuardianSosHistoryContent() {
   return (
     <div className={cx('page')}>
       <div className={cx('filters')}>
-        <div className={cx('wardTabs')} role="tablist" aria-label="피보호자 선택">
+        <div className={cx('wardTabs')}>
           <WardSelectorTabs
             wards={activeWards.map(ward => ({ wardId: ward.partnerUserId, wardName: ward.partnerName }))}
             selectedWardId={effectiveSelectedWardId ?? undefined}
@@ -77,8 +76,8 @@ export default function GuardianSosHistoryContent() {
         <div className={cx('typeFilters')} role="tablist" aria-label="발생 경로 필터">
           {([
             ['ALL', '전체', counts?.all ?? 0],
-            ['GUARDIAN_CALL', '보호자에게 알림', counts?.guardianCall ?? 0],
-            ['SOS_BUTTON', '긴급 SOS 버튼', counts?.sosButton ?? 0],
+            ['SOS_BUTTON', TRIGGER_TYPE_META.SOS_BUTTON.filterLabel, counts?.sosButton ?? 0],
+            ['GUARDIAN_CALL', TRIGGER_TYPE_META.GUARDIAN_CALL.filterLabel, counts?.guardianCall ?? 0],
           ] as const).map(([type, label, count]) => (
             <button
               key={type}
@@ -106,33 +105,20 @@ export default function GuardianSosHistoryContent() {
         </div>
       ) : (
         <div className={cx('historyCard')}>
-          <div className={cx('tableHead')}>
-            <span>언제</span>
-            <span>어디서</span>
-            <span>누구에게 연락</span>
-            <span>피보호자</span>
-          </div>
           {items.length === 0 ? (
             <div className={cx('emptyState')}>해당 조건의 호출 기록이 없습니다.</div>
           ) : (
             <ul className={cx('list')}>
               {items.map((item: IGuardianSosHistoryItem) => (
                 <li key={item.sosEventId} className={cx('item')}>
-                  <div className={cx('dateCell')}>
+                  <span className={cx('eventMarker', TRIGGER_TYPE_META[item.triggerType].tone)} aria-hidden="true">
+                    {item.triggerType === 'SOS_BUTTON' ? 'SOS' : <Icon name="phone" size={25} />}
+                  </span>
+                  <div className={cx('eventTime')}>
                     <strong>{formatSosDate(item.triggeredAt)}</strong>
                     <span>{formatTime(item.triggeredAt)}</span>
                   </div>
-                  <div className={cx('locationCell')}>
-                    <Icon name="mapPin" size={16} color="var(--sb-ink-mute)" />
-                    <span>{item.location ?? '-'}</span>
-                  </div>
-                  <div>
-                    <span className={cx('contactBadge', TRIGGER_TYPE_META[item.triggerType].tone)}>
-                      <Icon name={TRIGGER_TYPE_META[item.triggerType].icon} size={15} />
-                      {TRIGGER_TYPE_META[item.triggerType].label}
-                    </span>
-                  </div>
-                  <span className={cx('wardName')}>{item.wardName ?? UNKNOWN_WARD_NAME}</span>
+                  <span className={cx('eventDescription')}>{TRIGGER_TYPE_META[item.triggerType].description}</span>
                 </li>
               ))}
             </ul>
