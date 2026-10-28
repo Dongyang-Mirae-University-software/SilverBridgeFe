@@ -16,7 +16,8 @@ import styles from './AnomalyHistoryContent.module.css';
 
 const cx = classNames.bind(styles);
 
-const PAGE_SIZE = 10;
+// v13: 이상감지 목록은 한 화면에서 영상·판정 버튼을 함께 읽을 수 있도록 4건씩 보여 준다.
+const PAGE_SIZE = 4;
 type TypeFilter = 'ALL' | AnomalyDetectedType;
 // 유형 칩과 "삭제된 카메라" 칩 중 하나만 고른다(디자인과 같음)
 type HistoryFilter = TypeFilter | 'DELETED_CAMERA';
