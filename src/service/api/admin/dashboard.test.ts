@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const get = vi.fn();
+// vi.mock 은 파일 맨 위로 끌어올려지므로 그 안에서 쓰는 함수도 vi.hoisted 로 먼저 만든다(그냥 const 면 초기화 전 접근 오류)
+const { get } = vi.hoisted(() => ({ get: vi.fn() }));
 
 vi.mock('@/lib/api/apiClient', () => ({ apiClient: { get } }));
 
