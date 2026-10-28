@@ -1,29 +1,55 @@
-.guardianGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
-  gap: 16px;
-  max-width: 1000px;
+.guardianList {
+  display: flex;
+  flex-direction: column;
+  max-width: 900px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* v12 상세 카드 레이아웃 보관 — v13은 한 줄 목록으로 교체했다.
+.guardianGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  gap: 16px;
+  max-width: 1000px;
+}
 .guardianCard {
   display: flex;
   flex-direction: column;
-  min-width: 0;
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
-  background: #fff;
   box-shadow: var(--sb-shadow-sm);
   padding: 24px 26px 18px;
+}
+.rows { margin: 0; }
+.row { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; padding: 14px 0; }
+.cardFooter { display: flex; justify-content: flex-end; border-top: 1px solid var(--sb-line-soft); padding-top: 10px; }
+*/
+
+.guardianRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-width: 0;
+  border-bottom: 1px solid var(--sb-line-soft);
+  background: #fff;
+  padding: 18px 8px;
 }
 
 .guardianHead {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding-bottom: 18px;
+  min-width: 0;
+}
+
+.guardianInfo {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .guardianName {
@@ -39,51 +65,23 @@
   font-weight: 700;
 }
 
-.rows {
-  margin: 0;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 110px minmax(0, 1fr);
-  align-items: baseline;
-  gap: 12px;
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 14px 0;
-}
-
-.row dt {
-  color: var(--sb-ink-mute);
+.guardianPhone {
+  color: var(--sb-ink-soft);
   font-size: 17px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.row dd {
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: 20px;
   font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.cardFooter {
-  display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid var(--sb-line-soft);
-  padding-top: 10px;
 }
 
 .disconnectButton {
-  min-height: 52px;
+  flex-shrink: 0;
+  min-height: 44px;
   border: none;
   background: none;
   color: var(--sb-ink-mute);
   cursor: pointer;
   font-family: inherit;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
-  padding: 0 8px;
+  padding: 0 4px;
   text-decoration: underline;
   text-underline-offset: 3px;
   white-space: nowrap;
@@ -171,11 +169,20 @@
 }
 
 @media (max-width: 520px) {
-  .guardianCard {
-    padding: 20px 18px 14px;
+  .guardianRow {
+    gap: 12px;
+    padding: 16px 0;
   }
 
-  .row {
-    grid-template-columns: 88px minmax(0, 1fr);
+  .guardianHead {
+    gap: 12px;
+  }
+
+  .guardianName {
+    font-size: 22px;
+  }
+
+  .guardianPhone {
+    font-size: 16px;
   }
 }

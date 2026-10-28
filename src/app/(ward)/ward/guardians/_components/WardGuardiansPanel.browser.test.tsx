@@ -107,19 +107,20 @@ describe('피보호자 내 가족 (Chrome)', () => {
     await vi.waitFor(() => expect(api.refuseWardConnectionRequest.mock.calls[0]?.[0]).toBe(2));
   });
 
-  it('보호자 카드는 "이름 (관계)"와 4줄, 연결 끊기는 확인 창을 거친다', async () => {
+  it('보호자 목록은 이름·관계·전화번호 한 줄이고, 연결 끊기는 확인 창을 거친다', async () => {
     api.getWardPendingConnections.mockResolvedValue(ok([]));
     api.getWardActiveConnections.mockResolvedValue(ok([guardian()]));
     const screen = render(<WardGuardiansPanel />, { wrapper });
 
-    const card = screen.getByRole('list', { name: '연결된 보호자' });
-    await expect.element(card).toHaveTextContent('박민수 (아들)');
-    await expect.element(card).toHaveTextContent('2026년 1월 12일');
-    await expect.element(card).toHaveTextContent('kP7mQ2');
+    const list = screen.getByRole('list', { name: '연결된 보호자' });
+    await expect.element(list).toHaveTextContent('박민수 님 (아들)');
+    await expect.element(list).toHaveTextContent('010-1234-5678');
+    expect(list.element().textContent).not.toContain('2026년 1월 12일');
+    expect(list.element().textContent).not.toContain('kP7mQ2');
 
     await screen.getByRole('button', { name: '연결 끊기' }).click();
     const dialog = screen.getByRole('dialog');
-    await expect.element(dialog).toHaveTextContent('박민수와 연결을 끊을까요?');
+    await expect.element(dialog).toHaveTextContent('박민수 님과 연결을 끊을까요?');
     await expect.element(dialog).toHaveTextContent('끊으면 SOS를 눌러도 이 분께 알림이 가지 않아요');
     await dialog.getByRole('button', { name: '그대로 두기' }).click();
     expect(api.disconnectWardConnection).not.toHaveBeenCalled();

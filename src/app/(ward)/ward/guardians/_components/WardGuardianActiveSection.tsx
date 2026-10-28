@@ -8,14 +8,17 @@ import { useModalDialog } from '@/hooks/useModalDialog';
 import { getConnectionData } from '@/components/connections/ConnectionShared';
 import { IConnectionItem } from '@/service/interface/connection';
 import { useWardConnectionDisconnectMutation, useWardGuardianActiveConnectionsQuery } from '@/service/query/ward';
-import { formatKoreanDate } from '@/utils/connection/connectionView';
-import { getAndParticle } from '@/utils/format/korean';
 import { formatPhoneNumber } from '@/utils/format/phone';
 import styles from './WardGuardianActiveSection.module.css';
 
 const cx = classNames.bind(styles);
 
-// 값이 없는 줄은 "정보 없음"으로 채우지 않고 뺀다
+// v13은 한 사람을 한 줄로 보이게 한다. 연락처 이외의 상세 정보는 연결 데이터에만 유지한다.
+function getGuardianPhone(connection: IConnectionItem) {
+  return connection.partnerPhone ? formatPhoneNumber(connection.partnerPhone) : null;
+}
+
+/* v12 상세 카드 보관: 이메일·회원 ID·연결일은 API 데이터에 남아 있지만 v13 목록에서는 표시하지 않는다.
 function getGuardianRows(connection: IConnectionItem): Array<[string, string]> {
   const rows: Array<[string, string | null | undefined]> = [
     ['전화번호', connection.partnerPhone ? formatPhoneNumber(connection.partnerPhone) : null],
@@ -25,6 +28,7 @@ function getGuardianRows(connection: IConnectionItem): Array<[string, string]> {
   ];
   return rows.filter((row): row is [string, string] => Boolean(row[1]));
 }
+*/
 
 // 연결 끊기 확인 창 - 열릴 때만 그려서 포커스 가두기·복귀·Esc를 useModalDialog에 맡긴다
 function WardDisconnectDialog({
@@ -52,8 +56,7 @@ function WardDisconnectDialog({
         onKeyDown={onDialogKeyDown}
       >
         <h2 id="ward-disconnect-title" className={cx('modalTitle')}>
-          {guardian.partnerName}
-          {getAndParticle(guardian.partnerName)} 연결을 끊을까요?
+          {guardian.partnerName} 님과 연결을 끊을까요?
         </h2>
         <p className={cx('modalDesc')}>끊으면 SOS를 눌러도 이 분께 알림이 가지 않아요</p>
         <div className={cx('modalActions')}>
@@ -90,36 +93,32 @@ export function WardGuardianActiveSection() {
 
   return (
     <>
-      <ul className={cx('guardianGrid')} aria-label="연결된 보호자">
-        {guardians.map(guardian => (
-          <li key={guardian.id} className={cx('guardianCard')}>
+      <ul className={cx('guardianList')} aria-label="연결된 보호자">
+        {guardians.map(guardian => {
+          const phone = getGuardianPhone(guardian);
+          return (
+          <li key={guardian.id} className={cx('guardianRow')}>
             <div className={cx('guardianHead')}>
               <UserAvatar imageUrl={guardian.partnerProfileImage} size="w-72" userName={guardian.partnerName} />
-              <strong className={cx('guardianName')}>
-                {guardian.partnerName || '이름 확인 전'}
-                {guardian.relation && <span className={cx('relation')}> ({guardian.relation})</span>}
-              </strong>
+              <div className={cx('guardianInfo')}>
+                <strong className={cx('guardianName')}>
+                  {guardian.partnerName || '이름 확인 전'} 님
+                  {guardian.relation && <span className={cx('relation')}> ({guardian.relation})</span>}
+                </strong>
+                {phone && <span className={cx('guardianPhone')}>{phone}</span>}
+              </div>
             </div>
-            <dl className={cx('rows')}>
-              {getGuardianRows(guardian).map(([label, value]) => (
-                <div key={label} className={cx('row')}>
-                  <dt>{label}</dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
-            </dl>
-            <div className={cx('cardFooter')}>
-              <button
-                className={cx('disconnectButton')}
-                type="button"
-                disabled={disconnectMutation.isPending}
-                onClick={() => setConfirmId(guardian.id)}
-              >
-                연결 끊기
-              </button>
-            </div>
+            <button
+              className={cx('disconnectButton')}
+              type="button"
+              disabled={disconnectMutation.isPending}
+              onClick={() => setConfirmId(guardian.id)}
+            >
+              연결 끊기
+            </button>
           </li>
-        ))}
+          );
+        })}
       </ul>
 
       {confirmTarget && (
