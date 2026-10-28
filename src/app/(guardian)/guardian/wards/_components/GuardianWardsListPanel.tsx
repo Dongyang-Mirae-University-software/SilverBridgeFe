@@ -11,44 +11,40 @@ import { useModalDialog } from '@/hooks/useModalDialog';
 import { disconnectGuardianConnection } from '@/service/api/guardian/connection';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
-import { EmptyState, formatPartnerGender, getConnectionData } from '@/components/connections/ConnectionShared';
+import { EmptyState, getConnectionData } from '@/components/connections/ConnectionShared';
 import {
-  formatRelationToWard,
   getAgeFromBirthDate,
   getConnectionActionErrorMessage,
 } from '@/utils/connection/connectionView';
-import { getAndParticle } from '@/utils/format/korean';
 import { formatPhoneNumber } from '@/utils/format/phone';
 import styles from './GuardianWardsListPanel.module.css';
 
 const cx = classNames.bind(styles);
 
+/* v12 표시 보관: 성별·생년월일 행에 쓰던 날짜 변환이다.
 function formatBirthDate(value?: string | null) {
   return value ? value.slice(0, 10).replaceAll('-', '.') : null;
 }
+*/
 
-// "나는 김영희의 아들 · 78세" - relation은 보호자(나)가 피보호자에게 누구인지라, 카드 제목(김영희)을
-// 설명하는 말로 읽히지 않게 주어를 드러낸다
+// v13 카드 보조 정보는 관계와 나이만 간단히 보여 준다.
 function getWardSubtitle(connection: IConnectionItem) {
   const age = getAgeFromBirthDate(connection.partnerBirthDate);
-  const relation = formatRelationToWard(connection.partnerName, connection.relation);
-  return [relation ? `나는 ${relation}` : null, age === null ? null : `${age}세`]
+  return [connection.relation, age === null ? null : `${age}세`]
     .filter(Boolean)
     .join(' · ');
 }
 
-// 연락처는 연결(ACTIVE) 뒤에만 온다. 빈 값은 "정보 없음"으로 채우지 않고 줄을 뺀다
+// 연락처와 주소만 카드에 표시한다. 연결(ACTIVE) 뒤에만 오므로 빈 값은 줄을 뺀다.
 function getWardRows(connection: IConnectionItem): Array<[string, string]> {
   const address = [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
-  const genderAndBirth = [formatPartnerGender(connection.partnerGender), formatBirthDate(connection.partnerBirthDate)]
-    .filter(Boolean)
-    .join(' · ');
   const rows: Array<[string, string | null | undefined]> = [
     ['전화번호', connection.partnerPhone ? formatPhoneNumber(connection.partnerPhone) : null],
     ['주소', address ? `${connection.partnerPostcode ? `(${connection.partnerPostcode}) ` : ''}${address}` : null],
-    ['이메일', connection.partnerEmail],
-    ['성별 · 생년월일', genderAndBirth],
-    ['회원 ID', connection.partnerUserId],
+    // v12 보관: 이메일·성별·생년월일·회원 ID는 연결 데이터에는 남기되 v13 카드에서는 노출하지 않는다.
+    // ['이메일', connection.partnerEmail],
+    // ['성별 · 생년월일', genderAndBirth],
+    // ['회원 ID', connection.partnerUserId],
   ];
   return rows.filter((row): row is [string, string] => Boolean(row[1]));
 }
@@ -87,8 +83,7 @@ function GuardianDisconnectDialog({
           연결을 해제할까요?
         </h3>
         <p className={cx('modalDesc')}>
-          <strong>{ward.partnerName}</strong>
-          {getAndParticle(ward.partnerName)}의 연결을 해제하면
+          <strong>{ward.partnerName} 님</strong>과의 연결을 해제하면
           <br />이 분에 대한 알림을 더 이상 받지 않아요.
         </p>
         <div className={cx('modalActions')}>
@@ -149,9 +144,9 @@ export function GuardianWardsListPanel() {
             return (
               <li key={connection.id} className={cx('card')}>
                 <div className={cx('cardHead')}>
-                  <UserAvatar imageUrl={connection.partnerProfileImage} size="w-60" userName={connection.partnerName} />
+                  <UserAvatar imageUrl={connection.partnerProfileImage} size="w-72" userName={connection.partnerName} />
                   <div className={cx('cardTitle')}>
-                    <strong className={cx('cardName')}>{connection.partnerName}</strong>
+                    <strong className={cx('cardName')}>{connection.partnerName} 님</strong>
                     {subtitle && <span className={cx('cardSub')}>{subtitle}</span>}
                   </div>
                 </div>

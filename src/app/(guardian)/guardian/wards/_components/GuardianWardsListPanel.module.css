@@ -50,7 +50,7 @@
   border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
-  padding: 22px 24px 18px;
+  padding: 22px 24px 20px;
 }
 
 .cardHead {
@@ -121,16 +121,19 @@
 
 .disconnectButton {
   min-height: 44px;
-  border: none;
-  background: none;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
   color: var(--sb-ink-mute);
   cursor: pointer;
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  padding: 8px 4px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  padding: 0 14px;
+}
+
+.disconnectButton:hover {
+  background: var(--sb-bg-soft);
 }
 
 /* ── 연결 해제 확인 모달 ── */
