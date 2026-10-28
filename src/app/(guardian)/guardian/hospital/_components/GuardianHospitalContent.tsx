@@ -426,8 +426,12 @@ export function GuardianHospitalContent() {
             <div className={cx('confirmWhere')}>
               {pick.hospital.name} <span className={cx('pickedDept')}>· {pick.department}</span>
             </div>
-            <div className={cx('confirmAddress')}>{pick.hospital.address}</div>
-            <div className={cx('confirmWho')}>진료받으실 분: {ward.partnerName}</div>
+            {/*
+              v13 확인 단계는 날짜·시간·병원만 크게 보여 준다.
+              이전 주소·진료 대상 표시 구조는 아래처럼 남겨 둔다. 예약 요청에는 계속 ward 정보를 전송한다.
+              <div className={cx('confirmAddress')}>{pick.hospital.address}</div>
+              <div className={cx('confirmWho')}>진료받으실 분: {ward.partnerName}</div>
+            */}
             {!wardPhone && (
               <label className={cx('phoneField')}>
                 <span>병원 연락을 받을 번호</span>
