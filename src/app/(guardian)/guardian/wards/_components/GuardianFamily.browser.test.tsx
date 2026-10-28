@@ -165,14 +165,17 @@ describe('수락을 기다리는 중 (Chrome)', () => {
 });
 
 describe('연결된 가족 (Chrome)', () => {
-  it('관계를 보호자 기준 문장으로 쓰고, 수락 대기 건은 보이지 않는다', async () => {
+  it('관계·나이와 전화번호·주소만 보이고, 수락 대기 건은 보이지 않는다', async () => {
     api.getGuardianConnections.mockResolvedValue(
       ok([connection(), connection({ id: 8, partnerName: '이순자', status: 'PENDING', partnerPhone: null })]),
     );
     const screen = render(<GuardianWardsListPanel />, { wrapper });
 
-    await expect.element(screen.getByText(/^나는 김영희의 아들 · \d+세$/)).toBeInTheDocument();
+    await expect.element(screen.getByText(/^아들 · \d+세$/)).toBeInTheDocument();
     await expect.element(screen.getByText('(05551) 서울 송파구 올림픽로 456 102동 1503호')).toBeInTheDocument();
+    expect(screen.getByText('이메일').query()).toBeNull();
+    expect(screen.getByText('성별 · 생년월일').query()).toBeNull();
+    expect(screen.getByText('회원 ID').query()).toBeNull();
     expect(document.body.textContent).not.toContain('이순자');
     expectNoHorizontalScroll();
   });
@@ -184,7 +187,7 @@ describe('연결된 가족 (Chrome)', () => {
 
     await screen.getByRole('button', { name: '연결 해제' }).click();
     const dialog = screen.getByRole('dialog');
-    await expect.element(dialog).toHaveTextContent('김영희와의 연결을 해제하면');
+    await expect.element(dialog).toHaveTextContent('김영희 님과의 연결을 해제하면');
     await dialog.getByRole('button', { name: '취소' }).click();
     expect(api.disconnectGuardianConnection).not.toHaveBeenCalled();
 
