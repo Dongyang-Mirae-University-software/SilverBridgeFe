@@ -227,6 +227,14 @@
   align-self: flex-start;
 }
 
+.wardPromptTitle {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .quickPromptChevron {
   transition: transform 0.15s ease;
 }
@@ -490,6 +498,66 @@
   transform: rotate(180deg);
 }
 
+/* 피보호자 챗봇은 v13의 큰 글씨·간결한 상담 화면을 쓴다.
+   보호자 화면의 기록 보기와 접는 추천 질문은 기본 스타일로 그대로 둔다. */
+.wardVariant .brandCopy h1 {
+  font-size: 26px;
+}
+
+.wardVariant .brandCopy p {
+  margin-top: 2px;
+  color: var(--sb-ink-soft);
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.wardVariant .messageList {
+  gap: 14px;
+  padding: 22px 28px;
+}
+
+.wardVariant .quickPromptPanel {
+  gap: 10px;
+  padding: 12px 22px 0;
+}
+
+.wardVariant .quickPromptRow {
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow-x: visible;
+  padding: 0 0 12px;
+}
+
+.wardVariant .quickPromptButton {
+  min-height: 52px;
+  padding: 0 20px;
+  border-width: 1.5px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.wardVariant .composer {
+  padding: 14px 22px 18px;
+}
+
+.wardVariant .textarea {
+  min-height: 60px;
+  max-height: 88px;
+  border-radius: 16px;
+  font-size: 20px;
+  padding: 14px 20px;
+}
+
+.wardVariant .sendButton {
+  width: auto;
+  min-width: 112px;
+  height: 60px;
+  padding: 0 26px;
+  border-radius: 16px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
 .historyOverlay {
   position: fixed;
   z-index: 100;
@@ -743,6 +811,55 @@
 
   .composer {
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  }
+
+  .wardVariant .header {
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .wardVariant .brandCopy h1 {
+    font-size: 22px;
+  }
+
+  .wardVariant .brandCopy p {
+    font-size: 14px;
+  }
+
+  .wardVariant .messageList {
+    padding: 16px 14px;
+  }
+
+  .wardVariant .quickPromptPanel {
+    padding: 12px 14px 0;
+  }
+
+  .wardVariant .quickPromptRow {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 12px;
+  }
+
+  .wardVariant .quickPromptButton {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .wardVariant .composer {
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .wardVariant .textarea {
+    min-height: 56px;
+    font-size: 17px;
+    padding: 12px 14px;
+  }
+
+  .wardVariant .sendButton {
+    min-width: 72px;
+    height: 56px;
+    padding: 0 14px;
+    font-size: 16px;
   }
 }
 
