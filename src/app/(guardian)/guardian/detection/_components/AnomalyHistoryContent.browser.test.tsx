@@ -87,7 +87,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     await expect.element(screen.getByRole('button', { name: '낙상 9' })).toBeInTheDocument();
     await expect.element(screen.getByRole('status')).toHaveTextContent('확인 필요 5');
     expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
-      expect.objectContaining({ wardId: 'W1', page: 0, size: 10, type: undefined, camera: 'EXISTING' }),
+      expect.objectContaining({ wardId: 'W1', page: 0, size: 4, type: undefined, camera: 'EXISTING' }),
     );
     expect(api.getGuardianAnomalyHistorySummary).toHaveBeenCalledWith('W1');
 
