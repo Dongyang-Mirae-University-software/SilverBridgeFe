@@ -100,12 +100,14 @@
   color: var(--sb-safe);
 }
 
+/* v12 보조 문구 스타일 보관 — v13에서는 결과 배지만 표시한다.
 .myVerdict {
   color: var(--sb-ink-mute);
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
 }
+*/
 
 .linkButton {
   min-height: 44px;

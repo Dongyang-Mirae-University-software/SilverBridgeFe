@@ -132,27 +132,27 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     await vi.waitFor(() => expect(client.getQueryState(['guardian-dashboard', 'all'])?.isInvalidated).toBe(true));
   });
 
-  it('판정이 난 뒤에도 "판정 바꾸기"로 다시 고를 수 있다(덮어쓰기)', async () => {
+  it('판정이 난 뒤에도 "되돌리기"로 다시 고를 수 있다(덮어쓰기)', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(8, { reviewStatus: 'REAL', myVerdict: 'REAL' })]));
     api.submitAnomalyFeedback.mockResolvedValue({ incidentId: 8, reviewStatus: 'FALSE_ALARM', myVerdict: 'FALSE_ALARM' });
     const screen = renderHistory();
 
     await expect.element(screen.getByText('실제 위험', { exact: true })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '실제 위험이에요' }).query()).toBeNull();
-    expect(screen.getByText('되돌리기').query()).toBeNull();
+    await expect.element(screen.getByRole('button', { name: '되돌리기' })).toBeInTheDocument();
 
-    await screen.getByRole('button', { name: '판정 바꾸기' }).click();
+    await screen.getByRole('button', { name: '되돌리기' }).click();
     await expect.element(screen.getByRole('button', { name: '실제 위험이에요' })).toHaveAttribute('aria-pressed', 'true');
-    await screen.getByRole('button', { name: '괜찮아요 (오탐)' }).click();
+    await screen.getByRole('button', { name: '괜찮아요' }).click();
     await vi.waitFor(() => expect(api.submitAnomalyFeedback).toHaveBeenCalledWith(8, { verdict: 'FALSE_ALARM' }));
   });
 
-  it('내 표와 다수결 결과가 다르면 결과를 보이고 내 응답을 따로 적는다', async () => {
+  it('내 표와 다수결 결과가 달라도 결과 배지만 보인다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(9, { reviewStatus: 'FALSE_ALARM', myVerdict: 'REAL' })]));
     const screen = renderHistory();
 
     await expect.element(screen.getByText('괜찮았어요')).toBeInTheDocument();
-    await expect.element(screen.getByText('내 응답: 실제 위험이에요')).toBeInTheDocument();
+    expect(screen.getByText('내 응답: 실제 위험이에요').query()).toBeNull();
   });
 
   it('동수(CONFLICTED)면 다시 답하도록 안내하고 버튼을 둔다 - 다른 보호자의 선택은 보이지 않는다', async () => {
@@ -160,7 +160,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     const screen = renderHistory();
 
     await expect.element(screen.getByText('다른 보호자와 판정이 달라요. 다시 확인해 주세요.')).toBeInTheDocument();
-    await expect.element(screen.getByRole('button', { name: '괜찮아요 (오탐)' })).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(screen.getByRole('button', { name: '괜찮아요' })).toHaveAttribute('aria-pressed', 'true');
     await expect.element(screen.getByRole('button', { name: '실제 위험이에요' })).toBeInTheDocument();
   });
 

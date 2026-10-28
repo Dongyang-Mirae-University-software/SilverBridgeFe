@@ -41,11 +41,11 @@ function useLiveClock() {
   return now;
 }
 
-// 카메라 상태는 '켜짐/꺼짐' 두 말로만 보인다(2026-10-15 시안 - '연결 상태'와 버튼 상태가 따로 보여 헷갈렸다).
-// 모르면(null) '확인 중'. 피보호자 '내 카메라' 카드와 같은 말을 쓴다.
+// 카메라 상태는 '켜짐/꺼짐' 두 말로만 보인다(2026-10-28 v13 시안).
+// AI 상태를 아직 못 받았다면 상태를 지어내지 않고 표시 자체를 생략한다.
 function getCameraStatusMeta(status: GuardianCameraLiveStatus) {
   if (status === 'running') return { label: '켜짐', tone: 'running' } as const;
-  if (status === null) return { label: '확인 중', tone: 'checking' } as const;
+  if (status === null) return null;
   return { label: '꺼짐', tone: 'offline' } as const;
 }
 
@@ -156,15 +156,9 @@ export function LiveCameraModal({
               <span>카메라로 쓰는 기기의 화면을 켜 두세요</span>
             </div>
           ) : !monitor.frameSrc ? (
-            cameraStatus === null ? (
-              // 상태를 모르면(AI 연결 끊김 등) 켜짐·꺼짐으로 채우지 않는다
-              <div className={cx('videoUnavailable')}>
-                <strong>연결 상태를 확인하고 있어요</strong>
-                <span>잠시 후 다시 확인해 주세요</span>
-              </div>
-            ) : (
-              <div className={cx('placeholder')}>영상을 불러오는 중이에요...</div>
-            )
+            // v12에서는 cameraStatus가 null일 때 "연결 상태를 확인하고 있어요"라는 세 번째 상태를 보였다.
+            // v13은 켜짐/꺼짐 외 상태 문구를 두지 않아, 영상 대기 문구만 보인다.
+            <div className={cx('placeholder')}>영상을 불러오는 중이에요...</div>
           ) : (
             <MjpegFrame
               key={monitor.frameSrc}
@@ -191,9 +185,10 @@ export function LiveCameraModal({
                     className={cx('switchChip', { active: isSelected })}
                     onClick={() => monitor.selectSession(session.sessionId)}
                   >
-                    <span className={cx('switchStatusDot', status.tone)} />
+                    {/* v12의 null 상태(checking)는 v13에서 제거했다. 상태를 못 받으면 점도 표시하지 않는다. */}
+                    {status && <span className={cx('switchStatusDot', status.tone)} />}
                     {session.label}
-                    {status.tone !== 'running' && <span className={cx('switchStatus')}>{status.label}</span>}
+                    {status?.tone === 'offline' && <span className={cx('switchStatus')}>{status.label}</span>}
                   </button>
                 );
               })}

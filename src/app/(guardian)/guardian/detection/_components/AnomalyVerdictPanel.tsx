@@ -59,7 +59,6 @@ export function AnomalyVerdictPanel({
           type="button"
           className={cx('verdictButton', verdict === 'REAL' ? 'real' : 'falseAlarm', { mine: myVerdict === verdict })}
           aria-pressed={myVerdict === verdict}
-          aria-label={verdict === 'FALSE_ALARM' ? '괜찮아요 (오탐)' : undefined}
           disabled={feedbackMutation.isPending}
           onClick={event => {
             event.stopPropagation();
@@ -104,11 +103,11 @@ export function AnomalyVerdictPanel({
   return (
     <div className={cx('panel', size)}>
       <span className={cx('result', reviewStatus === 'REAL' ? 'real' : 'falseAlarm')}>{RESULT_LABEL[reviewStatus]}</span>
-      {myVerdict && myVerdict !== reviewStatus && (
-        <span className={cx('myVerdict')}>내 응답: {VERDICT_LABEL[myVerdict]}</span>
-      )}
+      {/* v12 디자인 보관: 다수결 결과와 다른 내 판정을 별도 문구로 노출했다.
+          v13은 결과 배지와 되돌리기만 보여 주므로 렌더링하지 않는다.
+          {myVerdict && myVerdict !== reviewStatus && <span className={cx('myVerdict')}>내 응답: {VERDICT_LABEL[myVerdict]}</span>} */}
       <button type="button" className={cx('linkButton')} onClick={() => setIsEditing(true)}>
-        {myVerdict ? '판정 바꾸기' : '나도 응답하기'}
+        {myVerdict ? '되돌리기' : '나도 응답하기'}
       </button>
     </div>
   );
