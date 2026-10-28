@@ -5,7 +5,7 @@
   width: 100%;
 }
 
-/* 디자인 SOS 버튼 - 화면 높이에 맞춰 크게(최소 200px), 아이콘 없이 "SOS" + 안내 */
+/* v13 SOS 버튼 - 화면을 축소하지 않고 큰 두 줄 문구를 유지한다. */
 .hero {
   display: flex;
   flex-direction: column;
@@ -24,7 +24,7 @@
 }
 
 .heroTitle {
-  font-size: clamp(64px, 18vw, 80px);
+  font-size: clamp(48px, 13vw, 72px);
   font-weight: 900;
   letter-spacing: 0.02em;
   line-height: 1;

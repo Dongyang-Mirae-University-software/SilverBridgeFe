@@ -8,6 +8,7 @@ const cx = classNames.bind(styles);
 
 export type CommonModalType = 'info' | 'success' | 'warning' | 'error';
 export type CommonModalTone = 'default' | 'guardian';
+export type CommonModalActionSize = 'default' | 'emergency';
 
 interface CommonModalButton {
   text: string;
@@ -22,6 +23,7 @@ interface CommonModalProps {
   message: string;
   primaryButton?: CommonModalButton;
   secondaryButton?: CommonModalButton;
+  actionSize?: CommonModalActionSize;
   onClose: () => void;
 }
 
@@ -46,6 +48,7 @@ export function CommonModal({
   message,
   primaryButton,
   secondaryButton,
+  actionSize = 'default',
   onClose,
 }: CommonModalProps) {
   const primary = primaryButton ?? { text: '확인', onClick: onClose };
@@ -67,7 +70,7 @@ export function CommonModal({
           <h2 id="common-modal-title">{title || MODAL_LABELS[type]}</h2>
           <p id="common-modal-message">{message}</p>
         </div>
-        <div className={cx('actions')}>
+        <div className={cx('actions', { emergencyActions: actionSize === 'emergency' })}>
           {secondaryButton && (
             <button
               className={cx('button', 'secondaryButton')}

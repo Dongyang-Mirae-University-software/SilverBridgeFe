@@ -47,19 +47,17 @@ export default function WardSosContent() {
   }
 
   function openSuccessModal(data?: Partial<WardSosResponse> | null) {
-    const triggeredAt = data?.triggeredAt ?? new Date().toISOString();
-    const sosEventId = data?.sosEventId ?? Date.now();
     const shouldOfferDial = wardSettings.sosAction === 'NOTIFY_GUARDIAN_FIRST';
 
     openModal(
       <CommonModal
         type="success"
         tone="guardian"
-        title="SOS 전송 완료"
+        title="보호자에게 알렸어요"
         message={
           shouldOfferDial
-            ? `보호자에게 알림을 보냈습니다.\n필요하면 아래 버튼으로 119 화면을 여세요.\n${formatDateTime(triggeredAt)}`
-            : `SOS 이력이 저장되었습니다.\n이력 ID ${sosEventId} · ${formatDateTime(triggeredAt)}`
+            ? '필요하면 아래 버튼을 눌러 119 화면을 열어 주세요.'
+            : `SOS 이력이 저장되었습니다.\n${formatDateTime(data?.triggeredAt ?? new Date().toISOString())}`
         }
         primaryButton={{
           text: shouldOfferDial ? '119 화면 열기' : '확인',
@@ -76,12 +74,11 @@ export default function WardSosContent() {
     );
   }
 
-  // 2026-10-07: 확인 창 없이 탭하면 바로 전송한다. 활성 보호자가 있으면 설정값에 따라
-  // 119 화면을 먼저 열거나(응답을 기다리지 않음) 완료 안내를 보여준다
+  // v13: 큰 SOS 버튼을 눌러도 바로 전송하지 않는다. 확인 창의 [보내기] 뒤에만 기존 전송 흐름을 실행한다.
   // 2026-10-23: 연결된 보호자가 없어도 SOS를 보내 이력을 남긴다(BE는 알림 대상 0명이면 이력만 저장).
   // 119 화면은 기다리지 않고 바로 열고, 알릴 사람이 없으니 실패해도 오류 창은 띄우지 않는다
   // 2026-10-23(사용자 결정): 119 키패드에는 보호자 알림 진행·결과 문구를 띄우지 않는다 - 키패드만 열고, 실패는 오류 창으로 알린다
-  function handleHeroPress() {
+  function sendConfirmedSos() {
     if (isSending) return;
     setIsSending(true);
 
@@ -103,16 +100,43 @@ export default function WardSosContent() {
       .finally(() => setIsSending(false));
   }
 
+  function openConfirmModal() {
+    openModal(
+      <CommonModal
+        type="warning"
+        tone="guardian"
+        actionSize="emergency"
+        title="긴급 SOS를 보낼까요?"
+        message="보호자에게 도움 요청을 보냅니다."
+        primaryButton={{
+          text: '보내기',
+          onClick: () => {
+            onCloseModal();
+            sendConfirmedSos();
+          },
+        }}
+        secondaryButton={{ text: '취소', onClick: onCloseModal }}
+        onClose={onCloseModal}
+      />,
+    );
+  }
+
+  /* v12 흐름 보관: 버튼을 누르면 확인 없이 곧바로 전송했다.
+  function handleHeroPress() {
+    sendConfirmedSos();
+  }
+  */
+
   function handleGuardianCall() {
     triggerSos({ triggerType: 'GUARDIAN_CALL' }, { onError: openErrorModal });
   }
 
   return (
     <div className={cx('page')}>
-      {/* 디자인 SOS 화면(2026-10-23): 큰 빨간 버튼에 "SOS"와 안내 한 줄 */}
-      <button className={cx('hero')} type="button" disabled={isSending} onClick={handleHeroPress}>
-        <span className={cx('heroTitle')}>SOS</span>
-        <span className={cx('heroSub')}>{isSending ? '보내는 중이에요…' : '도움이 필요하면 누르세요'}</span>
+      {/* v12 문구 보관: "SOS" / "도움이 필요하면 누르세요". v13은 확인 창을 거치는 두 줄 문구를 쓴다. */}
+      <button className={cx('hero')} type="button" disabled={isSending} onClick={openConfirmModal}>
+        <span className={cx('heroTitle')}>긴급 SOS</span>
+        <span className={cx('heroSub')}>{isSending ? '보내는 중이에요…' : '누르면 도움을 요청해요'}</span>
       </button>
 
       <WardGuardianCallSection
