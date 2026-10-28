@@ -20,6 +20,8 @@ export interface IHospital {
   breakStart?: string | null;
   breakEnd?: string | null;
   closedWeekdays?: number[];
+  // 요일별 진료 시간(그 요일만 기본 진료 시간을 덮어씀, 예: 토요일 반일)
+  weekdayHours?: { weekday: number; openTime: string; closeTime: string }[];
 }
 
 export interface IAvailableSlots {
