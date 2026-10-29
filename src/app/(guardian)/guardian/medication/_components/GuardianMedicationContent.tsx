@@ -5,8 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
+import { getConnectionData } from '@/components/connections/ConnectionShared';
 import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import useKstMidnightRefetch from '@/hooks/useKstMidnightRefetch';
+import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
 import { guardianMedicationQueryKey, guardianMedicationQueryOptions } from '@/service/query/guardian/medication';
 import { WardMedicationCard } from './WardMedicationCard';
 import styles from './GuardianMedicationContent.module.css';
@@ -15,7 +17,9 @@ const cx = classNames.bind(styles);
 
 export function GuardianMedicationContent() {
   const { data, isLoading, isError, refetch } = useQuery(guardianMedicationQueryOptions);
+  const { data: connectionsData } = useQuery(guardianConnectionsQueryOptions);
   const wards = data ?? [];
+  const activeConnections = getConnectionData(connectionsData).filter(connection => connection.status === 'ACTIVE');
   const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
   useKstMidnightRefetch(guardianMedicationQueryKey);
 
@@ -33,7 +37,19 @@ export function GuardianMedicationContent() {
 
       {wards.length > 0 && (
         <>
-          <WardSelectorTabs wards={wards} selectedWardId={selectedWard?.wardId} onSelect={setSelectedWardId} />
+          <WardSelectorTabs
+            wards={wards.map(ward => {
+              const connection = activeConnections.find(item => item.partnerUserId === ward.wardId);
+              return {
+                wardId: ward.wardId,
+                wardName: ward.wardName,
+                profileImage: connection?.partnerProfileImage,
+                relation: connection?.relation,
+              };
+            })}
+            selectedWardId={selectedWard?.wardId}
+            onSelect={setSelectedWardId}
+          />
 
           {selectedWard && <WardMedicationCard key={selectedWard.wardId} summary={selectedWard} />}
         </>
