@@ -1,8 +1,8 @@
 .guardianList {
   display: flex;
+  width: 100%;
   flex-direction: column;
   gap: 14px;
-  max-width: 720px;
   margin: 0;
   padding: 0;
   list-style: none;
