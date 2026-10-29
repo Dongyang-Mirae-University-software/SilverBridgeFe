@@ -133,10 +133,11 @@ export default function WardSosContent() {
 
   return (
     <div className={cx('page')}>
-      {/* v12 문구 보관: "SOS" / "도움이 필요하면 누르세요". v13은 확인 창을 거치는 두 줄 문구를 쓴다. */}
+      {/* v13 HTML 문구: 확인 창은 유지하되 버튼은 "SOS / 도움이 필요하면 누르세요"로 표시한다.
+          이전 문구: "긴급 SOS / 누르면 도움을 요청해요" */}
       <button className={cx('hero')} type="button" disabled={isSending} onClick={openConfirmModal}>
-        <span className={cx('heroTitle')}>긴급 SOS</span>
-        <span className={cx('heroSub')}>{isSending ? '보내는 중이에요…' : '누르면 도움을 요청해요'}</span>
+        <span className={cx('heroTitle')}>SOS</span>
+        <span className={cx('heroSub')}>{isSending ? '보내는 중이에요…' : '도움이 필요하면 누르세요'}</span>
       </button>
 
       <WardGuardianCallSection
