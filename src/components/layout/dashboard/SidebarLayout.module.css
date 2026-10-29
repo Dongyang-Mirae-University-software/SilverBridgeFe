@@ -16,22 +16,14 @@
   margin-bottom: 10px;
 }
 
-.wardHeadLogo {
+.wardHeadLogoLink {
   display: block;
-  color: #c25f43;
-  font-size: 26px;
-  font-weight: 600;
-  line-height: 1.05;
-  letter-spacing: -0.01em;
   text-decoration: none;
 }
 
-.wardHeadLogo small {
-  display: block;
-  margin-top: 3px;
-  color: var(--sb-ink-soft);
-  font-size: 13px;
-  font-weight: 700;
+.wardHeadLogo {
+  display: flex;
+  align-items: center;
 }
 
 .wardHeadActions {
