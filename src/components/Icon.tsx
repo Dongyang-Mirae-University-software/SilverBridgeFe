@@ -20,6 +20,7 @@ import CloseIcon from '@/assets/icons/close.svg';
 import DashboardIcon from '@/assets/icons/dashboard.svg';
 import EyeIcon from '@/assets/icons/eye.svg';
 import FileTextIcon from '@/assets/icons/file-text.svg';
+import FlameIcon from '@/assets/icons/flame.svg';
 import GameIcon from '@/assets/icons/game.svg';
 import GearIcon from '@/assets/icons/gear.svg';
 import HandshakeIcon from '@/assets/icons/handshake.svg';
@@ -70,6 +71,7 @@ const ICONS = {
   dashboard: DashboardIcon,
   eye: EyeIcon,
   fileText: FileTextIcon,
+  flame: FlameIcon,
   game: GameIcon,
   gear: GearIcon,
   handshake: HandshakeIcon,
