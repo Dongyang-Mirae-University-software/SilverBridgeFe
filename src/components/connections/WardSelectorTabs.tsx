@@ -2,13 +2,17 @@
 
 import classNames from 'classnames/bind';
 
+import { UserAvatar } from '@/components/UserAvatar';
 import styles from './WardSelectorTabs.module.css';
 
 const cx = classNames.bind(styles);
 
-interface WardOption {
+export interface WardOption {
   wardId: string;
   wardName: string | null;
+  profileImage?: string | null;
+  relation?: string | null;
+  badgeCount?: number | null;
 }
 
 interface WardSelectorTabsProps {
@@ -32,8 +36,10 @@ export function WardSelectorTabs({ wards, selectedWardId, onSelect, ariaLabel = 
             className={cx('wardTab', { wardTabActive: isActive })}
             onClick={() => onSelect(ward.wardId)}
           >
-            <span className={cx('wardTabAvatar')}>{(ward.wardName ?? '피').charAt(0)}</span>
-            {ward.wardName ?? '피보호자'}
+            <UserAvatar imageUrl={ward.profileImage} size="w-30" userName={ward.wardName} />
+            <span>{ward.wardName ?? '피보호자'}</span>
+            {ward.relation && <em>{ward.relation}</em>}
+            {!!ward.badgeCount && <i className={cx('wardTabBadge')}>{ward.badgeCount}</i>}
           </button>
         );
       })}
