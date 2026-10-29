@@ -29,8 +29,17 @@
   color: var(--sb-ink);
 }
 
+.headerLead {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
 .brand {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: 14px;
   min-width: 0;
@@ -55,10 +64,13 @@
 
 .brandCopy h1 {
   margin: 0;
+  overflow: hidden;
   color: var(--sb-ink);
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 800;
   line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .brandCopy p {
@@ -67,9 +79,12 @@
   align-items: center;
   gap: 6px;
   color: var(--sb-ink-soft);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 400;
   line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .statusDot {
@@ -123,15 +138,15 @@
 .backButton {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 9px 12px;
   box-shadow: none;
 }
 
@@ -694,6 +709,21 @@
     padding: 10px 14px;
   }
 
+  .headerLead {
+    gap: 8px;
+  }
+
+  .backButton {
+    width: 38px;
+    height: 38px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .backButton span {
+    display: none;
+  }
+
   .headerActions {
     width: auto;
   }
@@ -713,11 +743,11 @@
   }
 
   .brandCopy h1 {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .brandCopy p {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .brandMark {
