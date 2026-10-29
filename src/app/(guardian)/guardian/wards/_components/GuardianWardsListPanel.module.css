@@ -16,7 +16,7 @@
 .pageHead h1 {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
@@ -34,9 +34,9 @@
 /* ── 연결된 가족 카드 그리드 ── */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  width: min(100%, 1000px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  max-width: 1000px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -45,19 +45,19 @@
 .card {
   display: flex;
   flex-direction: column;
+  gap: 16px;
   min-width: 0;
   border: 1px solid var(--sb-line-soft);
   border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
-  padding: 22px 24px 20px;
+  padding: 20px;
 }
 
 .cardHead {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding-bottom: 16px;
 }
 
 .cardTitle {
@@ -70,18 +70,19 @@
 
 .cardName {
   color: var(--sb-ink);
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 800;
   overflow-wrap: anywhere;
 }
 
 .cardSub {
   color: var(--sb-ink-soft);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
 
+/* v12 표 형태 연락처 UI 보관. v13은 아래 contactPanel의 아이콘 행을 사용한다.
 .rows {
   margin: 0;
 }
@@ -118,22 +119,56 @@
   border-top: 1px solid var(--sb-line-soft);
   padding-top: 14px;
 }
+*/
+
+.contactPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  padding: 14px 16px;
+}
+
+.contactInfo {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.contactInfo svg {
+  flex: 0 0 auto;
+  color: var(--sb-ink-mute);
+  margin-top: 3px;
+}
+
+.contactInfo span {
+  min-width: 0;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  word-break: keep-all;
+}
 
 .disconnectButton {
-  min-height: 44px;
-  border: 1px solid var(--sb-line);
-  border-radius: 10px;
-  background: #fff;
+  min-height: 40px;
+  border: 0;
+  background: none;
   color: var(--sb-ink-mute);
   cursor: pointer;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 0 14px;
+  padding: 8px 2px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
 }
 
 .disconnectButton:hover {
-  background: var(--sb-bg-soft);
+  color: var(--sb-ink);
 }
 
 /* ── 연결 해제 확인 모달 ── */
@@ -229,7 +264,7 @@
     align-items: flex-start;
   }
 
-  .row {
-    grid-template-columns: 96px minmax(0, 1fr);
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -11,12 +11,13 @@ import { useModalDialog } from '@/hooks/useModalDialog';
 import { disconnectGuardianConnection } from '@/service/api/guardian/connection';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
-import { EmptyState, getConnectionData } from '@/components/connections/ConnectionShared';
+import { EmptyState, formatPartnerGender, getConnectionData } from '@/components/connections/ConnectionShared';
 import {
   getAgeFromBirthDate,
   getConnectionActionErrorMessage,
 } from '@/utils/connection/connectionView';
 import { formatPhoneNumber } from '@/utils/format/phone';
+import { GuardianConnectionRequestHistory } from './GuardianConnectionRequestHistory';
 import styles from './GuardianWardsListPanel.module.css';
 
 const cx = classNames.bind(styles);
@@ -27,15 +28,16 @@ function formatBirthDate(value?: string | null) {
 }
 */
 
-// v13 카드 보조 정보는 관계와 나이만 간단히 보여 준다.
+// v13 카드 보조 정보는 만 나이·성별만 간단히 보여 준다.
 function getWardSubtitle(connection: IConnectionItem) {
   const age = getAgeFromBirthDate(connection.partnerBirthDate);
-  return [connection.relation, age === null ? null : `${age}세`]
+  return [age === null ? null : `만 ${age}세`, formatPartnerGender(connection.partnerGender)]
     .filter(Boolean)
     .join(' · ');
 }
 
-// 연락처와 주소만 카드에 표시한다. 연결(ACTIVE) 뒤에만 오므로 빈 값은 줄을 뺀다.
+// v13 이전의 표 형태 정보 행 보관. 현재는 전화·주소를 아이콘 패널로 보여 준다.
+/*
 function getWardRows(connection: IConnectionItem): Array<[string, string]> {
   const address = [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
   const rows: Array<[string, string | null | undefined]> = [
@@ -47,6 +49,15 @@ function getWardRows(connection: IConnectionItem): Array<[string, string]> {
     // ['회원 ID', connection.partnerUserId],
   ];
   return rows.filter((row): row is [string, string] => Boolean(row[1]));
+}
+*/
+
+function getWardContactInfo(connection: IConnectionItem) {
+  const address = [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
+  return {
+    phone: connection.partnerPhone ? formatPhoneNumber(connection.partnerPhone) : null,
+    address: address ? `${connection.partnerPostcode ? `(${connection.partnerPostcode}) ` : ''}${address}` : null,
+  };
 }
 
 // 연결 해제 확인 창 - 열릴 때만 그려서 포커스 가두기·복귀·Esc를 useModalDialog에 맡긴다
@@ -141,33 +152,32 @@ export function GuardianWardsListPanel() {
         <ul className={cx('grid')} aria-label="연결된 가족">
           {activeConnections.map(connection => {
             const subtitle = getWardSubtitle(connection);
+            const contact = getWardContactInfo(connection);
             return (
               <li key={connection.id} className={cx('card')}>
                 <div className={cx('cardHead')}>
-                  <UserAvatar imageUrl={connection.partnerProfileImage} size="w-72" userName={connection.partnerName} />
+                  <UserAvatar imageUrl={connection.partnerProfileImage} size="w-56" userName={connection.partnerName} />
                   <div className={cx('cardTitle')}>
                     <strong className={cx('cardName')}>{connection.partnerName} 님</strong>
                     {subtitle && <span className={cx('cardSub')}>{subtitle}</span>}
                   </div>
-                </div>
-                <dl className={cx('rows')}>
-                  {getWardRows(connection).map(([label, value]) => (
-                    <div key={label} className={cx('row')}>
-                      <dt>{label}</dt>
-                      <dd>{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <div className={cx('cardFooter')}>
                   <button className={cx('disconnectButton')} type="button" onClick={() => setConfirmId(connection.id)}>
                     연결 해제
                   </button>
                 </div>
+                {(contact.phone || contact.address) && (
+                  <div className={cx('contactPanel')}>
+                    {contact.phone && <ContactInfo icon="phone" value={contact.phone} />}
+                    {contact.address && <ContactInfo icon="mapPin" value={contact.address} />}
+                  </div>
+                )}
               </li>
             );
           })}
         </ul>
       )}
+
+      <GuardianConnectionRequestHistory />
 
       <RefreshButton ariaLabel="새로고침" disabled={isLoading} onRefresh={() => refetch()} />
 
@@ -180,5 +190,14 @@ export function GuardianWardsListPanel() {
         />
       )}
     </section>
+  );
+}
+
+function ContactInfo({ icon, value }: { icon: 'phone' | 'mapPin'; value: string }) {
+  return (
+    <div className={cx('contactInfo')}>
+      <Icon name={icon} size={17} decorative />
+      <span>{value}</span>
+    </div>
   );
 }

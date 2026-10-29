@@ -73,6 +73,7 @@ function expectNoHorizontalScroll() {
 
 beforeEach(() => {
   Object.values(api).forEach(mock => mock.mockReset());
+  api.getGuardianConnectionRequests.mockResolvedValue(ok([]));
 });
 
 afterEach(() => {
@@ -118,7 +119,7 @@ describe('가족 등록 폼 (Chrome)', () => {
 });
 
 describe('수락을 기다리는 중 (Chrome)', () => {
-  it('회원 ID·관계·요청일만 보이고 상대 연락처는 보이지 않는다, 요청 취소를 부른다', async () => {
+  it('이름·관계·요청일과 프로필을 보이고 상대 연락처는 보이지 않는다, 요청 취소를 부른다', async () => {
     api.getGuardianConnectionRequests.mockResolvedValue(
       ok([
         connection({ id: 3, status: 'PENDING', partnerPhone: '010****5432', partnerName: '김영희', connectedAt: null }),
@@ -128,8 +129,8 @@ describe('수락을 기다리는 중 (Chrome)', () => {
     api.cancelGuardianConnectionRequest.mockResolvedValue(ok(null));
     const screen = render(<GuardianConnectionRequestHistory />, { wrapper });
 
-    await expect.element(screen.getByText('aB3x9Z')).toBeInTheDocument();
-    await expect.element(screen.getByText('아들 · 5월 8일 요청')).toBeInTheDocument();
+    await expect.element(screen.getByText('김영희')).toBeInTheDocument();
+    await expect.element(screen.getByText('아들로 요청 · 5월 8일')).toBeInTheDocument();
     expect(document.body.textContent).not.toContain('010');
     expect(screen.getByRole('button', { name: '요청 취소' }).elements()).toHaveLength(1);
 
@@ -165,13 +166,13 @@ describe('수락을 기다리는 중 (Chrome)', () => {
 });
 
 describe('연결된 가족 (Chrome)', () => {
-  it('관계·나이와 전화번호·주소만 보이고, 수락 대기 건은 보이지 않는다', async () => {
+  it('만 나이·성별과 전화번호·주소만 보이고, ACTIVE가 아닌 연결은 가족 카드에 보이지 않는다', async () => {
     api.getGuardianConnections.mockResolvedValue(
       ok([connection(), connection({ id: 8, partnerName: '이순자', status: 'PENDING', partnerPhone: null })]),
     );
     const screen = render(<GuardianWardsListPanel />, { wrapper });
 
-    await expect.element(screen.getByText(/^아들 · \d+세$/)).toBeInTheDocument();
+    await expect.element(screen.getByText(/^만 \d+세 · 여성$/)).toBeInTheDocument();
     await expect.element(screen.getByText('(05551) 서울 송파구 올림픽로 456 102동 1503호')).toBeInTheDocument();
     expect(screen.getByText('이메일').query()).toBeNull();
     expect(screen.getByText('성별 · 생년월일').query()).toBeNull();
