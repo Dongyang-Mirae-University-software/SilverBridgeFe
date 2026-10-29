@@ -68,7 +68,12 @@ export default function GuardianSosHistoryContent() {
       <div className={cx('filters')}>
         <div className={cx('wardTabs')}>
           <WardSelectorTabs
-            wards={activeWards.map(ward => ({ wardId: ward.partnerUserId, wardName: ward.partnerName }))}
+            wards={activeWards.map(ward => ({
+              wardId: ward.partnerUserId,
+              wardName: ward.partnerName,
+              profileImage: ward.partnerProfileImage,
+              relation: ward.relation,
+            }))}
             selectedWardId={effectiveSelectedWardId ?? undefined}
             onSelect={handleSelectWard}
           />
