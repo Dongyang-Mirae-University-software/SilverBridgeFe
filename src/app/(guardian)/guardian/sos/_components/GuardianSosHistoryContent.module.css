@@ -23,7 +23,7 @@
 
 .typeFilter {
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
@@ -46,6 +46,27 @@
 
 .typeFilter strong {
   font-weight: 800;
+}
+
+.triggerIcon {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  place-items: center;
+  border-radius: 7px;
+}
+
+.sosIcon {
+  background: var(--sb-danger);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.callIcon {
+  background: #e6effa;
+  color: #3b7dd8;
 }
 
 .historyCard {

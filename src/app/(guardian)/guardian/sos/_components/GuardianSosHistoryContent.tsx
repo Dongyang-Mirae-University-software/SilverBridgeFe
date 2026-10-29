@@ -93,6 +93,12 @@ export default function GuardianSosHistoryContent() {
                 setPage(0);
               }}
             >
+              {type === 'SOS_BUTTON' && <span className={cx('triggerIcon', 'sosIcon')}>SOS</span>}
+              {type === 'GUARDIAN_CALL' && (
+                <span className={cx('triggerIcon', 'callIcon')}>
+                  <Icon name="phone" size={13} decorative />
+                </span>
+              )}
               {label} <strong>{count}</strong>
             </button>
           ))}
