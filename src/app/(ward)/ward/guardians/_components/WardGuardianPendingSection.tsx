@@ -14,6 +14,13 @@ import styles from './WardGuardianPendingSection.module.css';
 
 const cx = classNames.bind(styles);
 
+function formatRequestedDate(value: string) {
+  const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!matched) return '최근';
+
+  return `${Number(matched[2])}월 ${Number(matched[3])}일`;
+}
+
 // 보호자가 보낸 연결 요청. 수락 전이라 연락처는 보여 주지 않는다(BE도 가린 번호만 준다)
 export function WardGuardianPendingSection() {
   const pendingQuery = useWardGuardianPendingConnectionsQuery();
@@ -32,14 +39,16 @@ export function WardGuardianPendingSection() {
     <ul className={cx('requestList')} aria-label="받은 연결 요청">
       {requests.map(request => (
         <li key={request.id} className={cx('requestCard')}>
-          <UserAvatar imageUrl={request.partnerProfileImage} size="w-72" userName={request.partnerName} />
-          <div className={cx('requestText')}>
-            {/* relation은 보호자가 나에게 누구인지라 "박철수 (손자)"가 그대로 맞다 */}
-            <strong className={cx('requestName')}>
-              {request.partnerName || '이름 확인 전'}
-              {request.relation && <span className={cx('relation')}> ({request.relation})</span>}
-            </strong>
-            <span className={cx('requestDesc')}>보호자가 되고 싶다고 요청했어요</span>
+          <div className={cx('requestHead')}>
+            <UserAvatar imageUrl={request.partnerProfileImage} size="w-72" userName={request.partnerName} />
+            <div className={cx('requestText')}>
+              {/* relation은 보호자가 나에게 누구인지라 "박철수 (손자)"가 그대로 맞다 */}
+              <strong className={cx('requestName')}>
+                {request.partnerName || '이름 확인 전'}
+                {request.relation && <span className={cx('relation')}> ({request.relation})</span>}
+              </strong>
+              <span className={cx('requestDesc')}>{formatRequestedDate(request.createdAt)}에 연결을 요청했어요</span>
+            </div>
           </div>
           <div className={cx('requestActions')}>
             <button

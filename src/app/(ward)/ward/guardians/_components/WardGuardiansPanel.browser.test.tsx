@@ -72,7 +72,11 @@ function wrapperWith(client: QueryClient) {
 }
 
 beforeEach(() => {
-  Object.values(api).forEach(mock => mock.mockReset());
+  api.getWardActiveConnections.mockReset();
+  api.getWardPendingConnections.mockReset();
+  api.acceptWardConnection.mockReset();
+  api.refuseWardConnectionRequest.mockReset();
+  api.disconnectWardConnection.mockReset();
   api.acceptWardConnection.mockResolvedValue(ok(null));
   api.refuseWardConnectionRequest.mockResolvedValue(ok(null));
   api.disconnectWardConnection.mockResolvedValue(ok(null));
@@ -83,15 +87,17 @@ afterEach(() => {
 });
 
 describe('피보호자 내 가족 (Chrome)', () => {
-  it('받은 요청은 이름(관계)만 보이고 수락 전 연락처는 보이지 않는다', async () => {
+  it('받은 요청은 이름·관계·요청일과 1:1 수락·거절 버튼을 보이고 연락처는 숨긴다', async () => {
     api.getWardPendingConnections.mockResolvedValue(ok([request()]));
     api.getWardActiveConnections.mockResolvedValue(ok([]));
     const screen = render(<WardGuardiansPanel />, { wrapper });
 
     const requests = screen.getByRole('list', { name: '받은 연결 요청' });
     await expect.element(requests).toHaveTextContent('박철수 (손자)');
-    await expect.element(requests).toHaveTextContent('보호자가 되고 싶다고 요청했어요');
+    await expect.element(requests).toHaveTextContent('1월 12일에 연결을 요청했어요');
     expect(requests.element().textContent).not.toContain('010');
+    await expect.element(requests.getByRole('button', { name: '거절' })).toBeVisible();
+    await expect.element(requests.getByRole('button', { name: '수락' })).toBeVisible();
     await expect.element(screen.getByText('아직 연결된 보호자가 없어요')).toBeInTheDocument();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
