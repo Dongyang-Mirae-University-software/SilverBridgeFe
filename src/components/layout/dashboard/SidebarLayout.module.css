@@ -66,6 +66,63 @@
   cursor: pointer;
 }
 
+/* 보호자도 피보호자처럼 모든 화면 폭에서 메뉴 버튼으로만 사이드바를 연다. */
+.guardianTopBar {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--sb-line);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 4px 14px rgba(20, 17, 12, 0.08);
+  padding: 10px 14px;
+  backdrop-filter: blur(10px);
+  margin-bottom: 10px;
+}
+
+.guardianTopBar .topBarMenuButton {
+  display: inline-flex;
+  width: auto;
+  height: 42px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  padding: 0 12px;
+}
+
+.guardianTopBar .topBarMenuButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.guardianTopBar .topBarBrand {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.guardianTopBar .topBarBrandLink {
+  display: block;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.guardianScrim {
+  display: block;
+}
+
 /* 피보호자 사이드바는 모든 화면 폭에서 오버레이로 열리므로 딤드도 항상 필요하다. */
 .wardScrim {
   display: block;
@@ -171,6 +228,11 @@
     padding: 10px 14px;
     backdrop-filter: blur(10px);
     margin-bottom: 10px;
+  }
+
+  .guardianTopBar {
+    /* 데스크톱과 같은 상단바 규격을 유지한다. */
+    display: flex;
   }
 
   .topBarMenuButton {
