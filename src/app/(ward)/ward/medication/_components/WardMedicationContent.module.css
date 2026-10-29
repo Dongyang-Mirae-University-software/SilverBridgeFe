@@ -73,6 +73,23 @@
 
 .medList { display: grid; margin: 0; padding: 0; list-style: none; }
 
+.medicationRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--sb-line-soft);
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 800;
+  padding: 12px 0;
+}
+
+.medicationRow:first-child { border-top: 0; }
+.medicationRow > strong { color: var(--sb-brand); font: inherit; white-space: nowrap; }
+.medicationRow.muted { color: var(--sb-ink-mute); }
+.medicationRow.muted > strong { color: var(--sb-ink-soft); }
+
 .takeButton {
   display: flex;
   min-height: 76px;
@@ -154,6 +171,7 @@
   .nowCard { padding: 18px 16px 20px; }
   .nowHead strong { font-size: 26px; }
   .nowHead span { font-size: 19px; }
+  .medicationRow { font-size: 20px; }
   .takeButton { min-height: 68px; font-size: 22px; }
   .doneCard { gap: 14px; padding: 18px 16px; }
   .doneIcon { width: 48px; height: 48px; }
