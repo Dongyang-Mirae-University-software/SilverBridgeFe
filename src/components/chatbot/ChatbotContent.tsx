@@ -75,10 +75,8 @@ export default function ChatbotContent() {
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const messagesRef = useRef(messages);
   const sendingRef = useRef(sending);
 
-  messagesRef.current = messages;
   sendingRef.current = sending;
 
   useEffect(() => {
@@ -124,11 +122,6 @@ export default function ChatbotContent() {
       if (!trimmed && !uiSelection) return;
       if (sendingRef.current) return;
 
-      const history = messagesRef.current
-        .filter(message => message.id !== 'welcome' && typeof message.content === 'string' && message.content.trim())
-        .slice(-24)
-        .map(message => ({ role: message.role, content: message.content }));
-
       const userMessage: ChatMessage = {
         id: makeId(),
         role: 'user',
@@ -166,10 +159,10 @@ export default function ChatbotContent() {
               }
             : { role };
 
+        // 대화 맥락은 AI가 같은 sessionId의 서버 기록으로 만든다 - 이력은 보내지 않는다(2026-10-29, AI #91).
         const result = await sendChatMessage({
           message: uiSelection ? undefined : trimmed,
           sessionId,
-          history,
           context,
           uiSelection: uiSelection ?? undefined,
         });
