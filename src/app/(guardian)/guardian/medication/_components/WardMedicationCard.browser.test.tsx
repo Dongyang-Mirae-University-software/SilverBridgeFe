@@ -94,19 +94,17 @@ describe('WardMedicationCard (Chrome)', () => {
     notificationSetting.value = null;
   });
 
-  it('시간순으로 약마다 시간·이름·상태·휴지통 삭제를 보여 준다', async () => {
+  it('아침·점심·저녁 시간대 드롭다운으로 약과 상태를 보여 준다', async () => {
     const screen = renderCard([
       medication(2, { name: '수면제', timeSlot: 'BEDTIME', doseTime: '22:00:00', doseAmount: 0.5 }),
       medication(1, { name: '혈압약', timeSlot: 'MORNING', doseTime: '08:00:00', taken: true }),
     ]);
 
     await expect.element(screen.getByRole('list', { name: '오늘 드실 약' })).toBeVisible();
-    await expect.element(screen.getByText('아침 08:00')).toBeVisible();
-    await expect.element(screen.getByText('혈압약')).toBeVisible();
+    await expect.element(screen.getByText('아침 약')).toBeVisible();
+    await expect.element(screen.getByText('오전 8:00')).toBeVisible();
     await expect.element(screen.getByText('드셨어요')).toBeVisible();
-    await expect.element(screen.getByText('취침 전 22:00')).toBeVisible();
-    await expect.element(screen.getByText('반 알')).toBeVisible();
-    await expect.element(screen.getByRole('button', { name: '혈압약 삭제' })).toBeVisible();
+    await expect.element(screen.getByText('취침 전 약')).toBeVisible();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
@@ -116,9 +114,11 @@ describe('WardMedicationCard (Chrome)', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     const screen = renderCard([medication(1, { name: '혈압약' })]);
 
+    await screen.getByRole('button', { name: '약 고치기' }).click();
     await screen.getByRole('button', { name: '혈압약 수정' }).click();
     await expect.element(screen.getByRole('dialog', { name: '약 수정' })).toBeVisible();
     await screen.getByRole('dialog', { name: '약 수정' }).getByRole('button', { name: '닫기' }).click();
+    await screen.getByRole('button', { name: '약 고치기' }).click();
     await screen.getByRole('button', { name: '혈압약 삭제' }).click();
     await vi.waitFor(() => expect(api.deleteGuardianMedication).toHaveBeenCalledWith(1));
   });

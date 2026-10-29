@@ -77,8 +77,7 @@
   text-align: center;
 }
 
-/* v13 약 목록: 한 약을 한 줄에 표시한다. 기존 시간대 아코디언 클래스는
-   이전 화면을 되돌려 확인할 수 있도록 아래에 남겨 두고, 새 목록에는 쓰지 않는다. */
+/* 이전 단일 약 행 레이아웃. 시간대 드롭다운으로 바뀌었지만 되돌려 확인할 수 있게 남긴다. */
 .medicationList {
   margin: 0;
   padding: 0;
@@ -122,24 +121,41 @@
 }
 
 .groupHeader {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
-  min-height: 60px;
+  min-height: 72px;
   border: 0;
   background: transparent;
   color: var(--sb-ink);
   cursor: pointer;
   font: inherit;
-  padding: 0 24px;
+  padding: 10px clamp(16px, 3vw, 24px);
   text-align: left;
 }
 
+.groupHeading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .groupLabel {
-  font-size: 17px;
+  display: block;
+  color: var(--sb-ink);
+  font-size: 19px;
   font-weight: 800;
+  line-height: 1.35;
+}
+
+.groupTime {
+  display: block;
+  margin-top: 2px;
+  color: var(--sb-ink-mute);
+  font-size: 17px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -153,37 +169,59 @@
 }
 
 .groupStatus {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--sb-bg-soft);
   color: var(--sb-ink-mute);
   font-size: 15px;
   font-weight: 800;
+  padding: 6px 12px;
   white-space: nowrap;
 }
 
 .groupStatus.done {
+  background: var(--sb-safe-soft);
   color: var(--sb-safe);
 }
 
 .groupStatus.miss {
+  background: var(--sb-sun-soft);
   color: #8a5f12;
 }
 
 .groupStatus.next {
+  background: var(--sb-brand-50);
   color: var(--sb-brand);
 }
 
-/* 펼친 약 - 시간대 이름 칸(64px) 오른쪽에 맞춘다 */
+.groupChevron {
+  flex-shrink: 0;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  transition: transform 0.15s ease;
+}
+
+.groupChevron.open {
+  transform: rotate(180deg);
+}
+
+/* 펼친 약은 HTML 목업처럼 각진 흰색 행으로 보여 준다. */
 .groupPanel {
-  padding: 0 24px 12px 102px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 clamp(16px, 3vw, 24px) 16px;
 }
 
 .medicationItem {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-auto-flow: column;
-  grid-auto-columns: auto;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 40px;
+  gap: 12px;
+  min-height: 56px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 12px;
+  background: #fff;
+  padding: 0 16px;
 }
 
 .medicationInfo {
@@ -228,10 +266,31 @@
 }
 
 .medicationAmount {
+  flex-shrink: 0;
   color: var(--sb-ink-soft);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.medicationActions {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.editButton {
+  min-height: 40px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 0 10px;
 }
 
 .statusBadge {
@@ -270,8 +329,8 @@
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
@@ -297,17 +356,16 @@
 }
 
 .editToggle {
-  min-height: 44px;
-  border: 0;
-  background: none;
-  color: var(--sb-ink-mute);
+  min-height: 48px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink-soft);
   cursor: pointer;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  padding: 0 16px;
   white-space: nowrap;
 }
 
@@ -651,7 +709,6 @@
   }
 
   .groupHeader {
-    grid-template-columns: 52px minmax(0, 1fr) auto;
     gap: 10px;
     padding: 0 16px;
   }
@@ -664,6 +721,19 @@
     overflow: visible;
     white-space: normal;
     word-break: break-all;
+  }
+
+  .medicationItem {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .medicationActions {
+    gap: 4px;
+  }
+
+  .editButton {
+    padding: 0 8px;
   }
 
   .settingsRow {

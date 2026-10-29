@@ -9,9 +9,8 @@ import { Icon } from '@/components/Icon';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import {
-  DoseStatus,
   formatDoseAmount,
-  formatDoseTime,
+  formatMedicationAlertTime,
   getDoseStatus,
   getTodayHeadline,
   getMedicationTimeSlotLabel,
@@ -37,13 +36,6 @@ interface WardMedicationCardProps {
 }
 
 const DELETE_FAILED_MESSAGE = '삭제하지 못했어요. 목록을 다시 불러왔으니 확인 후 다시 시도해 주세요.';
-
-const STATUS_LABEL: Record<DoseStatus, string> = {
-  done: '드셨어요',
-  miss: '아직 안 드셨어요',
-  later: '아직 시간 전',
-  beforeRegistered: '오늘은 등록 전이었어요',
-};
 
 function toUpdateBody(value: MedicationFormValue) {
   return {
@@ -89,6 +81,8 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const deleteMutation = useDeleteGuardianMedicationMutation();
   const deleteBatchMutation = useDeleteWardMedicationBatchMutation();
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [openSlotState, setOpenSlotState] = useState<{ wardId: string; key: string | null }>({ wardId: '', key: null });
+  const [editingSlotState, setEditingSlotState] = useState<{ wardId: string; key: string | null }>({ wardId: '', key: null });
   const alertSettingMutation = useUpdateMedicationAlertSettingMutation();
   const { data: notificationTypeSetting } = useQuery(guardianNotificationTypeSettingQueryOptions);
   const isMedicationNotificationDisabled = notificationTypeSetting?.medication.enabled === false;
@@ -103,10 +97,53 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     timeZone: 'Asia/Seoul',
   }).format(new Date());
   // 같은 시간대·시각의 약은 한 번으로 센다(약 6개 × 하루 3번 = "3번 중"). 오늘 등록 전이었던 묶음은 세지 않는다
-  const groups = groupMedicationsByTime(medications, nowHHmm, summary.doseDate);
+  const timeGroups = groupMedicationsByTime(medications, nowHHmm, summary.doseDate);
   // 맨 위 한 문장: "N번 중 M번" 대신 시간대로("아침 약을 다 드셨어요") - 약이 많으면 횟수가 무슨 뜻인지 알기 어렵다(2026-10-24)
-  const headline = getTodayHeadline(groups);
+  const headline = getTodayHeadline(timeGroups);
   const router = useRouter();
+
+  // 목록은 HTML 목업처럼 아침·점심·저녁·취침 전 시간대 단위로 접는다.
+  // 같은 시간대에 서로 다른 시각의 약이 있어도 한 드롭다운 안에서 확인할 수 있다.
+  const slotGroups = medications.reduce<typeof timeGroups>((result, medication) => {
+    const slot = result.find(group => group.timeSlot === medication.timeSlot);
+    if (slot) {
+      slot.medications.push(medication);
+      return result;
+    }
+
+    const status = getDoseStatus(medication, nowHHmm, summary.doseDate);
+    result.push({
+      key: medication.timeSlot,
+      timeSlot: medication.timeSlot,
+      doseTime: medication.doseTime,
+      label: getMedicationTimeSlotLabel(medication.timeSlot),
+      medications: [medication],
+      takenCount: status === 'beforeRegistered' ? 0 : Number(medication.taken),
+      countedCount: status === 'beforeRegistered' ? 0 : 1,
+      status,
+    });
+    return result;
+  }, []);
+
+  slotGroups.forEach(group => {
+    const statuses = group.medications.map(medication => getDoseStatus(medication, nowHHmm, summary.doseDate));
+    const countedStatuses = statuses.filter(status => status !== 'beforeRegistered');
+    group.takenCount = group.medications.filter((medication, index) => countedStatuses.length > 0 && statuses[index] !== 'beforeRegistered' && medication.taken).length;
+    group.countedCount = countedStatuses.length;
+    group.status =
+      countedStatuses.length === 0
+        ? 'beforeRegistered'
+        : group.takenCount === countedStatuses.length
+          ? 'done'
+          : statuses.includes('miss')
+            ? 'miss'
+            : 'later';
+  });
+
+  const defaultOpenSlot = slotGroups.find(group => group.status !== 'done')?.key ?? slotGroups[0]?.key;
+  const selectedOpenSlot = openSlotState.wardId === summary.wardId ? openSlotState.key : null;
+  const selectedEditingSlot = editingSlotState.wardId === summary.wardId ? editingSlotState.key : null;
+  const visibleOpenSlot = selectedOpenSlot === null ? defaultOpenSlot : selectedOpenSlot;
 
   const handleDelete = (medication: MedicationItem) => {
     if (!window.confirm(`${medication.name} 일정을 삭제할까요? 지난 복용 이력은 남습니다.`)) return;
@@ -157,38 +194,77 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         {!hasMedications ? (
           <p className={cx('emptyText')}>등록된 약이 없어요. 약을 추가해 주세요.</p>
         ) : (
-          <ul className={cx('medicationList')} aria-label="오늘 드실 약">
-            {medications.map(medication => {
-              const status = getDoseStatus(medication, nowHHmm, summary.doseDate);
+          <ul className={cx('groupList')} aria-label="오늘 드실 약">
+            {slotGroups.map(group => {
+              const isOpen = visibleOpenSlot === group.key;
+              const isEditing = selectedEditingSlot === group.key;
+              const isNext = slotGroups.find(item => item.status !== 'done')?.key === group.key;
+              const groupStatus =
+                group.status === 'done'
+                  ? '✓ 드셨어요'
+                  : group.status === 'miss'
+                    ? '아직 안 드셨어요'
+                    : group.status === 'later' && isNext
+                      ? '다음 약'
+                      : '';
+
               return (
-                <li key={medication.medicationId} className={cx('medicationRow')}>
-                  <span className={cx('medicationTime')}>
-                    {getMedicationTimeSlotLabel(medication.timeSlot)} {formatDoseTime(medication.doseTime)}
-                  </span>
+                <li key={group.key} className={cx('groupItem', { open: isOpen })}>
                   <button
                     type="button"
-                    className={cx('medicationInfo', 'editable')}
-                    onClick={() => openEditMedication(medication)}
-                    aria-label={`${medication.name} 수정`}
+                    className={cx('groupHeader')}
+                    aria-expanded={isOpen}
+                    onClick={() => {
+                      setOpenSlotState({ wardId: summary.wardId, key: isOpen ? '' : group.key });
+                      setEditingSlotState({ wardId: summary.wardId, key: null });
+                    }}
                   >
-                    <span className={cx('medicationName')}>{medication.name}</span>
-                    <span className={cx('medicationDetail')}>
-                      {formatDoseAmount(medication.doseAmount)}{medication.memo ? ` · ${medication.memo}` : ''}
+                    <span className={cx('groupHeading')}>
+                      <span className={cx('groupLabel')}>{group.label} 약</span>
+                      <span className={cx('groupTime')}>{formatMedicationAlertTime(group.doseTime)}</span>
                     </span>
+                    {groupStatus && <span className={cx('groupStatus', group.status, { next: group.status === 'later' })}>{groupStatus}</span>}
+                    <span className={cx('groupChevron', { open: isOpen })} aria-hidden="true">▼</span>
                   </button>
-                  <span className={cx('statusBadge', status)}>
-                    {status === 'done' && <span aria-hidden="true">✓ </span>}
-                    {STATUS_LABEL[status]}
-                  </span>
-                  <button
-                    type="button"
-                    className={cx('deleteButton')}
-                    disabled={deleteMutation.isPending}
-                    onClick={() => handleDelete(medication)}
-                    aria-label={`${medication.name} 삭제`}
-                  >
-                    <Icon name="trash" size={18} decorative />
-                  </button>
+
+                  {isOpen && (
+                    <div className={cx('groupPanel')}>
+                      <ul className={cx('groupMedications')}>
+                        {group.medications.map(medication => (
+                          <li key={medication.medicationId} className={cx('medicationItem')}>
+                            <span className={cx('medicationInfo')}>
+                              <span className={cx('medicationName')}>{medication.name}</span>
+                              {medication.memo && <span className={cx('medicationDetail')}>{medication.memo}</span>}
+                            </span>
+                            <span className={cx('medicationAmount')}>{formatDoseAmount(medication.doseAmount)}</span>
+                            {isEditing && (
+                              <span className={cx('medicationActions')}>
+                                <button type="button" className={cx('editButton')} onClick={() => openEditMedication(medication)} aria-label={`${medication.name} 수정`}>
+                                  수정
+                                </button>
+                                <button
+                                  type="button"
+                                  className={cx('deleteButton')}
+                                  disabled={deleteMutation.isPending}
+                                  onClick={() => handleDelete(medication)}
+                                  aria-label={`${medication.name} 삭제`}
+                                >
+                                  <Icon name="trash" size={18} decorative />
+                                </button>
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        type="button"
+                        className={cx('editToggle')}
+                        onClick={() => setEditingSlotState({ wardId: summary.wardId, key: isEditing ? null : group.key })}
+                      >
+                        {isEditing ? '다 고쳤어요' : '약 고치기'}
+                      </button>
+                    </div>
+                  )}
                 </li>
               );
             })}
