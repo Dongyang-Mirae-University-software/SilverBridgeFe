@@ -5,6 +5,13 @@ import classNames from 'classnames/bind';
 import styles from './Pagination.module.css';
 
 const cx = classNames.bind(styles);
+const NUMBERED_PAGE_WINDOW_SIZE = 5;
+
+function getNumberedPageWindow(page: number, totalPages: number) {
+  const count = Math.min(NUMBERED_PAGE_WINDOW_SIZE, totalPages);
+  const start = Math.min(Math.max(page - Math.floor(count / 2), 0), totalPages - count);
+  return Array.from({ length: count }, (_, index) => start + index);
+}
 
 interface PaginationProps {
   page: number;
@@ -38,7 +45,7 @@ export function Pagination({
         >
           이전
         </button>
-        {Array.from({ length: totalPages }, (_, index) => (
+        {getNumberedPageWindow(page, totalPages).map(index => (
           <button
             key={index}
             className={cx('numberedButton', { numberedButtonActive: index === page })}
