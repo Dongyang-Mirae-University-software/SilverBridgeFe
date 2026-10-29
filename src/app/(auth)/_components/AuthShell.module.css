@@ -17,7 +17,7 @@
 .starOne { top: 18%; left: 2%; }
 .starTwo { top: 12%; left: 92%; font-size: 12px; animation-delay: 1.6s; }
 .copy { position: relative; z-index: 1; max-width: 420px; text-align: center; }
-.brand { margin-bottom: 18px; color: #b0503a; font-family: var(--font-pretendard), sans-serif; font-size: clamp(44px, 4.4vw, 58px); font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+.brand { margin-bottom: 18px; color: #b0503a; font-family: var(--font-pretendard), sans-serif; font-size: clamp(44px, 4.4vw, 58px); font-weight: 600; letter-spacing: -0.01em; line-height: 1; }
 .headline { margin: 0; color: var(--sb-ink); font-size: clamp(19px, 1.8vw, 24px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.5; word-break: keep-all; }
 .headline span { color: var(--sb-brand); }
 .features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 28px; margin-top: 22px; }
