@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
-import { UserAvatar } from '@/components/UserAvatar';
+import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { guardianConnectionsQueryOptions, guardianDashboardQueryOptions } from '@/service/query/guardian';
 import styles from './GuardianDashboardContent.module.css';
 
@@ -66,19 +66,17 @@ export function GuardianDashboardContent() {
   return (
     <div className={cx('dashboardStack')}>
       <div className={cx('dashboardToolbar')}>
-        <div className={cx('wardRail')} role="list" aria-label="피보호자 선택">
-          {activeConnections.map(connection => {
-            const isSelected = selectedWard?.id === connection.id;
-            const pendingCount = pendingByWard.get(connection.partnerUserId);
-            return (
-              <button key={connection.id} className={cx('wardChip', { active: isSelected })} type="button" onClick={() => setSelectedConnectionId(connection.id)}>
-                <UserAvatar imageUrl={connection.partnerProfileImage} size="w-32" />
-                <span>{connection.partnerName || EMPTY_VALUE}</span><em>{connection.relation || '관계'}</em>
-                {!!pendingCount && <i className={cx('wardChipBadge')}>{pendingCount}</i>}
-              </button>
-            );
-          })}
-        </div>
+        <WardSelectorTabs
+          wards={activeConnections.map(connection => ({
+            wardId: connection.partnerUserId,
+            wardName: connection.partnerName || EMPTY_VALUE,
+            profileImage: connection.partnerProfileImage,
+            relation: connection.relation,
+            badgeCount: pendingByWard.get(connection.partnerUserId),
+          }))}
+          selectedWardId={selectedWard?.partnerUserId}
+          onSelect={wardId => setSelectedConnectionId(activeConnections.find(connection => connection.partnerUserId === wardId)?.id ?? null)}
+        />
         <span className={cx('attentionBadge', { attention: !!pendingTotal })}>
           <Icon name={pendingTotal ? 'bell' : 'check'} size={18} />
           {pendingTotal == null ? '확인 중' : pendingTotal > 0 ? `확인이 필요한 일 ${pendingTotal}건` : '지금 확인할 일이 없어요'}
