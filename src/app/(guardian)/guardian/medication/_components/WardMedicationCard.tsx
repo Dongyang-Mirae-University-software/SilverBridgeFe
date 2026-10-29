@@ -219,38 +219,37 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
       {/* 알림 설정 - Claude Design 시안대로(2026-10-24): "이 시간까지 안 드시면 나에게 알림" 시각.
           어르신 기기로 가는 "약 드실 시간" 알림은 늘 보내므로 켜고 끄는 스위치가 없다(2026-10-24 사용자 결정, BE #377).
           나에게 오는 알림을 켜고 끄는 건 환경설정 > 알림 종류에서만 한다(이 화면에 같은 스위치를 두지 않는다) */}
-      {hasMedications && (
-        <section className={cx('card', 'settingsCard')}>
-          <strong className={cx('settingsCardTitle')}>알림 설정</strong>
-          {isMedicationNotificationDisabled && (
-            <div className={cx('notificationOff')}>
-              <span>지금 복약 알림을 받지 않고 있어요</span>
-              <button type="button" className={cx('notificationOffButton')} onClick={() => router.push('/guardian/settings')}>
-                켜기
-              </button>
-            </div>
-          )}
-          <div className={cx('settingsRow')}>
-            <div className={cx('settingsText')}>
-              <strong className={cx('settingsTitle')}>이 시간까지 안 드시면 나에게 알림</strong>
-              {/* 시각이 곧 집계 상한 - 이 시각까지 복용 시각이 지난 약만 센다(BE 미복용 요약) */}
-              <span className={cx('settingsDescription')}>이 시각까지 체크되지 않은 약을 알려 드려요</span>
-              <span className={cx('settingsDescription')}>나에게 오는 알림을 켜고 끄는 건 환경설정에서 해요</span>
-            </div>
-            <MissedAlertTimeSelect
-              value={summary.missedAlertTime}
-              disabled={alertSettingMutation.isPending}
-              onConfirm={hhmm =>
-                // 이 화면에는 켜고 끄는 스위치가 없으므로 시각을 정하면 이 피보호자 요약도 켠다(예전에 꺼 둔 경우 다시 받게)
-                alertSettingMutation.mutate({
-                  wardId: summary.wardId,
-                  body: { missedAlertTime: `${hhmm}:00`, missedAlertEnabled: true },
-                })
-              }
-            />
+      {/* 약이 아직 없어도 미복약 알림 시각은 먼저 설정할 수 있어야 한다.
+          이전에는 hasMedications 조건 때문에 드롭다운 자체가 보이지 않았다. */}
+      <section className={cx('card', 'settingsCard')}>
+        <strong className={cx('settingsCardTitle')}>알림 설정</strong>
+        {isMedicationNotificationDisabled && (
+          <div className={cx('notificationOff')}>
+            <span>지금 복약 알림을 받지 않고 있어요</span>
+            <button type="button" className={cx('notificationOffButton')} onClick={() => router.push('/guardian/settings')}>
+              켜기
+            </button>
           </div>
-        </section>
-      )}
+        )}
+        <div className={cx('settingsRow')}>
+          <div className={cx('settingsText')}>
+            <strong className={cx('settingsTitle')}>이 시간까지 안 드시면 나에게 알림</strong>
+            {/* 이전 문구: 이 시각까지 체크되지 않은 약을 알려 드려요 */}
+            <span className={cx('settingsDescription')}>나에게 오는 알림을 켜고 끄는 건 환경설정에서 해요</span>
+          </div>
+          <MissedAlertTimeSelect
+            value={summary.missedAlertTime}
+            disabled={alertSettingMutation.isPending}
+            onConfirm={hhmm =>
+              // 이 화면에는 켜고 끄는 스위치가 없으므로 시각을 정하면 이 피보호자 요약도 켠다(예전에 꺼 둔 경우 다시 받게)
+              alertSettingMutation.mutate({
+                wardId: summary.wardId,
+                body: { missedAlertTime: `${hhmm}:00`, missedAlertEnabled: true },
+              })
+            }
+          />
+        </div>
+      </section>
     </Fragment>
   );
 }

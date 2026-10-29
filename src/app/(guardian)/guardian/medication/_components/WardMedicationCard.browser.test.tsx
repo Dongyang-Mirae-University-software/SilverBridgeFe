@@ -161,6 +161,13 @@ describe('WardMedicationCard (Chrome)', () => {
     );
   });
 
+  it('등록된 약이 없어도 알림 시각 드롭다운은 항상 보여 준다', async () => {
+    const screen = renderCard([]);
+
+    await expect.element(screen.getByText('등록된 약이 없어요. 약을 추가해 주세요.')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: /안 드시면 알림 받을 시각 오후 9:00/ })).toBeVisible();
+  });
+
   it('환경설정에서 복약 알림이 꺼져 있으면 켜기 안내를 제공한다', async () => {
     notificationSetting.value = { medication: { enabled: false } };
     const screen = renderCard([medication(1)]);

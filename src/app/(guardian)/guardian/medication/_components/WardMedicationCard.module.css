@@ -358,7 +358,7 @@
   color: var(--sb-ink);
   font-size: 18px;
   font-weight: 800;
-  padding: 16px 24px 4px;
+  padding: 18px clamp(16px, 3vw, 24px) 4px;
 }
 
 /* 보호자 쪽 복약 알림이 환경설정에서 꺼져 있을 때 */
@@ -671,7 +671,7 @@
   }
 
   .settingsCardTitle {
-    padding: 14px 16px 2px;
+    padding: 18px 16px 4px;
   }
 
   .notificationOff {
