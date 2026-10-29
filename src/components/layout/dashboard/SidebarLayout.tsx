@@ -2,22 +2,18 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Fredoka } from 'next/font/google';
 import { usePathname } from 'next/navigation';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
 import { AuthRole } from '@/lib/auth/tokenStore';
-import { getRoleLabel } from '@/utils/auth/routes';
 import { IUserProfile } from '@/service/interface/user/user';
 import { Sidebar } from './Sidebar';
 import { NavItem } from './types';
 import styles from './SidebarLayout.module.css';
 
 const cx = classNames.bind(styles);
-
-const fredoka = Fredoka({ subsets: ['latin'], weight: ['600'] });
 
 interface SidebarLayoutProps {
   navItems: NavItem[];
@@ -49,7 +45,7 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
       <div className={cx('mobileTopBar')}>
         <div className={cx('topBarBrand')}>
           <Link className={cx('topBarBrandLink')} href={rootPath} aria-label="대시보드로 이동">
-            <SilverBridgeLogo name={role === 'ADMIN' ? 'CareAI' : undefined} subtitle={`${getRoleLabel(role)} 웹`} />
+            <SilverBridgeLogo subtitle={role === 'ADMIN' ? '관리자' : undefined} variant="compactHeader" />
           </Link>
         </div>
         <button
@@ -103,9 +99,8 @@ function WardSidebarLayout({
   return (
     <>
       <div className={cx('wardHead')}>
-        <Link className={cx('wardHeadLogo', fredoka.className)} href={rootPath} aria-label="홈으로 이동">
-          SilverBridge
-          <small>피보호자 웹</small>
+        <Link className={cx('wardHeadLogoLink')} href={rootPath} aria-label="홈으로 이동">
+          <SilverBridgeLogo className={cx('wardHeadLogo')} variant="wardHeader" />
         </Link>
 
         <div className={cx('wardHeadActions')}>

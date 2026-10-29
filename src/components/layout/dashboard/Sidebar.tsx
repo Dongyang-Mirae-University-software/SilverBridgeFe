@@ -68,7 +68,7 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
         <div className={cx('brand')}>
           <div className={cx('brandInfo')}>
             <Link className={cx('brandLink')} href={rootPath} onClick={onClose} aria-label="대시보드로 이동">
-              <SilverBridgeLogo name={role === 'ADMIN' ? 'CareAI' : undefined} subtitle={`${getRoleLabel(role)} 웹`} />
+              <SilverBridgeLogo subtitle={role === 'ADMIN' ? '관리자' : undefined} />
             </Link>
           </div>
         </div>
