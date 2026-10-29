@@ -58,7 +58,7 @@ function renderPage() {
 }
 
 async function confirmSos(screen: ReturnType<typeof render>) {
-  await screen.getByRole('button', { name: /누르면 도움을 요청해요/ }).click();
+  await screen.getByRole('button', { name: /도움이 필요하면 누르세요/ }).click();
   await expect.element(screen.getByText('긴급 SOS를 보낼까요?')).toBeVisible();
   expect(mocks.triggerSosAsync).not.toHaveBeenCalled();
   await screen.getByRole('button', { name: '보내기' }).click();
@@ -89,7 +89,7 @@ describe('WardSosContent (Chrome)', () => {
 
     resolveSos({ sosEventId: 7, triggeredAt: '2026-10-23T06:00:00Z' });
     await vi.waitFor(() =>
-      expect(screen.getByRole('button', { name: /누르면 도움을 요청해요/ }).element()).toBeEnabled(),
+      expect(screen.getByRole('button', { name: /도움이 필요하면 누르세요/ }).element()).toBeEnabled(),
     );
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
     expect(screen.getByText(/보호자에게/).query()).toBeNull();
