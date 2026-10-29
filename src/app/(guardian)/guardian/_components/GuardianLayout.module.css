@@ -48,7 +48,8 @@
   flex: 1;
   display: flex;
   min-height: 0;
-  padding: 28px 32px 24px;
+  /* v13 admin-main 기준: 대시보드와 하위 보호자 화면의 여백을 20px·28px으로 통일한다. */
+  padding: 20px 28px 24px;
   box-sizing: border-box;
 }
 
