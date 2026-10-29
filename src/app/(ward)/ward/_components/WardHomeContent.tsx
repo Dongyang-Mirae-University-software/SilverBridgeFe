@@ -18,7 +18,7 @@ const HOME_ACTIONS: Array<{
   { href: '/ward/sos', icon: 'phone', label: '긴급 전화', tone: 'sos' },
   { href: '/ward/chatbot', icon: 'messageCircle', label: 'AI 의료', tone: 'chatbot' },
   // 게임은 아직 정식 공개 전이다. 카드 디자인은 유지하되 기존처럼 이동은 막는다.
-  { href: '/ward/game', icon: 'brain', label: '치매 예방 게임', tone: 'game', disabled: true },
+  { href: '/ward/game', icon: 'puzzle', label: '치매 예방 게임', tone: 'game', disabled: true },
   { href: '/ward/camera', icon: 'camera', label: '카메라 등록', tone: 'camera' },
   { href: '/ward/hospital', icon: 'hospital', label: '병원 가는 날', tone: 'hospital' },
   { href: '/ward/medication', icon: 'pill', label: '오늘 먹을 약', tone: 'medication' },
