@@ -1,5 +1,5 @@
 // 피보호자 복약 목록 컴포넌트 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`).
-// v13: 시간대 아코디언이 아니라 약마다 시간·이름·[먹었어요]를 바로 보여 준다.
+// v13: 시간대별로 묶어서 현재 약을 크게 보여 주고, 같은 시각의 약을 함께 체크한다.
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
@@ -77,21 +77,21 @@ describe('WardMedicationContent (Chrome)', () => {
     document.body.innerHTML = '';
   });
 
-  it('시간 순서로 약마다 시간·이름·복용 버튼을 보이고, 누른 약 하나만 체크한다', async () => {
+  it('현재 시간대 약을 크게 보여 주고, 해당 시간대의 약을 함께 체크한다', async () => {
     const dinner = medication('수면제', '19:00:00', 'DINNER');
     const morning = medication('혈압약', '08:00:00', 'MORNING');
     api.getTodayMedication.mockResolvedValue(today([dinner, morning]));
     setBatchResponse([dinner, morning]);
     const screen = renderContent();
 
-    await expect.element(screen.getByText('오전 8시')).toBeVisible();
+    await expect.element(screen.getByText('지금 아침 약')).toBeVisible();
     await expect.element(screen.getByText('혈압약')).toBeVisible();
     await expect.element(screen.getByText('오후 7시')).toBeVisible();
-    await screen.getByRole('button', { name: '혈압약 먹었어요' }).click();
+    await screen.getByRole('button', { name: '아침 약 먹었어요' }).click();
 
     await vi.waitFor(() => expect(api.setMedicationIntakeBatch).toHaveBeenCalledWith([2], true));
-    await expect.element(screen.getByRole('button', { name: '혈압약 복용 체크 되돌리기' })).toBeVisible();
-    await expect.element(screen.getByRole('button', { name: '수면제 먹었어요' })).toBeVisible();
+    await expect.element(screen.getByText('아침 약 다 먹었어요')).toBeVisible();
+    await expect.element(screen.getByText('저녁 약')).toBeVisible();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
@@ -102,9 +102,10 @@ describe('WardMedicationContent (Chrome)', () => {
     const screen = renderContent();
 
     await expect.element(screen.getByText('오늘 약 다 먹었어요')).toBeVisible();
-    await screen.getByRole('button', { name: '혈압약 복용 체크 되돌리기' }).click();
+    await screen.getByRole('button', { name: '아침 약 먹었어요' }).click();
+    await screen.getByRole('button', { name: '되돌리기' }).click();
     await vi.waitFor(() => expect(api.setMedicationIntakeBatch).toHaveBeenCalledWith([1], false));
-    await expect.element(screen.getByRole('button', { name: '혈압약 먹었어요' })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '아침 약 먹었어요' })).toBeVisible();
   });
 
   it('오늘 복용 시각이 지난 뒤 등록된 약은 내일부터 안내하고 체크 버튼을 두지 않는다', async () => {
@@ -116,7 +117,7 @@ describe('WardMedicationContent (Chrome)', () => {
     const screen = renderContent();
 
     await expect.element(screen.getByText('내일부터 드세요')).toBeVisible();
-    expect(screen.getByRole('button', { name: '혈압약 먹었어요' }).query()).toBeNull();
+    expect(screen.getByRole('button', { name: '아침 약 먹었어요' }).query()).toBeNull();
     expect(screen.getByText('오늘 약 다 먹었어요').query()).toBeNull();
   });
 
@@ -136,7 +137,7 @@ describe('WardMedicationContent (Chrome)', () => {
     );
     const screen = renderContent();
 
-    await screen.getByRole('button', { name: '혈압약 먹었어요' }).click();
+    await screen.getByRole('button', { name: '아침 약 먹었어요' }).click();
     await expect.element(screen.getByRole('alert')).toHaveTextContent('체크하지 못했어요');
     await vi.waitFor(() => expect(api.getTodayMedication).toHaveBeenCalledTimes(2));
   });
@@ -148,7 +149,7 @@ describe('WardMedicationContent (Chrome)', () => {
     api.setMedicationIntakeBatch.mockReturnValue(new Promise(resolve => (resolveRequest = resolve)));
     const screen = renderContent();
 
-    const button = screen.getByRole('button', { name: '혈압약 먹었어요' });
+    const button = screen.getByRole('button', { name: '아침 약 먹었어요' });
     const element = button.element() as HTMLButtonElement;
     element.click();
     element.click();
