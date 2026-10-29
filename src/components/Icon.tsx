@@ -38,6 +38,7 @@ import MonitorIcon from '@/assets/icons/monitor.svg';
 import PhoneIcon from '@/assets/icons/phone.svg';
 import PillIcon from '@/assets/icons/pill.svg';
 import PlusIcon from '@/assets/icons/plus.svg';
+import PuzzleIcon from '@/assets/icons/puzzle.svg';
 import RefreshIcon from '@/assets/icons/refresh.svg';
 import RefreshDoubleIcon from '@/assets/icons/refresh-double.svg';
 import SettingsIcon from '@/assets/icons/settings.svg';
@@ -87,6 +88,7 @@ const ICONS = {
   phone: PhoneIcon,
   pill: PillIcon,
   plus: PlusIcon,
+  puzzle: PuzzleIcon,
   refresh: RefreshIcon,
   refreshDouble: RefreshDoubleIcon,
   search: SearchIcon,
