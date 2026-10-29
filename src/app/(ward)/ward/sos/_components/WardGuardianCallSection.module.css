@@ -1,5 +1,7 @@
 .phoneSection {
   display: grid;
+  flex: 1 1 0;
+  min-height: 160px;
   width: 100%;
 }
 
@@ -7,6 +9,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+  min-height: 160px;
   width: 100%;
 }
 
@@ -14,9 +17,10 @@
 .guardianCard {
   position: relative;
   display: flex;
+  flex: 1 1 auto;
   min-width: 0;
-  /* 디자인은 SOS 버튼과 카드 줄이 화면을 반씩 나눈다 - 넓은 화면에서는 SOS 버튼과 비슷한 높이 */
-  min-height: clamp(160px, 34dvh, 330px);
+  /* HTML과 같이 SOS 버튼·보호자 전화 카드가 화면을 같은 비중으로 나눈다. */
+  min-height: 160px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -25,7 +29,7 @@
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
-  padding: 0 clamp(20px, 4vw, 28px);
+  padding: 0 28px;
   transition:
     border-color 0.16s ease,
     background 0.16s ease;
@@ -57,7 +61,7 @@
 .guardianName {
   overflow-wrap: anywhere;
   word-break: keep-all;
-  font-size: clamp(22px, 2.6vw, 30px);
+  font-size: 30px;
   font-weight: 800;
   line-height: 1.25;
 }
@@ -75,8 +79,8 @@
 .callCircle {
   display: grid;
   flex: 0 0 auto;
-  width: clamp(60px, 7vw, 72px);
-  height: clamp(60px, 7vw, 72px);
+  width: 72px;
+  height: 72px;
   place-items: center;
   border-radius: 50%;
   background: var(--sb-safe);
@@ -130,9 +134,6 @@
 }
 
 @media (max-width: 640px) {
-  .guardianGrid { grid-template-columns: 1fr; gap: 12px; }
-  .guardianCard { min-height: 96px; }
-  .guardianName { font-size: 24px; }
   .emptyState { align-items: flex-start; flex-direction: column; }
   .emptyButton { width: 100%; text-align: center; }
 }
