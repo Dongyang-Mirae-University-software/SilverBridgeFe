@@ -5,33 +5,24 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { Icon, type IconName } from '@/components/Icon';
-import { UserAvatar } from '@/components/UserAvatar';
+import { Icon } from '@/components/Icon';
+import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { guardianConnectionsQueryOptions, guardianDashboardQueryOptions } from '@/service/query/guardian';
-import { myProfileQueryOptions } from '@/service/query/user';
-import { formatDateTime } from '@/utils/format/date';
-import { formatDoseTime, getMedicationTimeSlotLabel } from '@/utils/format/medication';
-import { getUserProfileData } from '@/utils/auth/userProfile';
 import styles from './GuardianDashboardContent.module.css';
-import { getObjectParticle } from '@/utils/format/korean';
 
 const cx = classNames.bind(styles);
 const EMPTY_VALUE = '-';
 
-type DashboardCard = {
-  href: string;
-  icon: IconName;
-  kind: 'detect' | 'mood' | 'medication' | 'sos' | 'hospital' | 'game';
-  title: string;
-  main: string;
-  sub?: string | null;
-  pill?: { tone: 'ok' | 'care' | 'warn'; label: string };
-  highlighted?: 'danger' | 'care';
-};
+const QUICK_LINKS = [
+  { href: '/guardian/sos', icon: 'phone' as const, label: 'SOS 내역' },
+  { href: '/guardian/hospital', icon: 'hospital' as const, label: '병원 예약' },
+  { href: '/guardian/medication', icon: 'pill' as const, label: '약 관리' },
+  { href: '/guardian/game', icon: 'game' as const, label: '게임 활동' },
+  { href: '/guardian/wards', icon: 'users' as const, label: '연결된 가족' },
+  { href: '/guardian/wards/register', icon: 'plus' as const, label: '가족 등록' },
+];
 
 export function GuardianDashboardContent() {
-  const { data: profileResponse } = useQuery(myProfileQueryOptions);
-  const profile = getUserProfileData(profileResponse);
   const { data: connectionsResponse } = useQuery(guardianConnectionsQueryOptions);
 
   const activeConnections = useMemo(
@@ -56,73 +47,13 @@ export function GuardianDashboardContent() {
   });
 
   const isAnomalyUnavailable = dashboard?.unavailable.includes('anomalyDetection') ?? false;
-  const isSosUnavailable = dashboard?.unavailable.includes('sos') ?? false;
-  const isMedicationUnavailable = dashboard?.unavailable.includes('medication') ?? false;
-
   const anomaly = dashboard?.anomalyDetection;
-  const sos = dashboard?.sos;
-  const medication = dashboard?.medication;
-  const mostUrgent = medication?.mostUrgent;
-
-  const cards: DashboardCard[] = [
-    {
-      href: '/guardian/detection', icon: 'alert', kind: 'detect', title: '이상감지',
-      main: isAnomalyUnavailable
-        ? '확인 중'
-        : anomaly?.latest
-          ? `${anomaly.latest.cameraLabel ?? '카메라'}에서 ${anomaly.latest.detectedTypeLabel} 의심 감지`
-          : '확인할 이상 감지가 없어요',
-      sub: isAnomalyUnavailable
-        ? '잠시 후 다시 시도해 주세요'
-        : anomaly?.needsReviewCount
-          ? `확인 필요 ${anomaly.needsReviewCount}건`
-          : null,
-      pill: isAnomalyUnavailable
-        ? undefined
-        : anomaly?.needsReviewCount
-          ? { tone: 'warn', label: '확인 필요' }
-          : { tone: 'ok', label: '괜찮아요' },
-      highlighted: !isAnomalyUnavailable && (anomaly?.needsReviewCount ?? 0) > 0 ? 'danger' : undefined,
-    },
-    {
-      href: '/guardian/emotion', icon: 'heart', kind: 'mood', title: '오늘의 정서', main: '정서 상태 확인하기',
-      sub: selectedWard ? `${selectedWard.partnerName}의 오늘 대화를 살펴보세요` : null,
-      pill: { tone: 'ok', label: '살펴보기' },
-    },
-    {
-      href: '/guardian/medication', icon: 'pill', kind: 'medication', title: '복약',
-      main: isMedicationUnavailable
-        ? '확인 중'
-        : mostUrgent
-          ? `${getMedicationTimeSlotLabel(mostUrgent.timeSlot)} ${mostUrgent.name} (${formatDoseTime(mostUrgent.doseTime)})`
-          : '체크되지 않은 약이 없어요',
-      sub: isMedicationUnavailable
-        ? '잠시 후 다시 시도해 주세요'
-        : mostUrgent
-          ? '체크되지 않았습니다'
-          : '오늘 복약을 모두 확인했어요',
-      pill: isMedicationUnavailable ? undefined : mostUrgent ? { tone: 'care', label: '미체크' } : { tone: 'ok', label: '잘 드셨어요' },
-      highlighted: !isMedicationUnavailable && mostUrgent ? 'care' : undefined,
-    },
-    {
-      href: '/guardian/sos', icon: 'phone', kind: 'sos', title: 'SOS',
-      main: isSosUnavailable
-        ? '확인 중'
-        : sos?.latest
-          ? `최근 ${formatDateTime(sos.latest.triggeredAt)}`
-          : '이번 달 호출 이력이 없어요',
-      sub: isSosUnavailable ? '잠시 후 다시 시도해 주세요' : sos?.latest?.location ?? null,
-      pill: isSosUnavailable || !sos?.thisMonthCount ? undefined : { tone: 'warn', label: `이번 달 ${sos.thisMonthCount}건` },
-    },
-    { href: '/guardian/hospital', icon: 'hospital', kind: 'hospital', title: '병원 예약', main: '병원 예약하기', sub: selectedWard ? `${selectedWard.partnerName}${getObjectParticle(selectedWard.partnerName)} 대신해 예약할 수 있어요` : null },
-    { href: '/guardian/game', icon: 'game', kind: 'game', title: '게임·인지 활동', main: '게임 현황 확인하기', sub: selectedWard ? `${selectedWard.partnerName}의 인지 활동 기록` : null },
-  ];
   const pendingTotal = dashboard?.pendingActions.total;
+  const needsReview = !isAnomalyUnavailable && (anomaly?.needsReviewCount ?? 0) > 0;
 
   if (activeConnections.length === 0) {
     return (
       <div className={cx('dashboardStack')}>
-        <DashboardHeading guardianName={profile?.name} />
         <section className={cx('emptyHero')} aria-label="피보호자 없음">
           <div className={cx('emptyHeroIcon')}><Icon name="users" size={28} /></div>
           <div className={cx('emptyHeroText')}><strong>연결된 피보호자가 없습니다</strong><span>피보호자를 등록하면 상태 확인과 알림 관리가 시작됩니다.</span></div>
@@ -134,48 +65,65 @@ export function GuardianDashboardContent() {
 
   return (
     <div className={cx('dashboardStack')}>
-      <DashboardHeading guardianName={profile?.name} />
       <div className={cx('dashboardToolbar')}>
-        <div className={cx('wardRail')} role="list" aria-label="피보호자 선택">
-          {activeConnections.map(connection => {
-            const isSelected = selectedWard?.id === connection.id;
-            const pendingCount = pendingByWard.get(connection.partnerUserId);
-            return (
-              <button key={connection.id} className={cx('wardChip', { active: isSelected })} type="button" onClick={() => setSelectedConnectionId(connection.id)}>
-                <UserAvatar imageUrl={connection.partnerProfileImage} size="w-32" />
-                <span>{connection.partnerName || EMPTY_VALUE}</span><em>{connection.relation || '관계'}</em>
-                {!!pendingCount && <i className={cx('wardChipBadge')}>{pendingCount}</i>}
-              </button>
-            );
-          })}
-        </div>
+        <WardSelectorTabs
+          wards={activeConnections.map(connection => ({
+            wardId: connection.partnerUserId,
+            wardName: connection.partnerName || EMPTY_VALUE,
+            profileImage: connection.partnerProfileImage,
+            relation: connection.relation,
+            badgeCount: pendingByWard.get(connection.partnerUserId),
+          }))}
+          selectedWardId={selectedWard?.partnerUserId}
+          onSelect={wardId => setSelectedConnectionId(activeConnections.find(connection => connection.partnerUserId === wardId)?.id ?? null)}
+        />
         <span className={cx('attentionBadge', { attention: !!pendingTotal })}>
-          <Icon name={pendingTotal ? 'bell' : 'alert'} size={20} />
+          <Icon name={pendingTotal ? 'bell' : 'check'} size={18} />
           {pendingTotal == null ? '확인 중' : pendingTotal > 0 ? `확인이 필요한 일 ${pendingTotal}건` : '지금 확인할 일이 없어요'}
         </span>
       </div>
-      <section className={cx('featureGrid')} aria-label="피보호자 현황">
-        {cards.map(card => (
-          <Link key={card.href} href={card.href} className={cx('featureCard', card.kind, card.highlighted)}>
-            <div className={cx('cardTop')}>
-              <span className={cx('featureIcon')}><Icon name={card.icon} size={18} /></span>
-              <strong>{card.title}</strong>
-              {card.pill && <StatusPill {...card.pill} />}
-            </div>
-            <div className={cx('cardBody')}><b>{card.main}</b>{card.sub && <span>{card.sub}</span>}</div>
-          </Link>
-        ))}
+      <section className={cx('featureGrid')} aria-label="주요 기능">
+        <Link
+          href="/guardian/detection"
+          className={cx('featureCard', 'detect', { danger: needsReview })}
+          aria-label={needsReview ? `AI 이상감지, 확인 필요 ${anomaly?.needsReviewCount}건` : 'AI 이상감지'}
+        >
+          {needsReview && <DashboardPill tone="warn">확인 필요</DashboardPill>}
+          <span className={cx('tileIcon')}><Icon name="flame" size={36} decorative /></span>
+          <strong>AI 이상감지</strong>
+        </Link>
+        <Link href="/guardian/chatbot" className={cx('featureCard', 'chatbot')}>
+          <span className={cx('chatIconWrap')}>
+            <span className={cx('tileIcon')}><Icon name="messageCircle" size={36} decorative /></span>
+            <span className={cx('calendarBadge')}><Icon name="calendar" size={15} decorative /></span>
+          </span>
+          <strong>AI 의료 챗봇</strong>
+        </Link>
+        <Link href="/guardian/emotion" className={cx('featureCard', 'mood')}>
+          <span className={cx('moodIcon')}><MoodFace /></span>
+          <strong>AI 기분 체크</strong>
+        </Link>
       </section>
+      <nav className={cx('quickLinks')} aria-label="빠른 이동">
+        {QUICK_LINKS.slice(0, 4).map(link => <QuickLink key={link.href} {...link} />)}
+        <span className={cx('quickDivider')} aria-hidden="true" />
+        {QUICK_LINKS.slice(4).map(link => <QuickLink key={link.href} {...link} />)}
+      </nav>
     </div>
   );
 }
 
-function DashboardHeading({ guardianName }: { guardianName?: string }) {
-  return <header className={cx('heading')}><h1>대시보드</h1><p>{formatDashboardDate()} · 보호자 {guardianName || EMPTY_VALUE}</p></header>;
+function QuickLink({ href, icon, label }: (typeof QUICK_LINKS)[number]) {
+  return (
+    <Link href={href} className={cx('quickLink')}>
+      <Icon name={icon} size={18} decorative />
+      {label}
+    </Link>
+  );
 }
 
-function StatusPill({ tone, label }: { tone: 'ok' | 'care' | 'warn'; label: string }) {
-  return <span className={cx('statusPill', tone)}><Icon name={tone === 'ok' ? 'alert' : tone === 'care' ? 'refresh' : 'warning'} size={13} />{label}</span>;
+function DashboardPill({ children, tone }: { children: string; tone: 'warn' }) {
+  return <span className={cx('statusPill', tone)}><Icon name="warning" size={13} decorative />{children}</span>;
 }
 
 function getTime(value?: string | null) {
@@ -183,6 +131,27 @@ function getTime(value?: string | null) {
   return Number.isNaN(time) ? 0 : time;
 }
 
-function formatDashboardDate() {
-  return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(new Date());
+function MoodFace() {
+  return (
+    <svg viewBox="0 0 60 60" aria-hidden="true">
+      <defs>
+        <radialGradient id="guardian-dashboard-mood" cx="42%" cy="32%" r="75%">
+          <stop offset="0" stopColor="#ffe6cc" />
+          <stop offset="70%" stopColor="#fdd3ae" />
+          <stop offset="100%" stopColor="#f8c399" />
+        </radialGradient>
+      </defs>
+      <ellipse cx="30" cy="56.2" rx="14" ry="2.2" fill="#000" opacity=".08" />
+      <circle cx="30" cy="33.5" r="20.5" fill="url(#guardian-dashboard-mood)" stroke="#ebae78" strokeWidth="1.3" />
+      <ellipse cx="22.5" cy="22.8" rx="5.6" ry="3.2" transform="rotate(-28 22.5 22.8)" fill="#fff" opacity=".6" />
+      <path d="M30 13.4V10.2" stroke="#6e9466" strokeLinecap="round" strokeWidth="1.6" />
+      <path d="M29.6 10.6Q25.6 7.4 21.8 9.6q3.2 3 7.8 1" fill="#a9d39b" />
+      <path d="M30.4 10.6q4-3.2 7.8-1-3.2 3-7.8 1" fill="#a9d39b" />
+      <ellipse cx="18.6" cy="37.2" rx="3.9" ry="2.6" fill="#ff9aa2" opacity=".8" />
+      <ellipse cx="41.4" cy="37.2" rx="3.9" ry="2.6" fill="#ff9aa2" opacity=".8" />
+      <path d="M21 33q3.5-4.4 7 0M32 33q3.5-4.4 7 0" fill="none" stroke="#2e2420" strokeLinecap="round" strokeWidth="2.1" />
+      <path d="M25.2 37h9.6q-.6 6.2-4.8 6.2T25.2 37Z" fill="#3a2a22" />
+      <path d="M27.2 41.6q2.8-2 5.6 0-1.2 1.6-2.8 1.6t-2.8-1.6Z" fill="#f07a86" />
+    </svg>
+  );
 }

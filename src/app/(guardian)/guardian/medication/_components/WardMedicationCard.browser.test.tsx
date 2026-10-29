@@ -94,19 +94,17 @@ describe('WardMedicationCard (Chrome)', () => {
     notificationSetting.value = null;
   });
 
-  it('시간순으로 약마다 시간·이름·상태·휴지통 삭제를 보여 준다', async () => {
+  it('아침·점심·저녁 시간대 드롭다운으로 약과 상태를 보여 준다', async () => {
     const screen = renderCard([
       medication(2, { name: '수면제', timeSlot: 'BEDTIME', doseTime: '22:00:00', doseAmount: 0.5 }),
       medication(1, { name: '혈압약', timeSlot: 'MORNING', doseTime: '08:00:00', taken: true }),
     ]);
 
     await expect.element(screen.getByRole('list', { name: '오늘 드실 약' })).toBeVisible();
-    await expect.element(screen.getByText('아침 08:00')).toBeVisible();
-    await expect.element(screen.getByText('혈압약')).toBeVisible();
+    await expect.element(screen.getByText('아침 약')).toBeVisible();
+    await expect.element(screen.getByText('오전 8:00')).toBeVisible();
     await expect.element(screen.getByText('드셨어요')).toBeVisible();
-    await expect.element(screen.getByText('취침 전 22:00')).toBeVisible();
-    await expect.element(screen.getByText('반 알')).toBeVisible();
-    await expect.element(screen.getByRole('button', { name: '혈압약 삭제' })).toBeVisible();
+    await expect.element(screen.getByText('취침 전 약')).toBeVisible();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
@@ -116,9 +114,11 @@ describe('WardMedicationCard (Chrome)', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     const screen = renderCard([medication(1, { name: '혈압약' })]);
 
+    await screen.getByRole('button', { name: '약 고치기' }).click();
     await screen.getByRole('button', { name: '혈압약 수정' }).click();
     await expect.element(screen.getByRole('dialog', { name: '약 수정' })).toBeVisible();
     await screen.getByRole('dialog', { name: '약 수정' }).getByRole('button', { name: '닫기' }).click();
+    await screen.getByRole('button', { name: '약 고치기' }).click();
     await screen.getByRole('button', { name: '혈압약 삭제' }).click();
     await vi.waitFor(() => expect(api.deleteGuardianMedication).toHaveBeenCalledWith(1));
   });
@@ -159,6 +159,13 @@ describe('WardMedicationCard (Chrome)', () => {
         missedAlertTime: '22:30:00',
       }),
     );
+  });
+
+  it('등록된 약이 없어도 알림 시각 드롭다운은 항상 보여 준다', async () => {
+    const screen = renderCard([]);
+
+    await expect.element(screen.getByText('등록된 약이 없어요. 약을 추가해 주세요.')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: /안 드시면 알림 받을 시각 오후 9:00/ })).toBeVisible();
   });
 
   it('환경설정에서 복약 알림이 꺼져 있으면 켜기 안내를 제공한다', async () => {

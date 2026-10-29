@@ -1,4 +1,6 @@
 .card {
+  width: 100%;
+  box-sizing: border-box;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--sb-line-soft);
@@ -24,26 +26,30 @@
 
 .row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
-  padding: 14px 24px;
+  gap: 14px;
+  padding: 14px 22px;
 }
 
 .row + .row {
   border-top: 1px solid var(--sb-line-soft);
 }
 
-.memberId {
-  color: var(--sb-ink);
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+.requestInfo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
 }
 
-.meta {
-  flex: 1;
-  min-width: 0;
+.requestInfo strong {
+  color: var(--sb-ink);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.requestInfo span {
   color: var(--sb-ink-soft);
   font-size: 15px;
   font-weight: 600;
@@ -51,7 +57,7 @@
 }
 
 .cancelButton {
-  min-height: 44px;
+  min-height: 46px;
   border: 1px solid var(--sb-line);
   border-radius: 10px;
   background: #fff;
@@ -60,7 +66,7 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  padding: 0 14px;
+  padding: 0 18px;
 }
 
 .cancelButton:disabled {
@@ -82,4 +88,14 @@
   margin: 0;
   color: var(--sb-ink-soft);
   font-size: 14px;
+}
+
+@media (max-width: 520px) {
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .cancelButton {
+    margin-left: auto;
+  }
 }

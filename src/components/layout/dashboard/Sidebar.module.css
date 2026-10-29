@@ -204,6 +204,32 @@
   visibility: hidden;
 }
 
+/* 보호자도 피보호자와 같은 오버레이 정책을 쓴다. 다만 메뉴 폭은 기존 보호자 폭을 유지한다. */
+.sidebarGuardian {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 70;
+  width: min(78vw, 240px);
+  max-width: 320px;
+  height: 100dvh;
+  border-right: 0;
+  padding: max(18px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+  pointer-events: none;
+  transform: translateX(-105%);
+  transition: transform 0.18s ease;
+  visibility: hidden;
+}
+
+.sidebarGuardian.open {
+  pointer-events: auto;
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.sidebarGuardian .closeButton {
+  display: grid;
+}
+
 .sidebarWard.open {
   pointer-events: auto;
   transform: translateX(0);
@@ -276,12 +302,12 @@
 }
 
 @media (min-width: 1261px) {
-  /* 레퍼런스의 보호자 고정 사이드바: 메뉴가 촘촘하게 이어진다. */
-  .sidebar:not(.sidebarWard) .nav {
+  /* 관리자 고정 사이드바만 메뉴를 조밀하게 보인다. */
+  .sidebar:not(.sidebarWard):not(.sidebarGuardian) .nav {
     gap: 0;
   }
 
-  .sidebar:not(.sidebarWard) .navItem {
+  .sidebar:not(.sidebarWard):not(.sidebarGuardian) .navItem {
     padding: 8px 12px;
   }
 }

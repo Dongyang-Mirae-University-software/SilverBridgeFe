@@ -32,6 +32,8 @@ const TYPE_CHIPS: Array<{ key: TypeFilter; label: string; count: (summary: Anoma
 export interface WardOption {
   wardId: string;
   wardName: string;
+  profileImage?: string | null;
+  relation?: string | null;
 }
 
 // 건수는 불러온 목록을 세지 않고 요약 API 값을 쓴다(페이지·필터와 무관한 전체 기준).

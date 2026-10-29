@@ -68,7 +68,12 @@ export default function GuardianSosHistoryContent() {
       <div className={cx('filters')}>
         <div className={cx('wardTabs')}>
           <WardSelectorTabs
-            wards={activeWards.map(ward => ({ wardId: ward.partnerUserId, wardName: ward.partnerName }))}
+            wards={activeWards.map(ward => ({
+              wardId: ward.partnerUserId,
+              wardName: ward.partnerName,
+              profileImage: ward.partnerProfileImage,
+              relation: ward.relation,
+            }))}
             selectedWardId={effectiveSelectedWardId ?? undefined}
             onSelect={handleSelectWard}
           />
@@ -88,6 +93,12 @@ export default function GuardianSosHistoryContent() {
                 setPage(0);
               }}
             >
+              {type === 'SOS_BUTTON' && <span className={cx('triggerIcon', 'sosIcon')}>SOS</span>}
+              {type === 'GUARDIAN_CALL' && (
+                <span className={cx('triggerIcon', 'callIcon')}>
+                  <Icon name="phone" size={13} decorative />
+                </span>
+              )}
               {label} <strong>{count}</strong>
             </button>
           ))}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { UserAvatar } from '@/components/UserAvatar';
 import { getConnectionData } from '@/components/connections/ConnectionShared';
 import { guardianConnectionRequestsQueryOptions, useGuardianConnectionCancelMutation } from '@/service/query/guardian';
 import { formatMonthDay, getConnectionActionErrorMessage } from '@/utils/connection/connectionView';
@@ -56,10 +57,11 @@ export function GuardianConnectionRequestHistory() {
           const requestedOn = formatMonthDay(connection.createdAt);
           return (
             <li key={connection.id} className={cx('row')}>
-              <span className={cx('memberId')}>{connection.partnerUserId}</span>
-              <span className={cx('meta')}>
-                {[connection.relation, requestedOn && `${requestedOn} 요청`].filter(Boolean).join(' · ')}
-              </span>
+              <UserAvatar imageUrl={connection.partnerProfileImage} size="w-48" userName={connection.partnerName} />
+              <div className={cx('requestInfo')}>
+                <strong>{connection.partnerName || '이름 확인 전'}</strong>
+                <span>{[connection.relation && `${connection.relation}로 요청`, requestedOn].filter(Boolean).join(' · ')}</span>
+              </div>
               <button
                 className={cx('cancelButton')}
                 type="button"

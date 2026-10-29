@@ -26,7 +26,12 @@ export default function GuardianMonitorContent() {
   const { data: connectionsData } = useQuery(guardianConnectionsQueryOptions);
   const wards = getConnectionData(connectionsData)
     .filter(connection => connection.status === 'ACTIVE')
-    .map(connection => ({ wardId: connection.partnerUserId, wardName: connection.partnerName }));
+    .map(connection => ({
+      wardId: connection.partnerUserId,
+      wardName: connection.partnerName,
+      profileImage: connection.partnerProfileImage,
+      relation: connection.relation,
+    }));
   const activeWardId = selectedWardId ?? wards[0]?.wardId;
 
   const liveButton = (

@@ -285,7 +285,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
               <h1>AI 의료 챗봇</h1>
               <p>
                 {!isWardChat && <span className={styles.statusDot} />}
-                {isWardChat ? '몸이 궁금할 때 언제든 물어보세요' : '건강 도우미 · 24시간 답변'}
+                {isWardChat ? '몸이 궁금할 때 언제든 물어보세요' : '증상 상담부터 병원 예약까지 도와드려요'}
               </p>
             </div>
           </div>
@@ -303,7 +303,12 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           <section className={styles.wardTarget} aria-label="상담할 피보호자">
             <span>상담할 피보호자</span>
             <WardSelectorTabs
-              wards={activeWards.map(ward => ({ wardId: ward.partnerUserId, wardName: ward.partnerName }))}
+              wards={activeWards.map(ward => ({
+                wardId: ward.partnerUserId,
+                wardName: ward.partnerName,
+                profileImage: ward.partnerProfileImage,
+                relation: ward.relation,
+              }))}
               selectedWardId={selectedWard.partnerUserId}
               onSelect={handleWardSelect}
             />

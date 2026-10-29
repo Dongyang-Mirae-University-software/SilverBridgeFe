@@ -25,6 +25,7 @@ interface SidebarLayoutProps {
 export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayoutProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isGuardianOverlay = role === 'GUARDIAN';
 
   if (role === 'WARD') {
     return (
@@ -42,7 +43,7 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
 
   return (
     <>
-      <div className={cx('mobileTopBar')}>
+      <div className={cx('mobileTopBar', { guardianTopBar: isGuardianOverlay })}>
         <div className={cx('topBarBrand')}>
           <Link className={cx('topBarBrandLink')} href={rootPath} aria-label="대시보드로 이동">
             <SilverBridgeLogo subtitle={role === 'ADMIN' ? '관리자' : undefined} variant="compactHeader" />
@@ -71,7 +72,7 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
 
       {isMobileMenuOpen && (
         <button
-          className={cx('scrim')}
+          className={cx('scrim', { guardianScrim: isGuardianOverlay })}
           type="button"
           aria-label="메뉴 닫기"
           onClick={() => setIsMobileMenuOpen(false)}
