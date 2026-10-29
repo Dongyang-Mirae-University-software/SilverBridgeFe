@@ -303,7 +303,12 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           <section className={styles.wardTarget} aria-label="상담할 피보호자">
             <span>상담할 피보호자</span>
             <WardSelectorTabs
-              wards={activeWards.map(ward => ({ wardId: ward.partnerUserId, wardName: ward.partnerName }))}
+              wards={activeWards.map(ward => ({
+                wardId: ward.partnerUserId,
+                wardName: ward.partnerName,
+                profileImage: ward.partnerProfileImage,
+                relation: ward.relation,
+              }))}
               selectedWardId={selectedWard.partnerUserId}
               onSelect={handleWardSelect}
             />
