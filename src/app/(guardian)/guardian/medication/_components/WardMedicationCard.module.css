@@ -405,16 +405,16 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 44px;
+  height: 50px;
   border: 1px solid var(--sb-line);
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
   color: var(--sb-brand);
   cursor: pointer;
   font: inherit;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
-  padding: 0 12px 0 14px;
+  padding: 0 14px 0 16px;
   white-space: nowrap;
 }
 
@@ -432,6 +432,11 @@
   transform: rotate(180deg);
 }
 
+.timeSelectButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .timePanel {
   position: absolute;
   right: 0;
@@ -441,7 +446,7 @@
   flex-direction: column;
   gap: 12px;
   width: 280px;
-  max-width: calc(100vw - 32px);
+  max-width: calc(100vw - 40px);
   border: 1px solid var(--sb-line);
   border-radius: 18px;
   background: #fff;
@@ -515,8 +520,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
-  padding: 16px 24px;
+  gap: 14px;
+  padding: 14px clamp(16px, 3vw, 24px) 20px;
 }
 
 .settingsRow + .settingsRow {
