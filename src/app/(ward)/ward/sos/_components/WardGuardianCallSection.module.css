@@ -134,6 +134,10 @@
 }
 
 @media (max-width: 640px) {
+  /* 시안은 모든 폭에서 2칸이지만, 휴대폰에서 2칸이면 카드가 170px 남짓이라 이름이 잘리고 누르기 어렵다 - 한 칸으로 둔다(2026-10-30 결정).
+     글자 크기는 줄이지 않는다(시니어 화면) */
+  .guardianGrid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .guardianCard { min-height: 96px; }
   .emptyState { align-items: flex-start; flex-direction: column; }
   .emptyButton { width: 100%; text-align: center; }
 }
