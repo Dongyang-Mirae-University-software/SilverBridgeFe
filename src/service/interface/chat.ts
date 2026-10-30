@@ -41,6 +41,8 @@ export interface ChatMessage {
   emergencyWarning?: string[];
   recommendedAction?: string;
   reservationRequired?: boolean;
+  /** 이 답에 이어서 물어볼 질문(0~3개, AI #135). 빠른 질문 칸을 대화 흐름대로 바꾼다. */
+  suggestedQuestions?: string[];
 }
 
 export interface ChatContext {
@@ -103,6 +105,8 @@ export interface ChatResponse {
   emergencyWarning?: string[];
   recommendedAction?: string;
   reservationRequired?: boolean;
+  /** 응급·자해·예약 선택지 답에는 빈 목록. 옛 AI는 칸이 없다. */
+  suggestedQuestions?: string[];
   chatLogId?: number;
   chatNo?: string;
   sessionId?: string;

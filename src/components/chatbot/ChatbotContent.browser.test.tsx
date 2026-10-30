@@ -197,3 +197,55 @@ describe('피보호자 AI 의료 챗봇', () => {
     expect(api.sendChatMessage).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('이어서 물어볼 질문(suggestedQuestions)', () => {
+  it('보호자: 답의 질문이 예약 칩 뒤에 나오고, 누르면 그대로 보내며, 질문이 없는 답 뒤에는 고정 문장으로 돌아간다', async () => {
+    api.role.mockReturnValue('GUARDIAN');
+    api.sendChatMessage
+      .mockResolvedValueOnce({ ...REPLY, suggestedQuestions: ['집에서 쉬면 될까요?', '언제 병원에 가요?', '병원 예약하고 싶어요'] })
+      .mockResolvedValueOnce({ ...REPLY, reply: '내일 오전이 좋아요.', suggestedQuestions: [] });
+    renderChat(<ChatbotContent />);
+
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
+    await expect.element(page.getByRole('button', { name: '언제 병원에 가요?' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '집에서 쉬면 될까요?' })).toBeVisible();
+    expect(page.getByRole('button', { name: '병원 예약하고 싶어요' }).elements()).toHaveLength(1); // 예약 칩은 한 번만
+    expect(page.getByRole('button', { name: '무릎이 아프다고 하세요' }).elements()).toHaveLength(0);
+
+    await userEvent.click(page.getByRole('button', { name: '언제 병원에 가요?' }));
+    await expect.element(page.getByText('내일 오전이 좋아요.')).toBeVisible();
+    expect(api.sendChatMessage.mock.calls[1][0].message).toBe('언제 병원에 가요?');
+    await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeVisible();
+  });
+
+  it('피보호자: 답의 질문을 먼저 놓고 남는 칸은 기본 문장으로 채워 버튼 4개를 유지한다', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage.mockResolvedValue({
+      reply: '물을 한 잔 드시고 쉬어 보세요.',
+      engine: 'ai',
+      type: 'message',
+      suggestedQuestions: ['병원에 가야 할까요?'],
+    });
+    renderChat(<ChatbotContent variant="ward" />);
+
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    await expect.element(page.getByRole('button', { name: '병원에 가야 할까요?' })).toBeVisible();
+    const grid = page.getByRole('region', { name: '추천 질문' }).element();
+    expect([...grid.querySelectorAll('button')].map(button => button.textContent)).toEqual([
+      '병원에 가야 할까요?',
+      '머리가 아파요',
+      '배가 아파요',
+      '무릎이 아파요',
+    ]);
+  });
+
+  it('형식이 다른 값(문자열 아님·빈 문자열)은 무시하고 고정 문장을 쓴다', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message', suggestedQuestions: [3, '  ', null] });
+    renderChat(<ChatbotContent variant="ward" />);
+
+    await userEvent.click(page.getByRole('button', { name: '배가 아파요' }));
+    await expect.element(page.getByText('쉬어 보세요.')).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '어지러워요' })).toBeVisible();
+  });
+});

@@ -54,6 +54,36 @@ const GUARDIAN_PROMPTS = [
 
 const WARD_PROMPTS = ['머리가 아파요', '배가 아파요', '무릎이 아파요', '어지러워요'];
 
+const MAX_SUGGESTED = 3;
+
+/** 최신 답의 이어서 물어볼 질문. 없거나 형식이 다르면 빈 목록(고정 문장을 쓴다). */
+function latestSuggestions(messages: ChatMessage[]): string[] {
+  const last = [...messages].reverse().find(message => message.role === 'assistant');
+  const raw = last?.suggestedQuestions;
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.filter((q): q is string => typeof q === 'string').map(q => q.trim()).filter(Boolean))].slice(
+    0,
+    MAX_SUGGESTED,
+  );
+}
+
+/** 보호자: 예약 칩은 항상 맨 앞, 그 뒤에 이어질 질문(없으면 고정 문장). */
+function guardianPrompts(suggested: string[]): Array<{ text: string; primary?: boolean }> {
+  if (suggested.length === 0) return GUARDIAN_PROMPTS;
+  const booking = GUARDIAN_PROMPTS[0];
+  return [booking, ...suggested.filter(text => text !== booking.text).map(text => ({ text }))];
+}
+
+/** 피보호자: 이어질 질문을 먼저, 남는 칸은 기본 문장으로 채워 큰 버튼 4개 배치를 유지한다. */
+function wardPrompts(suggested: string[]) {
+  const items = suggested.map(text => ({ text, suggested: true }));
+  for (const text of WARD_PROMPTS) {
+    if (items.length >= WARD_PROMPTS.length) break;
+    if (!suggested.includes(text)) items.push({ text, suggested: false });
+  }
+  return items;
+}
+
 const COMPOSER_MAX_LINES = 2;
 
 interface ChatbotContentProps {
@@ -127,6 +157,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   }, [input, resizeComposer]);
 
   const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
+  const suggested = latestSuggestions(messages);
   // 서버는 버튼·날짜·지역 선택도 "[선택] field: value" 형식의 별도 기록으로 남긴다.
   // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
   const historyItems = Array.isArray(chatLogs) ? chatLogs.filter(log => !isUiSelectionLog(log.message)) : [];
@@ -208,6 +239,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             emergencyWarning: result.emergencyWarning,
             recommendedAction: result.recommendedAction,
             reservationRequired: result.reservationRequired,
+            suggestedQuestions: result.suggestedQuestions,
           },
         ]);
 
@@ -340,18 +372,18 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             <section className={styles.wardQuickPanel} aria-label="추천 질문">
               <p className={styles.wardQuickTitle}>눌러서 물어보세요</p>
               <div className={styles.wardQuickGrid}>
-                {WARD_PROMPTS.map(prompt => (
+                {wardPrompts(suggested).map(prompt => (
                   <button
-                    key={prompt}
+                    key={prompt.text}
                     type="button"
                     className={styles.wardQuickButton}
                     disabled={sending}
-                    onClick={() => void send(prompt)}
+                    onClick={() => void send(prompt.text)}
                   >
                     <span className={styles.wardQuickIcon} aria-hidden="true">
-                      <Icon name="alert" size={28} decorative />
+                      <Icon name={prompt.suggested ? 'message' : 'alert'} size={28} decorative />
                     </span>
-                    <span>{prompt}</span>
+                    <span>{prompt.text}</span>
                   </button>
                 ))}
               </div>
@@ -418,7 +450,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           <section className={styles.quickPromptPanel} aria-label="추천 질문">
             <p className={styles.quickPromptTitle}>눌러서 물어보세요</p>
             <div className={styles.quickPromptRow}>
-              {GUARDIAN_PROMPTS.map(prompt => (
+              {guardianPrompts(suggested).map(prompt => (
                 <button
                   key={prompt.text}
                   type="button"
