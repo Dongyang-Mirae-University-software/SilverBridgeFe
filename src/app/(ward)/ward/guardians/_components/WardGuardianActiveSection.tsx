@@ -89,7 +89,7 @@ export function WardGuardianActiveSection() {
 
   if (activeQuery.isLoading) return <p className={cx('emptyCard')}>보호자 목록을 불러오는 중이에요.</p>;
   if (activeQuery.isError) return <p className={cx('emptyCard')}>보호자 목록을 불러오지 못했어요.</p>;
-  if (guardians.length === 0) return <p className={cx('emptyCard')}>아직 연결된 보호자가 없어요</p>;
+  if (guardians.length === 0) return <p className={cx('emptyCard')}>아직 연결된 가족이 없어요</p>;
 
   return (
     <>

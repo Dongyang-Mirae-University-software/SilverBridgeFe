@@ -31,6 +31,7 @@ export interface IWardPendingConnectionRequest {
   connectionId: number;
   guardianId: string;
   guardianName: string;
+  guardianProfileImage?: string | null;
   guardianPhone: string;
   relation: string;
   requestedAt: string;
