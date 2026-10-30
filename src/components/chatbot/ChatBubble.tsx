@@ -1,13 +1,8 @@
-import dayjs from 'dayjs';
-import 'dayjs/locale/ko';
-
 import { UserAvatar } from '@/components/UserAvatar';
 import type { ChatMessage } from '@/service/interface/chat';
 import ChatToolCard from './ChatToolCard';
 import ChatUiPrompt from './ChatUiPrompt';
 import styles from './ChatBubble.module.css';
-
-dayjs.locale('ko');
 
 interface Props {
   message: ChatMessage;
@@ -28,25 +23,24 @@ export default function ChatBubble({
 }: Props) {
   const isUser = message.role === 'user';
   const isWardChat = variant === 'ward';
-  const timeText = dayjs(message.timestamp).format('A h:mm');
 
   if (isUser) {
     return (
       <div className={`${styles.rowUser} ${isWardChat ? styles.wardBubble : ''}`}>
-        {!isWardChat && <span className={styles.timeUser}>{timeText}</span>}
         <div className={styles.messageColumnUser}>
           <div className={styles.bubbleUser}>
             <p>{message.content}</p>
           </div>
         </div>
-        {isWardChat ? <WardChatAvatar /> : <UserAvatar imageUrl={userImageUrl} userName={userName} size="w-38" />}
+        {/* 피보호자 화면은 아바타 없이 큰 말풍선만 둔다 */}
+        {!isWardChat && <UserAvatar imageUrl={userImageUrl} userName={userName} size="w-38" />}
       </div>
     );
   }
 
   return (
     <div className={`${styles.rowAssistant} ${isWardChat ? styles.wardBubble : ''}`}>
-      <div className={styles.avatar}>AI</div>
+      {!isWardChat && <div className={styles.avatar}>AI</div>}
       <div className={styles.assistantBody}>
         {/* 메시지 본문 */}
         <div className={styles.assistantMessageRow}>
@@ -126,26 +120,9 @@ export default function ChatBubble({
             )}
             </div>
           </div>
-          {!isWardChat && <span className={styles.timeAssistant}>{timeText}</span>}
         </div>
       </div>
     </div>
   );
 }
 
-function WardChatAvatar() {
-  return (
-    <div className={styles.wardAvatar} aria-hidden="true">
-      <svg width="26" height="26" viewBox="0 0 60 60">
-        <circle cx="14" cy="16" r="8" fill="#C9986A" />
-        <circle cx="46" cy="16" r="8" fill="#C9986A" />
-        <ellipse cx="30" cy="32" rx="20" ry="18" fill="#F5C9A8" />
-        <ellipse cx="30" cy="38" rx="11" ry="9" fill="#FFE4D0" />
-        <circle cx="22" cy="28" r="2" fill="#3D2A1E" />
-        <circle cx="38" cy="28" r="2" fill="#3D2A1E" />
-        <ellipse cx="30" cy="35" rx="2" ry="1.4" fill="#3D2A1E" />
-        <path d="M28 38Q30 41 32 38" fill="none" stroke="#3D2A1E" strokeLinecap="round" strokeWidth="1.4" />
-      </svg>
-    </div>
-  );
-}

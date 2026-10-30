@@ -78,13 +78,6 @@
   white-space: nowrap;
 }
 
-.statusDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #7cd49b;
-}
-
 .headerActions {
   display: flex;
   align-items: center;
@@ -211,29 +204,14 @@
   display: flex;
   align-items: stretch;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
   border-top: 1px solid var(--sb-line);
   background: #fff;
-  padding: 10px 22px;
+  padding: 12px 22px 0;
 }
 
-.quickPromptToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border: 0;
-  background: transparent;
-  color: var(--sb-ink-mute);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 0;
-  white-space: nowrap;
-  align-self: flex-start;
-}
-
-.wardPromptTitle {
+.quickPromptTitle {
   margin: 0;
   color: var(--sb-ink-soft);
   font-size: 17px;
@@ -241,25 +219,13 @@
   line-height: 1.4;
 }
 
-.quickPromptChevron {
-  transition: transform 0.15s ease;
-}
-
-.quickPromptChevronOpen {
-  transform: rotate(90deg);
-}
-
 .quickPromptRow {
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
   width: 100%;
-  overflow-x: auto;
-  padding: 1px 0 0;
+  padding: 0 0 12px;
   scrollbar-width: none;
-}
-
-.quickPromptRow[hidden] {
-  display: none;
 }
 
 .quickPromptRow::-webkit-scrollbar {
@@ -267,20 +233,37 @@
 }
 
 .quickPromptButton {
-  border: 1px solid var(--sb-brand-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 52px;
+  border: 1.5px solid var(--sb-brand-soft);
   border-radius: 999px;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
   cursor: pointer;
   flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 7px 11px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 0 20px;
   white-space: nowrap;
 }
 
 .quickPromptButton:hover:not(:disabled) {
   background: var(--sb-brand-50);
+}
+
+/* 디자인에서 예약 칩만 진한 색 + 달력 아이콘으로 강조한다. */
+.quickPromptPrimary {
+  border-color: var(--sb-brand);
+  background: var(--sb-brand);
+  color: #fff;
+  font-weight: 800;
+}
+
+.quickPromptPrimary:hover:not(:disabled) {
+  background: var(--sb-brand);
 }
 
 .quickPromptButton:disabled {
@@ -461,19 +444,19 @@
 .textarea {
   flex: 1;
   box-sizing: border-box;
-  min-height: 50px;
-  max-height: 78px;
+  min-height: 60px;
+  max-height: 88px;
   resize: none;
   overflow-y: hidden;
   border: 1px solid var(--sb-line);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--sb-bg-soft);
   color: var(--sb-ink);
   font: inherit;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.5;
   outline: none;
-  padding: 14px 18px;
+  padding: 14px 20px;
 }
 
 .textarea::placeholder {
@@ -485,13 +468,17 @@
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
   flex-shrink: 0;
-  height: 50px;
-  width: 60px;
+  height: 60px;
+  padding: 0 26px;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
   box-shadow: none;
 }
 
@@ -500,68 +487,191 @@
   opacity: 0.55;
 }
 
-.sendIcon {
-  transform: rotate(180deg);
+/* 피보호자 챗봇: 왼쪽 대화 카드 + 오른쪽 큰 빠른 질문 버튼(디자인 2열).
+   보호자 화면(헤더·칩·기록 보기)은 위 기본 스타일을 그대로 쓴다. */
+.wardVariant .shell {
+  gap: 12px;
+  border: 0;
+  background: transparent;
 }
 
-/* 피보호자 챗봇은 v13의 큰 글씨·간결한 상담 화면을 쓴다.
-   보호자 화면의 기록 보기와 접는 추천 질문은 기본 스타일로 그대로 둔다. */
-.wardVariant .brandCopy h1 {
-  font-size: 26px;
+.wardTitle {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.3;
+  padding: 2px 4px 0;
 }
 
-.wardVariant .brandCopy p {
-  margin-top: 2px;
-  color: var(--sb-ink-soft);
-  font-size: 17px;
-  font-weight: 400;
+.wardBody {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 18px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.wardChatCard {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 20px;
+  background: #fff;
+}
+
+.wardVariant .board {
+  border: 0;
 }
 
 .wardVariant .messageList {
-  gap: 14px;
-  padding: 22px 28px;
+  padding: 22px 22px 10px;
 }
 
-.wardVariant .quickPromptPanel {
-  gap: 10px;
-  padding: 12px 22px 0;
-}
-
-.wardVariant .quickPromptRow {
-  flex-wrap: wrap;
-  gap: 8px;
-  overflow-x: visible;
-  padding: 0 0 12px;
-}
-
-.wardVariant .quickPromptButton {
-  min-height: 52px;
-  padding: 0 20px;
-  border-width: 1.5px;
-  font-size: 18px;
-  font-weight: 700;
+.wardVariant .typing {
+  padding-left: 4px;
 }
 
 .wardVariant .composer {
-  padding: 14px 22px 18px;
+  border-top: 1px solid var(--sb-line-soft);
+  padding: 14px;
+}
+
+.wardVariant .inputWrap {
+  align-items: stretch;
+  gap: 10px;
 }
 
 .wardVariant .textarea {
-  min-height: 60px;
-  max-height: 88px;
-  border-radius: 16px;
-  font-size: 20px;
-  padding: 14px 20px;
+  min-width: 0;
+  min-height: 68px;
+  max-height: 96px;
+  border: 2px solid var(--sb-line);
+  background: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  padding: 18px 20px;
 }
 
 .wardVariant .sendButton {
-  width: auto;
-  min-width: 112px;
-  height: 60px;
-  padding: 0 26px;
+  min-height: 68px;
+  height: auto;
+  padding: 0 28px;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.wardVariant .sendButton:disabled {
+  opacity: 0.4;
+}
+
+.wardQuickPanel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wardQuickTitle {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.3;
+  padding: 2px 4px;
+}
+
+.wardQuickGrid {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wardQuickButton {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 18px;
+  min-height: 92px;
+  border: 2px solid var(--sb-brand-soft);
+  border-radius: 20px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.3;
+  padding: 0 24px;
+  text-align: left;
+  word-break: keep-all;
+}
+
+.wardQuickButton:hover:not(:disabled) {
+  border-color: var(--sb-brand);
+}
+
+.wardQuickButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.wardQuickIcon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  place-items: center;
   border-radius: 16px;
-  font-size: 20px;
-  font-weight: 800;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+/* 태블릿: 2열이 좁아지면 빠른 질문을 대화 아래 2×2로 내린다. */
+@media (max-width: 1024px) {
+  .wardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .wardChatCard {
+    flex: 1;
+  }
+
+  .wardQuickPanel {
+    flex-shrink: 0;
+    gap: 8px;
+  }
+
+  .wardQuickTitle {
+    font-size: 22px;
+  }
+
+  .wardQuickGrid {
+    display: grid;
+    flex: 0 0 auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .wardQuickButton {
+    min-height: 80px;
+    gap: 12px;
+    font-size: 24px;
+    padding: 0 16px;
+  }
+
+  .wardQuickIcon {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .historyOverlay {
@@ -789,15 +899,17 @@
   }
 
   .textarea {
-    min-height: 46px;
-    max-height: 56px;
-    padding: 10px 13px;
+    min-height: 52px;
+    max-height: 74px;
+    font-size: 18px;
+    padding: 13px 14px;
   }
 
   .sendButton {
-    height: 46px;
-    width: 46px;
+    height: 52px;
+    padding: 0 16px;
     border-radius: 14px;
+    font-size: 17px;
   }
 
   .historyOverlay {
@@ -810,62 +922,88 @@
     padding-left: 16px;
   }
 
-  .quickPromptPanel {
-    gap: 10px;
-    padding: 7px 14px;
-  }
-
   .composer {
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   }
 
-  .wardVariant .header {
-    min-height: 0;
-    padding: 14px;
+  .quickPromptPanel {
+    padding: 8px 14px 0;
+    gap: 6px;
   }
 
-  .wardVariant .brandCopy h1 {
-    font-size: 22px;
-  }
-
-  .wardVariant .brandCopy p {
+  .quickPromptTitle {
     font-size: 14px;
   }
 
-  .wardVariant .messageList {
-    padding: 16px 14px;
-  }
-
-  .wardVariant .quickPromptPanel {
-    padding: 12px 14px 0;
-  }
-
-  .wardVariant .quickPromptRow {
+  /* 휴대폰에서는 칩을 한 줄 가로 스크롤로 둬서 대화창이 가려지지 않게 한다. */
+  .quickPromptRow {
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding-bottom: 12px;
+    padding-bottom: 8px;
   }
 
-  .wardVariant .quickPromptButton {
-    min-height: 48px;
+  .quickPromptButton {
+    min-height: 44px;
     font-size: 16px;
+    padding: 0 16px;
+  }
+
+  .wardVariant .shell {
+    gap: 8px;
+    padding: 12px 12px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .wardTitle {
+    font-size: 20px;
+  }
+
+  .wardChatCard {
+    border-radius: 16px;
+  }
+
+  .wardVariant .messageList {
+    padding: 14px 12px 8px;
   }
 
   .wardVariant .composer {
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    padding: 10px;
+  }
+
+  .wardVariant .inputWrap {
+    gap: 8px;
   }
 
   .wardVariant .textarea {
-    min-height: 56px;
-    font-size: 17px;
-    padding: 12px 14px;
+    min-height: 60px;
+    font-size: 20px;
+    padding: 15px 14px;
   }
 
   .wardVariant .sendButton {
-    min-width: 72px;
-    height: 56px;
-    padding: 0 14px;
-    font-size: 16px;
+    min-height: 60px;
+    padding: 0 16px;
+    font-size: 20px;
+  }
+
+  .wardQuickTitle {
+    font-size: 20px;
+  }
+
+  .wardQuickGrid {
+    gap: 8px;
+  }
+
+  /* 2칸에 맞추려고 아이콘 칸만 숨기고 글자·높이는 시니어 기준을 지킨다. */
+  .wardQuickIcon {
+    display: none;
+  }
+
+  .wardQuickButton {
+    justify-content: center;
+    min-height: 72px;
+    font-size: 22px;
+    padding: 0 10px;
+    text-align: center;
   }
 }
 
