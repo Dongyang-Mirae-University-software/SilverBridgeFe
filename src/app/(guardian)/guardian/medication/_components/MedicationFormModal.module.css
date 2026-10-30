@@ -96,6 +96,15 @@
   font-weight: 400;
 }
 
+/* 복용 시간(시간대)이 시각에 맞춰 정해진다는 안내 */
+.slotHint {
+  margin: -4px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
 .stepper {
   display: flex;
   align-items: center;
