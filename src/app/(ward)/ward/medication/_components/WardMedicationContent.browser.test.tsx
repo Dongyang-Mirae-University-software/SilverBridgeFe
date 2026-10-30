@@ -90,8 +90,8 @@ describe('WardMedicationContent (Chrome)', () => {
 
     await expect.element(screen.getByText('지금 먹을 약')).toBeVisible();
     await expect.element(screen.getByText('혈압약')).toBeVisible();
-    await expect.element(screen.getByRole('button', { name: '아침 약, 지금' })).toHaveAttribute('aria-pressed', 'true');
-    await expect.element(screen.getByRole('button', { name: '저녁 약, 오후 7시' })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '아침 지금' })).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(screen.getByRole('button', { name: '저녁 오후 7시' })).toBeVisible();
     await screen.getByRole('button', { name: '아침 약 먹었어요' }).click();
 
     await vi.waitFor(() => expect(api.setMedicationIntakeBatch).toHaveBeenCalledWith([2], true));
@@ -108,7 +108,7 @@ describe('WardMedicationContent (Chrome)', () => {
     const screen = renderContent();
 
     await expect.element(screen.getByText('오늘 약 다 먹었어요')).toBeVisible();
-    await expect.element(screen.getByRole('button', { name: '아침 약, 먹었어요' })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '아침 먹었어요' })).toBeVisible();
     await screen.getByRole('button', { name: '아침 약 복용 체크 되돌리기' }).click();
     await vi.waitFor(() => expect(api.setMedicationIntakeBatch).toHaveBeenCalledWith([1], false));
     await expect.element(screen.getByRole('button', { name: '아침 약 먹었어요' })).toBeVisible();
@@ -121,7 +121,7 @@ describe('WardMedicationContent (Chrome)', () => {
     api.getTodayMedication.mockResolvedValue(today([morning, bedtime]));
     const screen = renderContent();
 
-    await screen.getByRole('button', { name: '자기 전 약, 오후 10시' }).click();
+    await screen.getByRole('button', { name: '자기 전 오후 10시' }).click();
     await expect.element(screen.getByText('다음에 먹을 약')).toBeVisible();
     await expect.element(screen.getByText('반 알')).toBeVisible();
     expect(screen.getByText('0.5').query()).toBeNull();
@@ -133,7 +133,10 @@ describe('WardMedicationContent (Chrome)', () => {
     api.getTodayMedication.mockResolvedValue(today([early], kstToday()));
     const screen = renderContent();
 
-    await expect.element(screen.getByRole('button', { name: '아침 약, 체크 안 했어요' })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '아침 체크 안 했어요' })).toBeVisible();
+    // 시각이 지난 첫 시간대도 '지금 먹을 약'이라고 하지 않는다(기능 점검 F2)
+    await expect.element(screen.getByText('체크되지 않은 약')).toBeVisible();
+    expect(screen.getByText('지금 먹을 약').query()).toBeNull();
     expect(document.body.textContent).not.toContain('안 먹었');
   });
 
