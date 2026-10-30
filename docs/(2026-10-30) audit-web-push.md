@@ -81,3 +81,16 @@ PC Chrome 실제 클릭 이동(탭 없을 때 `openWindow`), 안드로이드 Chr
 
 ## 종합 판정
 **조건부 PASS** - 보안·개인정보 문제 없음, 두 번 표시 해결은 실측으로 확인. 다만 **H-1(복약 재알림이 소리 없이 덮임)은 피보호자 기능의 목적을 해치므로 빠르게 고칠 것**을 권한다. M-1·M-2는 같은 PR에서 테스트와 함께.
+
+## 반영 (2026-10-30, 같은 날 후속 PR)
+
+| 이슈 | 반영 | 고정한 테스트 |
+|---|---|---|
+| H-1 | `MEDICATION_REMINDER` tag = `{medicationId}:{doseDate}:{attempt}`, `renotify: true` | `pushSwLogic.test.ts` 복약 재알림 |
+| L-1 | `WARD_SOS` tag = `{wardId}`(없으면 sosEventId) - 연타는 한 장으로, renotify로 매번 울림 | `pushSwLogic.test.ts` SOS |
+| M-1·L-4 | 토스트 경로를 `PushNotificationListener.kind.ts`로 옮기고 강제 연결·문의 답변 추가, sessionId 인코딩 | `kind.test.ts` 종류 × 역할 전수 SW 경로 비교 |
+| M-2 | - | `firebaseMessagingSw.test.ts` - SW 파일을 가짜 환경에서 실행(리스너 순서·그리지 않는 분기·한 번 그림·FCM_MSG 클릭·포커스 거부 시 이동). 방어 줄을 지우면 실패함을 확인 |
+| L-2 | 알림 영역을 늘 두고(`aria-live=polite`), 긴급만 `role=alert` | 기존 브라우저 테스트 |
+| L-3 | 로그아웃 때 서버 삭제가 성공해야 기억한 토큰을 지움(실패하면 다음 등록 때 다시 지움) | `fcm.test.ts` 로그아웃 2건 |
+
+남김: 계정 전환(로그아웃 없이 다른 계정)으로 남는 옛 사용자 토큰은 클라이언트가 지울 수 없다(옛 access token 필요) - BE 사용자당 상한이 정리한다.
