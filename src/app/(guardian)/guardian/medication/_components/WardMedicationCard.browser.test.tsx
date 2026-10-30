@@ -125,6 +125,18 @@ describe('WardMedicationCard (Chrome)', () => {
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
+  it('시간대 칸은 시각과 상관없이 아침·점심·저녁·취침 전 순서다 (2026-10-30 gosky)', async () => {
+    const screen = renderCard([
+      medication(1, { name: '감기약', timeSlot: 'LUNCH', doseTime: '01:40:00' }),
+      medication(2, { name: '혈압약', timeSlot: 'MORNING', doseTime: '08:00:00' }),
+      medication(3, { name: '수면제', timeSlot: 'BEDTIME', doseTime: '00:30:00' }),
+    ]);
+
+    const tiles = screen.getByRole('group', { name: '시간대 고르기' }).getByRole('button');
+    await expect.element(tiles.first()).toHaveTextContent('아침');
+    expect(tiles.elements().map(tile => tile.textContent?.slice(0, 2))).toEqual(['아침', '점심', '취침']);
+  });
+
   it('지난 시간대는 "안 드셨어요"로 단정하지 않고, 오늘 늦게 등록한 약은 등록 전으로 보여 준다', async () => {
     const screen = renderCard([
       medication(1, { name: '혈압약', timeSlot: 'MORNING', doseTime: '06:00:00' }),
