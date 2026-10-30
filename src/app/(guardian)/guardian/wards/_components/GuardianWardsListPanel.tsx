@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -11,13 +12,13 @@ import { useModalDialog } from '@/hooks/useModalDialog';
 import { disconnectGuardianConnection } from '@/service/api/guardian/connection';
 import { IConnectionItem } from '@/service/interface/connection';
 import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
-import { EmptyState, formatPartnerGender, getConnectionData } from '@/components/connections/ConnectionShared';
+import { EmptyState, getConnectionData } from '@/components/connections/ConnectionShared';
 import {
   getAgeFromBirthDate,
   getConnectionActionErrorMessage,
 } from '@/utils/connection/connectionView';
 import { formatPhoneNumber } from '@/utils/format/phone';
-import { GuardianConnectionRequestHistory } from './GuardianConnectionRequestHistory';
+import { GuardianPendingRequestCard, useGuardianPendingRequests } from './GuardianConnectionRequestHistory';
 import styles from './GuardianWardsListPanel.module.css';
 
 const cx = classNames.bind(styles);
@@ -28,12 +29,10 @@ function formatBirthDate(value?: string | null) {
 }
 */
 
-// v13 카드 보조 정보는 만 나이·성별만 간단히 보여 준다.
+// Claude 디자인 시안: 카드 보조 정보는 만 나이만 보여 준다(성별은 연결 데이터에만 남긴다). 모르면 줄을 숨긴다
 function getWardSubtitle(connection: IConnectionItem) {
   const age = getAgeFromBirthDate(connection.partnerBirthDate);
-  return [age === null ? null : `만 ${age}세`, formatPartnerGender(connection.partnerGender)]
-    .filter(Boolean)
-    .join(' · ');
+  return age === null ? null : `만 ${age}세`;
 }
 
 // v13 이전의 표 형태 정보 행 보관. 현재는 전화·주소를 아이콘 패널로 보여 준다.
@@ -53,10 +52,11 @@ function getWardRows(connection: IConnectionItem): Array<[string, string]> {
 */
 
 function getWardContactInfo(connection: IConnectionItem) {
-  const address = [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(' ');
+  // 시안대로 우편번호 없이 "주소, 상세주소"로 보여 준다
+  const address = [connection.partnerAddress, connection.partnerAddressDetail].filter(Boolean).join(', ');
   return {
     phone: connection.partnerPhone ? formatPhoneNumber(connection.partnerPhone) : null,
-    address: address ? `${connection.partnerPostcode ? `(${connection.partnerPostcode}) ` : ''}${address}` : null,
+    address: address || null,
   };
 }
 
@@ -87,9 +87,6 @@ function GuardianDisconnectDialog({
         aria-labelledby="guardian-disconnect-title"
         onKeyDown={onDialogKeyDown}
       >
-        <div className={cx('modalIcon')}>
-          <Icon name="alert" size={26} />
-        </div>
         <h3 id="guardian-disconnect-title" className={cx('modalTitle')}>
           연결을 해제할까요?
         </h3>
@@ -116,7 +113,9 @@ export function GuardianWardsListPanel() {
   const [feedbackMessage, setFeedbackMessage] = useState('');
 
   const { data, isLoading, isError, refetch } = useQuery(guardianConnectionsQueryOptions);
+  const pendingRequests = useGuardianPendingRequests();
   const activeConnections = getConnectionData(data).filter(connection => connection.status === 'ACTIVE');
+  const isListReady = !isLoading && !isError;
   // 창은 id로 목록에서 다시 찾는다 - 열린 사이 상대가 먼저 해제해 목록에서 빠지면 창도 닫힌다
   const confirmTarget = activeConnections.find(connection => connection.id === confirmId) ?? null;
 
@@ -137,6 +136,7 @@ export function GuardianWardsListPanel() {
     <section className={cx('page')}>
       <div className={cx('pageHead')}>
         <h1>연결된 가족</h1>
+        {isListReady && <span className={cx('pageCount')}>{activeConnections.length}명</span>}
       </div>
 
       {feedbackMessage && (
@@ -144,11 +144,18 @@ export function GuardianWardsListPanel() {
           {feedbackMessage}
         </p>
       )}
+      {pendingRequests.errorMessage && (
+        <p className={cx('feedback')} role="alert">
+          {pendingRequests.errorMessage}
+        </p>
+      )}
       {isLoading && <EmptyState message="연결된 가족을 불러오는 중입니다." />}
       {isError && <EmptyState message="연결된 가족을 불러오지 못했습니다." />}
-      {!isLoading && !isError && activeConnections.length === 0 && <EmptyState message="아직 연결된 가족이 없습니다." />}
+      {isListReady && activeConnections.length === 0 && <EmptyState message="아직 연결된 가족이 없습니다." />}
+      {pendingRequests.isError && <p className={cx('loadError')}>보낸 요청을 불러오지 못했어요.</p>}
 
-      {activeConnections.length > 0 && (
+      {/* 시안: 연결된 가족 → 수락을 기다리는 요청 → 가족 등록 타일을 한 그리드에 둔다 */}
+      {isListReady && (
         <ul className={cx('grid')} aria-label="연결된 가족">
           {activeConnections.map(connection => {
             const subtitle = getWardSubtitle(connection);
@@ -161,23 +168,37 @@ export function GuardianWardsListPanel() {
                     <strong className={cx('cardName')}>{connection.partnerName} 님</strong>
                     {subtitle && <span className={cx('cardSub')}>{subtitle}</span>}
                   </div>
-                  <button className={cx('disconnectButton')} type="button" onClick={() => setConfirmId(connection.id)}>
-                    연결 해제
-                  </button>
                 </div>
                 {(contact.phone || contact.address) && (
                   <div className={cx('contactPanel')}>
-                    {contact.phone && <ContactInfo icon="phone" value={contact.phone} />}
+                    {contact.phone && <ContactInfo icon="phone" value={contact.phone} strong />}
                     {contact.address && <ContactInfo icon="mapPin" value={contact.address} />}
                   </div>
                 )}
+                <button className={cx('disconnectButton')} type="button" onClick={() => setConfirmId(connection.id)}>
+                  연결 해제
+                </button>
               </li>
             );
           })}
+          {pendingRequests.pendingConnections.map(connection => (
+            <GuardianPendingRequestCard
+              key={connection.id}
+              connection={connection}
+              disabled={pendingRequests.isCancelPending}
+              onCancel={() => pendingRequests.cancel(connection.id)}
+            />
+          ))}
+          <li className={cx('registerItem')}>
+            <Link className={cx('registerTile')} href="/guardian/wards/register">
+              <span className={cx('registerIcon')}>
+                <Icon name="plus" size={24} decorative />
+              </span>
+              가족 등록
+            </Link>
+          </li>
         </ul>
       )}
-
-      <GuardianConnectionRequestHistory />
 
       <RefreshButton ariaLabel="새로고침" disabled={isLoading} onRefresh={() => refetch()} />
 
@@ -193,9 +214,9 @@ export function GuardianWardsListPanel() {
   );
 }
 
-function ContactInfo({ icon, value }: { icon: 'phone' | 'mapPin'; value: string }) {
+function ContactInfo({ icon, value, strong = false }: { icon: 'phone' | 'mapPin'; value: string; strong?: boolean }) {
   return (
-    <div className={cx('contactInfo')}>
+    <div className={cx('contactInfo', { contactStrong: strong })}>
       <Icon name={icon} size={17} decorative />
       <span>{value}</span>
     </div>

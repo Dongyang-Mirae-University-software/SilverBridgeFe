@@ -19,6 +19,16 @@ const api = vi.hoisted(() => ({
   disconnectGuardianConnection: vi.fn(),
 }));
 
+// next/link는 브라우저 테스트에서 process를 찾으므로 일반 a로 바꾼다(가족 등록 타일)
+vi.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ href, children, ...rest }: { href: string; children: ReactNode }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock('@/service/api/guardian/connection', async importOriginal => ({
   ...(await importOriginal<object>()),
   ...api,
@@ -166,14 +176,18 @@ describe('수락을 기다리는 중 (Chrome)', () => {
 });
 
 describe('연결된 가족 (Chrome)', () => {
-  it('만 나이·성별과 전화번호·주소만 보이고, ACTIVE가 아닌 연결은 가족 카드에 보이지 않는다', async () => {
+  it('만 나이와 전화번호·주소만 보이고, ACTIVE가 아닌 연결은 가족 카드에 보이지 않는다', async () => {
     api.getGuardianConnections.mockResolvedValue(
       ok([connection(), connection({ id: 8, partnerName: '이순자', status: 'PENDING', partnerPhone: null })]),
     );
     const screen = render(<GuardianWardsListPanel />, { wrapper });
 
-    await expect.element(screen.getByText(/^만 \d+세 · 여성$/)).toBeInTheDocument();
-    await expect.element(screen.getByText('(05551) 서울 송파구 올림픽로 456 102동 1503호')).toBeInTheDocument();
+    await expect.element(screen.getByText(/^만 \d+세$/)).toBeInTheDocument();
+    await expect.element(screen.getByText('010-9876-5432')).toBeInTheDocument();
+    await expect.element(screen.getByText('서울 송파구 올림픽로 456, 102동 1503호')).toBeInTheDocument();
+    await expect.element(screen.getByText('1명')).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('여성');
+    expect(document.body.textContent).not.toContain('05551');
     expect(screen.getByText('이메일').query()).toBeNull();
     expect(screen.getByText('성별 · 생년월일').query()).toBeNull();
     expect(screen.getByText('회원 ID').query()).toBeNull();
@@ -201,6 +215,66 @@ describe('연결된 가족 (Chrome)', () => {
     api.getGuardianConnections.mockRejectedValue(apiError(500, 'INTERNAL_SERVER_ERROR'));
     const screen = render(<GuardianWardsListPanel />, { wrapper });
     await expect.element(screen.getByText('연결된 가족을 불러오지 못했습니다.')).toBeInTheDocument();
+    expect(screen.getByText('명', { exact: false }).query()).toBeNull();
+  });
+
+  it('불러오는 동안은 그렇다고 알리고 인원수·등록 타일을 그리지 않는다', async () => {
+    api.getGuardianConnections.mockReturnValue(new Promise(() => {}));
+    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    await expect.element(screen.getByText('연결된 가족을 불러오는 중입니다.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '가족 등록' }).query()).toBeNull();
+  });
+
+  it('연결된 가족이 없으면 안내 문구와 가족 등록 타일을 보인다', async () => {
+    api.getGuardianConnections.mockResolvedValue(ok([]));
+    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    await expect.element(screen.getByText('아직 연결된 가족이 없습니다.')).toBeInTheDocument();
+    await expect.element(screen.getByText('0명')).toBeInTheDocument();
+    await expect.element(screen.getByRole('link', { name: '가족 등록' })).toHaveAttribute('href', '/guardian/wards/register');
+    expectNoHorizontalScroll();
+  });
+
+  it('사진·연락처가 없으면 이름 첫 글자를 보이고 연락처 칸과 나이 줄을 숨긴다', async () => {
+    api.getGuardianConnections.mockResolvedValue(
+      ok([connection({ partnerPhone: null, partnerAddress: null, partnerAddressDetail: null, partnerBirthDate: null })]),
+    );
+    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const card = screen.getByRole('listitem').first();
+    await expect.element(card).toHaveTextContent('김영희 님');
+    expect(card.element().querySelector('img')).toBeNull();
+    expect(card.element().textContent).toContain('김');
+    expect(card.element().textContent).not.toContain('만 ');
+    expect(card.element().textContent).not.toContain('-');
+  });
+
+  it('수락을 기다리는 요청은 같은 그리드 안 점선 카드로 보이고 연락처 없이 요청 취소를 부른다', async () => {
+    api.getGuardianConnections.mockResolvedValue(ok([connection()]));
+    api.getGuardianConnectionRequests.mockResolvedValue(
+      ok([connection({ id: 3, partnerName: '최복순', status: 'PENDING', partnerPhone: '010****5432', connectedAt: null })]),
+    );
+    api.cancelGuardianConnectionRequest.mockResolvedValue(ok(null));
+    const screen = render(<GuardianWardsListPanel />, { wrapper });
+
+    const grid = screen.getByRole('list', { name: '연결된 가족' });
+    await expect.element(grid).toHaveTextContent('최복순');
+    await expect.element(grid).toHaveTextContent('아들로 요청 · 5월 8일');
+    await expect.element(grid).toHaveTextContent('수락을 기다리는 중');
+    expect(grid.element().textContent).not.toContain('010****5432');
+    // 인원수는 연결된(ACTIVE) 가족만 센다
+    await expect.element(screen.getByText('1명')).toBeInTheDocument();
+
+    await grid.getByRole('button', { name: '요청 취소' }).click();
+    expect(api.cancelGuardianConnectionRequest.mock.calls[0]?.[0]).toEqual(3);
+  });
+
+  it('요청 취소 실패(409)는 목록 위 한 줄로 안내한다', async () => {
+    api.getGuardianConnections.mockResolvedValue(ok([]));
+    api.getGuardianConnectionRequests.mockResolvedValue(ok([connection({ id: 3, status: 'PENDING', connectedAt: null })]));
+    api.cancelGuardianConnectionRequest.mockRejectedValue(apiError(409, 'CONNECTION_NOT_PENDING'));
+    const screen = render(<GuardianWardsListPanel />, { wrapper });
+
+    await screen.getByRole('button', { name: '요청 취소' }).click();
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('이미 수락되었거나 거절된 요청이에요.');
   });
 
   // 점검 L-1: 포커스는 창 안 "취소"로 들어가고, Esc로 닫으면 누른 버튼으로 돌아온다

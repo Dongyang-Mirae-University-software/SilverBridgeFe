@@ -102,7 +102,7 @@ function mapWardPendingRequestToConnection(request: IWardPendingConnectionReques
     partnerName: request.guardianName,
     partnerPhone: request.guardianPhone,
     partnerPostcode: null,
-    partnerProfileImage: null,
+    partnerProfileImage: request.guardianProfileImage ?? null,
     partnerUserId: request.guardianId,
     relation: request.relation,
     requester: false,

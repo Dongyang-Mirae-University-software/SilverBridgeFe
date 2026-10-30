@@ -90,6 +90,87 @@
   font-size: 14px;
 }
 
+/* ── 연결된 가족 그리드 안의 대기 카드 (Claude 디자인 시안) ── */
+.pendingCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  border: 1.5px dashed color-mix(in srgb, var(--sb-sun) 45%, #fff);
+  border-radius: var(--sb-radius);
+  background: color-mix(in srgb, var(--sb-sun-soft) 35%, #fff);
+  padding: 20px 20px 10px;
+}
+
+.pendingHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pendingAvatar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  opacity: 0.75;
+}
+
+.pendingCard .requestInfo strong {
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.pendingCard .requestInfo span {
+  color: var(--sb-ink-mute);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pendingBadge {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  border-radius: 12px;
+  background: var(--sb-sun-soft);
+  color: color-mix(in srgb, var(--sb-sun) 55%, #000);
+  font-size: 16px;
+  font-weight: 800;
+  padding: 14px 16px;
+}
+
+.pendingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sb-sun);
+}
+
+.pendingCancel {
+  align-self: flex-end;
+  min-height: 40px;
+  border: 0;
+  background: none;
+  color: var(--sb-ink-mute);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 2px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pendingCancel:hover:not(:disabled) {
+  color: var(--sb-ink);
+}
+
+.pendingCancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 @media (max-width: 520px) {
   .row {
     flex-wrap: wrap;

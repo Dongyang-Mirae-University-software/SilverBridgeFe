@@ -98,7 +98,7 @@ describe('피보호자 내 가족 (Chrome)', () => {
     expect(requests.element().textContent).not.toContain('010');
     await expect.element(requests.getByRole('button', { name: '거절' })).toBeVisible();
     await expect.element(requests.getByRole('button', { name: '수락' })).toBeVisible();
-    await expect.element(screen.getByText('아직 연결된 보호자가 없어요')).toBeInTheDocument();
+    await expect.element(screen.getByText('아직 연결된 가족이 없어요')).toBeInTheDocument();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
@@ -150,12 +150,43 @@ describe('피보호자 내 가족 (Chrome)', () => {
     await expect.element(screen.getByRole('dialog')).toBeInTheDocument();
 
     await client.invalidateQueries();
-    await expect.element(screen.getByText('아직 연결된 보호자가 없어요')).toBeInTheDocument();
+    await expect.element(screen.getByText('아직 연결된 가족이 없어요')).toBeInTheDocument();
 
     await client.invalidateQueries();
     await expect.element(screen.getByText('박지영')).toBeInTheDocument();
     expect(document.querySelector('[role="dialog"]')).toBeNull();
     expect(api.disconnectWardConnection).not.toHaveBeenCalled();
+  });
+
+  it('불러오는 동안은 그렇다고 알린다', async () => {
+    api.getWardPendingConnections.mockReturnValue(new Promise(() => {}));
+    api.getWardActiveConnections.mockReturnValue(new Promise(() => {}));
+    const screen = render(<WardGuardiansPanel />, { wrapper });
+    await expect.element(screen.getByText('보호자 목록을 불러오는 중이에요.')).toBeInTheDocument();
+  });
+
+  it('받은 요청에 보호자 사진이 있으면 사진을, 없으면 이름 첫 글자를 보인다', async () => {
+    api.getWardPendingConnections.mockResolvedValue(
+      ok([request({ partnerProfileImage: 'https://files.example/p.png' }), request({ id: 2, partnerName: '박영호' })]),
+    );
+    api.getWardActiveConnections.mockResolvedValue(ok([]));
+    const screen = render(<WardGuardiansPanel />, { wrapper });
+
+    const cards = screen.getByRole('list', { name: '받은 연결 요청' }).getByRole('listitem');
+    await expect.element(cards.nth(1)).toHaveTextContent('박영호');
+    expect(cards.nth(0).element().querySelector('img')?.getAttribute('src')).toBe('https://files.example/p.png');
+    expect(cards.nth(1).element().querySelector('img')).toBeNull();
+  });
+
+  it('보호자 전화번호가 없으면 그 줄을 숨기고 가짜 값을 넣지 않는다', async () => {
+    api.getWardPendingConnections.mockResolvedValue(ok([]));
+    api.getWardActiveConnections.mockResolvedValue(ok([guardian({ partnerPhone: null })]));
+    const screen = render(<WardGuardiansPanel />, { wrapper });
+
+    const list = screen.getByRole('list', { name: '연결된 보호자' });
+    await expect.element(list).toHaveTextContent('박민수 님 (아들)');
+    expect(list.element().textContent).not.toMatch(/\d/);
+    await expect.element(list.getByRole('button', { name: '연결 끊기' })).toBeVisible();
   });
 
   it('목록을 못 불러오면 그렇다고 알린다', async () => {
