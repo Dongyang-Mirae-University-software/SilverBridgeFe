@@ -195,13 +195,17 @@
   word-break: keep-all;
 }
 
+/* 약 9개 이상 3칸은 넓은 화면에서만 - 1199px 이하에서는 이름이 음절 단위로 끊겨 2칸으로 둔다(기능 점검 F1) */
+@media (max-width: 1199px) {
+  .medGrid.lots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* 태블릿 - 카드를 위아래로 쌓는다(피보호자 병원 화면과 같은 768px 기준) */
 @media (max-width: 768px) {
   .slotCard { grid-template-columns: minmax(0, 1fr); }
   .lead { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding: 20px 24px; }
   .leadState { flex-basis: 100%; }
   .leadName { font-size: 52px; }
-  .medGrid.lots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* 휴대폰 - 탭은 두 칸씩, 약은 한 칸씩. 글자는 이전 화면의 휴대폰 크기(20px)보다 줄이지 않는다 */
