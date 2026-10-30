@@ -80,7 +80,8 @@ export function HospitalConfirmStep(props: Props) {
                 </span>
               ) : (
                 <>
-                  <span>{wardPhone}</span>
+                  {/* 계정 번호가 줄표 없이 저장돼 있어도 읽기 쉽게 줄표를 넣어 보인다(보내는 값은 그대로) */}
+                  <span>{formatPhoneInput(wardPhone)}</span>
                   <button
                     type="button"
                     className={cx('btn', 'ghost', 'smallButton')}

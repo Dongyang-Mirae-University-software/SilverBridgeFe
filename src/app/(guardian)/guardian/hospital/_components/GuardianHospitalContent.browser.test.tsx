@@ -472,6 +472,21 @@ describe('GuardianHospitalContent (Chrome)', () => {
     expect(api.createReservation.mock.calls[0][1].symptomSummary).toBe('며칠 전부터 눈이 침침해요');
   });
 
+  it('피보호자 번호가 줄표 없이 저장돼 있어도 줄표를 넣어 보이고, 보낼 때는 저장된 값 그대로 보낸다', async () => {
+    wards.list = [ward('ward01', '김영희', '01012345678')];
+    const screen = renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    await screen.getByRole('button', { name: /푸른안과/ }).click();
+    await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
+    await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
+    await screen.getByRole('button', { name: '다음' }).click();
+
+    await expect.element(screen.getByText('010-1234-5678')).toBeVisible();
+    await screen.getByRole('button', { name: '예약하기' }).click();
+    await vi.waitFor(() => expect(api.createReservation).toHaveBeenCalledTimes(1));
+    expect(api.createReservation.mock.calls[0][1].phone).toBe('01012345678');
+  });
+
   it('[바꾸기]로 연락처를 고치면 고친 번호로 예약하고, 줄표는 자동으로 넣는다', async () => {
     const screen = renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
