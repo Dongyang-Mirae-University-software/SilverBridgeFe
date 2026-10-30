@@ -59,6 +59,24 @@ describe('MedicationFormModal (Chrome)', () => {
     await expect.element(screen.getByLabelText('복용 시각')).toHaveValue('12:00');
   });
 
+  // 경계값 - BE MedicationTimeSlot.fromDoseTime(DoseAmountsAndTimeSlotTest)과 같은 규칙이어야 한다(점검 L-3)
+  it.each([
+    ['03:59', 'BEDTIME'],
+    ['04:00', 'MORNING'],
+    ['10:59', 'MORNING'],
+    ['11:00', 'LUNCH'],
+    ['15:59', 'LUNCH'],
+    ['16:00', 'DINNER'],
+    ['20:59', 'DINNER'],
+    ['21:00', 'BEDTIME'],
+    ['00:00', 'BEDTIME'],
+  ])('시각 %s → 복용 시간 %s', async (time, slot) => {
+    const { screen } = renderModal(1);
+
+    await userEvent.fill(screen.getByLabelText('복용 시각'), time);
+    await expect.element(screen.getByRole('combobox', { name: '복용 시간' })).toHaveValue(slot);
+  });
+
   it('이미 어긋나 저장된 약(점심 01:40)은 열 때부터 시각에 맞는 시간대로 보이고, 그대로 저장하면 바로잡힌다', async () => {
     const { screen, onSubmit } = renderModal(1, false, { timeSlot: 'LUNCH', doseTime: '01:40:00' });
 
@@ -67,24 +85,24 @@ describe('MedicationFormModal (Chrome)', () => {
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ timeSlot: 'BEDTIME', doseTime: '01:40' }));
   });
 
-  it('반 알 약: 반알로 보이고 줄이기는 막히며, 늘리면 1알로 저장된다', async () => {
+  it('반 알 약: 반 알로 보이고 줄이기는 막히며, 늘리면 1정으로 저장된다', async () => {
     const { screen, onSubmit } = renderModal(0.5);
-    await expect.element(screen.getByText('반알')).toBeVisible();
+    await expect.element(screen.getByText('반 알')).toBeVisible();
     await expect.element(screen.getByRole('button', { name: '복용량 줄이기' })).toBeDisabled();
 
     await screen.getByRole('button', { name: '복용량 늘리기' }).click();
-    await expect.element(screen.getByText('1알', { exact: true })).toBeVisible();
+    await expect.element(screen.getByText('1정', { exact: true })).toBeVisible();
     await screen.getByRole('button', { name: '수정' }).click();
     expect(onSubmit.mock.calls[0][0].doseAmount).toBe(1);
   });
 
-  it('1.5알 약: 줄이면 1알, 다시 줄이면 반알', async () => {
+  it('1정 반 약: 줄이면 1정, 다시 줄이면 반 알 (입력 칸도 목록·알림과 같은 표기)', async () => {
     const { screen, onSubmit } = renderModal(1.5);
-    await expect.element(screen.getByText('1알 반')).toBeVisible();
+    await expect.element(screen.getByText('1정 반')).toBeVisible();
     await screen.getByRole('button', { name: '복용량 줄이기' }).click();
-    await expect.element(screen.getByText('1알', { exact: true })).toBeVisible();
+    await expect.element(screen.getByText('1정', { exact: true })).toBeVisible();
     await screen.getByRole('button', { name: '복용량 줄이기' }).click();
-    await expect.element(screen.getByText('반알')).toBeVisible();
+    await expect.element(screen.getByText('반 알')).toBeVisible();
     await screen.getByRole('button', { name: '수정' }).click();
     expect(onSubmit.mock.calls[0][0].doseAmount).toBe(0.5);
   });

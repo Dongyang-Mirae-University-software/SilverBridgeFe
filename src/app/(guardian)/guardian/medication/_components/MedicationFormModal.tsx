@@ -6,11 +6,10 @@ import classNames from 'classnames/bind';
 import { useModalDialog } from '@/hooks/useModalDialog';
 
 import { MedicationItem, MedicationTimeSlot } from '@/service/interface/medication';
-import { getMedicationTimeSlotLabel } from '@/utils/format/medication';
+import { formatDoseAmount, getMedicationTimeSlotLabel } from '@/utils/format/medication';
 import {
   decreaseDose,
   DOSE_CHIPS,
-  formatDoseLabel,
   increaseDose,
   MAX_DOSE_AMOUNT,
   MIN_DOSE_AMOUNT,
@@ -81,7 +80,7 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
     onSubmit(value);
   };
 
-  // 반알(0.5) → 1알 → 2알 … (등록과 같은 0.5 단위 규칙)
+  // 반 알(0.5) → 1정 → 2정 … (등록과 같은 0.5 단위 규칙)
   const adjustDoseAmount = (direction: 1 | -1) => {
     setValue(current => ({
       ...current,
@@ -167,7 +166,7 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
               >
                 −
               </button>
-              <span>{formatDoseLabel(value.doseAmount)}</span>
+              <span>{formatDoseAmount(value.doseAmount)}</span>
               <button
                 type="button"
                 onClick={() => adjustDoseAmount(1)}

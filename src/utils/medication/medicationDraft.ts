@@ -93,24 +93,18 @@ export function normalizeDoseAmount(value: number | null | undefined) {
   return Math.min(MAX_DOSE_AMOUNT, Math.max(MIN_DOSE_AMOUNT, rounded));
 }
 
-// 반알 → 1알 → 2알 … (1.5처럼 OCR이 준 값은 다음 정수로)
+// 반 알 → 1정 → 2정 … (1.5처럼 OCR이 준 값은 다음 정수로)
 export function increaseDose(value: number) {
   const next = value < 1 ? 1 : Math.floor(value) + 1;
   return Math.min(MAX_DOSE_AMOUNT, next);
 }
 
-// … 2알 → 1알 → 반알
+// … 2정 → 1정 → 반 알
 export function decreaseDose(value: number) {
   const next = value <= 1 ? MIN_DOSE_AMOUNT : Math.ceil(value) - 1;
   return Math.max(MIN_DOSE_AMOUNT, next);
 }
 
-// 0.5 → "반알", 2 → "2알", 1.5 → "1알 반"
-export function formatDoseLabel(value: number) {
-  if (value === 0.5) return '반알';
-  const whole = Math.floor(value);
-  return value - whole === 0.5 ? `${whole}알 반` : `${whole}알`;
-}
 
 // 하루 횟수: 1 이상의 정수만 아는 값으로 본다
 function knownTimesPerDay(value: number | null | undefined) {

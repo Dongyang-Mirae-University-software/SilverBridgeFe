@@ -9,7 +9,6 @@ import {
   defaultSlotsForGroup,
   DraftDrug,
   findDuplicateDrugKeys,
-  formatDoseLabel,
   groupToBatchRequest,
   increaseDose,
   isUncertainFailure,
@@ -206,12 +205,6 @@ describe('복용량', () => {
     expect(normalizeDoseAmount(Number.NaN)).toBe(1);
     expect(normalizeDoseAmount(0.25)).toBe(0.5);
     expect(normalizeDoseAmount(1.25)).toBe(1.5);
-  });
-
-  it('표시 문구', () => {
-    expect(formatDoseLabel(0.5)).toBe('반알');
-    expect(formatDoseLabel(1)).toBe('1알');
-    expect(formatDoseLabel(1.5)).toBe('1알 반');
   });
 });
 
