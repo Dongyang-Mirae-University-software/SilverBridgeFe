@@ -30,12 +30,13 @@ function toHHmm(pm: boolean, h12: number, minute: number) {
 }
 
 // "이 시간까지 안 드시면 나에게 알림" 시간 고르기 - 오전/오후·시·분(5분 단위) 세 칸 + "○○로 정하기"(Claude Design 시안, 2026-10-24)
-// 칸을 누르면 고르기만 하고, [로 정하기]를 눌러야 저장한다. 바깥을 누르면 저장하지 않고 닫는다
+// 칸을 누르면 고르기만 하고, [로 정하기]를 눌러야 저장한다. 바깥을 누르거나 Esc를 누르면 저장하지 않고 닫는다
 export function MissedAlertTimeSelect({ value, disabled = false, onConfirm }: MissedAlertTimeSelectProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(() => parse(value));
   const rootRef = useRef<HTMLSpanElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const draftLabel = formatMedicationAlertTime(toHHmm(draft.pm, draft.h12, draft.minute));
 
@@ -75,8 +76,19 @@ export function MissedAlertTimeSelect({ value, disabled = false, onConfirm }: Mi
   );
 
   return (
-    <span ref={rootRef} className={cx('timeSelect')}>
+    <span
+      ref={rootRef}
+      className={cx('timeSelect')}
+      // Esc = 저장하지 않고 닫기, 포커스는 연 버튼으로(점검 L-1)
+      onKeyDown={event => {
+        if (!open || event.key !== 'Escape') return;
+        event.stopPropagation();
+        setOpen(false);
+        buttonRef.current?.focus();
+      }}
+    >
       <button
+        ref={buttonRef}
         type="button"
         className={cx('timeSelectButton', { open })}
         onClick={toggle}

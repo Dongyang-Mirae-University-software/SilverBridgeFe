@@ -37,6 +37,9 @@ interface WardMedicationCardProps {
 }
 
 const DELETE_FAILED_MESSAGE = '삭제하지 못했어요. 목록을 다시 불러왔으니 확인 후 다시 시도해 주세요.';
+const ALERT_SAVE_FAILED_MESSAGE = '알림 시각을 저장하지 못했어요. 다시 골라 주세요.';
+// 페이지를 열어 둔 채로도 "예정" → "체크되지 않았어요"가 바뀌게 1분마다 다시 그린다(점검 L-3)
+const NOW_TICK_MS = 60 * 1000;
 
 function toUpdateBody(value: MedicationFormValue) {
   return {
@@ -88,6 +91,11 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const confirmCancelRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const lastConfirmedRef = useRef<number | null>(null);
+  const deletedIdRef = useRef<number | null>(null);
+  const slotTitleRef = useRef<HTMLHeadingElement>(null);
+  const emptyAddRef = useRef<HTMLButtonElement>(null);
+  const [alertError, setAlertError] = useState<string | null>(null);
+  const [, setNowTick] = useState(0);
   const alertSettingMutation = useUpdateMedicationAlertSettingMutation();
   const { data: notificationTypeSetting } = useQuery(guardianNotificationTypeSettingQueryOptions);
   const isMedicationNotificationDisabled = notificationTypeSetting?.medication.enabled === false;
@@ -156,6 +164,19 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     slotGroups[0]?.key;
   const selectedGroup = slotGroups.find(group => group.key === selectedSlot) ?? slotGroups.find(group => group.key === defaultSlot);
 
+  useEffect(() => {
+    const timer = setInterval(() => setNowTick(tick => tick + 1), NOW_TICK_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 단건 삭제가 끝나 그 줄이 목록에서 사라지면 시간대 제목(약이 다 없어졌으면 [첫 약 추가하기])으로 포커스를 옮긴다(점검 L-2)
+  useEffect(() => {
+    const deletedId = deletedIdRef.current;
+    if (deletedId === null || summary.medications.some(medication => medication.medicationId === deletedId)) return;
+    deletedIdRef.current = null;
+    (slotTitleRef.current ?? emptyAddRef.current)?.focus();
+  }, [summary.medications]);
+
   // 삭제 확인으로 바뀌면 [취소]로, 확인이 닫히면 그 약의 휴지통으로 포커스를 돌려준다(화면 읽기 위치를 잃지 않게)
   useEffect(() => {
     if (confirmingId !== null) {
@@ -180,6 +201,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     deleteMutation.mutate(medication.medicationId, {
       onSuccess: () => {
         lastConfirmedRef.current = null;
+        deletedIdRef.current = medication.medicationId;
         setConfirmingId(null);
       },
       onError: () => setDeleteError(DELETE_FAILED_MESSAGE),
@@ -210,7 +232,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
       {!hasMedications ? (
         <section className={cx('card', 'emptyCard')}>
           <strong className={cx('emptyTitle')}>등록된 약이 없어요</strong>
-          <button type="button" className={cx('primaryButton')} onClick={openAddMedication}>
+          <button ref={emptyAddRef} type="button" className={cx('primaryButton')} onClick={openAddMedication}>
             첫 약 추가하기
           </button>
         </section>
@@ -245,7 +267,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           {selectedGroup && (
             <section className={cx('card', 'slotCard')} aria-labelledby={`slot-title-${summary.wardId}`}>
               <div className={cx('slotHeader')}>
-                <h2 id={`slot-title-${summary.wardId}`} className={cx('slotTitle')}>
+                <h2 ref={slotTitleRef} id={`slot-title-${summary.wardId}`} className={cx('slotTitle')} tabIndex={-1}>
                   {selectedGroup.label} 약
                   <span className={cx('slotTime')}>{formatMedicationAlertTime(selectedGroup.doseTime)}</span>
                 </h2>
@@ -260,7 +282,16 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                   // 같은 시간대 안에서 시각이 다른 약은 그 약의 시각을 함께 보여 준다
                   const ownTime = medication.doseTime !== selectedGroup.doseTime ? formatMedicationAlertTime(medication.doseTime) : null;
                   return (
-                    <li key={medication.medicationId} className={cx('medicationItem', { confirming: isConfirming })}>
+                    <li
+                      key={medication.medicationId}
+                      className={cx('medicationItem', { confirming: isConfirming })}
+                      // Esc = 취소(점검 L-1). 포커스는 확인을 닫는 효과가 휴지통으로 돌려준다
+                      onKeyDown={event => {
+                        if (!isConfirming || event.key !== 'Escape') return;
+                        event.stopPropagation();
+                        setConfirmingId(null);
+                      }}
+                    >
                       <span className={cx('medicationInfo')}>
                         <span className={cx('medicationTitle')}>
                           <span className={cx('medicationName')}>{medication.name}</span>
@@ -312,25 +343,26 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                   );
                 })}
               </ul>
-
-              {deleteError && (
-                <p className={cx('deleteError')} role="alert">
-                  {deleteError}
-                </p>
-              )}
-              {medications.length > 1 && (
-                <div className={cx('listFooter')}>
-                  <button
-                    type="button"
-                    className={cx('dangerTextButton')}
-                    disabled={deleteBatchMutation.isPending}
-                    onClick={() => handleDeleteMany(medications, `${wardName}의 약 ${medications.length}개를 모두 삭제할까요?`)}
-                  >
-                    약 전부 삭제
-                  </button>
-                </div>
-              )}
             </section>
+          )}
+
+          {deleteError && (
+            <p className={cx('deleteError')} role="alert">
+              {deleteError}
+            </p>
+          )}
+          {/* 고른 시간대 카드 안에 두면 그 시간대만 지우는 것으로 읽힌다 - 모든 시간대를 지우므로 카드 밖에 둔다(점검 M-2) */}
+          {medications.length > 1 && (
+            <div className={cx('listFooter')}>
+              <button
+                type="button"
+                className={cx('dangerTextButton')}
+                disabled={deleteBatchMutation.isPending}
+                onClick={() => handleDeleteMany(medications, `모든 시간대의 약 ${medications.length}개를 모두 삭제할까요?`)}
+              >
+                모든 시간대 약 전부 삭제
+              </button>
+            </div>
           )}
         </>
       )}
@@ -345,15 +377,22 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           <MissedAlertTimeSelect
             value={summary.missedAlertTime}
             disabled={alertSettingMutation.isPending}
-            onConfirm={hhmm =>
+            onConfirm={hhmm => {
+              setAlertError(null);
               // 이 화면에는 켜고 끄는 스위치가 없으므로 시각을 정하면 이 피보호자 요약도 켠다(예전에 꺼 둔 경우 다시 받게)
-              alertSettingMutation.mutate({
-                wardId: summary.wardId,
-                body: { missedAlertTime: `${hhmm}:00`, missedAlertEnabled: true },
-              })
-            }
+              alertSettingMutation.mutate(
+                { wardId: summary.wardId, body: { missedAlertTime: `${hhmm}:00`, missedAlertEnabled: true } },
+                // 실패하면 버튼이 옛 시각으로 조용히 돌아가 저장된 줄 알았다 - 알린다(점검 M-1)
+                { onError: () => setAlertError(ALERT_SAVE_FAILED_MESSAGE) },
+              );
+            }}
           />
         </div>
+        {alertError && (
+          <p className={cx('alertError')} role="alert">
+            {alertError}
+          </p>
+        )}
         {isMedicationNotificationDisabled && (
           <div className={cx('notificationOff')}>
             <span>지금 약 알림이 꺼져 있어요</span>
