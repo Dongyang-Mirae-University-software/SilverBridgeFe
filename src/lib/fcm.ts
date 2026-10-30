@@ -143,11 +143,12 @@ export async function unregisterFcmTokenForCurrentDevice() {
 
   try {
     await deleteNotificationFcmToken(token);
+    // 서버에서 지운 뒤에만 잊는다 - 실패하면 남겨 두어 다음 등록 때 옛 토큰으로 다시 지운다
+    getLocalStorage()?.removeItem(FCM_LAST_TOKEN_KEY);
   } finally {
     getSessionStorage()?.removeItem(FCM_TOKEN_KEY);
     getSessionStorage()?.removeItem(FCM_REGISTERED_TOKEN_KEY);
     getSessionStorage()?.removeItem(FCM_REGISTERED_USER_KEY);
-    getLocalStorage()?.removeItem(FCM_LAST_TOKEN_KEY);
   }
 }
 
