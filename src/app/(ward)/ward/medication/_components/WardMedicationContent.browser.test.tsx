@@ -10,8 +10,11 @@ import { render } from 'vitest-browser-react';
 import type { MedicationItem, TodayMedicationResponse } from '@/service/interface/medication';
 import { WardMedicationContent } from './WardMedicationContent';
 
+// 쿼리 모듈이 import하는 함수는 모두 둔다 - 빠지면 테스트 파일 import부터 깨진다
 const api = vi.hoisted(() => ({
   getTodayMedication: vi.fn(),
+  checkMedicationIntake: vi.fn(),
+  uncheckMedicationIntake: vi.fn(),
   setMedicationIntakeBatch: vi.fn(),
 }));
 
@@ -150,6 +153,7 @@ describe('WardMedicationContent (Chrome)', () => {
     const screen = renderContent();
 
     const button = screen.getByRole('button', { name: '아침 약 먹었어요' });
+    await expect.element(button).toBeEnabled();
     const element = button.element() as HTMLButtonElement;
     element.click();
     element.click();

@@ -3,7 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Fragment, ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import type { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
@@ -37,6 +37,16 @@ vi.mock('@/service/query/guardian/notification', () => ({
 }));
 
 const TODAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+
+// 카드는 지금 시각으로 상단 문장·기본으로 펼칠 시간대를 정한다 - 실행 시각에 따라 결과가 바뀌지 않게 오늘 07:00(KST)으로 고정한다
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(`${TODAY}T07:00:00+09:00`));
+});
+
+afterAll(() => {
+  vi.useRealTimers();
+});
 
 function medication(id: number, overrides: Partial<MedicationItem> = {}): MedicationItem {
   return {
@@ -101,9 +111,9 @@ describe('WardMedicationCard (Chrome)', () => {
     ]);
 
     await expect.element(screen.getByRole('list', { name: '오늘 드실 약' })).toBeVisible();
-    await expect.element(screen.getByText('아침 약')).toBeVisible();
+    await expect.element(screen.getByText('아침 약', { exact: true })).toBeVisible();
     await expect.element(screen.getByText('오전 8:00')).toBeVisible();
-    await expect.element(screen.getByText('드셨어요')).toBeVisible();
+    await expect.element(screen.getByText('✓ 드셨어요')).toBeVisible();
     await expect.element(screen.getByText('취침 전 약')).toBeVisible();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
@@ -118,7 +128,8 @@ describe('WardMedicationCard (Chrome)', () => {
     await screen.getByRole('button', { name: '혈압약 수정' }).click();
     await expect.element(screen.getByRole('dialog', { name: '약 수정' })).toBeVisible();
     await screen.getByRole('dialog', { name: '약 수정' }).getByRole('button', { name: '닫기' }).click();
-    await screen.getByRole('button', { name: '약 고치기' }).click();
+    // 수정 창을 닫아도 고치기 상태("다 고쳤어요")는 그대로라 바로 삭제할 수 있다
+    await expect.element(screen.getByRole('button', { name: '다 고쳤어요' })).toBeVisible();
     await screen.getByRole('button', { name: '혈압약 삭제' }).click();
     await vi.waitFor(() => expect(api.deleteGuardianMedication).toHaveBeenCalledWith(1));
   });
@@ -129,6 +140,8 @@ describe('WardMedicationCard (Chrome)', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     const screen = renderCard([medication(1, { name: '혈압약' })]);
 
+    // 삭제 버튼은 시간대를 펼친 뒤 "약 고치기"를 눌러야 나온다
+    await screen.getByRole('button', { name: '약 고치기' }).click();
     await screen.getByRole('button', { name: '혈압약 삭제' }).click();
     await expect.element(screen.getByRole('alert')).toHaveTextContent('삭제하지 못했어요');
   });
