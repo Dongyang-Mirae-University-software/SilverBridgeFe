@@ -14,7 +14,10 @@ const api = vi.hoisted(() => ({
   getChatLogs: vi.fn(),
   role: vi.fn(),
   wards: vi.fn(),
+  push: vi.fn(),
 }));
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: api.push }) }));
 
 vi.mock('@/service/api/chat', () => ({
   sendChatMessage: api.sendChatMessage,
@@ -78,6 +81,7 @@ afterEach(async () => {
 beforeEach(() => {
   api.sendChatMessage.mockReset();
   api.getChatLogs.mockReset();
+  api.push.mockReset();
   api.wards.mockReturnValue([WARD]);
 });
 
@@ -98,13 +102,52 @@ describe('보호자 AI 의료 챗봇', () => {
     api.sendChatMessage.mockResolvedValue(REPLY);
     renderChat(<ChatbotContent />);
 
-    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
 
     await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
     const request = api.sendChatMessage.mock.calls[0][0];
-    expect(request.message).toBe('병원 예약하고 싶어요');
+    expect(request.message).toBe('무릎이 아프다고 하세요');
     expect(request.context).toMatchObject({ role: 'GUARDIAN', wardId: 'ward-1', patientId: 'ward-1' });
     expect(request).not.toHaveProperty('history');
+  });
+
+  it('예약 칩은 AI를 부르지 않고 내 말풍선을 남긴 뒤 병원 예약 화면으로 이동한다', async () => {
+    renderChat(<ChatbotContent />);
+
+    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
+
+    const bubbles = () =>
+      page
+        .getByText('병원 예약하고 싶어요', { exact: true })
+        .elements()
+        .filter(element => !element.closest('button'));
+    await vi.waitFor(() => expect(bubbles()).toHaveLength(1));
+    await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
+    expect(api.push).toHaveBeenCalledTimes(1);
+    expect(api.sendChatMessage).not.toHaveBeenCalled();
+  });
+
+  it('답을 기다리는 중에는 예약 칩도 누를 수 없다', async () => {
+    api.sendChatMessage.mockReturnValue(new Promise(() => {}));
+    renderChat(<ChatbotContent />);
+
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
+
+    await expect.element(page.getByRole('button', { name: '병원 예약하고 싶어요' })).toBeDisabled();
+    expect(api.push).not.toHaveBeenCalled();
+  });
+
+  it('직접 쓴 "병원 예약해줘"는 지금처럼 AI로 보내고 이동하지 않는다', async () => {
+    api.sendChatMessage.mockResolvedValue(REPLY);
+    renderChat(<ChatbotContent />);
+
+    await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '병원 예약해줘');
+    await userEvent.click(page.getByRole('button', { name: '보내기' }));
+
+    await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
+    expect(api.sendChatMessage.mock.calls[0][0].message).toBe('병원 예약해줘');
+    await new Promise(resolve => setTimeout(resolve, 400));
+    expect(api.push).not.toHaveBeenCalled();
   });
 
   it('같은 대화창에서는 sessionId를 유지한다', async () => {
@@ -282,11 +325,16 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
       expect(quickButtons()).toEqual(['병원 예약하고 싶어요', '혈압약을 같이 먹어도 되나요?', '다음 병원 예약 알려줘']),
     );
 
-    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
-    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(2));
     await userEvent.click(page.getByRole('button', { name: '혈압약을 같이 먹어도 되나요?' }));
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(2));
     await userEvent.click(page.getByRole('button', { name: '다음 병원 예약 알려줘' }));
-    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(4));
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(3));
+    await vi.waitFor(() => expect(quickButtons()).toEqual(['병원 예약하고 싶어요']));
+
+    // 예약 칩은 AI로 보내지 않고 보낸 문장 기억에도 넣지 않으므로 그대로 남는다.
+    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
+    await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
+    expect(api.sendChatMessage).toHaveBeenCalledTimes(3);
     await vi.waitFor(() => expect(quickButtons()).toEqual(['병원 예약하고 싶어요']));
   });
 
@@ -325,6 +373,38 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
       await vi.waitFor(() => expect(quickButtons()).toHaveLength(3 - index));
     }
     await expect.element(page.getByText('궁금한 점을 입력창에 적어 주세요')).toBeVisible();
+  });
+
+  it('피보호자 휴대폰: 버튼이 3개·1개 남으면 마지막 버튼을 두 칸 폭으로 놓는다(넓은 화면은 그대로)', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
+    await page.viewport(375, 800);
+    renderChat(<ChatbotContent variant="ward" />);
+
+    const lastButtonSpan = () => {
+      const buttons = page.getByRole('region', { name: '추천 질문' }).element().querySelectorAll('button');
+      const style = getComputedStyle(buttons[buttons.length - 1]);
+      return `${style.gridColumnStart} / ${style.gridColumnEnd}`;
+    };
+
+    await vi.waitFor(() => expect(quickButtons()).toHaveLength(4));
+    expect(lastButtonSpan()).toBe('auto / auto');
+
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    await vi.waitFor(() => expect(quickButtons()).toHaveLength(3));
+    expect(lastButtonSpan()).toBe('1 / -1');
+
+    await page.viewport(1280, 800);
+    await vi.waitFor(() => expect(lastButtonSpan()).toBe('auto / auto'));
+    await page.viewport(375, 800);
+
+    await userEvent.click(page.getByRole('button', { name: '배가 아파요' }));
+    await vi.waitFor(() => expect(quickButtons()).toHaveLength(2));
+    expect(lastButtonSpan()).toBe('auto / auto');
+
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아파요' }));
+    await vi.waitFor(() => expect(quickButtons()).toHaveLength(1));
+    expect(lastButtonSpan()).toBe('1 / -1');
   });
 
   it('보내기에 실패한 문장은 버튼에 남는다', async () => {
