@@ -25,6 +25,8 @@ export default defineConfig({
     ],
   },
   esbuild: { jsx: 'automatic' },
+  // Next는 NEXT_PUBLIC_* 를 빌드 때 값으로 바꾼다. 테스트 브라우저에는 process가 없어 같은 방식으로 빈 값을 넣는다
+  define: { 'process.env.NEXT_PUBLIC_AI_API_DOMAIN': JSON.stringify('') },
   test: {
     include: ['src/**/*.browser.test.tsx'],
     browser: {

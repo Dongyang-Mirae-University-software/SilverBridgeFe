@@ -156,7 +156,9 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await screen.getByRole('button', { name: '다음' }).click();
 
     await expect.element(screen.getByText('이대로 예약할까요?')).toBeVisible();
-    await expect.element(screen.getByText('진료받으실 분: 김영희')).toBeVisible();
+    // v13 확인 단계는 날짜·시간·병원만 크게 보여 준다(진료 대상 줄은 26772c2에서 뺐다)
+    await expect.element(screen.getByText(/강남내과/).last()).toBeVisible();
+    expect(screen.getByText(/진료받으실 분:/).elements()).toHaveLength(0);
     await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
     // 피보호자 번호가 있으면 번호 칸을 띄우지 않는다
     expect(screen.getByRole('textbox').elements()).toHaveLength(0);

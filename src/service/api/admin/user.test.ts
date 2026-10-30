@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const get = vi.fn();
-const patch = vi.fn();
-const remove = vi.fn();
+// vi.mock 팩토리는 파일 맨 위로 끌어올려지므로 목 함수도 vi.hoisted로 함께 올린다
+const { get, patch, remove } = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn(), remove: vi.fn() }));
 
 vi.mock('@/lib/api/apiClient', () => ({ apiClient: { get, patch, delete: remove } }));
 

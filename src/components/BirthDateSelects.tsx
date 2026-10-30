@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import classNames from 'classnames/bind';
 
 import styles from './BirthDateSelects.module.css';
@@ -15,26 +15,26 @@ interface Props {
 
 export function BirthDateSelects({ value, onChange, className }: Props) {
   const [parts, setParts] = useState(() => parseBirthDate(value));
-  const hasInteracted = useRef(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [prevValue, setPrevValue] = useState(value);
 
-  useEffect(() => {
+  // 바깥 값이 바뀌면 렌더 중에 칸을 맞춘다(effect 안 setState는 렌더를 한 번 더 일으킨다)
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (value) {
       setParts(parseBirthDate(value));
-      hasInteracted.current = false;
-      return;
-    }
-
-    if (!hasInteracted.current) {
+      setHasInteracted(false);
+    } else if (!hasInteracted) {
       setParts({ year: '', month: '', day: '' });
     }
-  }, [value]);
+  }
 
   const { year, month, day } = parts;
   const days = getBirthDateDays(year, month);
   const normalizedDay = day && days.includes(day) ? day : '';
 
   const updateParts = (nextParts: { year: string; month: string; day: string }) => {
-    hasInteracted.current = true;
+    setHasInteracted(true);
     setParts(nextParts);
 
     const nextValue = composeBirthDate(nextParts);
