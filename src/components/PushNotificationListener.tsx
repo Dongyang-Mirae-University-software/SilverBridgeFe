@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { MessagePayload } from 'firebase/messaging';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
@@ -21,12 +21,24 @@ import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api
 import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import { getAnomalyAlertText } from '@/utils/anomaly/alertText';
 import { getSubjectParticle } from '@/utils/format/korean';
+import {
+  formatReceivedAt,
+  getMedicationProgress,
+  getPushIconSrc,
+  getPushKind,
+  PUSH_KIND_LABEL,
+} from './PushNotificationListener.kind';
 import styles from './PushNotificationListener.module.css';
 
 const cx = classNames.bind(styles);
 
 const TOAST_LIFETIME_MS = 6000;
 const NOTIFICATION_DEDUPE_LIFETIME_MS = 8000;
+const RECEIVED_AT_TICK_MS = 30000;
+// 휴대폰 위쪽 토스트를 이만큼 위로 밀면 닫는다
+const SWIPE_DISMISS_PX = 48;
+// 복약 막대 칸 수 상한 - 더 많으면 비율로 줄여 그린다
+const MAX_PROGRESS_CELLS = 12;
 type ConnectionTargetRole = 'WARD' | 'GUARDIAN';
 
 interface PushToast {
@@ -35,6 +47,12 @@ interface PushToast {
   body: string;
   data?: MessagePayload['data'];
   error?: string;
+  receivedAt: number;
+}
+
+interface ToastAction {
+  label: string;
+  route: string;
 }
 
 interface LocalPushEventDetail {
@@ -148,10 +166,11 @@ function getPushNotificationContent({
   notification?: { body?: string; title?: string };
   role?: ConnectionTargetRole | null;
 }) {
+  // BE 문구(data 전용 웹푸시는 data에, 그 전에는 notification에)가 먼저, FE 예비 문구는 둘 다 없을 때만
   const fallback = getConnectionPushNotification(data, role);
   return {
-    body: notification?.body ?? fallback.body,
-    title: notification?.title ?? fallback.title,
+    body: data?.body || notification?.body || fallback.body,
+    title: data?.title || notification?.title || fallback.title,
   };
 }
 
@@ -285,6 +304,40 @@ function applyConnectionPushToCache(
   }
 }
 
+// 브라우저 알림 버튼과 같은 두 버튼(public/push-sw-logic.js getActions·getPath)
+function getToastActions(data: MessagePayload['data'] | undefined, role: ConnectionTargetRole | null): ToastAction[] {
+  if (role === 'WARD') return [];
+  if (data?.type === 'WARD_SOS') {
+    return [
+      { label: 'SOS 화면 열기', route: '/guardian/sos' },
+      { label: '가족 연락처', route: '/guardian/wards' },
+    ];
+  }
+  if (data?.type === 'ANOMALY_DETECTED') {
+    const session = data.sessionId ? `?session=${encodeURIComponent(data.sessionId)}` : '';
+    return [
+      { label: '영상 확인', route: '/guardian/detection' },
+      { label: '실시간 보기', route: `/guardian/detection${session}` },
+    ];
+  }
+  return [];
+}
+
+function isUrgentPush(data?: MessagePayload['data']) {
+  return isSosPush(data) || isAnomalyPush(data);
+}
+
+function BridgeMark() {
+  return (
+    <svg className={cx('bridgeMark')} viewBox="0 0 192 192" aria-hidden="true" focusable="false">
+      <path d="M52 114 C70 66 122 66 140 114" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" />
+      <rect x="36" y="112" width="120" height="18" rx="9" fill="currentColor" />
+      <rect x="56" y="126" width="16" height="30" rx="4" fill="currentColor" />
+      <rect x="120" y="126" width="16" height="30" rx="4" fill="currentColor" />
+    </svg>
+  );
+}
+
 function getActionError(error: unknown, fallback: string) {
   return (error as Error).message || fallback;
 }
@@ -297,11 +350,43 @@ export default function PushNotificationListener() {
   const handledNotificationKeysRef = useRef<Map<string, number>>(new Map());
   const [toasts, setToasts] = useState<PushToast[]>([]);
   const [processingToastIds, setProcessingToastIds] = useState<number[]>([]);
+  const [now, setNow] = useState(() => Date.now());
+  const swipeRef = useRef<{ id: number; startY: number; dy: number } | null>(null);
+  const [swipe, setSwipe] = useState<{ id: number; dy: number } | null>(null);
   const currentRole = getCurrentRole(pathname);
+  const hasToasts = toasts.length > 0;
 
   const dismissToast = useCallback((id: number) => {
     setToasts(prev => prev.filter(item => item.id !== id));
   }, []);
+
+  // "방금·N분 전"을 갱신한다 - 토스트가 떠 있을 때만
+  useEffect(() => {
+    if (!hasToasts) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), RECEIVED_AT_TICK_MS);
+    return () => window.clearInterval(timer);
+  }, [hasToasts]);
+
+  // 휴대폰(위쪽 토스트)에서 위로 밀어 닫기. 손가락·펜만 - 마우스 끌기는 글자 선택과 겹친다
+  const handleSwipeStart = (id: number, event: PointerEvent<HTMLElement>) => {
+    if (event.pointerType === 'mouse') return;
+    swipeRef.current = { id, startY: event.clientY, dy: 0 };
+  };
+
+  const handleSwipeMove = (event: PointerEvent<HTMLElement>) => {
+    const current = swipeRef.current;
+    if (!current) return;
+    current.dy = Math.min(0, event.clientY - current.startY);
+    setSwipe({ id: current.id, dy: current.dy });
+  };
+
+  const handleSwipeEnd = () => {
+    const current = swipeRef.current;
+    swipeRef.current = null;
+    setSwipe(null);
+    if (current && current.dy <= -SWIPE_DISMISS_PX) dismissToast(current.id);
+  };
 
   const addToast = useCallback(
     (toast: PushToast) => {
@@ -418,7 +503,13 @@ export default function PushNotificationListener() {
         notification: payload.notification,
         role: currentRole,
       });
-      const toast: PushToast = { id, title: notification.title, body: notification.body, data: payload.data };
+      const toast: PushToast = {
+        id,
+        title: notification.title,
+        body: notification.body,
+        data: payload.data,
+        receivedAt: Date.now(),
+      };
 
       if (isConnectionPush(payload.data)) {
         if (!shouldHandleConnectionPush(payload.data, currentRole)) return;
@@ -442,7 +533,13 @@ export default function PushNotificationListener() {
         notification: detail.notification,
         role: currentRole,
       });
-      const toast: PushToast = { id, title: notification.title, body: notification.body, data: detail.data };
+      const toast: PushToast = {
+        id,
+        title: notification.title,
+        body: notification.body,
+        data: detail.data,
+        receivedAt: Date.now(),
+      };
 
       if (isConnectionPush(detail.data)) {
         if (!shouldHandleConnectionPush(detail.data, currentRole)) return;
@@ -462,62 +559,127 @@ export default function PushNotificationListener() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className={cx('toastArea')} aria-live="polite">
-      {toasts.map(toast => (
-        <div
-          key={toast.id}
-          className={cx('toast', {
-            actionAlert: isConnectionRequest(toast.data, currentRole),
-            sosAlert: isSosPush(toast.data) || isAnomalyPush(toast.data),
-          })}
-        >
-          {isConnectionRequest(toast.data, currentRole) ? (
-            <div className={cx('toastContent')}>
+    <div className={cx('toastArea')} aria-label="새 알림">
+      {toasts.map(toast => {
+        const kind = getPushKind(toast.data);
+        const urgent = isUrgentPush(toast.data);
+        const connectionRequest = isConnectionRequest(toast.data, currentRole);
+        const actions = getToastActions(toast.data, currentRole);
+        const progress = getMedicationProgress(toast.data);
+        const processing = processingToastIds.includes(toast.id);
+        const swipeOffset = swipe?.id === toast.id ? swipe.dy : 0;
+        const progressCells = progress ? Math.min(progress.total, MAX_PROGRESS_CELLS) : 0;
+        const filledCells = progress ? Math.round((progress.taken / progress.total) * progressCells) : 0;
+
+        const openRoute = (route: string) => {
+          dismissToast(toast.id);
+          router.push(route);
+        };
+
+        const content = (
+          <>
+            {/* 브라우저 알림과 같은 그림(public/icons/push) - 장식이라 대체 문구를 비운다 */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className={cx('kindIcon')} src={getPushIconSrc(toast.data)} alt="" width={40} height={40} />
+            <span className={cx('text')}>
               <span className={cx('title')}>{toast.title}</span>
               {toast.body && <span className={cx('body')}>{toast.body}</span>}
-              {toast.error && <span className={cx('error')}>{toast.error}</span>}
+            </span>
+          </>
+        );
+
+        return (
+          <section
+            key={toast.id}
+            role={urgent ? 'alert' : 'status'}
+            aria-live={urgent ? 'assertive' : 'polite'}
+            aria-label={`${PUSH_KIND_LABEL[kind]} 알림`}
+            className={cx('toast', `kind-${kind}`, { swiping: swipeOffset !== 0 })}
+            style={swipeOffset ? { transform: `translateY(${swipeOffset}px)` } : undefined}
+            onPointerDown={event => handleSwipeStart(toast.id, event)}
+            onPointerMove={handleSwipeMove}
+            onPointerUp={handleSwipeEnd}
+            onPointerCancel={handleSwipeEnd}
+          >
+            <header className={cx('meta')}>
+              <BridgeMark />
+              <span className={cx('kindLabel')}>{PUSH_KIND_LABEL[kind]}</span>
+              <span className={cx('receivedAt')}>{formatReceivedAt(toast.receivedAt, now)}</span>
+              <button
+                className={cx('dismissButton')}
+                type="button"
+                aria-label={`${toast.title} 알림 닫기`}
+                onClick={() => dismissToast(toast.id)}
+              >
+                ×
+              </button>
+            </header>
+
+            {connectionRequest ? (
+              <div className={cx('main')}>{content}</div>
+            ) : (
+              <button
+                className={cx('main', 'mainButton')}
+                type="button"
+                onClick={() => openRoute(getPushRoute(toast.data, currentRole))}
+              >
+                {content}
+              </button>
+            )}
+
+            {progress && (
+              <div className={cx('progress')}>
+                <span className={cx('progressBar')} aria-hidden="true">
+                  {Array.from({ length: progressCells }, (_, index) => (
+                    <span key={index} className={cx('progressCell', { filled: index < filledCells })} />
+                  ))}
+                </span>
+                <span className={cx('progressLabel')}>
+                  {progress.total}번 중 {progress.taken}번 체크
+                </span>
+              </div>
+            )}
+
+            {toast.error && <span className={cx('error')}>{toast.error}</span>}
+
+            {connectionRequest ? (
               <div className={cx('actionRow')}>
                 <button
-                  className={cx('acceptButton')}
+                  className={cx('primaryButton')}
                   type="button"
-                  disabled={processingToastIds.includes(toast.id)}
+                  disabled={processing}
                   onClick={() => void handleConnectionAction(toast, 'accept')}
                 >
                   수락
                 </button>
                 <button
-                  className={cx('refuseButton')}
+                  className={cx('secondaryButton')}
                   type="button"
-                  disabled={processingToastIds.includes(toast.id)}
+                  disabled={processing}
                   onClick={() => void handleConnectionAction(toast, 'refuse')}
                 >
                   거절
                 </button>
               </div>
-            </div>
-          ) : (
-            <button
-              className={cx('toastContent')}
-              type="button"
-              onClick={() => {
-                dismissToast(toast.id);
-                router.push(getPushRoute(toast.data, currentRole));
-              }}
-            >
-              <span className={cx('title')}>{toast.title}</span>
-              {toast.body && <span className={cx('body')}>{toast.body}</span>}
-            </button>
-          )}
-          <button
-            className={cx('dismissButton')}
-            type="button"
-            aria-label="알림 닫기"
-            onClick={() => dismissToast(toast.id)}
-          >
-            ×
-          </button>
-        </div>
-      ))}
+            ) : (
+              actions.length > 0 && (
+                <div className={cx('actionRow')}>
+                  {actions.map((action, index) => (
+                    <button
+                      key={action.label}
+                      className={cx(index === 0 ? 'primaryButton' : 'secondaryButton')}
+                      type="button"
+                      onClick={() => openRoute(action.route)}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+                </div>
+              )
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { deleteNotificationFcmToken, registerNotificationFcmToken } from '@/serv
 const FCM_TOKEN_KEY = 'careai_fcm_token';
 const FCM_REGISTERED_TOKEN_KEY = 'careai_fcm_registered_token';
 const FCM_REGISTERED_USER_KEY = 'careai_fcm_registered_user';
+// 이 브라우저가 마지막으로 등록한 토큰. sessionStorage는 탭을 닫으면 지워져 토큰이 바뀐 걸 알 수 없다
+const FCM_LAST_TOKEN_KEY = 'careai_fcm_last_token';
 const DEFAULT_FIREBASE_API_KEY = 'AIzaSyB82QGIFGkeSsda2qg3Yg3feYKSAxvqI1Y';
 const DEFAULT_FIREBASE_SENDER_ID = '608365601427';
 const DEFAULT_FIREBASE_APP_ID = '1:608365601427:web:b3ac76ab46895df2fda366';
@@ -18,6 +20,30 @@ let registrationPromise: Promise<string | null> | null = null;
 function getSessionStorage() {
   if (typeof window === 'undefined') return null;
   return window.sessionStorage;
+}
+
+function getLocalStorage() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+// 토큰이 바뀌면 옛 토큰을 지운다 - 지우지 않으면 서버에 죽은 토큰이 쌓여 사용자당 상한을 차지한다.
+// 서버는 내 계정의 토큰만 지우므로(다른 사용자 토큰이면 아무 일도 없다) 실패해도 등록 흐름을 막지 않는다
+async function releasePreviousFcmToken(token: string) {
+  const storage = getLocalStorage();
+  const previousToken = storage?.getItem(FCM_LAST_TOKEN_KEY);
+  storage?.setItem(FCM_LAST_TOKEN_KEY, token);
+  if (!previousToken || previousToken === token) return;
+
+  try {
+    await deleteNotificationFcmToken(previousToken);
+  } catch (error) {
+    reportNonApiError('이전 FCM 토큰 해제 실패:', error);
+  }
 }
 
 function getFirebaseApp(): FirebaseApp {
@@ -97,6 +123,7 @@ export async function registerFcmTokenForCurrentDevice() {
     storage?.setItem(FCM_TOKEN_KEY, token);
     storage?.setItem(FCM_REGISTERED_TOKEN_KEY, token);
     if (currentUserId) storage?.setItem(FCM_REGISTERED_USER_KEY, currentUserId);
+    await releasePreviousFcmToken(token);
 
     return token;
   })();
@@ -120,6 +147,7 @@ export async function unregisterFcmTokenForCurrentDevice() {
     getSessionStorage()?.removeItem(FCM_TOKEN_KEY);
     getSessionStorage()?.removeItem(FCM_REGISTERED_TOKEN_KEY);
     getSessionStorage()?.removeItem(FCM_REGISTERED_USER_KEY);
+    getLocalStorage()?.removeItem(FCM_LAST_TOKEN_KEY);
   }
 }
 
