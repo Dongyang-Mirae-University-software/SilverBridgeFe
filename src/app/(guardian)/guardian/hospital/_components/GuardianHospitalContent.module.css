@@ -490,6 +490,11 @@
   background: #fff;
 }
 
+/* 취소하는 동안 포커스를 창 자체에 둘 때 테두리는 그리지 않는다(버튼에 다시 돌아가면 버튼 테두리가 보인다) */
+.dialog:focus {
+  outline: none;
+}
+
 .dialogTitle {
   margin: 0;
   color: var(--sb-ink);

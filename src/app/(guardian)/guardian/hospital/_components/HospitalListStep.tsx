@@ -9,11 +9,12 @@ import {
   formatDateShort,
   formatTime,
   isHospitalOpenNow,
+  pastStatusLabel,
   reservationErrorMessage,
   splitReservations,
 } from '@/utils/reservation/reservationView';
 import styles from './GuardianHospitalContent.module.css';
-import { ddayLabel, pastStatusLabel, Pick } from './hospitalBooking';
+import { ddayLabel, Pick } from './hospitalBooking';
 import { ChevronIcon, PlusIcon } from './hospitalIcons';
 
 const cx = classNames.bind(styles);
@@ -204,7 +205,8 @@ export function HospitalListStep(props: Props) {
                   key={item.reservationId}
                   type="button"
                   className={cx('card', 'pastCard', 'pastButton')}
-                  aria-label={`${item.hospitalName} ${item.department} 다시 예약`}
+                  // 같은 병원 카드가 여럿일 수 있어 날짜·상태까지 읽어 준다
+                  aria-label={`${item.hospitalName} ${item.department} ${formatDateShort(item.reservationDate)}${status ? ` ${status}` : ''} 다시 예약`}
                   onClick={() => props.onRebook(rebook)}
                 >
                   {body}
@@ -247,9 +249,24 @@ interface CancelDialogProps {
 function CancelDialog({ item, wardName, isCanceling, onKeep, onConfirm }: CancelDialogProps) {
   // 창이 뜨면 [그대로 두기]로 포커스를 옮긴다(되돌릴 수 없는 쪽을 실수로 누르지 않게)
   const keepRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     keepRef.current?.focus();
   }, []);
+
+  // 창이 떠 있는 동안 뒤 화면이 함께 스크롤되지 않게 한다
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  // 취소하는 동안 두 버튼이 잠겨 포커스가 창 밖으로 빠지지 않게 창 자체로 옮긴다
+  useEffect(() => {
+    if (isCanceling) dialogRef.current?.focus();
+  }, [isCanceling]);
 
   const close = () => {
     if (!isCanceling) onKeep();
@@ -258,6 +275,8 @@ function CancelDialog({ item, wardName, isCanceling, onKeep, onConfirm }: Cancel
   return (
     <div className={cx('overlay')} role="presentation" onClick={close}>
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className={cx('dialog')}
         role="dialog"
         aria-modal="true"
@@ -269,7 +288,11 @@ function CancelDialog({ item, wardName, isCanceling, onKeep, onConfirm }: Cancel
           // 포커스가 창 밖(가려진 화면)으로 나가지 않게 두 버튼 사이에서만 돈다
           if (event.key !== 'Tab') return;
           const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
-          if (buttons.length === 0) return;
+          // 취소하는 중(두 버튼 모두 잠김)에는 창에 머문다
+          if (buttons.length === 0) {
+            event.preventDefault();
+            return;
+          }
           const first = buttons[0];
           const last = buttons[buttons.length - 1];
           if (event.shiftKey && document.activeElement === first) {

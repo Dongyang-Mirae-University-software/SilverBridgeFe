@@ -177,4 +177,18 @@ describe('WardHospitalContent (Chrome)', () => {
     await expect.element(screen.getByRole('alert')).toHaveTextContent('지금은 병원 예약 서비스를 쓸 수 없어요.');
     await expect.element(screen.getByRole('button', { name: '다시 불러오기' })).toBeVisible();
   });
+
+  it('M-3 지난 진료의 취소·거절·미방문은 상태를 적어 다녀온 진료처럼 보이지 않게 한다', async () => {
+    api.getMyReservations.mockResolvedValue([
+      reservation(1, addDays(TODAY, -2), '10:00', 'CANCELED'),
+      reservation(2, addDays(TODAY, -3), '10:00', 'REJECTED'),
+      reservation(3, addDays(TODAY, -4), '10:00', 'NO_SHOW'),
+      reservation(4, addDays(TODAY, -5), '10:00', 'COMPLETED'),
+    ]);
+    const screen = renderContent();
+    const past = screen.getByRole('region', { name: '지난 진료' });
+    await expect.element(past.getByText('취소됨')).toBeVisible();
+    await expect.element(past.getByText('병원이 거절함')).toBeVisible();
+    await expect.element(past.getByText('방문하지 않음')).toBeVisible();
+  });
 });

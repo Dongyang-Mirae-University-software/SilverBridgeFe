@@ -154,6 +154,17 @@ export function isHospitalOpenNow(hospital: IHospital) {
   return hospital.operationStatus === 'OPEN';
 }
 
+// 지난 예약의 상태 표시(보호자·피보호자 화면 공용). 진료를 마친 예약(COMPLETED)과 날짜만 지난 예약은 따로 적지 않는다.
+const PAST_STATUS_LABEL: Partial<Record<IReservationItem['status'], string>> = {
+  CANCELED: '취소됨',
+  NO_SHOW: '방문하지 않음',
+  REJECTED: '병원이 거절함',
+};
+
+export function pastStatusLabel(status: IReservationItem['status']) {
+  return PAST_STATUS_LABEL[status] ?? null;
+}
+
 export function isActiveReservation(item: IReservationItem) {
   return ACTIVE_STATUS.includes(item.status);
 }

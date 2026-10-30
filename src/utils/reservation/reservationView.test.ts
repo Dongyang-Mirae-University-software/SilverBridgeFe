@@ -18,6 +18,7 @@ import {
   isHospitalOpenNow,
   isSlotPassed,
   kstNowTime,
+  pastStatusLabel,
   kstToday,
   reservationErrorMessage,
   splitReservations,
@@ -189,5 +190,14 @@ describe('reservationView - 점검 반영', () => {
     expect(isHospitalOpenNow({ ...base, operationStatus: 'CLOSED' })).toBe(false);
     expect(isHospitalOpenNow({ ...base, operationStatus: 'HOLIDAY' })).toBe(false);
     expect(isHospitalOpenNow({ ...base, operationStatus: 'BREAK_TIME' })).toBe(false);
+  });
+
+  it('지난 예약 상태 표시 - 취소·미방문·거절만 적고 완료·진행 중은 비운다', () => {
+    expect(pastStatusLabel('CANCELED')).toBe('취소됨');
+    expect(pastStatusLabel('NO_SHOW')).toBe('방문하지 않음');
+    expect(pastStatusLabel('REJECTED')).toBe('병원이 거절함');
+    expect(pastStatusLabel('COMPLETED')).toBeNull();
+    expect(pastStatusLabel('BOOKED')).toBeNull();
+    expect(pastStatusLabel('CONFIRMED')).toBeNull();
   });
 });

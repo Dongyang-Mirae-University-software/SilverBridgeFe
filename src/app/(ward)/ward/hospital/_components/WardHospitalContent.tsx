@@ -14,6 +14,7 @@ import {
   findHospitalByName,
   formatDateLong,
   formatTime,
+  pastStatusLabel,
   reservationErrorMessage,
   splitReservations,
 } from '@/utils/reservation/reservationView';
@@ -93,15 +94,19 @@ export function WardHospitalContent() {
         {past.length === 0 ? (
           <p className={cx('emptyRow')}>지난 진료가 없어요</p>
         ) : (
-          past.slice(page * PAST_PER_PAGE, (page + 1) * PAST_PER_PAGE).map(item => (
-            <div key={item.reservationId} className={cx('row', { canceled: item.status === 'CANCELED' })}>
-              <span className={cx('rowDate', 'pastDate')}>{shortDate(item.reservationDate)}</span>
-              <span className={cx('rowName')}>
-                {item.hospitalName} <span className={cx('rowDept')}>· {item.department}</span>
-              </span>
-              {item.status === 'CANCELED' && <span className={cx('tag')}>취소됨</span>}
-            </div>
-          ))
+          past.slice(page * PAST_PER_PAGE, (page + 1) * PAST_PER_PAGE).map(item => {
+            // 취소·거절·미방문은 다녀온 진료처럼 보이지 않게 흐리게 + 상태 표시
+            const status = pastStatusLabel(item.status);
+            return (
+              <div key={item.reservationId} className={cx('row', { canceled: status })}>
+                <span className={cx('rowDate', 'pastDate')}>{shortDate(item.reservationDate)}</span>
+                <span className={cx('rowName')}>
+                  {item.hospitalName} <span className={cx('rowDept')}>· {item.department}</span>
+                </span>
+                {status && <span className={cx('tag')}>{status}</span>}
+              </div>
+            );
+          })
         )}
       </section>
       <ReservationPager page={page} total={pastTotal} onChange={setPastPage} label="지난 진료 페이지" />

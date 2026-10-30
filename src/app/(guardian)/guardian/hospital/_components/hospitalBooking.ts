@@ -1,7 +1,7 @@
 // 보호자 병원 예약 화면 전용 도우미. 피보호자 화면과 함께 쓰는 판정은 utils/reservation/reservationView 그대로 쓴다.
 import { isAxiosError } from 'axios';
 
-import { IHospital, IReservationItem } from '@/service/interface/reservation';
+import { IHospital } from '@/service/interface/reservation';
 import { reservationErrorMessage } from '@/utils/reservation/reservationView';
 
 // 진료과는 진료과 카드에서 고른다 - 진료과가 하나뿐인 병원은 미리 정해 두고, 여럿이면 빈 값으로 시작한다
@@ -11,11 +11,12 @@ export type Pick = { hospital: IHospital; department: string };
 export const PHONE_PATTERN = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
 export const SYMPTOM_MAX = 200;
 
-// 병원 한 줄 = 병원 하나(진료과 목록은 줄 안에 보인다). 예약 접수를 멈춘 병원은 목록에 두지 않는다.
+// 병원 한 줄 = 병원 하나(진료과 목록은 줄 안에 보인다). 예약 접수를 멈춘 병원과
+// 진료과가 하나도 없는 병원(관리자가 진료과를 모두 지움 - 골라도 시간 칸을 못 묻는다)은 목록에 두지 않는다.
 export function searchHospitals(hospitals: IHospital[], query: string) {
   const keyword = query.trim();
   return hospitals
-    .filter(hospital => hospital.bookingAvailable)
+    .filter(hospital => hospital.bookingAvailable && hospital.departments.length > 0)
     .filter(
       hospital =>
         !keyword ||
@@ -40,17 +41,6 @@ export function ddayLabel(days: number) {
   if (days <= 0) return '오늘';
   if (days === 1) return '내일';
   return `${days}일 뒤`;
-}
-
-// 지난 진료 카드의 상태 표시. 진료를 마친 예약(COMPLETED)과 날짜만 지난 예약은 따로 적지 않는다.
-const PAST_STATUS_LABEL: Partial<Record<IReservationItem['status'], string>> = {
-  CANCELED: '취소됨',
-  NO_SHOW: '방문하지 않음',
-  REJECTED: '병원이 거절함',
-};
-
-export function pastStatusLabel(status: IReservationItem['status']) {
-  return PAST_STATUS_LABEL[status] ?? null;
 }
 
 // 입력하는 대로 "010-1234-5678" 꼴로 줄표를 넣는다
