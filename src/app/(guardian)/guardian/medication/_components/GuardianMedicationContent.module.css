@@ -25,7 +25,7 @@
 
 .addButton {
   display: inline-flex;
-  margin-left: auto; /* 새로고침 버튼은 화면에 떠 있어 이 줄에 자리를 차지하지 않는다 - [약 추가]는 늘 오른쪽 */
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
   min-height: 50px;
@@ -39,4 +39,23 @@
   font-weight: 800;
   padding: 0 22px;
   white-space: nowrap;
+}
+
+/* 피보호자 탭 + [약 추가] 한 줄. 탭이 길면 탭 칸 안에서 가로로 넘긴다 */
+.wardRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wardTabs {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .addButton {
+    min-height: 46px;
+    padding: 0 16px;
+  }
 }

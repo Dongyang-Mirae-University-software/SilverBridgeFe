@@ -164,6 +164,7 @@
 
 .slotTitle {
   flex: 1;
+  outline: none;
   min-width: 0;
   margin: 0;
   color: var(--sb-ink);
@@ -324,21 +325,22 @@
   opacity: 0.55;
 }
 
-.deleteError {
+.deleteError,
+.alertError {
   margin: 0;
-  border-top: 1px solid var(--sb-line-soft);
+  border-radius: 12px;
   background: var(--sb-danger-soft);
   color: var(--sb-danger);
   font-size: 15px;
   font-weight: 700;
-  padding: 12px 20px;
+  padding: 12px 16px;
+  word-break: keep-all;
 }
 
 .listFooter {
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 10px 20px;
+  margin-top: -8px;
 }
 
 .dangerTextButton {

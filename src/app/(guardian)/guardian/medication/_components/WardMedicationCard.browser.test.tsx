@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Fragment, ReactNode } from 'react';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
+import { userEvent } from '@vitest/browser/context';
 
 import type { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import useModalStore from '@/store/modalStore';
@@ -84,8 +85,9 @@ function ModalOutlet() {
 }
 
 function renderCard(medications: MedicationItem[]) {
+  const queryClient = new QueryClient();
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
   const screen = render(<WardMedicationCard summary={summary(medications)} />, { wrapper });
   render(<ModalOutlet />, { wrapper });
@@ -171,13 +173,48 @@ describe('WardMedicationCard (Chrome)', () => {
     await expect.element(screen.getByRole('alert')).toHaveTextContent('삭제하지 못했어요');
   });
 
+  it('삭제 확인은 Esc로 닫히고, 다른 시간대 칸을 눌러도 닫힌다 (점검 L-1)', async () => {
+    const screen = renderCard([
+      medication(1, { name: '혈압약', timeSlot: 'MORNING', doseTime: '08:00:00' }),
+      medication(2, { name: '위장약', timeSlot: 'LUNCH', doseTime: '12:00:00' }),
+    ]);
+    const tiles = screen.getByRole('group', { name: '시간대 고르기' });
+
+    await screen.getByRole('button', { name: '혈압약 삭제', exact: true }).click();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByText('삭제해도 지난 복용 이력은 남아요').query()).toBeNull();
+    await expect.element(screen.getByRole('button', { name: '혈압약 삭제', exact: true })).toHaveFocus();
+
+    await screen.getByRole('button', { name: '혈압약 삭제', exact: true }).click();
+    await tiles.getByRole('button', { name: /점심/ }).click();
+    await tiles.getByRole('button', { name: /아침/ }).click();
+    expect(screen.getByText('삭제해도 지난 복용 이력은 남아요').query()).toBeNull();
+  });
+
+  it('단건 삭제로 그 줄이 사라지면 시간대 제목으로 포커스를 옮긴다 (점검 L-2)', async () => {
+    api.deleteGuardianMedication.mockResolvedValue({});
+    api.getGuardianMedications.mockResolvedValue([]);
+    const meds = [medication(1, { name: '혈압약' }), medication(2, { name: '위장약' })];
+    const screen = renderCard(meds);
+
+    await screen.getByRole('button', { name: '혈압약 삭제', exact: true }).click();
+    await screen.getByRole('button', { name: '혈압약 삭제하기' }).click();
+    await vi.waitFor(() => expect(api.deleteGuardianMedication).toHaveBeenCalledWith(1));
+    // 다시 불러온 목록에서 그 약이 빠진 것처럼 다시 그린다
+    screen.rerender(<WardMedicationCard summary={summary([meds[1]])} />);
+    await expect.element(screen.getByRole('heading', { name: /아침 약/ })).toHaveFocus();
+  });
+
   it('약이 둘 이상이면 전체 삭제 기능을 유지한다', async () => {
     api.deleteWardMedicationBatch.mockResolvedValue(2);
     api.getGuardianMedications.mockResolvedValue([]);
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     const screen = renderCard([medication(1), medication(2)]);
 
-    await screen.getByRole('button', { name: '약 전부 삭제' }).click();
+    // 고른 시간대 카드 밖에 두고 모든 시간대라고 밝힌다 (점검 M-2)
+    const deleteAll = screen.getByRole('button', { name: '모든 시간대 약 전부 삭제' });
+    expect(deleteAll.element().closest('section')).toBeNull();
+    await deleteAll.click();
     await vi.waitFor(() => expect(api.deleteWardMedicationBatch).toHaveBeenCalledWith('W1', [1, 2]));
   });
 
@@ -188,8 +225,8 @@ describe('WardMedicationCard (Chrome)', () => {
     await expect.element(screen.getByRole('button', { name: /안 드시면 알림 받을 시각 오후 9:00/ })).toBeVisible();
     expect(screen.getByRole('checkbox').query()).toBeNull();
     await screen.getByRole('button', { name: /안 드시면 알림 받을 시각/ }).click();
-    await screen.getByRole('group', { name: '시' }).getByRole('button', { name: '10', exact: true }).click();
-    await screen.getByRole('group', { name: '분' }).getByRole('button', { name: '30', exact: true }).click();
+    await screen.getByRole('group', { name: '시', exact: true }).getByRole('button', { name: '10', exact: true }).click();
+    await screen.getByRole('group', { name: '분', exact: true }).getByRole('button', { name: '30', exact: true }).click();
     await screen.getByRole('button', { name: '오후 10:30로 정하기' }).click();
     await vi.waitFor(() =>
       expect(api.updateMedicationAlertSetting).toHaveBeenCalledWith('W1', {
@@ -197,6 +234,28 @@ describe('WardMedicationCard (Chrome)', () => {
         missedAlertTime: '22:30:00',
       }),
     );
+  });
+
+  it('알림 시각 저장이 실패하면 알린다 (점검 M-1)', async () => {
+    api.updateMedicationAlertSetting.mockRejectedValue(new Error('network'));
+    const screen = renderCard([medication(1)]);
+
+    await screen.getByRole('button', { name: /안 드시면 알림 받을 시각/ }).click();
+    await screen.getByRole('group', { name: '시', exact: true }).getByRole('button', { name: '10', exact: true }).click();
+    await screen.getByRole('button', { name: '오후 10:00로 정하기' }).click();
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('알림 시각을 저장하지 못했어요');
+  });
+
+  it('알림 시각 창은 Esc로 저장하지 않고 닫히고 포커스가 버튼으로 돌아온다 (점검 L-1)', async () => {
+    const screen = renderCard([medication(1)]);
+    const toggle = screen.getByRole('button', { name: /안 드시면 알림 받을 시각/ });
+
+    await toggle.click();
+    await screen.getByRole('group', { name: '시', exact: true }).getByRole('button', { name: '10', exact: true }).click();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByRole('group', { name: '시', exact: true }).query()).toBeNull();
+    await expect.element(toggle).toHaveFocus();
+    expect(api.updateMedicationAlertSetting).not.toHaveBeenCalled();
   });
 
   it('등록된 약이 없어도 알림 시각 드롭다운은 항상 보여 준다', async () => {
