@@ -3,6 +3,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { page } from '@vitest/browser/context';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act } from 'react';
+import { hydrateRoot } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
 import { render } from 'vitest-browser-react';
 
 import PushNotificationListener from './PushNotificationListener';
@@ -164,5 +167,29 @@ describe('반응형 위치', () => {
     else expect(800 - area.bottom).toBeLessThan(40);
     if (width > 520) expect(area.width).toBeLessThanOrEqual(360);
     screen.unmount();
+  });
+});
+
+// 하이드레이션 오류("1 Issue") 재발 방지 - 알림 영역은 서버 HTML에도 있어야 첫 클라이언트 렌더와 같다.
+// (2026-10-31 gosky dev 서버가 알림 영역을 그리지 않던 옛 컴파일을 서버 렌더에 써서 어긋났다)
+describe('서버 렌더와 첫 화면', () => {
+  it.each(['/login', '/ward', '/guardian'])('%s: 서버 HTML에 알림 영역이 있고 하이드레이션 차이가 없다', async pathname => {
+    mocks.pathname = pathname;
+    const tree = () => (
+      <QueryClientProvider client={new QueryClient()}>
+        <PushNotificationListener />
+      </QueryClientProvider>
+    );
+    const html = renderToString(tree());
+    expect(html).toContain('aria-label="새 알림"');
+
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    document.body.appendChild(container);
+    const onRecoverableError = vi.fn();
+    const root = await act(async () => hydrateRoot(container, tree(), { onRecoverableError }));
+    expect(onRecoverableError).not.toHaveBeenCalled();
+    act(() => root.unmount());
+    container.remove();
   });
 });
