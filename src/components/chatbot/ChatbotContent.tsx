@@ -26,38 +26,39 @@ function makeSessionId() {
 }
 
 function buildWelcomeMessage(name?: string, isGuardian = false): ChatMessage {
-  const title = name ? `${name}님 안녕하세요 😊` : '안녕하세요 😊';
-
   if (isGuardian && name) {
     return {
       id: 'welcome',
       role: 'assistant',
-      content: `${name} 님의 건강에 대해 무엇이 궁금하신가요?\n복약·혈압·증상·병원 예약을 도와드릴게요.`,
+      content: `안녕하세요\n${name}의 증상을 말씀해 주시면 맞는 진료과를 알려 드리고, 바로 병원 예약도 도와드려요.`,
       timestamp: new Date().toISOString(),
     };
   }
 
+  // 피보호자 화면의 빠른 질문은 넓은 화면에서 오른쪽, 휴대폰에서 아래에 놓이므로 위치를 말하지 않는다.
   return {
     id: 'welcome',
     role: 'assistant',
-    content: `${title}\n오늘 컨디션은 어떠세요?\n약 복용·혈압·증상 무엇이든 편하게 물어보세요.`,
+    content: `${name ? `안녕하세요, ${name} 님` : '안녕하세요'}\n어디가 불편하세요?\n버튼을 눌러 물어보세요.`,
     timestamp: new Date().toISOString(),
   };
 }
 
-const QUICK_PROMPTS = [
-  '💊 오늘 약 먹어야 해요?',
-  '🩺 혈압이 어떤가요?',
-  '😵 머리가 좀 아파요',
-  '🏥 다음 병원 예약 알려줘',
+const GUARDIAN_PROMPTS = [
+  { text: '병원 예약하고 싶어요', primary: true },
+  { text: '무릎이 아프다고 하세요' },
+  { text: '혈압약을 같이 먹어도 되나요?' },
+  { text: '다음 병원 예약 알려줘' },
 ];
+
+const WARD_PROMPTS = ['머리가 아파요', '배가 아파요', '무릎이 아파요', '어지러워요'];
 
 const COMPOSER_MAX_LINES = 2;
 
 interface ChatbotContentProps {
   /**
-   * 기존 보호자 상담 화면은 선택 대상·상담 기록을 제공한다.
-   * 피보호자 화면은 v13의 단순하고 큰 글씨 상담 화면을 사용한다.
+   * 보호자 화면은 선택 대상·상담 기록·추천 질문 칩을 제공한다.
+   * 피보호자 화면은 대화창과 큰 빠른 질문 버튼을 나란히 둔 큰 글씨 상담 화면을 사용한다.
    */
   variant?: 'guardian' | 'ward';
 }
@@ -75,7 +76,6 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
-  const [quickPromptsOpen, setQuickPromptsOpen] = useState(() => isWardChat);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [chatLogs, setChatLogs] = useState<ChatLogItem[]>([]);
   const [isLogsLoading, setIsLogsLoading] = useState(false);
@@ -241,11 +241,6 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     void send('', { field, value }, label);
   }
 
-  function handleQuickPrompt(prompt: string) {
-    setInput(prompt);
-    textareaRef.current?.focus();
-  }
-
   async function handleOpenHistory() {
     setHistoryOpen(true);
     setIsLogsLoading(true);
@@ -260,8 +255,101 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     }
   }
 
+  const board = (
+    <section className={styles.board}>
+      {fallback && <div className={styles.banner}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
+
+      <div ref={listRef} className={styles.messageList}>
+        {messages.map(message => (
+          <ChatBubble
+            key={message.id}
+            message={message}
+            isLastAssistant={message.id === lastAssistantId}
+            onUiSelect={handleUiSelect}
+            userImageUrl={profile?.profileImage}
+            userName={profile?.name}
+            variant={isWardChat ? 'ward' : 'guardian'}
+          />
+        ))}
+
+        {sending && (
+          <div className={styles.typing} role="status" aria-live="polite" aria-label="답변을 만들고 있어요">
+            <span className={styles.typingDot} />
+            <span className={styles.typingDot} />
+            <span className={styles.typingDot} />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+
+  const composer = (
+    <footer className={styles.composer}>
+      <div className={styles.inputWrap}>
+        <textarea
+          ref={textareaRef}
+          className={styles.textarea}
+          rows={1}
+          aria-label="궁금한 점 입력"
+          placeholder={isWardChat ? '직접 써서 물어보기' : '여기에 궁금한 점을 써 주세요'}
+          value={input}
+          disabled={sending}
+          onChange={e => {
+            setInput(e.target.value);
+            resizeComposer();
+          }}
+          onKeyDown={handleKeyDown}
+        />
+        <button
+          type="button"
+          className={styles.sendButton}
+          disabled={sending || !input.trim()}
+          onClick={() => void send(input)}
+        >
+          보내기
+        </button>
+      </div>
+    </footer>
+  );
+
+  if (isWardChat) {
+    return (
+      <div className={`${styles.chatPage} ${styles.wardVariant}`}>
+        <section className={styles.shell}>
+          <h1 className={styles.wardTitle}>AI 의료 챗봇</h1>
+          <div className={styles.wardBody}>
+            <div className={styles.wardChatCard}>
+              {board}
+              {composer}
+            </div>
+
+            <section className={styles.wardQuickPanel} aria-label="추천 질문">
+              <p className={styles.wardQuickTitle}>눌러서 물어보세요</p>
+              <div className={styles.wardQuickGrid}>
+                {WARD_PROMPTS.map(prompt => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    className={styles.wardQuickButton}
+                    disabled={sending}
+                    onClick={() => void send(prompt)}
+                  >
+                    <span className={styles.wardQuickIcon} aria-hidden="true">
+                      <Icon name="alert" size={28} decorative />
+                    </span>
+                    <span>{prompt}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
-    <div className={`${styles.chatPage} ${isWardChat ? styles.wardVariant : ''}`}>
+    <div className={styles.chatPage}>
       <section className={styles.shell}>
         <header className={styles.header}>
           <div className={styles.brand}>
@@ -283,20 +371,15 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             </div>
             <div className={styles.brandCopy}>
               <h1>AI 의료 챗봇</h1>
-              <p>
-                {!isWardChat && <span className={styles.statusDot} />}
-                {isWardChat ? '몸이 궁금할 때 언제든 물어보세요' : '증상 상담부터 병원 예약까지 도와드려요'}
-              </p>
+              <p>증상 상담부터 병원 예약까지 도와드려요</p>
             </div>
           </div>
-          {!isWardChat && (
-            <div className={styles.headerActions}>
-              <button type="button" className={styles.historyButton} onClick={() => void handleOpenHistory()}>
-                <Icon name="message" size={16} decorative />
-                상담 기록
-              </button>
-            </div>
-          )}
+          <div className={styles.headerActions}>
+            <button type="button" className={styles.historyButton} onClick={() => void handleOpenHistory()}>
+              <Icon name="message" size={16} decorative />
+              상담 기록
+            </button>
+          </div>
         </header>
 
         {isGuardian && activeWards.length > 0 && selectedWard && (
@@ -316,88 +399,27 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         )}
 
         <div className={styles.body}>
-          <section className={styles.board}>
-            {fallback && <div className={styles.banner}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
+          {board}
 
-            <div ref={listRef} className={styles.messageList}>
-              {messages.map(message => (
-                <ChatBubble
-                  key={message.id}
-                  message={message}
-                  isLastAssistant={message.id === lastAssistantId}
-                  onUiSelect={handleUiSelect}
-                  userImageUrl={profile?.profileImage}
-                  userName={profile?.name}
-                  variant={isWardChat ? 'ward' : 'guardian'}
-                />
-              ))}
-
-              {sending && (
-                <div className={styles.typing} role="status" aria-live="polite" aria-label="답변을 만들고 있어요">
-                  <span className={styles.typingDot} />
-                  <span className={styles.typingDot} />
-                  <span className={styles.typingDot} />
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className={`${styles.quickPromptPanel} ${quickPromptsOpen ? styles.quickPromptPanelOpen : ''}`} aria-label="추천 질문">
-            {isWardChat ? (
-              <p className={styles.wardPromptTitle}>눌러서 물어보세요</p>
-            ) : (
-              <button
-                type="button"
-                className={styles.quickPromptToggle}
-                aria-expanded={quickPromptsOpen}
-                aria-controls="chat-quick-prompts"
-                onClick={() => setQuickPromptsOpen(open => !open)}
-              >
-                이런 걸 물어보세요
-                <Icon name="chevronRight" size={14} className={`${styles.quickPromptChevron} ${quickPromptsOpen ? styles.quickPromptChevronOpen : ''}`} decorative />
-              </button>
-            )}
-            <div id="chat-quick-prompts" className={styles.quickPromptRow} hidden={!quickPromptsOpen}>
-              {QUICK_PROMPTS.map(prompt => (
+          <section className={styles.quickPromptPanel} aria-label="추천 질문">
+            <p className={styles.quickPromptTitle}>눌러서 물어보세요</p>
+            <div className={styles.quickPromptRow}>
+              {GUARDIAN_PROMPTS.map(prompt => (
                 <button
-                  key={prompt}
+                  key={prompt.text}
                   type="button"
-                  className={styles.quickPromptButton}
+                  className={`${styles.quickPromptButton} ${prompt.primary ? styles.quickPromptPrimary : ''}`}
                   disabled={sending}
-                  onClick={() => (isWardChat ? void send(prompt) : handleQuickPrompt(prompt))}
+                  onClick={() => void send(prompt.text)}
                 >
-                  {prompt}
+                  {prompt.primary && <Icon name="calendar" size={18} decorative />}
+                  {prompt.text}
                 </button>
               ))}
             </div>
           </section>
 
-          <footer className={styles.composer}>
-            <div className={styles.inputWrap}>
-              <textarea
-                ref={textareaRef}
-                className={styles.textarea}
-                rows={1}
-                placeholder={isWardChat ? '여기에 궁금한 점을 써 주세요' : '궁금한 점을 입력하세요...'}
-                value={input}
-                disabled={sending}
-                onChange={e => {
-                  setInput(e.target.value);
-                  resizeComposer();
-                }}
-                onKeyDown={handleKeyDown}
-              />
-              <button
-                type="button"
-                className={styles.sendButton}
-                disabled={sending || !input.trim()}
-                onClick={() => void send(input)}
-                aria-label="전송"
-              >
-                {isWardChat ? '보내기' : <Icon name="back" size={18} className={styles.sendIcon} decorative />}
-              </button>
-            </div>
-          </footer>
+          {composer}
         </div>
       </section>
 

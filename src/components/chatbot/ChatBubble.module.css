@@ -67,7 +67,7 @@
   width: fit-content;
   max-width: min(700px, calc(100vw - 168px));
   margin-left: auto;
-  border-radius: 18px 18px 4px 18px;
+  border-radius: 18px 4px 18px 18px;
   background: var(--sb-brand);
   color: #fff;
   padding: 14px 18px;
@@ -76,9 +76,9 @@
 
 .bubbleUser p {
   margin: 0;
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -99,9 +99,9 @@
 .replyText {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -152,63 +152,71 @@
   color: #c0392b;
 }
 
-.timeUser,
-.timeAssistant {
-  color: var(--sb-ink-mute);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1;
+/* 피보호자 챗봇: 아바타·시각 없이 행 폭의 86%까지 쓰는 26px 말풍선. */
+.wardBubble .messageColumnUser,
+.wardBubble .assistantMessageRow {
+  max-width: 86%;
 }
 
-.timeUser {
-  align-self: flex-end;
-  padding-bottom: 4px;
-}
-
-.timeAssistant {
-  flex-shrink: 0;
-  padding-bottom: 4px;
-}
-
-/* 피보호자 챗봇(v13): 시각 없이 큰 글씨 말풍선과 곰돌이 본인 아바타를 사용한다. */
 .wardBubble .bubbleUser,
 .wardBubble .bubbleAssistant {
-  max-width: min(75%, calc(100vw - 132px));
+  max-width: 100%;
+  padding: 18px 22px;
 }
 
 .wardBubble .bubbleUser {
-  border-radius: 18px 4px 18px 18px;
+  border-radius: 22px 6px 22px 22px;
+  box-shadow: none;
 }
 
 .wardBubble .bubbleAssistant {
-  border-radius: 4px 18px 18px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 6px 22px 22px;
+  box-shadow: none;
 }
 
 .wardBubble .bubbleUser p,
 .wardBubble .replyText {
-  font-size: 21px;
-  line-height: 1.55;
+  font-size: 26px;
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
-.wardAvatar {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 50%;
-  background: #f5c9a8;
+.wardBubble .bubbleUser p {
+  font-weight: 800;
+}
+
+.wardBubble .replyText {
+  font-weight: 700;
 }
 
 @media (max-width: 760px) {
-  .wardBubble .bubbleUser,
-  .wardBubble .bubbleAssistant {
-    max-width: calc(100vw - 116px);
+  /* 시각 표시가 빠져 아바타(38px)+간격+목록 여백만 빼면 된다. 좁게 두면 예약 카드가 세로로 찌그러진다. */
+  .bubbleUser,
+  .bubbleAssistant {
+    max-width: calc(100vw - 84px);
   }
 
+  .bubbleUser p,
+  .replyText {
+    font-size: 18px;
+  }
+
+  .wardBubble .messageColumnUser,
+  .wardBubble .assistantMessageRow {
+    max-width: 92%;
+  }
+
+  .wardBubble .bubbleUser,
+  .wardBubble .bubbleAssistant {
+    padding: 14px 18px;
+  }
+
+  /* 시니어 휴대폰 화면도 22px 아래로 줄이지 않는다(이전 18px보다 크게). */
   .wardBubble .bubbleUser p,
   .wardBubble .replyText {
-    font-size: 18px;
+    font-size: 22px;
   }
 }
 
