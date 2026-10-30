@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 
 import { Icon } from '@/components/Icon';
 import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
@@ -45,8 +46,15 @@ function buildWelcomeMessage(name?: string, isGuardian = false): ChatMessage {
   };
 }
 
-const GUARDIAN_PROMPTS = [
-  { text: '병원 예약하고 싶어요', primary: true },
+type GuardianPrompt = {
+  text: string;
+  primary?: boolean;
+  /** send: AI에 보낸다(기본). reservation: AI를 부르지 않고 내 말풍선만 남긴 뒤 병원 예약 화면으로 이동한다. */
+  action?: 'send' | 'reservation';
+};
+
+const GUARDIAN_PROMPTS: GuardianPrompt[] = [
+  { text: '병원 예약하고 싶어요', primary: true, action: 'reservation' },
   { text: '무릎이 아프다고 하세요' },
   { text: '혈압약을 같이 먹어도 되나요?' },
   { text: '다음 병원 예약 알려줘' },
@@ -55,6 +63,10 @@ const GUARDIAN_PROMPTS = [
 const WARD_PROMPTS = ['머리가 아파요', '배가 아파요', '무릎이 아파요', '어지러워요'];
 
 const MAX_SUGGESTED = 3;
+
+const RESERVATION_PATH = '/guardian/hospital';
+/** 남긴 말풍선을 잠깐 보여 준 뒤 이동한다. */
+const RESERVATION_NAV_DELAY_MS = 300;
 
 /** 최신 답의 이어서 물어볼 질문. 없거나 형식이 다르면 빈 목록(고정 문장을 쓴다). */
 function latestSuggestions(messages: ChatMessage[]): string[] {
@@ -68,10 +80,10 @@ function latestSuggestions(messages: ChatMessage[]): string[] {
 }
 
 /**
- * 보호자: 예약 칩은 항상 맨 앞(보낸 뒤에도 남긴다), 그 뒤에 이어질 질문(없으면 고정 문장).
+ * 보호자: 예약 칩은 항상 맨 앞(누른 뒤에도 남긴다), 그 뒤에 이어질 질문(없으면 고정 문장).
  * 이 대화창에서 이미 보낸 문장은 뺀다.
  */
-function guardianPrompts(suggested: string[], sent: ReadonlySet<string>): Array<{ text: string; primary?: boolean }> {
+function guardianPrompts(suggested: string[], sent: ReadonlySet<string>): GuardianPrompt[] {
   const booking = GUARDIAN_PROMPTS[0];
   const unsent = suggested.filter(text => text !== booking.text && !sent.has(text));
   const rest =
@@ -100,6 +112,7 @@ interface ChatbotContentProps {
 }
 
 export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentProps) {
+  const router = useRouter();
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profile = getUserProfileData(profileResponse);
   const isGuardian = getAuthRole() === 'GUARDIAN';
@@ -127,6 +140,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const sendingRef = useRef(sending);
+  const reservationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   sendingRef.current = sending;
 
@@ -276,6 +290,20 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     },
     [isGuardian, selectedWard, sessionId],
   );
+
+  useEffect(
+    () => () => {
+      if (reservationTimerRef.current) clearTimeout(reservationTimerRef.current);
+    },
+    [],
+  );
+
+  // AI를 부르지 않으므로 챗 기록에 저장되지 않고, 보낸 문장 기억에도 넣지 않는다(칩은 항상 남는다).
+  function openReservation(text: string) {
+    if (sendingRef.current || reservationTimerRef.current) return;
+    setMessages(prev => [...prev, { id: makeId(), role: 'user', content: text, timestamp: new Date().toISOString() }]);
+    reservationTimerRef.current = setTimeout(() => router.push(RESERVATION_PATH), RESERVATION_NAV_DELAY_MS);
+  }
 
   function handleWardSelect(wardId: string) {
     if (wardId === selectedWard?.partnerUserId) return;
@@ -475,7 +503,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                   type="button"
                   className={`${styles.quickPromptButton} ${prompt.primary ? styles.quickPromptPrimary : ''}`}
                   disabled={sending}
-                  onClick={() => void send(prompt.text)}
+                  onClick={() =>
+                    prompt.action === 'reservation' ? openReservation(prompt.text) : void send(prompt.text)
+                  }
                 >
                   {prompt.primary && <Icon name="calendar" size={18} decorative />}
                   {prompt.text}

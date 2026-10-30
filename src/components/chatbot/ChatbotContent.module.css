@@ -1043,6 +1043,10 @@
     padding: 0 10px;
     text-align: center;
   }
+  /* 보낸 문장을 빼서 1·3개가 남으면 마지막 버튼을 두 칸 폭으로(빈 칸 방지). */
+  .wardQuickButton:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Chat shell polish */
