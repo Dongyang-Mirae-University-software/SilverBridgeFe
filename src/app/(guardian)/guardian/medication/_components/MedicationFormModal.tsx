@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useId, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { useModalDialog } from '@/hooks/useModalDialog';
@@ -9,6 +9,7 @@ import { MedicationItem, MedicationTimeSlot } from '@/service/interface/medicati
 import { getMedicationTimeSlotLabel } from '@/utils/format/medication';
 import {
   decreaseDose,
+  DOSE_CHIPS,
   formatDoseLabel,
   increaseDose,
   MAX_DOSE_AMOUNT,
@@ -19,6 +20,18 @@ import styles from './MedicationFormModal.module.css';
 const cx = classNames.bind(styles);
 
 const TIME_SLOTS: MedicationTimeSlot[] = ['MORNING', 'LUNCH', 'DINNER', 'BEDTIME'];
+
+// 복용 시각으로 시간대를 정한다 - BE MedicationTimeSlot.fromDoseTime·일괄 등록과 같은 규칙
+// (04~10시 아침 / 11~15시 점심 / 16~20시 저녁 / 그 외 취침 전). 시간대와 시각이 따로 움직이면 "점심 01:40" 같은
+// 약이 생겨 시간대 칸 순서와 알림 묶음 문구가 틀어졌다(2026-10-30 gosky)
+function slotFromTime(hhmm: string): MedicationTimeSlot | null {
+  const hour = Number(hhmm.slice(0, 2));
+  if (!/^\d{2}:\d{2}/.test(hhmm) || Number.isNaN(hour)) return null;
+  if (hour >= 4 && hour < 11) return 'MORNING';
+  if (hour >= 11 && hour < 16) return 'LUNCH';
+  if (hour >= 16 && hour < 21) return 'DINNER';
+  return 'BEDTIME';
+}
 
 interface MedicationFormValue {
   name: string;
@@ -38,10 +51,12 @@ interface MedicationFormModalProps {
 }
 
 function toFormValue(initial: MedicationItem): MedicationFormValue {
+  const doseTime = initial.doseTime.slice(0, 5);
   return {
     name: initial.name,
-    timeSlot: initial.timeSlot,
-    doseTime: initial.doseTime.slice(0, 5),
+    // 이미 어긋나 저장된 옛 약도 열 때부터 시각에 맞는 시간대로 보여 준다 - 저장하면 바로잡힌다
+    timeSlot: slotFromTime(doseTime) ?? initial.timeSlot,
+    doseTime,
     doseAmount: initial.doseAmount,
     memo: initial.memo ?? '',
   };
@@ -49,6 +64,7 @@ function toFormValue(initial: MedicationItem): MedicationFormValue {
 
 export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSubmit, onClose }: MedicationFormModalProps) {
   const [value, setValue] = useState<MedicationFormValue>(() => toFormValue(initial));
+  const slotHintId = useId();
   // 저장 중에 닫으면 실패 안내를 볼 수 없다 - 저장이 끝날 때까지 닫지 않는다
   const requestClose = () => {
     if (isSubmitting) return;
@@ -108,9 +124,11 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
               복용 시간
               <select
                 value={value.timeSlot}
-                onChange={event =>
-                  setValue(current => ({ ...current, timeSlot: event.target.value as MedicationTimeSlot }))
-                }
+                onChange={event => {
+                  // 시간대를 고르면 시각을 그 시간대의 기본 시각으로(약 추가 칩과 같은 08·12·19·21시)
+                  const timeSlot = event.target.value as MedicationTimeSlot;
+                  setValue(current => ({ ...current, timeSlot, doseTime: DOSE_CHIPS[timeSlot].time }));
+                }}
               >
                 {TIME_SLOTS.map(slot => (
                   <option key={slot} value={slot}>
@@ -125,10 +143,18 @@ export function MedicationFormModal({ initial, isSubmitting, errorMessage, onSub
               <input
                 type="time"
                 value={value.doseTime}
-                onChange={event => setValue(current => ({ ...current, doseTime: event.target.value }))}
+                onChange={event => {
+                  // 시각을 바꾸면 시간대가 따라간다(지우는 중처럼 시각이 비면 시간대는 그대로)
+                  const doseTime = event.target.value;
+                  setValue(current => ({ ...current, doseTime, timeSlot: slotFromTime(doseTime) ?? current.timeSlot }));
+                }}
+                aria-describedby={slotHintId}
               />
             </label>
           </div>
+          <p id={slotHintId} className={cx('slotHint')}>
+            복용 시간은 시각에 맞춰 정해져요 (오전 4시~10시 아침 · 11시~오후 3시 점심 · 오후 4시~8시 저녁 · 그 외 취침 전)
+          </p>
 
           <label className={cx('field')}>
             복용량

@@ -7,7 +7,7 @@ import { render } from 'vitest-browser-react';
 import type { MedicationItem } from '@/service/interface/medication';
 import { MedicationFormModal } from './MedicationFormModal';
 
-function medication(doseAmount: number): MedicationItem {
+function medication(doseAmount: number, overrides: Partial<MedicationItem> = {}): MedicationItem {
   return {
     medicationId: 1,
     name: '혈압약',
@@ -17,16 +17,17 @@ function medication(doseAmount: number): MedicationItem {
     memo: null,
     taken: false,
     takenAt: null,
+    ...overrides,
   };
 }
 
-function renderModal(doseAmount: number, isSubmitting = false) {
+function renderModal(doseAmount: number, isSubmitting = false, overrides: Partial<MedicationItem> = {}) {
   const onSubmit = vi.fn();
   const onClose = vi.fn();
   const screen = render(
     <MedicationFormModal
       wardName="테스트"
-      initial={medication(doseAmount)}
+      initial={medication(doseAmount, overrides)}
       isSubmitting={isSubmitting}
       onSubmit={onSubmit}
       onClose={onClose}
@@ -38,6 +39,32 @@ function renderModal(doseAmount: number, isSubmitting = false) {
 describe('MedicationFormModal (Chrome)', () => {
   afterEach(() => {
     document.body.innerHTML = '';
+  });
+
+  // 시간대는 시각으로 정한다(2026-10-30) - 따로 움직이면 "점심 01:40" 같은 약이 생겼다
+  it('시각을 바꾸면 복용 시간(시간대)이 따라가고, 저장 본문도 둘이 맞는다', async () => {
+    const { screen, onSubmit } = renderModal(1);
+    const slot = screen.getByRole('combobox', { name: '복용 시간' });
+
+    await userEvent.fill(screen.getByLabelText('복용 시각'), '20:30');
+    await expect.element(slot).toHaveValue('DINNER');
+    await screen.getByRole('button', { name: '수정' }).click();
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ timeSlot: 'DINNER', doseTime: '20:30' }));
+  });
+
+  it('복용 시간(시간대)을 고르면 시각이 그 시간대의 기본 시각으로 바뀐다', async () => {
+    const { screen } = renderModal(1);
+
+    await screen.getByRole('combobox', { name: '복용 시간' }).selectOptions('LUNCH');
+    await expect.element(screen.getByLabelText('복용 시각')).toHaveValue('12:00');
+  });
+
+  it('이미 어긋나 저장된 약(점심 01:40)은 열 때부터 시각에 맞는 시간대로 보이고, 그대로 저장하면 바로잡힌다', async () => {
+    const { screen, onSubmit } = renderModal(1, false, { timeSlot: 'LUNCH', doseTime: '01:40:00' });
+
+    await expect.element(screen.getByRole('combobox', { name: '복용 시간' })).toHaveValue('BEDTIME');
+    await screen.getByRole('button', { name: '수정' }).click();
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ timeSlot: 'BEDTIME', doseTime: '01:40' }));
   });
 
   it('반 알 약: 반알로 보이고 줄이기는 막히며, 늘리면 1알로 저장된다', async () => {
