@@ -67,19 +67,24 @@ function latestSuggestions(messages: ChatMessage[]): string[] {
   );
 }
 
-/** 보호자: 예약 칩은 항상 맨 앞, 그 뒤에 이어질 질문(없으면 고정 문장). */
-function guardianPrompts(suggested: string[]): Array<{ text: string; primary?: boolean }> {
-  if (suggested.length === 0) return GUARDIAN_PROMPTS;
+/**
+ * 보호자: 예약 칩은 항상 맨 앞(보낸 뒤에도 남긴다), 그 뒤에 이어질 질문(없으면 고정 문장).
+ * 이 대화창에서 이미 보낸 문장은 뺀다.
+ */
+function guardianPrompts(suggested: string[], sent: ReadonlySet<string>): Array<{ text: string; primary?: boolean }> {
   const booking = GUARDIAN_PROMPTS[0];
-  return [booking, ...suggested.filter(text => text !== booking.text).map(text => ({ text }))];
+  const unsent = suggested.filter(text => text !== booking.text && !sent.has(text));
+  const rest =
+    unsent.length > 0 ? unsent.map(text => ({ text })) : GUARDIAN_PROMPTS.slice(1).filter(p => !sent.has(p.text));
+  return [booking, ...rest];
 }
 
-/** 피보호자: 이어질 질문을 먼저, 남는 칸은 기본 문장으로 채워 큰 버튼 4개 배치를 유지한다. */
-function wardPrompts(suggested: string[]) {
-  const items = suggested.map(text => ({ text, suggested: true }));
+/** 피보호자: 이어질 질문을 먼저, 남는 칸은 기본 문장으로 채운다(최대 4개). 이미 보낸 문장은 빼므로 칸 수가 줄 수 있다. */
+function wardPrompts(suggested: string[], sent: ReadonlySet<string>) {
+  const items = suggested.filter(text => !sent.has(text)).map(text => ({ text, suggested: true }));
   for (const text of WARD_PROMPTS) {
     if (items.length >= WARD_PROMPTS.length) break;
-    if (!suggested.includes(text)) items.push({ text, suggested: false });
+    if (!sent.has(text) && !suggested.includes(text)) items.push({ text, suggested: false });
   }
   return items;
 }
@@ -103,6 +108,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
   const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId) ?? activeWards[0] ?? null;
   const [sessionId, setSessionId] = useState(makeSessionId);
+  // 대화창(sessionId)마다 이미 보낸 문장 - 빠른 질문에서 뺀다. 상담 내용이라 브라우저 저장소에 남기지 않는다(새로고침하면 비워진다).
+  const [sentBySession, setSentBySession] = useState<Record<string, string[]>>({});
   const [messages, setMessages] = useState<ChatMessage[]>(() => [buildWelcomeMessage()]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -158,6 +165,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
   const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
   const suggested = latestSuggestions(messages);
+  const sentTexts = new Set(sentBySession[sessionId] ?? []);
   // 서버는 버튼·날짜·지역 선택도 "[선택] field: value" 형식의 별도 기록으로 남긴다.
   // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
   const historyItems = Array.isArray(chatLogs) ? chatLogs.filter(log => !isUiSelectionLog(log.message)) : [];
@@ -243,6 +251,11 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           },
         ]);
 
+        // 답을 받은 문장만 기억한다 - 보내기에 실패한 문장은 다시 누를 수 있게 버튼에 남긴다.
+        if (!uiSelection) {
+          setSentBySession(prev => ({ ...prev, [sessionId]: [...(prev[sessionId] ?? []), trimmed] }));
+        }
+
         if (result.engine === 'fallback') setFallback(true);
       } catch (error) {
         setMessages(prev => [
@@ -269,6 +282,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     const ward = activeWards.find(item => item.partnerUserId === wardId);
     setSelectedWardId(wardId);
     setSessionId(makeSessionId());
+    setSentBySession({});
     setMessages([buildWelcomeMessage(ward?.partnerName, true)]);
     setInput('');
     setFallback(false);
@@ -359,6 +373,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   );
 
   if (isWardChat) {
+    const wardQuickPrompts = wardPrompts(suggested, sentTexts);
     return (
       <div className={`${styles.chatPage} ${styles.wardVariant}`}>
         <section className={styles.shell}>
@@ -371,22 +386,26 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
             <section className={styles.wardQuickPanel} aria-label="추천 질문">
               <p className={styles.wardQuickTitle}>눌러서 물어보세요</p>
-              <div className={styles.wardQuickGrid}>
-                {wardPrompts(suggested).map(prompt => (
-                  <button
-                    key={prompt.text}
-                    type="button"
-                    className={styles.wardQuickButton}
-                    disabled={sending}
-                    onClick={() => void send(prompt.text)}
-                  >
-                    <span className={styles.wardQuickIcon} aria-hidden="true">
-                      <Icon name={prompt.suggested ? 'message' : 'alert'} size={28} decorative />
-                    </span>
-                    <span>{prompt.text}</span>
-                  </button>
-                ))}
-              </div>
+              {wardQuickPrompts.length === 0 ? (
+                <p className={styles.wardQuickEmpty}>궁금한 점을 입력창에 적어 주세요</p>
+              ) : (
+                <div className={styles.wardQuickGrid}>
+                  {wardQuickPrompts.map(prompt => (
+                    <button
+                      key={prompt.text}
+                      type="button"
+                      className={styles.wardQuickButton}
+                      disabled={sending}
+                      onClick={() => void send(prompt.text)}
+                    >
+                      <span className={styles.wardQuickIcon} aria-hidden="true">
+                        <Icon name={prompt.suggested ? 'message' : 'alert'} size={28} decorative />
+                      </span>
+                      <span>{prompt.text}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
         </section>
@@ -450,7 +469,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           <section className={styles.quickPromptPanel} aria-label="추천 질문">
             <p className={styles.quickPromptTitle}>눌러서 물어보세요</p>
             <div className={styles.quickPromptRow}>
-              {guardianPrompts(suggested).map(prompt => (
+              {guardianPrompts(suggested, sentTexts).map(prompt => (
                 <button
                   key={prompt.text}
                   type="button"

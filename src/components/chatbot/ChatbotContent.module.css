@@ -599,6 +599,15 @@
   padding: 2px 4px;
 }
 
+.wardQuickEmpty {
+  margin: 0;
+  padding: 2px 4px;
+  color: var(--sb-ink);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .wardQuickGrid {
   display: flex;
   flex: 1;
