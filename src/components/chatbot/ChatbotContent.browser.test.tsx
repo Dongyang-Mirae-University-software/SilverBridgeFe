@@ -3,7 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from '@vitest/browser/context';
 import { render } from 'vitest-browser-react';
 
@@ -57,6 +57,10 @@ function renderChat(node: ReactNode) {
   return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>);
 }
 
+afterEach(async () => {
+  await page.viewport(1280, 800);
+});
+
 beforeEach(() => {
   api.sendChatMessage.mockReset();
   api.getChatLogs.mockReset();
@@ -103,6 +107,26 @@ describe('보호자 AI 의료 챗봇', () => {
     expect(second.sessionId).toBe(first.sessionId);
     expect(second).not.toHaveProperty('history');
   });
+
+  it('입력창에서 보낸 뒤에는 입력창으로 포커스를 되돌린다', async () => {
+    api.sendChatMessage.mockResolvedValue(REPLY);
+    renderChat(<ChatbotContent />);
+
+    await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '무릎이 아파요');
+    await userEvent.keyboard('{Enter}');
+
+    await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
+    await vi.waitFor(() => expect(document.activeElement?.tagName).toBe('TEXTAREA'));
+  });
+
+  it('휴대폰에서 입력 중에는 칩 줄을 숨겨 대화를 가리지 않는다', async () => {
+    await page.viewport(375, 700);
+    renderChat(<ChatbotContent />);
+
+    await expect.element(page.getByRole('region', { name: '추천 질문' })).toBeVisible();
+    await userEvent.click(page.getByRole('textbox', { name: '궁금한 점 입력' }));
+    await expect.element(page.getByRole('region', { name: '추천 질문' })).not.toBeInTheDocument();
+  });
 });
 
 describe('피보호자 AI 의료 챗봇', () => {
@@ -133,6 +157,21 @@ describe('피보호자 AI 의료 챗봇', () => {
     expect(request.message).toBe('머리가 아파요');
     expect(request.context).toEqual({ role: 'WARD' });
     expect(request).not.toHaveProperty('history');
+    // 빠른 질문 뒤 입력창으로 포커스를 옮기면 휴대폰 키보드가 올라와 화면을 가린다
+    expect(document.activeElement?.tagName).not.toBe('TEXTAREA');
+  });
+
+  it('휴대폰에서 입력 중에는 빠른 질문 칸을 숨기고, 입력을 마치면 다시 보여 준다', async () => {
+    await page.viewport(375, 700);
+    renderChat(<ChatbotContent variant="ward" />);
+
+    await expect.element(page.getByRole('button', { name: '머리가 아파요' })).toBeVisible();
+    await userEvent.click(page.getByRole('textbox', { name: '궁금한 점 입력' }));
+    // display: none이 되면 접근성 트리에서 빠진다
+    await expect.element(page.getByRole('region', { name: '추천 질문' })).not.toBeInTheDocument();
+
+    (document.activeElement as HTMLElement | null)?.blur();
+    await expect.element(page.getByRole('button', { name: '머리가 아파요' })).toBeVisible();
   });
 
   it('보내기에 실패하면 안내하고 다시 보낼 수 있다', async () => {

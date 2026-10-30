@@ -126,7 +126,12 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
   const historyItems = Array.isArray(chatLogs) ? chatLogs.filter(log => !isUiSelectionLog(log.message)) : [];
   const send = useCallback(
-    async (text: string, uiSelection?: { field: string; value: string }, uiSelectionLabel?: string) => {
+    async (
+      text: string,
+      uiSelection?: { field: string; value: string },
+      uiSelectionLabel?: string,
+      refocusComposer = false,
+    ) => {
       const trimmed = text.trim();
       if (!trimmed && !uiSelection) return;
       if (sendingRef.current) return;
@@ -214,7 +219,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         ]);
       } finally {
         setSending(false);
-        textareaRef.current?.focus();
+        // 입력창에서 보낸 경우에만 되돌린다. 빠른 질문·선택지를 누른 뒤 포커스를 옮기면
+        // 휴대폰 키보드가 올라와 대화를 가리고, 피보호자 화면은 빠른 질문 칸까지 숨겨진다.
+        if (refocusComposer) textareaRef.current?.focus();
       }
     },
     [isGuardian, selectedWard, sessionId],
@@ -233,7 +240,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      void send(input);
+      void send(input, undefined, undefined, true);
     }
   }
 
@@ -304,7 +311,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           type="button"
           className={styles.sendButton}
           disabled={sending || !input.trim()}
-          onClick={() => void send(input)}
+          onClick={() => void send(input, undefined, undefined, true)}
         >
           보내기
         </button>
