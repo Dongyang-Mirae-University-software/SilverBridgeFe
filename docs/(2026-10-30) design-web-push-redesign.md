@@ -82,4 +82,7 @@ SOS·이상감지는 `role=alert`(assertive), 그 밖은 `status`(polite). 움�
 - 클릭 이동은 합성 클릭으로 확인할 수 없다(사용자 동작이 없어 `openWindow`·`focus`가 거부됨). SW 범위가 `/`라 열린 탭은 `navigate()`가
   된다는 것만 확인했다. 그 과정에서 `focus()`를 기다리다 거부되면 이동을 건너뛰는 회귀를 찾아 고쳤다(#184).
 - 시험 연결 요청(693~698)은 모두 보호자 취소로 정리했다(무알림).
-- 남은 사람 확인: PC Chrome 실제 클릭 이동, 안드로이드 Chrome 실기기, iOS 홈 화면 아이콘, BE data 전용을 켠 뒤의 새 아이콘·배지·버튼.
+- **BE data 전용 켠 뒤(2026-10-30 17:11, gosky dev `NOTIFICATION_FCM_WEBPUSH_DATA_ONLY=true`)**: 관리자 강제 연결(699, 확인 뒤 해제)로
+  탭을 모두 닫은 피보호자에게 `CONNECTION_FORCED` 1건 → **1개**, 서비스 워커가 그림(라이브러리 표시 아님). `icon-connection.png`·`badge.png`·
+  tag `CONNECTION_FORCED:699`·제목·본문은 BE `data.title`·`data.body`. 시험 보호자→피보호자 연결 요청은 하루 한도(5건)를 써서 이 경로를 썼다.
+- 남은 사람 확인: PC Chrome 실제 클릭 이동, 안드로이드 Chrome 실기기, iOS 홈 화면 아이콘, SOS·이상감지 실제 발생 시의 버튼(합성·단위 테스트로만 확인).
