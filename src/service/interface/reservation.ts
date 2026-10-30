@@ -1,7 +1,8 @@
 // 병원 예약 서비스(SilverBridgeReservation) 응답 타입. FE는 /api/reservation/** BFF를 통해 호출한다.
-export type HospitalOperationStatus = 'OPEN' | 'CLOSED' | 'BREAK_TIME' | 'HOLIDAY';
+// 값 목록은 예약 서비스 prisma/schema.prisma 의 enum 그대로
+export type HospitalOperationStatus = 'OPEN' | 'CLOSED' | 'BREAK_TIME' | 'HOLIDAY' | 'INSPECTION';
 export type HospitalCongestionLevel = 'LOW' | 'NORMAL' | 'BUSY' | 'VERY_BUSY';
-export type ReservationStatus = 'BOOKED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED';
+export type ReservationStatus = 'BOOKED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED' | 'NO_SHOW' | 'REJECTED';
 
 export interface IHospital {
   id: number;
