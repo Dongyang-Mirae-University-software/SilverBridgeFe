@@ -25,6 +25,7 @@ import {
   formatReceivedAt,
   getMedicationProgress,
   getPushIconSrc,
+  getPushRoute,
   getPushKind,
   PUSH_KIND_LABEL,
 } from './PushNotificationListener.kind';
@@ -61,38 +62,6 @@ interface LocalPushEventDetail {
     body?: string;
     title?: string;
   };
-}
-
-function getPushRoute(data?: MessagePayload['data'], role?: ConnectionTargetRole | null) {
-  switch (data?.type) {
-    case 'CONNECTION_REQUEST':
-      return '/ward/guardians';
-    case 'CONNECTION_ACCEPTED':
-    case 'CONNECTION_REFUSED':
-      return '/guardian/wards';
-    case 'CONNECTION_CANCELLED':
-      return role === 'GUARDIAN' ? '/guardian/wards' : '/ward/guardians';
-    case 'DISCONNECTION':
-    case 'CONNECTION_DISCONNECTED':
-      return role === 'WARD' ? '/ward/guardians' : '/guardian/wards';
-    case 'WARD_SOS':
-      return '/guardian/sos';
-    case 'MEDICATION_REMINDER':
-      return '/ward/medication';
-    case 'MEDICATION_MISSED':
-    case 'MEDICATION_STOPPED':
-      return '/guardian/medication';
-    case 'ANOMALY_DETECTED':
-      if (role === 'WARD') return '/ward';
-      return data?.sessionId ? `/guardian/detection?session=${data.sessionId}` : '/guardian/detection';
-    case 'ANOMALY_REVIEW_REQUIRED':
-    case 'ANOMALY_REVIEW_SUMMARY':
-    case 'ANOMALY_REVIEW_CONFLICTED':
-    case 'CAMERA_LINK_LOST':
-      return '/guardian/detection';
-    default:
-      return role === 'WARD' ? '/ward' : '/guardian';
-  }
 }
 
 function isConnectionPush(data?: MessagePayload['data']) {
@@ -556,10 +525,10 @@ export default function PushNotificationListener() {
     return () => window.removeEventListener('careai:push', handleLocalPush);
   }, [addToast, currentRole, refreshAnomalyPage, refreshConnectionPage, refreshMedicationPage, refreshSosPage]);
 
-  if (toasts.length === 0) return null;
-
+  // 알림 영역은 비어 있어도 둔다 - 새로 생긴 영역의 내용은 일부 스크린 리더가 읽지 않는다(점검 L-2).
+  // 일반 알림은 이 영역(polite)이 읽고, 긴급(SOS·이상감지)만 자기 role=alert로 바로 읽힌다
   return (
-    <div className={cx('toastArea')} aria-label="새 알림">
+    <div className={cx('toastArea')} aria-live="polite" aria-label="새 알림">
       {toasts.map(toast => {
         const kind = getPushKind(toast.data);
         const urgent = isUrgentPush(toast.data);
@@ -591,8 +560,8 @@ export default function PushNotificationListener() {
         return (
           <section
             key={toast.id}
-            role={urgent ? 'alert' : 'status'}
-            aria-live={urgent ? 'assertive' : 'polite'}
+            role={urgent ? 'alert' : undefined}
+            aria-live={urgent ? 'assertive' : undefined}
             aria-label={`${PUSH_KIND_LABEL[kind]} 알림`}
             className={cx('toast', `kind-${kind}`, { swiping: swipeOffset !== 0 })}
             style={swipeOffset ? { transform: `translateY(${swipeOffset}px)` } : undefined}

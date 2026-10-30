@@ -1,7 +1,13 @@
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 
-import { formatReceivedAt, getMedicationProgress, getPushIconName, getPushKind } from './PushNotificationListener.kind';
+import {
+  formatReceivedAt,
+  getMedicationProgress,
+  getPushIconName,
+  getPushKind,
+  getPushRoute,
+} from './PushNotificationListener.kind';
 
 const require = createRequire(import.meta.url);
 const swPush = require('../../public/push-sw-logic.js');
@@ -32,6 +38,15 @@ describe('토스트와 브라우저 알림은 같은 종류·그림을 쓴다', 
       const data = { type, detectedType };
       expect(getPushKind(data)).toBe(swPush.getKind(data));
       expect(`/icons/push/${getPushIconName(data)}.png`).toBe(swPush.getIcon(data));
+    }
+  });
+});
+
+describe('토스트를 눌렀을 때도 브라우저 알림과 같은 화면으로 간다', () => {
+  it.each(TYPES)('%s', type => {
+    for (const role of ['GUARDIAN', 'WARD'] as const) {
+      const data = { type, sessionId: 'ward_a1' };
+      expect(getPushRoute(data, role)).toBe(swPush.getPath(data, role));
     }
   });
 });

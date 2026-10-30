@@ -56,6 +56,42 @@ export function getMedicationProgress(data: PushData) {
   return { total, taken: total - missed, missed };
 }
 
+// 토스트를 눌렀을 때 갈 화면 - 브라우저 알림(public/push-sw-logic.js getPath)과 같아야 한다
+export function getPushRoute(data: PushData, role?: 'WARD' | 'GUARDIAN' | null) {
+  switch (data?.type) {
+    case 'CONNECTION_REQUEST':
+      return '/ward/guardians';
+    case 'CONNECTION_ACCEPTED':
+    case 'CONNECTION_REFUSED':
+      return '/guardian/wards';
+    case 'CONNECTION_CANCELLED':
+      return role === 'GUARDIAN' ? '/guardian/wards' : '/ward/guardians';
+    case 'DISCONNECTION':
+    case 'CONNECTION_DISCONNECTED':
+    case 'CONNECTION_FORCED':
+      return role === 'WARD' ? '/ward/guardians' : '/guardian/wards';
+    case 'WARD_SOS':
+      return '/guardian/sos';
+    case 'MEDICATION_REMINDER':
+      return '/ward/medication';
+    case 'MEDICATION_MISSED':
+    case 'MEDICATION_STOPPED':
+      return '/guardian/medication';
+    case 'ANOMALY_DETECTED':
+      if (role === 'WARD') return '/ward';
+      return data?.sessionId ? `/guardian/detection?session=${encodeURIComponent(data.sessionId)}` : '/guardian/detection';
+    case 'ANOMALY_REVIEW_REQUIRED':
+    case 'ANOMALY_REVIEW_SUMMARY':
+    case 'ANOMALY_REVIEW_CONFLICTED':
+    case 'CAMERA_LINK_LOST':
+      return '/guardian/detection';
+    case 'INQUIRY_ANSWERED':
+      return '/guardian/inquiries';
+    default:
+      return role === 'WARD' ? '/ward' : '/guardian';
+  }
+}
+
 export function formatReceivedAt(receivedAt: number, now: number) {
   const minutes = Math.floor((now - receivedAt) / 60000);
   if (minutes < 1) return '방금';
