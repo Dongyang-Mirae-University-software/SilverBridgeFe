@@ -562,6 +562,11 @@
   padding: 18px 20px;
 }
 
+.wardVariant .textarea::placeholder {
+  /* 입력 글자(600)와 같은 굵기면 실제로 쓴 글자처럼 보인다 */
+  font-weight: 400;
+}
+
 .wardVariant .textarea:focus {
   border-color: var(--sb-brand);
 }
@@ -687,8 +692,8 @@
     height: 44px;
   }
 
-  /* 입력 중(휴대폰 키보드가 올라온 상태)에는 빠른 질문 칸을 숨겨 대화가 보이게 한다. */
-  .wardBody:has(.textarea:focus) .wardQuickPanel {
+  /* 화면 키보드가 올라온 입력 중에는 빠른 질문 칸을 숨겨 대화가 보이게 한다. */
+  .wardBody.typingWithKeyboard .wardQuickPanel {
     display: none;
   }
 }
@@ -954,8 +959,8 @@
     font-size: 14px;
   }
 
-  /* 입력 중(키보드가 올라온 상태)에는 칩 줄을 숨겨 대화가 보이게 한다. */
-  .body:has(.textarea:focus) .quickPromptPanel {
+  /* 화면 키보드가 올라온 입력 중에는 칩 줄을 숨겨 대화가 보이게 한다. */
+  .body.typingWithKeyboard .quickPromptPanel {
     display: none;
   }
 

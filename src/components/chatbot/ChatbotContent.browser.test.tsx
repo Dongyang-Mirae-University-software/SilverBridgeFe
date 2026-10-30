@@ -119,12 +119,16 @@ describe('보호자 AI 의료 챗봇', () => {
     await vi.waitFor(() => expect(document.activeElement?.tagName).toBe('TEXTAREA'));
   });
 
-  it('휴대폰에서 입력 중에는 칩 줄을 숨겨 대화를 가리지 않는다', async () => {
+  it('휴대폰 키보드가 올라온 입력 중에는 칩 줄을 숨겨 대화를 가리지 않는다', async () => {
     await page.viewport(375, 700);
     renderChat(<ChatbotContent />);
 
     await expect.element(page.getByRole('region', { name: '추천 질문' })).toBeVisible();
     await userEvent.click(page.getByRole('textbox', { name: '궁금한 점 입력' }));
+    // 포커스만으로는 숨기지 않는다(실제 키보드가 없는 PC·태블릿)
+    await expect.element(page.getByRole('region', { name: '추천 질문' })).toBeVisible();
+
+    await page.viewport(375, 380); // 화면 키보드가 올라온 높이
     await expect.element(page.getByRole('region', { name: '추천 질문' })).not.toBeInTheDocument();
   });
 });
@@ -161,16 +165,19 @@ describe('피보호자 AI 의료 챗봇', () => {
     expect(document.activeElement?.tagName).not.toBe('TEXTAREA');
   });
 
-  it('휴대폰에서 입력 중에는 빠른 질문 칸을 숨기고, 입력을 마치면 다시 보여 준다', async () => {
+  it('휴대폰 키보드가 올라오면 빠른 질문 칸을 숨기고, 키보드를 내리면 포커스가 남아도 다시 보여 준다', async () => {
     await page.viewport(375, 700);
     renderChat(<ChatbotContent variant="ward" />);
 
     await expect.element(page.getByRole('button', { name: '머리가 아파요' })).toBeVisible();
     await userEvent.click(page.getByRole('textbox', { name: '궁금한 점 입력' }));
+    await page.viewport(375, 380); // 화면 키보드가 올라온 높이
     // display: none이 되면 접근성 트리에서 빠진다
     await expect.element(page.getByRole('region', { name: '추천 질문' })).not.toBeInTheDocument();
 
-    (document.activeElement as HTMLElement | null)?.blur();
+    // 안드로이드는 키보드를 내려도 입력창 포커스가 남는다(2026-10-30 실기기 보고)
+    await page.viewport(375, 700);
+    expect(document.activeElement?.tagName).toBe('TEXTAREA');
     await expect.element(page.getByRole('button', { name: '머리가 아파요' })).toBeVisible();
   });
 

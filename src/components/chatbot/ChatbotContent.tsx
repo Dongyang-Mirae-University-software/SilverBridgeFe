@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Icon } from '@/components/Icon';
 import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
+import { useSoftKeyboardOpen } from '@/hooks/useSoftKeyboardOpen';
 import { getAuthRole } from '@/lib/auth/tokenStore';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
 import { getHistoryWarning } from '@/service/api/chatPolicy';
@@ -80,6 +81,10 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const [chatLogs, setChatLogs] = useState<ChatLogItem[]>([]);
   const [isLogsLoading, setIsLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState<string | null>(null);
+  const [composerFocused, setComposerFocused] = useState(false);
+  const softKeyboardOpen = useSoftKeyboardOpen();
+  // 입력 중이고 화면 키보드가 떠 있을 때만 빠른 질문을 숨긴다(키보드를 내리면 포커스가 남아도 다시 보인다).
+  const typingWithKeyboard = composerFocused && softKeyboardOpen;
 
   const listRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -306,6 +311,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             resizeComposer();
           }}
           onKeyDown={handleKeyDown}
+          onFocus={() => setComposerFocused(true)}
+          onBlur={() => setComposerFocused(false)}
         />
         <button
           type="button"
@@ -324,7 +331,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       <div className={`${styles.chatPage} ${styles.wardVariant}`}>
         <section className={styles.shell}>
           <h1 className={styles.wardTitle}>AI 의료 챗봇</h1>
-          <div className={styles.wardBody}>
+          <div className={`${styles.wardBody} ${typingWithKeyboard ? styles.typingWithKeyboard : ''}`}>
             <div className={styles.wardChatCard}>
               {board}
               {composer}
@@ -405,7 +412,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           </section>
         )}
 
-        <div className={styles.body}>
+        <div className={`${styles.body} ${typingWithKeyboard ? styles.typingWithKeyboard : ''}`}>
           {board}
 
           <section className={styles.quickPromptPanel} aria-label="추천 질문">
