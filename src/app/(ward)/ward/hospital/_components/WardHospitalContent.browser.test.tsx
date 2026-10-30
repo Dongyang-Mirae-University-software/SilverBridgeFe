@@ -1,5 +1,5 @@
 // 피보호자 병원 예약 현황 컴포넌트 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`)
-// 보기 전용: 다음 진료(큰 글씨) · 그 밖의 예약 · 지난 진료, 누를 수 있는 버튼이 없다
+// 보기 전용: 다음 진료(큰 D-day 카드) · 그다음 예약 카드 · 지난 진료, 누를 수 있는 버튼이 없다
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
@@ -85,14 +85,19 @@ describe('WardHospitalContent (Chrome)', () => {
     const screen = renderContent();
 
     const next = screen.getByRole('region', { name: '다음 진료' });
-    await expect.element(next.getByText('2일 남았어요')).toBeVisible();
+    await expect.element(next.getByText('병원 가는 날')).toBeVisible();
+    await expect.element(next.getByText('2일 뒤')).toBeVisible();
     await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
     await expect.element(next.getByText(formatDateLong(addDays(TODAY, 2)))).toBeVisible();
     await expect.element(next.getByText('오전 10시')).toBeVisible();
     // 주소는 병원 목록에서 이름으로 찾아 붙인다
     await expect.element(next.getByText('서울 강남구 테헤란로 152, 3층')).toBeVisible();
 
-    await expect.element(screen.getByRole('region', { name: '그 밖의 예약' })).toHaveTextContent('푸른안과');
+    const later = screen.getByRole('region', { name: '그 밖의 예약' });
+    await expect.element(later).toHaveTextContent('푸른안과');
+    await expect.element(later.getByText('그다음')).toBeVisible();
+    await expect.element(later.getByText('5일 뒤')).toBeVisible();
+    await expect.element(later.getByText('오후 2시 30분')).toBeVisible();
     const past = screen.getByRole('region', { name: '지난 진료' });
     await expect.element(past).toHaveTextContent('서울정형외과');
     await expect.element(past).toHaveTextContent('한사랑한의원');
@@ -107,24 +112,44 @@ describe('WardHospitalContent (Chrome)', () => {
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
-  it('오늘 진료는 "오늘이에요"', async () => {
-    api.getMyReservations.mockResolvedValue([reservation(1, TODAY, '23:59')]);
+  it('오늘 진료는 "오늘", 내일 진료는 "내일"', async () => {
+    api.getMyReservations.mockResolvedValue([
+      reservation(1, TODAY, '23:59'),
+      reservation(2, addDays(TODAY, 1), '10:00', 'BOOKED', '푸른안과'),
+    ]);
     const screen = renderContent();
-    await expect.element(screen.getByText('오늘이에요')).toBeVisible();
+    await expect.element(screen.getByRole('region', { name: '다음 진료' }).getByText('오늘')).toBeVisible();
+    await expect.element(screen.getByRole('region', { name: '그 밖의 예약' }).getByText('내일')).toBeVisible();
   });
 
   it('예약이 없으면 빈 상태를 따로 안내한다', async () => {
     api.getMyReservations.mockResolvedValue([]);
     const screen = renderContent();
-    await expect.element(screen.getByText('예정된 진료가 없어요')).toBeVisible();
+    await expect.element(screen.getByText('병원 갈 날이 없어요')).toBeVisible();
     await expect.element(screen.getByText('지난 진료가 없어요')).toBeVisible();
+  });
+
+  it('지난 진료가 5건을 넘으면 페이지로 나눠 보여 준다', async () => {
+    api.getMyReservations.mockResolvedValue(
+      Array.from({ length: 7 }, (_, i) =>
+        reservation(i + 1, addDays(TODAY, -(i + 1)), '10:00', 'COMPLETED', `지난병원${i + 1}`),
+      ),
+    );
+    const screen = renderContent();
+    const past = screen.getByRole('region', { name: '지난 진료' });
+    await expect.element(past).toHaveTextContent('지난병원5');
+    expect(past.getByText('지난병원6').elements()).toHaveLength(0);
+
+    await screen.getByRole('button', { name: '2페이지' }).click();
+    await expect.element(past).toHaveTextContent('지난병원7');
+    expect(past.getByText('지난병원1', { exact: true }).elements()).toHaveLength(0);
   });
 
   it('병원 목록을 못 불러와도 예약은 보이고 주소만 빠진다', async () => {
     api.getHospitals.mockRejectedValue(new Error('down'));
     api.getMyReservations.mockResolvedValue([reservation(1, addDays(TODAY, 1), '10:00')]);
     const screen = renderContent();
-    await expect.element(screen.getByText('1일 남았어요')).toBeVisible();
+    await expect.element(screen.getByText('내일')).toBeVisible();
     expect(screen.getByText('서울 강남구 테헤란로 152, 3층').elements()).toHaveLength(0);
   });
 
