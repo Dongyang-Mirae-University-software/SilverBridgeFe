@@ -112,8 +112,9 @@ export function WardMedicationContent() {
   const getLeadText = (group: MedicationGroup) => {
     if (group.isTaken) return '다 먹었어요';
     if (group.isBeforeRegistered) return '오늘 늦게 등록한 약';
-    if (group.key === firstIncompleteGroup?.key) return '지금 먹을 약';
+    // 시각이 지난 시간대는 '지금 먹을 약'으로 안내하지 않는다 - 오래 지난 약을 지금 먹으라고 하지 않게(기능 점검 F2)
     if (isLate(group)) return '체크되지 않은 약';
+    if (group.key === firstIncompleteGroup?.key) return '지금 먹을 약';
     return '다음에 먹을 약';
   };
 
@@ -182,7 +183,8 @@ export function WardMedicationContent() {
                   type="button"
                   className={cx('tab', { selected: isSelected, done: group.isTaken })}
                   aria-pressed={isSelected}
-                  aria-label={`${group.label} 약, ${tag}`}
+                  // 접근 이름 = 보이는 글자 그대로(기능 점검 F3) - 두 줄 글자가 붙어 읽히지 않게 띄어 쓴다
+                  aria-label={`${group.label} ${tag}`}
                   onClick={() => setFocusedGroupKey(group.key)}
                 >
                   <span className={cx('tabName')}>{group.label}</span>
