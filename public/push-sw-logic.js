@@ -76,6 +76,12 @@
   function getTag(data) {
     data = data || {};
     const type = data.type || 'NOTICE';
+    // SOS는 누를 때마다 sosEventId가 새로 생긴다 - 피보호자 단위로 묶고 renotify로 매번 다시 울린다
+    if (type === 'WARD_SOS' && data.wardId) return `${type}:${data.wardId}`;
+    // 복약 재알림은 같은 약을 attempt만 올려 다시 보낸다 - 날짜·회차를 넣어 이전 알림과 구분한다
+    if (type === 'MEDICATION_REMINDER' && data.medicationId) {
+      return [type, data.medicationId, data.doseDate, data.attempt].filter(Boolean).join(':');
+    }
     const target =
       data.sosEventId ||
       data.incidentId ||
@@ -112,6 +118,8 @@
     const content = getContent(payload);
     const kind = getKind(data);
     const urgent = kind === 'sos' || data.type === 'ANOMALY_DETECTED';
+    // 같은 tag의 알림이 남아 있으면 renotify가 false일 때 소리·진동 없이 교체된다 - 다시 알리는 종류는 true
+    const renotify = urgent || data.type === 'MEDICATION_REMINDER';
     return {
       title: content.title,
       options: {
@@ -119,7 +127,7 @@
         icon: getIcon(data),
         badge: `${ICON_DIR}badge.png`,
         tag: getTag(data),
-        renotify: urgent,
+        renotify,
         requireInteraction: data.type === 'WARD_SOS',
         actions: getActions(data, role),
         data,

@@ -42,13 +42,26 @@ describe('알림 모양', () => {
     });
   });
 
-  it('SOS는 같은 사건끼리 묶고 다시 울리며 닫을 때까지 남는다', () => {
-    const { options } = push.buildNotification({ data: { type: 'WARD_SOS', sosEventId: '7' } }, 'GUARDIAN');
-    expect(options.tag).toBe('WARD_SOS:7');
+  it('SOS는 피보호자 단위로 묶고(누를 때마다 sosEventId가 달라도) 다시 울리며 닫을 때까지 남는다', () => {
+    const first = push.buildNotification({ data: { type: 'WARD_SOS', sosEventId: '7', wardId: 'w1' } }, 'GUARDIAN');
+    const second = push.buildNotification({ data: { type: 'WARD_SOS', sosEventId: '8', wardId: 'w1' } }, 'GUARDIAN');
+    expect(first.options.tag).toBe('WARD_SOS:w1');
+    expect(second.options.tag).toBe(first.options.tag);
+    expect(push.getTag({ type: 'WARD_SOS', sosEventId: '7' })).toBe('WARD_SOS:7');
+    const { options } = second;
     expect(options.renotify).toBe(true);
     expect(options.requireInteraction).toBe(true);
     expect(options.icon).toBe('/icons/push/icon-sos.png');
     expect(options.actions.map((a: { action: string }) => a.action)).toEqual(['open-sos', 'family-contacts']);
+  });
+
+  it('복약 재알림은 회차마다 tag가 다르고 다시 울린다 - 남아 있는 첫 알림을 소리 없이 덮지 않게', () => {
+    const base = { type: 'MEDICATION_REMINDER', medicationId: '3', doseDate: '2026-10-30' };
+    const first = push.buildNotification({ data: { ...base, attempt: '1' } }, 'WARD');
+    const retry = push.buildNotification({ data: { ...base, attempt: '2' } }, 'WARD');
+    expect(first.options.tag).toBe('MEDICATION_REMINDER:3:2026-10-30:1');
+    expect(retry.options.tag).not.toBe(first.options.tag);
+    expect(retry.options.renotify).toBe(true);
   });
 
   it.each([
