@@ -45,6 +45,7 @@
   line-height: 1.05;
   letter-spacing: -0.02em;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .nextBody {
@@ -93,6 +94,7 @@
   font-weight: 900;
   line-height: 1.2;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .bigTime {
@@ -105,6 +107,7 @@
   font-weight: 900;
   line-height: 1.2;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .dept {
@@ -120,6 +123,7 @@
   font-weight: 700;
   line-height: 1.45;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .emptyCard {
@@ -135,6 +139,7 @@
   font-size: 28px;
   font-weight: 800;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .laterList {
@@ -185,6 +190,7 @@
   font-size: 26px;
   font-weight: 900;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .laterTime {
@@ -197,6 +203,7 @@
   font-size: 22px;
   font-weight: 800;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .listCard {
@@ -243,6 +250,7 @@
   font-size: 19px;
   font-weight: 700;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .rowDept {
@@ -289,6 +297,7 @@
   font-size: 18px;
   text-align: center;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .retry {
