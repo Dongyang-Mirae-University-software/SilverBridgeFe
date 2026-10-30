@@ -76,3 +76,7 @@
   white-space: pre-wrap;
   word-break: keep-all;
 }
+
+.content.fullWidthContent {
+  max-width: none;
+}
