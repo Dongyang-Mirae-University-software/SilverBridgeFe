@@ -42,11 +42,11 @@
 
 .cancelButton,
 .confirmButton {
-  min-height: 56px;
-  border-radius: 12px;
+  min-height: 64px;
+  border-radius: 16px;
   cursor: pointer;
   font: inherit;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
 }
 

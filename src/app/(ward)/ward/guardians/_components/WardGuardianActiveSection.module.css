@@ -76,13 +76,13 @@
 
 .disconnectButton {
   flex-shrink: 0;
-  min-height: 44px;
+  min-height: 56px;
   border: none;
   background: none;
   color: var(--sb-ink-mute);
   cursor: pointer;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   padding: 0 4px;
   text-decoration: underline;

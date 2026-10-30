@@ -39,16 +39,16 @@
 
 .emptyRegisterButton {
   display: inline-flex;
-  min-height: 56px;
+  min-height: 64px;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 16px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   padding: 0 28px;
 }
@@ -156,16 +156,16 @@
 
 .primaryButton {
   display: inline-flex;
-  min-height: 56px;
+  min-height: 64px;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 16px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
 }
 
@@ -184,7 +184,7 @@
   gap: 6px;
   min-height: 56px;
   border: 1px solid var(--sb-line);
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
