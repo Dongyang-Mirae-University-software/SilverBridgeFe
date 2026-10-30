@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { Icon } from '@/components/Icon';
 import { ReservationDemoNotice } from '@/components/reservation/ReservationDemoNotice';
 import { ReservationPager } from '@/components/reservation/ReservationPager';
 import { IReservationItem } from '@/service/interface/reservation';
@@ -24,6 +25,9 @@ const PAST_PER_PAGE = 5;
 
 // "5월 11일 월요일" → "5월 11일"
 const shortDate = (iso: string) => formatDateLong(iso).replace(/ .요일$/, '');
+
+// 오늘 · 내일 · N일 뒤
+const ddayLabel = (days: number) => (days === 0 ? '오늘' : days === 1 ? '내일' : `${days}일 뒤`);
 
 // 보기 전용 - 예약은 보호자가 피보호자 계정으로 대신 잡아 본인 계정 조회(wardId 없음)로 그대로 보인다.
 export function WardHospitalContent() {
@@ -57,23 +61,28 @@ export function WardHospitalContent() {
       {next ? (
         <NextCard item={next} today={today} address={findHospitalByName(hospitals, next.hospitalName)?.address} />
       ) : (
-        <section className={cx('card', 'nextCard')} aria-label="다음 진료">
-          <span className={cx('nextLabel')}>다음 진료</span>
-          <p className={cx('emptyBig')}>예정된 진료가 없어요</p>
+        <section className={cx('card', 'emptyCard')} aria-label="다음 진료">
+          <p className={cx('emptyBig')}>병원 갈 날이 없어요</p>
         </section>
       )}
 
       {others.length > 0 && (
-        <section className={cx('card', 'listCard')} aria-label="그 밖의 예약">
-          <h2 className={cx('listHead')}>그 밖의 예약</h2>
+        <section className={cx('laterList')} aria-label="그 밖의 예약">
           {others.map(item => (
-            <div key={item.reservationId} className={cx('row')}>
-              <span className={cx('rowDate')}>
-                {shortDate(item.reservationDate)} {formatTime(item.reservationTime)}
-              </span>
-              <span className={cx('rowName')}>
-                {item.hospitalName} <span className={cx('rowDept')}>· {item.department}</span>
-              </span>
+            <div key={item.reservationId} className={cx('card', 'laterCard')}>
+              <div className={cx('laterWhen')}>
+                <span className={cx('laterLabel')}>그다음</span>
+                <span className={cx('laterDday')}>{ddayLabel(daysBetween(today, item.reservationDate))}</span>
+              </div>
+              <div className={cx('laterBody')}>
+                <div className={cx('laterDate')}>
+                  {formatDateLong(item.reservationDate)}{' '}
+                  <span className={cx('laterTime')}>{formatTime(item.reservationTime)}</span>
+                </div>
+                <div className={cx('laterName')}>
+                  {item.hospitalName} <span className={cx('rowDept')}>· {item.department}</span>
+                </div>
+              </div>
             </div>
           ))}
         </section>
@@ -103,22 +112,34 @@ export function WardHospitalContent() {
 }
 
 function NextCard({ item, today, address }: { item: IReservationItem; today: string; address?: string }) {
-  const days = daysBetween(today, item.reservationDate);
   return (
     <section className={cx('card', 'nextCard')} aria-label="다음 진료">
-      <div className={cx('nextTop')}>
-        <span className={cx('nextLabel')}>다음 진료</span>
-        <span className={cx('dday')}>{days === 0 ? '오늘이에요' : `${days}일 남았어요`}</span>
+      <div className={cx('ddayPanel')}>
+        <span className={cx('ddayCaption')}>병원 가는 날</span>
+        <span className={cx('ddayBig')}>{ddayLabel(daysBetween(today, item.reservationDate))}</span>
       </div>
-      <div>
-        <div className={cx('bigDate')}>{formatDateLong(item.reservationDate)}</div>
-        <div className={cx('bigDate', 'bigTime')}>{formatTime(item.reservationTime)}</div>
-      </div>
-      <div className={cx('place')}>
-        <div className={cx('hospital')}>
-          {item.hospitalName} <span className={cx('dept')}>· {item.department}</span>
+      <div className={cx('nextBody')}>
+        <div className={cx('infoRow')}>
+          <span className={cx('infoIcon', 'infoIconBrand')}>
+            <Icon name="calendar" size={32} />
+          </span>
+          <div className={cx('infoText')}>
+            <div className={cx('bigDate')}>{formatDateLong(item.reservationDate)}</div>
+            <div className={cx('bigDate', 'bigTime')}>{formatTime(item.reservationTime)}</div>
+          </div>
         </div>
-        {address && <div className={cx('address')}>{address}</div>}
+        <div className={cx('divider')} />
+        <div className={cx('infoRow')}>
+          <span className={cx('infoIcon')}>
+            <Icon name="hospital" size={32} />
+          </span>
+          <div className={cx('infoText')}>
+            <div className={cx('hospital')}>
+              {item.hospitalName} <span className={cx('dept')}>· {item.department}</span>
+            </div>
+            {address && <div className={cx('address')}>{address}</div>}
+          </div>
+        </div>
       </div>
     </section>
   );

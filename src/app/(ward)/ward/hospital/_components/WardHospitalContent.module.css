@@ -15,42 +15,83 @@
 }
 
 .nextCard {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.2fr);
+  overflow: hidden;
+  border: 2px solid var(--sb-brand-soft);
+}
+
+.ddayPanel {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 28px 30px;
-  border: 1.5px solid var(--sb-brand-soft);
-}
-
-.nextTop {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.nextLabel {
-  color: var(--sb-ink-soft);
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.dday {
-  padding: 8px 18px;
-  border-radius: 999px;
+  justify-content: center;
+  gap: 6px;
+  padding: 28px 20px;
   background: var(--sb-brand);
   color: #fff;
-  font-size: 20px;
-  font-weight: 800;
-  white-space: nowrap;
+  text-align: center;
+}
+
+.ddayCaption {
+  font-size: 24px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.ddayBig {
+  font-size: 84px;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+}
+
+.nextBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  min-width: 0;
+  padding: 30px 34px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.infoIcon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+}
+
+.infoIconBrand {
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.infoText {
+  min-width: 0;
+}
+
+.divider {
+  height: 2px;
+  background: var(--sb-line-soft);
 }
 
 .bigDate {
   color: var(--sb-ink);
-  font-size: 34px;
-  font-weight: 800;
-  line-height: 1.25;
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 1.2;
   word-break: keep-all;
 }
 
@@ -58,37 +99,104 @@
   color: var(--sb-brand);
 }
 
-.place {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .hospital {
   color: var(--sb-ink);
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1.2;
   word-break: keep-all;
 }
 
 .dept {
   color: var(--sb-ink-soft);
-  font-size: 19px;
+  font-size: 23px;
   font-weight: 700;
 }
 
 .address {
+  margin-top: 6px;
   color: var(--sb-ink-soft);
-  font-size: 18px;
-  line-height: 1.5;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.45;
   word-break: keep-all;
+}
+
+.emptyCard {
+  display: grid;
+  place-items: center;
+  padding: 56px 28px;
+  text-align: center;
 }
 
 .emptyBig {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 800;
+  word-break: keep-all;
+}
+
+.laterList {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.laterCard {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 20px 28px;
+}
+
+.laterWhen {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  min-width: 120px;
+  padding-right: 22px;
+  border-right: 2px solid var(--sb-line-soft);
+  text-align: center;
+}
+
+.laterLabel {
+  color: var(--sb-ink-mute);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.laterDday {
+  color: var(--sb-ink);
+  font-size: 28px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.laterBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.laterDate {
+  color: var(--sb-ink);
+  font-size: 26px;
+  font-weight: 900;
+  word-break: keep-all;
+}
+
+.laterTime {
+  color: var(--sb-brand);
+}
+
+.laterName {
+  margin-top: 4px;
+  color: var(--sb-ink-soft);
+  font-size: 22px;
+  font-weight: 800;
+  word-break: keep-all;
 }
 
 .listCard {
@@ -196,18 +304,70 @@
   cursor: pointer;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .nextCard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ddayPanel {
     padding: 22px 20px;
+  }
+
+  .ddayBig {
+    font-size: 64px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nextBody {
+    gap: 18px;
+    padding: 22px 20px;
+  }
+
+  .infoRow {
+    gap: 14px;
+  }
+
+  .infoIcon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+  }
+
+  .bigDate {
+    font-size: 30px;
+  }
+
+  .hospital {
+    font-size: 28px;
+  }
+
+  .dept,
+  .address {
+    font-size: 20px;
+  }
+
+  .laterCard {
+    gap: 16px;
+    padding: 18px 20px;
+  }
+
+  .laterWhen {
+    min-width: 84px;
+    padding-right: 16px;
+  }
+
+  .laterDate {
+    font-size: 22px;
+  }
+
+  .laterName {
+    font-size: 20px;
   }
 
   .row,
   .listHead {
     padding-left: 20px;
     padding-right: 20px;
-  }
-
-  .bigDate {
-    font-size: 30px;
   }
 }
