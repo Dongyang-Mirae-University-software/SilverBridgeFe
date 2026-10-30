@@ -43,6 +43,11 @@ beforeEach(() => {
   vi.stubGlobal('navigator', { serviceWorker: { register: async () => ({}), ready: Promise.resolve({}) } });
 });
 
+async function unregister() {
+  const { unregisterFcmTokenForCurrentDevice } = await import('./fcm');
+  return unregisterFcmTokenForCurrentDevice();
+}
+
 async function register() {
   const { registerFcmTokenForCurrentDevice } = await import('./fcm');
   return registerFcmTokenForCurrentDevice();
@@ -77,5 +82,30 @@ describe('FCM 토큰 교체', () => {
 
     await expect(register()).resolves.toBe('new-token');
     expect(local.getItem('careai_fcm_last_token')).toBe('new-token');
+  });
+});
+
+describe('로그아웃 토큰 해제', () => {
+  it('서버에서 지우면 기억한 토큰도 잊는다', async () => {
+    local.setItem('careai_fcm_last_token', 'token-1');
+    getTokenMock.mockResolvedValue('token-1');
+
+    await unregister();
+
+    expect(deleteToken).toHaveBeenCalledWith('token-1');
+    expect(local.getItem('careai_fcm_last_token')).toBeNull();
+  });
+
+  it('서버 삭제가 실패하면 기억을 남겨 다음 등록 때 다시 지운다', async () => {
+    local.setItem('careai_fcm_last_token', 'token-1');
+    getTokenMock.mockResolvedValue('token-1');
+    deleteToken.mockRejectedValueOnce(new Error('network'));
+
+    await expect(unregister()).rejects.toThrow('network');
+    expect(local.getItem('careai_fcm_last_token')).toBe('token-1');
+
+    getTokenMock.mockResolvedValue('token-2');
+    await register();
+    expect(deleteToken).toHaveBeenLastCalledWith('token-1');
   });
 });
