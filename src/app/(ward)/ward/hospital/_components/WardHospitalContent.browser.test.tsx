@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { page } from '@vitest/browser/context';
 import { render } from 'vitest-browser-react';
 
 import { RESERVATION_DEMO_NOTICE } from '@/constants/reservation';
@@ -143,6 +144,21 @@ describe('WardHospitalContent (Chrome)', () => {
     await screen.getByRole('button', { name: '2페이지' }).click();
     await expect.element(past).toHaveTextContent('지난병원7');
     expect(past.getByText('지난병원1', { exact: true }).elements()).toHaveLength(0);
+  });
+
+  it('띄어쓰기 없는 긴 병원 이름도 320px에서 가로로 넘치지 않는다', async () => {
+    const longName = '서울특별시립보라매병원부속노인전문재활의학과의원';
+    await page.viewport(320, 812);
+    api.getHospitals.mockResolvedValue([{ ...HOSPITAL, name: longName }]);
+    api.getMyReservations.mockResolvedValue([
+      reservation(1, addDays(TODAY, 123), '10:00', 'BOOKED', longName),
+      reservation(2, addDays(TODAY, 365), '14:45', 'BOOKED', longName),
+      reservation(3, addDays(TODAY, -1), '10:00', 'CANCELED', longName),
+    ]);
+    const screen = renderContent();
+    await expect.element(screen.getByText('123일 뒤')).toBeVisible();
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(320);
+    await page.viewport(375, 812);
   });
 
   it('병원 목록을 못 불러와도 예약은 보이고 주소만 빠진다', async () => {
