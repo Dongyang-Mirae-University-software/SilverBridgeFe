@@ -3,12 +3,12 @@
 import classNames from 'classnames/bind';
 import { useId } from 'react';
 
+import { formatDoseAmount } from '@/utils/format/medication';
 import {
   createEmptyDrug,
   decreaseDose,
   DraftDrug,
   findDuplicateDrugKeys,
-  formatDoseLabel,
   increaseDose,
   MAX_DOSE_AMOUNT,
   MAX_DRUGS,
@@ -80,7 +80,7 @@ export function MedicationDraftForm({ drugs, lowConfidenceHintId, onChange }: Me
               >
                 −
               </button>
-              <span aria-live="polite">{formatDoseLabel(drug.doseAmount)}</span>
+              <span aria-live="polite">{formatDoseAmount(drug.doseAmount)}</span>
               <button
                 type="button"
                 onClick={() => updateDrug(drug.key, { doseAmount: increaseDose(drug.doseAmount) })}

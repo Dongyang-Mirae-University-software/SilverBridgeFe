@@ -157,7 +157,7 @@ describe('MedicationAddModal (Chrome)', () => {
     await expect.element(screen.getByText('노란 칸의 약 이름을 한 번 더 확인해 주세요')).toBeVisible();
     await expect.element(screen.getByText('1 / 2')).toBeVisible();
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정');
-    await expect.element(screen.getByText('반알')).toBeVisible();
+    await expect.element(screen.getByText('반 알')).toBeVisible();
     // 확신 낮은 약이 있으면 결과 문구 바로 아래 노란 박스(작은 안내 대신)
     expect(document.querySelectorAll('[role="status"]')).toHaveLength(1);
     await expect.element(screen.getByLabelText('2번째 약 이름')).toHaveAttribute('aria-describedby');
@@ -312,7 +312,7 @@ describe('MedicationAddModal (Chrome)', () => {
     await expect.element(screen.getByRole('button', { name: '1번째 약 복용량 늘리기' })).toBeVisible();
     await expect.element(screen.getByRole('button', { name: '2번째 약 복용량 늘리기' })).toBeVisible();
     await screen.getByRole('button', { name: '1번째 약 복용량 늘리기' }).click();
-    await expect.element(screen.getByText('1알', { exact: true }).first()).toBeVisible();
+    await expect.element(screen.getByText('1정', { exact: true }).first()).toBeVisible();
     expect(screen.getByRole('button', { name: /바꾸기$/ }).query()).toBeNull();
   });
 
