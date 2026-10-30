@@ -22,8 +22,8 @@
 .header h1 {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 24px;
-  font-weight: 800;
+  font-size: calc(24px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   letter-spacing: -0.02em;
   line-height: 1.25;
 }
@@ -32,8 +32,8 @@
   max-width: 720px;
   margin: 4px 0 0;
   color: var(--sb-ink-mute);
-  font-size: 15px;
-  font-weight: 400;
+  font-size: calc(15px * var(--ward-font-scale, 1));
+  font-weight: calc(400 + var(--ward-weight-boost, 0));
   line-height: 1.55;
 }
 
@@ -79,13 +79,13 @@
 .emptyState strong {
   color: var(--sb-ink);
   font-size: 1.25rem;
-  font-weight: 850;
+  font-weight: calc(850 + var(--ward-weight-boost, 0));
 }
 
 .emptyState span {
   color: var(--sb-ink-mute);
   font-size: 0.8125rem;
-  font-weight: 650;
+  font-weight: calc(650 + var(--ward-weight-boost, 0));
   line-height: 1.6;
 }
 
@@ -97,7 +97,7 @@
   }
 
   .header h1 {
-    font-size: 30px;
+    font-size: calc(30px * var(--ward-font-scale, 1));
   }
 
   .emptyContent {

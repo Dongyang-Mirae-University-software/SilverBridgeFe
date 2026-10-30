@@ -17,7 +17,7 @@
   margin: 0;
   color: var(--sb-ink);
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 .empty {
@@ -57,13 +57,13 @@
 .hospitalInfo strong {
   color: var(--sb-ink);
   font-size: 0.8125rem;
-  font-weight: 800;
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 .hospitalInfo span {
   color: var(--sb-ink-soft);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: calc(650 + var(--ward-weight-boost, 0));
 }
 
 .address {
@@ -82,14 +82,14 @@
 .apptDetail dt {
   color: var(--sb-ink-mute);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .apptDetail dd {
   margin: 0;
   color: var(--sb-ink);
   font-size: 0.75rem;
-  font-weight: 750;
+  font-weight: calc(750 + var(--ward-weight-boost, 0));
 }
 
 /* 예약 목록 */
@@ -123,7 +123,7 @@
 .apptRow strong {
   color: var(--sb-ink);
   font-size: 0.8125rem;
-  font-weight: 800;
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 .apptRow span {
@@ -140,7 +140,7 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.75rem;
-  font-weight: 750;
+  font-weight: calc(750 + var(--ward-weight-boost, 0));
   padding: 6px 12px;
   white-space: nowrap;
 }

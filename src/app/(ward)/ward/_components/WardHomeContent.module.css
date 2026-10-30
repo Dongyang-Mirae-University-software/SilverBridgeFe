@@ -46,8 +46,8 @@
 
 .actionCard strong {
   color: inherit;
-  font-size: 30px;
-  font-weight: 800;
+  font-size: calc(30px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   line-height: 1.15;
   word-break: keep-all;
 }

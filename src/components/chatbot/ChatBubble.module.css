@@ -38,8 +38,8 @@
   border-radius: 50%;
   background: var(--sb-brand);
   color: #fff;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: calc(12px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   margin-bottom: 4px;
 }
 
@@ -76,8 +76,8 @@
 
 .bubbleUser p {
   margin: 0;
-  font-size: 21px;
-  font-weight: 400;
+  font-size: calc(21px * var(--ward-font-scale, 1));
+  font-weight: calc(400 + var(--ward-weight-boost, 0));
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
@@ -99,8 +99,8 @@
 .replyText {
   margin: 0;
   color: var(--sb-ink);
-  font-size: 21px;
-  font-weight: 400;
+  font-size: calc(21px * var(--ward-font-scale, 1));
+  font-weight: calc(400 + var(--ward-weight-boost, 0));
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
@@ -118,8 +118,8 @@
 .medTitle {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 12px;
-  font-weight: 800;
+  font-size: calc(12px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 .medTitleDanger {
@@ -137,7 +137,7 @@
 .medList li {
   color: var(--sb-ink-soft);
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: calc(500 + var(--ward-weight-boost, 0));
   line-height: 1.55;
 }
 
@@ -177,18 +177,18 @@
 
 .wardBubble .bubbleUser p,
 .wardBubble .replyText {
-  font-size: 26px;
+  font-size: calc(26px * var(--ward-font-scale, 1));
   line-height: 1.5;
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
 
 .wardBubble .bubbleUser p {
-  font-weight: 800;
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 .wardBubble .replyText {
-  font-weight: 700;
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 @media (max-width: 760px) {
@@ -200,7 +200,7 @@
 
   .bubbleUser p,
   .replyText {
-    font-size: 18px;
+    font-size: calc(18px * var(--ward-font-scale, 1));
   }
 
   .wardBubble .messageColumnUser,
@@ -216,7 +216,7 @@
   /* 시니어 휴대폰 화면도 22px 아래로 줄이지 않는다(이전 18px보다 크게). */
   .wardBubble .bubbleUser p,
   .wardBubble .replyText {
-    font-size: 22px;
+    font-size: calc(22px * var(--ward-font-scale, 1));
   }
 }
 

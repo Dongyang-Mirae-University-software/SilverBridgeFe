@@ -14,6 +14,7 @@ import {
   WARD_SETTINGS_STORAGE_KEY,
   clampFontSize,
   getValidSosAction,
+  getWardTextVars,
 } from '@/constants/wardSettings';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { getRealtimeNotification } from '@/utils/dashboard/realtime';
@@ -45,9 +46,11 @@ export function WardLayout({ children }: { children: ReactNode }) {
   useWardRootFontSize(wardSettings.fontSize);
   const isChatbotPage = pathname === '/ward/chatbot';
   const chatViewportHeight = useVisualViewportHeight(isChatbotPage);
-  const chatViewportStyle = chatViewportHeight
-    ? ({ '--chat-viewport-height': `${chatViewportHeight}px` } as CSSProperties)
-    : undefined;
+  // 글자 크기·진한 글자 설정은 본문 CSS의 변수로 반영한다(헤더 로고·버튼은 그대로)
+  const stageStyle = {
+    ...getWardTextVars(wardSettings),
+    ...(chatViewportHeight ? { '--chat-viewport-height': `${chatViewportHeight}px` } : {}),
+  } as CSSProperties;
 
   return (
     <DashboardProvider
@@ -62,7 +65,7 @@ export function WardLayout({ children }: { children: ReactNode }) {
           wardHighContrast: wardSettings.highContrast,
           wardReadableText: true,
         })}
-        style={chatViewportStyle}
+        style={stageStyle}
       >
         <SidebarLayout navItems={WARD_NAV} profile={profile} role={role} rootPath={rootPath} />
         {/* 카메라 송출은 피보호자 웹 어느 화면에서든 이어지도록 레이아웃에 둔다 */}

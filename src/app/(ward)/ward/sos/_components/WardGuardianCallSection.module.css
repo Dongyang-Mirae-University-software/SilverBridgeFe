@@ -61,8 +61,8 @@
 .guardianName {
   overflow-wrap: anywhere;
   word-break: keep-all;
-  font-size: 30px;
-  font-weight: 800;
+  font-size: calc(30px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   line-height: 1.25;
 }
 
@@ -72,8 +72,8 @@
 
 .noPhoneText {
   color: var(--sb-ink-mute);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: calc(15px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .callCircle {
@@ -119,8 +119,8 @@
 }
 
 .emptyCopy { display: grid; min-width: 0; flex: 1; gap: 6px; }
-.emptyCopy strong { color: var(--sb-ink); font-size: 20px; font-weight: 800; word-break: keep-all; }
-.emptyCopy span { color: var(--sb-ink-mute); font-size: 17px; line-height: 1.5; word-break: keep-all; }
+.emptyCopy strong { color: var(--sb-ink); font-size: calc(20px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); word-break: keep-all; }
+.emptyCopy span { color: var(--sb-ink-mute); font-size: calc(17px * var(--ward-font-scale, 1)); line-height: 1.5; word-break: keep-all; }
 
 .emptyButton {
   display: inline-flex;
@@ -131,8 +131,8 @@
   border-radius: 16px;
   background: var(--sb-brand);
   color: #fff;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 0 24px;
   text-decoration: none;
 }

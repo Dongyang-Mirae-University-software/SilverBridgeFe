@@ -35,7 +35,7 @@
   color: var(--sb-brand);
 }
 
-.emptyCard strong { color: var(--sb-ink); font-size: 22px; font-weight: 800; }
+.emptyCard strong { color: var(--sb-ink); font-size: calc(22px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
 
 .emptyRegisterButton {
   display: inline-flex;
@@ -48,8 +48,8 @@
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 0 28px;
 }
 
@@ -90,7 +90,7 @@
 .cameraInfo { display: grid; min-width: 0; flex: 1; gap: 8px; }
 .labelRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-.label { color: var(--sb-ink); font-size: 23px; font-weight: 800; line-height: 1.2; }
+.label { color: var(--sb-ink); font-size: calc(23px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); line-height: 1.2; }
 
 .statusBadge {
   display: inline-flex;
@@ -101,8 +101,8 @@
   border-radius: 999px;
   background: var(--sb-bg-soft);
   color: var(--sb-ink-mute);
-  font-size: 15px;
-  font-weight: 800;
+  font-size: calc(15px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 5px 12px;
 }
 
@@ -135,13 +135,13 @@
   border-radius: 999px;
   background: var(--sb-ink);
   color: #fff;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: calc(13px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 3px 9px;
   white-space: nowrap;
 }
 
-.statusMessage { margin: 0; color: var(--sb-ink); font-size: 15px; font-weight: 600; line-height: 1.5; }
+.statusMessage { margin: 0; color: var(--sb-ink); font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: calc(600 + var(--ward-weight-boost, 0)); line-height: 1.5; }
 .checkingMessage { color: #3f6e8c; }
 
 .meta {
@@ -150,8 +150,8 @@
   gap: 8px;
   margin: 0;
   color: var(--sb-ink-mute);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: calc(15px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .primaryButton {
@@ -165,8 +165,8 @@
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 .primaryButton:disabled {
@@ -188,13 +188,13 @@
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: calc(16px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .linkButton.danger { color: var(--sb-warn); }
 
 @media (max-width: 640px) {
   .item { padding: 18px; }
-  .label { font-size: 20px; }
+  .label { font-size: calc(20px * var(--ward-font-scale, 1)); }
 }

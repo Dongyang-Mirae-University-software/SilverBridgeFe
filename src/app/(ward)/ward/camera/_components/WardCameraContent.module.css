@@ -22,8 +22,8 @@
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 0 24px;
 }
 
@@ -31,7 +31,7 @@
   margin: 0;
   color: var(--sb-ink-mute);
   font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .registerButton:disabled {
@@ -48,6 +48,6 @@
   background: #fff7f5;
   color: var(--sb-warn);
   font-size: 1.125rem;
-  font-weight: 900;
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
   padding: 18px 20px;
 }

@@ -15,8 +15,8 @@
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: calc(17px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
   padding: 0 18px;
 }
 
@@ -32,7 +32,7 @@
   border-color: var(--sb-line-soft);
   background: var(--sb-bg-soft);
   color: var(--sb-ink-mute);
-  font-weight: 600;
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
   opacity: 1;
 }
 
@@ -40,7 +40,7 @@
   .chip {
     min-height: 48px;
     gap: 6px;
-    font-size: 15px;
+    font-size: calc(15px * var(--ward-font-scale, 1));
     padding: 0 14px;
   }
 }

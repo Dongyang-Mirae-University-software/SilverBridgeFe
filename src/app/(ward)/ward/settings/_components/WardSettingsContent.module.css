@@ -22,8 +22,8 @@
   color: var(--sb-ink);
   cursor: pointer;
   font-family: inherit;
-  font-size: 21px;
-  font-weight: 800;
+  font-size: calc(21px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   white-space: nowrap;
 }
 
@@ -54,7 +54,7 @@
 .passwordField span {
   color: var(--sb-ink-mute);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .passwordField input {
@@ -66,7 +66,7 @@
   color: var(--sb-ink);
   font: inherit;
   font-size: 0.9375rem;
-  font-weight: 750;
+  font-weight: calc(750 + var(--ward-weight-boost, 0));
   min-height: 48px;
   outline: none;
   padding: 0 16px;
@@ -81,7 +81,7 @@
   margin: 0;
   color: var(--sb-warn);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
   line-height: 1.5;
 }
 
@@ -105,7 +105,7 @@
     min-height: 58px;
     gap: 6px;
     border-radius: 14px;
-    font-size: 14px;
+    font-size: calc(14px * var(--ward-font-scale, 1));
   }
 
   .tabButton svg {
