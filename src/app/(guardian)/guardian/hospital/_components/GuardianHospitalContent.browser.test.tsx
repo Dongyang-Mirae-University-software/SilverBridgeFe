@@ -308,7 +308,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
     const past = screen.getByRole('region', { name: '지난 진료' });
     // 병원 목록에 없는 병원은 다시 예약 버튼이 없다
     expect(past.getByRole('button', { name: /다시 예약$/ }).elements()).toHaveLength(1);
-    await past.getByRole('button', { name: '강남내과 내과 다시 예약' }).click();
+    await past.getByRole('button', { name: `강남내과 내과 ${formatDateShort(addDays(TODAY, -5))} 다시 예약` }).click();
 
     await expect.element(step(screen, '2. 날짜·시간')).toHaveAttribute('aria-current', 'step');
     await expect.element(screen.getByText('강남내과', { exact: false })).toBeVisible();
@@ -551,5 +551,91 @@ describe('GuardianHospitalContent (Chrome)', () => {
     const screen = renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await expect.element(screen.getByRole('button', { name: /종합병원/ })).toHaveTextContent('내과 · 외과 · 안과 외 2개');
+  });
+
+  it('진료과를 바꾸면 고른 시간을 지우고 그 진료과의 빈 시간을 다시 묻는다', async () => {
+    const screen = renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    await screen.getByRole('button', { name: /강남내과/ }).click();
+    const dept = screen.getByRole('region', { name: '진료과' });
+    await dept.getByRole('button', { name: '내과', exact: true }).click();
+    await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
+    await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
+    await expect.element(screen.getByRole('button', { name: '다음' })).toBeEnabled();
+
+    await dept.getByRole('button', { name: '가정의학과' }).click();
+    await expect.element(screen.getByRole('button', { name: '다음' })).toBeDisabled();
+    await vi.waitFor(() => expect(api.getAvailableSlots).toHaveBeenCalledWith(1, TOMORROW, '가정의학과'));
+  });
+
+  it('진료과가 여럿인 병원도 다시 예약하면 그 진료과를 미리 고른다', async () => {
+    api.getMyReservations.mockResolvedValue([reservation(3, addDays(TODAY, -5), '10:00', 'COMPLETED')]);
+    const screen = renderContent();
+    await screen.getByRole('button', { name: /강남내과 내과 .* 다시 예약$/ }).click();
+    await expect
+      .element(screen.getByRole('region', { name: '진료과' }).getByRole('button', { name: '내과', exact: true }))
+      .toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('취소 확인 창은 바깥을 누르면 닫히고 취소하지 않는다', async () => {
+    api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
+    const screen = renderContent();
+    await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
+    (document.querySelector('[role="presentation"]') as HTMLElement).click();
+
+    await vi.waitFor(() => expect(screen.getByRole('dialog').elements()).toHaveLength(0));
+    expect(api.cancelReservation).not.toHaveBeenCalled();
+  });
+
+  it('취소에 실패하면 창을 닫고 서버 문구로 이유를 알린다', async () => {
+    api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
+    api.cancelReservation.mockRejectedValue(axiosError(400, '취소할 수 없는 예약 상태입니다.'));
+    const screen = renderContent();
+    await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
+    await screen.getByRole('dialog').getByRole('button', { name: '예약 취소' }).click();
+
+    await expect.element(screen.getByText('취소할 수 없는 예약 상태입니다.')).toBeVisible();
+    expect(screen.getByRole('dialog').elements()).toHaveLength(0);
+  });
+
+  it('M-1 진료과가 하나도 없는 병원은 병원 목록에 두지 않는다(골라도 시간 칸을 못 묻는다)', async () => {
+    api.getHospitals.mockResolvedValue([hospital(1, '빈진료과병원', []), hospital(2, '푸른안과', ['안과'])]);
+    const screen = renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    await expect.element(screen.getByRole('button', { name: /푸른안과/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: /빈진료과병원/ }).elements()).toHaveLength(0);
+  });
+
+  it('M-2 다시 예약 카드는 날짜·상태까지 읽어 줘 같은 병원 카드끼리 구별된다', async () => {
+    api.getMyReservations.mockResolvedValue([
+      reservation(3, addDays(TODAY, -5), '10:00', 'CANCELED'),
+      reservation(4, addDays(TODAY, -9), '10:00', 'COMPLETED'),
+    ]);
+    const screen = renderContent();
+    const past = screen.getByRole('region', { name: '지난 진료' });
+    await expect
+      .element(past.getByRole('button', { name: `강남내과 내과 ${formatDateShort(addDays(TODAY, -5))} 취소됨 다시 예약` }))
+      .toBeVisible();
+    await expect
+      .element(past.getByRole('button', { name: `강남내과 내과 ${formatDateShort(addDays(TODAY, -9))} 다시 예약` }))
+      .toBeVisible();
+  });
+
+  it('L-1·L-2 취소하는 동안 포커스는 창에 머물고, 창이 떠 있는 동안만 뒤 화면 스크롤을 잠근다', async () => {
+    let finish: (value: unknown) => void = () => {};
+    api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
+    api.cancelReservation.mockReturnValue(new Promise(resolve => (finish = resolve)));
+    const screen = renderContent();
+    await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
+    expect(document.body.style.overflow).toBe('hidden');
+
+    await screen.getByRole('dialog').getByRole('button', { name: '예약 취소' }).click();
+    await expect.element(screen.getByRole('dialog')).toHaveFocus();
+    await userEvent.keyboard('{Tab}');
+    await expect.element(screen.getByRole('dialog')).toHaveFocus();
+
+    finish({ data: { success: true } });
+    await vi.waitFor(() => expect(screen.getByRole('dialog').elements()).toHaveLength(0));
+    expect(document.body.style.overflow).toBe('');
   });
 });
