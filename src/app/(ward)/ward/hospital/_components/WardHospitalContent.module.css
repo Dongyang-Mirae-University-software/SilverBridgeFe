@@ -206,6 +206,19 @@
   overflow-wrap: anywhere;
 }
 
+.moreButton {
+  min-height: 56px;
+  padding: 0 28px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .listCard {
   padding: 0;
   overflow: hidden;

@@ -59,8 +59,7 @@ const HOSPITAL: IHospital = {
   closeTime: '18:00',
 };
 
-function renderContent() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderContent(queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
@@ -159,6 +158,63 @@ describe('WardHospitalContent (Chrome)', () => {
     await expect.element(screen.getByText('123일 뒤')).toBeVisible();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(320);
     await page.viewport(375, 812);
+  });
+
+  it('다가오는 예약이 많으면 그다음 카드는 3장만 보이고 더 보기로 펼친다', async () => {
+    api.getMyReservations.mockResolvedValue(
+      Array.from({ length: 6 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
+    );
+    const screen = renderContent();
+    const later = screen.getByRole('region', { name: '그 밖의 예약' });
+    await expect.element(later).toHaveTextContent('다음병원4');
+    expect(later.getByText('다음병원5').elements()).toHaveLength(0);
+
+    const more = screen.getByRole('button', { name: '예약 2건 더 보기' });
+    await expect.element(more).toHaveAttribute('aria-expanded', 'false');
+    await more.click();
+    await expect.element(later).toHaveTextContent('다음병원6');
+    await expect.element(screen.getByRole('button', { name: '접기' })).toHaveAttribute('aria-expanded', 'true');
+
+    await screen.getByRole('button', { name: '접기' }).click();
+    await expect.element(screen.getByRole('button', { name: '예약 2건 더 보기' })).toBeVisible();
+    expect(later.getByText('다음병원6').elements()).toHaveLength(0);
+  });
+
+  it('그다음 예약이 3건 이하면 더 보기 버튼이 없다', async () => {
+    api.getMyReservations.mockResolvedValue(
+      Array.from({ length: 4 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
+    );
+    const screen = renderContent();
+    await expect.element(screen.getByRole('region', { name: '그 밖의 예약' })).toHaveTextContent('다음병원4');
+    expect(screen.getByRole('button').elements()).toHaveLength(0);
+  });
+
+  it('켜 둔 화면을 다시 불러오다 실패해도 보이던 예약은 그대로 둔다', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    api.getMyReservations.mockResolvedValue([reservation(1, addDays(TODAY, 2), '10:00')]);
+    const screen = renderContent(queryClient);
+    await expect.element(screen.getByText('2일 뒤')).toBeVisible();
+
+    api.getMyReservations.mockRejectedValue(new Error('down'));
+    await queryClient.refetchQueries();
+    // 갱신 실패가 쿼리 상태에 들어가고 화면이 다시 그려질 때까지 기다린 뒤 본다
+    await vi.waitFor(() =>
+      expect(queryClient.getQueryCache().getAll().some(query => query.state.status === 'error')).toBe(true),
+    );
+    await new Promise(resolve => setTimeout(resolve, 200));
+    expect(screen.getByRole('alert').elements()).toHaveLength(0);
+    await expect.element(screen.getByText('2일 뒤')).toBeVisible();
+  });
+
+  it('켜 둔 화면에 보호자가 새로 잡은 예약이 다시 불러오면 나타난다', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    api.getMyReservations.mockResolvedValue([]);
+    const screen = renderContent(queryClient);
+    await expect.element(screen.getByText('병원 갈 날이 없어요')).toBeVisible();
+
+    api.getMyReservations.mockResolvedValue([reservation(1, addDays(TODAY, 2), '10:00')]);
+    await queryClient.refetchQueries();
+    await expect.element(screen.getByText('2일 뒤')).toBeVisible();
   });
 
   it('병원 목록을 못 불러와도 예약은 보이고 주소만 빠진다', async () => {
