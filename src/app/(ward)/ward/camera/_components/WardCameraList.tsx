@@ -158,7 +158,6 @@ export function WardCameraList({
       {removing && (
         <RemoveCameraDialog
           label={removing.camera.label}
-          isThisDevice={removing.isThisDevice}
           isPending={deleteMutation.isPending}
           onCancel={() => setRemoving(null)}
           onConfirm={handleDelete}

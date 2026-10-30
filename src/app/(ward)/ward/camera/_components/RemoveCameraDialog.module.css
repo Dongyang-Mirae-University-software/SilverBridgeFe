@@ -26,13 +26,6 @@
   line-height: 1.4;
 }
 
-.dialog p {
-  margin: 0;
-  color: var(--sb-ink-soft);
-  font-size: 16px;
-  line-height: 1.6;
-}
-
 .actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
