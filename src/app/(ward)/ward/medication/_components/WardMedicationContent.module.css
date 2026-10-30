@@ -30,124 +30,157 @@
   word-break: keep-all;
 }
 
-.slots { display: grid; min-width: 0; gap: 8px; }
+/* 시간대 탭 - 오늘 시간대를 한 줄에 모두 보여 주고, 누르면 아래 카드가 그 시간대로 바뀐다 */
+.tabs {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
 
-/* 접힌 시간대 한 줄 - 누르면 그 시간대를 펼친다 */
-.slotRow {
+.tab {
   display: flex;
-  width: 100%;
-  min-height: 64px;
+  min-width: 0;
+  min-height: 84px;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  border: 1px solid var(--sb-line-soft);
-  border-radius: 16px;
+  justify-content: center;
+  gap: 4px;
+  border: 2px solid var(--sb-line);
+  border-radius: 18px;
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
   font: inherit;
-  padding: 0 26px;
-  text-align: left;
+  padding: 8px 10px;
 }
 
-.slotRow.done { border-color: transparent; background: transparent; color: var(--sb-ink-mute); }
-.slotName { font-size: 22px; font-weight: 800; }
-.slotTime { color: var(--sb-ink-mute); font-size: 20px; font-weight: 700; white-space: nowrap; }
-.slotDone { display: inline-flex; align-items: center; gap: 6px; color: var(--sb-safe); font-size: 20px; font-weight: 800; white-space: nowrap; }
+.tab.selected { border: 3px solid var(--sb-brand); background: var(--sb-brand-50); }
+.tab.done { background: var(--sb-safe-soft); }
+.tab.done.selected { border-color: var(--sb-safe); }
 
-/* 펼친 시간대 - 지금 먹을 약 */
-.nowCard {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  border: 2.5px solid var(--sb-brand);
-  border-radius: 16px;
+.tabName { font-size: 24px; font-weight: 900; line-height: 1.2; text-align: center; word-break: keep-all; }
+
+/* 19px 굵게 = 큰 글자 기준(18.66px) - 갈색·초록 글자의 대비를 3:1 기준으로 맞춘다 */
+.tabTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--sb-ink-soft);
+  font-size: 19px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.tabTag.tagDone { color: var(--sb-safe); }
+.tabTag.tagLate { color: var(--sb-warn); }
+.tabTag.tagNow { color: var(--sb-brand); }
+
+/* 고른 시간대 카드 - 왼쪽 색 패널(상태·시간대·시각) + 오른쪽 약 칸과 버튼 */
+.slotCard {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.3fr);
+  overflow: hidden;
+  border: 2px solid var(--sb-brand-soft);
+  border-radius: 20px;
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
-  padding: 22px 28px 26px;
 }
 
-.nowHead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; }
-.nowHead strong { color: var(--sb-ink); font-size: 32px; font-weight: 800; line-height: 1.25; }
-.nowHead span { color: var(--sb-ink-soft); font-size: 22px; font-weight: 700; }
+.slotCard.done { border-color: var(--sb-safe); }
 
-.medList { display: grid; margin: 0; padding: 0; list-style: none; }
-
-.medicationRow {
+.lead {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--sb-brand);
+  color: #fff;
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.slotCard.done .lead { background: var(--sb-safe); }
+.leadState { font-size: 24px; font-weight: 700; word-break: keep-all; }
+.leadName { font-size: 76px; font-weight: 900; line-height: 1.05; word-break: keep-all; }
+.leadTime { font-size: 26px; font-weight: 800; }
+
+.body { display: flex; min-width: 0; flex-direction: column; gap: 20px; padding: 26px 30px; }
+
+.medGrid {
+  display: grid;
+  min-width: 0;
+  grid-auto-rows: minmax(72px, auto);
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  --med-font: 38px;
+}
+
+.medGrid.few { grid-template-columns: minmax(0, 1fr); }
+.medGrid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); --med-font: 34px; }
+.medGrid.some { grid-template-columns: repeat(2, minmax(0, 1fr)); --med-font: 32px; }
+.medGrid.many { grid-template-columns: repeat(2, minmax(0, 1fr)); --med-font: 28px; }
+.medGrid.lots { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(60px, auto); --med-font: 24px; }
+
+.medCell {
+  display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  border-top: 1px solid var(--sb-line-soft);
+  gap: 12px;
+  border-radius: 18px;
+  background: var(--sb-bg-soft);
   color: var(--sb-ink);
-  font-size: 24px;
-  font-weight: 800;
-  padding: 12px 0;
+  font-size: var(--med-font);
+  font-weight: 900;
+  line-height: 1.2;
+  padding: 10px 22px;
 }
 
-.medicationRow:first-child { border-top: 0; }
-.medicationRow > strong { color: var(--sb-brand); font: inherit; white-space: nowrap; }
-.medicationRow.muted { color: var(--sb-ink-mute); }
-.medicationRow.muted > strong { color: var(--sb-ink-soft); }
+.medName { min-width: 0; overflow-wrap: anywhere; word-break: keep-all; }
+.medAmount { flex-shrink: 0; color: var(--sb-brand); font: inherit; white-space: nowrap; }
+.slotCard.done .medCell { background: var(--sb-safe-soft); }
+.slotCard.done .medAmount { color: var(--sb-safe); }
+.medCell.muted { color: var(--sb-ink-soft); }
+.medCell.muted .medAmount { color: var(--sb-ink-soft); }
 
 .takeButton {
   display: flex;
-  min-height: 76px;
+  min-height: 84px;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 20px;
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 26px;
-  font-weight: 800;
+  font-size: 30px;
+  font-weight: 900;
   padding: 0 20px;
   word-break: keep-all;
+}
+
+.undoButton {
+  min-height: 64px;
+  border: 2px solid var(--sb-safe);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--sb-safe);
+  cursor: pointer;
+  font-size: 22px;
+  font-weight: 800;
+  padding: 0 18px;
 }
 
 .takeButton:disabled,
 .undoButton:disabled { cursor: not-allowed; opacity: 0.6; }
 
-.skippedText { margin: 0; color: var(--sb-ink-soft); font-size: 18px; font-weight: 700; word-break: keep-all; }
-
-/* 펼친 시간대 - 다 먹음, 바로 되돌릴 수 있다 */
-.doneCard {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 18px;
-  border: 2px solid var(--sb-safe);
-  border-radius: 16px;
-  background: var(--sb-safe-soft);
-  padding: 24px 28px;
-}
-
-.doneIcon {
-  display: grid;
-  width: 60px;
-  height: 60px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--sb-safe);
-}
-
-.doneText { min-width: 0; flex: 1 1 180px; color: var(--sb-safe); font-size: 28px; font-weight: 800; word-break: keep-all; }
-
-.undoButton {
-  min-height: 52px;
-  flex: 0 0 auto;
-  border: 1.5px solid var(--sb-safe);
-  border-radius: 14px;
-  background: #fff;
-  color: var(--sb-safe);
-  cursor: pointer;
-  font-size: 17px;
-  font-weight: 700;
-  padding: 0 18px;
-}
+.beforeText { margin: 0; color: var(--sb-ink-soft); font-size: 22px; font-weight: 800; text-align: center; word-break: keep-all; }
 
 .intakeError {
   margin: 0;
@@ -162,19 +195,33 @@
   word-break: keep-all;
 }
 
+/* 태블릿 - 카드를 위아래로 쌓는다(피보호자 병원 화면과 같은 768px 기준) */
+@media (max-width: 768px) {
+  .slotCard { grid-template-columns: minmax(0, 1fr); }
+  .lead { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding: 20px 24px; }
+  .leadState { flex-basis: 100%; }
+  .leadName { font-size: 52px; }
+  .medGrid.lots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* 휴대폰 - 탭은 두 칸씩, 약은 한 칸씩. 글자는 이전 화면의 휴대폰 크기(20px)보다 줄이지 않는다 */
 @media (max-width: 640px) {
   .allTaken { font-size: 24px; padding: 22px 16px; }
-  .slotRow { padding: 0 18px; }
-  .slotName { font-size: 20px; }
-  .slotTime,
-  .slotDone { font-size: 18px; }
-  .nowCard { padding: 18px 16px 20px; }
-  .nowHead strong { font-size: 26px; }
-  .nowHead span { font-size: 19px; }
-  .medicationRow { font-size: 20px; }
-  .takeButton { min-height: 68px; font-size: 22px; }
-  .doneCard { gap: 14px; padding: 18px 16px; }
-  .doneIcon { width: 48px; height: 48px; }
-  .doneText { font-size: 23px; }
-  .undoButton { width: 100%; }
+  .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .tab { min-height: 76px; }
+  .tabName { font-size: 22px; }
+  .lead { padding: 18px 16px; }
+  .leadState { font-size: 20px; }
+  .leadName { font-size: 40px; }
+  .leadTime { font-size: 22px; }
+  .body { gap: 16px; padding: 18px 16px 20px; }
+  .medGrid,
+  .medGrid.four,
+  .medGrid.some,
+  .medGrid.many,
+  .medGrid.lots { grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(60px, auto); --med-font: 26px; }
+  .medGrid.few { --med-font: 30px; }
+  .medCell { padding: 10px 16px; }
+  .takeButton { min-height: 76px; font-size: 24px; }
+  .undoButton { font-size: 20px; }
 }
