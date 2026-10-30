@@ -30,3 +30,9 @@
 
 - 실서버 화면 확인(보호자 피보호자 전환·대리 상담 예약 흐름·상담 기록)은 시험 보호자 계정 비밀번호가 갱신되면 다시 한다
 - 실제 휴대폰에서 키보드가 열릴 때의 모습(iOS `visualViewport`)은 기기로 확인해야 한다
+
+## 추가 (같은 날, gosky 디스크 정리 뒤 실서버 확인)
+
+- gosky dev 실서버 보호자 화면 확인 통과: 피보호자 탭 2명, 인사말에 피보호자 이름, 요청 경로 `/api/guardian/chat`·본문 키 `context|message|sessionId`(history 없음), 같은 대화창 sessionId 유지·피보호자 전환 시 새 sessionId와 `wardId` 변경, 상담 기록 창, 375·768·1280px 가로 스크롤 없음, 브라우저 콘솔에 상담 내용 없음
+- 발견: 375px에서 말풍선 안 지역 입력칸(`ChatUiPrompt` 입력형)의 "적용" 버튼이 밖으로 밀려 잘렸다 - 입력칸에 `min-width: 0`이 없어 기본 폭 아래로 줄지 않았다(기존 문제). 수정하고 `ChatUiPrompt.browser.test.tsx`로 고정
+- 그 전의 로그인 503은 gosky 루트 디스크 100%로 dev Redis AOF 쓰기가 실패한 것이었다(빌드 캐시·미사용 이미지 정리로 해소)

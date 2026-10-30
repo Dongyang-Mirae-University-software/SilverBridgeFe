@@ -117,6 +117,8 @@
 .dateInput,
 .textInput {
   flex: 1;
+  /* 입력칸 기본 폭이 줄지 않으면 좁은 말풍선에서 적용 버튼이 밖으로 밀려 잘린다(375px). */
+  min-width: 0;
   min-height: 38px;
   box-sizing: border-box;
   border: 1px solid rgba(37, 32, 24, 0.08);
