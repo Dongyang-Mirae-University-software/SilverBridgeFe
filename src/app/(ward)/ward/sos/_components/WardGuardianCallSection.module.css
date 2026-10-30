@@ -118,9 +118,9 @@
   color: var(--sb-ink-mute);
 }
 
-.emptyCopy { display: grid; min-width: 0; flex: 1; gap: 2px; }
-.emptyCopy strong { color: var(--sb-ink); font-size: 14px; font-weight: 800; }
-.emptyCopy span { color: var(--sb-ink-mute); font-size: 12px; }
+.emptyCopy { display: grid; min-width: 0; flex: 1; gap: 6px; }
+.emptyCopy strong { color: var(--sb-ink); font-size: 20px; font-weight: 800; word-break: keep-all; }
+.emptyCopy span { color: var(--sb-ink-mute); font-size: 17px; line-height: 1.5; word-break: keep-all; }
 
 .emptyButton {
   display: inline-flex;
