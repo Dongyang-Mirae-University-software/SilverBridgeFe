@@ -18,8 +18,10 @@ function isNewNotice(createdAt: string) {
   return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
 }
 
-// fullWidthContent: 본문을 카드 폭만큼 쓴다(피보호자 화면). 기본은 읽기 좋은 폭(78ch)으로 줄인다.
-export function NoticesPage({ fullWidthContent = false }: { fullWidthContent?: boolean }) {
+// variant="ward"(피보호자 화면): 본문이 카드 폭을 다 쓰고, 새로고침 줄이 첫 카드 위에 빈 칸을 만들지 않는다.
+// 기본(보호자 화면)은 읽기 좋은 폭(78ch)으로 줄인다.
+export function NoticesPage({ variant = 'default' }: { variant?: 'default' | 'ward' }) {
+  const ward = variant === 'ward';
   const { data: announcements = [], isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
   const sortedAnnouncements = [...announcements].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -27,7 +29,7 @@ export function NoticesPage({ fullWidthContent = false }: { fullWidthContent?: b
 
   return (
     <section className={cx('page')}>
-      <header className={cx('topBar')}>
+      <header className={cx('topBar', { wardTopBar: ward })}>
         <RefreshButton ariaLabel="공지사항 새로고침" disabled={isLoading} onRefresh={() => refetch()} />
       </header>
 
@@ -58,7 +60,7 @@ export function NoticesPage({ fullWidthContent = false }: { fullWidthContent?: b
             </time>
           </div>
           <h2 className={cx('title')}>{announcement.title}</h2>
-          <p className={cx('content', { fullWidthContent })}>{announcement.content}</p>
+          <p className={cx('content', { wardContent: ward })}>{announcement.content}</p>
         </article>
       ))}
     </section>

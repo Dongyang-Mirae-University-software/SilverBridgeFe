@@ -11,6 +11,11 @@
   justify-content: flex-end;
 }
 
+/* 새로고침 버튼은 화면에 고정(fixed)이라 이 줄은 높이가 0인데 gap만 차지한다 - 피보호자 화면에서는 레이아웃에서 뺀다 */
+.topBar.wardTopBar {
+  display: contents;
+}
+
 .empty {
   display: flex;
   align-items: center;
@@ -77,6 +82,6 @@
   word-break: keep-all;
 }
 
-.content.fullWidthContent {
+.content.wardContent {
   max-width: none;
 }
