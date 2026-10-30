@@ -8,6 +8,7 @@
 .title {
   overflow: hidden;
   color: #c25f43;
+  font-family: var(--font-fredoka), var(--font-pretendard), sans-serif;
   font-size: 32px;
   font-weight: 600;
   line-height: 1.1;
