@@ -74,6 +74,12 @@ SOS·이상감지는 `role=alert`(assertive), 그 밖은 `status`(polite). 움�
 | 시점 | 결과 |
 |---|---|
 | 배포 전(develop 80e9683, BE notification 블록 있음) | **2개** - 라이브러리(`FCM_MSG`) 1 + 서비스 워커 1, 둘 다 icon·badge 없음 → 원인 재현 |
-| 배포 후 | PR 머지·gosky dev 반영 뒤 기록 |
+| 배포 후(develop 66dcf7c, #182, BE notification 블록 그대로) | **1개** - 라이브러리 표시만, 5초 안에 도착. 서비스 워커는 그리지 않음(전환 기간 방어 동작) |
+| 서비스 워커 안 합성 PushEvent(새 SW) | notification 블록 있음 → 1개(라이브러리) / data만 → 1개(SW): `icon-connection.png`·`badge.png`·tag `CONNECTION_REQUEST:1`·두 줄 본문 |
 
-휴대폰(안드로이드 Chrome) 실기기·iOS 홈 화면 아이콘은 사람이 확인해야 한다.
+- 배포 후 첫 두 번은 25초 뒤 페이지를 열어 셌을 때 0개였다(FCM은 DELIVERED). SW 안에서 5초마다 세는 방식으로 바꾼 세 번째에 1개가 잡혀,
+  헤드리스 푸시 도착 지연·측정 방식 문제로 본다(원인 확정은 못 함).
+- 클릭 이동은 합성 클릭으로 확인할 수 없다(사용자 동작이 없어 `openWindow`·`focus`가 거부됨). SW 범위가 `/`라 열린 탭은 `navigate()`가
+  된다는 것만 확인했다. 그 과정에서 `focus()`를 기다리다 거부되면 이동을 건너뛰는 회귀를 찾아 고쳤다(#184).
+- 시험 연결 요청(693~698)은 모두 보호자 취소로 정리했다(무알림).
+- 남은 사람 확인: PC Chrome 실제 클릭 이동, 안드로이드 Chrome 실기기, iOS 홈 화면 아이콘, BE data 전용을 켠 뒤의 새 아이콘·배지·버튼.

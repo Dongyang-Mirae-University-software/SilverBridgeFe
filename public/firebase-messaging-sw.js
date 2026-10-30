@@ -42,7 +42,8 @@ self.addEventListener('notificationclick', event => {
       const sameOriginClient = clientList.find(client => client.url.startsWith(self.location.origin));
 
       if (sameOriginClient) {
-        await sameOriginClient.focus();
+        // 포커스가 거부돼도(브라우저 정책) 이동은 해야 한다 - 기다리지 않고 실패를 삼킨다
+        sameOriginClient.focus().catch(() => {});
         return sameOriginClient.navigate(targetUrl);
       }
 
