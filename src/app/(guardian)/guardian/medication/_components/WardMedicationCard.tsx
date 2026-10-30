@@ -9,6 +9,7 @@ import { Icon } from '@/components/Icon';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import type { DoseStatus } from '@/utils/format/medication';
+import { SLOT_ORDER } from '@/utils/medication/medicationDraft';
 import {
   formatDoseAmount,
   formatMedicationAlertTime,
@@ -152,6 +153,10 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             ? 'miss'
             : 'later';
   });
+
+  // 칸은 아침·점심·저녁·취침 전 순서로 고정한다. 시각 순으로 두면 시간대와 시각이 어긋난 약(점심인데 오전 1:40)이
+  // 있을 때 "점심 | 아침"으로 뒤집혔다(2026-10-30 gosky 실측). 같은 시간대 안의 약은 위에서 이미 시각 순이다
+  slotGroups.sort((a, b) => SLOT_ORDER.indexOf(a.timeSlot) - SLOT_ORDER.indexOf(b.timeSlot));
 
 
   // 처음 고르는 시간대: 체크되지 않은 시간대 → 다음 시간대 → 첫 시간대(시안과 같은 순서)
