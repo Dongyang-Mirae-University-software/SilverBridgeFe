@@ -1,5 +1,5 @@
 // 피보호자 병원 예약 현황 컴포넌트 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`)
-// 보기 전용: 다음 진료(큰 D-day 카드) · 그다음 예약 카드 · 지난 진료, 누를 수 있는 버튼이 없다
+// 보기 전용: 다음 진료(큰 D-day 카드) · 그다음 예약 카드 1장, 지난 진료·시연 안내는 싣지 않는다
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
@@ -75,19 +75,18 @@ describe('WardHospitalContent (Chrome)', () => {
     document.body.innerHTML = '';
   });
 
-  it('다가오는 진료와 지난 진료를 나눠 보여 주고, 버튼은 하나도 없다', async () => {
+  it('다가오는 진료만 보여 주고 지난 진료·시연 안내는 없으며, 버튼은 하나도 없다', async () => {
     api.getMyReservations.mockResolvedValue([
       reservation(1, addDays(TODAY, 2), '10:00'),
       reservation(2, addDays(TODAY, 5), '14:30', 'CONFIRMED', '푸른안과'),
       reservation(3, addDays(TODAY, -3), '10:00', 'COMPLETED', '서울정형외과'),
-      reservation(4, addDays(TODAY, 4), '09:00', 'CANCELED', '한사랑한의원'),
     ]);
     const screen = renderContent();
 
     const next = screen.getByRole('region', { name: '다음 진료' });
     await expect.element(next.getByText('병원 가는 날')).toBeVisible();
     await expect.element(next.getByText('2일 뒤')).toBeVisible();
-    await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
+    expect(screen.getByText(RESERVATION_DEMO_NOTICE).elements()).toHaveLength(0);
     await expect.element(next.getByText(formatDateLong(addDays(TODAY, 2)))).toBeVisible();
     await expect.element(next.getByText('오전 10시')).toBeVisible();
     // 주소는 병원 목록에서 이름으로 찾아 붙인다
@@ -98,10 +97,9 @@ describe('WardHospitalContent (Chrome)', () => {
     await expect.element(later.getByText('그다음')).toBeVisible();
     await expect.element(later.getByText('5일 뒤')).toBeVisible();
     await expect.element(later.getByText('오후 2시 30분')).toBeVisible();
-    const past = screen.getByRole('region', { name: '지난 진료' });
-    await expect.element(past).toHaveTextContent('서울정형외과');
-    await expect.element(past).toHaveTextContent('한사랑한의원');
-    await expect.element(past.getByText('취소됨')).toBeVisible();
+    // 지난 진료는 피보호자 화면에 싣지 않는다
+    expect(screen.getByRole('region', { name: '지난 진료' }).elements()).toHaveLength(0);
+    expect(screen.getByText('서울정형외과').elements()).toHaveLength(0);
     await expect.element(screen.getByText('예약은 보호자가 대신 잡아 드려요')).toBeVisible();
 
     // 증상(건강 정보)은 화면에 싣지 않는다
@@ -126,23 +124,7 @@ describe('WardHospitalContent (Chrome)', () => {
     api.getMyReservations.mockResolvedValue([]);
     const screen = renderContent();
     await expect.element(screen.getByText('병원 갈 날이 없어요')).toBeVisible();
-    await expect.element(screen.getByText('지난 진료가 없어요')).toBeVisible();
-  });
-
-  it('지난 진료가 5건을 넘으면 페이지로 나눠 보여 준다', async () => {
-    api.getMyReservations.mockResolvedValue(
-      Array.from({ length: 7 }, (_, i) =>
-        reservation(i + 1, addDays(TODAY, -(i + 1)), '10:00', 'COMPLETED', `지난병원${i + 1}`),
-      ),
-    );
-    const screen = renderContent();
-    const past = screen.getByRole('region', { name: '지난 진료' });
-    await expect.element(past).toHaveTextContent('지난병원5');
-    expect(past.getByText('지난병원6').elements()).toHaveLength(0);
-
-    await screen.getByRole('button', { name: '2페이지' }).click();
-    await expect.element(past).toHaveTextContent('지난병원7');
-    expect(past.getByText('지난병원1', { exact: true }).elements()).toHaveLength(0);
+    expect(screen.getByText('지난 진료가 없어요').elements()).toHaveLength(0);
   });
 
   it('띄어쓰기 없는 긴 병원 이름도 320px에서 가로로 넘치지 않는다', async () => {
@@ -160,32 +142,32 @@ describe('WardHospitalContent (Chrome)', () => {
     await page.viewport(375, 812);
   });
 
-  it('다가오는 예약이 많으면 그다음 카드는 3장만 보이고 더 보기로 펼친다', async () => {
+  it('다가오는 예약이 많으면 그다음 카드는 1장만 보이고 더 보기로 펼친다', async () => {
     api.getMyReservations.mockResolvedValue(
       Array.from({ length: 6 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
     );
     const screen = renderContent();
     const later = screen.getByRole('region', { name: '그 밖의 예약' });
-    await expect.element(later).toHaveTextContent('다음병원4');
-    expect(later.getByText('다음병원5').elements()).toHaveLength(0);
+    await expect.element(later).toHaveTextContent('다음병원2');
+    expect(later.getByText('다음병원3').elements()).toHaveLength(0);
 
-    const more = screen.getByRole('button', { name: '예약 2건 더 보기' });
+    const more = screen.getByRole('button', { name: '예약 4건 더 보기' });
     await expect.element(more).toHaveAttribute('aria-expanded', 'false');
     await more.click();
     await expect.element(later).toHaveTextContent('다음병원6');
     await expect.element(screen.getByRole('button', { name: '접기' })).toHaveAttribute('aria-expanded', 'true');
 
     await screen.getByRole('button', { name: '접기' }).click();
-    await expect.element(screen.getByRole('button', { name: '예약 2건 더 보기' })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '예약 4건 더 보기' })).toBeVisible();
     expect(later.getByText('다음병원6').elements()).toHaveLength(0);
   });
 
-  it('그다음 예약이 3건 이하면 더 보기 버튼이 없다', async () => {
+  it('그다음 예약이 1건이면 더 보기 버튼이 없다', async () => {
     api.getMyReservations.mockResolvedValue(
-      Array.from({ length: 4 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
+      Array.from({ length: 2 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
     );
     const screen = renderContent();
-    await expect.element(screen.getByRole('region', { name: '그 밖의 예약' })).toHaveTextContent('다음병원4');
+    await expect.element(screen.getByRole('region', { name: '그 밖의 예약' })).toHaveTextContent('다음병원2');
     expect(screen.getByRole('button').elements()).toHaveLength(0);
   });
 
@@ -234,17 +216,31 @@ describe('WardHospitalContent (Chrome)', () => {
     await expect.element(screen.getByRole('button', { name: '다시 불러오기' })).toBeVisible();
   });
 
-  it('M-3 지난 진료의 취소·거절·미방문은 상태를 적어 다녀온 진료처럼 보이지 않게 한다', async () => {
-    api.getMyReservations.mockResolvedValue([
-      reservation(1, addDays(TODAY, -2), '10:00', 'CANCELED'),
-      reservation(2, addDays(TODAY, -3), '10:00', 'REJECTED'),
-      reservation(3, addDays(TODAY, -4), '10:00', 'NO_SHOW'),
-      reservation(4, addDays(TODAY, -5), '10:00', 'COMPLETED'),
-    ]);
+  // 메뉴에서 들어오면 큰 카드와 그다음 카드가 스크롤 없이 보인다.
+  // 남는 높이 = 화면 - 헤더(76 + 아래 여백 10) - 본문 위아래 패딩(901px 이상 28·20, 미만 18·28)
+  it.each([
+    [1280, 800, 48],
+    [768, 1024, 46],
+  ])('%ipx×%ipx 한 화면에 큰 카드·그다음 카드·안내 문구가 다 들어간다', async (width, height, padding) => {
+    await page.viewport(width, height);
+    api.getMyReservations.mockResolvedValue(
+      Array.from({ length: 4 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
+    );
     const screen = renderContent();
-    const past = screen.getByRole('region', { name: '지난 진료' });
-    await expect.element(past.getByText('취소됨')).toBeVisible();
-    await expect.element(past.getByText('병원이 거절함')).toBeVisible();
-    await expect.element(past.getByText('방문하지 않음')).toBeVisible();
+    await expect.element(screen.getByText('예약은 보호자가 대신 잡아 드려요')).toBeVisible();
+    expect(window.innerWidth).toBe(width);
+    const content = screen.container.firstElementChild as HTMLElement;
+    expect(content.getBoundingClientRect().height).toBeLessThanOrEqual(height - 86 - padding);
+    await page.viewport(375, 812);
+  });
+
+  it('375px에서는 넘치더라도 큰 카드는 한 화면 안에 다 보인다', async () => {
+    api.getMyReservations.mockResolvedValue(
+      Array.from({ length: 4 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
+    );
+    const screen = renderContent();
+    const next = screen.getByRole('region', { name: '다음 진료' });
+    await expect.element(next).toBeVisible();
+    expect((next.element() as HTMLElement).getBoundingClientRect().height).toBeLessThanOrEqual(812 - 86 - 46);
   });
 });

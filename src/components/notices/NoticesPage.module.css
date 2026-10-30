@@ -49,30 +49,34 @@
   border-radius: 999px;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
-  font-size: 12px;
-  font-weight: 800;
+  font-size: calc(12px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 4px 10px;
 }
 
 .date {
   color: var(--sb-ink-mute);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: calc(13px * var(--ward-font-scale, 1));
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
 }
 
 .title {
   margin: 0 0 8px;
   color: var(--sb-ink);
-  font-size: 19px;
-  font-weight: 800;
+  font-size: calc(19px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 .content {
   margin: 0;
   max-width: 78ch;
   color: var(--sb-ink-soft);
-  font-size: 15px;
+  font-size: calc(15px * var(--ward-font-scale, 1));
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: keep-all;
+}
+
+.content.fullWidthContent {
+  max-width: none;
 }

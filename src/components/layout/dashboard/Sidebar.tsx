@@ -71,7 +71,11 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
         <div className={cx('brand')}>
           <div className={cx('brandInfo')}>
             <Link className={cx('brandLink')} href={rootPath} onClick={onClose} aria-label="대시보드로 이동">
-              <SilverBridgeLogo subtitle={role === 'ADMIN' ? '관리자' : undefined} />
+              {/* 피보호자 서랍은 헤더 로고와 같은 자리에 겹쳐 열리므로 같은 크기로 그린다 */}
+              <SilverBridgeLogo
+                subtitle={role === 'ADMIN' ? '관리자' : undefined}
+                variant={role === 'WARD' ? 'wardHeader' : undefined}
+              />
             </Link>
           </div>
         </div>

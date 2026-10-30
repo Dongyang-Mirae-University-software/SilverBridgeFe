@@ -30,8 +30,8 @@
 .header strong {
   min-width: 0;
   color: var(--sb-ink);
-  font-size: 24px;
-  font-weight: 800;
+  font-size: calc(24px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 .closeButton {
@@ -46,7 +46,7 @@
   background: transparent;
   color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: 30px;
+  font-size: calc(30px * var(--ward-font-scale, 1));
   line-height: 1;
 }
 
@@ -59,8 +59,8 @@
   border-radius: 999px;
   background: var(--sb-bg-soft);
   color: var(--sb-ink-mute);
-  font-size: 15px;
-  font-weight: 800;
+  font-size: calc(15px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 5px 12px;
 }
 
@@ -89,8 +89,8 @@
 .placeholder {
   margin: 0;
   color: #d8cfc6;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: calc(16px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
   padding: 0 20px;
   text-align: center;
 }
@@ -98,8 +98,8 @@
 .caption {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: calc(16px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .footer {
@@ -115,8 +115,8 @@
   color: #fff;
   cursor: pointer;
   font: inherit;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 @media (max-width: 640px) {
@@ -125,6 +125,6 @@
   }
 
   .header strong {
-    font-size: 20px;
+    font-size: calc(20px * var(--ward-font-scale, 1));
   }
 }

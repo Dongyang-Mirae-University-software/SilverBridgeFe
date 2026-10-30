@@ -34,14 +34,14 @@
 }
 
 .ddayCaption {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: calc(24px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
   opacity: 0.9;
 }
 
 .ddayBig {
-  font-size: 84px;
-  font-weight: 900;
+  font-size: calc(84px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
   line-height: 1.05;
   letter-spacing: -0.02em;
   word-break: keep-all;
@@ -90,8 +90,8 @@
 
 .bigDate {
   color: var(--sb-ink);
-  font-size: 38px;
-  font-weight: 900;
+  font-size: calc(38px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
   line-height: 1.2;
   word-break: keep-all;
   overflow-wrap: anywhere;
@@ -103,8 +103,8 @@
 
 .hospital {
   color: var(--sb-ink);
-  font-size: 36px;
-  font-weight: 900;
+  font-size: calc(36px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
   line-height: 1.2;
   word-break: keep-all;
   overflow-wrap: anywhere;
@@ -112,15 +112,15 @@
 
 .dept {
   color: var(--sb-ink-soft);
-  font-size: 23px;
-  font-weight: 700;
+  font-size: calc(23px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .address {
   margin-top: 6px;
   color: var(--sb-ink-soft);
-  font-size: 23px;
-  font-weight: 700;
+  font-size: calc(23px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
   line-height: 1.45;
   word-break: keep-all;
   overflow-wrap: anywhere;
@@ -136,8 +136,8 @@
 .emptyBig {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 28px;
-  font-weight: 800;
+  font-size: calc(28px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
@@ -169,14 +169,14 @@
 
 .laterLabel {
   color: var(--sb-ink-mute);
-  font-size: 18px;
-  font-weight: 700;
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .laterDday {
   color: var(--sb-ink);
-  font-size: 28px;
-  font-weight: 900;
+  font-size: calc(28px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
   white-space: nowrap;
 }
 
@@ -187,8 +187,8 @@
 
 .laterDate {
   color: var(--sb-ink);
-  font-size: 26px;
-  font-weight: 900;
+  font-size: calc(26px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
@@ -197,11 +197,16 @@
   color: var(--sb-brand);
 }
 
+.rowDept {
+  color: var(--sb-ink-mute);
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
+}
+
 .laterName {
   margin-top: 4px;
   color: var(--sb-ink-soft);
-  font-size: 22px;
-  font-weight: 800;
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
@@ -214,85 +219,15 @@
   background: #fff;
   color: var(--sb-ink-soft);
   font: inherit;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   cursor: pointer;
-}
-
-.listCard {
-  padding: 0;
-  overflow: hidden;
-}
-
-.listHead {
-  margin: 0;
-  padding: 18px 26px;
-  border-bottom: 1px solid var(--sb-line-soft);
-  color: var(--sb-ink);
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  padding: 18px 26px;
-}
-
-.row + .row {
-  border-top: 1px solid var(--sb-line-soft);
-}
-
-.rowDate {
-  flex-shrink: 0;
-  color: var(--sb-ink-soft);
-  font-size: 19px;
-  font-weight: 800;
-}
-
-.pastDate {
-  width: 96px;
-}
-
-.rowName {
-  flex: 1;
-  min-width: 0;
-  color: var(--sb-ink);
-  font-size: 19px;
-  font-weight: 700;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-}
-
-.rowDept {
-  color: var(--sb-ink-mute);
-  font-weight: 600;
-}
-
-.canceled .rowDate,
-.canceled .rowName {
-  color: var(--sb-ink-mute);
-}
-
-.tag {
-  color: var(--sb-ink-mute);
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.emptyRow {
-  margin: 0;
-  padding: 24px 26px;
-  color: var(--sb-ink-mute);
-  font-size: 18px;
 }
 
 .footnote {
   margin: 0;
   color: var(--sb-ink-mute);
-  font-size: 16px;
+  font-size: calc(16px * var(--ward-font-scale, 1));
   text-align: center;
 }
 
@@ -307,7 +242,7 @@
 .message {
   margin: 0;
   color: var(--sb-ink-soft);
-  font-size: 18px;
+  font-size: calc(18px * var(--ward-font-scale, 1));
   text-align: center;
   word-break: keep-all;
   overflow-wrap: anywhere;
@@ -321,8 +256,8 @@
   background: #fff;
   color: var(--sb-ink-soft);
   font: inherit;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   cursor: pointer;
 }
 
@@ -336,7 +271,7 @@
   }
 
   .ddayBig {
-    font-size: 64px;
+    font-size: calc(64px * var(--ward-font-scale, 1));
   }
 }
 
@@ -357,16 +292,16 @@
   }
 
   .bigDate {
-    font-size: 30px;
+    font-size: calc(30px * var(--ward-font-scale, 1));
   }
 
   .hospital {
-    font-size: 28px;
+    font-size: calc(28px * var(--ward-font-scale, 1));
   }
 
   .dept,
   .address {
-    font-size: 20px;
+    font-size: calc(20px * var(--ward-font-scale, 1));
   }
 
   .laterCard {
@@ -380,16 +315,10 @@
   }
 
   .laterDate {
-    font-size: 22px;
+    font-size: calc(22px * var(--ward-font-scale, 1));
   }
 
   .laterName {
-    font-size: 20px;
-  }
-
-  .row,
-  .listHead {
-    padding-left: 20px;
-    padding-right: 20px;
+    font-size: calc(20px * var(--ward-font-scale, 1));
   }
 }

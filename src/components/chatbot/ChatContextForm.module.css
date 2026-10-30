@@ -8,7 +8,7 @@
   display: grid;
   gap: 5px;
   font-size: 0.75rem;
-  font-weight: 750;
+  font-weight: calc(750 + var(--ward-weight-boost, 0));
   color: var(--sb-ink-soft);
 }
 

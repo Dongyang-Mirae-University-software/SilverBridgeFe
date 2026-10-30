@@ -35,20 +35,20 @@
 
 .requestName {
   color: var(--sb-ink);
-  font-size: 24px;
-  font-weight: 800;
+  font-size: calc(24px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   overflow-wrap: anywhere;
 }
 
 .relation {
   color: var(--sb-ink-soft);
-  font-weight: 700;
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .requestDesc {
   color: var(--sb-ink-soft);
-  font-size: 19px;
-  font-weight: 600;
+  font-size: calc(19px * var(--ward-font-scale, 1));
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
   word-break: keep-all;
 }
 
@@ -69,8 +69,8 @@
   border-radius: 16px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 0 26px;
   white-space: nowrap;
 }
@@ -98,8 +98,8 @@
   border-radius: var(--sb-radius);
   background: var(--sb-warn-soft);
   color: var(--sb-ink);
-  font-size: 18px;
-  font-weight: 700;
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
   padding: 16px 20px;
 }
 

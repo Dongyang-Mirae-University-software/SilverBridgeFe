@@ -8,7 +8,7 @@
   border-radius: var(--sb-radius);
   background: #fff;
   color: var(--sb-ink-soft);
-  font-size: 18px;
+  font-size: calc(18px * var(--ward-font-scale, 1));
   padding: 40px 24px;
   text-align: center;
 }
@@ -23,8 +23,8 @@
   border-radius: 16px;
   background: var(--sb-safe-soft);
   color: var(--sb-safe);
-  font-size: 30px;
-  font-weight: 800;
+  font-size: calc(30px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 28px;
   text-align: center;
   word-break: keep-all;
@@ -59,7 +59,7 @@
 .tab.done { background: var(--sb-safe-soft); }
 .tab.done.selected { border-color: var(--sb-safe); }
 
-.tabName { font-size: 24px; font-weight: 900; line-height: 1.2; text-align: center; word-break: keep-all; }
+.tabName { font-size: calc(24px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); line-height: 1.2; text-align: center; word-break: keep-all; }
 
 /* 19px 굵게 = 큰 글자 기준(18.66px) - 갈색·초록 글자의 대비를 3:1 기준으로 맞춘다 */
 .tabTag {
@@ -67,8 +67,8 @@
   align-items: center;
   gap: 4px;
   color: var(--sb-ink-soft);
-  font-size: 19px;
-  font-weight: 800;
+  font-size: calc(19px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   white-space: nowrap;
 }
 
@@ -103,9 +103,9 @@
 }
 
 .slotCard.done .lead { background: var(--sb-safe); }
-.leadState { font-size: 24px; font-weight: 700; word-break: keep-all; }
-.leadName { font-size: 76px; font-weight: 900; line-height: 1.05; word-break: keep-all; }
-.leadTime { font-size: 26px; font-weight: 800; }
+.leadState { font-size: calc(24px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); word-break: keep-all; }
+.leadName { font-size: calc(76px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); line-height: 1.05; word-break: keep-all; }
+.leadTime { font-size: calc(26px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
 
 .body { display: flex; min-width: 0; flex-direction: column; gap: 20px; padding: 26px 30px; }
 
@@ -135,8 +135,8 @@
   border-radius: 18px;
   background: var(--sb-bg-soft);
   color: var(--sb-ink);
-  font-size: var(--med-font);
-  font-weight: 900;
+  font-size: calc(var(--med-font) * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
   line-height: 1.2;
   padding: 10px 22px;
 }
@@ -159,8 +159,8 @@
   background: var(--sb-brand);
   color: #fff;
   cursor: pointer;
-  font-size: 30px;
-  font-weight: 900;
+  font-size: calc(30px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
   padding: 0 20px;
   word-break: keep-all;
 }
@@ -172,15 +172,15 @@
   background: #fff;
   color: var(--sb-safe);
   cursor: pointer;
-  font-size: 22px;
-  font-weight: 800;
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 0 18px;
 }
 
 .takeButton:disabled,
 .undoButton:disabled { cursor: not-allowed; opacity: 0.6; }
 
-.beforeText { margin: 0; color: var(--sb-ink-soft); font-size: 22px; font-weight: 800; text-align: center; word-break: keep-all; }
+.beforeText { margin: 0; color: var(--sb-ink-soft); font-size: calc(22px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); text-align: center; word-break: keep-all; }
 
 .intakeError {
   margin: 0;
@@ -188,8 +188,8 @@
   border-radius: var(--sb-radius);
   background: var(--sb-warn-soft);
   color: var(--sb-warn);
-  font-size: 19px; /* 큰 글자(18.66px 굵게) 기준 - 대비 4.23:1이라 18px로는 모자랐다(점검 M-2) */
-  font-weight: 800;
+  font-size: calc(19px * var(--ward-font-scale, 1)); /* 큰 글자(18.66px 굵게) 기준 - 대비 4.23:1이라 18px로는 모자랐다(점검 M-2) */
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 14px 18px;
   text-align: center;
   word-break: keep-all;
@@ -205,19 +205,19 @@
   .slotCard { grid-template-columns: minmax(0, 1fr); }
   .lead { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding: 20px 24px; }
   .leadState { flex-basis: 100%; }
-  .leadName { font-size: 52px; }
+  .leadName { font-size: calc(52px * var(--ward-font-scale, 1)); }
 }
 
 /* 휴대폰 - 탭은 두 칸씩, 약은 한 칸씩. 글자는 이전 화면의 휴대폰 크기(20px)보다 줄이지 않는다 */
 @media (max-width: 640px) {
-  .allTaken { font-size: 24px; padding: 22px 16px; }
+  .allTaken { font-size: calc(24px * var(--ward-font-scale, 1)); padding: 22px 16px; }
   .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .tab { min-height: 76px; }
-  .tabName { font-size: 22px; }
+  .tabName { font-size: calc(22px * var(--ward-font-scale, 1)); }
   .lead { padding: 18px 16px; }
-  .leadState { font-size: 20px; }
-  .leadName { font-size: 40px; }
-  .leadTime { font-size: 22px; }
+  .leadState { font-size: calc(20px * var(--ward-font-scale, 1)); }
+  .leadName { font-size: calc(40px * var(--ward-font-scale, 1)); }
+  .leadTime { font-size: calc(22px * var(--ward-font-scale, 1)); }
   .body { gap: 16px; padding: 18px 16px 20px; }
   .medGrid,
   .medGrid.four,
@@ -226,6 +226,6 @@
   .medGrid.lots { grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(60px, auto); --med-font: 26px; }
   .medGrid.few { --med-font: 30px; }
   .medCell { padding: 10px 16px; }
-  .takeButton { min-height: 76px; font-size: 24px; }
-  .undoButton { font-size: 20px; }
+  .takeButton { min-height: 76px; font-size: calc(24px * var(--ward-font-scale, 1)); }
+  .undoButton { font-size: calc(20px * var(--ward-font-scale, 1)); }
 }

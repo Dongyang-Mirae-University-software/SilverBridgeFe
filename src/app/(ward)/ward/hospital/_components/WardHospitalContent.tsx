@@ -5,8 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
-import { ReservationDemoNotice } from '@/components/reservation/ReservationDemoNotice';
-import { ReservationPager } from '@/components/reservation/ReservationPager';
 import { IReservationItem } from '@/service/interface/reservation';
 import { hospitalsQueryOptions, myReservationsQueryOptions } from '@/service/query/guardian/reservation';
 import {
@@ -14,7 +12,6 @@ import {
   findHospitalByName,
   formatDateLong,
   formatTime,
-  pastStatusLabel,
   reservationErrorMessage,
   splitReservations,
 } from '@/utils/reservation/reservationView';
@@ -22,14 +19,10 @@ import { useKstNow } from '@/utils/reservation/useKstNow';
 import styles from './WardHospitalContent.module.css';
 
 const cx = classNames.bind(styles);
-const PAST_PER_PAGE = 5;
-// 다음 진료 아래 "그다음" 카드는 처음에 3장까지, 나머지는 펼쳐서 본다
-const LATER_VISIBLE = 3;
+// 메뉴에서 들어오면 다음 진료 큰 카드와 "그다음" 1장이 한 화면에 보인다. 나머지는 펼쳐서 본다
+const LATER_VISIBLE = 1;
 // 켜 둔 화면에도 보호자가 새로 잡은 예약이 1분 안에 보인다(useKstNow 주기와 같음, 탭이 뒤에 있으면 멈춘다)
 const REFETCH_MS = 60 * 1000;
-
-// "5월 11일 월요일" → "5월 11일"
-const shortDate = (iso: string) => formatDateLong(iso).replace(/ .요일$/, '');
 
 // 오늘 · 내일 · N일 뒤
 const ddayLabel = (days: number) => (days === 0 ? '오늘' : days === 1 ? '내일' : `${days}일 뒤`);
@@ -45,9 +38,8 @@ export function WardHospitalContent() {
   } = useQuery({ ...myReservationsQueryOptions(), refetchInterval: REFETCH_MS });
   // 주소는 예약 응답에 없어 병원 목록에서 이름으로 찾는다. 못 불러오면 주소만 뺀다.
   const { data: hospitals = [] } = useQuery(hospitalsQueryOptions);
-  const [pastPage, setPastPage] = useState(0);
   const [showAllLater, setShowAllLater] = useState(false);
-  // 화면을 켜 둔 채 날이 바뀌어도 D-day·다가오는/지난 진료가 1분 안에 따라온다
+  // 화면을 켜 둔 채 날이 바뀌어도 D-day·다가오는 진료가 1분 안에 따라온다
   const { today, nowTime } = useKstNow();
 
   if (isLoading) return <p className={cx('message')}>예약 현황을 불러오는 중이에요.</p>;
@@ -63,14 +55,12 @@ export function WardHospitalContent() {
     );
   }
 
-  const { upcoming, past } = splitReservations(reservations ?? [], today, nowTime);
+  // 지난 진료는 피보호자 화면에 보여 주지 않는다(보호자 화면에서 본다)
+  const { upcoming } = splitReservations(reservations ?? [], today, nowTime);
   const [next, ...others] = upcoming;
-  const pastTotal = Math.ceil(past.length / PAST_PER_PAGE);
-  const page = Math.min(pastPage, Math.max(0, pastTotal - 1));
 
   return (
     <div className={cx('page')}>
-      <ReservationDemoNotice />
       {next ? (
         <NextCard item={next} today={today} address={findHospitalByName(hospitals, next.hospitalName)?.address} />
       ) : (
@@ -111,27 +101,6 @@ export function WardHospitalContent() {
         </section>
       )}
 
-      <section className={cx('card', 'listCard')} aria-label="지난 진료">
-        <h2 className={cx('listHead')}>지난 진료</h2>
-        {past.length === 0 ? (
-          <p className={cx('emptyRow')}>지난 진료가 없어요</p>
-        ) : (
-          past.slice(page * PAST_PER_PAGE, (page + 1) * PAST_PER_PAGE).map(item => {
-            // 취소·거절·미방문은 다녀온 진료처럼 보이지 않게 흐리게 + 상태 표시
-            const status = pastStatusLabel(item.status);
-            return (
-              <div key={item.reservationId} className={cx('row', { canceled: status })}>
-                <span className={cx('rowDate', 'pastDate')}>{shortDate(item.reservationDate)}</span>
-                <span className={cx('rowName')}>
-                  {item.hospitalName} <span className={cx('rowDept')}>· {item.department}</span>
-                </span>
-                {status && <span className={cx('tag')}>{status}</span>}
-              </div>
-            );
-          })
-        )}
-      </section>
-      <ReservationPager page={page} total={pastTotal} onChange={setPastPage} label="지난 진료 페이지" />
 
       <p className={cx('footnote')}>예약은 보호자가 대신 잡아 드려요</p>
     </div>

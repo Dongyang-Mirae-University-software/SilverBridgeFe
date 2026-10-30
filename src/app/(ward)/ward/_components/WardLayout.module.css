@@ -8,6 +8,8 @@
   overflow-y: auto;
   background: var(--sb-bg);
   color: var(--sb-ink);
+  /* 굵기를 따로 정하지 않은 글자도 진한 글자 설정을 따른다 */
+  font-weight: calc(400 + var(--ward-weight-boost, 0));
 }
 
 .scrim {

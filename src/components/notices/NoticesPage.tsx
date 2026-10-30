@@ -18,7 +18,8 @@ function isNewNotice(createdAt: string) {
   return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
 }
 
-export function NoticesPage() {
+// fullWidthContent: 본문을 카드 폭만큼 쓴다(피보호자 화면). 기본은 읽기 좋은 폭(78ch)으로 줄인다.
+export function NoticesPage({ fullWidthContent = false }: { fullWidthContent?: boolean }) {
   const { data: announcements = [], isLoading, isError, refetch } = useQuery(announcementsQueryOptions);
   const sortedAnnouncements = [...announcements].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -57,7 +58,7 @@ export function NoticesPage() {
             </time>
           </div>
           <h2 className={cx('title')}>{announcement.title}</h2>
-          <p className={cx('content')}>{announcement.content}</p>
+          <p className={cx('content', { fullWidthContent })}>{announcement.content}</p>
         </article>
       ))}
     </section>
