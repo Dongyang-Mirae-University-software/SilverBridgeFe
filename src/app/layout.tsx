@@ -12,6 +12,7 @@ const pretendard = localFont({
   variable: '--font-pretendard',
   weight: '45 920',
   display: 'swap',
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -26,7 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html suppressHydrationWarning className={pretendard.variable}>
-      <body>
+      {/* CSS 변수뿐 아니라 next/font의 실제 family 클래스도 body에 적용한다.
+          Windows·macOS에서 변수 전달 상태와 무관하게 로컬 Pretendard 파일을 우선 사용한다. */}
+      <body className={pretendard.className}>
         <ReactQueryProvider>
           {children}
           <PushNotificationListener />
