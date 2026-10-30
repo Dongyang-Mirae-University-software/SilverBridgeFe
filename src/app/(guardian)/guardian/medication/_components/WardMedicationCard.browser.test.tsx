@@ -1,5 +1,5 @@
 // 보호자 복약 카드 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`).
-// v13: 약마다 시간·이름·상태·삭제 버튼을 한 줄에 표시한다.
+// Claude Design(2026-10-30): 위에 시간대 칸, 아래에 고른 시간대의 약. 삭제는 그 줄 안에서 확인한다.
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Fragment, ReactNode } from 'react';
@@ -104,45 +104,70 @@ describe('WardMedicationCard (Chrome)', () => {
     notificationSetting.value = null;
   });
 
-  it('아침·점심·저녁 시간대 드롭다운으로 약과 상태를 보여 준다', async () => {
+  it('시간대 칸을 고르면 그 시간대의 약과 상태를 보여 준다', async () => {
     const screen = renderCard([
       medication(2, { name: '수면제', timeSlot: 'BEDTIME', doseTime: '22:00:00', doseAmount: 0.5 }),
       medication(1, { name: '혈압약', timeSlot: 'MORNING', doseTime: '08:00:00', taken: true }),
     ]);
 
-    await expect.element(screen.getByRole('list', { name: '오늘 드실 약' })).toBeVisible();
-    await expect.element(screen.getByText('아침 약', { exact: true })).toBeVisible();
-    await expect.element(screen.getByText('오전 8:00')).toBeVisible();
-    await expect.element(screen.getByText('✓ 드셨어요')).toBeVisible();
-    await expect.element(screen.getByText('취침 전 약')).toBeVisible();
+    const tiles = screen.getByRole('group', { name: '시간대 고르기' });
+    await expect.element(tiles.getByRole('button', { name: /아침/ })).toHaveTextContent('✓ 드셨어요');
+    // 끝나지 않은 첫 시간대가 기본으로 골라지고 "다음"으로 표시된다
+    await expect.element(tiles.getByRole('button', { name: /취침 전/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(tiles.getByRole('button', { name: /취침 전/ })).toHaveTextContent('다음');
+    await expect.element(screen.getByRole('list', { name: '취침 전 약 목록' })).toHaveTextContent('수면제반 알');
+
+    await tiles.getByRole('button', { name: /아침/ }).click();
+    await expect.element(screen.getByRole('heading', { name: /아침 약/ })).toHaveTextContent('오전 8:00');
+    await expect.element(screen.getByRole('list', { name: '아침 약 목록' })).toHaveTextContent('혈압약');
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
-  it('약 이름을 누르면 기존 수정 모달을 열고, 삭제는 즉시 확인한다', async () => {
+  it('지난 시간대는 "안 드셨어요"로 단정하지 않고, 오늘 늦게 등록한 약은 등록 전으로 보여 준다', async () => {
+    const screen = renderCard([
+      medication(1, { name: '혈압약', timeSlot: 'MORNING', doseTime: '06:00:00' }),
+      medication(2, { name: '위장약', timeSlot: 'LUNCH', doseTime: '06:30:00', createdAt: `${TODAY}T06:50:00+09:00` }),
+    ]);
+
+    const tiles = screen.getByRole('group', { name: '시간대 고르기' });
+    await expect.element(tiles.getByRole('button', { name: /아침/ })).toHaveTextContent('체크되지 않았어요');
+    await expect.element(tiles.getByRole('button', { name: /점심/ })).toHaveTextContent('등록 전');
+    await tiles.getByRole('button', { name: /점심/ }).click();
+    await expect.element(screen.getByText('오늘은 등록 전이었어요')).toBeVisible();
+    expect(document.body.textContent).not.toContain('안 드셨어요');
+  });
+
+  it('수정 버튼은 늘 보이고, 삭제는 그 줄 안에서 확인한 뒤 지운다', async () => {
     api.deleteGuardianMedication.mockResolvedValue({});
     api.getGuardianMedications.mockResolvedValue([]);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const confirm = vi.spyOn(window, 'confirm');
     const screen = renderCard([medication(1, { name: '혈압약' })]);
 
-    await screen.getByRole('button', { name: '약 고치기' }).click();
     await screen.getByRole('button', { name: '혈압약 수정' }).click();
     await expect.element(screen.getByRole('dialog', { name: '약 수정' })).toBeVisible();
     await screen.getByRole('dialog', { name: '약 수정' }).getByRole('button', { name: '닫기' }).click();
-    // 수정 창을 닫아도 고치기 상태("다 고쳤어요")는 그대로라 바로 삭제할 수 있다
-    await expect.element(screen.getByRole('button', { name: '다 고쳤어요' })).toBeVisible();
-    await screen.getByRole('button', { name: '혈압약 삭제' }).click();
+
+    // 취소하면 지우지 않고 휴지통으로 포커스가 돌아온다
+    await screen.getByRole('button', { name: '혈압약 삭제', exact: true }).click();
+    await expect.element(screen.getByText('삭제해도 지난 복용 이력은 남아요')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '취소' })).toHaveFocus();
+    await screen.getByRole('button', { name: '취소' }).click();
+    await expect.element(screen.getByRole('button', { name: '혈압약 삭제', exact: true })).toHaveFocus();
+    expect(api.deleteGuardianMedication).not.toHaveBeenCalled();
+
+    await screen.getByRole('button', { name: '혈압약 삭제', exact: true }).click();
+    await screen.getByRole('button', { name: '혈압약 삭제하기' }).click();
     await vi.waitFor(() => expect(api.deleteGuardianMedication).toHaveBeenCalledWith(1));
+    expect(confirm).not.toHaveBeenCalled();
   });
 
   it('단건 삭제가 실패하면 안내를 보여 준다', async () => {
     api.deleteGuardianMedication.mockRejectedValue(new Error('network'));
     api.getGuardianMedications.mockResolvedValue([]);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const screen = renderCard([medication(1, { name: '혈압약' })]);
 
-    // 삭제 버튼은 시간대를 펼친 뒤 "약 고치기"를 눌러야 나온다
-    await screen.getByRole('button', { name: '약 고치기' }).click();
-    await screen.getByRole('button', { name: '혈압약 삭제' }).click();
+    await screen.getByRole('button', { name: '혈압약 삭제', exact: true }).click();
+    await screen.getByRole('button', { name: '혈압약 삭제하기' }).click();
     await expect.element(screen.getByRole('alert')).toHaveTextContent('삭제하지 못했어요');
   });
 
@@ -177,7 +202,8 @@ describe('WardMedicationCard (Chrome)', () => {
   it('등록된 약이 없어도 알림 시각 드롭다운은 항상 보여 준다', async () => {
     const screen = renderCard([]);
 
-    await expect.element(screen.getByText('등록된 약이 없어요. 약을 추가해 주세요.')).toBeVisible();
+    await expect.element(screen.getByText('등록된 약이 없어요')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '첫 약 추가하기' })).toBeVisible();
     await expect.element(screen.getByRole('button', { name: /안 드시면 알림 받을 시각 오후 9:00/ })).toBeVisible();
   });
 
@@ -185,7 +211,7 @@ describe('WardMedicationCard (Chrome)', () => {
     notificationSetting.value = { medication: { enabled: false } };
     const screen = renderCard([medication(1)]);
 
-    await expect.element(screen.getByText('지금 복약 알림을 받지 않고 있어요')).toBeVisible();
+    await expect.element(screen.getByText('지금 약 알림이 꺼져 있어요')).toBeVisible();
     await screen.getByRole('button', { name: '켜기' }).click();
     expect(navigation.push).toHaveBeenCalledWith('/guardian/settings');
   });

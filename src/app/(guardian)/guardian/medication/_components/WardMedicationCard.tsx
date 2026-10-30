@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/Icon';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
+import type { DoseStatus } from '@/utils/format/medication';
 import {
   formatDoseAmount,
   formatMedicationAlertTime,
@@ -81,8 +82,12 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const deleteMutation = useDeleteGuardianMedicationMutation();
   const deleteBatchMutation = useDeleteWardMedicationBatchMutation();
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [openSlotState, setOpenSlotState] = useState<{ wardId: string; key: string | null }>({ wardId: '', key: null });
-  const [editingSlotState, setEditingSlotState] = useState<{ wardId: string; key: string | null }>({ wardId: '', key: null });
+  // 카드는 피보호자마다 key로 새로 그려지므로(GuardianMedicationContent) 고른 시간대·삭제 확인은 이 카드 안에서만 기억한다
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const confirmCancelRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const lastConfirmedRef = useRef<number | null>(null);
   const alertSettingMutation = useUpdateMedicationAlertSettingMutation();
   const { data: notificationTypeSetting } = useQuery(guardianNotificationTypeSettingQueryOptions);
   const isMedicationNotificationDisabled = notificationTypeSetting?.medication.enabled === false;
@@ -102,8 +107,8 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const headline = getTodayHeadline(timeGroups);
   const router = useRouter();
 
-  // 목록은 HTML 목업처럼 아침·점심·저녁·취침 전 시간대 단위로 접는다.
-  // 같은 시간대에 서로 다른 시각의 약이 있어도 한 드롭다운 안에서 확인할 수 있다.
+  // 목록은 아침·점심·저녁·취침 전 시간대 단위로 묶는다(Claude Design 2026-10-30: 위에 시간대 칸, 아래에 고른 시간대 약).
+  // 같은 시간대에 서로 다른 시각의 약이 있어도 한 묶음 안에서 확인할 수 있다.
   const slotGroups = medications.reduce<typeof timeGroups>((result, medication) => {
     const slot = result.find(group => group.timeSlot === medication.timeSlot);
     if (slot) {
@@ -140,19 +145,48 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             : 'later';
   });
 
-  const defaultOpenSlot = slotGroups.find(group => group.status !== 'done')?.key ?? slotGroups[0]?.key;
-  const selectedOpenSlot = openSlotState.wardId === summary.wardId ? openSlotState.key : null;
-  const selectedEditingSlot = editingSlotState.wardId === summary.wardId ? editingSlotState.key : null;
-  const visibleOpenSlot = selectedOpenSlot === null ? defaultOpenSlot : selectedOpenSlot;
 
-  const handleDelete = (medication: MedicationItem) => {
-    if (!window.confirm(`${medication.name} 일정을 삭제할까요? 지난 복용 이력은 남습니다.`)) return;
-    setDeleteError(null);
-    // 실패하면 여러 개 삭제와 같은 안내 - 전에는 아무 반응이 없었다(점검 L-2)
-    deleteMutation.mutate(medication.medicationId, { onError: () => setDeleteError(DELETE_FAILED_MESSAGE) });
+  // 처음 고르는 시간대: 체크되지 않은 시간대 → 다음 시간대 → 첫 시간대(시안과 같은 순서)
+  // "다음"은 아직 끝나지 않은 첫 시간대가 '시간 전'일 때만(앞에 체크되지 않은 시간대가 있으면 그쪽이 먼저다)
+  const firstOpenGroup = slotGroups.find(group => group.status !== 'done');
+  const nextSlotKey = firstOpenGroup?.status === 'later' ? firstOpenGroup.key : undefined;
+  const defaultSlot =
+    slotGroups.find(group => group.status === 'miss')?.key ??
+    slotGroups.find(group => group.status !== 'done')?.key ??
+    slotGroups[0]?.key;
+  const selectedGroup = slotGroups.find(group => group.key === selectedSlot) ?? slotGroups.find(group => group.key === defaultSlot);
+
+  // 삭제 확인으로 바뀌면 [취소]로, 확인이 닫히면 그 약의 휴지통으로 포커스를 돌려준다(화면 읽기 위치를 잃지 않게)
+  useEffect(() => {
+    if (confirmingId !== null) {
+      lastConfirmedRef.current = confirmingId;
+      confirmCancelRef.current?.focus();
+      return;
+    }
+    const last = lastConfirmedRef.current;
+    lastConfirmedRef.current = null;
+    if (last !== null) listRef.current?.querySelector<HTMLButtonElement>(`[data-delete-id="${last}"]`)?.focus();
+  }, [confirmingId]);
+
+  const selectSlot = (key: string) => {
+    setSelectedSlot(key);
+    setConfirmingId(null);
   };
 
-  // 여러 개 삭제 - 시간대 묶음("아침 약 모두 삭제") 또는 전부. 화면에 보이는 약만 보낸다(2026-10-23)
+  // 단건 삭제 - 시안처럼 그 줄 안에서 [취소]/[삭제]로 확인한다(2026-10-30, 전에는 window.confirm 창)
+  const handleDelete = (medication: MedicationItem) => {
+    setDeleteError(null);
+    // 실패하면 여러 개 삭제와 같은 안내 - 전에는 아무 반응이 없었다(점검 L-2)
+    deleteMutation.mutate(medication.medicationId, {
+      onSuccess: () => {
+        lastConfirmedRef.current = null;
+        setConfirmingId(null);
+      },
+      onError: () => setDeleteError(DELETE_FAILED_MESSAGE),
+    });
+  };
+
+  // 여러 개 삭제 - 화면에 보이는 약만 보낸다(2026-10-23). 한 번에 여러 개가 지워지므로 확인 창은 그대로 둔다
   const handleDeleteMany = (targets: MedicationItem[], question: string) => {
     if (targets.length === 0 || !window.confirm(`${question} 지난 복용 이력은 남습니다.`)) return;
     setDeleteError(null);
@@ -172,147 +206,142 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
 
   return (
     <Fragment>
-      {/* v13은 시간대 아코디언 대신 약마다 시간·이름·상태를 한 줄로 바로 보여 준다.
-          추가·수정·단건/일괄 삭제 API는 기존과 동일하게 유지한다. */}
-      <section className={cx('card', 'listCard')}>
-        <div className={cx('sectionHeader')}>
-          <div className={cx('headline')}>
-            {hasMedications ? (
-              <>
-                <strong className={cx('todayCount', headline?.tone)}>{headline?.text ?? '오늘은 체크할 약이 없어요'}</strong>
-                {headline?.sub && <span className={cx('todayMiss')}>{headline.sub}</span>}
-              </>
-            ) : (
-              <strong className={cx('sectionTitle')}>오늘 드실 약</strong>
-            )}
-          </div>
-          <button type="button" className={cx('addButton')} onClick={openAddMedication}>
-            + 약 추가
+      {/* Claude Design(2026-10-30): 위에 시간대 칸, 그 아래에 고른 시간대의 약. 복용 체크는 피보호자만 한다 - 여기는 등록·수정·삭제만 */}
+      {!hasMedications ? (
+        <section className={cx('card', 'emptyCard')}>
+          <strong className={cx('emptyTitle')}>등록된 약이 없어요</strong>
+          <button type="button" className={cx('primaryButton')} onClick={openAddMedication}>
+            첫 약 추가하기
           </button>
-        </div>
+        </section>
+      ) : (
+        <>
+          {headline && (
+            <p className={cx('headline')}>
+              <strong className={cx('todayCount', headline.tone)}>{headline.text}</strong>
+              {headline.sub && <span className={cx('todayMiss')}>{headline.sub}</span>}
+            </p>
+          )}
 
-        {!hasMedications ? (
-          <p className={cx('emptyText')}>등록된 약이 없어요. 약을 추가해 주세요.</p>
-        ) : (
-          <ul className={cx('groupList')} aria-label="오늘 드실 약">
+          <div className={cx('slotTiles')} role="group" aria-label="시간대 고르기" style={{ gridTemplateColumns: `repeat(${slotGroups.length}, minmax(0, 1fr))` }}>
             {slotGroups.map(group => {
-              const isOpen = visibleOpenSlot === group.key;
-              const isEditing = selectedEditingSlot === group.key;
-              const isNext = slotGroups.find(item => item.status !== 'done')?.key === group.key;
-              const groupStatus =
-                group.status === 'done'
-                  ? '✓ 드셨어요'
-                  : group.status === 'miss'
-                    ? '아직 안 드셨어요'
-                    : group.status === 'later' && isNext
-                      ? '다음 약'
-                      : '';
-
+              const isNext = group.key === nextSlotKey;
+              const tileStatus = getTileStatus(group.status, isNext);
               return (
-                <li key={group.key} className={cx('groupItem', { open: isOpen })}>
-                  <button
-                    type="button"
-                    className={cx('groupHeader')}
-                    aria-expanded={isOpen}
-                    onClick={() => {
-                      setOpenSlotState({ wardId: summary.wardId, key: isOpen ? '' : group.key });
-                      setEditingSlotState({ wardId: summary.wardId, key: null });
-                    }}
-                  >
-                    <span className={cx('groupHeading')}>
-                      <span className={cx('groupLabel')}>{group.label} 약</span>
-                      <span className={cx('groupTime')}>{formatMedicationAlertTime(group.doseTime)}</span>
-                    </span>
-                    {groupStatus && <span className={cx('groupStatus', group.status, { next: group.status === 'later' })}>{groupStatus}</span>}
-                    <span className={cx('groupChevron', { open: isOpen })} aria-hidden="true">▼</span>
-                  </button>
-
-                  {isOpen && (
-                    <div className={cx('groupPanel')}>
-                      <ul className={cx('groupMedications')}>
-                        {group.medications.map(medication => (
-                          <li key={medication.medicationId} className={cx('medicationItem')}>
-                            <span className={cx('medicationInfo')}>
-                              <span className={cx('medicationName')}>{medication.name}</span>
-                              {medication.memo && <span className={cx('medicationDetail')}>{medication.memo}</span>}
-                            </span>
-                            <span className={cx('medicationAmount')}>{formatDoseAmount(medication.doseAmount)}</span>
-                            {isEditing && (
-                              <span className={cx('medicationActions')}>
-                                <button type="button" className={cx('editButton')} onClick={() => openEditMedication(medication)} aria-label={`${medication.name} 수정`}>
-                                  수정
-                                </button>
-                                <button
-                                  type="button"
-                                  className={cx('deleteButton')}
-                                  disabled={deleteMutation.isPending}
-                                  onClick={() => handleDelete(medication)}
-                                  aria-label={`${medication.name} 삭제`}
-                                >
-                                  <Icon name="trash" size={18} decorative />
-                                </button>
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                      <button
-                        type="button"
-                        className={cx('editToggle')}
-                        onClick={() => setEditingSlotState({ wardId: summary.wardId, key: isEditing ? null : group.key })}
-                      >
-                        {isEditing ? '다 고쳤어요' : '약 고치기'}
-                      </button>
-                    </div>
-                  )}
-                </li>
+                <button
+                  key={group.key}
+                  type="button"
+                  className={cx('slotTile', group.status, { selected: group.key === selectedGroup?.key })}
+                  aria-pressed={group.key === selectedGroup?.key}
+                  onClick={() => selectSlot(group.key)}
+                >
+                  <span className={cx('slotTileLabel')}>{group.label}</span>
+                  {tileStatus && <span className={cx('slotTileStatus', { next: isNext })}>{tileStatus}</span>}
+                </button>
               );
             })}
-          </ul>
-        )}
-        {deleteError && (
-          <p className={cx('deleteError')} role="alert">
-            {deleteError}
-          </p>
-        )}
-        {/* v13 목록에는 없지만, 기존 일괄 삭제 기능은 별도 하단 동작으로 보존한다. */}
-        {medications.length > 1 && (
-          <div className={cx('listFooter')}>
-            <button
-              type="button"
-              className={cx('dangerTextButton')}
-              disabled={deleteBatchMutation.isPending}
-              onClick={() =>
-                handleDeleteMany(medications, `${wardName}의 약 ${medications.length}개를 모두 삭제할까요?`)
-              }
-            >
-              약 전부 삭제
-            </button>
           </div>
-        )}
-      </section>
 
-      {/* 알림 설정 - Claude Design 시안대로(2026-10-24): "이 시간까지 안 드시면 나에게 알림" 시각.
+          {selectedGroup && (
+            <section className={cx('card', 'slotCard')} aria-labelledby={`slot-title-${summary.wardId}`}>
+              <div className={cx('slotHeader')}>
+                <h2 id={`slot-title-${summary.wardId}`} className={cx('slotTitle')}>
+                  {selectedGroup.label} 약
+                  <span className={cx('slotTime')}>{formatMedicationAlertTime(selectedGroup.doseTime)}</span>
+                </h2>
+                <span className={cx('slotStatus', selectedGroup.status, { next: selectedGroup.key === nextSlotKey })}>
+                  {getCardStatus(selectedGroup.status, selectedGroup.key === nextSlotKey)}
+                </span>
+              </div>
+
+              <ul ref={listRef} className={cx('medicationGrid')} aria-label={`${selectedGroup.label} 약 목록`}>
+                {selectedGroup.medications.map(medication => {
+                  const isConfirming = confirmingId === medication.medicationId;
+                  // 같은 시간대 안에서 시각이 다른 약은 그 약의 시각을 함께 보여 준다
+                  const ownTime = medication.doseTime !== selectedGroup.doseTime ? formatMedicationAlertTime(medication.doseTime) : null;
+                  return (
+                    <li key={medication.medicationId} className={cx('medicationItem', { confirming: isConfirming })}>
+                      <span className={cx('medicationInfo')}>
+                        <span className={cx('medicationTitle')}>
+                          <span className={cx('medicationName')}>{medication.name}</span>
+                          <span className={cx('medicationAmount')}>{formatDoseAmount(medication.doseAmount)}</span>
+                        </span>
+                        {isConfirming ? (
+                          <span className={cx('medicationDetail')}>삭제해도 지난 복용 이력은 남아요</span>
+                        ) : (
+                          (ownTime || medication.memo) && (
+                            <span className={cx('medicationDetail')}>{[ownTime, medication.memo].filter(Boolean).join(' · ')}</span>
+                          )
+                        )}
+                      </span>
+                      {isConfirming ? (
+                        <span className={cx('medicationActions')}>
+                          <button ref={confirmCancelRef} type="button" className={cx('ghostButton')} onClick={() => setConfirmingId(null)}>
+                            취소
+                          </button>
+                          <button
+                            type="button"
+                            className={cx('dangerButton')}
+                            disabled={deleteMutation.isPending}
+                            onClick={() => handleDelete(medication)}
+                            aria-label={`${medication.name} 삭제하기`}
+                          >
+                            삭제
+                          </button>
+                        </span>
+                      ) : (
+                        <span className={cx('medicationActions')}>
+                          <button type="button" className={cx('editButton')} onClick={() => openEditMedication(medication)} aria-label={`${medication.name} 수정`}>
+                            수정
+                          </button>
+                          <button
+                            type="button"
+                            className={cx('deleteButton')}
+                            data-delete-id={medication.medicationId}
+                            onClick={() => {
+                              setDeleteError(null);
+                              setConfirmingId(medication.medicationId);
+                            }}
+                            aria-label={`${medication.name} 삭제`}
+                          >
+                            <Icon name="trash" size={17} decorative />
+                          </button>
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {deleteError && (
+                <p className={cx('deleteError')} role="alert">
+                  {deleteError}
+                </p>
+              )}
+              {medications.length > 1 && (
+                <div className={cx('listFooter')}>
+                  <button
+                    type="button"
+                    className={cx('dangerTextButton')}
+                    disabled={deleteBatchMutation.isPending}
+                    onClick={() => handleDeleteMany(medications, `${wardName}의 약 ${medications.length}개를 모두 삭제할까요?`)}
+                  >
+                    약 전부 삭제
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+        </>
+      )}
+
+      {/* 알림 - 시안대로 한 줄(2026-10-30): "이 시간까지 안 드시면 알려 드려요" 시각.
           어르신 기기로 가는 "약 드실 시간" 알림은 늘 보내므로 켜고 끄는 스위치가 없다(2026-10-24 사용자 결정, BE #377).
-          나에게 오는 알림을 켜고 끄는 건 환경설정 > 알림 종류에서만 한다(이 화면에 같은 스위치를 두지 않는다) */}
-      {/* 약이 아직 없어도 미복약 알림 시각은 먼저 설정할 수 있어야 한다.
-          이전에는 hasMedications 조건 때문에 드롭다운 자체가 보이지 않았다. */}
-      <section className={cx('card', 'settingsCard')}>
-        <strong className={cx('settingsCardTitle')}>알림 설정</strong>
-        {isMedicationNotificationDisabled && (
-          <div className={cx('notificationOff')}>
-            <span>지금 복약 알림을 받지 않고 있어요</span>
-            <button type="button" className={cx('notificationOffButton')} onClick={() => router.push('/guardian/settings')}>
-              켜기
-            </button>
-          </div>
-        )}
-        <div className={cx('settingsRow')}>
-          <div className={cx('settingsText')}>
-            <strong className={cx('settingsTitle')}>이 시간까지 안 드시면 나에게 알림</strong>
-            {/* 이전 문구: 이 시각까지 체크되지 않은 약을 알려 드려요 */}
-            <span className={cx('settingsDescription')}>나에게 오는 알림을 켜고 끄는 건 환경설정에서 해요</span>
-          </div>
+          나에게 오는 알림을 켜고 끄는 건 환경설정 > 알림 종류에서만 한다. 꺼져 있어도 시각은 미리 정해 둘 수 있게 드롭다운은 늘 둔다 */}
+      <section className={cx('card', 'alertCard')} aria-label="알림 설정">
+        <div className={cx('alertRow')}>
+          <Icon name="bell" size={20} className={cx('alertIcon')} decorative />
+          <strong className={cx('alertText')}>이 시간까지 안 드시면 알려 드려요</strong>
           <MissedAlertTimeSelect
             value={summary.missedAlertTime}
             disabled={alertSettingMutation.isPending}
@@ -325,7 +354,30 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
             }
           />
         </div>
+        {isMedicationNotificationDisabled && (
+          <div className={cx('notificationOff')}>
+            <span>지금 약 알림이 꺼져 있어요</span>
+            <button type="button" className={cx('primaryButton', 'small')} onClick={() => router.push('/guardian/settings')}>
+              켜기
+            </button>
+          </div>
+        )}
       </section>
     </Fragment>
   );
+}
+
+// 안 드셨다고 단정하지 않는다 - 체크 누락과 실제 미복용을 구분할 수 없다("체크되지 않았어요")
+function getTileStatus(status: DoseStatus, isNext: boolean) {
+  if (status === 'done') return '✓ 드셨어요';
+  if (status === 'miss') return '체크되지 않았어요';
+  if (status === 'beforeRegistered') return '등록 전';
+  return isNext ? '다음' : '예정';
+}
+
+function getCardStatus(status: DoseStatus, isNext: boolean) {
+  if (status === 'done') return '드셨어요';
+  if (status === 'miss') return '체크되지 않았어요';
+  if (status === 'beforeRegistered') return '오늘은 등록 전이었어요';
+  return isNext ? '다음 약' : '예정';
 }
