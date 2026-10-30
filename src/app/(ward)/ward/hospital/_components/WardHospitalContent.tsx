@@ -23,6 +23,10 @@ import styles from './WardHospitalContent.module.css';
 
 const cx = classNames.bind(styles);
 const PAST_PER_PAGE = 5;
+// 다음 진료 아래 "그다음" 카드는 처음에 3장까지, 나머지는 펼쳐서 본다
+const LATER_VISIBLE = 3;
+// 켜 둔 화면에도 보호자가 새로 잡은 예약이 1분 안에 보인다(useKstNow 주기와 같음, 탭이 뒤에 있으면 멈춘다)
+const REFETCH_MS = 60 * 1000;
 
 // "5월 11일 월요일" → "5월 11일"
 const shortDate = (iso: string) => formatDateLong(iso).replace(/ .요일$/, '');
@@ -32,15 +36,23 @@ const ddayLabel = (days: number) => (days === 0 ? '오늘' : days === 1 ? '내�
 
 // 보기 전용 - 예약은 보호자가 피보호자 계정으로 대신 잡아 본인 계정 조회(wardId 없음)로 그대로 보인다.
 export function WardHospitalContent() {
-  const { data: reservations = [], isLoading, isError, error, refetch } = useQuery(myReservationsQueryOptions());
+  const {
+    data: reservations,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({ ...myReservationsQueryOptions(), refetchInterval: REFETCH_MS });
   // 주소는 예약 응답에 없어 병원 목록에서 이름으로 찾는다. 못 불러오면 주소만 뺀다.
   const { data: hospitals = [] } = useQuery(hospitalsQueryOptions);
   const [pastPage, setPastPage] = useState(0);
+  const [showAllLater, setShowAllLater] = useState(false);
   // 화면을 켜 둔 채 날이 바뀌어도 D-day·다가오는/지난 진료가 1분 안에 따라온다
   const { today, nowTime } = useKstNow();
 
   if (isLoading) return <p className={cx('message')}>예약 현황을 불러오는 중이에요.</p>;
-  if (isError) {
+  // 이미 보이던 예약이 있으면 주기 갱신이 한 번 실패해도 화면을 그대로 둔다
+  if (isError && !reservations) {
     return (
       <div className={cx('card', 'messageCard')} role="alert">
         <p className={cx('message')}>{reservationErrorMessage(error)}</p>
@@ -51,7 +63,7 @@ export function WardHospitalContent() {
     );
   }
 
-  const { upcoming, past } = splitReservations(reservations, today, nowTime);
+  const { upcoming, past } = splitReservations(reservations ?? [], today, nowTime);
   const [next, ...others] = upcoming;
   const pastTotal = Math.ceil(past.length / PAST_PER_PAGE);
   const page = Math.min(pastPage, Math.max(0, pastTotal - 1));
@@ -69,7 +81,7 @@ export function WardHospitalContent() {
 
       {others.length > 0 && (
         <section className={cx('laterList')} aria-label="그 밖의 예약">
-          {others.map(item => (
+          {(showAllLater ? others : others.slice(0, LATER_VISIBLE)).map(item => (
             <div key={item.reservationId} className={cx('card', 'laterCard')}>
               <div className={cx('laterWhen')}>
                 <span className={cx('laterLabel')}>그다음</span>
@@ -86,6 +98,16 @@ export function WardHospitalContent() {
               </div>
             </div>
           ))}
+          {others.length > LATER_VISIBLE && (
+            <button
+              type="button"
+              className={cx('moreButton')}
+              aria-expanded={showAllLater}
+              onClick={() => setShowAllLater(open => !open)}
+            >
+              {showAllLater ? '접기' : `예약 ${others.length - LATER_VISIBLE}건 더 보기`}
+            </button>
+          )}
         </section>
       )}
 
