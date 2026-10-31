@@ -603,8 +603,8 @@
   margin: 0;
   padding: 2px 4px;
   color: var(--sb-ink);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
   line-height: 1.4;
 }
 
@@ -1076,3 +1076,7 @@
 .quickPromptPopover {
   backdrop-filter: blur(8px);
 }
+
+/* 진한 글자로 보기: 중간 톤 배지·안내 글자색을 더 진하게 한다 */
+:global(.wardHighContrast) .targetBadge { color: #2a2a24; }
+:global(.wardHighContrast) .banner { color: #6b4e00; }

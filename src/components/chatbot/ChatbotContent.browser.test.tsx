@@ -161,7 +161,7 @@ describe('피보호자 AI 의료 챗봇', () => {
     expect(page.getByRole('button', { name: '상담 기록' }).elements()).toHaveLength(0);
     expect(page.getByRole('region', { name: '상담할 피보호자' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: '병원 예약하고 싶어요' }).elements()).toHaveLength(0);
-    await expect.element(page.getByPlaceholder('직접 써서 물어보기')).toBeVisible();
+    await expect.element(page.getByPlaceholder('직접 쓰기')).toBeVisible();
   });
 
   it('빠른 질문은 본인 상담으로 보내고 피보호자 정보를 싣지 않는다', async () => {

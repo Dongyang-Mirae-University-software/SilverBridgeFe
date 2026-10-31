@@ -63,7 +63,6 @@ export function WardLayout({ children }: { children: ReactNode }) {
         className={cx('stage', {
           chatStage: isChatbotPage,
           wardHighContrast: wardSettings.highContrast,
-          wardReadableText: true,
         })}
         style={stageStyle}
       >

@@ -561,3 +561,9 @@
     animation: none;
   }
 }
+
+/* 진한 글자로 보기: 중간 톤 상태·안내 글자색을 더 진하게 한다(배경은 그대로) */
+:global(.wardHighContrast) .statusBadge.checking { color: #6e4f12; }
+:global(.wardHighContrast) .statusBadge.connecting { color: #24465c; }
+:global(.wardHighContrast) .rotateHint strong,
+:global(.wardHighContrast) .rotateHintIcon { color: #6e4a0c; }

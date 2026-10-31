@@ -349,7 +349,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           className={styles.textarea}
           rows={1}
           aria-label="궁금한 점 입력"
-          placeholder={isWardChat ? '직접 써서 물어보기' : '여기에 궁금한 점을 써 주세요'}
+          placeholder={isWardChat ? '직접 쓰기' : '여기에 궁금한 점을 써 주세요'}
           value={input}
           disabled={sending}
           onChange={e => {

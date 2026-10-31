@@ -4,7 +4,7 @@
 .fontChoices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
 .fontChoice { display: flex; min-height: 84px; align-items: center; justify-content: center; flex-direction: column; gap: 4px; border: 1.5px solid var(--sb-line); border-radius: 16px; background: #fff; color: var(--sb-ink); cursor: pointer; font-family: inherit; }
 .fontChoice > span { font-weight: calc(800 + var(--ward-weight-boost, 0)); line-height: 1.1; }
-.fontChoice > strong { font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
+.fontChoice > strong { font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); text-align: center; word-break: keep-all; }
 .fontChoiceActive { border: 2.5px solid var(--sb-brand); background: var(--sb-brand-50); color: var(--sb-brand); }
 .fontPreview { margin: 16px 0 0; border-radius: 14px; background: var(--sb-bg-soft); color: var(--sb-ink); font-weight: calc(600 + var(--ward-weight-boost, 0)); line-height: 1.5; padding: 16px 18px; }
 .contrastRow { position: relative; display: flex; align-items: center; gap: 20px; border-top: 1px solid var(--sb-line-soft); cursor: pointer; padding: 22px 26px; }
