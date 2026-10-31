@@ -12,16 +12,6 @@
   font-weight: calc(400 + var(--ward-weight-boost, 0));
 }
 
-.scrim {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  border: 0;
-  background: rgba(20, 17, 12, 0.38);
-  cursor: pointer;
-}
-
 .main {
   display: flex;
   flex: 1;
