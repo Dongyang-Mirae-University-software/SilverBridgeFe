@@ -660,6 +660,8 @@ describe('GuardianHospitalContent (Chrome)', () => {
       await vi.waitFor(() => expect(picker(screen).value).toBe('ward02'));
       expect(sessionStorage.getItem(RESERVATION_WARD_STORAGE_KEY)).toBeNull();
       await vi.waitFor(() => expect(api.getMyReservations).toHaveBeenCalledWith('ward02'));
+      // 이어받기 확인 전에 첫 번째 피보호자를 그리거나 그 사람 예약을 부르지 않는다(점검 M-1)
+      expect(api.getMyReservations.mock.calls.map(call => call[0])).toEqual(['ward02']);
     });
 
     it('목록을 불러오는 중에 들어와도 값은 즉시 지우고, 목록이 오면 그 사람을 고른다', async () => {
@@ -667,9 +669,11 @@ describe('GuardianHospitalContent (Chrome)', () => {
       wards.loading = true;
       const screen = renderContent();
       await vi.waitFor(() => expect(sessionStorage.getItem(RESERVATION_WARD_STORAGE_KEY)).toBeNull());
+      expect(api.getMyReservations).not.toHaveBeenCalled();
       wards.loading = false;
       screen.rerender(<GuardianHospitalContent />);
       await vi.waitFor(() => expect(picker(screen).value).toBe('ward02'));
+      expect(api.getMyReservations.mock.calls.map(call => call[0])).toEqual(['ward02']);
     });
 
     it.each([
