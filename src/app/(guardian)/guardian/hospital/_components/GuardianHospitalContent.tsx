@@ -55,7 +55,9 @@ export function GuardianHospitalContent() {
 
   const [wardId, setWardId] = useState<string | null>(null);
   // 챗봇 예약 칩에서 고른 피보호자 - 들어오자마자 저장소에서 꺼내 지우고, 목록이 오면 내 ACTIVE 피보호자일 때만 쓴다.
+  // 확인이 끝나기 전에는 화면·예약 조회를 미룬다(첫 번째 피보호자가 잠깐 보이고 그 사람 예약을 부르지 않게).
   const handoffWardIdRef = useRef<string | null>(null);
+  const [handoffChecked, setHandoffChecked] = useState(false);
   const [step, setStep] = useState<Step>('list');
   const [pick, setPick] = useState<Pick | null>(null);
   const [date, setDate] = useState('');
@@ -78,11 +80,12 @@ export function GuardianHospitalContent() {
   }, []);
 
   useEffect(() => {
+    if (handoffChecked || isWardsLoading) return;
     const handoff = handoffWardIdRef.current;
-    if (!handoff || isWardsLoading) return;
     handoffWardIdRef.current = null;
-    if (activeWards.some(item => item.partnerUserId === handoff)) setWardId(handoff);
-  }, [isWardsLoading, activeWards]);
+    if (handoff && activeWards.some(item => item.partnerUserId === handoff)) setWardId(handoff);
+    setHandoffChecked(true);
+  }, [handoffChecked, isWardsLoading, activeWards]);
 
   const ward = activeWards.find(item => item.partnerUserId === wardId) ?? activeWards[0] ?? null;
   const wardPhone = ward?.partnerPhone && PHONE_PATTERN.test(ward.partnerPhone) ? ward.partnerPhone : null;
@@ -91,7 +94,10 @@ export function GuardianHospitalContent() {
   const hospitalsQuery = useQuery(hospitalsQueryOptions);
   const hospitals = hospitalsQuery.data ?? [];
   const slotsQuery = useQuery(availableSlotsQueryOptions(pick?.hospital.id ?? null, date, pick?.department ?? ''));
-  const reservationsQuery = useQuery({ ...myReservationsQueryOptions(ward?.partnerUserId), enabled: Boolean(ward) });
+  const reservationsQuery = useQuery({
+    ...myReservationsQueryOptions(ward?.partnerUserId),
+    enabled: Boolean(ward) && handoffChecked,
+  });
 
   const { today, nowTime } = useKstNow();
 
@@ -192,7 +198,7 @@ export function GuardianHospitalContent() {
     });
   };
 
-  if (isWardsLoading) return <p className={cx('message')}>피보호자 정보를 불러오는 중이에요.</p>;
+  if (isWardsLoading || !handoffChecked) return <p className={cx('message')}>피보호자 정보를 불러오는 중이에요.</p>;
   if (!ward) return <p className={cx('message')}>연결된 피보호자가 없어요. 먼저 피보호자를 연결해 주세요.</p>;
 
   const stepIndex = STEPS.findIndex(item => item.step === step);

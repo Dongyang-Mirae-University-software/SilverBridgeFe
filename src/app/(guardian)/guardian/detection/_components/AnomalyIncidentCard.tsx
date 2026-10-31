@@ -29,6 +29,7 @@ export function AnomalyIncidentCard({ incident }: { incident: AnomalyIncident })
         onClick={() => setIsClipModalOpen(true)}
       >
         {/* 클립의 첫 화면. 못 받으면 어두운 배경 그대로 */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- 인증이 필요한 클립 썸네일(BFF 경유)이라 next/image 최적화 대상이 아니다 */}
         {thumbSrc && incident.clip && <img className={cx('thumbImage')} src={thumbSrc} alt="" />}
         {incident.clip ? (
           <span className={cx('playButton')}>

@@ -111,11 +111,7 @@ export default function LoginContent() {
 
         <div className={cx('secondaryActions')}>
           <label className={cx('remember')}>
-            <input
-              checked={remember}
-              type="checkbox"
-              onChange={event => setRemember(event.target.checked)}
-            />
+            <input checked={remember} type="checkbox" onChange={event => setRemember(event.target.checked)} />
             로그인 유지
           </label>
           <div className={cx('findLinks')}>
@@ -123,7 +119,11 @@ export default function LoginContent() {
               아이디 찾기
             </button>
             <span className={cx('separator')} />
-            <button className={cx('textButton', 'accentTextButton')} type="button" onClick={() => router.push('/find-password')}>
+            <button
+              className={cx('textButton', 'accentTextButton')}
+              type="button"
+              onClick={() => router.push('/find-password')}
+            >
               비밀번호 찾기
             </button>
           </div>

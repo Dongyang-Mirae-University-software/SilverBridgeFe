@@ -30,11 +30,14 @@ interface AvatarProps {
 }
 
 function Avatar({ imageUrl, userName, size, disabled, onClick }: AvatarProps) {
+  // next/image를 쓰지 않는다 - 원격 프로필(카카오 CDN)은 크기를 CSS로 맞추고 이미지 최적화 설정·도메인 허용 목록을 두지 않는다
   const content = imageUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element -- 위 주석
     <img alt="" src={imageUrl} />
   ) : userName ? (
     getNameInitial(userName)
   ) : (
+    // eslint-disable-next-line @next/next/no-img-element -- 위 주석(같은 자리의 기본 이미지)
     <img alt="" src="/images/avatar.png" />
   );
   const classValue = cx('avatar', size, { fallback: !imageUrl && userName });

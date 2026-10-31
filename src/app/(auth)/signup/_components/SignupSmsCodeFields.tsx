@@ -19,7 +19,6 @@ interface SignupSmsCodeFieldsProps {
 }
 
 export default function SignupSmsCodeFields({
-  phone,
   smsCode,
   errorMessage,
   isSubmitting = false,

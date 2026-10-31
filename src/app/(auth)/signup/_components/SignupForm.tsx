@@ -13,7 +13,6 @@ import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/
 
 const cx = classNames.bind(styles);
 
-
 interface Props {
   step: number;
   onStepChange: (step: number) => void;
@@ -226,8 +225,14 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
             register={register}
             nameField={register('name', textRules('이름을 입력하세요.', 2))}
             emailField={register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
-            passwordField={register('password', isKakaoSignup ? undefined : passwordRules('비밀번호 형식이 올바르지 않습니다.'))}
-            passwordCheckField={register('passwordCheck', isKakaoSignup ? undefined : passwordCheckRules('비밀번호가 일치하지 않습니다.'))}
+            passwordField={register(
+              'password',
+              isKakaoSignup ? undefined : passwordRules('비밀번호 형식이 올바르지 않습니다.'),
+            )}
+            passwordCheckField={register(
+              'passwordCheck',
+              isKakaoSignup ? undefined : passwordCheckRules('비밀번호가 일치하지 않습니다.'),
+            )}
             genderField={register('gender', { required: '성별을 선택하세요.' })}
             birthDateValue={allValues.birthDate}
             onBirthDateChange={value => setValue('birthDate', value, { shouldDirty: true, shouldValidate: true })}
@@ -264,7 +269,9 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
         )}
       </form>
 
-      {signupError && <CommonModal type="error" title="회원가입 실패" message={signupError} onClose={clearSignupError} />}
+      {signupError && (
+        <CommonModal type="error" title="회원가입 실패" message={signupError} onClose={clearSignupError} />
+      )}
     </>
   );
 }
