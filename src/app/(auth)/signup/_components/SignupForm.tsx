@@ -214,7 +214,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
 
   return (
     <>
-      <form className={cx('container')} onSubmit={handleSignupSubmit}>
+      <form method="post" className={cx('container')} onSubmit={handleSignupSubmit}>
         {step === 1 && (
           <SignupBasicInfoStep
             allValues={allValues}

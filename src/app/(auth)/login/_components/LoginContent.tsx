@@ -84,7 +84,7 @@ export default function LoginContent() {
         <p className={cx('description')}>다시 오신 것을 환영해요</p>
       </div>
 
-      <form className={cx('form')} onSubmit={handleSubmit} suppressHydrationWarning>
+      <form method="post" className={cx('form')} onSubmit={handleSubmit} suppressHydrationWarning>
         <div className={cx('fields')}>
           <TextInput
             autoComplete="email"

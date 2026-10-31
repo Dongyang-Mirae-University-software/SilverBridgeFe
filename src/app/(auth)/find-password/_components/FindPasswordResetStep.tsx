@@ -31,7 +31,7 @@ export default function FindPasswordResetStep({ errorMessage, isPending, onSubmi
   };
 
   return (
-    <form className={cx('form')} onSubmit={handleSubmit}>
+    <form method="post" className={cx('form')} onSubmit={handleSubmit}>
       <div className={cx('resetIntro')}>
         <h2 className={cx('resetTitle')}>새 비밀번호</h2>
         <p className={cx('description')}>새로운 비밀번호를 설정해 주세요.</p>
