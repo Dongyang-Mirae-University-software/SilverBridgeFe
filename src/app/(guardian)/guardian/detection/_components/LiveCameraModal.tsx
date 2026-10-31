@@ -22,6 +22,7 @@ function MjpegFrame({ src, className, onError }: { src: string; className?: stri
   }, [src]);
 
   return (
+    // eslint-disable-next-line @next/next/no-img-element -- MJPEG 실시간 스트림: next/image로는 연결 끊기(src 비우기)를 제어할 수 없다
     <img ref={imgRef} src={src} alt="실시간 영상" className={className} onError={onError} />
   );
 }

@@ -74,10 +74,14 @@ function latestSuggestions(messages: ChatMessage[]): string[] {
   const last = [...messages].reverse().find(message => message.role === 'assistant');
   const raw = last?.suggestedQuestions;
   if (!Array.isArray(raw)) return [];
-  return [...new Set(raw.filter((q): q is string => typeof q === 'string').map(q => q.trim()).filter(Boolean))].slice(
-    0,
-    MAX_SUGGESTED,
-  );
+  return [
+    ...new Set(
+      raw
+        .filter((q): q is string => typeof q === 'string')
+        .map(q => q.trim())
+        .filter(Boolean),
+    ),
+  ].slice(0, MAX_SUGGESTED);
 }
 
 /**
@@ -198,7 +202,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       const userMessage: ChatMessage = {
         id: makeId(),
         role: 'user',
-        content: uiSelection ? uiSelectionLabel ?? uiSelection.value : trimmed,
+        content: uiSelection ? (uiSelectionLabel ?? uiSelection.value) : trimmed,
         timestamp: new Date().toISOString(),
       };
 

@@ -297,7 +297,10 @@ describe('이어서 물어볼 질문(suggestedQuestions)', () => {
   it('보호자: 답의 질문이 예약 칩 뒤에 나오고, 누르면 그대로 보내며, 질문이 없는 답 뒤에는 고정 문장으로 돌아간다', async () => {
     api.role.mockReturnValue('GUARDIAN');
     api.sendChatMessage
-      .mockResolvedValueOnce({ ...REPLY, suggestedQuestions: ['집에서 쉬면 될까요?', '언제 병원에 가요?', '병원 예약하고 싶어요'] })
+      .mockResolvedValueOnce({
+        ...REPLY,
+        suggestedQuestions: ['집에서 쉬면 될까요?', '언제 병원에 가요?', '병원 예약하고 싶어요'],
+      })
       .mockResolvedValueOnce({ ...REPLY, reply: '내일 오전이 좋아요.', suggestedQuestions: [] });
     renderChat(<ChatbotContent />);
 
@@ -337,7 +340,12 @@ describe('이어서 물어볼 질문(suggestedQuestions)', () => {
 
   it('형식이 다른 값(문자열 아님·빈 문자열)은 무시하고 고정 문장을 쓴다', async () => {
     api.role.mockReturnValue('WARD');
-    api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message', suggestedQuestions: [3, '  ', null] });
+    api.sendChatMessage.mockResolvedValue({
+      reply: '쉬어 보세요.',
+      engine: 'ai',
+      type: 'message',
+      suggestedQuestions: [3, '  ', null],
+    });
     renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: '배가 아파요' }));
@@ -380,7 +388,11 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     api.role.mockReturnValue('GUARDIAN');
     api.sendChatMessage
       .mockResolvedValueOnce({ ...REPLY, suggestedQuestions: ['집에서 쉬면 될까요?', '언제 병원에 가요?'] })
-      .mockResolvedValueOnce({ ...REPLY, reply: '내일 오전이 좋아요.', suggestedQuestions: ['언제 병원에 가요?', '약은 언제 먹어요?'] });
+      .mockResolvedValueOnce({
+        ...REPLY,
+        reply: '내일 오전이 좋아요.',
+        suggestedQuestions: ['언제 병원에 가요?', '약은 언제 먹어요?'],
+      });
     renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
