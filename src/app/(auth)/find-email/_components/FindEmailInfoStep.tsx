@@ -21,7 +21,7 @@ export default function FindEmailInfoStep({ errorMessage, form, isPending, onCha
   const isValid = form.name.trim().length > 0 && form.phone.trim().length > 0;
 
   return (
-    <form className={cx('form')} onSubmit={onSubmit}>
+    <form method="post" className={cx('form')} onSubmit={onSubmit}>
       <p className={cx('description')}>
         이름과 전화번호를 입력하시면
         <br />

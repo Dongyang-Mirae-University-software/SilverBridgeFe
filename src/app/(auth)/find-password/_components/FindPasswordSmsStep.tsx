@@ -37,7 +37,7 @@ export default function FindPasswordSmsStep({
   const isUnknownUser = errorMessage.includes('사용자를 찾을 수 없습니다.');
 
   return (
-    <form className={cx('form')} onSubmit={onSubmit}>
+    <form method="post" className={cx('form')} onSubmit={onSubmit}>
       <p className={cx('description')}>등록한 휴대폰 번호로 인증코드를 보내드려요.</p>
       <TextInput
         variant="auth"

@@ -36,7 +36,7 @@ export default function FindPasswordEmailStep({
   const isUnknownEmail = errorMessage.includes('해당 이메일로 가입된 계정이 없습니다.');
 
   return (
-    <form className={cx('form')} onSubmit={onSubmit}>
+    <form method="post" className={cx('form')} onSubmit={onSubmit}>
       <p className={cx('description')}>가입한 이메일로 인증코드를 보내드려요.</p>
       <TextInput
         variant="auth"
