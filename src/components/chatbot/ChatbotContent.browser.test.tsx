@@ -445,6 +445,30 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     expect(lastButtonSpan()).toBe('1 / -1');
   });
 
+  it('글자 가장 크게(28px, 1.647배)여도 태블릿 2×2에서 마지막 버튼이 두 칸 폭이고 가로로 넘치지 않는다(점검 L-2)', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
+    await page.viewport(768, 1024);
+    renderChat(
+      <div style={{ '--ward-font-scale': '1.647' } as React.CSSProperties}>
+        <ChatbotContent variant="ward" />
+      </div>,
+    );
+
+    await vi.waitFor(() => expect(quickButtons()).toHaveLength(4));
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    await vi.waitFor(() => expect(quickButtons()).toHaveLength(3));
+
+    const region = page.getByRole('region', { name: '추천 질문' }).element() as HTMLElement;
+    const buttons = [...region.querySelectorAll('button')];
+    const last = buttons[buttons.length - 1];
+    const grid = last.parentElement as HTMLElement;
+    expect(getComputedStyle(last).gridColumnStart).toBe('1');
+    expect(Math.round(last.getBoundingClientRect().width)).toBe(Math.round(grid.getBoundingClientRect().width));
+    expect(grid.scrollWidth).toBeLessThanOrEqual(grid.clientWidth);
+    for (const button of buttons) expect(button.scrollWidth).toBeLessThanOrEqual(button.clientWidth);
+  });
+
   it('피보호자 태블릿(761~1024px)도 2×2라 버튼이 3개·1개면 마지막 버튼을 두 칸 폭으로 놓는다', async () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
