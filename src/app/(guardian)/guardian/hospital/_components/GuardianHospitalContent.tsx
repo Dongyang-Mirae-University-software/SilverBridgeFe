@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { takeReservationWardId } from '@/components/chatbot/reservationWardHandoff';
 import { ReservationDemoNotice } from '@/components/reservation/ReservationDemoNotice';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { cancelReservation, createReservation } from '@/service/api/guardian/reservation';
@@ -53,6 +54,8 @@ export function GuardianHospitalContent() {
   const guardian = getUserProfileData(profileResponse);
 
   const [wardId, setWardId] = useState<string | null>(null);
+  // 챗봇 예약 칩에서 고른 피보호자 - 들어오자마자 저장소에서 꺼내 지우고, 목록이 오면 내 ACTIVE 피보호자일 때만 쓴다.
+  const handoffWardIdRef = useRef<string | null>(null);
   const [step, setStep] = useState<Step>('list');
   const [pick, setPick] = useState<Pick | null>(null);
   const [date, setDate] = useState('');
@@ -68,6 +71,18 @@ export function GuardianHospitalContent() {
   const [listNotice, setListNotice] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null);
   const [slotNotice, setSlotNotice] = useState<string | null>(null);
   const doneTitleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handoff = takeReservationWardId();
+    if (handoff) handoffWardIdRef.current = handoff;
+  }, []);
+
+  useEffect(() => {
+    const handoff = handoffWardIdRef.current;
+    if (!handoff || isWardsLoading) return;
+    handoffWardIdRef.current = null;
+    if (activeWards.some(item => item.partnerUserId === handoff)) setWardId(handoff);
+  }, [isWardsLoading, activeWards]);
 
   const ward = activeWards.find(item => item.partnerUserId === wardId) ?? activeWards[0] ?? null;
   const wardPhone = ward?.partnerPhone && PHONE_PATTERN.test(ward.partnerPhone) ? ward.partnerPhone : null;
