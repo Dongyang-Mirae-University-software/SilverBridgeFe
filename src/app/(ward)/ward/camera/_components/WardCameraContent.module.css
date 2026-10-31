@@ -24,6 +24,7 @@
   cursor: pointer;
   font-size: calc(20px * var(--ward-font-scale, 1));
   font-weight: calc(800 + var(--ward-weight-boost, 0));
+  word-break: keep-all;
   padding: 0 24px;
 }
 

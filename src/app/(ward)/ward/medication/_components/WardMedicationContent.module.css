@@ -11,6 +11,7 @@
   font-size: calc(18px * var(--ward-font-scale, 1));
   padding: 40px 24px;
   text-align: center;
+  word-break: keep-all;
 }
 
 /* 오늘 약을 다 먹으면 맨 위에 한 번 */

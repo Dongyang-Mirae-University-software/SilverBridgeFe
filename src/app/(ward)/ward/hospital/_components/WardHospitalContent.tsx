@@ -101,7 +101,6 @@ export function WardHospitalContent() {
         </section>
       )}
 
-
       <p className={cx('footnote')}>예약은 보호자가 대신 잡아 드려요</p>
     </div>
   );
