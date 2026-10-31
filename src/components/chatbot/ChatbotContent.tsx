@@ -17,6 +17,7 @@ import { calcAge, type ChatLogItem, type ChatMessage } from '@/service/interface
 
 import ChatBubble from './ChatBubble';
 import styles from './ChatbotContent.module.css';
+import { saveReservationWardId } from './reservationWardHandoff';
 
 function makeId() {
   return Math.random().toString(36).slice(2);
@@ -302,7 +303,12 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   function openReservation(text: string) {
     if (sendingRef.current || reservationTimerRef.current) return;
     setMessages(prev => [...prev, { id: makeId(), role: 'user', content: text, timestamp: new Date().toISOString() }]);
-    reservationTimerRef.current = setTimeout(() => router.push(RESERVATION_PATH), RESERVATION_NAV_DELAY_MS);
+    const wardId = selectedWard?.partnerUserId;
+    // 이동 직전에 담는다 - 타이머가 취소되면(화면 이탈) 저장소에 남지 않는다.
+    reservationTimerRef.current = setTimeout(() => {
+      saveReservationWardId(wardId);
+      router.push(RESERVATION_PATH);
+    }, RESERVATION_NAV_DELAY_MS);
   }
 
   function handleWardSelect(wardId: string) {

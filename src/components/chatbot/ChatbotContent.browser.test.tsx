@@ -8,6 +8,7 @@ import { page, userEvent } from '@vitest/browser/context';
 import { render } from 'vitest-browser-react';
 
 import ChatbotContent from './ChatbotContent';
+import { RESERVATION_WARD_STORAGE_KEY } from './reservationWardHandoff';
 
 const api = vi.hoisted(() => ({
   sendChatMessage: vi.fn(),
@@ -83,6 +84,7 @@ beforeEach(() => {
   api.getChatLogs.mockReset();
   api.push.mockReset();
   api.wards.mockReturnValue([WARD]);
+  sessionStorage.clear();
 });
 
 describe('보호자 AI 의료 챗봇', () => {
@@ -125,6 +127,42 @@ describe('보호자 AI 의료 챗봇', () => {
     await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
     expect(api.push).toHaveBeenCalledTimes(1);
     expect(api.sendChatMessage).not.toHaveBeenCalled();
+  });
+
+  it('예약 칩은 고른 피보호자 ID만 sessionStorage에 담아 예약 화면으로 넘긴다(주소창·이름·문장은 싣지 않음)', async () => {
+    api.wards.mockReturnValue([WARD, WARD_2]);
+    renderChat(<ChatbotContent />);
+
+    await userEvent.click(page.getByRole('button', { name: '이철수' }));
+    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
+
+    await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
+    expect(sessionStorage.getItem(RESERVATION_WARD_STORAGE_KEY)).toBe('ward-2');
+    expect(sessionStorage.length).toBe(1);
+  });
+
+  it('이동 전에 화면을 벗어나면(타이머 취소) 저장소에 남기지 않는다', async () => {
+    const screen = renderChat(<ChatbotContent />);
+
+    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
+    screen.unmount();
+
+    await new Promise(resolve => setTimeout(resolve, 800));
+    expect(api.push).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(RESERVATION_WARD_STORAGE_KEY)).toBeNull();
+  });
+
+  it('저장소를 쓸 수 없어도 예약 화면으로는 이동한다', async () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('denied', 'QuotaExceededError');
+    });
+    try {
+      renderChat(<ChatbotContent />);
+      await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
+      await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('답을 기다리는 중에는 예약 칩도 누를 수 없다', async () => {
@@ -402,6 +440,39 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     await vi.waitFor(() => expect(quickButtons()).toHaveLength(2));
     expect(lastButtonSpan()).toBe('auto / auto');
 
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아파요' }));
+    await vi.waitFor(() => expect(quickButtons()).toHaveLength(1));
+    expect(lastButtonSpan()).toBe('1 / -1');
+  });
+
+  it('피보호자 태블릿(761~1024px)도 2×2라 버튼이 3개·1개면 마지막 버튼을 두 칸 폭으로 놓는다', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
+    await page.viewport(768, 1024);
+    renderChat(<ChatbotContent variant="ward" />);
+
+    const lastButtonSpan = () => {
+      const buttons = page.getByRole('region', { name: '추천 질문' }).element().querySelectorAll('button');
+      const style = getComputedStyle(buttons[buttons.length - 1]);
+      return `${style.gridColumnStart} / ${style.gridColumnEnd}`;
+    };
+
+    await vi.waitFor(() => expect(quickButtons()).toHaveLength(4));
+    expect(lastButtonSpan()).toBe('auto / auto');
+
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    await vi.waitFor(() => expect(quickButtons()).toHaveLength(3));
+    expect(lastButtonSpan()).toBe('1 / -1');
+
+    await page.viewport(1024, 768);
+    await vi.waitFor(() => expect(lastButtonSpan()).toBe('1 / -1'));
+    await page.viewport(1025, 768);
+    await vi.waitFor(() => expect(lastButtonSpan()).toBe('auto / auto'));
+    await page.viewport(768, 1024);
+
+    await userEvent.click(page.getByRole('button', { name: '배가 아파요' }));
+    await vi.waitFor(() => expect(quickButtons()).toHaveLength(2));
+    expect(lastButtonSpan()).toBe('auto / auto');
     await userEvent.click(page.getByRole('button', { name: '무릎이 아파요' }));
     await vi.waitFor(() => expect(quickButtons()).toHaveLength(1));
     expect(lastButtonSpan()).toBe('1 / -1');
