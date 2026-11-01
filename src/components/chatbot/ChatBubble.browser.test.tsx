@@ -121,4 +121,55 @@ describe('ChatBubble 답 모양', () => {
     const wrap = page.getByTestId('wrap').element();
     expect(wrap.scrollWidth).toBeLessThanOrEqual(wrap.clientWidth + 1); // 375 폭에서 가로 넘침 없음
   });
+
+  it('줄 머리 이모지·카드 제목 아이콘은 화면 읽기 프로그램에서 숨긴다(글은 그대로 읽힘)', async () => {
+    show({
+      content: '',
+      layout: {
+        headline: '🏥 내과 진료를 권해드려요.',
+        body: ['💧 물을 자주 드세요.', '이모지 없는 줄'],
+        questions: [],
+        homeCare: ['🛏️ 푹 쉬세요.'],
+        visitHospitalIf: ['⚠️ 숨이 차면 119에 연락하세요.'],
+      },
+    });
+
+    const root = page.getByTestId('wrap').element();
+    const hidden = Array.from(root.querySelectorAll('[aria-hidden="true"]')).map(el => el.textContent?.trim());
+    expect(hidden).toEqual(expect.arrayContaining(['🏥', '💧', '🛏️', '⚠️']));
+    // 숨긴 것은 맨 앞 이모지뿐 - 문장 글자는 숨기지 않는다
+    for (const el of root.querySelectorAll('[aria-hidden="true"]')) {
+      expect(/[가-힣0-9]/.test(el.textContent ?? '')).toBe(false);
+    }
+    const plainLine = page.getByText('이모지 없는 줄').element();
+    expect(plainLine.querySelector('[aria-hidden]')).toBeNull();
+    // 카드 제목 아이콘도 숨기고 제목 글은 남긴다
+    const title = page.getByText('이럴 땐 병원으로').element();
+    expect(title.querySelector('[aria-hidden="true"]')?.textContent?.trim()).toBe('🏥');
+    // 119 굵게 강조는 이모지를 떼어 낸 뒤에도 그대로
+    expect(root.querySelector('strong')?.textContent).toBe('119');
+  });
+
+  it('layout·경고·옛 reply 안의 HTML 은 글자로만 보이고 태그로 해석하지 않는다(XSS)', async () => {
+    const payload = '<img src=x onerror="window.__xss=1"><script>window.__xss=2</script>';
+    show({
+      content: `💬 ${payload}`,
+      emergencyWarning: [payload],
+      layout: {
+        headline: `🚨 ${payload}`,
+        body: [payload],
+        questions: [`❓ ${payload}`],
+        homeCare: [payload],
+        visitHospitalIf: [payload],
+      },
+    });
+    const root = page.getByTestId('wrap').element();
+    expect(root.querySelectorAll('img, script, iframe').length).toBe(0);
+    expect(root.textContent).toContain('<img src=x');
+    expect((window as unknown as { __xss?: number }).__xss).toBeUndefined();
+
+    // 옛 형식(reply 글)도 같다
+    show({ content: payload, layout: null });
+    expect(document.querySelectorAll('[data-testid="wrap"] img, [data-testid="wrap"] script').length).toBe(0);
+  });
 });
