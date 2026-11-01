@@ -42,7 +42,21 @@ export interface ChatMessage {
   recommendedAction?: string;
   reservationRequired?: boolean;
   /** 이 답에 이어서 물어볼 질문(0~3개, AI #135). 빠른 질문 칸을 대화 흐름대로 바꾼다. */
-  suggestedQuestions?: string[];
+  suggestedQuestions?: string[];  /** 답 모양(AI 2026-11-01). 없으면 content 로 그린다. */
+  layout?: ChatLayout | null;
+}
+
+/**
+ * 답 모양(AI 2026-11-01): 핵심 한 줄·본문(4줄 이내)·되묻기 질문·카드. 문장마다 줄 머리 이모지가 이미 붙어 온다.
+ * 있으면 이것으로 그리고, 없으면(옛 AI·옛 기록·예약 흐름 답) 지금처럼 reply 로 그린다.
+ * 문구·이모지를 비교해 판단하지 말 것 - 있는지만 본다.
+ */
+export interface ChatLayout {
+  headline?: string | null;
+  body?: string[];
+  questions?: string[];
+  homeCare?: string[];
+  visitHospitalIf?: string[];
 }
 
 export interface ChatContext {
@@ -107,6 +121,8 @@ export interface ChatResponse {
   reservationRequired?: boolean;
   /** 응급·자해·예약 선택지 답에는 빈 목록. 옛 AI는 칸이 없다. */
   suggestedQuestions?: string[];
+  /** 답 모양(AI 2026-11-01). 옛 AI·예약 흐름 답은 null 또는 없음. */
+  layout?: ChatLayout | null;
   chatLogId?: number;
   chatNo?: string;
   sessionId?: string;
@@ -127,6 +143,8 @@ export interface ChatLogItem {
   ui?: ChatUiPromptData;
   // 응급·위기 응답의 빨간 경고 박스 문구. 기록을 다시 열어도 119·109 안내가 보이게 BE가 내려준다(2026-10-24)
   emergencyWarning?: string[] | null;
+  /** 답 모양(2026-11-01). 옛 기록은 null. */
+  layout?: ChatLayout | null;
   createdAt?: string;
 }
 

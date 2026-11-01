@@ -267,6 +267,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             recommendedAction: result.recommendedAction,
             reservationRequired: result.reservationRequired,
             suggestedQuestions: result.suggestedQuestions,
+            layout: result.layout ?? null,
           },
         ]);
 
