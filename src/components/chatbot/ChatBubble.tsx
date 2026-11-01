@@ -66,28 +66,28 @@ export default function ChatBubble({
               <>
                 {layout.headline && (
                   <p className={styles.headline}>
-                    <Emphasize text={layout.headline} />
+                    <Line text={layout.headline} />
                   </p>
                 )}
                 {layout.body.length > 0 && (
                   <ul className={styles.lines}>
                     {layout.body.map((line, i) => (
                       <li key={i}>
-                        <Emphasize text={line} />
+                        <Line text={line} />
                       </li>
                     ))}
                   </ul>
                 )}
-                <SectionCard title="❓ 이렇게 알려 주세요" items={layout.questions} tone="ask" />
-                <SectionCard title="🏠 집에서 이렇게" items={layout.homeCare} tone="home" />
-                <SectionCard title="🏥 이럴 땐 병원으로" items={layout.visitHospitalIf} tone="hospital" />
+                <SectionCard icon="❓" title="이렇게 알려 주세요" items={layout.questions} tone="ask" />
+                <SectionCard icon="🏠" title="집에서 이렇게" items={layout.homeCare} tone="home" />
+                <SectionCard icon="🏥" title="이럴 땐 병원으로" items={layout.visitHospitalIf} tone="hospital" />
               </>
             ) : (
               <>
                 <p className={styles.replyText}>{message.content}</p>
-                <SectionCard title="🩺 가능한 원인" items={strings(message.possibleCauses)} tone="plain" />
-                <SectionCard title="🏠 집에서 이렇게" items={strings(message.homeCare)} tone="home" />
-                <SectionCard title="🏥 이럴 땐 병원으로" items={strings(message.visitHospitalIf)} tone="hospital" />
+                <SectionCard icon="🩺" title="가능한 원인" items={strings(message.possibleCauses)} tone="plain" />
+                <SectionCard icon="🏠" title="집에서 이렇게" items={strings(message.homeCare)} tone="home" />
+                <SectionCard icon="🏥" title="이럴 땐 병원으로" items={strings(message.visitHospitalIf)} tone="hospital" />
               </>
             )}
 
@@ -169,11 +169,31 @@ function Emphasize({ text }: { text: string }) {
   );
 }
 
+/** 줄 머리 이모지(AI가 붙인 장식) - 맨 앞 그림 문자 하나와 뒤 공백. 보이는 모양만 나눈다(판단에 쓰지 않는다). */
+const LEAD_EMOJI = /^(\p{Extended_Pictographic}\uFE0F?)\s+/u;
+
+/**
+ * 답 한 줄. 줄 머리 이모지는 화면 읽기 프로그램이 이름("물방울" 등)을 먼저 읽지 않게 aria-hidden 으로 감싸고,
+ * 나머지 글은 그대로 글자로 넣는다(HTML 로 해석하지 않는다).
+ */
+function Line({ text }: { text: string }) {
+  const match = LEAD_EMOJI.exec(text);
+  if (!match) return <Emphasize text={text} />;
+  return (
+    <>
+      <span aria-hidden="true">{match[1]} </span>
+      <Emphasize text={text.slice(match[0].length)} />
+    </>
+  );
+}
+
 function SectionCard({
+  icon,
   title,
   items,
   tone,
 }: {
+  icon: string;
   title: string;
   items: string[];
   tone: 'home' | 'hospital' | 'ask' | 'plain';
@@ -181,11 +201,14 @@ function SectionCard({
   if (items.length === 0) return null; // 빈 칸은 그리지 않는다
   return (
     <section className={`${styles.card} ${styles[`card_${tone}`] ?? ''}`}>
-      <p className={styles.cardTitle}>{title}</p>
+      <p className={styles.cardTitle}>
+        <span aria-hidden="true">{icon} </span>
+        {title}
+      </p>
       <ul className={styles.lines}>
         {items.map((item, i) => (
           <li key={i}>
-            <Emphasize text={item} />
+            <Line text={item} />
           </li>
         ))}
       </ul>
