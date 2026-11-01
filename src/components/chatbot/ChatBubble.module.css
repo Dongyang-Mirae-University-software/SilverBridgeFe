@@ -106,50 +106,110 @@
   word-break: break-word;
 }
 
-/* ── 구조화된 의학 정보 섹션 ── */
-.medSection {
-  margin-top: 2px;
-  padding-top: 2px;
+/* ── 답 모양(2026-11-01): 응급 상자 → 핵심 한 줄 → 본문 → 카드. 글자는 18px 아래로 줄이지 않는다 ── */
+.emergencyBox {
+  border: 2px solid #c0392b;
+  border-radius: 12px;
+  background: #fff5f5;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.medTitle {
+.emergencyTitle {
   margin: 0;
-  color: var(--sb-ink-soft);
-  font-size: calc(12px * var(--ward-font-scale, 1));
+  color: #c0392b;
+  font-size: calc(18px * var(--ward-font-scale, 1));
   font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
-.medTitleDanger {
+.emergencyList {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   color: #c0392b;
+  font-size: calc(19px * var(--ward-font-scale, 1));
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
+  line-height: 1.5;
 }
 
-.medList {
+.headline {
   margin: 0;
-  padding: 0 0 0 14px;
+  color: var(--sb-ink);
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  line-height: 1.45;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.medList li {
-  color: var(--sb-ink-soft);
-  font-size: 0.8125rem;
-  font-weight: calc(500 + var(--ward-weight-boost, 0));
+.lines li {
+  color: var(--sb-ink);
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(400 + var(--ward-weight-boost, 0));
   line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
-.medSection:has(.medTitleDanger) {
-  border-radius: 12px;
-  background: #fff5f5;
-  padding: 8px 10px;
-  margin-top: 6px;
-}
-
-.medSection:has(.medTitleDanger) .medList li {
+.n119 {
   color: #c0392b;
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+}
+
+.card {
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+}
+
+.card_home {
+  background: #eef5ee;
+}
+
+.card_home .cardTitle {
+  color: #2f5d36;
+}
+
+.card_hospital {
+  background: #eef2f8;
+}
+
+.card_hospital .cardTitle {
+  color: #2b4a75;
+}
+
+.card_ask {
+  background: var(--sb-bg-soft);
+}
+
+.card_ask .cardTitle,
+.card_plain .cardTitle {
+  color: var(--sb-ink-soft);
+}
+
+.card_plain {
+  background: var(--sb-bg);
 }
 
 /* 피보호자 챗봇: 아바타·시각 없이 행 폭의 86%까지 쓰는 26px 말풍선. */
@@ -191,6 +251,21 @@
   font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
+.wardBubble .headline {
+  font-size: calc(28px * var(--ward-font-scale, 1));
+}
+
+.wardBubble .lines li,
+.wardBubble .emergencyList {
+  font-size: calc(26px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+}
+
+.wardBubble .cardTitle,
+.wardBubble .emergencyTitle {
+  font-size: calc(22px * var(--ward-font-scale, 1));
+}
+
 @media (max-width: 760px) {
   /* 시각 표시가 빠져 아바타(38px)+간격+목록 여백만 빼면 된다. 좁게 두면 예약 카드가 세로로 찌그러진다. */
   .bubbleUser,
@@ -199,7 +274,18 @@
   }
 
   .bubbleUser p,
-  .replyText {
+  .replyText,
+  .lines li,
+  .emergencyList {
+    font-size: calc(18px * var(--ward-font-scale, 1));
+  }
+
+  .headline {
+    font-size: calc(20px * var(--ward-font-scale, 1));
+  }
+
+  .cardTitle,
+  .emergencyTitle {
     font-size: calc(18px * var(--ward-font-scale, 1));
   }
 
@@ -215,8 +301,19 @@
 
   /* 시니어 휴대폰 화면도 22px 아래로 줄이지 않는다(이전 18px보다 크게). */
   .wardBubble .bubbleUser p,
-  .wardBubble .replyText {
+  .wardBubble .replyText,
+  .wardBubble .lines li,
+  .wardBubble .emergencyList {
     font-size: calc(22px * var(--ward-font-scale, 1));
+  }
+
+  .wardBubble .headline {
+    font-size: calc(24px * var(--ward-font-scale, 1));
+  }
+
+  .wardBubble .cardTitle,
+  .wardBubble .emergencyTitle {
+    font-size: calc(20px * var(--ward-font-scale, 1));
   }
 }
 

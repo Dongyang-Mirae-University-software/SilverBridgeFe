@@ -1,5 +1,5 @@
 import { UserAvatar } from '@/components/UserAvatar';
-import type { ChatMessage } from '@/service/interface/chat';
+import type { ChatLayout, ChatMessage } from '@/service/interface/chat';
 import ChatToolCard from './ChatToolCard';
 import ChatUiPrompt from './ChatUiPrompt';
 import styles from './ChatBubble.module.css';
@@ -23,6 +23,8 @@ export default function ChatBubble({
 }: Props) {
   const isUser = message.role === 'user';
   const isWardChat = variant === 'ward';
+  const layout = normalizeLayout(message.layout);
+  const warnings = strings(message.emergencyWarning);
 
   if (isUser) {
     return (
@@ -46,54 +48,47 @@ export default function ChatBubble({
         <div className={styles.assistantMessageRow}>
           <div className={styles.messageColumnAssistant}>
             <div className={styles.bubbleAssistant}>
-              <p className={styles.replyText}>{message.content}</p>
-
-            {/* 응급 경고 — 최우선 표시 */}
-            {message.emergencyWarning && message.emergencyWarning.length > 0 && (
-              <div className={styles.medSection}>
-                <p className={`${styles.medTitle} ${styles.medTitleDanger}`}>응급 주의</p>
-                <ul className={styles.medList}>
-                  {message.emergencyWarning.map((item, i) => (
-                    <li key={i}>{item}</li>
+            {/* 응급 경고 - 맨 위(빨간 상자). 문구는 비교하지 않고 있는지만 본다 */}
+            {warnings.length > 0 && (
+              <div className={styles.emergencyBox} role="alert">
+                <p className={styles.emergencyTitle}>응급 주의</p>
+                <ul className={styles.emergencyList}>
+                  {warnings.map((item, i) => (
+                    <li key={i}>
+                      <Emphasize text={item} />
+                    </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {/* 가능한 원인 */}
-            {message.possibleCauses && message.possibleCauses.length > 0 && (
-              <div className={styles.medSection}>
-                <p className={styles.medTitle}>가능한 원인</p>
-                <ul className={styles.medList}>
-                  {message.possibleCauses.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* 자가 관리 */}
-            {message.homeCare && message.homeCare.length > 0 && (
-              <div className={styles.medSection}>
-                <p className={styles.medTitle}>자가 관리</p>
-                <ul className={styles.medList}>
-                  {message.homeCare.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* 병원 방문 기준 */}
-            {message.visitHospitalIf && message.visitHospitalIf.length > 0 && (
-              <div className={styles.medSection}>
-                <p className={styles.medTitle}>병원 방문이 필요한 경우</p>
-                <ul className={styles.medList}>
-                  {message.visitHospitalIf.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
+            {layout ? (
+              <>
+                {layout.headline && (
+                  <p className={styles.headline}>
+                    <Emphasize text={layout.headline} />
+                  </p>
+                )}
+                {layout.body.length > 0 && (
+                  <ul className={styles.lines}>
+                    {layout.body.map((line, i) => (
+                      <li key={i}>
+                        <Emphasize text={line} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <SectionCard title="❓ 이렇게 알려 주세요" items={layout.questions} tone="ask" />
+                <SectionCard title="🏠 집에서 이렇게" items={layout.homeCare} tone="home" />
+                <SectionCard title="🏥 이럴 땐 병원으로" items={layout.visitHospitalIf} tone="hospital" />
+              </>
+            ) : (
+              <>
+                <p className={styles.replyText}>{message.content}</p>
+                <SectionCard title="🩺 가능한 원인" items={strings(message.possibleCauses)} tone="plain" />
+                <SectionCard title="🏠 집에서 이렇게" items={strings(message.homeCare)} tone="home" />
+                <SectionCard title="🏥 이럴 땐 병원으로" items={strings(message.visitHospitalIf)} tone="hospital" />
+              </>
             )}
 
             {/* 툴 결과 카드 */}
@@ -126,3 +121,74 @@ export default function ChatBubble({
   );
 }
 
+
+interface NormalizedLayout {
+  headline: string | null;
+  body: string[];
+  questions: string[];
+  homeCare: string[];
+  visitHospitalIf: string[];
+}
+
+/** 문자열만 남긴 목록(빈 칸·이상한 값은 그리지 않는다). */
+function strings(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+}
+
+/** layout 이 객체이고 그릴 문장이 하나라도 있을 때만 쓴다 - 아니면 옛 방식(reply)으로 그린다. */
+function normalizeLayout(layout: ChatLayout | null | undefined): NormalizedLayout | null {
+  if (!layout || typeof layout !== 'object' || Array.isArray(layout)) return null;
+  const headline = typeof layout.headline === 'string' && layout.headline.trim() ? layout.headline : null;
+  const out = {
+    headline,
+    body: strings(layout.body),
+    questions: strings(layout.questions),
+    homeCare: strings(layout.homeCare),
+    visitHospitalIf: strings(layout.visitHospitalIf),
+  };
+  const total = (headline ? 1 : 0) + out.body.length + out.questions.length + out.homeCare.length + out.visitHospitalIf.length;
+  return total > 0 ? out : null;
+}
+
+/** 숫자 119만 빨갛고 굵게 보인다(보이는 모양만 - 판단에 쓰지 않는다). */
+function Emphasize({ text }: { text: string }) {
+  const parts = text.split(/(119)/);
+  return (
+    <>
+      {parts.map((part, i) =>
+        part === '119' ? (
+          <strong key={i} className={styles.n119}>
+            119
+          </strong>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
+function SectionCard({
+  title,
+  items,
+  tone,
+}: {
+  title: string;
+  items: string[];
+  tone: 'home' | 'hospital' | 'ask' | 'plain';
+}) {
+  if (items.length === 0) return null; // 빈 칸은 그리지 않는다
+  return (
+    <section className={`${styles.card} ${styles[`card_${tone}`] ?? ''}`}>
+      <p className={styles.cardTitle}>{title}</p>
+      <ul className={styles.lines}>
+        {items.map((item, i) => (
+          <li key={i}>
+            <Emphasize text={item} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
