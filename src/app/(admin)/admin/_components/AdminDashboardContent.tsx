@@ -16,7 +16,6 @@ const subscribeNothing = () => () => {};
 
 function formatCount(value: number | null | undefined, unit: string) { return value === null || value === undefined ? '-' : `${value.toLocaleString('ko-KR')}${unit}`; }
 function formatElapsed(value: string | undefined) { if (!value) return '방금'; const time = new Date(value).getTime(); if (Number.isNaN(time)) return '방금'; const minutes = Math.max(0, Math.floor((Date.now() - time) / 60_000)); return minutes < 1 ? '방금' : `${minutes}분 전`; }
-function confidence(value: number | null) { return value === null ? '-' : `${Math.round(value * 100)}%`; }
 function serviceState(status: AdminAiServiceStatus | null | undefined, kind: 'anomaly' | 'chat', loading: boolean, error: boolean) { if (loading) return { label: '확인 중', tone: 'mute' }; if (error || !status) return { label: '확인 불가', tone: 'mute' }; const value: unknown = kind === 'anomaly' ? status.anomalyDetection : status.chatbot; if (value === null) return { label: kind === 'anomaly' ? '확인 중' : '확인 불가', tone: 'mute' }; if (value === 'OK') return { label: '정상', tone: 'safe' }; if (kind === 'anomaly' && value === 'DISCONNECTED') return { label: '연결 끊김', tone: 'warn' }; if (kind === 'chat' && value === 'DISABLED') return { label: '일시 중단', tone: 'warn' }; return { label: '확인 불가', tone: 'mute' }; }
 
 export function AdminDashboardContent() {
@@ -35,13 +34,6 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
   const review = getReviewMetrics(safety.todayAnomaly.review, safety.todayAnomaly.total);
   const falseAlarmRate = review.answered === 0 ? '-' : `${review.falseAlarmRate}%`;
   const typeTotal = safety.todayAnomaly.total || 1;
-  const eventRows = [
-    ['연결이 끊긴 카메라', formatNullableCount(safety.safetyEvents.disconnectedCameras, '대'), '꺼져 있어 감지가 되지 않습니다', safety.safetyEvents.disconnectedCameras !== null && safety.safetyEvents.disconnectedCameras > 0],
-    ['보호자 미연결 피보호자', formatCount(safety.safetyEvents.wardsWithoutGuardian, '명'), 'SOS를 받을 보호자가 없습니다', safety.safetyEvents.wardsWithoutGuardian > 0],
-    ['카메라 미등록 피보호자', formatCount(safety.safetyEvents.wardsWithoutCamera, '명'), '이상감지 대상 카메라가 없습니다', safety.safetyEvents.wardsWithoutCamera > 0],
-    ['전달 실패한 알림', formatCount(safety.safetyEvents.todayFailedNotifications, '건'), 'SOS·복약 알림 전달 실패만 집계합니다', safety.safetyEvents.todayFailedNotifications > 0],
-    ['7일 이상 방치된 연결 요청', formatCount(safety.safetyEvents.stalePendingConnections, '건'), '수락 또는 거절 확인이 필요합니다', safety.safetyEvents.stalePendingConnections > 0],
-  ] as const;
   return <main className={cx('dashboard')}>
     <header className={cx('heading')}><div><h1>대시보드</h1><p>{dateLabel}</p></div></header>
     <section className={cx('aiBar', { warning: anomalyService.tone === 'warn' || chatbotService.tone === 'warn' })} aria-label="AI 서비스 상태"><div className={cx('aiBarHead')}><span><Icon name="activity" size={16} decorative />AI 서비스</span><time>{formatElapsed(aiStatus?.generatedAt)} 확인</time></div><div className={cx('aiServices')}><AiServiceCard label="AI 이상감지" state={anomalyService} /><AiServiceCard label="안부 말벗 · 기분 분석" state={{ label: '준비 중', tone: 'mute' }} /><AiServiceCard label="AI 의료 챗봇" state={chatbotService} /></div></section>
@@ -68,9 +60,6 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
         <NumberGrid items={[['답변 기다림', formatCount(operation.unansweredInquiries.count, '건'), operation.unansweredInquiries.count > 0 ? 'care' : undefined], ['최장 대기', operation.unansweredInquiries.longestWaitingHours === null ? '-' : `${operation.unansweredInquiries.longestWaitingHours}시간`]]} /><SimpleRows rows={[['오늘 접수된 문의', formatCount(operation.pendingItems.todayInquiries, '건')]]} />
       </DashboardSection>
       <DashboardSection icon="fileText" title="공지사항" tone="mute"><NumberGrid items={[['임시저장', formatCount(operation.pendingItems.announcementDrafts, '건')]]} /><SimpleRows rows={[['안내', '공지 관리 기능은 준비 중입니다']]} /></DashboardSection>
-      <DashboardSection wide icon="alert" title="오늘 이상감지 현황" tone="danger" href="/admin/ai-stats">
-        <div className={cx('anomalyDetail')}><div className={cx('anomalyNumbers')}><NumberGrid items={[['감지', formatCount(safety.todayAnomaly.total, '건')], ['위험', formatCount(safety.todayAnomaly.review.real, '건'), 'danger'], ['오탐', formatCount(safety.todayAnomaly.review.falseAlarm, '건')], ['미판정', formatCount(safety.todayAnomaly.review.pending, '건')]]} /><div className={cx('detailLine')}><span>보호자 응답률 <b>{review.responseRate}%</b></span><span>AI 신뢰도 <b>{confidence(safety.todayAnomaly.aiConfidence.average)}</b> · 판정 {safety.todayAnomaly.aiConfidence.basis}건</span></div></div><div className={cx('eventRows')}>{eventRows.map(([label, value, note, hot]) => <div key={label} className={cx({ hot })}><div><b>{label}</b><small>{note}</small></div><strong>{value}</strong><Icon name="chevronRight" size={16} decorative /></div>)}</div></div>
-      </DashboardSection>
     </div>
     <p className={cx('generatedAt')}>안전 현황 {formatElapsed(safety.generatedAt)} · 운영 현황 {formatElapsed(operation.generatedAt)} 확인</p>
   </main>;
