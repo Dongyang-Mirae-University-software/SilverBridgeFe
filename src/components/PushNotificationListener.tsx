@@ -20,7 +20,6 @@ import { IConnectionItem } from '@/service/interface/connection';
 import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/ward/connection';
 import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import { getAnomalyAlertText } from '@/utils/anomaly/alertText';
-import { getSubjectParticle } from '@/utils/format/korean';
 import {
   formatReceivedAt,
   getMedicationProgress,
@@ -82,7 +81,7 @@ function getConnectionPushNotification(data?: MessagePayload['data'], role?: Con
       return { body: '연결이 해제되었습니다.', title: '연결 해제' };
     case 'WARD_SOS':
       return {
-        body: `${data?.wardName ?? '피보호자'}${getSubjectParticle(data?.wardName ?? '피보호자')} 긴급 도움을 요청했습니다.`,
+        body: `${data?.wardName || '피보호자'}님이 긴급 도움을 요청했습니다.`,
         title: '긴급 SOS',
       };
     case 'MEDICATION_REMINDER':

@@ -139,6 +139,40 @@ describe('문구·구성', () => {
   });
 });
 
+describe('SOS 예비 문구 - 서버 푸시·OS 알림과 같은 "○○님이"', () => {
+  it.each([
+    ['남궁명진', '남궁명진님이 긴급 도움을 요청했습니다.'],
+    ['김영희', '김영희님이 긴급 도움을 요청했습니다.'],
+    [undefined, '피보호자님이 긴급 도움을 요청했습니다.'],
+  ])('본문이 없으면 이름 %s → %s', async (wardName, body) => {
+    const screen = renderListener();
+    await receive({ data: { type: 'WARD_SOS', sosEventId: '1', ...(wardName ? { wardName } : {}) } });
+    await expect.element(screen.getByText(body)).toBeVisible();
+  });
+
+  it('서버 본문이 오면 그대로 쓴다', async () => {
+    const screen = renderListener();
+    await receive({ data: { type: 'WARD_SOS', sosEventId: '1', wardName: '남궁명진', body: '남궁명진님이 계속 도움을 요청하고 있습니다.' } });
+    await expect.element(screen.getByText('남궁명진님이 계속 도움을 요청하고 있습니다.')).toBeVisible();
+  });
+
+  it.each([375, 768, 1280])('%ipx 에서 예비 문구가 알림창 안에서 줄바꿈된다', async width => {
+    await page.viewport(width, 800);
+    const screen = renderListener();
+    await receive({ data: { type: 'WARD_SOS', sosEventId: '1', wardName: '남궁명진' } });
+    const body = screen.getByText('남궁명진님이 긴급 도움을 요청했습니다.');
+    await expect.element(body).toBeVisible();
+    await Promise.all(document.getAnimations().map(animation => animation.finished));
+    const section = document.querySelector('section')!.getBoundingClientRect();
+    const text = body.element().getBoundingClientRect();
+    expect(text.left).toBeGreaterThanOrEqual(section.left);
+    expect(text.right).toBeLessThanOrEqual(section.right);
+    expect(section.right).toBeLessThanOrEqual(width);
+    expect(body.element().scrollWidth).toBeLessThanOrEqual(body.element().clientWidth);
+    screen.unmount();
+  });
+});
+
 describe('반응형 위치', () => {
   it.each([
     [375, 'top'],
