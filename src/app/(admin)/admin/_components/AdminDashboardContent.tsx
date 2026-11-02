@@ -44,7 +44,7 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
   ] as const;
   return <main className={cx('dashboard')}>
     <header className={cx('heading')}><div><h1>대시보드</h1><p>{dateLabel}</p></div></header>
-    <section className={cx('aiBar', { warning: anomalyService.tone === 'warn' || chatbotService.tone === 'warn' })} aria-label="AI 서비스 상태"><div className={cx('aiBarHead')}><span><Icon name="activity" size={16} decorative />AI 서비스</span><time>{formatElapsed(aiStatus?.generatedAt)} 확인</time></div><div className={cx('aiServices')}><ServiceState label="AI 이상감지" state={anomalyService} /><ServiceState label="AI 의료 챗봇" state={chatbotService} /><ServiceState label="AI 안부 말벗 · 정서 분석" state={{ label: '준비 중', tone: 'mute' }} /></div></section>
+    <section className={cx('aiBar', { warning: anomalyService.tone === 'warn' || chatbotService.tone === 'warn' })} aria-label="AI 서비스 상태"><div className={cx('aiBarHead')}><span><Icon name="activity" size={16} decorative />AI 서비스</span><time>{formatElapsed(aiStatus?.generatedAt)} 확인</time></div><div className={cx('aiServices')}><ServiceState label="AI 이상감지" state={anomalyService} /><ServiceState label="안부 말벗 · 기분 분석" state={{ label: '준비 중', tone: 'mute' }} /><ServiceState label="AI 의료 챗봇" state={chatbotService} /></div></section>
     <div className={cx('sectionGrid')}>
       <DashboardSection wide icon="activity" title="AI 통계" tone="danger" href="/admin/ai-stats" pill={safety.todayAnomaly.review.real > 0 ? `위험 ${safety.todayAnomaly.review.real}건` : undefined}>
         <div className={cx('aiStatsGrid')}>
