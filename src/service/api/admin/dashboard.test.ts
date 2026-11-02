@@ -5,7 +5,7 @@ const { get } = vi.hoisted(() => ({ get: vi.fn() }));
 
 vi.mock('@/lib/api/apiClient', () => ({ apiClient: { get } }));
 
-import { getAdminOperationDashboard, getAdminSafetyDashboard } from './dashboard';
+import { getAdminAiServiceStatus, getAdminOperationDashboard, getAdminSafetyDashboard } from './dashboard';
 
 describe('관리자 대시보드 API', () => {
   beforeEach(() => {
@@ -21,5 +21,10 @@ describe('관리자 대시보드 API', () => {
   it('운영 현황을 관리자 운영 집계 주소로 조회한다', async () => {
     await getAdminOperationDashboard();
     expect(get).toHaveBeenCalledWith('/admin/dashboard/operation');
+  });
+
+  it('AI 서비스 상태를 별도 주소로 조회한다', async () => {
+    await getAdminAiServiceStatus();
+    expect(get).toHaveBeenCalledWith('/admin/dashboard/ai-status');
   });
 });

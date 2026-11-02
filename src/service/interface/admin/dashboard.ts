@@ -13,6 +13,7 @@ export interface AdminSafetyDashboard {
     wardsWithoutReachableGuardian: number;
     wardsWithoutCamera: number;
     stalePendingConnections: number;
+    todayFailedNotifications: number;
   };
   todayAnomaly: {
     total: number;
@@ -23,14 +24,16 @@ export interface AdminSafetyDashboard {
       falseAlarm: number;
       conflicted: number;
     };
+    aiConfidence: { average: number | null; basis: number };
   };
+  generatedAt: string;
 }
 
 export interface AdminOperationDashboard {
   totalUsers: number;
   newUsersToday: number;
   memberComposition: { wards: number; guardians: number };
-  cameras: { registered: number; wards: number };
+  cameras: { registered: number; wards: number; maxTotal: number | null };
   pendingConnections: number;
   unansweredInquiries: {
     count: number;
@@ -43,4 +46,14 @@ export interface AdminOperationDashboard {
     todayInquiries: number;
     announcementDrafts: number;
   };
+  generatedAt: string;
+}
+
+export type AdminAnomalyServiceStatus = 'OK' | 'DISCONNECTED' | null;
+export type AdminChatbotServiceStatus = 'OK' | 'DISABLED' | null;
+
+export interface AdminAiServiceStatus {
+  anomalyDetection: AdminAnomalyServiceStatus;
+  chatbot: AdminChatbotServiceStatus;
+  generatedAt: string;
 }
