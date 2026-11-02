@@ -122,7 +122,7 @@ function MemberRow({ member, onOpen }: { member: AdminUserListItem; onOpen: () =
   return <tr className={cx({ restricted: member.status === 'RESTRICTED' })}>
     <td className={cx('userId')}>{member.userId}</td><td><Badge tone={member.provider === 'KAKAO' ? 'sun' : 'mute'}>{member.provider === 'KAKAO' ? '카카오' : '로컬'}</Badge></td><td title={member.email}>{member.email}</td><td className={cx('name')}>{member.name}</td><td><Badge tone={member.role === 'ADMIN' ? 'brand' : member.role === 'GUARDIAN' ? 'sun' : 'mute'}>{ROLE_LABEL[member.role]}</Badge></td>
     <td title={hasMultipleConnections ? undefined : connectionText}>{hasMultipleConnections ? <button className={cx('connectionButton')} type="button" onClick={onOpen} aria-label={`${member.name}님의 연결 회원 ${member.connectionCount}명 모두 보기`}>연결 회원 {member.connectionCount}명 보기</button> : connectionText}</td><td>{member.connectionState ? <Badge tone={member.connectionState === 'CONNECTED' ? 'safe' : member.connectionState === 'PENDING' ? 'sun' : 'warn'}>{CONNECTION_LABEL[member.connectionState]}</Badge> : '—'}</td><td className={cx('phone')}>{formatPhoneText(member.phone)}</td><td title={member.statusReason ?? undefined}><Badge tone={member.status === 'ACTIVE' ? 'safe' : 'warn'}>{STATUS_LABEL[member.status]}</Badge></td>
-    <td><button className={cx('editButton')} type="button" onClick={onOpen}>{member.role === 'ADMIN' ? '상세' : '관리'}</button></td>
+    <td>{member.role === 'ADMIN' ? null : <button className={cx('editButton')} type="button" onClick={onOpen}>관리</button>}</td>
   </tr>;
 }
 
