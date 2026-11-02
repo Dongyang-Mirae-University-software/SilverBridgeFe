@@ -6,7 +6,7 @@ import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { Pagination } from '@/components/Pagination';
-import { deleteAdminUser, updateAdminUser } from '@/service/api/admin/user';
+import { createAdminConnection, deleteAdminConnection, deleteAdminUser, updateAdminUser } from '@/service/api/admin/user';
 import {
   AdminUserDetail,
   AdminUserListItem,
@@ -151,12 +151,18 @@ function MemberDetailModal({ detail, isLoading, isError, isSaving, isDeleting, o
 }
 
 function MemberDetailForm({ detail, isSaving, isDeleting, onClose, onUpdate, onDelete, actionError }: Pick<MemberDetailModalProps, 'detail' | 'isSaving' | 'isDeleting' | 'onClose' | 'onUpdate' | 'onDelete' | 'actionError'> & { detail: AdminUserDetail }) {
+  const queryClient = useQueryClient();
   const [name, setName] = useState(detail.name);
   const [role, setRole] = useState<Exclude<AdminUserRole, 'ADMIN'>>(detail.role === 'ADMIN' ? 'GUARDIAN' : detail.role);
   const [status, setStatus] = useState<AdminUserStatus>(detail.status);
   const [statusReason, setStatusReason] = useState(detail.statusReason ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [addOpen, setAddOpen] = useState(false);
+  const [candidateKeyword, setCandidateKeyword] = useState('');
+  const [candidate, setCandidate] = useState<AdminUserListItem | null>(null);
+  const [confirmConnection, setConfirmConnection] = useState(false);
+  const [connectionError, setConnectionError] = useState('');
 
   const isAdmin = detail?.role === 'ADMIN';
   const isWard = detail?.role === 'WARD';
@@ -166,6 +172,11 @@ function MemberDetailForm({ detail, isSaving, isDeleting, onClose, onUpdate, onD
     if (status === 'RESTRICTED' && isWard) { setFeedback('피보호자는 안전을 위해 이용 제한할 수 없습니다.'); return; }
     onUpdate(detail.userId, { name: name.trim(), role, status, statusReason: status === 'RESTRICTED' ? statusReason.trim() || null : null });
   };
+  const counterpartRole = detail.role === 'GUARDIAN' ? 'WARD' : 'GUARDIAN';
+  const candidates = useQuery({ ...adminUserListQueryOptions({ keyword: candidateKeyword.trim() || undefined, role: counterpartRole, status: 'ACTIVE', connection: 'ALL', page: 0, size: 20 }), enabled: addOpen });
+  const refreshConnections = async () => { await queryClient.invalidateQueries({ queryKey: adminUserQueryKey }); await queryClient.invalidateQueries({ queryKey: [...adminUserQueryKey, 'detail', detail.userId] }); };
+  const connect = useMutation({ mutationFn: () => createAdminConnection(detail.role === 'GUARDIAN' ? { guardianId: detail.userId, wardId: candidate!.userId } : { guardianId: candidate!.userId, wardId: detail.userId }), onSuccess: async () => { setConfirmConnection(false); setAddOpen(false); setCandidate(null); await refreshConnections(); }, onError: () => setConnectionError('연결을 완료하지 못했습니다. 이미 연결되어 있는지 확인해 주세요.') });
+  const disconnect = useMutation({ mutationFn: deleteAdminConnection, onSuccess: refreshConnections, onError: () => setConnectionError('연결을 해제하지 못했습니다. 목록을 새로고침해 주세요.') });
 
   return <div className={cx('modalBody')}>
       {/* 기존 가입 메타는 서버 상세 데이터에 유지합니다. v13 모달 구조에는 노출하지 않습니다.
@@ -180,11 +191,12 @@ function MemberDetailForm({ detail, isSaving, isDeleting, onClose, onUpdate, onD
       <section className={cx('membershipBox')}><span>가입 방식</span><div><Badge tone={detail.provider === 'KAKAO' ? 'sun' : 'mute'}>{detail.provider === 'KAKAO' ? '카카오' : '로컬'}</Badge><b>{detail.provider === 'KAKAO' ? '카카오 소셜 로그인 · 이메일·비밀번호 변경 불가' : '이메일·비밀번호 로컬 계정'}</b></div></section>
       <label className={cx('accountStatus')}>계정 상태<select disabled={isAdmin || role === 'WARD'} value={status} onChange={event => setStatus(event.target.value as AdminUserStatus)}><option value="ACTIVE">이용 중</option><option value="RESTRICTED">이용 제한</option></select></label>
       {status === 'RESTRICTED' && <label className={cx('reason')}>이용 제한 사유 <small>(선택)</small><textarea maxLength={200} disabled={isAdmin} value={statusReason} onChange={event => setStatusReason(event.target.value)} placeholder="제한 사유를 남겨두면 이후 이력에서 확인할 수 있습니다" /></label>}
-      <section className={cx('connections')}><h3>연결 상태 · {role === 'GUARDIAN' ? '연결된 피보호자' : '연결된 보호자'} <small>{detail.connections.length > 1 ? `${detail.connections.length}명` : ''}</small></h3>{detail.connections.length === 0 ? <p>연결된 회원이 없습니다.</p> : <ul>{detail.connections.map(connection => <li key={connection.connectionId}><span className={cx('connectionIcon')}><Icon name="users" size={15} /></span><span className={cx('connectionInfo')}><b>{connection.counterpartName}</b><small>{role === 'GUARDIAN' ? `이 회원은 ${connection.counterpartName}님의 ${connection.relation ?? '보호자'}` : `이 보호자는 ${detail.name}님의 ${connection.relation ?? '보호자'}`}</small></span><Badge tone={connection.status === 'ACTIVE' ? 'safe' : 'sun'}>{connection.status === 'ACTIVE' ? '연결됨' : '수락 대기'}</Badge></li>)}</ul>}</section>
-      {(feedback || actionError) && <p className={cx('errorMessage')}>{feedback || actionError}</p>}
+      <section className={cx('connections')}><h3>연결 상태 · {role === 'GUARDIAN' ? '연결된 피보호자' : '연결된 보호자'} <small>{detail.connections.length > 1 ? `${detail.connections.length}명` : ''}</small><button type="button" onClick={() => setAddOpen(open => !open)}><Icon name="plus" size={14} />연결 추가</button></h3>{detail.connections.length === 0 ? <p>연결된 회원이 없습니다.</p> : <ul>{detail.connections.map(connection => <li key={connection.connectionId}><span className={cx('connectionIcon')}><Icon name="users" size={15} /></span><span className={cx('connectionInfo')}><b>{connection.counterpartName}</b><small>{connection.relation ? `피보호자의 ${connection.relation}` : '관리자 강제 연결'}</small></span><Badge tone={connection.status === 'ACTIVE' ? 'safe' : 'sun'}>{connection.status === 'ACTIVE' ? '연결됨' : '수락 대기'}</Badge>{connection.status === 'ACTIVE' && <button className={cx('disconnectButton')} type="button" disabled={disconnect.isPending} onClick={() => disconnect.mutate(connection.connectionId)}>해제</button>}</li>)}</ul>}{addOpen && <div className={cx('connectionPicker')}><input value={candidateKeyword} onChange={event => { setCandidateKeyword(event.target.value); setCandidate(null); }} placeholder={`${counterpartRole === 'WARD' ? '피보호자' : '보호자'} 이름 · 이메일 · 전화번호 검색`} />{candidates.data?.content.map(user => <button key={user.userId} type="button" className={cx({ selected: candidate?.userId === user.userId })} onClick={() => setCandidate(user)}><b>{user.name}</b><span>{user.email} · {formatPhoneText(user.phone)}</span></button>)}{candidate && <button className={cx('connectButton')} type="button" onClick={() => setConfirmConnection(true)}>{candidate.name}님 연결</button>}</div>}</section>
+      {(feedback || actionError || connectionError) && <p className={cx('errorMessage')}>{feedback || actionError || connectionError}</p>}
       {!isAdmin && <div className={cx('modalActions')}><button className={cx('deleteButton')} type="button" disabled={isSaving || isDeleting} onClick={() => setConfirmDelete(true)}><Icon name="trash" size={16} />강제 탈퇴</button><div><button className={cx('cancelButton')} type="button" disabled={isSaving || isDeleting} onClick={onClose}>취소</button><button className={cx('saveButton')} type="button" disabled={savingDisabled} onClick={save}>{isSaving ? '저장 중...' : '저장'}</button></div></div>}
       {isAdmin && <p className={cx('adminNotice')}>관리자 계정은 이 화면에서 수정하거나 삭제할 수 없습니다.</p>}
       {confirmDelete && <div className={cx('confirm')}><strong>정말 강제 탈퇴 처리할까요?</strong><p>계정과 연결 정보가 영구 삭제되며 복구할 수 없습니다.</p><div><button type="button" onClick={() => setConfirmDelete(false)}>취소</button><button type="button" disabled={isDeleting} onClick={() => onDelete(detail.userId)}>{isDeleting ? '처리 중...' : '영구 삭제'}</button></div></div>}
+      {confirmConnection && candidate && <div className={cx('confirm')}><strong>강제로 연결할까요?</strong><p>{detail.role === 'GUARDIAN' ? `${candidate.name}님의 SOS·카메라·복약 정보가 ${detail.name}님에게 공개되고, 두 분 모두에게 알림이 갑니다.` : `${detail.name}님의 SOS·카메라·복약 정보가 ${candidate.name}님에게 공개되고, 두 분 모두에게 알림이 갑니다.`}</p><div><button type="button" onClick={() => setConfirmConnection(false)}>취소</button><button type="button" disabled={connect.isPending} onClick={() => connect.mutate()}>{connect.isPending ? '연결 중...' : '연결'}</button></div></div>}
     </div>;
 }
 

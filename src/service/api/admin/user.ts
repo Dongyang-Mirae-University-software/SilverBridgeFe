@@ -33,3 +33,12 @@ export async function updateAdminUser(userId: string, body: AdminUserUpdateReque
 export async function deleteAdminUser(userId: string) {
   await apiClient.delete<CommonResponse<void>>(`${ADMIN_USER_BASE}/${userId}`);
 }
+
+export async function createAdminConnection(body: { guardianId: string; wardId: string }) {
+  const response = await apiClient.post<CommonResponse<void>>('/admin/connection', body);
+  return getResponseData<void>(response);
+}
+
+export async function deleteAdminConnection(connectionId: number) {
+  await apiClient.delete<CommonResponse<void>>(`/admin/connection/${connectionId}`);
+}
