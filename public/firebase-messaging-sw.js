@@ -4,6 +4,17 @@ importScripts('/push-sw-logic.js');
 
 const push = self.SilverBridgePush;
 
+// 새 버전이 오면 열린 탭이 있어도 바로 바꾼다 - 기다리면 옛 워커가 옛 모양으로 알림을 그린다(2026-11-02).
+// 이 워커는 푸시 표시·클릭만 다루고 페이지 요청(fetch)·캐시를 다루지 않아 교체해도 열린 화면은 그대로다.
+// 열린 탭을 새로고침하지 않는다(controllerchange 자동 reload 금지 - 입력 중인 내용이 날아간다)
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
+});
+
 // 역할(보호자·피보호자)을 고른다: access token 쿠키 → 열린 탭 경로 → 모름(null).
 // cookieStore는 Chrome·안드로이드만 있다. 토큰은 role 값만 읽고 밖으로 보내지 않는다
 async function resolveRole(clientList) {

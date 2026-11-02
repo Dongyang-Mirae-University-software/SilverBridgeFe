@@ -1,6 +1,5 @@
 import { ConnectionRealtimePayload } from '@/lib/realtime/connectionSocket';
 import { getAnomalyAlertText } from '@/utils/anomaly/alertText';
-import { getSubjectParticle } from '@/utils/format/korean';
 
 export function getRealtimeNotification(payload: ConnectionRealtimePayload, role?: 'WARD' | 'GUARDIAN') {
   switch (payload.type) {
@@ -26,7 +25,7 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload, role
       };
     case 'SOS_TRIGGERED':
       return {
-        body: payload.body ?? `${payload.wardName ?? '피보호자'}${getSubjectParticle(payload.wardName ?? '피보호자')} 긴급 도움을 요청했습니다.`,
+        body: payload.body ?? `${payload.wardName || '피보호자'}님이 긴급 도움을 요청했습니다.`,
         title: payload.title ?? '긴급 SOS',
       };
     case 'MEDICATION_STOPPED':

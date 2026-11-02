@@ -16,11 +16,14 @@ function loadServiceWorker({ windows = [] as { url: string; focus: () => Promise
   let backgroundHandler: ((payload: unknown) => Promise<void>) | null = null;
   const showNotification = vi.fn(async () => {});
   const openWindow = vi.fn(async () => null);
+  const skipWaiting = vi.fn(async () => {});
+  const claim = vi.fn(async () => {});
 
   const self = {
     location: { origin: 'https://example.com' },
     registration: { showNotification },
-    clients: { matchAll: async () => windows, openWindow },
+    skipWaiting,
+    clients: { matchAll: async () => windows, openWindow, claim },
     addEventListener: (type: string, listener: Listener) => {
       order.push(`listener:${type}`);
       listeners[type] = listener;
@@ -44,7 +47,7 @@ function loadServiceWorker({ windows = [] as { url: string; focus: () => Promise
   };
   runInNewContext(SW_SOURCE, context);
 
-  return { order, listeners, showNotification, openWindow, background: (payload: unknown) => backgroundHandler!(payload) };
+  return { order, listeners, showNotification, openWindow, skipWaiting, claim, background: (payload: unknown) => backgroundHandler!(payload) };
 }
 
 async function click(listener: Listener, data: unknown, action = '') {
@@ -61,6 +64,25 @@ async function click(listener: Listener, data: unknown, action = '') {
 }
 
 describe('서비스 워커 연결', () => {
+  it('새 버전은 열린 탭이 있어도 기다리지 않고 바로 활성화해 열린 탭을 맡는다', async () => {
+    const sw = loadServiceWorker();
+    sw.listeners.install({});
+    expect(sw.skipWaiting).toHaveBeenCalledTimes(1);
+
+    let pending: Promise<unknown> | null = null;
+    sw.listeners.activate({ waitUntil: (promise: Promise<unknown>) => (pending = promise) });
+    expect(sw.claim).toHaveBeenCalledTimes(1);
+    expect(pending).not.toBeNull();
+    await pending;
+  });
+
+  it('페이지 요청·캐시는 다루지 않는다 - 즉시 교체해도 열린 화면이 바뀌지 않는 근거', () => {
+    const sw = loadServiceWorker();
+    expect(sw.listeners.fetch).toBeUndefined();
+    const code = SW_SOURCE.replace(/\/\/.*$/gm, '');
+    expect(code).not.toMatch(/caches\.|controllerchange|location\.reload/);
+  });
+
   it('클릭 리스너를 firebase.messaging()보다 먼저 등록한다 - 라이브러리 리스너가 FCM_MSG 클릭을 가로채지 못하게', () => {
     const { order } = loadServiceWorker();
     expect(order.indexOf('listener:notificationclick')).toBeGreaterThanOrEqual(0);
