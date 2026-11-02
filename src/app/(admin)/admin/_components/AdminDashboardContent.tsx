@@ -44,7 +44,7 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
   ] as const;
   return <main className={cx('dashboard')}>
     <header className={cx('heading')}><div><h1>대시보드</h1><p>{dateLabel}</p></div></header>
-    <section className={cx('aiBar', { warning: anomalyService.tone === 'warn' || chatbotService.tone === 'warn' })} aria-label="AI 서비스 상태"><div className={cx('aiBarHead')}><span><Icon name="activity" size={16} decorative />AI 서비스</span><time>{formatElapsed(aiStatus?.generatedAt)} 확인</time></div><div className={cx('aiServices')}><ServiceState label="AI 이상감지" state={anomalyService} /><ServiceState label="안부 말벗 · 기분 분석" state={{ label: '준비 중', tone: 'mute' }} /><ServiceState label="AI 의료 챗봇" state={chatbotService} /></div></section>
+    <section className={cx('aiBar', { warning: anomalyService.tone === 'warn' || chatbotService.tone === 'warn' })} aria-label="AI 서비스 상태"><div className={cx('aiBarHead')}><span><Icon name="activity" size={16} decorative />AI 서비스</span><time>{formatElapsed(aiStatus?.generatedAt)} 확인</time></div><div className={cx('aiServices')}><AiServiceCard label="AI 이상감지" state={anomalyService} /><AiServiceCard label="안부 말벗 · 기분 분석" state={{ label: '준비 중', tone: 'mute' }} /><AiServiceCard label="AI 의료 챗봇" state={chatbotService} /></div></section>
     <div className={cx('sectionGrid')}>
       <DashboardSection wide icon="activity" title="AI 통계" tone="danger" href="/admin/ai-stats" pill={safety.todayAnomaly.review.real > 0 ? `위험 ${safety.todayAnomaly.review.real}건` : undefined}>
         <div className={cx('aiStatsGrid')}>
@@ -76,7 +76,7 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
   </main>;
 }
 
-function ServiceState({ label, state }: { label: string; state: { label: string; tone: string } }) { return <div className={cx('serviceState', state.tone)}><strong>{label}</strong><span><i />{state.label}</span></div>; }
+function AiServiceCard({ label, state }: { label: string; state: { label: string; tone: string } }) { return <span className={cx('aiServiceCard', state.tone)}><span className={cx('aiServiceName')}>{label}</span><span className={cx('aiServiceResult')}><i />{state.label}</span></span>; }
 function DashboardSection({ icon, title, tone, href, pill, wide = false, children }: { icon: IconName; title: string; tone: string; href?: string; pill?: string; wide?: boolean; children: ReactNode }) { const body = <section className={cx('section', { wide })}><header><span className={cx('sectionIcon', tone)}><Icon name={icon} size={17} decorative /></span><h2>{title}</h2>{pill && <em className={cx('pill', tone)}>{pill}</em>}{href && <span className={cx('allLink')}>전체 보기<Icon name="chevronRight" size={14} decorative /></span>}</header>{children}</section>; return href ? <Link className={cx('sectionLink', { wide })} href={href}>{body}</Link> : body; }
 function NumberGrid({ items }: { items: Array<[string, string, ('care' | 'danger' | 'brand')?]> }) { return <div className={cx('numberGrid')}>{items.map(([label, value, tone]) => <div key={label} className={cx(tone)}><span>{label}</span><b>{value}</b></div>)}</div>; }
 function SimpleRows({ rows }: { rows: Array<[string, string]> }) { return <div className={cx('simpleRows')}>{rows.map(([label, value]) => <div key={label}><span>{label}</span><b>{value}</b></div>)}</div>; }
