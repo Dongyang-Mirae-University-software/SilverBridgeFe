@@ -25,7 +25,8 @@ export type PageKey =
   | 'members'
   | 'ai-stats'
   | 'notification-history'
-  | 'devices';
+  | 'devices'
+  | 'admin-notices';
 
 export type NavIconName =
   | 'home'
@@ -44,6 +45,7 @@ export type NavIconName =
   | 'inquiry'
   | 'camera'
   | 'eye'
+  | 'fileText'
   | 'brain';
 
 export interface NavItem {
