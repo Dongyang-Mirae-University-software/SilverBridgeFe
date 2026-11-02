@@ -169,14 +169,14 @@ function StateRow({ children }: { children: React.ReactNode }) {
 }
 
 function NotificationRow({ log, onSelect }: { log: AdminNotificationLogItem; onSelect: (log: AdminNotificationLogItem) => void }) {
-  return <tr>
+  return <tr className={cx('selectableRow')} tabIndex={0} onClick={() => onSelect(log)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(log); } }}>
     <td>{formatSentAt(log.sentAt)}</td>
     <td><span className={cx('categoryBadge', log.category)}>{CATEGORY_LABEL[log.category]}</span></td>
     <td className={cx('wardName')}>{log.wardName ?? '—'}</td>
     <td className={cx('message')}>{log.body}</td>
     <td><div className={cx('recipient')}><span>{recipientLabel(log)}</span><span className={cx('recipientBadge', { ward: log.recipientIsWard })}>{log.recipientIsWard ? '본인' : '보호자'}</span></div></td>
     <td>{log.deliveredChannels.length > 0 ? <div className={cx('channels')}>{log.deliveredChannels.map(channel => <span key={channel}>{channelLabel(channel)}</span>)}</div> : <span className={cx('dash')}>-</span>}</td>
-    <td><button type="button" className={cx('resultBadge', log.result)} onClick={() => onSelect(log)}>{RESULT_LABEL[log.result]}</button></td>
+    <td><button type="button" className={cx('resultBadge', log.result)} onClick={event => { event.stopPropagation(); onSelect(log); }}>{RESULT_LABEL[log.result]}</button></td>
   </tr>;
 }
 
