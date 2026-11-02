@@ -1,4 +1,4 @@
-.shell { position: relative; display: flex; min-height: 100dvh; flex-direction: column; overflow: hidden; background: var(--sb-bg); color: var(--sb-ink); }
+.shell { position: relative; display: flex; min-height: 100dvh; flex-direction: column; overflow: hidden; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); background: var(--sb-bg); color: var(--sb-ink); }
 .background { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .drift { position: absolute; border-radius: 50%; }
 .driftOne { top: -220px; left: -180px; width: 560px; height: 560px; background: #f8e6d8; animation: driftOne 14s ease-in-out infinite; }
@@ -51,7 +51,7 @@
 @media (max-width: 767px) {
   .shell { overflow: visible; overflow-x: clip; background: var(--sb-brand-50); }
   .background, .heroVisual, .features, .headlineBreak { display: none; }
-  .content { display: flex; flex-direction: column; justify-content: flex-start; gap: 0; padding-top: env(safe-area-inset-top); }
+  .content { display: flex; flex-direction: column; justify-content: flex-start; gap: 0; }
   .hero { flex: none; min-width: 0; gap: 0; padding: 28px 24px 4px; }
   .brandRow { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; }
   .appIcon { display: block; width: 52px; height: 52px; border-radius: 16px; box-shadow: var(--sb-shadow-md); }
@@ -60,7 +60,8 @@
   .formPane { flex: none; justify-content: center; padding: 56px 16px 12px; }
   .card { width: 100%; max-width: 440px; margin: 0 auto; padding: 26px 22px 20px; border: none; border-radius: 24px; box-shadow: var(--sb-shadow-lg); }
   .bunnyEars { right: 32px; }
-  .footer { padding: 4px 16px calc(10px + env(safe-area-inset-bottom)); font-size: 11px; line-height: 1.45; }
+  /* 학습 목적 안내는 읽혀야 한다 - 새 배경(--sb-brand-50) 위 대비 약 6:1. color-mix 미지원 브라우저는 ink-soft(8:1) */
+  .footer { padding: 4px 16px 10px; color: var(--sb-ink-soft); color: color-mix(in srgb, var(--sb-ink-soft) 70%, var(--sb-ink-mute)); font-size: 11px; line-height: 1.45; }
   .footer > div:first-child { word-break: keep-all; text-wrap: balance; }
 
   /* 로그인 화면만: 한 화면에 맞춘다(기준 375×667·390×844·430×932·360×800) */

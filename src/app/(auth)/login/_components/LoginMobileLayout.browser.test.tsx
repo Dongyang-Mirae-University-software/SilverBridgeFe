@@ -93,6 +93,62 @@ describe('로그인 화면 핸드폰 배치 (Chrome)', () => {
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(375);
   });
 
+  // 점검 M-1(2026-11-02): 320px에서 '로그인 유\n지'처럼 글자 단위로 쪼개졌다 - 줄바꿈 금지 + 모자라면 찾기 링크를 다음 줄로
+  it('320px 폭에서도 로그인 유지·찾기 링크가 한 줄 글자로 남는다(단어 쪼개짐 없음)', async () => {
+    await page.viewport(320, 568);
+    const screen = renderLoginScreen();
+    await expect.element(screen.getByRole('button', { name: '비밀번호 찾기' })).toBeInTheDocument();
+
+    for (const el of [
+      screen.getByText('로그인 유지').element(),
+      screen.getByRole('button', { name: '아이디 찾기' }).element(),
+      screen.getByRole('button', { name: '비밀번호 찾기' }).element(),
+    ]) {
+      const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || parseFloat(getComputedStyle(el).fontSize) * 1.5;
+      expect(el.getBoundingClientRect().height, el.textContent ?? '').toBeLessThan(lineHeight * 1.6);
+    }
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(320);
+  });
+
+  // 점검 L-1(2026-11-02): '로그인 유지'의 넓힌 터치 영역이 로그인 버튼 위 가장자리를 덮었다
+  it('767px 이하: 넓힌 터치 영역이 이웃 버튼을 덮지 않는다', async () => {
+    await page.viewport(375, 667);
+    const screen = renderLoginScreen();
+    await expect.element(screen.getByRole('button', { name: '회원가입' })).toBeInTheDocument();
+
+    const targets = [
+      document.querySelector('button[type="submit"]') as HTMLElement,
+      screen.getByRole('button', { name: '카카오로 로그인' }).element() as HTMLElement,
+      screen.getByRole('button', { name: '아이디 찾기' }).element() as HTMLElement,
+      screen.getByRole('button', { name: '비밀번호 찾기' }).element() as HTMLElement,
+      screen.getByRole('button', { name: '회원가입' }).element() as HTMLElement,
+      document.querySelector('input[name="password"]') as HTMLElement,
+    ];
+    for (const el of targets) {
+      const r = el.getBoundingClientRect();
+      // 둥근 모서리를 피해 가로는 안쪽 16px, 세로는 위·아래 가장자리 1px 안쪽
+      for (const [x, y] of [
+        [r.left + Math.min(16, r.width / 2), r.top + 1],
+        [r.left + r.width / 2, r.top + 1],
+        [r.left + r.width / 2, r.bottom - 1],
+        [r.right - Math.min(16, r.width / 2), r.bottom - 1],
+      ]) {
+        const hit = document.elementFromPoint(x, y);
+        expect(hit === el || el.contains(hit) || (hit?.contains(el) && hit !== document.body), `${el.textContent || el.getAttribute('name')} (${Math.round(x)},${Math.round(y)}) → ${hit?.textContent?.trim().slice(0, 10)}`).toBe(true);
+      }
+    }
+  });
+
+  // 점검 L-2(2026-11-02): 오류 문구 한 줄이 떠도 아이폰 SE 크기에서 한 화면
+  it('375×667에서 오류 문구가 떠도 스크롤 없이 한 화면에 들어간다', async () => {
+    await page.viewport(375, 667);
+    const screen = renderLoginScreen();
+    (document.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+    await expect.element(screen.getByText('이메일과 비밀번호를 입력해주세요.')).toBeInTheDocument();
+
+    expect(document.documentElement.scrollHeight).toBeLessThanOrEqual(667);
+  });
+
   it('768px 이상: 지금 화면 그대로 - 앱 아이콘은 숨고 기능 아이콘 줄·부제가 보인다', async () => {
     await page.viewport(1280, 800);
     renderLoginScreen();
