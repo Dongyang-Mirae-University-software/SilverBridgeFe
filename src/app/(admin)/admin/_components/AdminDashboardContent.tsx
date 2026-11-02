@@ -6,8 +6,8 @@ import classNames from 'classnames/bind';
 import Link from 'next/link';
 
 import { Icon, type IconName } from '@/components/Icon';
-import { AdminOperationDashboard, AdminSafetyDashboard } from '@/service/interface/admin/dashboard';
-import { adminOperationDashboardQueryOptions, adminSafetyDashboardQueryOptions } from '@/service/query/admin';
+import { AdminAiServiceStatus, AdminOperationDashboard, AdminSafetyDashboard } from '@/service/interface/admin/dashboard';
+import { adminAiServiceStatusQueryOptions, adminOperationDashboardQueryOptions, adminSafetyDashboardQueryOptions } from '@/service/query/admin';
 import { ADMIN_ANOMALY_TYPE_META, formatAdminTrendDate, formatNullableCount, getReviewMetrics } from '@/utils/admin/dashboard';
 import styles from './AdminDashboardContent.module.css';
 
@@ -21,17 +21,18 @@ export function AdminDashboardContent() {
   const dateLabel = useSyncExternalStore(subscribeNothing, () => new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(new Date()), () => '오늘');
   const safety = useQuery(adminSafetyDashboardQueryOptions(tab === 'safety'));
   const operation = useQuery(adminOperationDashboardQueryOptions(tab === 'operations'));
+  const aiStatus = useQuery(adminAiServiceStatusQueryOptions(tab === 'safety'));
   return <div className={cx('dashboard')}>
     <header className={cx('heading')}><h1>대시보드</h1><p>{dateLabel}</p></header>
     <div className={cx('tabs')} role="tablist" aria-label="관리자 대시보드 보기">
       <button className={cx('tab', { active: tab === 'safety' })} type="button" role="tab" aria-selected={tab === 'safety'} onClick={() => setTab('safety')}>안전 현황</button>
       <button className={cx('tab', { active: tab === 'operations' })} type="button" role="tab" aria-selected={tab === 'operations'} onClick={() => setTab('operations')}>운영 현황</button>
     </div>
-    {tab === 'safety' ? <SafetyDashboard data={safety.data} isLoading={safety.isLoading} isError={safety.isError} onRetry={() => void safety.refetch()} /> : <OperationsDashboard data={operation.data} isLoading={operation.isLoading} isError={operation.isError} onRetry={() => void operation.refetch()} />}
+    {tab === 'safety' ? <SafetyDashboard data={safety.data} aiStatus={aiStatus.data} aiStatusLoading={aiStatus.isLoading} aiStatusError={aiStatus.isError} isLoading={safety.isLoading} isError={safety.isError} onRetry={() => { void safety.refetch(); void aiStatus.refetch(); }} /> : <OperationsDashboard data={operation.data} isLoading={operation.isLoading} isError={operation.isError} onRetry={() => void operation.refetch()} />}
   </div>;
 }
 
-function SafetyDashboard({ data, isLoading, isError, onRetry }: DashboardState<AdminSafetyDashboard>) {
+function SafetyDashboard({ data, aiStatus, aiStatusLoading, aiStatusError, isLoading, isError, onRetry }: DashboardState<AdminSafetyDashboard> & { aiStatus: AdminAiServiceStatus | null | undefined; aiStatusLoading: boolean; aiStatusError: boolean }) {
   if (isLoading) return <DashboardNotice>안전 현황을 불러오는 중입니다.</DashboardNotice>;
   if (isError || !data) return <DashboardNotice retry={onRetry}>안전 현황을 불러오지 못했습니다.</DashboardNotice>;
   const { safetyEvents, todayAnomaly } = data;
@@ -41,12 +42,13 @@ function SafetyDashboard({ data, isLoading, isError, onRetry }: DashboardState<A
     { label: '연락 가능한 보호자 없음', value: `${safetyEvents.wardsWithoutReachableGuardian}명`, description: '연결은 있지만 연락 가능한 보호자가 없습니다', alert: safetyEvents.wardsWithoutReachableGuardian > 0 },
     { label: '카메라 미등록 피보호자', value: `${safetyEvents.wardsWithoutCamera}명`, description: '이상감지 대상 카메라가 없습니다', alert: safetyEvents.wardsWithoutCamera > 0 },
     { label: '7일 이상 방치된 연결 요청', value: `${safetyEvents.stalePendingConnections}건`, description: '수락 또는 거절 확인이 필요합니다', alert: safetyEvents.stalePendingConnections > 0 },
+    { label: '오늘 전달 실패한 알림', value: `${safetyEvents.todayFailedNotifications}건`, description: '발송 안 함은 실패 건수에 포함되지 않습니다', alert: safetyEvents.todayFailedNotifications > 0 },
   ];
   const reviewMetrics = getReviewMetrics(todayAnomaly.review, todayAnomaly.total);
   return <div className={cx('stack')}>
-    <section className={cx('serviceCard', { offline: !data.aiConnected })} aria-label="AI 서비스 상태">
-      <div className={cx('sectionTitleRow')}><span className={cx('serviceIcon')}><Icon name={data.aiConnected ? 'activity' : 'alert'} size={18} /></span><h2>AI 서비스 상태</h2><time>30초마다 갱신</time></div>
-      <div className={cx('serviceGrid')}><Metric label="AI 수신기" value={data.aiConnected ? '정상' : '연결 끊김'} tone={data.aiConnected ? 'safe' : 'warn'} /><Metric label="구독 중 세션" value={`${data.subscribedSessions}개`} /><Metric label="카메라 상태" value={data.streamingCameras === null ? `등록 ${data.totalCameras}대 · 스트리밍 확인 불가` : `${data.streamingCameras} / ${data.totalCameras}대`} tone={data.streamingCameras === null ? 'warn' : undefined} /></div>
+    <section className={cx('serviceCard', { offline: aiStatus?.anomalyDetection === 'DISCONNECTED' })} aria-label="AI 서비스 상태">
+      <div className={cx('sectionTitleRow')}><span className={cx('serviceIcon')}><Icon name={aiStatus?.anomalyDetection === 'DISCONNECTED' ? 'alert' : 'activity'} size={18} /></span><h2>AI 서비스 상태</h2><time>{aiStatus?.generatedAt ? `${formatElapsed(aiStatus.generatedAt)} 확인` : '60초마다 갱신'}</time></div>
+      <div className={cx('serviceGrid')}><Metric label="이상감지" value={formatAnomalyService(aiStatus, aiStatusLoading, aiStatusError)} tone={aiStatus?.anomalyDetection === 'DISCONNECTED' ? 'warn' : undefined} /><Metric label="AI 의료 챗봇" value={formatChatService(aiStatus, aiStatusLoading, aiStatusError)} tone={aiStatus?.chatbot === 'DISABLED' ? 'warn' : undefined} /><Metric label="구독 중 세션" value={`${data.subscribedSessions}개`} /><Metric label="카메라 상태" value={data.streamingCameras === null ? '스트리밍 확인 불가' : `${data.streamingCameras} / ${data.totalCameras}대`} tone={data.streamingCameras === null ? 'warn' : undefined} /></div>
     </section>
     <div className={cx('primaryGrid')}>
       <section className={cx('card')}><div className={cx('cardHeading')}><h2>안전 이벤트</h2><span>확인이 필요한 항목</span></div><div className={cx('eventList')}>{events.map(event => <article className={cx('event', { alert: event.alert })} key={event.label}><div><strong>{event.label}</strong><p>{event.description}</p></div><b>{event.value}</b><Icon name="chevronRight" size={16} /></article>)}</div></section>
@@ -56,9 +58,11 @@ function SafetyDashboard({ data, isLoading, isError, onRetry }: DashboardState<A
           <div className={cx('anomalySummary')}><Donut items={todayAnomaly.byType} total={todayAnomaly.total} /><div className={cx('legend')}>{todayAnomaly.byType.map(item => <div key={item.detectedType}><i className={cx(ADMIN_ANOMALY_TYPE_META[item.detectedType].color)} /><span>{ADMIN_ANOMALY_TYPE_META[item.detectedType].label}</span><b>{item.count}건</b></div>)}</div></div>
           <div className={cx('reviewNotice')}><strong>응답 {reviewMetrics.answered}건 ({reviewMetrics.responseRate}%)</strong><span>응답한 보호자의 판정만 오탐률 계산에 사용합니다.</span></div>
           <div className={cx('reviewGrid')}><ReviewItem label="확인 필요" value={todayAnomaly.review.pending} /><ReviewItem label="실제 위험" value={todayAnomaly.review.real} tone="danger" /><ReviewItem label="오탐" value={todayAnomaly.review.falseAlarm} detail={reviewMetrics.answered ? `응답 기준 ${reviewMetrics.falseAlarmRate}%` : '응답 없음'} /><ReviewItem label="보호자 재확인 대기" value={todayAnomaly.review.conflicted} tone="warn" /></div>
+          <AiConfidence confidence={todayAnomaly.aiConfidence} />
         </>}
       </section></Link>
     </div>
+    <p className={cx('generatedAt')}>안전 현황 {formatElapsed(data.generatedAt)} 확인</p>
   </div>;
 }
 
@@ -67,16 +71,20 @@ function OperationsDashboard({ data, isLoading, isError, onRetry }: DashboardSta
   if (isError || !data) return <DashboardNotice retry={onRetry}>운영 현황을 불러오지 못했습니다.</DashboardNotice>;
   const stats: Array<{ label: string; value: string; icon: IconName; note?: string; tone: 'brand' | 'sun' }> = [
     { label: '전체 회원', value: `${data.totalUsers}명`, icon: 'users', note: `오늘 신규 ${data.newUsersToday}명`, tone: 'brand' }, { label: '연결 대기', value: `${data.pendingConnections}건`, icon: 'users', tone: 'sun' },
-    { label: '미답변 문의', value: `${data.unansweredInquiries.count}건`, icon: 'messageCircle', note: data.unansweredInquiries.longestWaitingHours === null ? '대기 문의 없음' : `최장 ${data.unansweredInquiries.longestWaitingHours}시간`, tone: 'sun' }, { label: '카메라 등록', value: `${data.cameras.registered}대`, icon: 'eye', note: `${data.cameras.wards}명 사용`, tone: 'brand' },
+    { label: '미답변 문의', value: `${data.unansweredInquiries.count}건`, icon: 'messageCircle', note: data.unansweredInquiries.longestWaitingHours === null ? '대기 문의 없음' : `최장 ${data.unansweredInquiries.longestWaitingHours}시간`, tone: 'sun' }, { label: '카메라 등록', value: data.cameras.maxTotal === null ? `${data.cameras.registered}대` : `${data.cameras.registered} / ${data.cameras.maxTotal}대`, icon: 'eye', note: `${data.cameras.wards}명 사용`, tone: 'brand' },
   ];
   return <div className={cx('stack')}><div className={cx('statGrid')}>{stats.map(stat => <section className={cx('stat')} key={stat.label}><span className={cx('statLabel')}><i className={cx('statIcon', stat.tone)}><Icon name={stat.icon} size={16} /></i>{stat.label}</span><b>{stat.value}</b>{stat.note && <small>{stat.note}</small>}</section>)}</div>
     <div className={cx('operationsGrid')}><section className={cx('card')}><div className={cx('cardHeading')}><h2>회원 구성</h2></div><div className={cx('memberTypes')}><div><span>피보호자</span><b>{data.memberComposition.wards}명</b></div><div><span>보호자</span><b>{data.memberComposition.guardians}명</b></div></div><p className={cx('recentTitle')}>최근 7일 신규 가입</p><SignupTrendChart trend={data.signupTrend} /></section>
       <section className={cx('card')}><div className={cx('cardHeading')}><h2>처리 대기 항목</h2></div><div className={cx('pendingList')}><Pending icon="users" label="피보호자 연결 요청" value={data.pendingItems.connectionRequests} /><Pending icon="messageCircle" label="오늘 접수된 문의" value={data.pendingItems.todayInquiries} /><Pending icon="fileText" label="공지사항 임시저장" value={data.pendingItems.announcementDrafts} /></div></section></div>
-  </div>;
+    <p className={cx('generatedAt')}>운영 현황 {formatElapsed(data.generatedAt)} 확인</p></div>;
 }
 
 function Metric({ label, value, tone }: { label: string; value: string; tone?: 'safe' | 'warn' }) { return <div className={cx('serviceItem', tone)}><i /><strong>{label}</strong><span>{value}</span></div>; }
 function ReviewItem({ label, value, detail, tone }: { label: string; value: number; detail?: string; tone?: 'danger' | 'warn' }) { return <div className={cx('reviewItem', tone)}><span>{label}</span><b>{value}건</b>{detail && <small>{detail}</small>}</div>; }
+function AiConfidence({ confidence }: { confidence: AdminSafetyDashboard['todayAnomaly']['aiConfidence'] }) { return <div className={cx('confidence')}><div><span>AI 신뢰도</span><b>{confidence.average === null ? '-' : `${Math.round(confidence.average * 100)}%`}</b><small>판정 {confidence.basis}건 기준</small></div><i><em style={{ width: confidence.average === null ? '0%' : `${Math.round(confidence.average * 100)}%` }} /></i></div>; }
+function formatElapsed(value: string) { const timestamp = new Date(value).getTime(); if (Number.isNaN(timestamp)) return '방금'; const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60_000)); return minutes < 1 ? '방금' : `${minutes}분 전`; }
+function formatAnomalyService(status: AdminAiServiceStatus | null | undefined, loading: boolean, error: boolean) { if (loading) return '확인 중'; if (error || !status || status.anomalyDetection === null) return '확인 불가'; return status.anomalyDetection === 'OK' ? '정상' : '연결 끊김'; }
+function formatChatService(status: AdminAiServiceStatus | null | undefined, loading: boolean, error: boolean) { if (loading) return '확인 중'; if (error || !status || status.chatbot === null) return '확인 불가'; return status.chatbot === 'OK' ? '정상' : '일시 중단'; }
 function Pending({ icon, label, value }: { icon: IconName; label: string; value: number }) {
   return <div>
     <span className={cx('pendingIcon')}><Icon name={icon} size={17} /></span>
