@@ -23,6 +23,7 @@ export type PageKey =
   | 'game-management'
   | 'camera-register'
   | 'members'
+  | 'ai-stats'
   | 'notification-history';
 
 export type NavIconName =
@@ -36,6 +37,7 @@ export type NavIconName =
   | 'bell'
   | 'settings'
   | 'dashboard'
+  | 'activity'
   | 'alert'
   | 'plus'
   | 'inquiry'

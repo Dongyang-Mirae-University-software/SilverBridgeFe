@@ -30,6 +30,7 @@ export const GUARDIAN_NAV: NavItem[] = [
 export const ADMIN_NAV: NavItem[] = [
   { href: '/admin', icon: 'dashboard', label: '대시보드', key: 'dashboard' },
   { href: '/admin/members', icon: 'users', label: '회원 관리', key: 'members' },
+  { href: '/admin/ai-stats', icon: 'activity', label: 'AI 통계', key: 'ai-stats' },
   { href: '/admin/notifications', icon: 'bell', label: '알림 이력', key: 'notification-history' },
 ];
 
