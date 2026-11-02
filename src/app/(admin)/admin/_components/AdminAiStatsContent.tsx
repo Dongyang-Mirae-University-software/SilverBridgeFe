@@ -51,7 +51,7 @@ function DetectionStats({ summary, records, typeSummaries, isLoading, isError, i
   if (isError || !summary || !records) return <Notice retry={onRetry}>AI 이상감지 통계를 불러오지 못했습니다.</Notice>;
   const answered = summary.total - summary.review.pending;
   const falseAlarmRate = summary.aiConfidence.basis > 0 ? summary.review.falseAlarm / summary.aiConfidence.basis : null;
-  const count = (value: TypeTab) => value === 'ALL' ? summary.total : summary.byType.find(item => item.type === value)?.count;
+  const count = (value: TypeTab) => value === 'ALL' ? summary.total : summary.byType.find(item => item.detectedType === value)?.count;
   const cards: Array<{ label: string; value: string; tone?: 'warn' | 'care' | 'brand' }> = [{ label: '감지', value: formatCount(summary.total) }, { label: '위험', value: formatCount(summary.review.real), tone: 'warn' }, { label: '오탐', value: formatCount(summary.review.falseAlarm) }, { label: '미판정', value: formatCount(summary.review.pending), tone: 'care' }, { label: 'AI 오탐률', value: percent(falseAlarmRate), tone: 'brand' }];
   return <>
     <div className={cx('filterTop')}><p className={cx('description')}>보호자가 ‘실제 위험 / 괜찮아요’로 판정한 결과로 오탐률을 계산해요</p><Segment label="이상감지 조회 기간" items={PERIOD_TABS} selected={period} onSelect={onPeriod} /></div>
