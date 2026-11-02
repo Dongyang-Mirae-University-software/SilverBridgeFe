@@ -32,6 +32,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: '/admin/members', icon: 'users', label: '회원 관리', key: 'members' },
   { href: '/admin/ai-stats', icon: 'activity', label: 'AI 통계', key: 'ai-stats' },
   { href: '/admin/notifications', icon: 'bell', label: '알림 이력', key: 'notification-history' },
+  { href: '/admin/inquiries', icon: 'inquiry', label: '고객센터', key: 'inquiries' },
 ];
 
 export const WARD_ACTIONS = [
