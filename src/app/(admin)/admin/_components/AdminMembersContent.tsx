@@ -146,11 +146,11 @@ function MemberDetailModal({ detail, isLoading, isError, isSaving, isDeleting, o
     <header className={cx('modalHead')}><h2 id="admin-member-title">{detail?.role === 'ADMIN' ? '회원 정보' : '회원 수정'}</h2><button type="button" aria-label="닫기" onClick={onClose}><Icon name="close" size={16} /></button></header>
     {isLoading && <div className={cx('modalState')}>회원 정보를 불러오는 중입니다.</div>}
     {isError && <div className={cx('modalState')}>회원 정보를 불러오지 못했습니다.<button type="button" onClick={onRetry}>다시 시도</button></div>}
-    {detail && <MemberDetailForm key={detail.userId} actionError={actionError} detail={detail} isDeleting={isDeleting} isSaving={isSaving} onDelete={onDelete} onUpdate={onUpdate} />}
+    {detail && <MemberDetailForm key={detail.userId} actionError={actionError} detail={detail} isDeleting={isDeleting} isSaving={isSaving} onClose={onClose} onDelete={onDelete} onUpdate={onUpdate} />}
   </section></div>;
 }
 
-function MemberDetailForm({ detail, isSaving, isDeleting, onUpdate, onDelete, actionError }: Pick<MemberDetailModalProps, 'detail' | 'isSaving' | 'isDeleting' | 'onUpdate' | 'onDelete' | 'actionError'> & { detail: AdminUserDetail }) {
+function MemberDetailForm({ detail, isSaving, isDeleting, onClose, onUpdate, onDelete, actionError }: Pick<MemberDetailModalProps, 'detail' | 'isSaving' | 'isDeleting' | 'onClose' | 'onUpdate' | 'onDelete' | 'actionError'> & { detail: AdminUserDetail }) {
   const [name, setName] = useState(detail.name);
   const [role, setRole] = useState<Exclude<AdminUserRole, 'ADMIN'>>(detail.role === 'ADMIN' ? 'GUARDIAN' : detail.role);
   const [status, setStatus] = useState<AdminUserStatus>(detail.status);
@@ -168,27 +168,30 @@ function MemberDetailForm({ detail, isSaving, isDeleting, onUpdate, onDelete, ac
   };
 
   return <div className={cx('modalBody')}>
-      <div className={cx('detailMeta')}><span>{detail.userId}</span><span>가입 {formatDate(detail.createdAt)}</span><span>최근 로그인 {detail.lastLoginAt ? formatDate(detail.lastLoginAt, true) : '없음'}</span></div>
+      {/* 기존 가입 메타는 서버 상세 데이터에 유지합니다. v13 모달 구조에는 노출하지 않습니다.
+      <div className={cx('detailMeta')}><span>{detail.userId}</span><span>가입 {formatDate(detail.createdAt)}</span><span>최근 로그인 {detail.lastLoginAt ? formatDate(detail.lastLoginAt, true) : '없음'}</span></div> */}
       <div className={cx('memberFormGrid')}>
         <label>이메일<input readOnly value={detail.email} /></label>
         <label>이름<input maxLength={20} disabled={isAdmin} value={name} onChange={event => setName(event.target.value)} /></label>
         <label>역할<select disabled={isAdmin} value={role} onChange={event => { const nextRole = event.target.value as Exclude<AdminUserRole, 'ADMIN'>; setRole(nextRole); if (nextRole === 'WARD') setStatus('ACTIVE'); }}><option value="GUARDIAN">보호자</option><option value="WARD">피보호자</option></select></label>
         <label>전화번호<input readOnly value={formatPhoneText(detail.phone)} /></label>
       </div>
-      {role === 'WARD' && <p className={cx('formNotice')}>피보호자는 SOS 안전망을 위해 이용 제한할 수 없습니다.</p>}
+      {role !== detail.role && <p className={cx('formNotice')}><Icon name="warning" size={15} />역할을 변경하면 기존 연결이 해제되고 상대에게 알림이 발송됩니다.</p>}
       <section className={cx('membershipBox')}><span>가입 방식</span><div><Badge tone={detail.provider === 'KAKAO' ? 'sun' : 'mute'}>{detail.provider === 'KAKAO' ? '카카오' : '로컬'}</Badge><b>{detail.provider === 'KAKAO' ? '카카오 소셜 로그인 · 이메일·비밀번호 변경 불가' : '이메일·비밀번호 로컬 계정'}</b></div></section>
       <label className={cx('accountStatus')}>계정 상태<select disabled={isAdmin || role === 'WARD'} value={status} onChange={event => setStatus(event.target.value as AdminUserStatus)}><option value="ACTIVE">이용 중</option><option value="RESTRICTED">이용 제한</option></select></label>
       {status === 'RESTRICTED' && <label className={cx('reason')}>이용 제한 사유 <small>(선택)</small><textarea maxLength={200} disabled={isAdmin} value={statusReason} onChange={event => setStatusReason(event.target.value)} placeholder="제한 사유를 남겨두면 이후 이력에서 확인할 수 있습니다" /></label>}
-      <section className={cx('connections')}><h3>연결 상태 · {role === 'GUARDIAN' ? '연결된 피보호자' : '연결된 보호자'} <small>{detail.connections.length > 1 ? `${detail.connections.length}명` : ''}</small></h3>{detail.connections.length === 0 ? <p>연결된 회원이 없습니다.</p> : <ul>{detail.connections.map(connection => <li key={connection.connectionId}><span><b>{connection.counterpartName}</b><small>{role === 'GUARDIAN' ? `이 회원은 ${connection.counterpartName}님의 ${connection.relation ?? '보호자'}` : `이 보호자는 ${detail.name}님의 ${connection.relation ?? '보호자'}`}</small></span><Badge tone={connection.status === 'ACTIVE' ? 'safe' : 'sun'}>{connection.status === 'ACTIVE' ? '연결됨' : '수락 대기'}</Badge></li>)}</ul>}</section>
+      <section className={cx('connections')}><h3>연결 상태 · {role === 'GUARDIAN' ? '연결된 피보호자' : '연결된 보호자'} <small>{detail.connections.length > 1 ? `${detail.connections.length}명` : ''}</small></h3>{detail.connections.length === 0 ? <p>연결된 회원이 없습니다.</p> : <ul>{detail.connections.map(connection => <li key={connection.connectionId}><span className={cx('connectionIcon')}><Icon name="users" size={15} /></span><span className={cx('connectionInfo')}><b>{connection.counterpartName}</b><small>{role === 'GUARDIAN' ? `이 회원은 ${connection.counterpartName}님의 ${connection.relation ?? '보호자'}` : `이 보호자는 ${detail.name}님의 ${connection.relation ?? '보호자'}`}</small></span><Badge tone={connection.status === 'ACTIVE' ? 'safe' : 'sun'}>{connection.status === 'ACTIVE' ? '연결됨' : '수락 대기'}</Badge></li>)}</ul>}</section>
       {(feedback || actionError) && <p className={cx('errorMessage')}>{feedback || actionError}</p>}
-      {!isAdmin && <div className={cx('modalActions')}><button className={cx('deleteButton')} type="button" disabled={isSaving || isDeleting} onClick={() => setConfirmDelete(true)}>강제 탈퇴</button><button className={cx('saveButton')} type="button" disabled={savingDisabled} onClick={save}>{isSaving ? '저장 중...' : '저장'}</button></div>}
+      {!isAdmin && <div className={cx('modalActions')}><button className={cx('deleteButton')} type="button" disabled={isSaving || isDeleting} onClick={() => setConfirmDelete(true)}><Icon name="trash" size={16} />강제 탈퇴</button><div><button className={cx('cancelButton')} type="button" disabled={isSaving || isDeleting} onClick={onClose}>취소</button><button className={cx('saveButton')} type="button" disabled={savingDisabled} onClick={save}>{isSaving ? '저장 중...' : '저장'}</button></div></div>}
       {isAdmin && <p className={cx('adminNotice')}>관리자 계정은 이 화면에서 수정하거나 삭제할 수 없습니다.</p>}
       {confirmDelete && <div className={cx('confirm')}><strong>정말 강제 탈퇴 처리할까요?</strong><p>계정과 연결 정보가 영구 삭제되며 복구할 수 없습니다.</p><div><button type="button" onClick={() => setConfirmDelete(false)}>취소</button><button type="button" disabled={isDeleting} onClick={() => onDelete(detail.userId)}>{isDeleting ? '처리 중...' : '영구 삭제'}</button></div></div>}
     </div>;
 }
 
+/* v13 회원 수정 모달에는 가입/최근 로그인 메타를 노출하지 않는다.
 function formatDate(value: string, withTime = false) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   return new Intl.DateTimeFormat('ko-KR', withTime ? { dateStyle: 'medium', timeStyle: 'short' } : { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
+*/
