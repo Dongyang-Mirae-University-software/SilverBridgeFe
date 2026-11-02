@@ -3,10 +3,10 @@
 .heading { margin-bottom: 18px; }
 .heading h1 { margin: 0; color: var(--sb-ink); font-size: 26px; font-weight: 900; letter-spacing: -.04em; }
 .heading p { margin: 7px 0 0; color: var(--sb-ink-mute); font-size: 13px; font-weight: 600; }
-.roleTabs { display: flex; width: fit-content; gap: 4px; border: 1px solid var(--sb-line); border-radius: 11px; background: var(--sb-bg-soft); margin-bottom: 14px; padding: 4px; }
-.roleTab { border: 0; border-radius: 8px; background: transparent; color: var(--sb-ink-mute); cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; padding: 8px 12px; }
-.roleTab small { font-size: 11px; font-weight: 700; }
-.roleTab.active { background: #fff; box-shadow: var(--sb-shadow-sm); color: var(--sb-brand); }
+.roleTabs { display: flex; gap: 2px; margin-bottom: 14px; }
+.roleTab { border: 0; border-bottom: 2px solid transparent; background: none; color: var(--sb-ink-mute); cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; line-height: 1.4; padding: 9px 16px; }
+.roleTab small { font-size: 11px; font-weight: inherit; opacity: .7; }
+.roleTab.active { border-bottom-color: var(--sb-brand); color: var(--sb-brand); }
 .card { overflow: hidden; border: 1px solid var(--sb-line); border-radius: var(--sb-radius); background: #fff; box-shadow: var(--sb-shadow-sm); }
 .filterBar { display: flex; align-items: center; gap: 9px; border-bottom: 1px solid var(--sb-line-soft); padding: 14px 18px; }
 .search { display: flex; min-width: 260px; flex: 1; align-items: center; gap: 8px; border-radius: 10px; background: var(--sb-bg); color: var(--sb-ink-mute); padding: 9px 12px; }
