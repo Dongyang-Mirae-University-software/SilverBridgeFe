@@ -26,7 +26,8 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload, role
     case 'SOS_TRIGGERED':
       return {
         body: payload.body ?? `${payload.wardName || '피보호자'}님이 긴급 도움을 요청했습니다.`,
-        title: payload.title ?? '긴급 SOS',
+        // BE 푸시·WS 제목과 같은 형식(BE가 title을 싣지 않을 때만 쓰는 예비 문구)
+        title: payload.title ?? `[긴급] ${payload.wardName || '피보호자'}님 SOS`,
       };
     case 'MEDICATION_STOPPED':
       return {

@@ -103,6 +103,14 @@ describe('문구·구성', () => {
     expect(mocks.push).toHaveBeenCalledWith('/guardian/wards');
   });
 
+  it('SOS 제목·본문이 없으면 BE와 같은 형식의 예비 문구를 쓴다', async () => {
+    const screen = renderListener();
+    await receive({ data: { type: 'WARD_SOS', sosEventId: '2', wardName: '김영희' } });
+
+    await expect.element(screen.getByText('[긴급] 김영희님 SOS')).toBeVisible();
+    await expect.element(screen.getByText('김영희님이 긴급 도움을 요청했습니다.')).toBeVisible();
+  });
+
   it('보호자 이상감지의 실시간 보기는 그 카메라를 연다', async () => {
     const screen = renderListener();
     await receive({ data: { type: 'ANOMALY_DETECTED', anomalyEventId: '9', sessionId: 'ward_x', detectedType: 'FIRE' } });
