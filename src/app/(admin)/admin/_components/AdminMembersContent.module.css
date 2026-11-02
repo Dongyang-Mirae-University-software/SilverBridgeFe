@@ -28,6 +28,8 @@
 .badge { display: inline-flex; align-items: center; border-radius: 999px; font-size: 10.5px; font-weight: 800; line-height: 1; padding: 5px 8px; }
 .brand { background: var(--sb-brand-50); color: var(--sb-brand); }.safe { background: var(--sb-safe-soft); color: var(--sb-safe); }.sun { background: var(--sb-sun-soft); color: var(--sb-sun); }.warn { background: var(--sb-warn-soft); color: var(--sb-warn); }.mute { background: var(--sb-bg-soft); color: var(--sb-ink-mute); }
 .moreConnection { color: var(--sb-brand); }
+.connectionButton { border: 0; background: none; color: var(--sb-brand); cursor: pointer; font: inherit; font-size: inherit; font-weight: 700; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+.connectionButton:hover { color: var(--sb-ink); }
 .editButton { border: 0; border-radius: 8px; background: var(--sb-brand); color: #fff; cursor: pointer; font: inherit; font-size: 11px; font-weight: 800; padding: 7px 11px; }
 .editButton:hover, .saveButton:hover { filter: brightness(.96); }
 .stateCell { color: var(--sb-ink-mute) !important; padding: 44px 14px !important; text-align: center; }.stateCell button { border: 0; background: none; color: var(--sb-brand); cursor: pointer; font: inherit; font-weight: 800; text-decoration: underline; }
