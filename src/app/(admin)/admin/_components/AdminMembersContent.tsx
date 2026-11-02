@@ -76,7 +76,7 @@ export function AdminMembersContent() {
   return <div className={cx('page')}>
     <header className={cx('heading')}><h1>회원 관리</h1><p>가입한 회원을 조회하고 계정 정보를 관리합니다.</p></header>
     <div className={cx('roleTabs')} role="tablist" aria-label="회원 역할">
-      {roleTabs.map(tab => <button className={cx('roleTab', { active: role === tab.value })} key={tab.value} type="button" role="tab" aria-selected={role === tab.value} onClick={() => { setRole(tab.value); setPage(0); }}>{tab.label} <small>{counts.isLoading ? '—' : `(${tab.count ?? 0})`}</small></button>)}
+      {roleTabs.map(tab => <button className={cx('roleTab', { active: role === tab.value })} key={tab.value} type="button" role="tab" aria-selected={role === tab.value} onClick={() => { setRole(tab.value); setPage(0); }}>{tab.label} <small>{counts.isLoading ? '-' : `(${tab.count ?? 0})`}</small></button>)}
     </div>
     <section className={cx('card')}>
       <div className={cx('filterBar')}>
@@ -117,11 +117,11 @@ export function AdminMembersContent() {
 }
 
 function MemberRow({ member, onOpen }: { member: AdminUserListItem; onOpen: () => void }) {
-  const connectionText = member.firstConnection ? `${member.firstConnection.counterpartName}${member.firstConnection.relation ? ` (${member.firstConnection.relation})` : ''}` : '—';
+  const connectionText = member.firstConnection ? `${member.firstConnection.counterpartName}${member.firstConnection.relation ? ` (${member.firstConnection.relation})` : ''}` : '-';
   const hasMultipleConnections = member.connectionCount > 1;
   return <tr className={cx({ restricted: member.status === 'RESTRICTED' })}>
     <td className={cx('userId')}>{member.userId}</td><td><Badge tone={member.provider === 'KAKAO' ? 'sun' : 'mute'}>{member.provider === 'KAKAO' ? '카카오' : '로컬'}</Badge></td><td title={member.email}>{member.email}</td><td className={cx('name')}>{member.name}</td><td><Badge tone={member.role === 'ADMIN' ? 'brand' : member.role === 'GUARDIAN' ? 'sun' : 'mute'}>{ROLE_LABEL[member.role]}</Badge></td>
-    <td title={hasMultipleConnections ? undefined : connectionText}>{hasMultipleConnections ? <button className={cx('connectionButton')} type="button" onClick={onOpen} aria-label={`${member.name}님의 연결 회원 ${member.connectionCount}명 모두 보기`}>연결 회원 {member.connectionCount}명 보기</button> : connectionText}</td><td>{member.connectionState ? <Badge tone={member.connectionState === 'CONNECTED' ? 'safe' : member.connectionState === 'PENDING' ? 'sun' : 'warn'}>{CONNECTION_LABEL[member.connectionState]}</Badge> : '—'}</td><td className={cx('phone')}>{formatPhoneText(member.phone)}</td><td title={member.statusReason ?? undefined}><Badge tone={member.status === 'ACTIVE' ? 'safe' : 'warn'}>{STATUS_LABEL[member.status]}</Badge></td>
+    <td title={hasMultipleConnections ? undefined : connectionText}>{hasMultipleConnections ? <button className={cx('connectionButton')} type="button" onClick={onOpen} aria-label={`${member.name}님의 연결 회원 ${member.connectionCount}명 모두 보기`}>연결 회원 {member.connectionCount}명 보기</button> : connectionText}</td><td>{member.connectionState ? <Badge tone={member.connectionState === 'CONNECTED' ? 'safe' : member.connectionState === 'PENDING' ? 'sun' : 'warn'}>{CONNECTION_LABEL[member.connectionState]}</Badge> : '-'}</td><td className={cx('phone')}>{formatPhoneText(member.phone)}</td><td title={member.statusReason ?? undefined}><Badge tone={member.status === 'ACTIVE' ? 'safe' : 'warn'}>{STATUS_LABEL[member.status]}</Badge></td>
     <td>{member.role === 'ADMIN' ? null : <button className={cx('editButton')} type="button" onClick={onOpen}>관리</button>}</td>
   </tr>;
 }
@@ -203,7 +203,7 @@ function MemberDetailForm({ detail, isSaving, isDeleting, onClose, onUpdate, onD
 /* v13 회원 수정 모달에는 가입/최근 로그인 메타를 노출하지 않는다.
 function formatDate(value: string, withTime = false) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
+  if (Number.isNaN(date.getTime())) return '-';
   return new Intl.DateTimeFormat('ko-KR', withTime ? { dateStyle: 'medium', timeStyle: 'short' } : { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
 */

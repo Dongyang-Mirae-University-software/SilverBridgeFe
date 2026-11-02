@@ -59,7 +59,7 @@ function getResultFromTab(tab: CategoryTab): AdminNotificationResult | undefined
 
 function formatSentAt(value: string) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
+  if (Number.isNaN(date.getTime())) return '-';
   return new Intl.DateTimeFormat('ko-KR', {
     month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
     timeZone: 'Asia/Seoul',
@@ -160,7 +160,7 @@ export function AdminNotificationHistoryContent() {
 }
 
 function SummaryCard({ icon, label, value, tone, detail, interactive = false, onClick }: { icon: 'bell' | 'check' | 'warning'; label: string; value: number | undefined; tone: 'brand' | 'safe' | 'danger' | 'mute'; detail?: string; interactive?: boolean; onClick?: () => void }) {
-  const content = <><span className={cx('summaryLabel')}><span className={cx('summaryIcon', tone)}><Icon name={icon} size={16} decorative /></span>{label}</span><strong className={cx('summaryValue', tone)}>{value === undefined ? '—' : `${value}건`}</strong>{detail && <small>{detail}</small>}</>;
+  const content = <><span className={cx('summaryLabel')}><span className={cx('summaryIcon', tone)}><Icon name={icon} size={16} decorative /></span>{label}</span><strong className={cx('summaryValue', tone)}>{value === undefined ? '-' : `${value}건`}</strong>{detail && <small>{detail}</small>}</>;
   return interactive ? <button type="button" className={cx('summaryCard', 'interactive')} onClick={onClick}>{content}</button> : <div className={cx('summaryCard')}>{content}</div>;
 }
 
@@ -172,7 +172,7 @@ function NotificationRow({ log, onSelect }: { log: AdminNotificationLogItem; onS
   return <tr className={cx('selectableRow')} tabIndex={0} onClick={() => onSelect(log)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(log); } }}>
     <td>{formatSentAt(log.sentAt)}</td>
     <td><span className={cx('categoryBadge', log.category)}>{CATEGORY_LABEL[log.category]}</span></td>
-    <td className={cx('wardName')}>{log.wardName ?? '—'}</td>
+    <td className={cx('wardName')}>{log.wardName ?? '-'}</td>
     <td className={cx('message')}>{log.body}</td>
     <td><div className={cx('recipient')}><span>{recipientLabel(log)}</span><span className={cx('recipientBadge', { ward: log.recipientIsWard })}>{log.recipientIsWard ? '본인' : '보호자'}</span></div></td>
     <td>{log.deliveredChannels.length > 0 ? <div className={cx('channels')}>{log.deliveredChannels.map(channel => <span key={channel}>{channelLabel(channel)}</span>)}</div> : <span className={cx('dash')}>-</span>}</td>
@@ -186,7 +186,7 @@ function NotificationDetailModal({ log, onClose }: { log: AdminNotificationLogIt
     <section className={cx('modal')} role="dialog" aria-modal="true" aria-labelledby="notification-detail-title" onMouseDown={event => event.stopPropagation()}>
       <header className={cx('modalHead')}><div><p>{RESULT_LABEL[log.result]}</p><h2 id="notification-detail-title">알림 전송 상세</h2></div><button type="button" aria-label="닫기" onClick={onClose}><Icon name="close" size={20} decorative /></button></header>
       <div className={cx('modalBody')}>
-        <dl className={cx('detailInfo')}><div><dt>발송 시각</dt><dd>{formatSentAt(log.sentAt)}</dd></div><div><dt>알림 종류</dt><dd>{log.typeLabel || CATEGORY_LABEL[log.category]}</dd></div><div><dt>피보호자</dt><dd>{log.wardName ?? '—'}</dd></div><div><dt>수신자</dt><dd>{recipientLabel(log)} · {log.recipientIsWard ? '본인' : '보호자'}</dd></div></dl>
+        <dl className={cx('detailInfo')}><div><dt>발송 시각</dt><dd>{formatSentAt(log.sentAt)}</dd></div><div><dt>알림 종류</dt><dd>{log.typeLabel || CATEGORY_LABEL[log.category]}</dd></div><div><dt>피보호자</dt><dd>{log.wardName ?? '-'}</dd></div><div><dt>수신자</dt><dd>{recipientLabel(log)} · {log.recipientIsWard ? '본인' : '보호자'}</dd></div></dl>
         <section className={cx('messageBox')}><strong>{log.title}</strong><p>{log.body}</p></section>
         {log.result === 'NOT_SENT' && <section className={cx('notSentBox')}><strong>{log.notSentReasonLabel ?? '발송하지 않았습니다.'}</strong><p>실패가 아닙니다. 계정 상태 또는 수신자의 알림 설정에 따라 보내지 않은 알림입니다.</p></section>}
         <section className={cx('channelSection')}><h3>채널별 전송 결과</h3>{channelResults.length > 0 ? <ul>{channelResults.map((item, index) => <li key={`${item.channel}-${index}`} className={cx({ failed: item.status === 'FAILED' })}><strong>{channelLabel(item.channel)}</strong><span>{item.status === 'FAILED' ? item.reasonLabel ?? '전송 실패' : '전송 완료'}</span></li>)}</ul> : <p>시도한 채널이 없습니다.</p>}</section>
