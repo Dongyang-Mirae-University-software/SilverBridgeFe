@@ -84,7 +84,7 @@ export function AdminDevicesContent() {
 
 function SummaryCard({ icon, label, value, detail, tone, interactive = false, disabled = false, onClick }: { icon: 'eye' | 'check' | 'warning'; label: string; value: string; detail?: string; tone: 'brand' | 'safe' | 'danger'; interactive?: boolean; disabled?: boolean; onClick?: () => void }) {
   const content = <><span className={cx('summaryLabel')}><i className={cx('summaryIcon', tone)}><Icon name={icon} size={16} decorative /></i>{label}</span><strong className={cx('summaryValue', tone)}>{value}</strong>{detail && <small>{detail}</small>}</>;
-  return interactive ? <button type="button" className={cx('summaryCard', 'interactive')} disabled={disabled} onClick={onClick}>{content}</button> : <div className={cx('summaryCard')}>{content}</div>;
+  return interactive ? <button type="button" className={cx('summaryCard', tone, 'interactive')} disabled={disabled} onClick={onClick}>{content}</button> : <div className={cx('summaryCard', tone)}>{content}</div>;
 }
 
 function CameraRow({ camera }: { camera: AdminCameraItem }) {
