@@ -46,10 +46,14 @@ export default function AuthShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className={cx('copy')}>
-            <div className={cx('brand')}>CareAI</div>
+            {/* 767px 이하에서만 앱 아이콘이 보인다(Claude Design 핸드폰 시안) - 768px 이상은 글자 로고만 */}
+            <div className={cx('brandRow')}>
+              <Image alt="" className={cx('appIcon')} height={152} src="/images/careai-icon.png" width={152} />
+              <div className={cx('brand')}>CareAI</div>
+            </div>
             <h1 className={cx('headline')}>
-              떨어져 살아도,
-              <br />
+              떨어져 살아도,{' '}
+              <br className={cx('headlineBreak')} />
               <span>마음은 늘 곁에 있어요</span>
             </h1>
             <div className={cx('features')}>

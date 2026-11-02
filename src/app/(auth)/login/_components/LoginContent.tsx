@@ -79,7 +79,8 @@ export default function LoginContent() {
 
   return (
     <>
-      <div className={cx('header')}>
+      {/* data-auth-screen: 767px 이하에서 AuthShell이 로그인 화면만 한 화면에 들어가게 줄일 때 쓰는 표시 */}
+      <div className={cx('header')} data-auth-screen="login">
         <h2 className={cx('title')}>로그인</h2>
         <p className={cx('description')}>다시 오신 것을 환영해요</p>
       </div>
