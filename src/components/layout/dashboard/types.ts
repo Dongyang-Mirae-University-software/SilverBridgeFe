@@ -24,7 +24,8 @@ export type PageKey =
   | 'camera-register'
   | 'members'
   | 'ai-stats'
-  | 'notification-history';
+  | 'notification-history'
+  | 'devices';
 
 export type NavIconName =
   | 'home'
@@ -42,6 +43,7 @@ export type NavIconName =
   | 'plus'
   | 'inquiry'
   | 'camera'
+  | 'eye'
   | 'brain';
 
 export interface NavItem {
