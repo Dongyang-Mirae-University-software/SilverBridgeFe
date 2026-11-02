@@ -22,7 +22,8 @@ export type PageKey =
   | 'medication-management'
   | 'game-management'
   | 'camera-register'
-  | 'members';
+  | 'members'
+  | 'notification-history';
 
 export type NavIconName =
   | 'home'
