@@ -5,7 +5,7 @@ import { isAxiosError } from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { Icon, type IconName } from '@/components/Icon';
+import { Icon } from '@/components/Icon';
 import { AdminChatStats } from '@/service/interface/admin/aiStats';
 import { adminChatStatsQueryOptions } from '@/service/query/admin';
 import styles from './AdminAiStatsContent.module.css';
@@ -67,9 +67,9 @@ export function AdminAiStatsContent() {
   };
 
   return <section className={cx('page')}>
-    <header className={cx('heading')}><div><h1>AI 통계</h1><p>AI 의료 챗봇 집계</p></div></header>
-    <section className={cx('filterCard')} aria-label="AI 의료 챗봇 통계 조회 기간">
-      <div className={cx('serviceLabel')}><span><Icon name="messageCircle" size={17} /></span><div><strong>AI 의료 챗봇</strong><p>상담 내용과 사용자 식별 정보는 포함하지 않습니다.</p></div></div>
+    <header className={cx('pageHead')}><h1>AI 통계</h1><div className={cx('aiTabs')} role="tablist" aria-label="AI 통계 종류"><button type="button" disabled role="tab" aria-selected={false}>AI 이상감지</button><button className={cx('active')} type="button" role="tab" aria-selected>AI 의료 챗봇</button><button type="button" disabled role="tab" aria-selected={false}>AI 안부 말벗 · 정서 분석</button></div></header>
+    <section className={cx('rangeCard')} aria-label="AI 의료 챗봇 통계 조회 기간">
+      <div className={cx('rangeHeading')}><Icon name="calendar" size={16} /><span>조회 기간</span></div>
       <div className={cx('rangeControls')}>
         <div className={cx('quickRange')}><button type="button" onClick={() => applyPreset(7)}>최근 7일</button><button type="button" onClick={() => applyPreset(30)}>최근 30일</button></div>
         <label>시작일<input type="date" min="2000-01-01" max="2999-12-31" value={range.from} onChange={event => setRange(current => ({ ...current, from: event.target.value }))} /></label>
@@ -83,28 +83,24 @@ export function AdminAiStatsContent() {
 }
 
 function ChatStats({ data }: { data: AdminChatStats }) {
-  const statCards: Array<{ label: string; value: number | null; icon: IconName; tone: 'brand' | 'safe' | 'sun' | 'danger' | 'mute'; detail?: string }> = [
-    { label: '전체 상담', value: data.totalChats, icon: 'messageCircle', tone: 'brand' },
-    { label: '상담 사용자', value: data.users, icon: 'users', tone: 'safe', detail: '역할 미기록 포함' },
-    { label: '예약 완료', value: data.reservationCompleted, icon: 'calendar', tone: 'brand' },
-    { label: '119 안내', value: data.emergencyGuidance, icon: 'alert', tone: 'danger', detail: '고위험 판정 기준' },
-    { label: '대체 응답', value: data.fallbackReplies, icon: 'messageCircle', tone: 'sun' },
+  const statCards: Array<{ label: string; value: number | null; tone?: 'brand' | 'warn' | 'care' }> = [
+    { label: '기간 내 대화', value: data.totalChats }, { label: '쓴 사람', value: data.users }, { label: '예약 완료', value: data.reservationCompleted, tone: 'brand' }, { label: '119 안내', value: data.emergencyGuidance, tone: 'warn' }, { label: '대체 응답', value: data.fallbackReplies, tone: 'care' },
   ];
   return <>
-    <div className={cx('summaryGrid')} aria-label="AI 의료 챗봇 집계 요약">{statCards.map(card => <article className={cx('summaryCard')} key={card.label}><span className={cx('summaryLabel')}><i className={cx('summaryIcon', card.tone)}><Icon name={card.icon} size={16} /></i>{card.label}</span><strong className={cx(card.tone)}>{formatCount(card.value)}</strong>{card.detail && <small>{card.detail}</small>}</article>)}</div>
-    <div className={cx('grid')}>
-      <section className={cx('card', 'dailyCard')}><CardHeading title="일별 상담 수" note={`${data.from} ~ ${data.to}`} /><DailyChart daily={data.daily} /></section>
-      <section className={cx('card')}><CardHeading title="상담 사용자 역할" note="unknown은 역할이 기록되지 않은 과거 상담입니다." /><Breakdown rows={[['보호자', data.byRole.guardian, 'brand'], ['피보호자', data.byRole.ward, 'safe'], ['역할 미기록', data.byRole.unknown, 'mute']]} /></section>
-      <section className={cx('card')}><CardHeading title="상담 경로" note="AI가 분류한 상담 목적 기준입니다." /><Breakdown rows={[['병원 예약', data.byRoute.reservation, 'brand'], ['증상 상담', data.byRoute.symptom, 'sun'], ['일반 상담', data.byRoute.general, 'safe'], ['분류 미확인', data.byRoute.unknown, 'mute']]} /></section>
+    <section className={cx('statNums')} aria-label="AI 의료 챗봇 집계 요약">{statCards.map(card => <div key={card.label}><span>{card.label}</span><strong className={cx(card.tone)}>{formatCount(card.value)}</strong></div>)}</section>
+    <div className={cx('listGrid')}>
+      <section className={cx('listCard')}><ListHeading title="상담 사용자 역할" note="기간 내 역할 기준" /><StatRows rows={[["보호자", data.byRole.guardian, 'brand'], ['피보호자', data.byRole.ward, 'safe'], ['역할 미기록', data.byRole.unknown, 'mute']]} /></section>
+      <section className={cx('listCard')}><ListHeading title="상담 경로" note="AI가 분류한 상담 목적 기준" /><StatRows rows={[["병원 예약", data.byRoute.reservation, 'brand'], ['증상 상담', data.byRoute.symptom, 'sun'], ['일반 상담', data.byRoute.general, 'safe'], ['분류 미확인', data.byRoute.unknown, 'mute']]} /></section>
     </div>
+    <section className={cx('listCard', 'dailyCard')}><ListHeading title="일별 상담 수" note={`${data.from} ~ ${data.to}`} /><DailyChart daily={data.daily} /></section>
     <p className={cx('generatedAt')}>AI 집계 시각 {formatGeneratedAt(data.generatedAt)} · 같은 기간은 60초 동안 같은 결과를 제공합니다.</p>
   </>;
 }
 
-function CardHeading({ title, note }: { title: string; note: string }) { return <header className={cx('cardHeading')}><h2>{title}</h2><p>{note}</p></header>; }
+function ListHeading({ title, note }: { title: string; note: string }) { return <header className={cx('listHead')}><span>{title}</span><small>{note}</small></header>; }
 
-function Breakdown({ rows }: { rows: Array<[string, number | null, 'brand' | 'safe' | 'sun' | 'mute']> }) {
-  return <div className={cx('breakdown')}>{rows.map(([label, value, tone]) => <div key={label}><span><i className={cx(tone)} />{label}</span><strong>{formatCount(value)}</strong></div>)}</div>;
+function StatRows({ rows }: { rows: Array<[string, number | null, 'brand' | 'safe' | 'sun' | 'mute']> }) {
+  return <div className={cx('statRows')}>{rows.map(([label, value, tone]) => <div key={label}><span>{label}</span><strong className={cx(tone)}>{formatCount(value)}</strong></div>)}</div>;
 }
 
 function DailyChart({ daily }: { daily: AdminChatStats['daily'] }) {
