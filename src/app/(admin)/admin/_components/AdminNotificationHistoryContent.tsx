@@ -67,7 +67,7 @@ function formatSentAt(value: string) {
 }
 
 function channelLabel(channel: string) {
-  const labels: Record<string, string> = { FCM: '푸시', SMS: '문자', KAKAO_ALIMTALK: '알림톡', EMAIL: '이메일' };
+  const labels: Record<string, string> = { FCM: '앱 푸시', SMS: '문자', KAKAO_ALIMTALK: '카카오 알림톡', EMAIL: '이메일' };
   return labels[channel] ?? channel;
 }
 
