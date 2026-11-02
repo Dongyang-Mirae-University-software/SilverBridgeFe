@@ -82,7 +82,8 @@ function getConnectionPushNotification(data?: MessagePayload['data'], role?: Con
     case 'WARD_SOS':
       return {
         body: `${data?.wardName || '피보호자'}님이 긴급 도움을 요청했습니다.`,
-        title: '긴급 SOS',
+        // BE 푸시 제목과 같은 형식(BE 문구가 없을 때만 쓰는 예비 문구)
+        title: `[긴급] ${data?.wardName || '피보호자'}님 SOS`,
       };
     case 'MEDICATION_REMINDER':
       return { body: '복용 시각이 되었습니다.', title: '복약 알림' };
