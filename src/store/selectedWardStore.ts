@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 // 보호자가 고른 피보호자(partnerUserId). 대시보드·이상감지·SOS·복약·챗봇·병원 예약 어디서 골라도 다른 화면에서 같은 사람을 본다.
 // 새로고침해도 남도록 탭 저장소(sessionStorage)에 같이 둔다. 로그아웃하면 clearAuthTokens 가 지운다.
@@ -60,4 +60,34 @@ export function clearSelectedWardId() {
 
 export default function useSelectedWardId() {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+interface UseSelectedWardOptions {
+  // 이 화면 목록이 연결된 피보호자 전체가 아닐 수 있으면 false - 고른 사람이 목록에 없다고 전역 선택을 바꾸지 않는다
+  replaceMissing?: boolean;
+}
+
+// 화면에 보일 피보호자를 정하는 단 한 곳. 고른 사람이 목록에 있으면 그 사람, 없으면 첫 번째.
+// 화면마다 목록 순서가 달라 "첫 번째"가 서로 다를 수 있다 - 그래서 보이게 된 사람을 전역 선택으로 남겨
+// 처음 들른 화면의 피보호자가 다른 화면에서도 그대로 보이게 한다
+export function useSelectedWard<T>(
+  wards: readonly T[],
+  getId: (ward: T) => string,
+  { replaceMissing = true }: UseSelectedWardOptions = {},
+) {
+  const selectedWardId = useSelectedWardId();
+  const selectedWard = wards.find(ward => getId(ward) === selectedWardId) ?? wards[0] ?? null;
+  const resolvedWardId = selectedWard ? getId(selectedWard) : null;
+  const wardIds = wards.map(getId).join('\n');
+
+  useEffect(() => {
+    if (!resolvedWardId) return;
+    // 하이드레이션 첫 렌더는 서버 값(null)으로 그리므로, 그린 값이 아니라 저장소의 지금 값으로 판단한다
+    const current = getSnapshot();
+    if (current === resolvedWardId) return;
+    const currentInList = current !== null && wardIds.split('\n').includes(current);
+    if (current === null || (replaceMissing && !currentInList)) setSelectedWardId(resolvedWardId);
+  }, [replaceMissing, resolvedWardId, wardIds]);
+
+  return selectedWard;
 }

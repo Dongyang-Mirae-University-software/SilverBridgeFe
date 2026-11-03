@@ -11,7 +11,7 @@ import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { formatTime } from '@/utils/format/date';
 import { guardianSosHistoryQueryOptions } from '@/service/query/guardian';
 import type { IGuardianSosHistoryItem, SosTriggerType } from '@/service/interface/guardian/sosHistory';
-import useSelectedWardId, { setSelectedWardId } from '@/store/selectedWardStore';
+import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 import styles from './GuardianSosHistoryContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -25,13 +25,11 @@ const TRIGGER_TYPE_META: Record<SosTriggerType, { filterLabel: string; descripti
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
 
 export default function GuardianSosHistoryContent() {
-  const selectedWardId = useSelectedWardId();
   const [triggerTypeFilter, setTriggerTypeFilter] = useState<TriggerTypeFilter>('ALL');
   const [page, setPage] = useState(0);
 
   const { activeWards, hasActiveWards } = useGuardianActiveWards();
-  const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId);
-  const effectiveSelectedWardId = selectedWard?.partnerUserId ?? activeWards[0]?.partnerUserId ?? null;
+  const effectiveSelectedWardId = useSelectedWard(activeWards, ward => ward.partnerUserId)?.partnerUserId ?? null;
 
   const { data, isLoading, isError, isFetching } = useQuery({
     ...guardianSosHistoryQueryOptions({

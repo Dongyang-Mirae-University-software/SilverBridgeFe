@@ -8,7 +8,7 @@ import classNames from 'classnames/bind';
 import PageLayout from '@/components/layout/PageLayout';
 import { getConnectionData } from '@/components/connections/ConnectionShared';
 import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
-import useSelectedWardId, { setSelectedWardId } from '@/store/selectedWardStore';
+import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 import { AnomalyHistoryContent } from './AnomalyHistoryContent';
 import { LiveCameraModal } from './LiveCameraModal';
 import styles from './GuardianMonitorContent.module.css';
@@ -22,7 +22,6 @@ export default function GuardianMonitorContent() {
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(Boolean(deepLinkSessionId));
   // 실시간 영상을 열 피보호자. 모달을 연 그 순간의 선택으로 고정한다(열린 뒤 이력에서 바꿔도 영상은 그대로)
   const [liveWardId, setLiveWardId] = useState<string | undefined>(undefined);
-  const selectedWardId = useSelectedWardId();
 
   const { data: connectionsData } = useQuery(guardianConnectionsQueryOptions);
   const wards = getConnectionData(connectionsData)
@@ -33,7 +32,7 @@ export default function GuardianMonitorContent() {
       profileImage: connection.partnerProfileImage,
       relation: connection.relation,
     }));
-  const activeWardId = wards.find(ward => ward.wardId === selectedWardId)?.wardId ?? wards[0]?.wardId;
+  const activeWardId = useSelectedWard(wards, ward => ward.wardId)?.wardId;
 
   const liveButton = (
     <button

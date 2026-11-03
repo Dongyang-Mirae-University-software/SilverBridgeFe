@@ -8,7 +8,7 @@ import classNames from 'classnames/bind';
 import { Icon } from '@/components/Icon';
 import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { guardianConnectionsQueryOptions, guardianDashboardQueryOptions } from '@/service/query/guardian';
-import useSelectedWardId, { setSelectedWardId } from '@/store/selectedWardStore';
+import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 import styles from './GuardianDashboardContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -32,8 +32,7 @@ export function GuardianDashboardContent() {
       .sort((a, b) => getTime(b.connectedAt ?? b.createdAt) - getTime(a.connectedAt ?? a.createdAt)),
     [connectionsResponse],
   );
-  const selectedWardId = useSelectedWardId();
-  const selectedWard = activeConnections.find(connection => connection.partnerUserId === selectedWardId) ?? activeConnections[0] ?? null;
+  const selectedWard = useSelectedWard(activeConnections, connection => connection.partnerUserId);
 
   // 피보호자 칩 배지는 선택 상태와 무관하게 항상 전체 기준으로 보여야 해서 별도로 조회
   const { data: dashboardAll } = useQuery({

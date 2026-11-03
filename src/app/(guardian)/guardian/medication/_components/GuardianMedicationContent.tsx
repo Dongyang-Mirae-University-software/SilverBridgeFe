@@ -11,7 +11,7 @@ import useKstMidnightRefetch from '@/hooks/useKstMidnightRefetch';
 import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
 import { guardianMedicationQueryKey, guardianMedicationQueryOptions } from '@/service/query/guardian/medication';
 import useModalStore from '@/store/modalStore';
-import useSelectedWardId, { setSelectedWardId } from '@/store/selectedWardStore';
+import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 import { MedicationAddModal } from './MedicationAddModal';
 import { WardMedicationCard } from './WardMedicationCard';
 import styles from './GuardianMedicationContent.module.css';
@@ -23,14 +23,14 @@ export function GuardianMedicationContent() {
   const { data: connectionsData } = useQuery(guardianConnectionsQueryOptions);
   const wards = data ?? [];
   const activeConnections = getConnectionData(connectionsData).filter(connection => connection.status === 'ACTIVE');
-  const selectedWardId = useSelectedWardId();
   const { openModal, onCloseModal } = useModalStore(state => ({
     openModal: state.openModal,
     onCloseModal: state.onCloseModal,
   }));
   useKstMidnightRefetch(guardianMedicationQueryKey);
 
-  const selectedWard = wards.find(ward => ward.wardId === selectedWardId) ?? wards[0];
+  // 복약 현황 목록은 연결 목록과 따로 와서, 고른 사람이 없다고 전역 선택을 바꾸지 않는다
+  const selectedWard = useSelectedWard(wards, ward => ward.wardId, { replaceMissing: false });
 
   return (
     <section className={cx('page')}>

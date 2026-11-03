@@ -25,7 +25,7 @@ import {
   reservationErrorMessage,
 } from '@/utils/reservation/reservationView';
 import { useKstNow } from '@/utils/reservation/useKstNow';
-import useSelectedWardId, { setSelectedWardId } from '@/store/selectedWardStore';
+import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 import styles from './GuardianHospitalContent.module.css';
 import { HospitalConfirmStep } from './HospitalConfirmStep';
 import { HospitalDateTimeStep } from './HospitalDateTimeStep';
@@ -53,8 +53,6 @@ export function GuardianHospitalContent() {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const guardian = getUserProfileData(profileResponse);
 
-  // 다른 화면(대시보드·챗봇 등)에서 고른 피보호자로 시작한다. 내 ACTIVE 목록에 없으면 첫 번째 피보호자
-  const wardId = useSelectedWardId();
   const [step, setStep] = useState<Step>('list');
   const [pick, setPick] = useState<Pick | null>(null);
   const [date, setDate] = useState('');
@@ -71,7 +69,8 @@ export function GuardianHospitalContent() {
   const [slotNotice, setSlotNotice] = useState<string | null>(null);
   const doneTitleRef = useRef<HTMLDivElement>(null);
 
-  const ward = activeWards.find(item => item.partnerUserId === wardId) ?? activeWards[0] ?? null;
+  // 다른 화면(대시보드·챗봇 등)에서 고른 피보호자로 시작한다. 내 ACTIVE 목록에 없으면 첫 번째 피보호자
+  const ward = useSelectedWard(activeWards, item => item.partnerUserId);
   const wardPhone = ward?.partnerPhone && PHONE_PATTERN.test(ward.partnerPhone) ? ward.partnerPhone : null;
   const patientPhone = wardPhone && !phoneEditing ? wardPhone : phoneInput.trim();
 

@@ -14,7 +14,7 @@ import { getHistoryWarning } from '@/service/api/chatPolicy';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { calcAge, type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
-import useSelectedWardId, { setSelectedWardId } from '@/store/selectedWardStore';
+import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
 import styles from './ChatbotContent.module.css';
@@ -132,8 +132,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const isGuardian = getAuthRole() === 'GUARDIAN';
   const isWardChat = variant === 'ward';
   const { activeWards } = useGuardianActiveWards(isGuardian);
-  const selectedWardId = useSelectedWardId();
-  const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId) ?? activeWards[0] ?? null;
+  const selectedWard = useSelectedWard(activeWards, ward => ward.partnerUserId);
   const [sessionId, setSessionId] = useState(makeSessionId);
   // 대화창(sessionId)마다 이미 보낸 문장 - 빠른 질문에서 뺀다. 상담 내용이라 브라우저 저장소에 남기지 않는다(새로고침하면 비워진다).
   const [sentBySession, setSentBySession] = useState<Record<string, string[]>>({});
