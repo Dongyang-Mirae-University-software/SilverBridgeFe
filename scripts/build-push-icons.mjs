@@ -1,5 +1,5 @@
 // 웹푸시·홈 화면 아이콘 생성기. 그림은 이 파일에서 직접 그린 SVG가 원본이다(외부 이미지 없음).
-// 실행: node scripts/build-push-icons.mjs  →  public/icons/push/*.svg·*.png, src/app/apple-icon.png
+// 실행: node scripts/build-push-icons.mjs  →  public/icons/push/*.svg·*.png, src/app/apple-icon.png·favicon.ico·icon.svg
 // 색은 globals.css 토큰 값과 같다(서비스 워커·PNG는 CSS 변수를 못 읽어 값을 적는다).
 import { mkdirSync, writeFileSync } from 'node:fs';
 import sharp from 'sharp';
@@ -87,5 +87,32 @@ const appIcon = svg(`<rect width="192" height="192" fill="${COLOR.brand}"/>${GLY
 await write('app-192', appIcon, 192);
 await sharp(Buffer.from(appIcon)).resize(512, 512).png().toFile(`${OUT}app-512.png`);
 await sharp(Buffer.from(appIcon)).resize(180, 180).png().toFile(`${APP_DIR}apple-icon.png`);
+
+// 파비콘: 16px에서도 다리로 읽히게 현수교의 두 주탑·케이블·상판만 굵게 남긴다
+const faviconGlyph = `
+  <path d="M60 40 V158 M132 40 V158" stroke="#fff" stroke-width="18" stroke-linecap="round"/>
+  <path d="M24 112 Q44 86 60 46 Q96 132 132 46 Q148 86 168 112" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="20" y="108" width="152" height="20" rx="10" fill="#fff"/>`;
+const favicon = svg(`<rect width="192" height="192" rx="44" fill="${COLOR.brand}"/>${faviconGlyph}`);
+writeFileSync(`${APP_DIR}icon.svg`, favicon);
+
+// favicon.ico: 16·32·48px PNG를 ICO 컨테이너에 그대로 담는다(sharp는 ICO를 못 쓴다)
+const sizes = [16, 32, 48];
+const pngs = await Promise.all(sizes.map(size => sharp(Buffer.from(favicon)).resize(size, size).png().toBuffer()));
+const header = Buffer.alloc(6 + 16 * sizes.length);
+header.writeUInt16LE(1, 2); // type: icon
+header.writeUInt16LE(sizes.length, 4);
+let offset = header.length;
+sizes.forEach((size, i) => {
+  const entry = 6 + 16 * i;
+  header.writeUInt8(size, entry);
+  header.writeUInt8(size, entry + 1);
+  header.writeUInt16LE(1, entry + 4); // color planes
+  header.writeUInt16LE(32, entry + 6); // bits per pixel
+  header.writeUInt32LE(pngs[i].length, entry + 8);
+  header.writeUInt32LE(offset, entry + 12);
+  offset += pngs[i].length;
+});
+writeFileSync(`${APP_DIR}favicon.ico`, Buffer.concat([header, ...pngs]));
 
 console.log('push icons written');
