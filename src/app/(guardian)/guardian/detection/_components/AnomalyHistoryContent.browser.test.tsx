@@ -77,6 +77,19 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     Object.values(api).forEach(fn => fn.mockReset());
   });
 
+  it('피보호자 목록을 받기 전에는 전체 피보호자 기록·건수를 부르지 않고 불러오는 중으로 둔다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
+    const screen = render(
+      <AnomalyHistoryContent wards={[]} selectedWardId={undefined} onSelectWard={() => undefined} wardsReady={false} />,
+      { wrapper },
+    );
+
+    await expect.element(screen.getByText('감지 기록을 불러오는 중이에요.')).toBeVisible();
+    await new Promise(resolve => setTimeout(resolve, 50));
+    expect(api.getGuardianAnomalyHistory).not.toHaveBeenCalled();
+    expect(api.getGuardianAnomalyHistorySummary).not.toHaveBeenCalled();
+  });
+
   it('칩 건수는 불러온 목록이 아니라 요약 값이고, 유형을 고르면 type 쿼리로 다시 받는다 - 둘 다 지금 등록된 카메라 기준', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
     const screen = renderHistory();

@@ -23,7 +23,7 @@ export default function GuardianMonitorContent() {
   // 실시간 영상을 열 피보호자. 모달을 연 그 순간의 선택으로 고정한다(열린 뒤 이력에서 바꿔도 영상은 그대로)
   const [liveWardId, setLiveWardId] = useState<string | undefined>(undefined);
 
-  const { data: connectionsData } = useQuery(guardianConnectionsQueryOptions);
+  const { data: connectionsData, isLoading: isWardsLoading } = useQuery(guardianConnectionsQueryOptions);
   const wards = getConnectionData(connectionsData)
     .filter(connection => connection.status === 'ACTIVE')
     .map(connection => ({
@@ -50,7 +50,12 @@ export default function GuardianMonitorContent() {
 
   return (
     <PageLayout title="이상감지" description="피보호자의 실시간 영상과 AI 화재·낙상·흉기 감지 기록을 확인합니다." actions={liveButton}>
-      <AnomalyHistoryContent wards={wards} selectedWardId={activeWardId} onSelectWard={setSelectedWardId} />
+      <AnomalyHistoryContent
+        wards={wards}
+        selectedWardId={activeWardId}
+        onSelectWard={setSelectedWardId}
+        wardsReady={!isWardsLoading}
+      />
 
       {isLiveModalOpen && (
         <LiveCameraModal

@@ -44,25 +44,30 @@ export function AnomalyHistoryContent({
   wards,
   selectedWardId,
   onSelectWard,
+  wardsReady = true,
 }: {
   wards: WardOption[];
   selectedWardId?: string;
   onSelectWard: (wardId: string) => void;
+  // 피보호자 목록을 받았는가. 받기 전에는 wardId 없이(전체 피보호자) 조회해 다른 사람 기록·건수가 잠깐 보이므로 기다린다
+  wardsReady?: boolean;
 }) {
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState<HistoryFilter>('ALL');
 
-  const { data, isLoading, isError } = useQuery(
-    guardianAnomalyHistoryQueryOptions({
+  const { data, isLoading: isHistoryLoading, isError } = useQuery({
+    ...guardianAnomalyHistoryQueryOptions({
       page,
       size: PAGE_SIZE,
       wardId: selectedWardId,
       type: filter === 'ALL' || filter === 'DELETED_CAMERA' ? undefined : filter,
       camera: filter === 'DELETED_CAMERA' ? 'DELETED' : 'EXISTING',
     }),
-  );
+    enabled: wardsReady,
+  });
+  const isLoading = !wardsReady || isHistoryLoading;
   // 요약을 못 받으면 건수를 비워 둔다(0으로 채우지 않는다)
-  const { data: summary } = useQuery(guardianAnomalyHistorySummaryQueryOptions(selectedWardId));
+  const { data: summary } = useQuery({ ...guardianAnomalyHistorySummaryQueryOptions(selectedWardId), enabled: wardsReady });
 
   const incidents = data?.content ?? [];
   const totalPages = data?.totalPages ?? 0;
