@@ -124,7 +124,8 @@ export default function RoleRouteGuard({ allowedRole, children, roleMismatchMess
     ) {
       return <div role="alert" style={{ padding: '48px 24px', textAlign: 'center' }}>{roleMismatchMessage}</div>;
     }
-    return null;
+    // 프로필 조회·역할 홈 이동 중에도 빈 화면 대신 확인 중 안내를 보인다(금방 끝나면 늦게 떠서 깜빡이지 않는다)
+    return hydrated ? <SessionCheckingNotice /> : null;
   }
 
   return children;

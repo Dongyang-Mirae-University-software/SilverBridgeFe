@@ -75,6 +75,16 @@ describe('RoleRouteGuard', () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
+  it('프로필을 불러오는 동안에도 빈 화면 대신 확인 중 안내를 보인다', async () => {
+    setAuthTokens({ accessToken: 'a1', refreshToken: 'r1' });
+    mocks.getMyProfile.mockReturnValue(new Promise(() => {}));
+
+    const screen = renderGuard();
+
+    await expect.element(screen.getByText('로그인 상태를 확인하고 있어요')).toBeVisible();
+    expect(screen.getByText('보호자 화면').elements()).toHaveLength(0);
+  });
+
   it('복원이 거절되면 로그인 화면으로 보낸다', async () => {
     document.cookie = 'careai_refresh_token=r1; path=/';
     mocks.restoreSession.mockImplementation(async () => {
