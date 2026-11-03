@@ -1,7 +1,7 @@
 .page { display: flex; width: 100%; min-width: 0; flex-direction: column; gap: 16px; }
 .heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 4px; }
 .heading h1 { margin: 0; color: var(--sb-ink); font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
-.heading > button, .formActions > button:last-child, .unavailable button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 10px; background: var(--sb-brand); color: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; padding: 9px 16px; }
+.heading > button, .formActions > button:last-child, .unavailable button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 10px; background: var(--sb-brand); color: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; padding: 9px 16px; }
 .heading > button:disabled, .formActions button:disabled { cursor: not-allowed; opacity: .5; }
 .summaryGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .summaryCard { border: 1px solid var(--sb-line-soft); border-radius: 14px; background: #fff; box-shadow: var(--sb-shadow-sm); padding: 16px; }
@@ -18,19 +18,19 @@
 .filterSelect { display: flex; align-items: center; gap: 6px; color: var(--sb-ink-mute); font-size: 12px; font-weight: 800; white-space: nowrap; }
 .filterSelect input, .filterSelect select { width: 114px; height: 36px; border: 1px solid var(--sb-line); border-radius: 9px; outline: 0; background: #fff; color: var(--sb-ink-soft); font: inherit; font-size: 12px; font-weight: 700; padding: 0 9px; }
 .tableScroll { width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
-.table { width: 100%; min-width: 920px; border-collapse: collapse; table-layout: fixed; }
-.hospitalColumn { width: 174px; }.departmentColumn { width: 230px; }.addressColumn { width: auto; }.hoursColumn { width: 145px; }.registeredColumn { width: 112px; }.actionColumn { width: 130px; }
-.table th { border-bottom: 1px solid var(--sb-line-soft); background: var(--sb-bg-soft); color: var(--sb-ink-mute); font-size: 11px; font-weight: 800; padding: 11px 14px; text-align: left; white-space: nowrap; }
-.table td { overflow: hidden; height: 66px; border-bottom: 1px solid var(--sb-line-soft); color: var(--sb-ink-soft); font-size: 12px; font-weight: 650; padding: 10px 14px; text-overflow: ellipsis; white-space: nowrap; }
+.table { width: 100%; min-width: 820px; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+.hospitalColumn { width: 174px; }.departmentColumn { width: 230px; }.addressColumn { width: auto; }.phoneColumn { width: 130px; }.registeredColumn { width: 112px; }.actionColumn { width: 130px; }
+.table th { border-bottom: 1px solid var(--sb-line); background: var(--sb-bg-soft); color: var(--sb-ink-mute); font-size: 12px; font-weight: 600; padding: 12px 16px; text-align: left; white-space: nowrap; }
+.table td { overflow: hidden; border-bottom: 1px solid var(--sb-line-soft); color: var(--sb-ink-soft); font-size: 13px; font-weight: 400; padding: 12px 16px; text-overflow: ellipsis; white-space: nowrap; }
 .table tbody tr:last-child td { border-bottom: 0; }
 .hospitalName b, .hospitalName small, .hours b, .hours small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hospitalName b { color: var(--sb-ink); font-size: 13px; font-weight: 800; }.hospitalName small, .hours small, .operation { margin-top: 3px; color: var(--sb-ink-mute); font-size: 11px; font-weight: 600; }
+.hospitalName b { color: var(--sb-ink); font-size: 13px; font-weight: 700; }.hospitalName small, .hours small, .operation { margin-top: 3px; color: var(--sb-ink-mute); font-size: 11px; font-weight: 600; }
 .departmentCell { overflow: visible !important; white-space: normal !important; }
 .departments { display: flex; flex-wrap: wrap; align-content: center; gap: 4px; }
-.departments span { flex: 0 0 auto; border-radius: 999px; background: var(--sb-bg-soft); color: var(--sb-ink-soft); font-size: 10.5px; font-weight: 800; padding: 3px 7px; white-space: nowrap; }
-.address { overflow: hidden; text-overflow: ellipsis; }.hours b { color: var(--sb-ink-soft); font-weight: 800; }.registeredAt { color: var(--sb-ink-mute) !important; }
+.departments span { flex: 0 0 auto; border-radius: 999px; background: var(--sb-bg-soft); color: var(--sb-ink-soft); font-size: 11.5px; font-weight: 700; padding: 2px 8px; white-space: nowrap; }
+.address { overflow: hidden; text-overflow: ellipsis; }.phone { color: var(--sb-ink-soft); white-space: nowrap; }.hours b { color: var(--sb-ink-soft); font-weight: 700; }.registeredAt { color: var(--sb-ink-mute) !important; }
 .bookingBadge { display: inline-flex; align-items: center; border-radius: 999px; background: var(--sb-safe-soft); color: var(--sb-safe); font-size: 11px; font-weight: 800; padding: 5px 8px; }.bookingBadge.off { background: var(--sb-warn-soft); color: var(--sb-warn); }.operation { display: block; }
-.actions { display: flex; justify-content: flex-end; gap: 5px; }.actions button { border: 1px solid var(--sb-line); border-radius: 7px; background: #fff; color: var(--sb-ink-soft); cursor: pointer; font: inherit; font-size: 11px; font-weight: 800; padding: 6px 8px; }.actions button:hover { border-color: var(--sb-brand); color: var(--sb-brand); }.actions .delete { color: var(--sb-danger); }
+.actions { display: flex; justify-content: flex-end; gap: 6px; }.actions button { border: 1px solid var(--sb-line); border-radius: 10px; background: #fff; color: var(--sb-ink-soft); cursor: pointer; font: inherit; font-size: 11.5px; font-weight: 600; padding: 5px 10px; }.actions button:hover { background: var(--sb-bg-soft); }.actions .delete { color: var(--sb-warn); }
 .state { padding: 40px 14px !important; color: var(--sb-ink-mute) !important; text-align: center; }.state button { border: 0; background: none; color: var(--sb-brand); cursor: pointer; font: inherit; font-weight: 800; text-decoration: underline; }
 .pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--sb-line-soft); color: var(--sb-ink-mute); font-size: 12px; font-weight: 650; padding: 12px 16px; }
 .unavailable { display: grid; min-height: 280px; place-content: center; justify-items: center; border: 1px solid var(--sb-line); border-radius: var(--sb-radius); background: #fff; color: var(--sb-ink-mute); text-align: center; }.unavailable > span { color: var(--sb-brand); }.unavailable strong { margin-top: 12px; color: var(--sb-ink); font-size: 15px; }.unavailable p { margin: 5px 0 15px; font-size: 12px; font-weight: 600; }
