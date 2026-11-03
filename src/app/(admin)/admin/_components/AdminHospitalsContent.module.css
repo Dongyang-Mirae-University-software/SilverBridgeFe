@@ -18,8 +18,8 @@
 .filterSelect { display: flex; align-items: center; gap: 6px; color: var(--sb-ink-mute); font-size: 12px; font-weight: 800; white-space: nowrap; }
 .filterSelect input, .filterSelect select { width: 114px; height: 36px; border: 1px solid var(--sb-line); border-radius: 9px; outline: 0; background: #fff; color: var(--sb-ink-soft); font: inherit; font-size: 12px; font-weight: 700; padding: 0 9px; }
 .tableScroll { width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
-.table { width: 100%; min-width: 820px; border-collapse: collapse; table-layout: fixed; }
-.hospitalColumn { width: 174px; }.departmentColumn { width: 230px; }.addressColumn { width: auto; }.hoursColumn { width: 145px; }.actionColumn { width: 160px; }
+.table { width: 100%; min-width: 920px; border-collapse: collapse; table-layout: fixed; }
+.hospitalColumn { width: 174px; }.departmentColumn { width: 230px; }.addressColumn { width: auto; }.hoursColumn { width: 145px; }.registeredColumn { width: 112px; }.actionColumn { width: 130px; }
 .table th { border-bottom: 1px solid var(--sb-line-soft); background: var(--sb-bg-soft); color: var(--sb-ink-mute); font-size: 11px; font-weight: 800; padding: 11px 14px; text-align: left; white-space: nowrap; }
 .table td { overflow: hidden; height: 66px; border-bottom: 1px solid var(--sb-line-soft); color: var(--sb-ink-soft); font-size: 12px; font-weight: 650; padding: 10px 14px; text-overflow: ellipsis; white-space: nowrap; }
 .table tbody tr:last-child td { border-bottom: 0; }
@@ -28,7 +28,7 @@
 .departmentCell { overflow: visible !important; white-space: normal !important; }
 .departments { display: flex; flex-wrap: wrap; align-content: center; gap: 4px; }
 .departments span { flex: 0 0 auto; border-radius: 999px; background: var(--sb-bg-soft); color: var(--sb-ink-soft); font-size: 10.5px; font-weight: 800; padding: 3px 7px; white-space: nowrap; }
-.address { overflow: hidden; text-overflow: ellipsis; }.hours b { color: var(--sb-ink-soft); font-weight: 800; }
+.address { overflow: hidden; text-overflow: ellipsis; }.hours b { color: var(--sb-ink-soft); font-weight: 800; }.registeredAt { color: var(--sb-ink-mute) !important; }
 .bookingBadge { display: inline-flex; align-items: center; border-radius: 999px; background: var(--sb-safe-soft); color: var(--sb-safe); font-size: 11px; font-weight: 800; padding: 5px 8px; }.bookingBadge.off { background: var(--sb-warn-soft); color: var(--sb-warn); }.operation { display: block; }
 .actions { display: flex; justify-content: flex-end; gap: 5px; }.actions button { border: 1px solid var(--sb-line); border-radius: 7px; background: #fff; color: var(--sb-ink-soft); cursor: pointer; font: inherit; font-size: 11px; font-weight: 800; padding: 6px 8px; }.actions button:hover { border-color: var(--sb-brand); color: var(--sb-brand); }.actions .delete { color: var(--sb-danger); }
 .state { padding: 40px 14px !important; color: var(--sb-ink-mute) !important; text-align: center; }.state button { border: 0; background: none; color: var(--sb-brand); cursor: pointer; font: inherit; font-weight: 800; text-decoration: underline; }
