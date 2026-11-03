@@ -35,6 +35,7 @@ export type KakaoSignupData = {
 
 type UseSignupFormOptions = {
   kakaoData?: KakaoSignupData;
+  returnTo?: string;
 };
 
 function getKakaoSignupResponseData(response: unknown) {
@@ -44,7 +45,7 @@ function getKakaoSignupResponseData(response: unknown) {
   return nestedData ?? data ?? response;
 }
 
-export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) {
+export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOptions = {}) {
   const isKakaoSignup = Boolean(kakaoData);
   const {
     register,
@@ -174,7 +175,7 @@ export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) 
             });
           }
 
-          router.push(getRoleHomePath(role));
+          router.push(returnTo ?? getRoleHomePath(role));
         },
         onError: error => {
           setSignupError((error as Error).message || '카카오 회원가입에 실패했습니다. 다시 시도해 주세요.');
@@ -200,7 +201,7 @@ export default function useSignupForm({ kakaoData }: UseSignupFormOptions = {}) 
     mutate(form, {
       onSuccess: () => {
         formDataInit();
-        router.push('/login');
+        router.push(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login');
       },
       onError: error => {
         setSignupError((error as Error).message || '회원가입에 실패했습니다. 다시 시도해 주세요.');

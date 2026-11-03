@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSafeReturnPath } from '@/lib/auth/returnPath';
 
 const KAKAO_AUTHORIZE_URL = 'https://kauth.kakao.com/oauth/authorize';
 const KAKAO_CALLBACK_PATH = '/oauth';
@@ -30,6 +31,9 @@ export function GET(request: NextRequest) {
     redirect_uri: redirectUri,
     response_type: 'code',
   });
+
+  const returnTo = getSafeReturnPath(request.nextUrl.searchParams.get('returnTo'));
+  if (returnTo) params.set('state', returnTo);
 
   return NextResponse.redirect(`${KAKAO_AUTHORIZE_URL}?${params.toString()}`);
 }

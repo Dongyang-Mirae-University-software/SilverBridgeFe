@@ -5,6 +5,7 @@ type SignupPageProps = {
     kakaoId?: string;
     email?: string;
     profileImageUrl?: string;
+    returnTo?: string;
   }>;
 };
 

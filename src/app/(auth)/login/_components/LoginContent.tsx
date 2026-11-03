@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
@@ -12,6 +12,7 @@ import { ISigninResponse } from '@/service/interface/auth/auth';
 import { getLoginErrorMessage } from '@/utils/auth/loginError';
 import { getRoleHomePath } from '@/utils/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
+import { getSafeReturnPath } from '@/lib/auth/returnPath';
 import styles from './LoginContent.module.css';
 const cx = classNames.bind(styles);
 
@@ -24,6 +25,8 @@ function getSigninData(response: unknown) {
 
 export default function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = getSafeReturnPath(searchParams.get('returnTo'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
@@ -47,7 +50,7 @@ export default function LoginContent() {
         });
       }
 
-      router.push(getRoleHomePath(data.role));
+      router.push(returnTo ?? getRoleHomePath(data.role));
     },
     onError: error => {
       setErrorMessage(getLoginErrorMessage(error));
@@ -74,7 +77,10 @@ export default function LoginContent() {
   };
 
   const handleKakaoLogin = () => {
-    window.location.href = '/api/oauth/kakao/authorize';
+    const authorizeUrl = returnTo
+      ? `/api/oauth/kakao/authorize?returnTo=${encodeURIComponent(returnTo)}`
+      : '/api/oauth/kakao/authorize';
+    window.location.href = authorizeUrl;
   };
 
   return (
@@ -150,7 +156,11 @@ export default function LoginContent() {
 
       <div className={cx('footer')}>
         아직 계정이 없으신가요?{' '}
-        <button className={cx('signupLink')} type="button" onClick={() => router.push('/signup')}>
+        <button
+          className={cx('signupLink')}
+          type="button"
+          onClick={() => router.push(returnTo ? `/signup?returnTo=${encodeURIComponent(returnTo)}` : '/signup')}
+        >
           회원가입
         </button>
       </div>

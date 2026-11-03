@@ -11,6 +11,7 @@ import { getKakaoRedirectUri } from '@/lib/auth/kakao';
 import { getRoleHomePath } from '@/utils/auth/routes';
 import { signinKakao } from '@/service/api/auth/auth';
 import { IKakaoSigninRes } from '@/service/interface/auth/auth';
+import { getSafeReturnPath } from '@/lib/auth/returnPath';
 import styles from './KakaoCallbackContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -28,6 +29,7 @@ function KakaoCallbackInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
+  const returnTo = getSafeReturnPath(searchParams.get('state'));
   const [errorMessage, setErrorMessage] = useState('');
 
   const { mutate } = useMutation({
@@ -41,6 +43,7 @@ function KakaoCallbackInner() {
           email: data.email || '',
           profileImageUrl: data.profileImageUrl || '',
         });
+        if (returnTo) params.set('returnTo', returnTo);
         router.push(`/signup?${params.toString()}`);
         return;
       }
@@ -53,7 +56,7 @@ function KakaoCallbackInner() {
         });
       }
       if (data.role) {
-        router.push(getRoleHomePath(data.role));
+        router.push(returnTo ?? getRoleHomePath(data.role));
         return;
       }
 

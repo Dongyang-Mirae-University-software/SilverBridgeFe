@@ -13,15 +13,17 @@ import { registerFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { reportNonApiError } from '@/lib/api/reportError';
 import SessionCheckingNotice from '@/components/auth/SessionCheckingNotice';
 import SessionRetryNotice from '@/components/auth/SessionRetryNotice';
+import { getSafeReturnPath } from '@/lib/auth/returnPath';
 
 const subscribeNothing = () => () => {};
 
 interface Props {
   allowedRole: AuthRole;
   children: ReactNode;
+  roleMismatchMessage?: string;
 }
 
-export default function RoleRouteGuard({ allowedRole, children }: Props) {
+export default function RoleRouteGuard({ allowedRole, children, roleMismatchMessage }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const accessToken = getAccessToken();
@@ -32,6 +34,7 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
   const [, setRestoredCount] = useState(0);
   // 서버 렌더와 하이드레이션 첫 렌더는 쿠키를 모르므로(null) 둘 다 아무것도 그리지 않는다 - 그 뒤에만 안내를 그린다
   const hydrated = useSyncExternalStore(subscribeNothing, () => true, () => false);
+  const isGuardianRegisterPath = hydrated && isCurrentGuardianRegisterPath();
   const { data: profileResponse, error, isError, isLoading, refetch } = useQuery({
     ...myProfileQueryOptions,
     enabled: Boolean(accessToken),
@@ -48,7 +51,7 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
       if (cancelled) return;
       // 새 토큰은 tokenStore 에 저장됐다 - 다시 그려 getAccessToken() 으로 읽게 한다
       if (result.status === 'restored') setRestoredCount(value => value + 1);
-      else if (result.status === 'rejected') router.replace('/login');
+      else if (result.status === 'rejected') router.replace(getLoginPath());
       else setRestoreUnavailable(true);
     });
 
@@ -59,7 +62,7 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
 
   useEffect(() => {
     if (!accessToken) {
-      if (!needsRestore) router.replace('/login');
+      if (!needsRestore) router.replace(getLoginPath());
       return;
     }
 
@@ -67,7 +70,7 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
       // 일시 장애(갱신 5xx·프로필 5xx·네트워크)로는 로그아웃시키지 않고 다시 시도 안내를 보인다
       if (endsSession) {
         clearAuthTokens();
-        router.replace('/login');
+        router.replace(getLoginPath());
       }
       return;
     }
@@ -77,9 +80,10 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
     }
 
     if (profile?.role && profile.role !== allowedRole) {
+      if (isGuardianRegisterPath && roleMismatchMessage) return;
       router.replace(getRoleHomePath(profile.role));
     }
-  }, [accessToken, allowedRole, endsSession, isError, needsRestore, profile?.role, router]);
+  }, [accessToken, allowedRole, endsSession, isError, isGuardianRegisterPath, needsRestore, profile?.role, roleMismatchMessage, router]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -110,7 +114,28 @@ export default function RoleRouteGuard({ allowedRole, children }: Props) {
 
   if (isError && !endsSession) return <SessionRetryNotice onRetry={() => void refetch()} />;
 
-  if (isLoading || !isAllowed) return null;
+  if (isLoading || !isAllowed) {
+    if (
+      accessToken &&
+      isGuardianRegisterPath &&
+      profile?.role &&
+      profile.role !== allowedRole &&
+      roleMismatchMessage
+    ) {
+      return <div role="alert" style={{ padding: '48px 24px', textAlign: 'center' }}>{roleMismatchMessage}</div>;
+    }
+    return null;
+  }
 
   return children;
+}
+
+function isCurrentGuardianRegisterPath() {
+  return typeof window !== 'undefined' && window.location.pathname === '/guardian/wards/register';
+}
+
+function getLoginPath() {
+  if (!isCurrentGuardianRegisterPath()) return '/login';
+  const returnTo = getSafeReturnPath(`${window.location.pathname}${window.location.search}`);
+  return returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login';
 }

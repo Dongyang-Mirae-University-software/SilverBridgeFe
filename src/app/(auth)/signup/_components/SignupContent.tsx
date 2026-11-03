@@ -7,6 +7,7 @@ import classNames from 'classnames/bind';
 import { Icon } from '@/components/Icon';
 import styles from './SignupContent.module.css';
 import SignupForm from './SignupForm';
+import { getSafeReturnPath } from '@/lib/auth/returnPath';
 
 const cx = classNames.bind(styles);
 
@@ -15,6 +16,7 @@ type SignupContentProps = {
     kakaoId?: string;
     email?: string;
     profileImageUrl?: string;
+    returnTo?: string;
   };
 };
 
@@ -25,6 +27,7 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
   const kakaoId = searchParams.kakaoId || clientSearchParams.get('kakaoId') || '';
   const email = searchParams.email || clientSearchParams.get('email') || '';
   const profileImageUrl = searchParams.profileImageUrl || clientSearchParams.get('profileImageUrl') || '';
+  const returnTo = getSafeReturnPath(searchParams.returnTo || clientSearchParams.get('returnTo'));
 
   const isKakao = Boolean(kakaoId && email);
 
@@ -71,12 +74,12 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
       </div>
 
       <div className={cx('content')}>
-        <SignupForm step={signupStep} onStepChange={setSignupStep} kakaoData={kakaoData} />
+        <SignupForm step={signupStep} onStepChange={setSignupStep} kakaoData={kakaoData} returnTo={returnTo ?? undefined} />
       </div>
 
       <div className={cx('footer')}>
         이미 계정이 있으신가요?{' '}
-        <button className={cx('loginLink')} type="button" onClick={() => router.push('/login')}>
+        <button className={cx('loginLink')} type="button" onClick={() => router.push(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login')}>
           로그인
         </button>
       </div>

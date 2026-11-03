@@ -17,6 +17,7 @@ interface Props {
   step: number;
   onStepChange: (step: number) => void;
   kakaoData?: KakaoSignupData;
+  returnTo?: string;
 }
 
 function getVerificationNonce(response: unknown) {
@@ -27,7 +28,7 @@ function getVerificationNonce(response: unknown) {
   return typeof result.verificationNonce === 'string' ? result.verificationNonce : '';
 }
 
-export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
+export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: Props) {
   const {
     register,
     onSubmit,
@@ -43,7 +44,7 @@ export default function SignupForm({ step, onStepChange, kakaoData }: Props) {
     signupError,
     isKakaoSignup,
     clearSignupError,
-  } = useSignupForm({ kakaoData });
+  } = useSignupForm({ kakaoData, returnTo });
 
   const [isEmailCheck, setIsEmailCheck] = useState(Boolean(kakaoData));
   const [checkedEmail, setCheckedEmail] = useState(kakaoData?.email.trim() ?? '');
