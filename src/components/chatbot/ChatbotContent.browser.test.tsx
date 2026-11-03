@@ -15,6 +15,7 @@ const api = vi.hoisted(() => ({
   getChatLogs: vi.fn(),
   role: vi.fn(),
   wards: vi.fn(),
+  wardsLoading: vi.fn(),
   push: vi.fn(),
 }));
 
@@ -32,7 +33,10 @@ vi.mock('@/service/query/user/profile', () => ({
 vi.mock('@/utils/auth/userProfile', () => ({ getUserProfileData: (response: unknown) => response }));
 vi.mock('@/lib/auth/tokenStore', () => ({ getAuthRole: api.role }));
 vi.mock('@/hooks/useActiveConnections', () => ({
-  useGuardianActiveWards: (enabled: boolean) => ({ activeWards: enabled ? api.wards() : [] }),
+  useGuardianActiveWards: (enabled: boolean) => ({
+    activeWards: enabled ? api.wards() : [],
+    isLoading: enabled ? api.wardsLoading() : false,
+  }),
 }));
 vi.mock('@/components/connections/WardSelectorTabs', () => ({
   WardSelectorTabs: ({
@@ -84,6 +88,7 @@ beforeEach(() => {
   api.getChatLogs.mockReset();
   api.push.mockReset();
   api.wards.mockReturnValue([WARD]);
+  api.wardsLoading.mockReturnValue(false);
   sessionStorage.clear();
   clearSelectedWardId();
 });
@@ -99,6 +104,30 @@ describe('보호자 AI 의료 챗봇', () => {
     await expect.element(page.getByRole('region', { name: '상담할 피보호자' })).toBeVisible();
     await expect.element(page.getByText(/김영희의 증상을 말씀해 주시면/)).toBeVisible();
     await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeVisible();
+  });
+
+  it('피보호자 목록을 불러오는 동안에는 칩·입력·보내기를 잠그고 안내한다 - 본인 상담으로 새지 않게(2026-11-03 점검 M-1)', async () => {
+    api.wards.mockReturnValue([]);
+    api.wardsLoading.mockReturnValue(true);
+    api.sendChatMessage.mockResolvedValue(REPLY);
+    renderChat(<ChatbotContent />);
+
+    await expect.element(page.getByText('피보호자 정보를 불러오는 중이에요')).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeDisabled();
+    await expect.element(page.getByRole('button', { name: '병원 예약하고 싶어요' })).toBeDisabled();
+    await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeDisabled();
+    expect(api.sendChatMessage).not.toHaveBeenCalled();
+  });
+
+  it('피보호자 목록이 없는 보호자(로딩 끝)는 지금처럼 본인 상담으로 보낼 수 있다', async () => {
+    api.wards.mockReturnValue([]);
+    api.sendChatMessage.mockResolvedValue(REPLY);
+    renderChat(<ChatbotContent />);
+
+    await expect.element(page.getByText('눌러서 물어보세요')).toBeVisible();
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
+    await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
+    expect(api.sendChatMessage.mock.calls[0][0].context ?? {}).not.toHaveProperty('wardId');
   });
 
   it('추천 칩은 펼쳐져 있고 누르면 선택한 피보호자 context로 바로 보낸다', async () => {

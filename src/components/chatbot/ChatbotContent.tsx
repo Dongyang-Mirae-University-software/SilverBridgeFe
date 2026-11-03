@@ -131,7 +131,10 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const profile = getUserProfileData(profileResponse);
   const isGuardian = getAuthRole() === 'GUARDIAN';
   const isWardChat = variant === 'ward';
-  const { activeWards } = useGuardianActiveWards(isGuardian);
+  const { activeWards, isLoading: wardsLoading } = useGuardianActiveWards(isGuardian);
+  // 보호자는 피보호자 목록을 받기 전에 보내면 wardId 없이 본인 상담으로 가고, 다음 턴(wardId 있음)에 되묻기 이어 붙이기가 끊긴다
+  // (2026-11-03 답 칩 점검 M-1). 목록을 받는 동안은 칩·입력·보내기를 잠근다.
+  const waitingWards = isGuardian && Boolean(wardsLoading);
   const selectedWard = useSelectedWard(activeWards, ward => ward.partnerUserId);
   const [sessionId, setSessionId] = useState(makeSessionId);
   // 대화창(sessionId)마다 이미 보낸 문장 - 빠른 질문에서 뺀다. 상담 내용이라 브라우저 저장소에 남기지 않는다(새로고침하면 비워진다).
@@ -192,7 +195,11 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
   const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
   const suggested = latestSuggestions(messages);
-  const quickTitle = suggested.answer ? '눌러서 답해 보세요' : '눌러서 물어보세요';
+  const quickTitle = waitingWards
+    ? '피보호자 정보를 불러오는 중이에요'
+    : suggested.answer
+      ? '눌러서 답해 보세요'
+      : '눌러서 물어보세요';
   const sentTexts = new Set(sentBySession[sessionId] ?? []);
   // 서버는 버튼·날짜·지역 선택도 "[선택] field: value" 형식의 별도 기록으로 남긴다.
   // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
@@ -206,7 +213,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     ) => {
       const trimmed = text.trim();
       if (!trimmed && !uiSelection) return;
-      if (sendingRef.current) return;
+      if (sendingRef.current || waitingWards) return;
 
       const userMessage: ChatMessage = {
         id: makeId(),
@@ -304,7 +311,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         if (refocusComposer) textareaRef.current?.focus();
       }
     },
-    [isGuardian, selectedWard, sessionId],
+    [isGuardian, selectedWard, sessionId, waitingWards],
   );
 
   useEffect(
@@ -316,7 +323,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
   // AI를 부르지 않으므로 챗 기록에 저장되지 않고, 보낸 문장 기억에도 넣지 않는다(칩은 항상 남는다).
   function openReservation(text: string) {
-    if (sendingRef.current || reservationTimerRef.current) return;
+    if (sendingRef.current || reservationTimerRef.current || waitingWards) return;
     setMessages(prev => [...prev, { id: makeId(), role: 'user', content: text, timestamp: new Date().toISOString() }]);
     // 예약 화면은 전역으로 고른 피보호자(selectedWardStore)로 시작한다 - 따로 넘기지 않는다
     reservationTimerRef.current = setTimeout(() => {
@@ -398,7 +405,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           aria-label="궁금한 점 입력"
           placeholder={isWardChat ? '직접 쓰기' : '여기에 궁금한 점을 써 주세요'}
           value={input}
-          disabled={sending}
+          disabled={sending || waitingWards}
           onChange={e => {
             setInput(e.target.value);
             resizeComposer();
@@ -410,7 +417,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         <button
           type="button"
           className={styles.sendButton}
-          disabled={sending || !input.trim()}
+          disabled={sending || waitingWards || !input.trim()}
           onClick={() => void send(input, undefined, undefined, true)}
         >
           보내기
@@ -521,7 +528,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                   key={prompt.text}
                   type="button"
                   className={`${styles.quickPromptButton} ${prompt.primary ? styles.quickPromptPrimary : ''}`}
-                  disabled={sending}
+                  disabled={sending || waitingWards}
                   onClick={() =>
                     prompt.action === 'reservation' ? openReservation(prompt.text) : void send(prompt.text)
                   }
