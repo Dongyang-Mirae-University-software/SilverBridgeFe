@@ -13,6 +13,7 @@ import styles from './ProfileModal.module.css';
 import { useLogoutMutation } from '@/service/query/auth';
 import { CommonModal } from '@/components/CommonModal';
 import useModalStore from '@/store/modalStore';
+import { WardIdSharePanel } from './WardIdSharePanel';
 
 const cx = classNames.bind(styles);
 
@@ -129,6 +130,7 @@ export function ProfileModal({ onClose, profile, role, userId, userEmail, userNa
             profile={profile}
             setIsEditing={setIsEditing}
           />
+          {role === 'WARD' && <WardIdSharePanel userId={userId} />}
         </div>
 
         <div className={cx('profileModalFooter')}>

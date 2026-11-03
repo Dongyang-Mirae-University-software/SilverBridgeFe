@@ -1,0 +1,28 @@
+.sharePanel {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
+  padding: 16px;
+}
+
+.heading { display: flex; align-items: flex-start; gap: 10px; }
+.headingIcon { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 10px; background: var(--sb-brand-50); color: var(--sb-brand); }
+.heading h3 { margin: 0; color: var(--sb-ink); font-size: 15px; font-weight: 800; }
+.heading p { margin: 3px 0 0; color: var(--sb-ink-mute); font-size: 12px; line-height: 1.45; word-break: keep-all; }
+
+.idBox { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px dashed var(--sb-line); border-radius: 10px; background: #fff; padding: 10px 12px; }
+.idBox span { color: var(--sb-ink-mute); font-size: 12px; font-weight: 700; }
+.idBox strong { color: var(--sb-brand); font-family: monospace; font-size: 16px; font-weight: 800; letter-spacing: .08em; }
+
+.nativeShareButton { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 11px; background: var(--sb-brand); color: #fff; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 800; }
+.nativeShareButton:disabled, .shareMethods button:disabled { cursor: not-allowed; opacity: .55; }
+
+.shareMethods { display: flex; flex-wrap: wrap; gap: 7px; }
+.shareMethods button { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; gap: 5px; border: 1px solid var(--sb-line); border-radius: 9px; background: #fff; color: var(--sb-ink-soft); cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 700; padding: 0 10px; }
+.shareMethods button:hover { border-color: var(--sb-brand); color: var(--sb-brand); }
+.notice { min-height: 17px; margin: -2px 0 0; color: var(--sb-safe); font-size: 12px; font-weight: 700; }
+
+@media (max-width: 420px) { .sharePanel { padding: 14px; } .shareMethods button { flex: 1; padding: 0 7px; } }
