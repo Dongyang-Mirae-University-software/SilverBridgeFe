@@ -1,3 +1,4 @@
+import { clearSelectedWardId } from '@/store/selectedWardStore';
 import { decodeAccessTokenClaims } from './tokenClaims';
 
 let accessToken: string | null = null;
@@ -125,4 +126,6 @@ export function clearAuthTokens() {
   removeCookie(ACCESS_TOKEN_KEY);
   removeCookie(REFRESH_TOKEN_KEY);
   removeCookie(SESSION_ONLY_KEY);
+  // 다음에 이 탭으로 로그인하는 사람에게 앞 사람이 고른 피보호자가 남지 않게 한다
+  clearSelectedWardId();
 }

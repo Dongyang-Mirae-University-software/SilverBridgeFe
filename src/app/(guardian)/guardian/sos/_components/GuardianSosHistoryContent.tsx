@@ -11,6 +11,7 @@ import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { formatTime } from '@/utils/format/date';
 import { guardianSosHistoryQueryOptions } from '@/service/query/guardian';
 import type { IGuardianSosHistoryItem, SosTriggerType } from '@/service/interface/guardian/sosHistory';
+import useSelectedWardId, { setSelectedWardId } from '@/store/selectedWardStore';
 import styles from './GuardianSosHistoryContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -24,7 +25,7 @@ const TRIGGER_TYPE_META: Record<SosTriggerType, { filterLabel: string; descripti
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
 
 export default function GuardianSosHistoryContent() {
-  const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
+  const selectedWardId = useSelectedWardId();
   const [triggerTypeFilter, setTriggerTypeFilter] = useState<TriggerTypeFilter>('ALL');
   const [page, setPage] = useState(0);
 

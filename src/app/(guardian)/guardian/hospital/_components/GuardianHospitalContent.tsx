@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { takeReservationWardId } from '@/components/chatbot/reservationWardHandoff';
 import { ReservationDemoNotice } from '@/components/reservation/ReservationDemoNotice';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { cancelReservation, createReservation } from '@/service/api/guardian/reservation';
@@ -26,6 +25,7 @@ import {
   reservationErrorMessage,
 } from '@/utils/reservation/reservationView';
 import { useKstNow } from '@/utils/reservation/useKstNow';
+import useSelectedWardId, { setSelectedWardId } from '@/store/selectedWardStore';
 import styles from './GuardianHospitalContent.module.css';
 import { HospitalConfirmStep } from './HospitalConfirmStep';
 import { HospitalDateTimeStep } from './HospitalDateTimeStep';
@@ -53,11 +53,8 @@ export function GuardianHospitalContent() {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const guardian = getUserProfileData(profileResponse);
 
-  const [wardId, setWardId] = useState<string | null>(null);
-  // 챗봇 예약 칩에서 고른 피보호자 - 들어오자마자 저장소에서 꺼내 지우고, 목록이 오면 내 ACTIVE 피보호자일 때만 쓴다.
-  // 확인이 끝나기 전에는 화면·예약 조회를 미룬다(첫 번째 피보호자가 잠깐 보이고 그 사람 예약을 부르지 않게).
-  const handoffWardIdRef = useRef<string | null>(null);
-  const [handoffChecked, setHandoffChecked] = useState(false);
+  // 다른 화면(대시보드·챗봇 등)에서 고른 피보호자로 시작한다. 내 ACTIVE 목록에 없으면 첫 번째 피보호자
+  const wardId = useSelectedWardId();
   const [step, setStep] = useState<Step>('list');
   const [pick, setPick] = useState<Pick | null>(null);
   const [date, setDate] = useState('');
@@ -74,19 +71,6 @@ export function GuardianHospitalContent() {
   const [slotNotice, setSlotNotice] = useState<string | null>(null);
   const doneTitleRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handoff = takeReservationWardId();
-    if (handoff) handoffWardIdRef.current = handoff;
-  }, []);
-
-  useEffect(() => {
-    if (handoffChecked || isWardsLoading) return;
-    const handoff = handoffWardIdRef.current;
-    handoffWardIdRef.current = null;
-    if (handoff && activeWards.some(item => item.partnerUserId === handoff)) setWardId(handoff);
-    setHandoffChecked(true);
-  }, [handoffChecked, isWardsLoading, activeWards]);
-
   const ward = activeWards.find(item => item.partnerUserId === wardId) ?? activeWards[0] ?? null;
   const wardPhone = ward?.partnerPhone && PHONE_PATTERN.test(ward.partnerPhone) ? ward.partnerPhone : null;
   const patientPhone = wardPhone && !phoneEditing ? wardPhone : phoneInput.trim();
@@ -96,7 +80,7 @@ export function GuardianHospitalContent() {
   const slotsQuery = useQuery(availableSlotsQueryOptions(pick?.hospital.id ?? null, date, pick?.department ?? ''));
   const reservationsQuery = useQuery({
     ...myReservationsQueryOptions(ward?.partnerUserId),
-    enabled: Boolean(ward) && handoffChecked,
+    enabled: Boolean(ward) && !isWardsLoading,
   });
 
   const { today, nowTime } = useKstNow();
@@ -198,7 +182,7 @@ export function GuardianHospitalContent() {
     });
   };
 
-  if (isWardsLoading || !handoffChecked) return <p className={cx('message')}>피보호자 정보를 불러오는 중이에요.</p>;
+  if (isWardsLoading) return <p className={cx('message')}>피보호자 정보를 불러오는 중이에요.</p>;
   if (!ward) return <p className={cx('message')}>연결된 피보호자가 없어요. 먼저 피보호자를 연결해 주세요.</p>;
 
   const stepIndex = STEPS.findIndex(item => item.step === step);
@@ -216,7 +200,7 @@ export function GuardianHospitalContent() {
                 value={ward.partnerUserId}
                 disabled={inFlow}
                 onChange={event => {
-                  setWardId(event.target.value);
+                  setSelectedWardId(event.target.value);
                   setPastPage(0);
                   setListNotice(null);
                 }}

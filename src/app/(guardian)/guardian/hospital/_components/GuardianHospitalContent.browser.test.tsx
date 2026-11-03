@@ -8,8 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from '@vitest/browser/context';
 import { render } from 'vitest-browser-react';
 
-import { RESERVATION_WARD_STORAGE_KEY } from '@/components/chatbot/reservationWardHandoff';
 import { RESERVATION_DEMO_NOTICE } from '@/constants/reservation';
+import useSelectedWardId, { clearSelectedWardId, setSelectedWardId } from '@/store/selectedWardStore';
 import type { IConnectionItem } from '@/service/interface/connection';
 import type { IHospital, IReservationItem } from '@/service/interface/reservation';
 import { addDays, formatDateShort, kstToday } from '@/utils/reservation/reservationView';
@@ -128,6 +128,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
     wards.list = [ward('ward01', '김영희')];
     wards.loading = false;
     sessionStorage.clear();
+    clearSelectedWardId();
     api.getHospitals.mockResolvedValue([
       hospital(1, '강남내과', ['내과', '가정의학과']),
       hospital(2, '푸른안과', ['안과']),
@@ -664,7 +665,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
     expect(document.body.style.overflow).toBe('');
   });
 
-  describe('챗봇 예약 칩에서 고른 피보호자 이어받기(sessionStorage 1회)', () => {
+  describe('다른 화면에서 고른 피보호자 이어받기(전역 선택)', () => {
     const picker = (screen: ReturnType<typeof renderContent>) =>
       screen.getByRole('combobox', { name: '진료받으실 분' }).element() as HTMLSelectElement;
 
@@ -672,21 +673,18 @@ describe('GuardianHospitalContent (Chrome)', () => {
       wards.list = [ward('ward01', '김영희'), ward('ward02', '이철수')];
     });
 
-    it('넘겨받은 피보호자가 내 목록에 있으면 그 사람으로 시작하고, 값은 바로 지운다', async () => {
-      sessionStorage.setItem(RESERVATION_WARD_STORAGE_KEY, 'ward02');
+    it('대시보드·챗봇에서 고른 피보호자로 시작하고, 첫 번째 피보호자 예약은 부르지 않는다', async () => {
+      setSelectedWardId('ward02');
       const screen = renderContent();
       await vi.waitFor(() => expect(picker(screen).value).toBe('ward02'));
-      expect(sessionStorage.getItem(RESERVATION_WARD_STORAGE_KEY)).toBeNull();
       await vi.waitFor(() => expect(api.getMyReservations).toHaveBeenCalledWith('ward02'));
-      // 이어받기 확인 전에 첫 번째 피보호자를 그리거나 그 사람 예약을 부르지 않는다(점검 M-1)
       expect(api.getMyReservations.mock.calls.map(call => call[0])).toEqual(['ward02']);
     });
 
-    it('목록을 불러오는 중에 들어와도 값은 즉시 지우고, 목록이 오면 그 사람을 고른다', async () => {
-      sessionStorage.setItem(RESERVATION_WARD_STORAGE_KEY, 'ward02');
+    it('목록을 불러오는 중에 들어와도 목록이 오면 고른 피보호자로 시작한다', async () => {
+      setSelectedWardId('ward02');
       wards.loading = true;
       const screen = renderContent();
-      await vi.waitFor(() => expect(sessionStorage.getItem(RESERVATION_WARD_STORAGE_KEY)).toBeNull());
       expect(api.getMyReservations).not.toHaveBeenCalled();
       wards.loading = false;
       screen.rerender(<GuardianHospitalContent />);
@@ -694,16 +692,23 @@ describe('GuardianHospitalContent (Chrome)', () => {
       expect(api.getMyReservations.mock.calls.map(call => call[0])).toEqual(['ward02']);
     });
 
-    it.each([
-      ['목록에 없는 ID', 'ward99'],
-      ['빈 값', ''],
-      ['너무 긴 값', 'w'.repeat(65)],
-      ['앞뒤 공백', ' ward02 '],
-    ])('%s이면 첫 번째 피보호자로 시작하고 값은 지운다', async (_label, value) => {
-      sessionStorage.setItem(RESERVATION_WARD_STORAGE_KEY, value);
+    it('고른 피보호자가 내 목록에 없으면(연결 해제 등) 첫 번째 피보호자로 시작한다', async () => {
+      setSelectedWardId('ward99');
       const screen = renderContent();
       await vi.waitFor(() => expect(picker(screen).value).toBe('ward01'));
-      expect(sessionStorage.getItem(RESERVATION_WARD_STORAGE_KEY)).toBeNull();
+    });
+
+    it('여기서 바꾼 피보호자는 다른 화면에도 이어진다', async () => {
+      const seen: (string | null)[] = [];
+      function SelectedWardProbe() {
+        seen.push(useSelectedWardId());
+        return null;
+      }
+      const screen = renderContent();
+      render(<SelectedWardProbe />);
+      await vi.waitFor(() => expect(picker(screen).value).toBe('ward01'));
+      await userEvent.selectOptions(picker(screen), 'ward02');
+      await vi.waitFor(() => expect(seen.at(-1)).toBe('ward02'));
     });
 
     it('저장소 접근이 실패해도 화면은 첫 번째 피보호자로 뜬다', async () => {
@@ -716,12 +721,6 @@ describe('GuardianHospitalContent (Chrome)', () => {
       } finally {
         spy.mockRestore();
       }
-    });
-
-    it('예약 화면에 바로 들어오면(값 없음) 지금처럼 첫 번째 피보호자', async () => {
-      const screen = renderContent();
-      await vi.waitFor(() => expect(picker(screen).value).toBe('ward01'));
-      expect(sessionStorage.length).toBe(0);
     });
   });
 });

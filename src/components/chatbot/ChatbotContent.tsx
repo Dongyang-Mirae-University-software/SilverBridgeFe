@@ -14,10 +14,10 @@ import { getHistoryWarning } from '@/service/api/chatPolicy';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { calcAge, type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
+import useSelectedWardId, { setSelectedWardId } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
 import styles from './ChatbotContent.module.css';
-import { saveReservationWardId } from './reservationWardHandoff';
 
 function makeId() {
   return Math.random().toString(36).slice(2);
@@ -132,7 +132,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const isGuardian = getAuthRole() === 'GUARDIAN';
   const isWardChat = variant === 'ward';
   const { activeWards } = useGuardianActiveWards(isGuardian);
-  const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
+  const selectedWardId = useSelectedWardId();
   const selectedWard = activeWards.find(ward => ward.partnerUserId === selectedWardId) ?? activeWards[0] ?? null;
   const [sessionId, setSessionId] = useState(makeSessionId);
   // 대화창(sessionId)마다 이미 보낸 문장 - 빠른 질문에서 뺀다. 상담 내용이라 브라우저 저장소에 남기지 않는다(새로고침하면 비워진다).
@@ -319,10 +319,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   function openReservation(text: string) {
     if (sendingRef.current || reservationTimerRef.current) return;
     setMessages(prev => [...prev, { id: makeId(), role: 'user', content: text, timestamp: new Date().toISOString() }]);
-    const wardId = selectedWard?.partnerUserId;
-    // 이동 직전에 담는다 - 타이머가 취소되면(화면 이탈) 저장소에 남지 않는다.
+    // 예약 화면은 전역으로 고른 피보호자(selectedWardStore)로 시작한다 - 따로 넘기지 않는다
     reservationTimerRef.current = setTimeout(() => {
-      saveReservationWardId(wardId);
       router.push(RESERVATION_PATH);
     }, RESERVATION_NAV_DELAY_MS);
   }

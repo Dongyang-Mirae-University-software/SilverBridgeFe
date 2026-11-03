@@ -8,7 +8,7 @@ import { page, userEvent } from '@vitest/browser/context';
 import { render } from 'vitest-browser-react';
 
 import ChatbotContent from './ChatbotContent';
-import { RESERVATION_WARD_STORAGE_KEY } from './reservationWardHandoff';
+import { clearSelectedWardId, setSelectedWardId } from '@/store/selectedWardStore';
 
 const api = vi.hoisted(() => ({
   sendChatMessage: vi.fn(),
@@ -85,6 +85,7 @@ beforeEach(() => {
   api.push.mockReset();
   api.wards.mockReturnValue([WARD]);
   sessionStorage.clear();
+  clearSelectedWardId();
 });
 
 describe('보호자 AI 의료 챗봇', () => {
@@ -129,7 +130,7 @@ describe('보호자 AI 의료 챗봇', () => {
     expect(api.sendChatMessage).not.toHaveBeenCalled();
   });
 
-  it('예약 칩은 고른 피보호자 ID만 sessionStorage에 담아 예약 화면으로 넘긴다(주소창·이름·문장은 싣지 않음)', async () => {
+  it('챗봇에서 고른 피보호자는 전역 선택이 되어 예약 화면이 이어받는다(주소창엔 싣지 않음)', async () => {
     api.wards.mockReturnValue([WARD, WARD_2]);
     renderChat(<ChatbotContent />);
 
@@ -137,11 +138,18 @@ describe('보호자 AI 의료 챗봇', () => {
     await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
 
     await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
-    expect(sessionStorage.getItem(RESERVATION_WARD_STORAGE_KEY)).toBe('ward-2');
-    expect(sessionStorage.length).toBe(1);
+    expect(sessionStorage.getItem('careai_selected_ward_id')).toBe('ward-2');
   });
 
-  it('이동 전에 화면을 벗어나면(타이머 취소) 저장소에 남기지 않는다', async () => {
+  it('다른 화면에서 고른 피보호자로 시작한다', async () => {
+    api.wards.mockReturnValue([WARD, WARD_2]);
+    setSelectedWardId('ward-2');
+    renderChat(<ChatbotContent />);
+
+    await expect.element(page.getByText(/이철수의 증상을 말씀해 주시면/)).toBeVisible();
+  });
+
+  it('이동 전에 화면을 벗어나면(타이머 취소) 예약 화면으로 가지 않는다', async () => {
     const screen = renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
@@ -149,7 +157,6 @@ describe('보호자 AI 의료 챗봇', () => {
 
     await new Promise(resolve => setTimeout(resolve, 800));
     expect(api.push).not.toHaveBeenCalled();
-    expect(sessionStorage.getItem(RESERVATION_WARD_STORAGE_KEY)).toBeNull();
   });
 
   it('저장소를 쓸 수 없어도 예약 화면으로는 이동한다', async () => {

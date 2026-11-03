@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -12,6 +11,7 @@ import useKstMidnightRefetch from '@/hooks/useKstMidnightRefetch';
 import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
 import { guardianMedicationQueryKey, guardianMedicationQueryOptions } from '@/service/query/guardian/medication';
 import useModalStore from '@/store/modalStore';
+import useSelectedWardId, { setSelectedWardId } from '@/store/selectedWardStore';
 import { MedicationAddModal } from './MedicationAddModal';
 import { WardMedicationCard } from './WardMedicationCard';
 import styles from './GuardianMedicationContent.module.css';
@@ -23,7 +23,7 @@ export function GuardianMedicationContent() {
   const { data: connectionsData } = useQuery(guardianConnectionsQueryOptions);
   const wards = data ?? [];
   const activeConnections = getConnectionData(connectionsData).filter(connection => connection.status === 'ACTIVE');
-  const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
+  const selectedWardId = useSelectedWardId();
   const { openModal, onCloseModal } = useModalStore(state => ({
     openModal: state.openModal,
     onCloseModal: state.onCloseModal,
