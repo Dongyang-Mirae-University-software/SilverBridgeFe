@@ -6,13 +6,13 @@ import { guardianConnectionsQueryOptions } from '@/service/query/guardian';
 import { wardConnectionsQueryOptions } from '@/service/query/ward';
 
 export function useGuardianActiveWards(enabled = true) {
-  const { data: connectionsResponse, isLoading, isError } = useQuery({
+  const { data: connectionsResponse, isLoading, isError, refetch } = useQuery({
     ...guardianConnectionsQueryOptions,
     enabled,
   });
   const activeWards = (connectionsResponse?.data ?? []).filter(connection => connection.status === 'ACTIVE');
 
-  return { activeWards, hasActiveWards: activeWards.length > 0, isLoading, isError };
+  return { activeWards, hasActiveWards: activeWards.length > 0, isLoading, isError, refetch };
 }
 
 export function useWardActiveGuardians() {

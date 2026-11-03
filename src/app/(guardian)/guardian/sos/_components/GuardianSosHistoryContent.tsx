@@ -28,7 +28,13 @@ export default function GuardianSosHistoryContent() {
   const [triggerTypeFilter, setTriggerTypeFilter] = useState<TriggerTypeFilter>('ALL');
   const [page, setPage] = useState(0);
 
-  const { activeWards, hasActiveWards } = useGuardianActiveWards();
+  const {
+    activeWards,
+    hasActiveWards,
+    isLoading: isWardsLoading,
+    isError: isWardsError,
+    refetch: refetchWards,
+  } = useGuardianActiveWards();
   const effectiveSelectedWardId = useSelectedWard(activeWards, ward => ward.partnerUserId)?.partnerUserId ?? null;
 
   const { data, isLoading, isError, isFetching } = useQuery({
@@ -47,6 +53,31 @@ export default function GuardianSosHistoryContent() {
 
   const hasNextPage = data ? !data.last : false;
   const hasPrevPage = page > 0;
+  // 목록을 받기 전·실패했을 때 "연결된 피보호자가 없습니다"로 보이지 않게 따로 안내한다
+  if (isWardsLoading) {
+    return (
+      <div className={cx('page')}>
+        <p className={cx('emptyState')} role="status">
+          피보호자 정보를 불러오는 중이에요.
+        </p>
+      </div>
+    );
+  }
+
+  // 이미 받은 목록이 있으면 갱신 실패여도 그대로 보여 준다
+  if (isWardsError && !hasActiveWards) {
+    return (
+      <div className={cx('page')}>
+        <div className={cx('emptyState')} role="alert">
+          <strong>피보호자 정보를 불러오지 못했어요.</strong>
+          <button className={cx('retryButton')} type="button" onClick={() => void refetchWards()}>
+            다시 불러오기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!hasActiveWards) {
     return (
       <div className={cx('page')}>

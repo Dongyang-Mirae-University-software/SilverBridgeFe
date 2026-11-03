@@ -195,6 +195,20 @@
   text-align: center;
 }
 
+.retryButton {
+  display: block;
+  margin: 14px auto 0;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 16px;
+}
+
 @media (max-width: 900px) {
   .filters {
     align-items: flex-start;
