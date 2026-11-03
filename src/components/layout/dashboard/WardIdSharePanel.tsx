@@ -124,14 +124,9 @@ export function WardIdSharePanel({ userId }: Props) {
         <strong>{userId}</strong>
       </div>
 
-      <button className={cx('nativeShareButton')} type="button" disabled={isSharing} onClick={() => void handleNativeShare()}>
-        <Icon name="users" size={18} decorative />
-        {isSharing ? '공유 준비 중...' : '가족에게 내 ID 보내기'}
-      </button>
-
       <div className={cx('shareMethods')}>
         {isKakaoAvailable && (
-          <button type="button" disabled={isSharing} onClick={() => void handleKakaoShare()}>
+          <button className={cx('kakaoButton')} type="button" disabled={isSharing} onClick={() => void handleKakaoShare()}>
             <Icon name="kakaoLogo" size={17} color="#3C1E1E" decorative /> 카카오톡으로 보내기
           </button>
         )}
@@ -142,6 +137,11 @@ export function WardIdSharePanel({ userId }: Props) {
           <Icon name="fileText" size={16} decorative /> 복사하기
         </button>
       </div>
+
+      <button className={cx('nativeShareButton')} type="button" disabled={isSharing} onClick={() => void handleNativeShare()}>
+        <Icon name="users" size={18} decorative />
+        {isSharing ? '공유 준비 중...' : '다른 앱으로 보내기'}
+      </button>
 
       <p className={cx('notice')} aria-live="polite">{notice}</p>
     </section>

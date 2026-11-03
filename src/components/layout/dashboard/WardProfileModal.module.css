@@ -1,0 +1,9 @@
+.quickIdentity { display: flex; align-items: center; gap: 16px; }
+.quickIdentity h2 { margin: 0; color: var(--sb-ink); font-size: 30px; font-weight: 800; letter-spacing: -.04em; }
+.quickIdentity p { margin: 3px 0 0; color: var(--sb-ink-mute); font-size: 18px; font-weight: 600; }
+.quickGuide { margin: 14px 2px 18px; color: var(--sb-ink-mute); font-size: 14px; font-weight: 600; line-height: 1.55; word-break: keep-all; }
+.detailHero { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 0 0 18px; text-align: center; }
+.detailHero h2 { margin: 2px 0 0; color: var(--sb-ink); font-size: 28px; font-weight: 800; }
+.detailHero > span { display: inline-flex; border: 1px solid var(--sb-line-soft); border-radius: 999px; background: var(--sb-bg-soft); color: var(--sb-ink-soft); font-size: 15px; font-weight: 800; padding: 5px 14px; }
+.email { margin: 14px 0 18px; color: var(--sb-ink-mute); font-size: 13px; text-align: center; word-break: break-all; }
+@media (max-width: 520px) { .quickIdentity h2 { font-size: 25px; } .quickIdentity p { font-size: 16px; } }
