@@ -66,10 +66,14 @@ export function GuardianDashboardContent() {
   const detectAlert = needsReview || sosCount > 0;
   const detectLabel = [needsReview && `확인 필요 ${anomalyCount}건`, sosCount > 0 && `이번 달 SOS ${sosCount}건`].filter(Boolean).join(', ');
 
+  // 화면 제목은 시안에 없어 보이지 않게 두고, 화면 읽기 프로그램·자동 점검이 찾을 수 있게 h1만 둔다
+  const pageHeading = <h1 className={cx('srOnly')}>보호자 대시보드</h1>;
+
   // 목록을 받기 전·실패했을 때 "연결된 피보호자가 없습니다"로 보이지 않게 따로 안내한다
   if (isConnectionsLoading) {
     return (
       <div className={cx('dashboardStack')}>
+        {pageHeading}
         <p className={cx('stateCard')} role="status">피보호자 정보를 불러오는 중이에요.</p>
       </div>
     );
@@ -78,6 +82,7 @@ export function GuardianDashboardContent() {
   if (isConnectionsError && !connectionsResponse) {
     return (
       <div className={cx('dashboardStack')}>
+        {pageHeading}
         <div className={cx('stateCard')} role="alert">
           <p>피보호자 정보를 불러오지 못했어요.</p>
           <button className={cx('emptyHeroButton')} type="button" onClick={() => void refetchConnections()}>
@@ -91,6 +96,7 @@ export function GuardianDashboardContent() {
   if (activeConnections.length === 0) {
     return (
       <div className={cx('dashboardStack')}>
+        {pageHeading}
         <section className={cx('emptyHero')} aria-label="피보호자 없음">
           <div className={cx('emptyHeroIcon')}><Icon name="users" size={28} /></div>
           <div className={cx('emptyHeroText')}><strong>연결된 피보호자가 없습니다</strong><span>피보호자를 등록하면 상태 확인과 알림 관리가 시작됩니다.</span></div>
@@ -102,6 +108,7 @@ export function GuardianDashboardContent() {
 
   return (
     <div className={cx('dashboardStack')}>
+      {pageHeading}
       <div className={cx('dashboardToolbar')}>
         <WardSelectorTabs
           wards={activeConnections.map(connection => ({

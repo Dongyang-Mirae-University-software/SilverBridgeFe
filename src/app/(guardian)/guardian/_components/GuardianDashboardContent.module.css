@@ -1,3 +1,4 @@
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
 .dashboardStack { display: flex; width: 100%; min-width: 0; flex: 1 0 auto; flex-direction: column; gap: 16px; }
 .dashboardToolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .wardRail { display: flex; min-width: 0; gap: 8px; overflow-x: auto; padding: 2px; scrollbar-width: none; }

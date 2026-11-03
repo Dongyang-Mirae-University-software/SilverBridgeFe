@@ -135,6 +135,13 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
     expect(borderOf(chip.element())).toMatchObject({ color: 'rgb(226, 164, 154)', background: 'rgb(255, 241, 238)' });
   });
 
+  it('보이지 않는 h1 "보호자 대시보드"를 둔다(시안에는 제목이 없다)', async () => {
+    data.dashboard = dashboard({});
+    renderDashboard();
+
+    await expect.element(page.getByRole('heading', { name: '보호자 대시보드', level: 1 })).toBeInTheDocument();
+  });
+
   it('확인할 일이 없으면 테두리 강조가 없다', async () => {
     data.dashboard = dashboard({});
     renderDashboard();
