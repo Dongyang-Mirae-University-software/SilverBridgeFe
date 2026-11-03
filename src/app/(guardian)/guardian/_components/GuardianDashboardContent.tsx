@@ -47,9 +47,13 @@ export function GuardianDashboardContent() {
   });
 
   const isAnomalyUnavailable = dashboard?.unavailable.includes('anomalyDetection') ?? false;
+  const isMedicationUnavailable = dashboard?.unavailable.includes('medication') ?? false;
   const anomaly = dashboard?.anomalyDetection;
   const pendingTotal = dashboard?.pendingActions.total;
-  const needsReview = !isAnomalyUnavailable && (anomaly?.needsReviewCount ?? 0) > 0;
+  // 확인 필요 건수가 있으면 그 칸에 테두리를 둔다(v13.0 시안). 이상감지는 두 값 중 하나라도 있으면 켠다
+  const anomalyCount = anomaly?.needsReviewCount || dashboard?.pendingActions.anomaly || 0;
+  const needsReview = !isAnomalyUnavailable && anomalyCount > 0;
+  const medicationCount = isMedicationUnavailable ? 0 : (dashboard?.pendingActions.medication ?? 0);
 
   if (activeConnections.length === 0) {
     return (
@@ -86,7 +90,7 @@ export function GuardianDashboardContent() {
         <Link
           href="/guardian/detection"
           className={cx('featureCard', 'detect', { danger: needsReview })}
-          aria-label={needsReview ? `AI 이상감지, 확인 필요 ${anomaly?.needsReviewCount}건` : 'AI 이상감지'}
+          aria-label={needsReview ? `AI 이상감지, 확인 필요 ${anomalyCount}건` : 'AI 이상감지'}
         >
           {needsReview && <DashboardPill tone="warn">확인 필요</DashboardPill>}
           <span className={cx('tileIcon')}><Icon name="flame" size={36} decorative /></span>
@@ -105,7 +109,9 @@ export function GuardianDashboardContent() {
         </Link>
       </section>
       <nav className={cx('quickLinks')} aria-label="빠른 이동">
-        {QUICK_LINKS.slice(0, 4).map(link => <QuickLink key={link.href} {...link} />)}
+        {QUICK_LINKS.slice(0, 4).map(link => (
+          <QuickLink key={link.href} {...link} alertCount={link.href === '/guardian/medication' ? medicationCount : 0} />
+        ))}
         <span className={cx('quickDivider')} aria-hidden="true" />
         {QUICK_LINKS.slice(4).map(link => <QuickLink key={link.href} {...link} />)}
       </nav>
@@ -113,9 +119,11 @@ export function GuardianDashboardContent() {
   );
 }
 
-function QuickLink({ href, icon, label }: (typeof QUICK_LINKS)[number]) {
+// 확인할 일이 있는 칩은 시안의 강조 칩(빨간 테두리·연한 바탕)으로 그린다
+function QuickLink({ href, icon, label, alertCount = 0 }: (typeof QUICK_LINKS)[number] & { alertCount?: number }) {
+  const hot = alertCount > 0;
   return (
-    <Link href={href} className={cx('quickLink')}>
+    <Link href={href} className={cx('quickLink', { hot })} aria-label={hot ? `${label}, 확인 필요 ${alertCount}건` : undefined}>
       <Icon name={icon} size={18} decorative />
       {label}
     </Link>
