@@ -42,14 +42,17 @@ vi.mock('@/service/query/guardian', () => ({
     queryOptions({ queryKey: ['test-dashboard', wardId ?? 'all'], queryFn: async () => data.dashboard }),
 }));
 
-function dashboard(pending: { anomaly?: number; medication?: number; needsReview?: number | null }, unavailable: string[] = []) {
+function dashboard(
+  pending: { anomaly?: number; medication?: number; needsReview?: number | null; sosThisMonth?: number },
+  unavailable: string[] = [],
+) {
   const anomaly = pending.anomaly ?? 0;
   const medication = pending.medication ?? 0;
   return {
     pendingActions: { total: anomaly + medication, anomaly, medication },
     wards: [{ wardId: 'ward01', wardName: '김영희', pendingCount: anomaly + medication }],
     anomalyDetection: { needsReviewCount: pending.needsReview === undefined ? anomaly : pending.needsReview, latest: null },
-    sos: { thisMonthCount: 0, latest: null },
+    sos: { thisMonthCount: pending.sosThisMonth ?? 0, latest: null },
     medication: { uncheckedCount: medication, mostUrgent: null },
     unavailable,
   } as GuardianDashboardResponse;
@@ -64,7 +67,6 @@ function renderDashboard() {
   );
 }
 
-// 1.5px 테두리는 1배율 화면에서 Chrome이 1px로 그린다 - 굵기 대신 색으로 강조 여부를 본다
 const borderOf = (element: Element) => {
   const style = getComputedStyle(element);
   return { width: style.borderTopWidth, color: style.borderTopColor, background: style.backgroundColor };
@@ -93,15 +95,31 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
     await expect.element(page.getByRole('link', { name: 'AI 이상감지, 확인 필요 1건' })).toBeVisible();
   });
 
-  it('안 드신 약이 있으면 약 관리 칩을 시안의 강조 칩(빨간 1.5px·#FFF1EE)으로 그린다', async () => {
-    data.dashboard = dashboard({ medication: 3 });
+  it('실제 응답(약 2건·이상감지 0건·이번 달 SOS 0건)이면 약 관리 칩에만 금색 3px 테두리를 둔다', async () => {
+    data.dashboard = {
+      pendingActions: { total: 2, anomaly: 0, medication: 2 },
+      wards: [{ wardId: 'ward01', wardName: '김철수', pendingCount: 2 }],
+      anomalyDetection: { needsReviewCount: 0, latest: null },
+      sos: { thisMonthCount: 0, latest: null },
+      medication: { uncheckedCount: 2, mostUrgent: null },
+      unavailable: [],
+    };
     renderDashboard();
 
-    const chip = page.getByRole('link', { name: '약 관리, 확인 필요 3건' });
+    const chip = page.getByRole('link', { name: '약 관리, 안 드신 약 2건' });
     await expect.element(chip).toBeVisible();
-    expect(borderOf(chip.element())).toMatchObject({ color: 'rgb(226, 164, 154)', background: 'rgb(255, 241, 238)' });
-    // 이상감지는 건수가 없으니 평소 테두리
+    expect(borderOf(chip.element())).toEqual({ width: '3px', color: 'rgb(217, 178, 94)', background: 'rgb(255, 250, 245)' });
+    expect(borderOf(page.getByRole('link', { name: 'SOS 내역' }).element()).width).not.toBe('3px');
     expect(borderOf(page.getByRole('link', { name: 'AI 이상감지' }).element()).width).not.toBe('3px');
+  });
+
+  it('이번 달 SOS가 있으면 SOS 내역 칩에 빨간 3px 테두리를 둔다', async () => {
+    data.dashboard = dashboard({ sosThisMonth: 1 });
+    renderDashboard();
+
+    const chip = page.getByRole('link', { name: 'SOS 내역, 이번 달 SOS 1건' });
+    await expect.element(chip).toBeVisible();
+    expect(borderOf(chip.element())).toMatchObject({ width: '3px', background: 'rgb(255, 241, 238)' });
   });
 
   it('확인할 일이 없으면 테두리 강조가 없다', async () => {
@@ -114,10 +132,11 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
   });
 
   it('조회 실패한 칸(unavailable)은 건수가 있어도 강조하지 않는다', async () => {
-    data.dashboard = dashboard({ anomaly: 2, medication: 1 }, ['anomalyDetection', 'medication']);
+    data.dashboard = dashboard({ anomaly: 2, medication: 1, sosThisMonth: 1 }, ['anomalyDetection', 'medication', 'sos']);
     renderDashboard();
 
     await expect.element(page.getByRole('link', { name: 'AI 이상감지' })).toBeVisible();
     await expect.element(page.getByRole('link', { name: '약 관리' })).toBeVisible();
+    await expect.element(page.getByRole('link', { name: 'SOS 내역' })).toBeVisible();
   });
 });

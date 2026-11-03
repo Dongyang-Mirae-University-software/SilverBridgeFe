@@ -54,6 +54,14 @@ export function GuardianDashboardContent() {
   const anomalyCount = anomaly?.needsReviewCount || dashboard?.pendingActions.anomaly || 0;
   const needsReview = !isAnomalyUnavailable && anomalyCount > 0;
   const medicationCount = isMedicationUnavailable ? 0 : (dashboard?.pendingActions.medication ?? 0);
+  const isSosUnavailable = dashboard?.unavailable.includes('sos') ?? false;
+  const sosCount = isSosUnavailable ? 0 : (dashboard?.sos.thisMonthCount ?? 0);
+  // 큰 카드가 없는 SOS·약은 바로가기 칩에 카드와 같은 굵은 테두리를 둔다(SOS는 위험 빨강, 약은 살펴보기 금색)
+  const chipAlert = (href: string): ChipAlert | undefined => {
+    if (href === '/guardian/sos' && sosCount > 0) return { tone: 'warn', label: `이번 달 SOS ${sosCount}건` };
+    if (href === '/guardian/medication' && medicationCount > 0) return { tone: 'care', label: `안 드신 약 ${medicationCount}건` };
+    return undefined;
+  };
 
   if (activeConnections.length === 0) {
     return (
@@ -110,7 +118,7 @@ export function GuardianDashboardContent() {
       </section>
       <nav className={cx('quickLinks')} aria-label="빠른 이동">
         {QUICK_LINKS.slice(0, 4).map(link => (
-          <QuickLink key={link.href} {...link} alertCount={link.href === '/guardian/medication' ? medicationCount : 0} />
+          <QuickLink key={link.href} {...link} alert={chipAlert(link.href)} />
         ))}
         <span className={cx('quickDivider')} aria-hidden="true" />
         {QUICK_LINKS.slice(4).map(link => <QuickLink key={link.href} {...link} />)}
@@ -119,11 +127,11 @@ export function GuardianDashboardContent() {
   );
 }
 
-// 확인할 일이 있는 칩은 시안의 강조 칩(빨간 테두리·연한 바탕)으로 그린다
-function QuickLink({ href, icon, label, alertCount = 0 }: (typeof QUICK_LINKS)[number] & { alertCount?: number }) {
-  const hot = alertCount > 0;
+type ChipAlert = { tone: 'warn' | 'care'; label: string };
+
+function QuickLink({ href, icon, label, alert }: (typeof QUICK_LINKS)[number] & { alert?: ChipAlert }) {
   return (
-    <Link href={href} className={cx('quickLink', { hot })} aria-label={hot ? `${label}, 확인 필요 ${alertCount}건` : undefined}>
+    <Link href={href} className={cx('quickLink', alert?.tone)} aria-label={alert ? `${label}, ${alert.label}` : undefined}>
       <Icon name={icon} size={18} decorative />
       {label}
     </Link>

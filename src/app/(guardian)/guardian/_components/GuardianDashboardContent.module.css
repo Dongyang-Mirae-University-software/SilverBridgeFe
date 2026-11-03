@@ -31,8 +31,11 @@
 .quickLinks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) 1px repeat(2, minmax(0, 1fr)); align-items: center; gap: 12px; }
 .quickLink { display: flex; width: 100%; min-width: 0; min-height: 54px; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--sb-line); border-radius: 16px; background: #f3ece3; color: var(--sb-ink-soft); font-size: 16px; font-weight: 700; padding: 0 12px; text-decoration: none; white-space: nowrap; }
 .quickLink:hover { background: #fff; color: var(--sb-ink); }
-.quickLink.hot { border: 1.5px solid #e2a49a; background: #fff1ee; color: var(--sb-danger); }
-.quickLink.hot:hover { background: #fff1ee; color: var(--sb-danger); }
+/* 카드와 같은 굵은 테두리 - warn: 이상감지 카드의 빨강, care: 기분 체크 카드의 살펴보기 금색(v13.0) */
+.quickLink.warn { border: 3px solid var(--sb-danger); background: #fff1ee; color: var(--sb-danger); }
+.quickLink.warn:hover { background: #fff1ee; color: var(--sb-danger); }
+.quickLink.care { border: 3px solid #d9b25e; background: #fffaf5; color: #86621f; }
+.quickLink.care:hover { background: #fffaf5; color: #86621f; }
 .quickDivider { width: 1px; height: 32px; justify-self: center; background: var(--sb-line); }
 
 .emptyHero { display: flex; align-items: center; gap: 16px; border: 1px dashed var(--sb-line-soft); border-radius: var(--sb-radius); background: #fff; padding: 20px 22px; }
