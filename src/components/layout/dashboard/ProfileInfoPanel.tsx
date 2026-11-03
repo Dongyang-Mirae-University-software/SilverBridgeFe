@@ -45,7 +45,12 @@ export function ProfileInfoPanel({
       <form className={cx('profileForm')} onSubmit={onSubmit}>
         <ProfileRow label="이름" editing={isEditing}>
           {isEditing ? (
-            <ProfileTextInput maxLength={20} value={form.name ?? ''} onValueChange={value => onChange('name', value)} />
+            <ProfileTextInput
+              aria-label="이름"
+              maxLength={20}
+              value={form.name ?? ''}
+              onValueChange={value => onChange('name', value)}
+            />
           ) : (
             <span>{getFieldValue(form.name)}</span>
           )}
@@ -54,6 +59,7 @@ export function ProfileInfoPanel({
         <ProfileRow label="전화번호" editing={isEditing}>
           {isEditing ? (
             <ProfileTextInput
+              aria-label="전화번호"
               inputMode="numeric"
               value={formatPhoneNumber(form.phone ?? '')}
               onValueChange={value => onChange('phone', getPhoneDigits(value))}
@@ -66,6 +72,7 @@ export function ProfileInfoPanel({
         <ProfileRow label="성별" editing={isEditing}>
           {isEditing ? (
             <select
+              aria-label="성별"
               value={form.gender ?? ''}
               onChange={event => onChange('gender', event.target.value as GenderType | '')}
             >
@@ -106,16 +113,19 @@ export function ProfileInfoPanel({
           {isEditing ? (
             <>
               <ProfileTextInput
+                aria-label="우편번호"
                 readOnly
                 value={form.postcode ?? ''}
                 onValueChange={value => onChange('postcode', value.replace(/\D/g, ''))}
               />
               <ProfileTextInput
+                aria-label="주소"
                 readOnly
                 value={form.address ?? ''}
                 onValueChange={value => onChange('address', value)}
               />
               <ProfileTextInput
+                aria-label="상세 주소"
                 placeholder="상세 주소"
                 value={form.addressDetail ?? ''}
                 onValueChange={value => onChange('addressDetail', value)}
@@ -145,6 +155,7 @@ export function ProfileInfoPanel({
                 {smsSendMutation.isPending ? '발송 중' : '인증번호 발송'}
               </button>
               <input
+                aria-label="휴대폰 인증번호"
                 inputMode="numeric"
                 placeholder="인증번호"
                 value={phoneCode}
@@ -174,6 +185,7 @@ export function ProfileInfoPanel({
   );
 }
 
+// 칸 이름(label)은 span이라 입력칸과 이어지지 않는다 - 입력칸마다 aria-label로 같은 이름을 준다
 function ProfileRow({
   children,
   action,
