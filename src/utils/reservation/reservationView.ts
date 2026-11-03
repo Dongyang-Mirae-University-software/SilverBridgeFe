@@ -214,6 +214,13 @@ function statusOf(error: unknown) {
   return undefined;
 }
 
+// BFF가 고정 문구로 주는 이유(예: "보호자만 예약하거나 취소할 수 있어요.", "연결된 피보호자가 아니에요.")
+function serverMessageOf(error: unknown) {
+  if (!isAxiosError<{ message?: unknown }>(error)) return undefined;
+  const message = error.response?.data?.message;
+  return typeof message === 'string' && message.trim() ? message : undefined;
+}
+
 // 403: 보호자가 그 피보호자와 ACTIVE 연결이 아님(연결이 끊겼거나 수락 전). 분기는 상태 코드로 한다
 export function isReservationForbidden(error: unknown) {
   return statusOf(error) === 403;
@@ -224,8 +231,9 @@ export function reservationErrorMessage(error: unknown) {
   switch (statusOf(error)) {
     case 401:
       return '로그인이 끝났어요. 다시 로그인해 주세요.';
+    // 403은 이유가 둘(쓰기 권한 없음 / 연결 안 된 피보호자)이라 BFF 문구를 그대로 쓴다
     case 403:
-      return '연결된 피보호자의 예약만 볼 수 있어요.';
+      return serverMessageOf(error) ?? '연결된 피보호자의 예약만 볼 수 있어요.';
     case 503:
       return '지금은 병원 예약 서비스를 쓸 수 없어요. 잠시 뒤 다시 시도해 주세요.';
     case 502:
