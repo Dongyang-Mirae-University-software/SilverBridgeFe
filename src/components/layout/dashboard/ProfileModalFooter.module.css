@@ -1,0 +1,6 @@
+.logoutButton, .actionButton { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 800; }
+.logoutButton { border: 1px solid var(--sb-line); background: #fff; color: var(--sb-ink-soft); }
+.actionButton { border: 0; background: var(--sb-brand); color: #fff; }
+.logoutButton:hover { background: var(--sb-bg-soft); }
+.actionButton:hover { filter: brightness(.96); }
+.logoutButton:disabled { cursor: not-allowed; opacity: .55; }
