@@ -62,4 +62,13 @@ describe('회원가입 이메일 중복 확인 (Chrome)', () => {
     await userEvent.fill(emailInput(), 'new2@test.com');
     expect(page.getByText('이메일이 중복되었습니다.').elements()).toHaveLength(0);
   });
+
+  it('형식이 틀린 이메일은 중복 확인 API를 부르지 않는다', async () => {
+    renderSignup();
+
+    await userEvent.fill(emailInput(), 'not-an-email');
+    await userEvent.click(page.getByLabelText('이름'));
+    await expect.element(page.getByText('이메일 형식이 올바르지 않습니다.')).toBeInTheDocument();
+    expect(api.signupEmailCheck).not.toHaveBeenCalled();
+  });
 });

@@ -8,6 +8,7 @@ import SignupPhoneVerificationStep from './SignupPhoneVerificationStep';
 import { CommonModal } from '@/components/CommonModal';
 import useSignupForm, { type KakaoSignupData } from '@/hooks/useSignupForm';
 import { getPhoneDigits } from '@/utils/format/phone';
+import { EMAIL_PATTRERN } from '@/constants/pattern';
 import { openKakaoPostcode } from '@/lib/postcode/kakaoPostcode';
 import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/auth/auth';
 
@@ -121,7 +122,10 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
 
   const handleEmailCheck = () => {
     if (isKakaoSignup) return;
-    emailCheckMutate({ email: getValues('email') });
+    // 형식이 틀린 값은 칸 아래 형식 오류로 충분하다 - 중복 확인 API는 부르지 않는다
+    const email = getValues('email').trim();
+    if (!EMAIL_PATTRERN.test(email)) return;
+    emailCheckMutate({ email });
   };
 
   const handlePhoneCheck = () => {
