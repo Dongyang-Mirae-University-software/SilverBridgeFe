@@ -15,8 +15,10 @@ interface SignupRoleSelectorProps {
 export default function SignupRoleSelector({ role, register }: SignupRoleSelectorProps) {
   return (
     <div className={cx('roleSection')}>
-      <label className={cx('fieldLabel')}>가입 유형</label>
-      <div className={cx('radioGroup')}>
+      <span className={cx('fieldLabel')} id="signup-role-label">
+        가입 유형
+      </span>
+      <div className={cx('radioGroup')} role="radiogroup" aria-labelledby="signup-role-label">
         <label className={cx('roleCard', 'wardRole', { active: role === 'WARD' })} htmlFor="WARD">
           <input id="WARD" type="radio" value="WARD" {...register('role')} defaultChecked />
           <span className={cx('roleEmoji')} aria-hidden="true">🌷</span>
