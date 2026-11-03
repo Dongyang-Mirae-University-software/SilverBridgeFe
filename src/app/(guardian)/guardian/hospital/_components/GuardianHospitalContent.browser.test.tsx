@@ -4,7 +4,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { ReactNode } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { userEvent } from '@vitest/browser/context';
 import { render } from 'vitest-browser-react';
 
@@ -622,6 +622,56 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     await expect.element(screen.getByText('취소할 수 없는 예약 상태입니다.')).toBeVisible();
     expect(screen.getByRole('dialog').elements()).toHaveLength(0);
+  });
+
+  describe('403 연결된 피보호자가 아니에요 → 피보호자 목록 새로 받기', () => {
+    const connectionsRefetched = (spy: MockInstance<QueryClient['invalidateQueries']>) =>
+      spy.mock.calls.some(([filters]) => JSON.stringify((filters as { queryKey?: unknown })?.queryKey) === '["guardian-connections"]');
+    let spy: MockInstance<QueryClient['invalidateQueries']>;
+    beforeEach(() => {
+      spy = vi.spyOn(QueryClient.prototype, 'invalidateQueries');
+    });
+    afterEach(() => spy.mockRestore());
+
+    it('예약 내역 조회가 403이면 피보호자 목록을 새로 받는다', async () => {
+      api.getMyReservations.mockRejectedValue(axiosError(403, '연결된 피보호자가 아니에요.'));
+      renderContent();
+      await vi.waitFor(() => expect(connectionsRefetched(spy)).toBe(true));
+    });
+
+    it('예약 취소가 403이면 피보호자 목록을 새로 받는다', async () => {
+      api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
+      api.cancelReservation.mockRejectedValue(axiosError(403, '연결된 피보호자가 아니에요.'));
+      const screen = renderContent();
+      await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
+      await screen.getByRole('dialog').getByRole('button', { name: '예약 취소' }).click();
+      await vi.waitFor(() => expect(connectionsRefetched(spy)).toBe(true));
+    });
+
+    it('예약 만들기가 403이면 피보호자 목록을 새로 받는다', async () => {
+      api.createReservation.mockRejectedValue(axiosError(403, '연결된 피보호자가 아니에요.'));
+      const screen = renderContent();
+      await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+      await screen.getByRole('button', { name: /푸른안과/ }).click();
+      await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
+      await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
+      await screen.getByRole('button', { name: '다음' }).click();
+      await screen.getByRole('button', { name: '예약하기' }).click();
+      await vi.waitFor(() => expect(connectionsRefetched(spy)).toBe(true));
+    });
+
+    it('다른 오류(409)로는 피보호자 목록을 다시 받지 않는다', async () => {
+      api.createReservation.mockRejectedValue(axiosError(409, '이미 예약된 시간입니다.'));
+      const screen = renderContent();
+      await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+      await screen.getByRole('button', { name: /푸른안과/ }).click();
+      await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
+      await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
+      await screen.getByRole('button', { name: '다음' }).click();
+      await screen.getByRole('button', { name: '예약하기' }).click();
+      await expect.element(screen.getByRole('alert')).toHaveTextContent('이미 예약된 시간입니다.');
+      expect(connectionsRefetched(spy)).toBe(false);
+    });
   });
 
   it('M-1 진료과가 하나도 없는 병원은 병원 목록에 두지 않는다(골라도 시간 칸을 못 묻는다)', async () => {

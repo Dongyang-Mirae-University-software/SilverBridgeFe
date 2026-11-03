@@ -214,6 +214,11 @@ function statusOf(error: unknown) {
   return undefined;
 }
 
+// 403: 보호자가 그 피보호자와 ACTIVE 연결이 아님(연결이 끊겼거나 수락 전). 분기는 상태 코드로 한다
+export function isReservationForbidden(error: unknown) {
+  return statusOf(error) === 403;
+}
+
 // 상태별로 다른 안내. 그 밖의 업무 오류(이미 찬 시간 등)는 서버 문구를 그대로 쓴다.
 export function reservationErrorMessage(error: unknown) {
   switch (statusOf(error)) {

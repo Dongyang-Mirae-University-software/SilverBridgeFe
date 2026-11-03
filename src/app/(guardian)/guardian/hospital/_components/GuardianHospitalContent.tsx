@@ -7,6 +7,7 @@ import classNames from 'classnames/bind';
 import { ReservationDemoNotice } from '@/components/reservation/ReservationDemoNotice';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { cancelReservation, createReservation } from '@/service/api/guardian/reservation';
+import { guardianConnectionsQueryKey } from '@/service/query/guardian/connection';
 import { IReservationCreateReq } from '@/service/interface/reservation';
 import {
   availableSlotsQueryOptions,
@@ -17,6 +18,7 @@ import {
 import { myProfileQueryOptions } from '@/service/query/user';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import {
+  isReservationForbidden,
   formatDateShort,
   formatTime,
   isSlotPassed,
@@ -89,6 +91,18 @@ export function GuardianHospitalContent() {
     if (step === 'done') doneTitleRef.current?.focus();
   }, [step]);
 
+  // 예약 서비스가 "연결된 피보호자가 아니에요"(403)라면 화면의 피보호자 목록이 낡은 것이다 - 새로 받는다.
+  // 끊긴 사람이 목록에서 빠지면 useSelectedWard 가 남은 첫 번째 피보호자로 옮긴다
+  const refreshWardsIfForbidden = (error: unknown) => {
+    if (isReservationForbidden(error)) queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+  };
+
+  useEffect(() => {
+    if (isReservationForbidden(reservationsQuery.error)) {
+      queryClient.invalidateQueries({ queryKey: guardianConnectionsQueryKey });
+    }
+  }, [queryClient, reservationsQuery.error]);
+
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: myReservationsQueryKey });
     queryClient.invalidateQueries({ queryKey: ['reservation-slots'] });
@@ -124,7 +138,10 @@ export function GuardianHospitalContent() {
       setStep('done');
     },
     // 그새 다른 예약이 시간을 잡았을 수 있어 빈 시간을 다시 받는다
-    onError: () => queryClient.invalidateQueries({ queryKey: ['reservation-slots'] }),
+    onError: error => {
+      queryClient.invalidateQueries({ queryKey: ['reservation-slots'] });
+      refreshWardsIfForbidden(error);
+    },
   });
 
   const cancelMutation = useMutation({
@@ -134,7 +151,10 @@ export function GuardianHospitalContent() {
       invalidate();
       setListNotice({ tone: 'ok', text: '예약을 취소했어요.' });
     },
-    onError: error => setListNotice({ tone: 'bad', text: reservationErrorMessage(error) }),
+    onError: error => {
+      setListNotice({ tone: 'bad', text: reservationErrorMessage(error) });
+      refreshWardsIfForbidden(error);
+    },
   });
 
   const choose = (next: Pick) => {
