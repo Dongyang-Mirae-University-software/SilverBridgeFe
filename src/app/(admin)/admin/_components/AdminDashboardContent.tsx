@@ -59,7 +59,6 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
       <DashboardSection icon="messageCircle" title="고객센터" tone="accent" href="/admin/inquiries" pill={operation.unansweredInquiries.count > 0 ? '답변 필요' : '정상'}>
         <NumberGrid items={[['답변 기다림', formatCount(operation.unansweredInquiries.count, '건'), operation.unansweredInquiries.count > 0 ? 'care' : undefined], ['최장 대기', operation.unansweredInquiries.longestWaitingHours === null ? '-' : `${operation.unansweredInquiries.longestWaitingHours}시간`]]} /><SimpleRows rows={[['오늘 접수된 문의', formatCount(operation.pendingItems.todayInquiries, '건')]]} />
       </DashboardSection>
-      <DashboardSection icon="fileText" title="공지사항" tone="mute"><NumberGrid items={[['임시저장', formatCount(operation.pendingItems.announcementDrafts, '건')]]} /><SimpleRows rows={[['안내', '공지 관리 기능은 준비 중입니다']]} /></DashboardSection>
     </div>
     <p className={cx('generatedAt')}>안전 현황 {formatElapsed(safety.generatedAt)} · 운영 현황 {formatElapsed(operation.generatedAt)} 확인</p>
   </main>;
