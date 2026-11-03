@@ -98,6 +98,7 @@ export default function ChatUiPrompt({ ui, active, onSelect }: Props) {
           <input
             type="date"
             className={styles.dateInput}
+            aria-label={ui.label ?? '날짜 선택'}
             value={dateVal}
             disabled={!active}
             onChange={e => setDateVal(e.target.value)}
@@ -123,6 +124,7 @@ export default function ChatUiPrompt({ ui, active, onSelect }: Props) {
           <input
             type="text"
             className={styles.textInput}
+            aria-label={ui.label ?? ui.placeholder ?? '답 입력'}
             value={textVal}
             disabled={!active}
             placeholder={ui.placeholder ?? '입력하세요'}

@@ -19,4 +19,16 @@ describe('ChatUiPrompt 입력형', () => {
     const button = page.getByRole('button', { name: '적용' }).element().getBoundingClientRect();
     expect(button.right).toBeLessThanOrEqual(bubble.right);
   });
+
+  it('입력칸은 안내 문구를 이름으로 갖고, 문구가 없으면 기본 이름을 쓴다', async () => {
+    render(
+      <>
+        <ChatUiPrompt ui={{ kind: 'text', field: 'region', label: '지역을 입력해 주세요' }} active onSelect={vi.fn()} />
+        <ChatUiPrompt ui={{ kind: 'date', field: 'date' }} active onSelect={vi.fn()} />
+      </>,
+    );
+
+    await expect.element(page.getByRole('textbox', { name: '지역을 입력해 주세요' })).toBeVisible();
+    await expect.element(page.getByLabelText('날짜 선택')).toBeVisible();
+  });
 });
