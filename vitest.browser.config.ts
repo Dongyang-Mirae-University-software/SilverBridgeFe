@@ -23,6 +23,7 @@ export default defineConfig({
       'dayjs/locale/ko',
       'next/link',
       'next/image',
+      'react-hook-form',
     ],
   },
   esbuild: { jsx: 'automatic' },

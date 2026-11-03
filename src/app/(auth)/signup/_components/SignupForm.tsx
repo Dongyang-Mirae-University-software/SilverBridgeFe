@@ -48,7 +48,8 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
 
   const [isEmailCheck, setIsEmailCheck] = useState(Boolean(kakaoData));
   const [checkedEmail, setCheckedEmail] = useState(kakaoData?.email.trim() ?? '');
-  const [isEmailTouched, setIsEmailTouched] = useState(false);
+  // 중복 확인에 실패한 이메일. 칸 값이 이것과 같을 때만 오류를 보인다(고치는 중엔 지난 결과를 띄우지 않는다)
+  const [failedEmail, setFailedEmail] = useState('');
   const [emailCheckErrorMsg, setEmailCheckErrorMsg] = useState('');
   const [isCode, setIsCode] = useState(false);
   const [smsSendErrorMsg, setSmsSendErrorMsg] = useState('');
@@ -64,14 +65,16 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
   const { mutate: emailCheckMutate, isPending: isEmailCheckPending } = useMutation({
     mutationKey: ['email-check'],
     mutationFn: signupEmailCheck,
-    onError: error => {
+    onError: (error, variables) => {
       setIsEmailCheck(false);
       setCheckedEmail('');
+      setFailedEmail(variables.email.trim());
       setEmailCheckErrorMsg((error as Error).message || '이메일이 중복되었습니다.');
     },
     onSuccess: (_response, variables) => {
       setIsEmailCheck(true);
       setCheckedEmail(variables.email.trim());
+      setFailedEmail('');
       setEmailCheckErrorMsg('');
     },
   });
@@ -118,7 +121,6 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
 
   const handleEmailCheck = () => {
     if (isKakaoSignup) return;
-    setIsEmailTouched(true);
     emailCheckMutate({ email: getValues('email') });
   };
 
@@ -158,7 +160,7 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
 
   const emailError =
     (errors.email && allValues.email && allValues.email.trim() !== '') ||
-    (isEmailTouched && !isEmailVerified && !isEmailCheckPending && !!getValues('email').length);
+    (!isEmailCheckPending && currentEmail !== '' && failedEmail === currentEmail);
   const emailErrorText = emailError
     ? (errors.email?.message ?? (emailCheckErrorMsg || '이메일이 중복되었습니다.'))
     : undefined;
