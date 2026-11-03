@@ -47,7 +47,7 @@ export default function FindPasswordEmailStep({
         value={email}
         onChange={event => onChange(event.target.value)}
       />
-      {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
+      {errorMessage && <p className={cx('errorMessage')} role="alert">{errorMessage}</p>}
       {isKakaoAccount && (
         <button className={cx('secondaryButton')} type="button" onClick={onKakaoLogin}>
           카카오 로그인으로 이동

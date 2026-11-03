@@ -57,7 +57,7 @@ export default function FindEmailInfoStep({ errorMessage, form, isPending, onCha
           />
         </div>
       </div>
-      {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
+      {errorMessage && <p className={cx('errorMessage')} role="alert">{errorMessage}</p>}
       <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
         {isPending ? '찾는 중...' : '아이디 찾기'}
       </button>

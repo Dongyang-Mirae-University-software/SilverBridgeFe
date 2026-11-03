@@ -136,7 +136,7 @@ export default function LoginContent() {
           </div>
         </div>
 
-        {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
+        {errorMessage && <p className={cx('errorMessage')} role="alert">{errorMessage}</p>}
 
         <button className={cx('submitButton')} disabled={isPending} type="submit">
           {isPending ? '로그인 중...' : '로그인'}

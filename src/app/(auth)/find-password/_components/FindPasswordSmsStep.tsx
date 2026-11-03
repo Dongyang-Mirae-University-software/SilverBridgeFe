@@ -57,7 +57,7 @@ export default function FindPasswordSmsStep({
         value={formatPhoneNumber(phone)}
         onChange={event => onChange('phone', getPhoneDigits(event.target.value))}
       />
-      {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
+      {errorMessage && <p className={cx('errorMessage')} role="alert">{errorMessage}</p>}
       {isKakaoAccount && (
         <button className={cx('secondaryButton')} type="button" onClick={onKakaoLogin}>
           카카오 로그인으로 이동

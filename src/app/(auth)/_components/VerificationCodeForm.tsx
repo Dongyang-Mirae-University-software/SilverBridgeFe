@@ -74,7 +74,7 @@ export default function VerificationCodeForm({
         variant={variant}
         onChange={handleCode}
       />
-      {errorMessage && <p className={cx('error')}>{errorMessage}</p>}
+      {errorMessage && <p className={cx('error')} role="alert">{errorMessage}</p>}
       <div className={cx('actions', { withBack: Boolean(onBack) })}>
         {onBack && (
           <button className={cx('backButton')} type="button" onClick={onBack}>

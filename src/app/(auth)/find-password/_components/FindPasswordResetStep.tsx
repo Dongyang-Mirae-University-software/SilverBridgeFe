@@ -62,7 +62,7 @@ export default function FindPasswordResetStep({ errorMessage, isPending, onSubmi
           onChange={event => setConfirmPassword(event.target.value)}
         />
       </div>
-      {errorMessage && <p className={cx('errorMessage')}>{errorMessage}</p>}
+      {errorMessage && <p className={cx('errorMessage')} role="alert">{errorMessage}</p>}
       <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
         {isPending ? '변경 중...' : '비밀번호 변경'}
       </button>
