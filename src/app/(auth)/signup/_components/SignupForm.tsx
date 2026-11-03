@@ -45,6 +45,8 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
     signupError,
     isKakaoSignup,
     clearSignupError,
+    isSignupCompleted,
+    goToLogin,
   } = useSignupForm({ kakaoData, returnTo });
 
   const [isEmailCheck, setIsEmailCheck] = useState(Boolean(kakaoData));
@@ -278,6 +280,15 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
 
       {signupError && (
         <CommonModal type="error" title="회원가입 실패" message={signupError} onClose={clearSignupError} />
+      )}
+      {isSignupCompleted && (
+        <CommonModal
+          type="success"
+          title="회원가입이 완료되었습니다"
+          message="가입한 이메일과 비밀번호로 로그인해주세요."
+          primaryButton={{ text: '로그인하기', onClick: goToLogin }}
+          onClose={goToLogin}
+        />
       )}
     </>
   );

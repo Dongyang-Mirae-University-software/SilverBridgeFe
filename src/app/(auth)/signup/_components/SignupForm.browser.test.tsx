@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from '@vitest/browser/context';
 import { render } from 'vitest-browser-react';
 
+import useSignupForm from '@/hooks/useSignupForm';
 import SignupForm from './SignupForm';
 
 const api = vi.hoisted(() => ({
@@ -18,7 +19,9 @@ vi.mock('@/service/api/auth/auth', async importOriginal => ({
   ...(await importOriginal<typeof import('@/service/api/auth/auth')>()),
   ...api,
 }));
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
+const nav = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
+
+vi.mock('next/navigation', () => ({ useRouter: () => nav }));
 
 function renderSignup() {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
@@ -33,6 +36,7 @@ const emailInput = () => page.getByLabelText('이메일');
 
 beforeEach(() => {
   Object.values(api).forEach(fn => fn.mockReset().mockResolvedValue({ data: {} }));
+  Object.values(nav).forEach(fn => fn.mockReset());
 });
 afterEach(() => {
   document.body.innerHTML = '';
@@ -70,5 +74,45 @@ describe('회원가입 이메일 중복 확인 (Chrome)', () => {
     await userEvent.click(page.getByLabelText('이름'));
     await expect.element(page.getByText('이메일 형식이 올바르지 않습니다.')).toBeInTheDocument();
     expect(api.signupEmailCheck).not.toHaveBeenCalled();
+  });
+});
+
+// 주소 검색(새 창)·SMS 인증은 화면으로 끝까지 갈 수 없어 가입 요청 부분만 훅으로 확인한다
+function SignupSubmitHarness() {
+  const { setValue, onSubmit, isSignupCompleted } = useSignupForm();
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setValue('name', '김영희');
+          setValue('email', 'new@test.com');
+          setValue('password', 'abcd1234!');
+          setValue('phone', '01012345678');
+          setValue('verificationNonce', 'nonce');
+          void onSubmit();
+        }}
+      >
+        가입 요청
+      </button>
+      {isSignupCompleted && <p>가입 완료</p>}
+    </>
+  );
+}
+
+describe('이메일 회원가입 완료 (Chrome)', () => {
+  it('가입에 성공하면 바로 이동하지 않고 완료 안내를 먼저 띄운다', async () => {
+    const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <SignupSubmitHarness />
+      </QueryClientProvider>,
+    );
+
+    await userEvent.click(page.getByRole('button', { name: '가입 요청' }));
+    await vi.waitFor(() => expect(api.signup).toHaveBeenCalledTimes(1));
+    await expect.element(page.getByText('가입 완료')).toBeInTheDocument();
+    expect(nav.push).not.toHaveBeenCalled();
   });
 });

@@ -126,6 +126,8 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
   }
 
   const [signupError, setSignupError] = useState<string | null>(null);
+  // 이메일 가입은 토큰을 받지 않아 로그인 화면으로 보낸다 - 말없이 넘기지 않고 완료 안내를 먼저 띄운다
+  const [isSignupCompleted, setIsSignupCompleted] = useState(false);
 
   const { mutate } = useMutation({
     mutationKey: ['signup'],
@@ -201,7 +203,7 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
     mutate(form, {
       onSuccess: () => {
         formDataInit();
-        router.push(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login');
+        setIsSignupCompleted(true);
       },
       onError: error => {
         setSignupError((error as Error).message || '회원가입에 실패했습니다. 다시 시도해 주세요.');
@@ -225,6 +227,8 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
     signupError,
     isKakaoSignup,
     clearSignupError: () => setSignupError(null),
+    isSignupCompleted,
+    goToLogin: () => router.push(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login'),
   };
 }
 
