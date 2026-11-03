@@ -1,4 +1,4 @@
-.page { width: 100%; }
+.page { width: 100%; min-width: 0; max-width: 100%; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
 .heading { margin-bottom: 18px; }
 .heading h1 { margin: 0; color: var(--sb-ink); font-size: 26px; font-weight: 900; letter-spacing: -.04em; }
@@ -7,14 +7,14 @@
 .roleTab { border: 0; border-bottom: 2px solid transparent; background: none; color: var(--sb-ink-mute); cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; line-height: 1.4; padding: 9px 16px; }
 .roleTab small { font-size: 11px; font-weight: inherit; opacity: .7; }
 .roleTab.active { border-bottom-color: var(--sb-brand); color: var(--sb-brand); }
-.card { overflow: hidden; border: 1px solid var(--sb-line); border-radius: var(--sb-radius); background: #fff; box-shadow: var(--sb-shadow-sm); }
+.card { min-width: 0; max-width: 100%; overflow: hidden; border: 1px solid var(--sb-line); border-radius: var(--sb-radius); background: #fff; box-shadow: var(--sb-shadow-sm); }
 .filterBar { display: flex; align-items: center; gap: 9px; border-bottom: 1px solid var(--sb-line-soft); padding: 14px 18px; }
 .search { display: flex; min-width: 260px; flex: 1; align-items: center; gap: 8px; border-radius: 10px; background: var(--sb-bg); color: var(--sb-ink-mute); padding: 9px 12px; }
 .search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--sb-ink); font: inherit; font-size: 13px; }
 .search input::placeholder { color: var(--sb-ink-mute); }
 .selectWrap { display: flex; align-items: center; gap: 5px; color: var(--sb-ink-mute); font-size: 11px; font-weight: 700; white-space: nowrap; }
 .selectWrap select { height: 36px; border: 1px solid var(--sb-line); border-radius: 9px; background: #fff; color: var(--sb-ink-soft); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; padding: 0 8px; }
-.tableScroll { overflow-x: auto; }
+.tableScroll { width: 100%; min-width: 0; max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
 .table { width: 100%; min-width: 1080px; border-collapse: collapse; table-layout: fixed; white-space: nowrap; }
 .idColumn { width: 80px; }.providerColumn { width: 76px; }.emailColumn { width: 160px; }.nameColumn { width: 70px; }.roleColumn { width: 76px; }.connectionColumn { width: 140px; }.connectionStateColumn { width: 92px; }.phoneColumn { width: 118px; }.statusColumn { width: 84px; }.actionColumn { width: 70px; }
 .table th { overflow: hidden; border-bottom: 1px solid var(--sb-line-soft); background: var(--sb-bg-soft); color: var(--sb-ink-mute); font-size: 11px; font-weight: 800; text-align: left; padding: 11px 14px; text-overflow: ellipsis; }
