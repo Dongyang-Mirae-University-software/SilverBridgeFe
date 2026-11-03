@@ -57,6 +57,9 @@ export function GuardianDashboardContent() {
   // v13.0 시안에서 강조하는 칩은 SOS 내역뿐이다(약 관리 등은 강조 없음)
   const chipAlert = (href: string): ChipAlert | undefined =>
     href === '/guardian/sos' && sosCount > 0 ? { label: `이번 달 SOS ${sosCount}건` } : undefined;
+  // 이상감지 카드는 확인할 이상감지가 있거나 이번 달 SOS가 있으면 테두리·확인 필요 배지를 둔다
+  const detectAlert = needsReview || sosCount > 0;
+  const detectLabel = [needsReview && `확인 필요 ${anomalyCount}건`, sosCount > 0 && `이번 달 SOS ${sosCount}건`].filter(Boolean).join(', ');
 
   if (activeConnections.length === 0) {
     return (
@@ -92,10 +95,10 @@ export function GuardianDashboardContent() {
       <section className={cx('featureGrid')} aria-label="주요 기능">
         <Link
           href="/guardian/detection"
-          className={cx('featureCard', 'detect', { danger: needsReview })}
-          aria-label={needsReview ? `AI 이상감지, 확인 필요 ${anomalyCount}건` : 'AI 이상감지'}
+          className={cx('featureCard', 'detect', { danger: detectAlert })}
+          aria-label={detectAlert ? `AI 이상감지, ${detectLabel}` : 'AI 이상감지'}
         >
-          {needsReview && <DashboardPill tone="warn">확인 필요</DashboardPill>}
+          {detectAlert && <DashboardPill tone="warn">확인 필요</DashboardPill>}
           <span className={cx('tileIcon')}><Icon name="flame" size={36} decorative /></span>
           <strong>AI 이상감지</strong>
         </Link>

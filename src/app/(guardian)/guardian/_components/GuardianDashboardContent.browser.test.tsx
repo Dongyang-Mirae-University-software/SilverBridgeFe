@@ -112,6 +112,16 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
     expect(borderOf(page.getByRole('link', { name: 'AI 이상감지' }).element()).width).not.toBe('3px');
   });
 
+  it('이번 달 SOS가 1건 이상이면 이상감지 카드에 빨간 3px 테두리와 확인 필요 배지를 둔다', async () => {
+    data.dashboard = dashboard({ sosThisMonth: 1 });
+    renderDashboard();
+
+    const tile = page.getByRole('link', { name: 'AI 이상감지, 이번 달 SOS 1건' });
+    await expect.element(tile).toBeVisible();
+    await expect.element(tile.getByText('확인 필요')).toBeVisible();
+    expect(borderOf(tile.element()).width).toBe('3px');
+  });
+
   it('이번 달 SOS가 있으면 SOS 내역 칩을 시안의 강조 칩(#E2A49A 테두리·#FFF1EE)으로 그린다', async () => {
     data.dashboard = dashboard({ sosThisMonth: 1 });
     renderDashboard();
