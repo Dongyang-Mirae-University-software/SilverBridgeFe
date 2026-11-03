@@ -17,3 +17,4 @@
 @media (max-width: 600px) { .summaryGrid { gap: 8px; }.summaryCard { min-height: 96px; padding: 12px; }.summaryValue { font-size: 21px; }.tabs { overflow-x: auto; padding-bottom: 2px; }.tab { padding: 8px; }.filterBar { padding: 12px; }.detailInfo { grid-template-columns: 1fr; }.modalOverlay { align-items: end; padding: 0; }.modal { max-height: 92dvh; border-radius: 16px 16px 0 0; }.modalHead, .modalBody { padding-right: 16px; padding-left: 16px; } }
 .table td.message { white-space: pre-line; }
 .table tbody tr.selectableRow { cursor: pointer; }.table tbody tr.selectableRow:focus-visible { outline: 2px solid var(--sb-brand); outline-offset: -2px; }.messageBox p { white-space: pre-line; }
+.srOnly { border: 0; margin: -1px; padding: 0; }
