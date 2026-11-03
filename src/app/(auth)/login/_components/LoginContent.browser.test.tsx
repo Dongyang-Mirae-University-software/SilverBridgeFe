@@ -2,7 +2,7 @@
 // method="post": 하이드레이션 전 제출이어도 자격이 주소 쿼리로 가지 않게(2026-10-31). 하이드레이션 뒤에는 API로 로그인한다.
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { userEvent } from '@vitest/browser/context';
+import { page, userEvent } from '@vitest/browser/context';
 import { render } from 'vitest-browser-react';
 
 import LoginContent from './LoginContent';
@@ -50,5 +50,17 @@ describe('LoginContent (Chrome)', () => {
     expect(mocks.signin.mock.calls[0][0]).toEqual({ email: 'user@test.com', password: 'pw-1234' });
     await vi.waitFor(() => expect(mocks.push).toHaveBeenCalled());
     expect(window.location.href).toBe(before);
+  });
+
+  it('이메일 형식이 틀리면 브라우저 말풍선이 아니라 화면 오류 문구로 알리고 API를 부르지 않는다', async () => {
+    renderLogin();
+    const form = document.querySelector('form') as HTMLFormElement;
+    expect(form.noValidate).toBe(true);
+    await userEvent.fill(form.querySelector('input[name="email"]') as HTMLInputElement, 'abc');
+    await userEvent.fill(form.querySelector('input[name="password"]') as HTMLInputElement, 'pw-1234');
+    await userEvent.click(form.querySelector('button[type="submit"]') as HTMLButtonElement);
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('이메일 형식이 올바르지 않습니다.');
+    expect(mocks.signin).not.toHaveBeenCalled();
   });
 });

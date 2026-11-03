@@ -13,6 +13,7 @@ import { getLoginErrorMessage } from '@/utils/auth/loginError';
 import { getRoleHomePath } from '@/utils/auth/routes';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import { getSafeReturnPath } from '@/lib/auth/returnPath';
+import { EMAIL_PATTRERN } from '@/constants/pattern';
 import styles from './LoginContent.module.css';
 const cx = classNames.bind(styles);
 
@@ -70,6 +71,11 @@ export default function LoginContent() {
       return;
     }
 
+    if (!EMAIL_PATTRERN.test(formEmail)) {
+      setErrorMessage('이메일 형식이 올바르지 않습니다.');
+      return;
+    }
+
     mutate({
       email: formEmail,
       password: formPassword,
@@ -91,7 +97,8 @@ export default function LoginContent() {
         <p className={cx('description')}>다시 오신 것을 환영해요</p>
       </div>
 
-      <form method="post" className={cx('form')} onSubmit={handleSubmit} suppressHydrationWarning>
+      {/* noValidate: 브라우저 기본 말풍선 대신 아래 오류 문구 한 곳에서 안내한다 */}
+      <form method="post" className={cx('form')} noValidate onSubmit={handleSubmit} suppressHydrationWarning>
         <div className={cx('fields')}>
           <TextInput
             autoComplete="email"
