@@ -63,18 +63,26 @@ const GUARDIAN_PROMPTS: GuardianPrompt[] = [
 
 const WARD_PROMPTS = ['머리가 아파요', '배가 아파요', '무릎이 아파요', '어지러워요'];
 
-const MAX_SUGGESTED = 3;
+const MAX_SUGGESTED = 4;
+/** 되묻기 답 칩(AI suggestedKind). 문구가 아니라 칸의 코드 값을 본다. */
+const ANSWER_KIND = 'answer';
 
 const RESERVATION_PATH = '/guardian/hospital';
 /** 남긴 말풍선을 잠깐 보여 준 뒤 이동한다. */
 const RESERVATION_NAV_DELAY_MS = 300;
 
-/** 최신 답의 이어서 물어볼 질문. 없거나 형식이 다르면 빈 목록(고정 문장을 쓴다). */
-function latestSuggestions(messages: ChatMessage[]): string[] {
+type Suggestions = {
+  items: string[];
+  /** 되묻기에 눌러서 답하는 칩인가(패널 제목·보낸 문장 처리만 바뀐다). */
+  answer: boolean;
+};
+
+/** 최신 답의 칩. 없거나 형식이 다르면 빈 목록(고정 문장을 쓴다). */
+function latestSuggestions(messages: ChatMessage[]): Suggestions {
   const last = [...messages].reverse().find(message => message.role === 'assistant');
   const raw = last?.suggestedQuestions;
-  if (!Array.isArray(raw)) return [];
-  return [
+  if (!Array.isArray(raw)) return { items: [], answer: false };
+  const items = [
     ...new Set(
       raw
         .filter((q): q is string => typeof q === 'string')
@@ -82,28 +90,29 @@ function latestSuggestions(messages: ChatMessage[]): string[] {
         .filter(Boolean),
     ),
   ].slice(0, MAX_SUGGESTED);
+  return { items, answer: items.length > 0 && last?.suggestedKind === ANSWER_KIND };
 }
 
 /**
  * 보호자: 예약 칩은 항상 맨 앞(누른 뒤에도 남긴다), 그 뒤에 이어질 질문(없으면 고정 문장).
- * 이 대화창에서 이미 보낸 문장은 뺀다.
+ * 이 대화창에서 이미 보낸 문장은 뺀다. 되묻기 답 칩은 빼지 않는다(다른 증상에도 같은 답을 고를 수 있다).
  */
-function guardianPrompts(suggested: string[], sent: ReadonlySet<string>): GuardianPrompt[] {
+function guardianPrompts({ items: suggested, answer }: Suggestions, sent: ReadonlySet<string>): GuardianPrompt[] {
   const booking = GUARDIAN_PROMPTS[0];
-  const unsent = suggested.filter(text => text !== booking.text && !sent.has(text));
+  const unsent = suggested.filter(text => text !== booking.text && (answer || !sent.has(text)));
   const rest =
     unsent.length > 0 ? unsent.map(text => ({ text })) : GUARDIAN_PROMPTS.slice(1).filter(p => !sent.has(p.text));
   return [booking, ...rest];
 }
 
-/** 피보호자: 이어질 질문을 먼저, 남는 칸은 기본 문장으로 채운다(최대 4개). 이미 보낸 문장은 빼므로 칸 수가 줄 수 있다. */
-function wardPrompts(suggested: string[], sent: ReadonlySet<string>) {
-  const items = suggested.filter(text => !sent.has(text)).map(text => ({ text, suggested: true }));
-  for (const text of WARD_PROMPTS) {
-    if (items.length >= WARD_PROMPTS.length) break;
-    if (!sent.has(text) && !suggested.includes(text)) items.push({ text, suggested: false });
-  }
-  return items;
+/**
+ * 피보호자: 답에 딸린 칩(되묻기 답 칩·이어질 질문)이 있으면 그것만 - 상관없는 기본 증상으로 채우지 않는다(2026-11-02).
+ * 없으면 기본 문장. 이미 보낸 문장은 빼므로 칸 수가 줄 수 있다(되묻기 답 칩은 빼지 않는다).
+ */
+function wardPrompts({ items: suggested, answer }: Suggestions, sent: ReadonlySet<string>) {
+  const related = suggested.filter(text => answer || !sent.has(text)).map(text => ({ text, suggested: true }));
+  if (related.length > 0) return related;
+  return WARD_PROMPTS.filter(text => !sent.has(text)).map(text => ({ text, suggested: false }));
 }
 
 const COMPOSER_MAX_LINES = 2;
@@ -184,6 +193,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
   const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
   const suggested = latestSuggestions(messages);
+  const quickTitle = suggested.answer ? '눌러서 답해 보세요' : '눌러서 물어보세요';
   const sentTexts = new Set(sentBySession[sessionId] ?? []);
   // 서버는 버튼·날짜·지역 선택도 "[선택] field: value" 형식의 별도 기록으로 남긴다.
   // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
@@ -267,6 +277,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             recommendedAction: result.recommendedAction,
             reservationRequired: result.reservationRequired,
             suggestedQuestions: result.suggestedQuestions,
+            suggestedKind: result.suggestedKind,
             layout: result.layout ?? null,
           },
         ]);
@@ -424,7 +435,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             </div>
 
             <section className={styles.wardQuickPanel} aria-label="추천 질문">
-              <p className={styles.wardQuickTitle}>눌러서 물어보세요</p>
+              <p className={styles.wardQuickTitle}>{quickTitle}</p>
               {wardQuickPrompts.length === 0 ? (
                 <p className={styles.wardQuickEmpty}>궁금한 점을 입력창에 적어 주세요</p>
               ) : (
@@ -506,7 +517,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           {board}
 
           <section className={styles.quickPromptPanel} aria-label="추천 질문">
-            <p className={styles.quickPromptTitle}>눌러서 물어보세요</p>
+            <p className={styles.quickPromptTitle}>{quickTitle}</p>
             <div className={styles.quickPromptRow}>
               {guardianPrompts(suggested, sentTexts).map(prompt => (
                 <button

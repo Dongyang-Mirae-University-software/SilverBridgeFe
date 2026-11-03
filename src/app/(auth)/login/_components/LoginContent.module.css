@@ -201,8 +201,11 @@
   .fields { gap: clamp(8px, 1.6dvh, 14px); margin-bottom: clamp(10px, 2dvh, 18px); }
   .fields input { min-height: 44px; height: clamp(44px, 6.4dvh, 52px); padding-top: 0; padding-bottom: 0; }
 
-  .secondaryActions { flex-direction: row; align-items: center; margin-bottom: clamp(10px, 2dvh, 22px); }
-  .findLinks { width: auto; gap: 10px; }
+  /* 폭이 모자라면(약 340px 미만) 단어를 쪼개지 않고 찾기 링크를 다음 줄 오른쪽으로 보낸다 */
+  .secondaryActions { flex-direction: row; flex-wrap: wrap; align-items: center; row-gap: 8px; margin-bottom: clamp(10px, 2dvh, 22px); }
+  .findLinks { width: auto; gap: 10px; margin-left: auto; }
+  .remember,
+  .textButton { white-space: nowrap; }
 
   .remember,
   .textButton,
@@ -211,6 +214,9 @@
   .remember::after,
   .textButton::after,
   .signupLink::after { content: ''; position: absolute; inset: -15px -6px; }
+
+  /* 라벨(18px)은 위아래 13px로 44px - 15px면 로그인 버튼 위 가장자리를 덮는다 */
+  .remember::after { inset: -13px -6px; }
 
   .submitButton,
   .kakaoButton { display: flex; align-items: center; justify-content: center; min-height: 44px; height: clamp(44px, 6.4dvh, 52px); padding: 0 14px; }

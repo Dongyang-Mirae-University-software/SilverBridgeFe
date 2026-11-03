@@ -11,9 +11,9 @@ import AuthShell from './AuthShell';
 // next/image 는 CommonJS로 미리 묶여(optimizeDeps) __esModule 표시가 없으면 default 가 한 겹 더 감싸여 들어온다.
 vi.mock('next/image', () => ({
   __esModule: true,
-  default: ({ alt, src, width, height }: { alt: string; src: string; width?: number; height?: number }) => (
+  default: ({ alt, src, width, height, className }: { alt: string; src: string; width?: number; height?: number; className?: string }) => (
     // eslint-disable-next-line @next/next/no-img-element
-    <img alt={alt} src={src} width={width} height={height} />
+    <img alt={alt} className={className} src={src} width={width} height={height} />
   ),
 }));
 // SVG 아이콘은 테스트 번들에서 컴포넌트가 아니라 객체로 들어온다 - 설정 화면 테스트들과 같은 방식으로 바꾼다
@@ -47,5 +47,22 @@ describe('AuthShell (Chrome)', () => {
     expect(hidden.element().getBoundingClientRect().top).toBeGreaterThan(shellBottom);
     // 그래도 바깥 문서는 틀보다 길어지지 않는다 - 빈 띠 없음
     expect(document.documentElement.scrollHeight).toBeLessThanOrEqual(Math.ceil(shellBottom));
+  });
+
+  // 핸드폰 배치(767px 이하, 2026-11-02)는 로그인뿐 아니라 회원가입·찾기 등 모든 인증 화면의 머리 부분에 적용된다
+  it('767px 이하 다른 인증 화면도 앱 아이콘이 보이고 기능 아이콘 줄은 숨는다', async () => {
+    await page.viewport(375, 667);
+    render(
+      <AuthShell>
+        <div>회원가입 양식</div>
+      </AuthShell>,
+    );
+    const icon = await vi.waitFor(() => {
+      const el = document.querySelector('img[src="/images/careai-icon.png"]');
+      expect(el).not.toBeNull();
+      return el as HTMLElement;
+    });
+    expect(getComputedStyle(icon).display).not.toBe('none');
+    expect(getComputedStyle(document.querySelector('[class*="features"]') as HTMLElement).display).toBe('none');
   });
 });

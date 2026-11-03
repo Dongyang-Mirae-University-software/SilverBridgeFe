@@ -317,7 +317,7 @@ describe('이어서 물어볼 질문(suggestedQuestions)', () => {
     expect(page.getByRole('button', { name: '무릎이 아프다고 하세요' }).elements()).toHaveLength(0); // 이미 보낸 문장
   });
 
-  it('피보호자: 답의 질문을 먼저 놓고 남는 칸은 보내지 않은 기본 문장으로 채운다', async () => {
+  it('피보호자: 답의 질문이 있으면 그것만 놓고 상관없는 기본 문장으로 채우지 않는다(2026-11-02)', async () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage.mockResolvedValue({
       reply: '물을 한 잔 드시고 쉬어 보세요.',
@@ -330,12 +330,8 @@ describe('이어서 물어볼 질문(suggestedQuestions)', () => {
     await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
     await expect.element(page.getByRole('button', { name: '병원에 가야 할까요?' })).toBeVisible();
     const grid = page.getByRole('region', { name: '추천 질문' }).element();
-    expect([...grid.querySelectorAll('button')].map(button => button.textContent)).toEqual([
-      '병원에 가야 할까요?',
-      '배가 아파요',
-      '무릎이 아파요',
-      '어지러워요',
-    ]);
+    expect([...grid.querySelectorAll('button')].map(button => button.textContent)).toEqual(['병원에 가야 할까요?']);
+    await expect.element(page.getByText('눌러서 물어보세요')).toBeVisible();
   });
 
   it('형식이 다른 값(문자열 아님·빈 문자열)은 무시하고 고정 문장을 쓴다', async () => {
@@ -351,6 +347,91 @@ describe('이어서 물어볼 질문(suggestedQuestions)', () => {
     await userEvent.click(page.getByRole('button', { name: '배가 아파요' }));
     await expect.element(page.getByText('쉬어 보세요.')).toBeVisible();
     await expect.element(page.getByRole('button', { name: '어지러워요' })).toBeVisible();
+  });
+});
+
+describe('되묻기 답 칩(suggestedKind="answer")', () => {
+  const HEAD_CHIPS = ['오늘부터 아파요', '며칠째 계속 아파요', '점점 심해져요', '열도 나요'];
+  const FOLLOWUP = { ...REPLY, reply: '언제부터 그러셨나요?', suggestedQuestions: HEAD_CHIPS, suggestedKind: 'answer' };
+
+  function panelButtons() {
+    const panel = page.getByRole('region', { name: '추천 질문' }).element();
+    return [...panel.querySelectorAll('button')].map(button => button.textContent);
+  }
+
+  it('피보호자: 되묻기 턴에는 답 칩 4개만, 제목은 "눌러서 답해 보세요" - 칩을 누르면 그대로 보내고 상담 답 뒤에는 기본 칩으로 돌아간다', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage
+      .mockResolvedValueOnce(FOLLOWUP)
+      .mockResolvedValueOnce({ ...REPLY, reply: '신경과 진료를 권해요.', suggestedQuestions: [] });
+    renderChat(<ChatbotContent variant="ward" />);
+
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    await expect.element(page.getByText('눌러서 답해 보세요')).toBeVisible();
+    expect(panelButtons()).toEqual(HEAD_CHIPS); // 상관없는 증상(배·무릎·어지러워요)을 섞지 않는다
+
+    await userEvent.click(page.getByRole('button', { name: '오늘부터 아파요' }));
+    await expect.element(page.getByText('신경과 진료를 권해요.')).toBeVisible();
+    expect(api.sendChatMessage.mock.calls[1][0].message).toBe('오늘부터 아파요');
+    await expect.element(page.getByText('눌러서 물어보세요')).toBeVisible();
+    expect(panelButtons()).toEqual(['배가 아파요', '무릎이 아파요', '어지러워요']); // 보낸 기본 문장은 뺀다
+  });
+
+  it('피보호자: 이미 눌러 보낸 답 칩도 다음 되묻기 턴에는 다시 보인다', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage.mockResolvedValue(FOLLOWUP);
+    renderChat(<ChatbotContent variant="ward" />);
+
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    await userEvent.click(page.getByRole('button', { name: '오늘부터 아파요' }));
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(panelButtons()).toEqual(HEAD_CHIPS));
+  });
+
+  it('피보호자: 칩이 없는 답(응급 등) 뒤에는 기본 칩과 원래 제목', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage.mockResolvedValue({ ...REPLY, reply: '바로 119에 연락하세요.', riskLevel: 'high', suggestedQuestions: [] });
+    renderChat(<ChatbotContent variant="ward" />);
+
+    await userEvent.click(page.getByRole('button', { name: '배가 아파요' }));
+    await expect.element(page.getByText('바로 119에 연락하세요.')).toBeVisible();
+    await expect.element(page.getByText('눌러서 물어보세요')).toBeVisible();
+    expect(panelButtons()).toEqual(['머리가 아파요', '무릎이 아파요', '어지러워요']);
+  });
+
+  it('모르는 칩 종류·칸 없음(옛 AI)은 이어서 물어볼 질문으로 본다', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage
+      .mockResolvedValueOnce({ ...FOLLOWUP, suggestedKind: 'ANSWER' })
+      .mockResolvedValueOnce({ ...FOLLOWUP, reply: '두 번째 답', suggestedKind: undefined });
+    renderChat(<ChatbotContent variant="ward" />);
+
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    await expect.element(page.getByText('언제부터 그러셨나요?')).toBeVisible();
+    await expect.element(page.getByText('눌러서 물어보세요')).toBeVisible();
+    await userEvent.click(page.getByRole('button', { name: '열도 나요' }));
+    await expect.element(page.getByText('두 번째 답')).toBeVisible();
+    await expect.element(page.getByText('눌러서 물어보세요')).toBeVisible();
+    expect(panelButtons()).not.toContain('열도 나요'); // 이어서 물어볼 질문은 보낸 문장을 뺀다
+  });
+
+  it('보호자: 예약 칩은 맨 앞 그대로, 그 뒤에 답 칩 4개와 "눌러서 답해 보세요"', async () => {
+    api.role.mockReturnValue('GUARDIAN');
+    api.sendChatMessage.mockResolvedValue({
+      ...FOLLOWUP,
+      suggestedQuestions: ['오늘부터 아프시대요', '며칠째 계속 아프시대요', '점점 심해지신대요', '열도 나신대요'],
+    });
+    renderChat(<ChatbotContent />);
+
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
+    await expect.element(page.getByText('눌러서 답해 보세요')).toBeVisible();
+    expect(panelButtons()).toEqual([
+      '병원 예약하고 싶어요',
+      '오늘부터 아프시대요',
+      '며칠째 계속 아프시대요',
+      '점점 심해지신대요',
+      '열도 나신대요',
+    ]);
   });
 });
 

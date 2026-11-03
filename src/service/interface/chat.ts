@@ -41,8 +41,10 @@ export interface ChatMessage {
   emergencyWarning?: string[];
   recommendedAction?: string;
   reservationRequired?: boolean;
-  /** 이 답에 이어서 물어볼 질문(0~3개, AI #135). 빠른 질문 칸을 대화 흐름대로 바꾼다. */
-  suggestedQuestions?: string[];  /** 답 모양(AI 2026-11-01). 없으면 content 로 그린다. */
+  /** 이 답에 이어서 물어볼 질문(0~3개, AI #135). 빠른 질문 칸을 대화 흐름대로 바꾼다. 되묻기 턴은 답 칩 4개. */
+  suggestedQuestions?: string[];
+  /** 칩 종류(AI 2026-11-02): "answer"면 되묻기에 눌러서 답하는 칩. 그 밖의 값·없음은 이어서 물어볼 질문. */
+  suggestedKind?: string;  /** 답 모양(AI 2026-11-01). 없으면 content 로 그린다. */
   layout?: ChatLayout | null;
 }
 
@@ -121,6 +123,8 @@ export interface ChatResponse {
   reservationRequired?: boolean;
   /** 응급·자해·예약 선택지 답에는 빈 목록. 옛 AI는 칸이 없다. */
   suggestedQuestions?: string[];
+  /** "answer"면 suggestedQuestions 는 되묻기 답 칩(AI 2026-11-02). 옛 AI·BE는 칸이 없다. */
+  suggestedKind?: string;
   /** 답 모양(AI 2026-11-01). 옛 AI·예약 흐름 답은 null 또는 없음. */
   layout?: ChatLayout | null;
   chatLogId?: number;
