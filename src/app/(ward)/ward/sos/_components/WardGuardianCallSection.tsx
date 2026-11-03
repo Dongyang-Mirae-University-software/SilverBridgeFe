@@ -14,12 +14,12 @@ interface Props {
   activeGuardians: IConnectionItem[];
   isGuardiansError: boolean;
   isLoadingGuardians: boolean;
-  onGuardianCall: () => void;
+  onGuardianCall: (connection: IConnectionItem) => void;
 }
 
 // 디자인 SOS 화면(2026-10-23): 흰 카드에 "이름 (관계)"와 초록 원 전화 버튼. 카드 전체가 실제 가족 전화(tel:)이며
 // 누르면 SOS 이력에 GUARDIAN_CALL로 남긴다(onCall) - 119 키패드와 달리 실제로 걸리는 것이 의도다
-function GuardianCard({ connection, onCall }: { connection: IConnectionItem; onCall: () => void }) {
+function GuardianCard({ connection, onCall }: { connection: IConnectionItem; onCall: (connection: IConnectionItem) => void }) {
   const telHref = makeTelHref(connection.partnerPhone);
   const relation = connection.relation?.trim();
 
@@ -41,7 +41,7 @@ function GuardianCard({ connection, onCall }: { connection: IConnectionItem; onC
           className={cx('cardLink')}
           href={telHref}
           aria-label={`${connection.partnerName}${relation ? `(${relation})` : ''}에게 전화하기`}
-          onClick={onCall}
+          onClick={() => onCall(connection)}
         />
       ) : null}
     </article>

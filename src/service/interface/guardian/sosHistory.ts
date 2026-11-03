@@ -16,6 +16,12 @@ export interface IGuardianSosHistoryItem {
   triggeredAt: string;
   location: string | null;
   triggerType: SosTriggerType;
+  /** group=true 일 때만 내려온다. */
+  pressCount?: number;
+  firstTriggeredAt?: string;
+  lastTriggeredAt?: string;
+  /** 보호자에게 직접 전화한 SOS이며 현재도 연결된 경우에만 내려온다. */
+  calledGuardianName?: string;
 }
 
 export interface ISosHistoryCounts {

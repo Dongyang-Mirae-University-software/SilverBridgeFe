@@ -66,6 +66,7 @@ describe('WardGuardianCallSection (Chrome)', () => {
     call.element().addEventListener('click', event => event.preventDefault());
     await call.click();
     expect(onGuardianCall).toHaveBeenCalledTimes(1);
+    expect(onGuardianCall).toHaveBeenCalledWith(expect.objectContaining({ partnerUserId: 'g1' }));
   });
 
   it('관계가 없으면 이름만, 전화번호가 없으면 링크 없이 "전화번호가 없어요"', async () => {

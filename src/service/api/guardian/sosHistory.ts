@@ -12,6 +12,8 @@ const GUARDIAN_SOS_BASE = '/guardian/sos';
 export interface GetGuardianSosHistoryParams {
   wardId?: string; // 특정 피보호자만 조회. 생략하면 연결된 전원의 이력을 합쳐서 반환
   triggerType?: SosTriggerType; // 발생 경로. 생략하면 전체 경로 반환
+  /** true면 1분 이내의 연속 SOS를 서버에서 하나의 이력으로 묶어 반환한다. */
+  group?: boolean;
   page?: number; // 0부터 시작
   size?: number; // 서버에서 최대 50으로 제한됨
 }

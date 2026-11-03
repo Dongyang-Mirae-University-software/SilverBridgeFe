@@ -18,7 +18,7 @@ const PAGE_SIZE = 5;
 
 const TRIGGER_TYPE_META: Record<SosTriggerType, { filterLabel: string; description: string; tone: 'guardian' | 'sos' }> = {
   SOS_BUTTON: { filterLabel: 'SOS 버튼', description: '긴급 SOS 버튼을 눌렀어요', tone: 'sos' },
-  GUARDIAN_CALL: { filterLabel: '직접 전화', description: '보호자에게 직접 전화했어요', tone: 'guardian' },
+  GUARDIAN_CALL: { filterLabel: '보호자 연락', description: '보호자에게 직접 전화했어요', tone: 'guardian' },
 };
 
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
@@ -36,6 +36,7 @@ export default function GuardianSosHistoryContent() {
     ...guardianSosHistoryQueryOptions({
       wardId: effectiveSelectedWardId ?? undefined,
       triggerType: triggerTypeFilter === 'ALL' ? undefined : triggerTypeFilter,
+      group: true,
       page,
       size: PAGE_SIZE,
     }),
@@ -127,9 +128,13 @@ export default function GuardianSosHistoryContent() {
                   </span>
                   <div className={cx('eventTime')}>
                     <strong>{formatSosDate(item.triggeredAt)}</strong>
-                    <span>{formatTime(item.triggeredAt)}</span>
+                    <span>{formatSosTime(item)}</span>
                   </div>
-                  <span className={cx('eventDescription')}>{TRIGGER_TYPE_META[item.triggerType].description}</span>
+                  <div className={cx('eventDescription')}>
+                    <span>{TRIGGER_TYPE_META[item.triggerType].description}</span>
+                    {item.pressCount !== undefined && item.pressCount >= 2 && <strong className={cx('pressBadge')}>{item.pressCount}번 연달아 누름</strong>}
+                    {item.calledGuardianName && <span className={cx('guardianChip')}><i>{item.calledGuardianName.slice(0, 1)}</i>{item.calledGuardianName}</span>}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -155,4 +160,11 @@ function formatSosDate(value: string) {
   if (Number.isNaN(date.getTime())) return '-';
   const weekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(date);
   return new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric' }).format(date) + ` (${weekday})`;
+}
+
+function formatSosTime(item: IGuardianSosHistoryItem) {
+  if (item.pressCount && item.pressCount >= 2 && item.firstTriggeredAt && item.lastTriggeredAt) {
+    return `${formatTime(item.firstTriggeredAt)}~${formatTime(item.lastTriggeredAt)}`;
+  }
+  return formatTime(item.triggeredAt);
 }

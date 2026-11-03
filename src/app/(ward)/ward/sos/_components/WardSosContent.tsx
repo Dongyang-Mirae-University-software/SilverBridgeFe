@@ -10,6 +10,7 @@ import useModalStore from '@/store/modalStore';
 import { useWardSosMutation } from '@/service/query/ward';
 import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
 import type { WardSosResponse } from '@/service/interface/ward/sos';
+import type { IConnectionItem } from '@/service/interface/connection';
 import { Emergency119Dialpad } from './Emergency119Dialpad';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
@@ -127,8 +128,11 @@ export default function WardSosContent() {
   }
   */
 
-  function handleGuardianCall() {
-    triggerSos({ triggerType: 'GUARDIAN_CALL' }, { onError: openErrorModal });
+  function handleGuardianCall(connection: IConnectionItem) {
+    triggerSos(
+      { triggerType: 'GUARDIAN_CALL', calledGuardianId: connection.partnerUserId },
+      { onError: openErrorModal },
+    );
   }
 
   return (
