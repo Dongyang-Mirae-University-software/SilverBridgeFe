@@ -40,7 +40,11 @@ function formatDate(value: string | null) {
 function formatYearMonth(value: string | null) {
   if (!value) return '-';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '-' : new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'numeric', timeZone: 'Asia/Seoul' }).format(date);
+  if (Number.isNaN(date.getTime())) return '-';
+  const parts = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'numeric', timeZone: 'Asia/Seoul' }).formatToParts(date);
+  const year = parts.find(part => part.type === 'year')?.value;
+  const month = parts.find(part => part.type === 'month')?.value;
+  return year && month ? `${year}년 ${Number(month)}월` : '-';
 }
 
 function errorCode(error: unknown) { return isAxiosError<{ code?: string }>(error) ? error.response?.data?.code : undefined; }
