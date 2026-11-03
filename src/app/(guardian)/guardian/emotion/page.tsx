@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import PageLayout from '@/components/layout/PageLayout';
+
+export const metadata: Metadata = { title: '정서 상태 체크' };
 
 // AI 말벗·정서 분석은 개발 중이라 데이터가 없다. 빈 화면 대신 준비 중임을 분명히 알린다
 export default function GuardianEmotionPage() {

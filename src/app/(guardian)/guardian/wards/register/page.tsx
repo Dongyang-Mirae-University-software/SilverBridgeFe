@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import PageLayout from '@/components/layout/PageLayout';
 import { GuardianConnectionRequestForm } from '../_components/GuardianConnectionRequestForm';
 import { GuardianConnectionRequestHistory } from '../_components/GuardianConnectionRequestHistory';
 import styles from './page.module.css';
+
+export const metadata: Metadata = { title: '가족 등록' };
 
 export default function GuardianWardRegisterPage() {
   return (

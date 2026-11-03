@@ -1,5 +1,8 @@
+import type { Metadata } from 'next';
 import PageLayout from '@/components/layout/PageLayout';
 import { GuardianMedicationContent } from './_components/GuardianMedicationContent';
+
+export const metadata: Metadata = { title: '복약 관리' };
 
 export default function GuardianMedicationPage() {
   return (
