@@ -26,6 +26,7 @@ export type PageKey =
   | 'ai-stats'
   | 'notification-history'
   | 'devices'
+  | 'hospitals'
   | 'admin-notices';
 
 export type NavIconName =
