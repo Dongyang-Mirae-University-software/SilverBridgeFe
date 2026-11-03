@@ -11,6 +11,12 @@
   text-align: center;
 }
 
+.inline {
+  min-height: 240px;
+  padding: 24px 0;
+  background: transparent;
+}
+
 .title {
   font-size: 20px;
   font-weight: 700;
