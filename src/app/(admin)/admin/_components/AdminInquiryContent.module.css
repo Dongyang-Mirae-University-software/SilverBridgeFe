@@ -3,11 +3,11 @@
 
 /* 탭별 데이터 길이와 무관하게 같은 열 위치를 유지한다. */
 .table { table-layout: fixed; }
-.categoryColumn { width: 112px; }
+.categoryColumn { width: 115px; }
 .titleColumn { width: auto; }
 .authorColumn { width: 112px; }
 .dateColumn { width: 118px; }
 .statusColumn { width: 104px; }
 .actionColumn { width: 82px; }
 .table td { overflow: hidden; text-overflow: ellipsis; }
-.categoryCell { width: 112px; min-width: 112px; max-width: 112px; }
+.categoryCell { width: 115px; min-width: 115px; max-width: 115px; }
