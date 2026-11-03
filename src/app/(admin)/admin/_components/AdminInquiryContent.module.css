@@ -10,3 +10,4 @@
 .statusColumn { width: 104px; }
 .actionColumn { width: 82px; }
 .table td { overflow: hidden; text-overflow: ellipsis; }
+.categoryBadge { width: 72px; justify-content: center; }
