@@ -4,7 +4,7 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { getConnectionResponseBody, mergeConnectionItems } from '@/utils/api/connectionResponse';
 import { CommonResponse } from '../../interface/common';
-import { IConnectionItem, IGuardianConnectionRequestReq } from '../../interface/connection';
+import { IConnectionItem, IGuardianConnectionPreview, IGuardianConnectionRequestReq } from '../../interface/connection';
 
 const GUARDIAN_CONNECTION_BASE = '/guardian/connection';
 
@@ -15,6 +15,21 @@ export type WardListFilter = 'ACTIVE' | 'PENDING' | 'ALL';
 // 피보호자에게 페어링(연결) 요청 보내기
 export async function requestWardConnection(body: IGuardianConnectionRequestReq) {
   return apiClient.post<CommonResponse<null>>(`${GUARDIAN_CONNECTION_BASE}/request`, body);
+}
+
+// 링크로 전달받은 회원 ID의 연결 가능 여부를 가린 이름으로만 미리 확인한다.
+export async function previewWardConnection(targetId: string) {
+  const response = await apiClient.get<CommonResponse<IGuardianConnectionPreview>>(`${GUARDIAN_CONNECTION_BASE}/preview`, {
+    params: { targetId },
+  });
+  const body = response as unknown as {
+    data?: IGuardianConnectionPreview | CommonResponse<IGuardianConnectionPreview>;
+  };
+  const data = body.data;
+
+  if (data && 'targetId' in data) return data;
+  if (data && 'data' in data && data.data) return data.data;
+  throw new Error('가족 정보를 확인하지 못했습니다.');
 }
 
 // 내 피보호자 목록 조회: status 생략 시 ACTIVE + PENDING 상태를 최신 요청순으로 반환

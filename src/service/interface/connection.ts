@@ -27,6 +27,11 @@ export interface IGuardianConnectionRequestReq {
   targetId: string;
 }
 
+export interface IGuardianConnectionPreview {
+  targetId: string;
+  maskedName: string;
+}
+
 export interface IWardPendingConnectionRequest {
   connectionId: number;
   guardianId: string;

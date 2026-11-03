@@ -1,14 +1,25 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   cancelGuardianConnectionRequest,
   getGuardianConnectionRequests,
   getGuardianConnections,
+  previewWardConnection,
   requestWardConnection,
 } from '@/service/api/guardian/connection';
 
 export const guardianConnectionsQueryKey = ['guardian-connections'] as const;
 export const guardianConnectionRequestsQueryKey = [...guardianConnectionsQueryKey, 'requests'] as const;
+
+export function useGuardianConnectionPreview(targetId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['guardian-connection-preview', targetId],
+    queryFn: () => previewWardConnection(targetId),
+    enabled,
+    retry: false,
+    staleTime: 30 * 1000,
+  });
+}
 
 export const guardianConnectionsQueryOptions = queryOptions({
   queryKey: guardianConnectionsQueryKey,

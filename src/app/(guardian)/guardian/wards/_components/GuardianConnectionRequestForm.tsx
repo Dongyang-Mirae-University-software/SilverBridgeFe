@@ -1,9 +1,10 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import classNames from 'classnames/bind';
 
-import { useGuardianConnectionRequestMutation } from '@/service/query/guardian';
+import { useGuardianConnectionPreview, useGuardianConnectionRequestMutation } from '@/service/query/guardian';
 import {
   getConnectionRequestErrorMessage,
   isValidMemberId,
@@ -18,11 +19,15 @@ const RELATION_OPTIONS = ['아들', '딸', '며느리', '사위', '손자', '손
 type RelationOption = (typeof RELATION_OPTIONS)[number];
 
 export function GuardianConnectionRequestForm() {
-  const [memberId, setMemberId] = useState('');
+  const searchParams = useSearchParams();
+  const linkedTargetId = searchParams.get('targetId') ?? '';
+  const isLinkedTargetId = isValidMemberId(linkedTargetId);
+  const [memberId, setMemberId] = useState(() => (isLinkedTargetId ? linkedTargetId : ''));
   const [relation, setRelation] = useState<RelationOption | ''>('');
   const [sent, setSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const { mutate, isPending } = useGuardianConnectionRequestMutation();
+  const preview = useGuardianConnectionPreview(memberId, isValidMemberId(memberId));
 
   const canSubmit = isValidMemberId(memberId) && Boolean(relation) && !isPending;
 
@@ -80,6 +85,13 @@ export function GuardianConnectionRequestForm() {
         <p id="ward-member-id-help" className={cx('help')}>
           어르신 화면 메뉴에서 이름(프로필)을 누르면 보이는 회원 ID예요. 휴대폰에서는 메뉴 버튼을 먼저 눌러 주세요 (영문·숫자 6자리, 대소문자 구분)
         </p>
+        {isLinkedTargetId && memberId === linkedTargetId && (
+          <p className={cx('linkNotice')} aria-live="polite">
+            {preview.isLoading && '가족 정보를 확인하고 있어요.'}
+            {preview.data?.maskedName && `이 분이 맞나요? ${preview.data.maskedName}`}
+            {preview.isError && '이 ID는 지금 연결할 수 없어요. 다른 ID를 확인해 주세요.'}
+          </p>
+        )}
       </div>
 
       <fieldset className={cx('field', 'relationField')}>
