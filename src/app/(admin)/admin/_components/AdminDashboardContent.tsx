@@ -53,7 +53,7 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
       <DashboardSection icon="bell" title="알림 이력" tone="danger" href="/admin/notifications" pill={safety.safetyEvents.todayFailedNotifications > 0 ? '확인 필요' : '정상'}>
         <NumberGrid items={[['전달 실패', formatCount(safety.safetyEvents.todayFailedNotifications, '건'), safety.safetyEvents.todayFailedNotifications > 0 ? 'care' : undefined]]} /><SimpleRows rows={[['안내', '발송 안 함은 실패에 포함되지 않습니다']]} />
       </DashboardSection>
-      <DashboardSection icon="eye" title="디바이스 관리" tone="sun">
+      <DashboardSection icon="eye" title="디바이스 관리" tone="sun" href="/admin/devices">
         <NumberGrid items={[['꺼진 카메라', formatNullableCount(safety.safetyEvents.disconnectedCameras, '대'), safety.safetyEvents.disconnectedCameras !== null && safety.safetyEvents.disconnectedCameras > 0 ? 'care' : undefined], ['카메라 없는 어르신', formatCount(safety.safetyEvents.wardsWithoutCamera, '명')], ['등록 카메라', operation.cameras.maxTotal === null ? formatCount(operation.cameras.registered, '대') : `${operation.cameras.registered} / ${operation.cameras.maxTotal}대`]]} /><TypeStack total={Math.max(1, operation.cameras.registered)} items={[{ label: '켜짐', value: safety.streamingCameras ?? 0, tone: 'safe' }, { label: '꺼짐', value: safety.safetyEvents.disconnectedCameras ?? 0, tone: 'warn' }]} />
       </DashboardSection>
       <DashboardSection icon="messageCircle" title="고객센터" tone="accent" href="/admin/inquiries" pill={operation.unansweredInquiries.count > 0 ? '답변 필요' : '정상'}>
@@ -66,7 +66,10 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
 }
 
 function AiServiceCard({ label, state }: { label: string; state: { label: string; tone: string } }) { return <span className={cx('aiServiceCard', state.tone)}><span className={cx('aiServiceName')}>{label}</span><span className={cx('aiServiceResult')}><i />{state.label}</span></span>; }
-function DashboardSection({ icon, title, tone, href, pill, wide = false, children }: { icon: IconName; title: string; tone: string; href?: string; pill?: string; wide?: boolean; children: ReactNode }) { return <section className={cx('section', { wide })}><header><span className={cx('sectionIcon', tone)}><Icon name={icon} size={17} decorative /></span><h2>{title}</h2>{pill && <em className={cx('pill', tone)}>{pill}</em>}{href && <Link className={cx('allLink')} href={href}>전체 보기<Icon name="chevronRight" size={14} decorative /></Link>}</header>{children}</section>; }
+function DashboardSection({ icon, title, tone, href, pill, wide = false, children }: { icon: IconName; title: string; tone: string; href?: string; pill?: string; wide?: boolean; children: ReactNode }) {
+  const content = <><header><span className={cx('sectionIcon', tone)}><Icon name={icon} size={17} decorative /></span><h2>{title}</h2>{pill && <em className={cx('pill', tone)}>{pill}</em>}{href && <Icon name="chevronRight" className={cx('cardArrow')} size={16} decorative />}</header>{children}</>;
+  return href ? <Link className={cx('section', 'linked', { wide })} href={href} aria-label={`${title} 페이지로 이동`}>{content}</Link> : <section className={cx('section', { wide })}>{content}</section>;
+}
 function NumberGrid({ items }: { items: Array<[string, string, ('care' | 'danger' | 'brand')?]> }) { return <div className={cx('numberGrid')}>{items.map(([label, value, tone]) => <div key={label} className={cx(tone)}><span>{label}</span><b>{value}</b></div>)}</div>; }
 function SimpleRows({ rows }: { rows: Array<[string, string]> }) { return <div className={cx('simpleRows')}>{rows.map(([label, value]) => <div key={label}><span>{label}</span><b>{value}</b></div>)}</div>; }
 function AiSummaryCard({ title, marker, items, children }: { title: string; marker: string; items: Array<[string, string, ('danger' | 'brand')?]>; children: ReactNode }) { return <article className={cx('aiSummaryCard')}><h3><i className={cx(marker)} />{title}</h3><NumberGrid items={items} />{children}</article>; }
