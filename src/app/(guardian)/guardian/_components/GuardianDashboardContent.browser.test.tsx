@@ -95,7 +95,7 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
     await expect.element(page.getByRole('link', { name: 'AI 이상감지, 확인 필요 1건' })).toBeVisible();
   });
 
-  it('실제 응답(약 2건·이상감지 0건·이번 달 SOS 0건)이면 약 관리 칩에만 금색 3px 테두리를 둔다', async () => {
+  it('실제 응답(약 2건·이상감지 0건·이번 달 SOS 0건)이면 아무 칸도 강조하지 않는다(시안에 약 강조가 없다)', async () => {
     data.dashboard = {
       pendingActions: { total: 2, anomaly: 0, medication: 2 },
       wards: [{ wardId: 'ward01', wardName: '김철수', pendingCount: 2 }],
@@ -106,20 +106,20 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
     };
     renderDashboard();
 
-    const chip = page.getByRole('link', { name: '약 관리, 안 드신 약 2건' });
-    await expect.element(chip).toBeVisible();
-    expect(borderOf(chip.element())).toEqual({ width: '3px', color: 'rgb(217, 178, 94)', background: 'rgb(255, 250, 245)' });
-    expect(borderOf(page.getByRole('link', { name: 'SOS 내역' }).element()).width).not.toBe('3px');
+    await expect.element(page.getByText('확인이 필요한 일 2건')).toBeVisible();
+    expect(borderOf(page.getByRole('link', { name: '약 관리' }).element()).background).toBe('rgb(243, 236, 227)');
+    expect(borderOf(page.getByRole('link', { name: 'SOS 내역' }).element()).background).toBe('rgb(243, 236, 227)');
     expect(borderOf(page.getByRole('link', { name: 'AI 이상감지' }).element()).width).not.toBe('3px');
   });
 
-  it('이번 달 SOS가 있으면 SOS 내역 칩에 빨간 3px 테두리를 둔다', async () => {
+  it('이번 달 SOS가 있으면 SOS 내역 칩을 시안의 강조 칩(#E2A49A 테두리·#FFF1EE)으로 그린다', async () => {
     data.dashboard = dashboard({ sosThisMonth: 1 });
     renderDashboard();
 
     const chip = page.getByRole('link', { name: 'SOS 내역, 이번 달 SOS 1건' });
     await expect.element(chip).toBeVisible();
-    expect(borderOf(chip.element())).toMatchObject({ width: '3px', background: 'rgb(255, 241, 238)' });
+    // 1.5px 테두리는 1배율 화면에서 Chrome이 1px로 그린다 - 굵기 대신 색으로 본다
+    expect(borderOf(chip.element())).toMatchObject({ color: 'rgb(226, 164, 154)', background: 'rgb(255, 241, 238)' });
   });
 
   it('확인할 일이 없으면 테두리 강조가 없다', async () => {

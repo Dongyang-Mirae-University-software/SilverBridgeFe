@@ -47,21 +47,16 @@ export function GuardianDashboardContent() {
   });
 
   const isAnomalyUnavailable = dashboard?.unavailable.includes('anomalyDetection') ?? false;
-  const isMedicationUnavailable = dashboard?.unavailable.includes('medication') ?? false;
   const anomaly = dashboard?.anomalyDetection;
   const pendingTotal = dashboard?.pendingActions.total;
   // 확인 필요 건수가 있으면 그 칸에 테두리를 둔다(v13.0 시안). 이상감지는 두 값 중 하나라도 있으면 켠다
   const anomalyCount = anomaly?.needsReviewCount || dashboard?.pendingActions.anomaly || 0;
   const needsReview = !isAnomalyUnavailable && anomalyCount > 0;
-  const medicationCount = isMedicationUnavailable ? 0 : (dashboard?.pendingActions.medication ?? 0);
   const isSosUnavailable = dashboard?.unavailable.includes('sos') ?? false;
   const sosCount = isSosUnavailable ? 0 : (dashboard?.sos.thisMonthCount ?? 0);
-  // 큰 카드가 없는 SOS·약은 바로가기 칩에 카드와 같은 굵은 테두리를 둔다(SOS는 위험 빨강, 약은 살펴보기 금색)
-  const chipAlert = (href: string): ChipAlert | undefined => {
-    if (href === '/guardian/sos' && sosCount > 0) return { tone: 'warn', label: `이번 달 SOS ${sosCount}건` };
-    if (href === '/guardian/medication' && medicationCount > 0) return { tone: 'care', label: `안 드신 약 ${medicationCount}건` };
-    return undefined;
-  };
+  // v13.0 시안에서 강조하는 칩은 SOS 내역뿐이다(약 관리 등은 강조 없음)
+  const chipAlert = (href: string): ChipAlert | undefined =>
+    href === '/guardian/sos' && sosCount > 0 ? { label: `이번 달 SOS ${sosCount}건` } : undefined;
 
   if (activeConnections.length === 0) {
     return (
@@ -127,11 +122,11 @@ export function GuardianDashboardContent() {
   );
 }
 
-type ChipAlert = { tone: 'warn' | 'care'; label: string };
+type ChipAlert = { label: string };
 
 function QuickLink({ href, icon, label, alert }: (typeof QUICK_LINKS)[number] & { alert?: ChipAlert }) {
   return (
-    <Link href={href} className={cx('quickLink', alert?.tone)} aria-label={alert ? `${label}, ${alert.label}` : undefined}>
+    <Link href={href} className={cx('quickLink', { warn: alert })} aria-label={alert ? `${label}, ${alert.label}` : undefined}>
       <Icon name={icon} size={18} decorative />
       {label}
     </Link>
