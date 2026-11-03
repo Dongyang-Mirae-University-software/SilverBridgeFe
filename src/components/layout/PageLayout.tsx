@@ -14,11 +14,13 @@ interface PageLayoutProps {
   fill?: boolean;
   // true면 제목·설명을 화면에서 숨긴다(스크린 리더는 제목을 그대로 읽는다).
   hideTitle?: boolean;
+  // children이 없을 때 빈 칸에 보일 안내. 없으면 제목·설명을 그대로 쓴다
+  empty?: { title: string; message: string };
 }
 
 const DEFAULT_DESCRIPTION = '아직 상세 화면을 준비 중입니다.';
 
-export default function PageLayout({ actions, children, description, fill, hideTitle, title }: PageLayoutProps) {
+export default function PageLayout({ actions, children, description, empty, fill, hideTitle, title }: PageLayoutProps) {
   return (
     <section className={cx('pageLayout', { fill })} aria-labelledby="page-layout-title">
       {hideTitle ? (
@@ -38,8 +40,8 @@ export default function PageLayout({ actions, children, description, fill, hideT
       <div className={cx(children ? 'content' : 'emptyContent')}>
         {children ?? (
           <div className={cx('emptyState')}>
-            <strong>{title}</strong>
-            <span>{description ?? DEFAULT_DESCRIPTION}</span>
+            <strong>{empty?.title ?? title}</strong>
+            <span>{empty?.message ?? description ?? DEFAULT_DESCRIPTION}</span>
           </div>
         )}
       </div>
