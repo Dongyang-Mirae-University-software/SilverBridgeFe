@@ -9,7 +9,10 @@ import LoginContent from './LoginContent';
 
 const mocks = vi.hoisted(() => ({ signin: vi.fn(), push: vi.fn(), complete: vi.fn() }));
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mocks.push }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 vi.mock('@/service/api/auth/auth', () => ({ signin: mocks.signin }));
 vi.mock('@/lib/auth/completeSignin', () => ({ completeSigninSession: mocks.complete }));
 vi.mock('@/components/Icon', () => ({ Icon: () => <span data-testid="icon" /> }));

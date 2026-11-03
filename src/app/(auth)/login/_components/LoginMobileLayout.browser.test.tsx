@@ -17,7 +17,10 @@ vi.mock('next/image', () => ({
   ),
 }));
 vi.mock('@/components/Icon', () => ({ Icon: () => <span data-testid="icon" /> }));
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 vi.mock('@/service/api/auth/auth', () => ({ signin: vi.fn() }));
 vi.mock('@/lib/auth/completeSignin', () => ({ completeSigninSession: vi.fn() }));
 

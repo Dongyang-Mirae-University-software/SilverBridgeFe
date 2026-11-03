@@ -29,6 +29,9 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+// 가족 등록 링크(?targetId=)를 읽는 폼이라 빈 쿼리를 준다
+vi.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams() }));
+
 vi.mock('@/service/api/guardian/connection', async importOriginal => ({
   ...(await importOriginal<object>()),
   ...api,
