@@ -36,6 +36,9 @@
 .quickLink.warn:hover { background: #fff1ee; color: var(--sb-danger); }
 .quickDivider { width: 1px; height: 32px; justify-self: center; background: var(--sb-line); }
 
+.stateCard { display: flex; min-height: 160px; align-items: center; justify-content: center; gap: 14px; margin: 0; border: 1px solid var(--sb-line-soft); border-radius: var(--sb-radius); background: #fff; color: var(--sb-ink-soft); flex-direction: column; font-size: 16px; font-weight: 700; padding: 24px; text-align: center; }
+.stateCard p { margin: 0; }
+.stateCard .emptyHeroButton { border: 0; cursor: pointer; font: inherit; font-size: 14px; }
 .emptyHero { display: flex; align-items: center; gap: 16px; border: 1px dashed var(--sb-line-soft); border-radius: var(--sb-radius); background: #fff; padding: 20px 22px; }
 .emptyHeroIcon { display: grid; width: 64px; height: 64px; flex: 0 0 auto; place-items: center; border-radius: 18px; background: var(--sb-brand-50); color: var(--sb-brand); }
 .emptyHeroText { display: grid; min-width: 0; flex: 1; gap: 4px; }

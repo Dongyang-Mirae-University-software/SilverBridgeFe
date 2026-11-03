@@ -10,7 +10,7 @@ import { clearSelectedWardId } from '@/store/selectedWardStore';
 import '@/app/globals.css';
 import { GuardianDashboardContent } from './GuardianDashboardContent';
 
-const data = vi.hoisted(() => ({ dashboard: null as unknown }));
+const data = vi.hoisted(() => ({ dashboard: null as unknown, connections: null as (() => Promise<unknown>) | null }));
 
 vi.mock('next/link', () => ({
   __esModule: true,
@@ -23,7 +23,7 @@ vi.mock('next/link', () => ({
 vi.mock('@/service/query/guardian', () => ({
   guardianConnectionsQueryOptions: queryOptions({
     queryKey: ['test-connections'],
-    queryFn: async () => ({
+    queryFn: async () => data.connections ? data.connections() : ({
       data: [
         {
           id: 1,
@@ -72,7 +72,10 @@ const borderOf = (element: Element) => {
   return { width: style.borderTopWidth, color: style.borderTopColor, background: style.backgroundColor };
 };
 
-beforeEach(() => clearSelectedWardId());
+beforeEach(() => {
+  clearSelectedWardId();
+  data.connections = null;
+});
 afterEach(() => {
   document.body.innerHTML = '';
 });
@@ -148,5 +151,31 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
     await expect.element(page.getByRole('link', { name: 'AI 이상감지' })).toBeVisible();
     await expect.element(page.getByRole('link', { name: '약 관리' })).toBeVisible();
     await expect.element(page.getByRole('link', { name: 'SOS 내역' })).toBeVisible();
+  });
+});
+
+describe('보호자 대시보드 불러오기 상태 (Chrome)', () => {
+  it('연결 목록을 받는 동안에는 "연결된 피보호자가 없습니다" 대신 불러오는 중 안내를 보인다', async () => {
+    data.connections = () => new Promise(() => {});
+    renderDashboard();
+
+    await expect.element(page.getByRole('status')).toHaveTextContent('피보호자 정보를 불러오는 중이에요.');
+    expect(page.getByText('연결된 피보호자가 없습니다').elements()).toHaveLength(0);
+  });
+
+  it('연결 목록 조회가 실패하면 "없음"이 아니라 실패 안내와 다시 불러오기를 보인다', async () => {
+    let fail = true;
+    data.connections = async () => {
+      if (fail) throw new Error('server down');
+      return { data: [] };
+    };
+    data.dashboard = dashboard({});
+    renderDashboard();
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('피보호자 정보를 불러오지 못했어요.');
+    expect(page.getByText('연결된 피보호자가 없습니다').elements()).toHaveLength(0);
+    fail = false;
+    await page.getByRole('button', { name: '다시 불러오기' }).click();
+    await expect.element(page.getByText('연결된 피보호자가 없습니다')).toBeVisible();
   });
 });

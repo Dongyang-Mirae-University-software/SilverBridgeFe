@@ -24,7 +24,12 @@ const QUICK_LINKS = [
 ];
 
 export function GuardianDashboardContent() {
-  const { data: connectionsResponse } = useQuery(guardianConnectionsQueryOptions);
+  const {
+    data: connectionsResponse,
+    isLoading: isConnectionsLoading,
+    isError: isConnectionsError,
+    refetch: refetchConnections,
+  } = useQuery(guardianConnectionsQueryOptions);
 
   const activeConnections = useMemo(
     () => (Array.isArray(connectionsResponse?.data) ? connectionsResponse.data : [])
@@ -60,6 +65,28 @@ export function GuardianDashboardContent() {
   // 이상감지 카드는 확인할 이상감지가 있거나 이번 달 SOS가 있으면 테두리·확인 필요 배지를 둔다
   const detectAlert = needsReview || sosCount > 0;
   const detectLabel = [needsReview && `확인 필요 ${anomalyCount}건`, sosCount > 0 && `이번 달 SOS ${sosCount}건`].filter(Boolean).join(', ');
+
+  // 목록을 받기 전·실패했을 때 "연결된 피보호자가 없습니다"로 보이지 않게 따로 안내한다
+  if (isConnectionsLoading) {
+    return (
+      <div className={cx('dashboardStack')}>
+        <p className={cx('stateCard')} role="status">피보호자 정보를 불러오는 중이에요.</p>
+      </div>
+    );
+  }
+
+  if (isConnectionsError && !connectionsResponse) {
+    return (
+      <div className={cx('dashboardStack')}>
+        <div className={cx('stateCard')} role="alert">
+          <p>피보호자 정보를 불러오지 못했어요.</p>
+          <button className={cx('emptyHeroButton')} type="button" onClick={() => void refetchConnections()}>
+            다시 불러오기
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (activeConnections.length === 0) {
     return (
