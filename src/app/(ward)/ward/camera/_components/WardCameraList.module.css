@@ -9,6 +9,28 @@
   text-align: center;
 }
 
+div.emptyText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.emptyText p { margin: 0; }
+
+.retryButton {
+  min-height: 56px;
+  padding: 0 28px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  font: inherit;
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  cursor: pointer;
+}
+
 .emptyCard {
   display: flex;
   min-height: 310px;

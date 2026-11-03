@@ -39,7 +39,7 @@ export function WardCameraList({
   // 이 기기의 카메라를 등록 해제했을 때 - 이 탭의 송출을 끄게 한다
   onThisDeviceDeleted?: () => void;
 }) {
-  const { data, isLoading } = useQuery(wardLiveCamerasQueryOptions);
+  const { data, isLoading, isError, refetch } = useQuery(wardLiveCamerasQueryOptions);
   const cameras = data ?? [];
   const myDeviceId = getStoredDeviceId();
   const [renamingCamera, setRenamingCamera] = useState<WardLiveCamera | null>(null);
@@ -66,6 +66,17 @@ export function WardCameraList({
   };
 
   if (isLoading) return <p className={cx('emptyText')}>등록된 카메라를 불러오는 중입니다.</p>;
+  // 목록을 못 받았을 때 '아직 등록한 카메라가 없어요'·등록 버튼을 보이면 이미 등록한 기기를 또 등록하게 된다
+  if (isError && !data) {
+    return (
+      <div className={cx('emptyText')} role="alert">
+        <p>카메라 목록을 불러오지 못했어요.</p>
+        <button type="button" className={cx('retryButton')} onClick={() => void refetch()}>
+          다시 불러오기
+        </button>
+      </div>
+    );
+  }
   if (cameras.length === 0) {
     return (
       <section className={cx('emptyCard')}>
