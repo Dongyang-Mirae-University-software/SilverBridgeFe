@@ -150,6 +150,8 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await expect.element(screen.getByRole('heading', { name: '예약 현황 0건' })).toBeVisible();
     // 피보호자가 한 명이면 선택 칸이 없다
     expect(screen.getByRole('combobox').elements()).toHaveLength(0);
+    // 예약 내역(첫 화면)에도 시연 안내가 보인다
+    await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
 
     await expect.element(step(screen, '1. 병원 고르기')).toHaveAttribute('aria-current', 'step');

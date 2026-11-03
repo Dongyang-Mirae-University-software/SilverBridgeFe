@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
+import { ReservationDemoNotice } from '@/components/reservation/ReservationDemoNotice';
 import { ReservationPager } from '@/components/reservation/ReservationPager';
 import { IHospital, IReservationItem } from '@/service/interface/reservation';
 import {
@@ -74,6 +75,7 @@ export function HospitalListStep(props: Props) {
     return (
       <>
         {newButton}
+        <ReservationDemoNotice />
         {props.isLoading ? (
           <div className={cx('card', 'emptyCard')}>
             <p className={cx('message', 'inline')}>{props.wardName}의 예약을 불러오는 중이에요.</p>
@@ -117,6 +119,8 @@ export function HospitalListStep(props: Props) {
   return (
     <>
       {newButton}
+      {/* 예약 내역도 가상 예약이라 첫 화면부터 같은 안내를 둔다 */}
+      <ReservationDemoNotice />
 
       {/* 알림 영역은 늘 두고 내용만 바꾼다 - 새로 생기는 영역은 화면 읽기 프로그램이 놓칠 수 있다 */}
       <div aria-live="polite">
