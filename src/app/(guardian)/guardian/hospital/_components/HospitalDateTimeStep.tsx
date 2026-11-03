@@ -29,6 +29,7 @@ interface Props {
   slots?: string[];
   slotsLoading: boolean;
   slotsError: unknown;
+  onRetrySlots: () => void;
   notice: string | null;
   onNext: () => void;
 }
@@ -105,6 +106,7 @@ export function HospitalDateTimeStep(props: Props) {
               available={props.slots}
               isLoading={props.slotsLoading}
               error={props.slotsError}
+              onRetry={props.onRetrySlots}
               isToday={date === today}
               nowTime={props.nowTime}
               time={props.time}
@@ -140,15 +142,26 @@ interface SlotPickerProps {
   available?: string[];
   isLoading: boolean;
   error: unknown;
+  onRetry: () => void;
   isToday: boolean;
   nowTime: string;
   time: string;
   onTime: (time: string) => void;
 }
 
-function SlotPicker({ hospital, date, available, isLoading, error, isToday, nowTime, time, onTime }: SlotPickerProps) {
+function SlotPicker({ hospital, date, available, isLoading, error, onRetry, isToday, nowTime, time, onTime }: SlotPickerProps) {
   if (isLoading) return <p className={cx('message', 'inline')}>예약할 수 있는 시간을 확인하는 중이에요.</p>;
-  if (error) return <p className={cx('message', 'inline')}>{reservationErrorMessage(error)}</p>;
+  // 예약 내역·병원 목록처럼 연결 실패(502) 등은 그 자리에서 다시 묻게 한다
+  if (error) {
+    return (
+      <div role="alert">
+        <p className={cx('message', 'inline')}>{reservationErrorMessage(error)}</p>
+        <button type="button" className={cx('btn', 'ghost', 'smallButton')} onClick={onRetry}>
+          다시 불러오기
+        </button>
+      </div>
+    );
+  }
 
   const hours = hoursForDay(hospital, date); // 요일별 진료 시간(예: 토요일 반일)
   const slots = buildSlotGrid(hours.openTime, hours.closeTime, available ?? [], {

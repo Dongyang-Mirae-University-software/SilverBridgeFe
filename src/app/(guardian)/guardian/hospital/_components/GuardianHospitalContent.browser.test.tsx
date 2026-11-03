@@ -624,6 +624,19 @@ describe('GuardianHospitalContent (Chrome)', () => {
     expect(screen.getByRole('dialog').elements()).toHaveLength(0);
   });
 
+  it('빈 시간 조회가 실패(502)하면 다시 불러오기로 다시 묻는다', async () => {
+    api.getAvailableSlots.mockRejectedValueOnce(axiosError(502, '예약 서비스에 연결하지 못했습니다.'));
+    const screen = renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    await screen.getByRole('button', { name: /푸른안과/ }).click();
+    await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
+
+    await expect.element(screen.getByRole('alert')).toHaveTextContent('예약 서비스에 연결하지 못했어요');
+    await screen.getByRole('button', { name: '다시 불러오기' }).click();
+    await expect.element(screen.getByRole('button', { name: '오전 9시', exact: true })).toBeVisible();
+    expect(api.getAvailableSlots).toHaveBeenCalledTimes(2);
+  });
+
   describe('403 연결된 피보호자가 아니에요 → 피보호자 목록 새로 받기', () => {
     const connectionsRefetched = (spy: MockInstance<QueryClient['invalidateQueries']>) =>
       spy.mock.calls.some(([filters]) => JSON.stringify((filters as { queryKey?: unknown })?.queryKey) === '["guardian-connections"]');

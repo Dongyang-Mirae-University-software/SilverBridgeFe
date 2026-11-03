@@ -339,6 +339,7 @@ export function GuardianHospitalContent() {
           slots={slotsQuery.data}
           slotsLoading={slotsQuery.isFetching && !slotsQuery.data}
           slotsError={slotsQuery.isError ? slotsQuery.error : null}
+          onRetrySlots={() => slotsQuery.refetch()}
           notice={slotNotice}
           onNext={() => {
             if (!slotStillAhead()) return;
