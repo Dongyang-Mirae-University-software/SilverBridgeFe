@@ -1,7 +1,7 @@
 // 보호자 복약 화면 줄 배치 - 피보호자가 많아 탭이 화면보다 넓어도 [약 추가]·카드가 화면 안에 있어야 한다.
 // 실제 Chrome에서 돈다(`npm run test:browser`). 데이터 조회 없이 같은 CSS 모듈·탭 컴포넌트로 줄 구조만 그린다.
 
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 import classNames from 'classnames/bind';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -32,7 +32,7 @@ describe('보호자 복약 화면 줄 배치', () => {
     boxSizing.textContent = '*, *::before, *::after { box-sizing: border-box; } body { margin: 0; }';
     document.head.appendChild(boxSizing);
 
-    const screen = render(
+    const screen = await render(
       // GuardianLayout의 main처럼 flex 줄 안에 둔다(.main > * { flex: 1 })
       <main style={{ display: 'flex', width: '100%' }}>
         <div style={{ flex: 1 }}>

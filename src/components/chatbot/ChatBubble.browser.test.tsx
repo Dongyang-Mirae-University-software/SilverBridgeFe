@@ -2,7 +2,7 @@
 // 합성 문장만 쓴다. 문구·이모지로 판단하지 않는지(있는지만 보는지)도 확인한다.
 
 import { describe, expect, it, vi } from 'vitest';
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import type { ChatMessage } from '@/service/interface/chat';
@@ -28,7 +28,7 @@ function textOrder(): string[] {
 
 describe('ChatBubble 답 모양', () => {
   it('핵심 한 줄·본문·카드를 칸별로 그리고 빈 칸은 그리지 않는다', async () => {
-    show({
+    await show({
       content: '🏥 정형외과 진료를 권해드려요.\n💬 많이 불편하시겠어요.',
       layout: {
         headline: '🏥 정형외과 진료를 권해드려요.',
@@ -50,7 +50,7 @@ describe('ChatBubble 답 모양', () => {
   });
 
   it('응급 답은 빨간 상자가 맨 위, 그다음 119 핵심 줄', async () => {
-    show({
+    await show({
       content: '🚨 바로 119에 전화해 주세요.\n지금은 병원 예약보다 119 연락이 먼저예요.',
       emergencyWarning: ['지금은 응급 상황일 수 있어요.', '지금 바로 119에 전화하세요.'],
       layout: { headline: '🚨 바로 119에 전화해 주세요.', body: ['지금은 병원 예약보다 119 연락이 먼저예요.'], questions: [], homeCare: [], visitHospitalIf: [] },
@@ -69,7 +69,7 @@ describe('ChatBubble 답 모양', () => {
   });
 
   it('옛 형식(layout 없음)은 지금처럼 reply 글로 그린다 - 옛 AI·옛 기록 호환', async () => {
-    show({ content: '말씀해 주신 내용을 정리했어요.\n· 증상: 기침', layout: undefined });
+    await show({ content: '말씀해 주신 내용을 정리했어요.\n· 증상: 기침', layout: undefined });
 
     const reply = page.getByText(/· 증상: 기침/).element();
     expect(getComputedStyle(reply).whiteSpace).toBe('pre-wrap');
@@ -77,14 +77,14 @@ describe('ChatBubble 답 모양', () => {
   });
 
   it('옛 형식에서도 응급 상자는 reply 글보다 위', async () => {
-    show({ content: '옛 응급 답', emergencyWarning: ['지금 바로 119에 전화하세요.'], layout: null });
+    await show({ content: '옛 응급 답', emergencyWarning: ['지금 바로 119에 전화하세요.'], layout: null });
 
     const order = textOrder();
     expect(order.indexOf('응급 주의')).toBeLessThan(order.indexOf('옛 응급 답'));
   });
 
   it('이상한 layout(문장 없음·문자열 아님)은 무시하고 reply 로 그린다', async () => {
-    show({
+    await show({
       content: '대체 답',
       layout: { headline: '', body: [1 as unknown as string], questions: [], homeCare: [], visitHospitalIf: [] },
     });
@@ -93,7 +93,7 @@ describe('ChatBubble 답 모양', () => {
   });
 
   it('되묻기 질문은 질문 칸에, 글자는 18px 이상', async () => {
-    show({
+    await show({
       content: '',
       layout: {
         headline: '🏥 신경과 진료를 생각해 보셔도 좋아요.',
@@ -111,7 +111,7 @@ describe('ChatBubble 답 모양', () => {
   });
 
   it('피보호자 화면은 더 크게(22px 이상)', async () => {
-    show(
+    await show(
       { content: '', layout: { headline: '🏥 내과 진료를 권해드려요.', body: ['💬 걱정되시겠어요.'], questions: [], homeCare: [], visitHospitalIf: [] } },
       'ward',
     );
@@ -123,7 +123,7 @@ describe('ChatBubble 답 모양', () => {
   });
 
   it('줄 머리 이모지·카드 제목 아이콘은 화면 읽기 프로그램에서 숨긴다(글은 그대로 읽힘)', async () => {
-    show({
+    await show({
       content: '',
       layout: {
         headline: '🏥 내과 진료를 권해드려요.',
@@ -152,7 +152,7 @@ describe('ChatBubble 답 모양', () => {
 
   it('layout·경고·옛 reply 안의 HTML 은 글자로만 보이고 태그로 해석하지 않는다(XSS)', async () => {
     const payload = '<img src=x onerror="window.__xss=1"><script>window.__xss=2</script>';
-    show({
+    await show({
       content: `💬 ${payload}`,
       emergencyWarning: [payload],
       layout: {
@@ -169,7 +169,7 @@ describe('ChatBubble 답 모양', () => {
     expect((window as unknown as { __xss?: number }).__xss).toBeUndefined();
 
     // 옛 형식(reply 글)도 같다
-    show({ content: payload, layout: null });
+    await show({ content: payload, layout: null });
     expect(document.querySelectorAll('[data-testid="wrap"] img, [data-testid="wrap"] script').length).toBe(0);
   });
 });

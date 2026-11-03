@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
-import { userEvent } from '@vitest/browser/context';
+import { userEvent } from 'vitest/browser';
 
 import type { IConnectionItem } from '@/service/interface/connection';
 import { GuardianConnectionRequestForm } from './GuardianConnectionRequestForm';
@@ -94,14 +94,14 @@ afterEach(() => {
 });
 
 describe('가족 등록 폼 (Chrome)', () => {
-  async function fillForm(screen: ReturnType<typeof render>, id: string, relation = '아들') {
+  async function fillForm(screen: Awaited<ReturnType<typeof render>>, id: string, relation = '아들') {
     await userEvent.fill(screen.getByLabelText('어르신의 회원 ID').element() as HTMLInputElement, id);
     await screen.getByRole('button', { name: relation }).click();
   }
 
   it('회원 ID는 영문·숫자 6자리만 받고 대소문자 그대로 요청한다', async () => {
     api.requestWardConnection.mockResolvedValue(ok(null));
-    const screen = render(<GuardianConnectionRequestForm />, { wrapper });
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
     const submit = screen.getByRole('button', { name: '연결 요청 보내기' });
 
     await expect.element(submit).toBeDisabled();
@@ -122,12 +122,12 @@ describe('가족 등록 폼 (Chrome)', () => {
     [429, 'CONNECTION_REQUEST_COOLDOWN', { retryAfterSeconds: 7260 }, '2시간 1분 뒤에 다시 요청할 수 있어요'],
   ])('%s %s는 코드별 문구로 안내한다', async (status, code, data, expected) => {
     api.requestWardConnection.mockRejectedValue(apiError(status, code, data));
-    const screen = render(<GuardianConnectionRequestForm />, { wrapper });
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
 
     await fillForm(screen, 'aB3x9Z', '손녀');
     await screen.getByRole('button', { name: '연결 요청 보내기' }).click();
 
-    await expect.element(screen.getByRole('alert')).toHaveTextContent(expected);
+    await expect.element(screen.getByRole('alert')).toMatchTextContent(expected);
   });
 });
 
@@ -140,7 +140,7 @@ describe('수락을 기다리는 중 (Chrome)', () => {
       ]),
     );
     api.cancelGuardianConnectionRequest.mockResolvedValue(ok(null));
-    const screen = render(<GuardianConnectionRequestHistory />, { wrapper });
+    const screen = await render(<GuardianConnectionRequestHistory />, { wrapper });
 
     await expect.element(screen.getByText('김영희')).toBeInTheDocument();
     await expect.element(screen.getByText('아들로 요청 · 5월 8일')).toBeInTheDocument();
@@ -157,22 +157,22 @@ describe('수락을 기다리는 중 (Chrome)', () => {
       .mockResolvedValueOnce(ok([connection({ id: 3, status: 'PENDING', connectedAt: null })]))
       .mockResolvedValue(ok([connection({ id: 3, status: 'ACTIVE' })]));
     api.cancelGuardianConnectionRequest.mockRejectedValue(apiError(409, 'CONNECTION_NOT_PENDING'));
-    const screen = render(<GuardianConnectionRequestHistory />, { wrapper });
+    const screen = await render(<GuardianConnectionRequestHistory />, { wrapper });
 
     await screen.getByRole('button', { name: '요청 취소' }).click();
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('이미 수락되었거나 거절된 요청이에요.');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('이미 수락되었거나 거절된 요청이에요.');
     await expect.element(screen.getByText('수락을 기다리는 중')).not.toBeInTheDocument();
   });
 
   it('보낸 요청을 못 불러오면 그렇다고 알린다', async () => {
     api.getGuardianConnectionRequests.mockRejectedValue(apiError(500, 'INTERNAL_SERVER_ERROR'));
-    const screen = render(<GuardianConnectionRequestHistory />, { wrapper });
+    const screen = await render(<GuardianConnectionRequestHistory />, { wrapper });
     await expect.element(screen.getByText('보낸 요청을 불러오지 못했어요.')).toBeInTheDocument();
   });
 
   it('대기 요청이 없으면 칸을 그리지 않는다', async () => {
     api.getGuardianConnectionRequests.mockResolvedValue(ok([]));
-    const screen = render(<GuardianConnectionRequestHistory />, { wrapper });
+    const screen = await render(<GuardianConnectionRequestHistory />, { wrapper });
     await new Promise(resolve => setTimeout(resolve, 50));
     expect(screen.container.textContent).toBe('');
   });
@@ -183,7 +183,7 @@ describe('연결된 가족 (Chrome)', () => {
     api.getGuardianConnections.mockResolvedValue(
       ok([connection(), connection({ id: 8, partnerName: '이순자', status: 'PENDING', partnerPhone: null })]),
     );
-    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper });
 
     await expect.element(screen.getByText(/^만 \d+세$/)).toBeInTheDocument();
     await expect.element(screen.getByText('010-9876-5432')).toBeInTheDocument();
@@ -201,11 +201,11 @@ describe('연결된 가족 (Chrome)', () => {
   it('연결 해제는 확인 창을 거친다 - 취소하면 부르지 않고, 확인하면 부른다', async () => {
     api.getGuardianConnections.mockResolvedValue(ok([connection()]));
     api.disconnectGuardianConnection.mockResolvedValue(ok(null));
-    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper });
 
     await screen.getByRole('button', { name: '연결 해제' }).click();
     const dialog = screen.getByRole('dialog');
-    await expect.element(dialog).toHaveTextContent('김영희 님과의 연결을 해제하면');
+    await expect.element(dialog).toMatchTextContent('김영희 님과의 연결을 해제하면');
     await dialog.getByRole('button', { name: '취소' }).click();
     expect(api.disconnectGuardianConnection).not.toHaveBeenCalled();
 
@@ -216,21 +216,21 @@ describe('연결된 가족 (Chrome)', () => {
 
   it('목록을 못 불러오면 그렇다고 알린다', async () => {
     api.getGuardianConnections.mockRejectedValue(apiError(500, 'INTERNAL_SERVER_ERROR'));
-    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper });
     await expect.element(screen.getByText('연결된 가족을 불러오지 못했습니다.')).toBeInTheDocument();
     expect(screen.getByText('명', { exact: false }).query()).toBeNull();
   });
 
   it('불러오는 동안은 그렇다고 알리고 인원수·등록 타일을 그리지 않는다', async () => {
     api.getGuardianConnections.mockReturnValue(new Promise(() => {}));
-    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper });
     await expect.element(screen.getByText('연결된 가족을 불러오는 중입니다.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '가족 등록' }).query()).toBeNull();
   });
 
   it('연결된 가족이 없으면 안내 문구와 가족 등록 타일을 보인다', async () => {
     api.getGuardianConnections.mockResolvedValue(ok([]));
-    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper });
     await expect.element(screen.getByText('아직 연결된 가족이 없습니다.')).toBeInTheDocument();
     await expect.element(screen.getByText('0명')).toBeInTheDocument();
     await expect.element(screen.getByRole('link', { name: '가족 등록' })).toHaveAttribute('href', '/guardian/wards/register');
@@ -241,9 +241,9 @@ describe('연결된 가족 (Chrome)', () => {
     api.getGuardianConnections.mockResolvedValue(
       ok([connection({ partnerPhone: null, partnerAddress: null, partnerAddressDetail: null, partnerBirthDate: null })]),
     );
-    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper });
     const card = screen.getByRole('listitem').first();
-    await expect.element(card).toHaveTextContent('김영희 님');
+    await expect.element(card).toMatchTextContent('김영희 님');
     expect(card.element().querySelector('img')).toBeNull();
     expect(card.element().textContent).toContain('김');
     expect(card.element().textContent).not.toContain('만 ');
@@ -256,12 +256,12 @@ describe('연결된 가족 (Chrome)', () => {
       ok([connection({ id: 3, partnerName: '최복순', status: 'PENDING', partnerPhone: '010****5432', connectedAt: null })]),
     );
     api.cancelGuardianConnectionRequest.mockResolvedValue(ok(null));
-    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper });
 
     const grid = screen.getByRole('list', { name: '연결된 가족' });
-    await expect.element(grid).toHaveTextContent('최복순');
-    await expect.element(grid).toHaveTextContent('아들로 요청 · 5월 8일');
-    await expect.element(grid).toHaveTextContent('수락을 기다리는 중');
+    await expect.element(grid).toMatchTextContent('최복순');
+    await expect.element(grid).toMatchTextContent('아들로 요청 · 5월 8일');
+    await expect.element(grid).toMatchTextContent('수락을 기다리는 중');
     expect(grid.element().textContent).not.toContain('010****5432');
     // 인원수는 연결된(ACTIVE) 가족만 센다
     await expect.element(screen.getByText('1명')).toBeInTheDocument();
@@ -274,16 +274,16 @@ describe('연결된 가족 (Chrome)', () => {
     api.getGuardianConnections.mockResolvedValue(ok([]));
     api.getGuardianConnectionRequests.mockResolvedValue(ok([connection({ id: 3, status: 'PENDING', connectedAt: null })]));
     api.cancelGuardianConnectionRequest.mockRejectedValue(apiError(409, 'CONNECTION_NOT_PENDING'));
-    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper });
 
     await screen.getByRole('button', { name: '요청 취소' }).click();
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('이미 수락되었거나 거절된 요청이에요.');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('이미 수락되었거나 거절된 요청이에요.');
   });
 
   // 점검 L-1: 포커스는 창 안 "취소"로 들어가고, Esc로 닫으면 누른 버튼으로 돌아온다
   it('확인 창은 포커스를 안으로 옮기고 Esc로 닫으면 연 버튼으로 돌려준다', async () => {
     api.getGuardianConnections.mockResolvedValue(ok([connection()]));
-    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper });
 
     const opener = screen.getByRole('button', { name: '연결 해제' });
     await opener.click();
@@ -297,7 +297,7 @@ describe('연결된 가족 (Chrome)', () => {
   it('확인 창이 열린 채 대상이 목록에서 사라지면 창을 닫는다', async () => {
     const client = newClient();
     api.getGuardianConnections.mockResolvedValueOnce(ok([connection()])).mockResolvedValue(ok([]));
-    const screen = render(<GuardianWardsListPanel />, { wrapper: wrapperWith(client) });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper: wrapperWith(client) });
 
     await screen.getByRole('button', { name: '연결 해제' }).click();
     await expect.element(screen.getByRole('dialog')).toBeInTheDocument();
@@ -309,10 +309,10 @@ describe('연결된 가족 (Chrome)', () => {
   it('이미 해제된 연결(409)은 사실대로 안내한다', async () => {
     api.getGuardianConnections.mockResolvedValue(ok([connection()]));
     api.disconnectGuardianConnection.mockRejectedValue(apiError(409, 'CONNECTION_NOT_ACTIVE'));
-    const screen = render(<GuardianWardsListPanel />, { wrapper });
+    const screen = await render(<GuardianWardsListPanel />, { wrapper });
 
     await screen.getByRole('button', { name: '연결 해제' }).click();
     await screen.getByRole('dialog').getByRole('button', { name: '연결 해제' }).click();
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('이미 연결이 해제됐어요.');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('이미 연결이 해제됐어요.');
   });
 });

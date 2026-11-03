@@ -3,7 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
-import { userEvent } from '@vitest/browser/context';
+import { userEvent } from 'vitest/browser';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -61,7 +61,7 @@ function renderContent() {
   );
 }
 
-async function openFormAndFill(screen: ReturnType<typeof renderContent>) {
+async function openFormAndFill(screen: Awaited<ReturnType<typeof renderContent>>) {
   await screen.getByRole('button', { name: '문의 남기기' }).click();
   await screen.getByRole('radio', { name: '병원' }).click();
   await screen.getByRole('textbox', { name: /제목/ }).fill('예약 문의');
@@ -78,13 +78,13 @@ afterEach(() => {
 describe('GuardianInquiryContent (Chrome)', () => {
   it('빈 목록이면 안내 문구를 보여 준다', async () => {
     api.getGuardianInquiries.mockResolvedValue([]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await expect.element(screen.getByText('아직 남긴 문의가 없어요')).toBeInTheDocument();
   });
 
   it('분류·제목·내용이 모두 있어야 보내기가 켜지고, 글자 수와 최대 길이를 지킨다', async () => {
     api.getGuardianInquiries.mockResolvedValue([]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '문의 남기기' }).click();
 
     const submit = screen.getByRole('button', { name: '보내기' });
@@ -111,7 +111,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
     api.getGuardianInquiries.mockResolvedValueOnce([]).mockResolvedValue([WAITING]);
     let resolveCreate: (value: GuardianInquiry) => void = () => undefined;
     api.createGuardianInquiry.mockImplementation(() => new Promise(resolve => (resolveCreate = resolve)));
-    const screen = renderContent();
+    const screen = await renderContent();
     await openFormAndFill(screen);
 
     const submit = screen.getByRole('button', { name: '보내기' });
@@ -125,7 +125,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
     });
 
     resolveCreate(WAITING);
-    await expect.element(screen.getByRole('status')).toHaveTextContent('문의를 남겼어요');
+    await expect.element(screen.getByRole('status')).toMatchTextContent('문의를 남겼어요');
     await expect.element(screen.getByRole('form', { name: '새 문의 작성' })).not.toBeInTheDocument();
     await expect.element(screen.getByText(WAITING.title)).toBeInTheDocument();
     expect(api.getGuardianInquiries).toHaveBeenLastCalledWith({ page: 0, size: 20 });
@@ -138,11 +138,11 @@ describe('GuardianInquiryContent (Chrome)', () => {
   ])('등록이 %i이면 맞는 문구를 보여 주고 입력은 남긴다', async (status, text) => {
     api.getGuardianInquiries.mockResolvedValue([]);
     api.createGuardianInquiry.mockRejectedValue(httpError(status, { code: 'SOME_CODE', message: '서버 문구' }));
-    const screen = renderContent();
+    const screen = await renderContent();
     await openFormAndFill(screen);
     await screen.getByRole('button', { name: '보내기' }).click();
 
-    await expect.element(screen.getByRole('alert')).toHaveTextContent(text);
+    await expect.element(screen.getByRole('alert')).toMatchTextContent(text);
     await expect.element(screen.getByRole('textbox', { name: /제목/ })).toHaveValue('예약 문의');
     await expect.element(screen.getByRole('button', { name: '보내기' })).toBeEnabled();
   });
@@ -150,7 +150,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
   it('카드는 상태를 보여 주고, 상세에서 답변 대기·완료를 구분한다', async () => {
     api.getGuardianInquiries.mockResolvedValue([WAITING, ANSWERED]);
     api.getGuardianInquiryDetail.mockImplementation((id: number) => Promise.resolve(id === 1 ? WAITING : ANSWERED));
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await expect.element(screen.getByText('답변 기다리는 중')).toBeInTheDocument();
     await expect.element(screen.getByText('답변 완료')).toBeInTheDocument();
@@ -168,16 +168,16 @@ describe('GuardianInquiryContent (Chrome)', () => {
   it('남의 문의 상세(403)는 본인 문의만 볼 수 있다고 안내한다', async () => {
     api.getGuardianInquiries.mockResolvedValue([WAITING]);
     api.getGuardianInquiryDetail.mockRejectedValue(httpError(403, { code: 'INQUIRY_NOT_AUTHORIZED', message: '서버 문구' }));
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: /자세히 보기/ }).click();
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('본인이 남긴 문의만 볼 수 있어요.');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('본인이 남긴 문의만 볼 수 있어요.');
   });
 
   it('375px에서 가로로 넘치지 않는다', async () => {
     api.getGuardianInquiries.mockResolvedValue([
       { ...ANSWERED, title: '아주긴제목'.repeat(20), answer: '긴답변'.repeat(200) },
     ]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '문의 남기기' }).click();
     await expect.element(screen.getByText('답변 완료')).toBeInTheDocument();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
@@ -187,7 +187,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
   it('같은 순간 연속 클릭도 한 번만 보낸다', async () => {
     api.getGuardianInquiries.mockResolvedValue([]);
     api.createGuardianInquiry.mockReturnValue(new Promise(() => undefined));
-    const screen = renderContent();
+    const screen = await renderContent();
     await openFormAndFill(screen);
 
     const submit = screen.getByRole('button', { name: '보내기' }).element() as HTMLButtonElement;
@@ -200,7 +200,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
   // 점검 L-2: 분류·제목이 있어도 내용이 공백뿐이면 보내지 못한다
   it('내용이 공백뿐이면 보내기가 꺼진다', async () => {
     api.getGuardianInquiries.mockResolvedValue([]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await openFormAndFill(screen);
     await screen.getByRole('textbox', { name: /내용/ }).fill('   \n  ');
     await expect.element(screen.getByRole('button', { name: '보내기' })).toBeDisabled();
@@ -211,7 +211,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
     const twenty = Array.from({ length: 20 }, (_, i) => ({ ...WAITING, id: 100 + i, title: `문의 ${i}` }));
     api.getGuardianInquiries.mockImplementation(({ page }: { page: number }) => Promise.resolve(page === 0 ? twenty : []));
     api.createGuardianInquiry.mockResolvedValue(WAITING);
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await screen.getByRole('button', { name: '다음' }).click();
     await expect.element(screen.getByText('더 이상 문의가 없어요')).toBeInTheDocument();
@@ -219,7 +219,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
 
     await openFormAndFill(screen);
     await screen.getByRole('button', { name: '보내기' }).click();
-    await expect.element(screen.getByRole('status')).toHaveTextContent('문의를 남겼어요');
+    await expect.element(screen.getByRole('status')).toMatchTextContent('문의를 남겼어요');
     await expect.element(screen.getByText('문의 0')).toBeInTheDocument();
     expect(api.getGuardianInquiries).toHaveBeenLastCalledWith({ page: 0, size: 20 });
   });
@@ -228,11 +228,11 @@ describe('GuardianInquiryContent (Chrome)', () => {
   it('400 INVALID_INPUT이면 서버 문구를 보여 주고 입력을 고치면 지운다', async () => {
     api.getGuardianInquiries.mockResolvedValue([]);
     api.createGuardianInquiry.mockRejectedValue(httpError(400, { code: 'INVALID_INPUT', message: '제목을 입력해주세요.' }));
-    const screen = renderContent();
+    const screen = await renderContent();
     await openFormAndFill(screen);
     await screen.getByRole('button', { name: '보내기' }).click();
 
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('제목을 입력해주세요.');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('제목을 입력해주세요.');
     await screen.getByRole('textbox', { name: /제목/ }).fill('다시 쓴 제목');
     await expect.element(screen.getByRole('alert')).not.toBeInTheDocument();
   });
@@ -240,7 +240,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
   // 점검 L-5: 분류 칩은 Tab이 한 번만 멈추고 방향키로 고른다
   it('분류 칩은 방향키로 이동하며 고른다', async () => {
     api.getGuardianInquiries.mockResolvedValue([]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '문의 남기기' }).click();
 
     const radios = screen.getByRole('radio').elements();
@@ -260,7 +260,7 @@ describe('GuardianInquiryContent (Chrome)', () => {
   it('상세 모달은 포커스를 가두고 Esc로 닫힌다', async () => {
     api.getGuardianInquiries.mockResolvedValue([WAITING]);
     api.getGuardianInquiryDetail.mockResolvedValue(WAITING);
-    const screen = renderContent();
+    const screen = await renderContent();
 
     const card = screen.getByRole('button', { name: /자세히 보기/ });
     await card.click();
@@ -279,9 +279,9 @@ describe('GuardianInquiryContent (Chrome)', () => {
   it('응답이 없는 실패(네트워크)는 다시 시도 문구를 보여 준다', async () => {
     api.getGuardianInquiries.mockResolvedValue([]);
     api.createGuardianInquiry.mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK'));
-    const screen = renderContent();
+    const screen = await renderContent();
     await openFormAndFill(screen);
     await screen.getByRole('button', { name: '보내기' }).click();
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('문의를 보내지 못했어요. 다시 시도해 주세요.');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('문의를 보내지 못했어요. 다시 시도해 주세요.');
   });
 });

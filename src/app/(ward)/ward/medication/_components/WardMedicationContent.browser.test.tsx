@@ -86,7 +86,7 @@ describe('WardMedicationContent (Chrome)', () => {
     const morning = medication('혈압약', '08:00:00', 'MORNING');
     api.getTodayMedication.mockResolvedValue(today([dinner, morning]));
     setBatchResponse([dinner, morning]);
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await expect.element(screen.getByText('지금 먹을 약')).toBeVisible();
     await expect.element(screen.getByText('혈압약')).toBeVisible();
@@ -96,7 +96,7 @@ describe('WardMedicationContent (Chrome)', () => {
 
     await vi.waitFor(() => expect(api.setMedicationIntakeBatch).toHaveBeenCalledWith([2], true));
     await expect.element(screen.getByText('다 먹었어요', { exact: true })).toBeVisible();
-    await expect.element(screen.getByRole('button', { name: '아침 약 복용 체크 되돌리기' })).toHaveTextContent('잘못 눌렀어요');
+    await expect.element(screen.getByRole('button', { name: '아침 약 복용 체크 되돌리기' })).toMatchTextContent('잘못 눌렀어요');
     expect(screen.getByText('오늘 약 다 먹었어요').query()).toBeNull();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
@@ -105,7 +105,7 @@ describe('WardMedicationContent (Chrome)', () => {
     const morning = medication('혈압약', '08:00:00', 'MORNING', true);
     api.getTodayMedication.mockResolvedValue(today([morning]));
     setBatchResponse([morning]);
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await expect.element(screen.getByText('오늘 약 다 먹었어요')).toBeVisible();
     await expect.element(screen.getByRole('button', { name: '아침 먹었어요' })).toBeVisible();
@@ -119,7 +119,7 @@ describe('WardMedicationContent (Chrome)', () => {
     const morning = medication('혈압약', '08:00:00', 'MORNING');
     const bedtime = medication('수면 보조제', '22:00:00', 'BEDTIME', false, { doseAmount: 0.5 });
     api.getTodayMedication.mockResolvedValue(today([morning, bedtime]));
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await screen.getByRole('button', { name: '자기 전 오후 10시' }).click();
     await expect.element(screen.getByText('다음에 먹을 약')).toBeVisible();
@@ -131,7 +131,7 @@ describe('WardMedicationContent (Chrome)', () => {
   it('복용 시각이 지났는데 체크하지 않은 시간대는 안 먹었다고 단정하지 않고 "체크 안 했어요"로 쓴다', async () => {
     const early = medication('혈압약', '00:00:00', 'MORNING');
     api.getTodayMedication.mockResolvedValue(today([early], kstToday()));
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await expect.element(screen.getByRole('button', { name: '아침 체크 안 했어요' })).toBeVisible();
     // 시각이 지난 첫 시간대도 '지금 먹을 약'이라고 하지 않는다(기능 점검 F2)
@@ -143,7 +143,7 @@ describe('WardMedicationContent (Chrome)', () => {
   it('약이 많으면 여러 칸으로 나눠 보여 주고 가로로 넘치지 않는다', async () => {
     const names = ['혈압약', '당뇨약', '위장약', '고지혈증약', '관절약', '비타민D'];
     api.getTodayMedication.mockResolvedValue(today(names.map(name => medication(name, '08:00:00', 'MORNING'))));
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await expect.element(screen.getByText('고지혈증약')).toBeVisible();
     expect(screen.getByRole('listitem').all()).toHaveLength(6);
@@ -156,7 +156,7 @@ describe('WardMedicationContent (Chrome)', () => {
         medication('혈압약', '08:00:00', 'MORNING', false, { createdAt: '2026-10-23T10:00:00+09:00' }),
       ]),
     );
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await expect.element(screen.getByText('내일부터 드세요')).toBeVisible();
     expect(screen.getByRole('button', { name: '아침 약 먹었어요' }).query()).toBeNull();
@@ -177,10 +177,10 @@ describe('WardMedicationContent (Chrome)', () => {
         data: {},
       }),
     );
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await screen.getByRole('button', { name: '아침 약 먹었어요' }).click();
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('체크하지 못했어요');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('체크하지 못했어요');
     await vi.waitFor(() => expect(api.getTodayMedication).toHaveBeenCalledTimes(2));
   });
 
@@ -189,7 +189,7 @@ describe('WardMedicationContent (Chrome)', () => {
     api.getTodayMedication.mockResolvedValue(today([morning]));
     let resolveRequest: (items: MedicationItem[]) => void = () => {};
     api.setMedicationIntakeBatch.mockReturnValue(new Promise(resolve => (resolveRequest = resolve)));
-    const screen = renderContent();
+    const screen = await renderContent();
 
     const button = screen.getByRole('button', { name: '아침 약 먹었어요' });
     await expect.element(button).toBeEnabled();

@@ -90,11 +90,11 @@ describe('피보호자 내 가족 (Chrome)', () => {
   it('받은 요청은 이름·관계·요청일과 1:1 수락·거절 버튼을 보이고 연락처는 숨긴다', async () => {
     api.getWardPendingConnections.mockResolvedValue(ok([request()]));
     api.getWardActiveConnections.mockResolvedValue(ok([]));
-    const screen = render(<WardGuardiansPanel />, { wrapper });
+    const screen = await render(<WardGuardiansPanel />, { wrapper });
 
     const requests = screen.getByRole('list', { name: '받은 연결 요청' });
-    await expect.element(requests).toHaveTextContent('박철수 (손자)');
-    await expect.element(requests).toHaveTextContent('1월 12일에 연결을 요청했어요');
+    await expect.element(requests).toMatchTextContent('박철수 (손자)');
+    await expect.element(requests).toMatchTextContent('1월 12일에 연결을 요청했어요');
     expect(requests.element().textContent).not.toContain('010');
     await expect.element(requests.getByRole('button', { name: '거절' })).toBeVisible();
     await expect.element(requests.getByRole('button', { name: '수락' })).toBeVisible();
@@ -105,7 +105,7 @@ describe('피보호자 내 가족 (Chrome)', () => {
   it('받은 요청을 수락·거절한다(확인 창 없이)', async () => {
     api.getWardPendingConnections.mockResolvedValue(ok([request(), request({ id: 2, partnerName: '박영철' })]));
     api.getWardActiveConnections.mockResolvedValue(ok([]));
-    const screen = render(<WardGuardiansPanel />, { wrapper });
+    const screen = await render(<WardGuardiansPanel />, { wrapper });
 
     await screen.getByRole('button', { name: '수락' }).first().click();
     await vi.waitFor(() => expect(api.acceptWardConnection.mock.calls[0]?.[0]).toBe(1));
@@ -116,18 +116,18 @@ describe('피보호자 내 가족 (Chrome)', () => {
   it('보호자 목록은 이름·관계·전화번호 한 줄이고, 연결 끊기는 확인 창을 거친다', async () => {
     api.getWardPendingConnections.mockResolvedValue(ok([]));
     api.getWardActiveConnections.mockResolvedValue(ok([guardian()]));
-    const screen = render(<WardGuardiansPanel />, { wrapper });
+    const screen = await render(<WardGuardiansPanel />, { wrapper });
 
     const list = screen.getByRole('list', { name: '연결된 보호자' });
-    await expect.element(list).toHaveTextContent('박민수 님 (아들)');
-    await expect.element(list).toHaveTextContent('010-1234-5678');
+    await expect.element(list).toMatchTextContent('박민수 님 (아들)');
+    await expect.element(list).toMatchTextContent('010-1234-5678');
     expect(list.element().textContent).not.toContain('2026년 1월 12일');
     expect(list.element().textContent).not.toContain('kP7mQ2');
 
     await screen.getByRole('button', { name: '연결 끊기' }).click();
     const dialog = screen.getByRole('dialog');
-    await expect.element(dialog).toHaveTextContent('박민수 님과 연결을 끊을까요?');
-    await expect.element(dialog).toHaveTextContent('끊으면 SOS를 눌러도 이 분께 알림이 가지 않아요');
+    await expect.element(dialog).toMatchTextContent('박민수 님과 연결을 끊을까요?');
+    await expect.element(dialog).toMatchTextContent('끊으면 SOS를 눌러도 이 분께 알림이 가지 않아요');
     await dialog.getByRole('button', { name: '그대로 두기' }).click();
     expect(api.disconnectWardConnection).not.toHaveBeenCalled();
 
@@ -144,7 +144,7 @@ describe('피보호자 내 가족 (Chrome)', () => {
       .mockResolvedValueOnce(ok([guardian()]))
       .mockResolvedValueOnce(ok([]))
       .mockResolvedValue(ok([guardian({ id: 22, partnerName: '박지영', relation: '딸' })]));
-    const screen = render(<WardGuardiansPanel />, { wrapper: wrapperWith(client) });
+    const screen = await render(<WardGuardiansPanel />, { wrapper: wrapperWith(client) });
 
     await screen.getByRole('button', { name: '연결 끊기' }).click();
     await expect.element(screen.getByRole('dialog')).toBeInTheDocument();
@@ -161,7 +161,7 @@ describe('피보호자 내 가족 (Chrome)', () => {
   it('불러오는 동안은 그렇다고 알린다', async () => {
     api.getWardPendingConnections.mockReturnValue(new Promise(() => {}));
     api.getWardActiveConnections.mockReturnValue(new Promise(() => {}));
-    const screen = render(<WardGuardiansPanel />, { wrapper });
+    const screen = await render(<WardGuardiansPanel />, { wrapper });
     await expect.element(screen.getByText('보호자 목록을 불러오는 중이에요.')).toBeInTheDocument();
   });
 
@@ -170,10 +170,10 @@ describe('피보호자 내 가족 (Chrome)', () => {
       ok([request({ partnerProfileImage: 'https://files.example/p.png' }), request({ id: 2, partnerName: '박영호' })]),
     );
     api.getWardActiveConnections.mockResolvedValue(ok([]));
-    const screen = render(<WardGuardiansPanel />, { wrapper });
+    const screen = await render(<WardGuardiansPanel />, { wrapper });
 
     const cards = screen.getByRole('list', { name: '받은 연결 요청' }).getByRole('listitem');
-    await expect.element(cards.nth(1)).toHaveTextContent('박영호');
+    await expect.element(cards.nth(1)).toMatchTextContent('박영호');
     expect(cards.nth(0).element().querySelector('img')?.getAttribute('src')).toBe('https://files.example/p.png');
     expect(cards.nth(1).element().querySelector('img')).toBeNull();
   });
@@ -181,10 +181,10 @@ describe('피보호자 내 가족 (Chrome)', () => {
   it('보호자 전화번호가 없으면 그 줄을 숨기고 가짜 값을 넣지 않는다', async () => {
     api.getWardPendingConnections.mockResolvedValue(ok([]));
     api.getWardActiveConnections.mockResolvedValue(ok([guardian({ partnerPhone: null })]));
-    const screen = render(<WardGuardiansPanel />, { wrapper });
+    const screen = await render(<WardGuardiansPanel />, { wrapper });
 
     const list = screen.getByRole('list', { name: '연결된 보호자' });
-    await expect.element(list).toHaveTextContent('박민수 님 (아들)');
+    await expect.element(list).toMatchTextContent('박민수 님 (아들)');
     expect(list.element().textContent).not.toMatch(/\d/);
     await expect.element(list.getByRole('button', { name: '연결 끊기' })).toBeVisible();
   });
@@ -192,7 +192,7 @@ describe('피보호자 내 가족 (Chrome)', () => {
   it('목록을 못 불러오면 그렇다고 알린다', async () => {
     api.getWardPendingConnections.mockRejectedValue(new Error('x'));
     api.getWardActiveConnections.mockRejectedValue(new Error('x'));
-    const screen = render(<WardGuardiansPanel />, { wrapper });
+    const screen = await render(<WardGuardiansPanel />, { wrapper });
 
     await expect.element(screen.getByText('받은 연결 요청을 불러오지 못했어요.')).toBeInTheDocument();
     await expect.element(screen.getByText('보호자 목록을 불러오지 못했어요.')).toBeInTheDocument();

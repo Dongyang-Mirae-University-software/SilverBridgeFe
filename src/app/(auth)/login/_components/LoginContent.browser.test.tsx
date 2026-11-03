@@ -2,7 +2,7 @@
 // method="post": 하이드레이션 전 제출이어도 자격이 주소 쿼리로 가지 않게(2026-10-31). 하이드레이션 뒤에는 API로 로그인한다.
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { page, userEvent } from '@vitest/browser/context';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import LoginContent from './LoginContent';
@@ -32,15 +32,15 @@ describe('LoginContent (Chrome)', () => {
     mocks.signin.mockResolvedValue({ data: { accessToken: 'a', refreshToken: 'r', role: 'GUARDIAN' } });
   });
 
-  it('폼은 POST라 JS 없이 제출돼도 자격이 주소에 실리지 않는다', () => {
-    renderLogin();
+  it('폼은 POST라 JS 없이 제출돼도 자격이 주소에 실리지 않는다', async () => {
+    await renderLogin();
     const form = document.querySelector('form') as HTMLFormElement;
     expect(form.method).toBe('post');
   });
 
   it('하이드레이션 뒤에는 페이지 이동 없이 API로 로그인한다(주소 그대로)', async () => {
     const before = window.location.href;
-    renderLogin();
+    await renderLogin();
     const form = document.querySelector('form') as HTMLFormElement;
     await userEvent.fill(form.querySelector('input[name="email"]') as HTMLInputElement, 'user@test.com');
     await userEvent.fill(form.querySelector('input[name="password"]') as HTMLInputElement, 'pw-1234');
@@ -53,26 +53,26 @@ describe('LoginContent (Chrome)', () => {
   });
 
   it('이메일 형식이 틀리면 브라우저 말풍선이 아니라 화면 오류 문구로 알리고 API를 부르지 않는다', async () => {
-    renderLogin();
+    await renderLogin();
     const form = document.querySelector('form') as HTMLFormElement;
     expect(form.noValidate).toBe(true);
     await userEvent.fill(form.querySelector('input[name="email"]') as HTMLInputElement, 'abc');
     await userEvent.fill(form.querySelector('input[name="password"]') as HTMLInputElement, 'pw-1234');
     await userEvent.click(form.querySelector('button[type="submit"]') as HTMLButtonElement);
 
-    await expect.element(page.getByRole('alert')).toHaveTextContent('이메일 형식이 올바르지 않습니다.');
+    await expect.element(page.getByRole('alert')).toMatchTextContent('이메일 형식이 올바르지 않습니다.');
     expect(mocks.signin).not.toHaveBeenCalled();
   });
 
   it('응답에 토큰이 없으면 이동하지 않고 실패를 알린다', async () => {
     mocks.signin.mockResolvedValue({ data: { role: 'GUARDIAN' } });
-    renderLogin();
+    await renderLogin();
     const form = document.querySelector('form') as HTMLFormElement;
     await userEvent.fill(form.querySelector('input[name="email"]') as HTMLInputElement, 'user@test.com');
     await userEvent.fill(form.querySelector('input[name="password"]') as HTMLInputElement, 'pw-1234');
     await userEvent.click(form.querySelector('button[type="submit"]') as HTMLButtonElement);
 
-    await expect.element(page.getByRole('alert')).toHaveTextContent('로그인 정보를 받지 못했습니다');
+    await expect.element(page.getByRole('alert')).toMatchTextContent('로그인 정보를 받지 못했습니다');
     expect(mocks.push).not.toHaveBeenCalled();
     expect(mocks.complete).not.toHaveBeenCalled();
   });

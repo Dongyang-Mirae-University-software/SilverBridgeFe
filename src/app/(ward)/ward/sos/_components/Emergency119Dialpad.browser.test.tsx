@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
-import { page, userEvent } from '@vitest/browser/context';
+import { page, userEvent } from 'vitest/browser';
 
 import { DEMO_CALL_NOTICE, Emergency119Dialpad } from './Emergency119Dialpad';
 
@@ -17,11 +17,11 @@ describe('Emergency119Dialpad (Chrome)', () => {
   });
 
   it('열리면 119가 입력돼 있고, 키 입력·지우기가 된다', async () => {
-    const screen = render(<Emergency119Dialpad onClose={() => {}} />);
+    const screen = await render(<Emergency119Dialpad onClose={() => {}} />);
     const display = screen.getByLabelText('입력된 번호');
 
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
-    await expect.element(display).toHaveTextContent('119');
+    await expect.element(display).toMatchTextContent('119');
     // 상단 안내는 대화상자 설명으로 연결돼 화면 낭독기가 함께 읽는다
     await expect
       .element(screen.getByRole('dialog'))
@@ -31,17 +31,17 @@ describe('Emergency119Dialpad (Chrome)', () => {
 
     await screen.getByRole('button', { name: '2' }).click();
     await screen.getByRole('button', { name: '별표' }).click();
-    await expect.element(display).toHaveTextContent('1192*');
+    await expect.element(display).toMatchTextContent('1192*');
 
     await screen.getByRole('button', { name: '한 글자 지우기' }).click();
     await screen.getByRole('button', { name: '한 글자 지우기' }).click();
-    await expect.element(display).toHaveTextContent('119');
+    await expect.element(display).toMatchTextContent('119');
   });
 
   it('통화 버튼은 안내만 띄우고 이동·새 창·링크가 없다', async () => {
     const openSpy = vi.spyOn(window, 'open');
     const hrefBefore = window.location.href;
-    const screen = render(<Emergency119Dialpad onClose={() => {}} />);
+    const screen = await render(<Emergency119Dialpad onClose={() => {}} />);
 
     const call = screen.getByRole('button', { name: /실제로 걸리지 않음/ });
     await expect.element(call).toBeEnabled();
@@ -50,7 +50,7 @@ describe('Emergency119Dialpad (Chrome)', () => {
     await call.click();
 
     await expect.element(screen.getByText(DEMO_CALL_NOTICE)).toBeVisible();
-    await expect.element(screen.getByLabelText('입력된 번호')).toHaveTextContent('119');
+    await expect.element(screen.getByLabelText('입력된 번호')).toMatchTextContent('119');
     expect(openSpy).not.toHaveBeenCalled();
     expect(window.location.href).toBe(hrefBefore);
     expect(document.querySelectorAll('[role="dialog"] a').length).toBe(0);
@@ -58,7 +58,7 @@ describe('Emergency119Dialpad (Chrome)', () => {
 
   it('닫기 버튼과 Esc로 닫는다', async () => {
     const onClose = vi.fn();
-    const screen = render(<Emergency119Dialpad onClose={onClose} />);
+    const screen = await render(<Emergency119Dialpad onClose={onClose} />);
 
     await screen.getByRole('button', { name: '119 화면 닫기' }).click();
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -79,7 +79,7 @@ describe('Emergency119Dialpad (Chrome)', () => {
         </>
       );
     }
-    const screen = render(<Page />);
+    const screen = await render(<Page />);
     const sos = screen.getByRole('button', { name: '긴급 SOS' });
     await sos.click();
     const dialog = screen.getByRole('dialog', { name: /119 신고 키패드/ });
@@ -100,7 +100,7 @@ describe('Emergency119Dialpad (Chrome)', () => {
   });
 
   it('375px 화면에서 키·통화 버튼이 화면 안에 있고 가로로 넘치지 않는다', async () => {
-    const screen = render(<Emergency119Dialpad onClose={() => {}} />);
+    const screen = await render(<Emergency119Dialpad onClose={() => {}} />);
     const call = screen.getByRole('button', { name: /실제로 걸리지 않음/ });
     await expect.element(call).toBeVisible();
 
@@ -114,7 +114,7 @@ describe('Emergency119Dialpad (Chrome)', () => {
 
   it('가로 화면(812×375)에서도 키 지름이 48px 이상이고, 통화 버튼은 스크롤로 닿는다', async () => {
     await page.viewport(812, 375);
-    const screen = render(<Emergency119Dialpad onClose={() => {}} />);
+    const screen = await render(<Emergency119Dialpad onClose={() => {}} />);
     const call = screen.getByRole('button', { name: /실제로 걸리지 않음/ });
     await expect.element(call).toBeInTheDocument();
 

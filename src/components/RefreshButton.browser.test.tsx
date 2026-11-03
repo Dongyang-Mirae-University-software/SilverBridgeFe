@@ -16,7 +16,7 @@ describe('RefreshButton (Chrome)', () => {
     const box = document.createElement('div');
     box.style.padding = '40px';
     document.body.appendChild(box);
-    const screen = render(<RefreshButton placement="inline" onRefresh={() => undefined} />, { container: box });
+    const screen = await render(<RefreshButton placement="inline" onRefresh={() => undefined} />, { container: box });
     const button = screen.getByRole('button', { name: '새로고침' });
     await expect.element(button).toBeInTheDocument();
 
@@ -28,7 +28,7 @@ describe('RefreshButton (Chrome)', () => {
   });
 
   it('기본(떠 있는) 버튼은 화면 오른쪽 아래에 고정된다', async () => {
-    const screen = render(<RefreshButton onRefresh={() => undefined} />);
+    const screen = await render(<RefreshButton onRefresh={() => undefined} />);
     const button = screen.getByRole('button', { name: '새로고침' });
     await expect.element(button).toBeInTheDocument();
 

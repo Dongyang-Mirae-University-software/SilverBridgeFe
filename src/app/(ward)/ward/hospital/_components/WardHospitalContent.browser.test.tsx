@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import { RESERVATION_DEMO_NOTICE } from '@/constants/reservation';
@@ -81,7 +81,7 @@ describe('WardHospitalContent (Chrome)', () => {
       reservation(2, addDays(TODAY, 5), '14:30', 'CONFIRMED', '푸른안과'),
       reservation(3, addDays(TODAY, -3), '10:00', 'COMPLETED', '서울정형외과'),
     ]);
-    const screen = renderContent();
+    const screen = await renderContent();
 
     const next = screen.getByRole('region', { name: '다음 진료' });
     await expect.element(next.getByText('병원 가는 날')).toBeVisible();
@@ -93,7 +93,7 @@ describe('WardHospitalContent (Chrome)', () => {
     await expect.element(next.getByText('서울 강남구 테헤란로 152, 3층')).toBeVisible();
 
     const later = screen.getByRole('region', { name: '그 밖의 예약' });
-    await expect.element(later).toHaveTextContent('푸른안과');
+    await expect.element(later).toMatchTextContent('푸른안과');
     await expect.element(later.getByText('그다음')).toBeVisible();
     await expect.element(later.getByText('5일 뒤')).toBeVisible();
     await expect.element(later.getByText('오후 2시 30분')).toBeVisible();
@@ -115,14 +115,14 @@ describe('WardHospitalContent (Chrome)', () => {
       reservation(1, TODAY, '23:59'),
       reservation(2, addDays(TODAY, 1), '10:00', 'BOOKED', '푸른안과'),
     ]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await expect.element(screen.getByRole('region', { name: '다음 진료' }).getByText('오늘')).toBeVisible();
     await expect.element(screen.getByRole('region', { name: '그 밖의 예약' }).getByText('내일')).toBeVisible();
   });
 
   it('예약이 없으면 빈 상태를 따로 안내한다', async () => {
     api.getMyReservations.mockResolvedValue([]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await expect.element(screen.getByText('병원 갈 날이 없어요')).toBeVisible();
     expect(screen.getByText('지난 진료가 없어요').elements()).toHaveLength(0);
   });
@@ -136,7 +136,7 @@ describe('WardHospitalContent (Chrome)', () => {
       reservation(2, addDays(TODAY, 365), '14:45', 'BOOKED', longName),
       reservation(3, addDays(TODAY, -1), '10:00', 'CANCELED', longName),
     ]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await expect.element(screen.getByText('123일 뒤')).toBeVisible();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(320);
     await page.viewport(375, 812);
@@ -146,15 +146,15 @@ describe('WardHospitalContent (Chrome)', () => {
     api.getMyReservations.mockResolvedValue(
       Array.from({ length: 6 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
     );
-    const screen = renderContent();
+    const screen = await renderContent();
     const later = screen.getByRole('region', { name: '그 밖의 예약' });
-    await expect.element(later).toHaveTextContent('다음병원2');
+    await expect.element(later).toMatchTextContent('다음병원2');
     expect(later.getByText('다음병원3').elements()).toHaveLength(0);
 
     const more = screen.getByRole('button', { name: '예약 4건 더 보기' });
     await expect.element(more).toHaveAttribute('aria-expanded', 'false');
     await more.click();
-    await expect.element(later).toHaveTextContent('다음병원6');
+    await expect.element(later).toMatchTextContent('다음병원6');
     await expect.element(screen.getByRole('button', { name: '접기' })).toHaveAttribute('aria-expanded', 'true');
 
     await screen.getByRole('button', { name: '접기' }).click();
@@ -166,15 +166,15 @@ describe('WardHospitalContent (Chrome)', () => {
     api.getMyReservations.mockResolvedValue(
       Array.from({ length: 2 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
     );
-    const screen = renderContent();
-    await expect.element(screen.getByRole('region', { name: '그 밖의 예약' })).toHaveTextContent('다음병원2');
+    const screen = await renderContent();
+    await expect.element(screen.getByRole('region', { name: '그 밖의 예약' })).toMatchTextContent('다음병원2');
     expect(screen.getByRole('button').elements()).toHaveLength(0);
   });
 
   it('켜 둔 화면을 다시 불러오다 실패해도 보이던 예약은 그대로 둔다', async () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     api.getMyReservations.mockResolvedValue([reservation(1, addDays(TODAY, 2), '10:00')]);
-    const screen = renderContent(queryClient);
+    const screen = await renderContent(queryClient);
     await expect.element(screen.getByText('2일 뒤')).toBeVisible();
 
     api.getMyReservations.mockRejectedValue(new Error('down'));
@@ -191,7 +191,7 @@ describe('WardHospitalContent (Chrome)', () => {
   it('켜 둔 화면에 보호자가 새로 잡은 예약이 다시 불러오면 나타난다', async () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     api.getMyReservations.mockResolvedValue([]);
-    const screen = renderContent(queryClient);
+    const screen = await renderContent(queryClient);
     await expect.element(screen.getByText('병원 갈 날이 없어요')).toBeVisible();
 
     api.getMyReservations.mockResolvedValue([reservation(1, addDays(TODAY, 2), '10:00')]);
@@ -202,7 +202,7 @@ describe('WardHospitalContent (Chrome)', () => {
   it('병원 목록을 못 불러와도 예약은 보이고 주소만 빠진다', async () => {
     api.getHospitals.mockRejectedValue(new Error('down'));
     api.getMyReservations.mockResolvedValue([reservation(1, addDays(TODAY, 1), '10:00')]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await expect.element(screen.getByText('내일')).toBeVisible();
     expect(screen.getByText('서울 강남구 테헤란로 152, 3층').elements()).toHaveLength(0);
   });
@@ -211,8 +211,8 @@ describe('WardHospitalContent (Chrome)', () => {
     const error = new AxiosError('x');
     error.response = { status: 503, data: {}, statusText: '', headers: {}, config: { headers: new AxiosHeaders() } };
     api.getMyReservations.mockRejectedValue(error);
-    const screen = renderContent();
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('지금은 병원 예약 서비스를 쓸 수 없어요.');
+    const screen = await renderContent();
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('지금은 병원 예약 서비스를 쓸 수 없어요.');
     await expect.element(screen.getByRole('button', { name: '다시 불러오기' })).toBeVisible();
   });
 
@@ -226,7 +226,7 @@ describe('WardHospitalContent (Chrome)', () => {
     api.getMyReservations.mockResolvedValue(
       Array.from({ length: 4 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
     );
-    const screen = renderContent();
+    const screen = await renderContent();
     await expect.element(screen.getByText('예약은 보호자가 대신 잡아 드려요')).toBeVisible();
     expect(window.innerWidth).toBe(width);
     const content = screen.container.firstElementChild as HTMLElement;
@@ -238,7 +238,7 @@ describe('WardHospitalContent (Chrome)', () => {
     api.getMyReservations.mockResolvedValue(
       Array.from({ length: 4 }, (_, i) => reservation(i + 1, addDays(TODAY, i + 1), '10:00', 'BOOKED', `다음병원${i + 1}`)),
     );
-    const screen = renderContent();
+    const screen = await renderContent();
     const next = screen.getByRole('region', { name: '다음 진료' });
     await expect.element(next).toBeVisible();
     expect((next.element() as HTMLElement).getBoundingClientRect().height).toBeLessThanOrEqual(812 - 86 - 46);

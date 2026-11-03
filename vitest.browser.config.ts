@@ -1,4 +1,4 @@
-/// <reference types="@vitest/browser/providers/playwright" />
+import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vitest/config';
 
 // 컴포넌트 테스트 - 실제 Chrome(설치된 google-chrome)에서 돌린다. `npm run test:browser`
@@ -33,15 +33,12 @@ export default defineConfig({
     include: ['src/**/*.browser.test.tsx'],
     browser: {
       enabled: true,
-      provider: 'playwright',
+      provider: playwright({ launchOptions: { channel: 'chrome' } }),
       headless: true,
-      instances: [
-        {
-          browser: 'chromium',
-          launch: { channel: 'chrome' },
-          context: { viewport: { width: 375, height: 812 } },
-        },
-      ],
+      viewport: { width: 375, height: 812 },
+      // vitest 5부터 locator가 글자를 통째로 맞춰 본다 - 이전처럼 일부만 맞아도 찾게 둔다
+      locators: { exact: false },
+      instances: [{ browser: 'chromium' }],
     },
   },
 });

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-react';
-import { userEvent } from '@vitest/browser/context';
+import { userEvent } from 'vitest/browser';
 
 import { BirthDateSelects } from './BirthDateSelects';
 
@@ -33,7 +33,7 @@ afterEach(() => {
 
 describe('BirthDateSelects (Chrome)', () => {
   it('처음 값을 세 칸에 나눠 보이고, 바깥 값이 바뀌면 칸도 따라간다', async () => {
-    const screen = render(<Harness initial="1948-03-15" />);
+    const screen = await render(<Harness initial="1948-03-15" />);
     expect(selects().map(select => select.value)).toEqual(['1948', '03', '15']);
 
     await screen.getByRole('button', { name: '바깥에서 채우기' }).click();
@@ -41,7 +41,7 @@ describe('BirthDateSelects (Chrome)', () => {
   });
 
   it('세 칸을 다 고르기 전에는 바깥 값이 비어 있어도 고른 칸을 지우지 않는다', async () => {
-    const screen = render(<Harness />);
+    const screen = await render(<Harness />);
     const [year, month] = selects();
 
     await userEvent.selectOptions(year!, '1948');
@@ -51,13 +51,13 @@ describe('BirthDateSelects (Chrome)', () => {
   });
 
   it('세 칸을 다 고르면 값을 올리고, 바깥에서 비우면 칸도 비운다', async () => {
-    const screen = render(<Harness />);
+    const screen = await render(<Harness />);
     const [year, month, day] = selects();
 
     await userEvent.selectOptions(year!, '1948');
     await userEvent.selectOptions(month!, '03');
     await userEvent.selectOptions(day!, '15');
-    await expect.element(screen.getByTestId('value')).toHaveTextContent('1948-03-15');
+    await expect.element(screen.getByTestId('value')).toMatchTextContent('1948-03-15');
 
     await screen.getByRole('button', { name: '바깥에서 비우기' }).click();
     await expect.poll(() => selects().map(select => select.value)).toEqual(['', '', '']);

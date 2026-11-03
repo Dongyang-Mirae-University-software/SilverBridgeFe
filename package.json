@@ -25,16 +25,16 @@
     "react-hook-form": "^7.72.1"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitest/browser": "3.2.7",
+    "@vitest/browser-playwright": "5.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "playwright": "1.56.1",
     "typescript": "^5",
-    "vitest": "3.2.7",
-    "vitest-browser-react": "1.0.1"
+    "vitest": "5.1.0",
+    "vitest-browser-react": "2.3.0"
   },
   "overrides": {
     "@grpc/grpc-js": "^1.14.7"

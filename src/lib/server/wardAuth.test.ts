@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, type Mock, vi } from 'vitest';
 
 import { createWardAuthVerifier } from './wardAuth';
 
@@ -8,7 +8,7 @@ function jsonResponse(status: number, body: unknown = {}, headers: Record<string
 
 const WARD_BODY = { data: { data: { role: 'WARD' } } };
 
-function setup(fetcher: ReturnType<typeof vi.fn>, extra: { now?: () => number; maxEntries?: number } = {}) {
+function setup(fetcher: Mock<(url: string) => Promise<Response>>, extra: { now?: () => number; maxEntries?: number } = {}) {
   return createWardAuthVerifier({ apiDomain: 'https://api.test/', fetcher, ...extra });
 }
 

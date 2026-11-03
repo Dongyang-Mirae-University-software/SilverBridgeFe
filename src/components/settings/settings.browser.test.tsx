@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { page, userEvent } from '@vitest/browser/context';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import { AccountDeleteSection } from './AccountDeleteSection';
@@ -97,7 +97,7 @@ afterEach(() => {
 
 describe('알림 종류 (보호자)', () => {
   it('SOS·이상 감지는 켜진 채 잠긴 스위치로 보이고, 이유 문구가 연결된다', async () => {
-    const screen = render(withClient(<AlertTypeSettingsSection />));
+    const screen = await render(withClient(<AlertTypeSettingsSection />));
     await expect.element(screen.getByText('SOS 알림')).toBeInTheDocument();
 
     for (const name of ['SOS 알림', '이상 감지 알림']) {
@@ -115,7 +115,7 @@ describe('알림 종류 (보호자)', () => {
   });
 
   it('잠긴 스위치를 눌러도 꺼지지 않고 저장 요청 없이 이유만 안내한다', async () => {
-    const screen = render(withClient(<AlertTypeSettingsSection />));
+    const screen = await render(withClient(<AlertTypeSettingsSection />));
     const sos = screen.getByRole('switch', { name: 'SOS 알림' });
     await expect.element(sos).toBeChecked();
 
@@ -130,7 +130,7 @@ describe('알림 종류 (보호자)', () => {
   });
 
   it('잠긴 스위치를 연달아 눌러도 안내는 한 번만, 자물쇠를 눌러도 안내한다', async () => {
-    const screen = render(withClient(<AlertTypeSettingsSection />));
+    const screen = await render(withClient(<AlertTypeSettingsSection />));
     const sos = screen.getByRole('switch', { name: 'SOS 알림' });
     await expect.element(sos).toBeChecked();
     const label = sos.element().closest('label') as HTMLLabelElement;
@@ -155,7 +155,7 @@ describe('알림 종류 (보호자)', () => {
       ...TYPE_SETTING,
       medication: { enabled: false, required: false },
     });
-    const screen = render(withClient(<AlertTypeSettingsSection />));
+    const screen = await render(withClient(<AlertTypeSettingsSection />));
     const medication = screen.getByRole('switch', { name: '복약 알림' });
     await expect.element(medication).toBeChecked();
     const label = medication.element().closest('label') as HTMLLabelElement;
@@ -174,7 +174,7 @@ describe('알림 종류 (보호자)', () => {
       ...TYPE_SETTING,
       cameraLinkLost: { enabled: false, required: false },
     });
-    const screen = render(withClient(<AlertTypeSettingsSection />));
+    const screen = await render(withClient(<AlertTypeSettingsSection />));
     const toggle = screen.getByRole('switch', { name: '카메라 연결 끊김 안내' });
     await expect.element(toggle).toBeChecked();
 
@@ -188,7 +188,7 @@ describe('알림 종류 (보호자)', () => {
   it('저장 중에는 다른 토글을 막고, 서버 오류면 이전 값으로 되돌리고 안내한다', async () => {
     const pending = deferred<unknown>();
     api.updateGuardianNotificationTypeSetting.mockReturnValue(pending.promise);
-    const screen = render(withClient(<AlertTypeSettingsSection />));
+    const screen = await render(withClient(<AlertTypeSettingsSection />));
     const medication = screen.getByRole('switch', { name: '복약 알림' });
     await expect.element(medication).toBeChecked();
 
@@ -207,7 +207,7 @@ describe('알림 종류 (보호자)', () => {
 
 describe('알림 방법 (채널)', () => {
   it('네 채널을 디자인 순서로 보여 주고 이메일도 켤 수 있다', async () => {
-    const screen = render(withClient(<NotificationSettingsSection />));
+    const screen = await render(withClient(<NotificationSettingsSection />));
     await expect.element(screen.getByRole('switch', { name: '푸시 알림' })).toBeChecked();
 
     const labels = screen.getByRole('switch').elements().map(el => el.getAttribute('aria-label'));
@@ -217,7 +217,7 @@ describe('알림 방법 (채널)', () => {
   });
 
   it('채널 스위치도 모양보다 넓은 44px 높이를 누를 수 있다', async () => {
-    const screen = render(withClient(<NotificationSettingsSection />));
+    const screen = await render(withClient(<NotificationSettingsSection />));
     const toggles = screen.getByRole('switch');
     await expect.element(toggles.first()).toBeInTheDocument();
     const label = toggles.first().element().closest('label') as HTMLLabelElement;
@@ -229,7 +229,7 @@ describe('알림 방법 (채널)', () => {
   it('서버 오류면 화면 값을 되돌리고 안내한다', async () => {
     const pending = deferred<unknown>();
     api.updateMyNotificationSettings.mockReturnValue(pending.promise);
-    const screen = render(withClient(<NotificationSettingsSection />));
+    const screen = await render(withClient(<NotificationSettingsSection />));
     const sms = screen.getByRole('switch', { name: 'SMS 문자' });
     await expect.element(sms).not.toBeChecked();
 
@@ -248,7 +248,7 @@ describe('알림 방법 (채널)', () => {
 
 describe('비밀번호 변경', () => {
   it('카카오 가입 계정은 변경 버튼이 없다', async () => {
-    const screen = render(withClient(<PasswordChangeSection isKakaoUser />));
+    const screen = await render(withClient(<PasswordChangeSection isKakaoUser />));
     await expect.element(screen.getByText('비밀번호 변경')).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: '변경' }).elements()).toHaveLength(0);
@@ -257,7 +257,7 @@ describe('비밀번호 변경', () => {
 
   it('일반 계정은 현재 비밀번호로 변경 요청을 보낸다', async () => {
     api.changeMyPassword.mockResolvedValue({});
-    const screen = render(withClient(<PasswordChangeSection isKakaoUser={false} variant="ward" />));
+    const screen = await render(withClient(<PasswordChangeSection isKakaoUser={false} variant="ward" />));
     await screen.getByRole('button', { name: '변경' }).click();
 
     await screen.getByLabelText('현재 비밀번호').fill('old-pass-1');
@@ -275,7 +275,7 @@ describe('비밀번호 변경', () => {
 describe('회원 탈퇴', () => {
   it('일반 계정: 확인 → 비밀번호 입력 두 단계를 거쳐야 요청한다', async () => {
     api.deleteMyAccount.mockResolvedValue({});
-    const screen = render(withClient(<AccountDeleteSection isKakaoUser={false} />));
+    const screen = await render(withClient(<AccountDeleteSection isKakaoUser={false} />));
 
     await screen.getByRole('button', { name: '탈퇴' }).click();
     await expect.element(screen.getByText('정말 탈퇴하시겠습니까?')).toBeInTheDocument();
@@ -296,7 +296,7 @@ describe('회원 탈퇴', () => {
 
   it('카카오 계정: "탈퇴"를 입력해야 하고 "회원탈퇴"도 받는다', async () => {
     api.deleteMyAccount.mockResolvedValue({});
-    const screen = render(withClient(<AccountDeleteSection isKakaoUser variant="ward" />));
+    const screen = await render(withClient(<AccountDeleteSection isKakaoUser variant="ward" />));
 
     await screen.getByRole('button', { name: '탈퇴' }).click();
     await expect.element(screen.getByText('정말 탈퇴하시겠어요?')).toBeInTheDocument();
@@ -316,7 +316,7 @@ describe('회원 탈퇴', () => {
 
   it('카카오 계정: "탈퇴" 입력으로 요청한다', async () => {
     api.deleteMyAccount.mockResolvedValue({});
-    const screen = render(withClient(<AccountDeleteSection isKakaoUser />));
+    const screen = await render(withClient(<AccountDeleteSection isKakaoUser />));
 
     await screen.getByRole('button', { name: '탈퇴' }).click();
     await screen.getByRole('button', { name: '계속하기' }).click();
@@ -336,7 +336,7 @@ describe('레이아웃 (375px)', () => {
     document.body.style.margin = '0';
     document.body.appendChild(scroller);
 
-    const screen = render(
+    const screen = await render(
       withClient(
         <>
           <AlertTypeSettingsSection />
@@ -373,7 +373,7 @@ describe('점검 후속 (2026-10-24 audit-fe-settings-design)', () => {
     api.getMyNotificationSettings.mockResolvedValue({
       data: { data: { settings: [{ channelType: 'FCM', enabled: true }, { channelType: 'EMAIL', enabled: true }] } },
     });
-    const screen = render(withClient(<NotificationSettingsSection />));
+    const screen = await render(withClient(<NotificationSettingsSection />));
     const email = screen.getByRole('switch', { name: '이메일 알림' });
 
     await expect.element(screen.getByText(/카카오로 가입해 받을 이메일 주소가 없어요/)).toBeInTheDocument();
@@ -382,7 +382,7 @@ describe('점검 후속 (2026-10-24 audit-fe-settings-design)', () => {
   });
 
   it('일반 이메일 계정은 이메일 알림을 켤 수 있다', async () => {
-    const screen = render(withClient(<NotificationSettingsSection />));
+    const screen = await render(withClient(<NotificationSettingsSection />));
     await expect.element(screen.getByRole('switch', { name: '이메일 알림' })).toBeEnabled();
     expect(document.body.textContent).not.toContain('받을 이메일 주소가 없어요');
   });
@@ -390,7 +390,7 @@ describe('점검 후속 (2026-10-24 audit-fe-settings-design)', () => {
   // M-2: 불러오지 못한 설정을 기본값으로 그리면 꺼 둔 알림이 켜진 것처럼 보이고 그대로 저장된다
   it('알림 종류를 불러오지 못하면 토글 대신 다시 시도 안내를 보여 준다', async () => {
     api.getGuardianNotificationTypeSetting.mockRejectedValueOnce(new Error('서버 오류'));
-    const screen = render(withClient(<AlertTypeSettingsSection />));
+    const screen = await render(withClient(<AlertTypeSettingsSection />));
 
     await expect.element(screen.getByText(/설정을 불러오지 못했어요/)).toBeInTheDocument();
     expect(screen.getByRole('switch').elements()).toHaveLength(0);
@@ -401,7 +401,7 @@ describe('점검 후속 (2026-10-24 audit-fe-settings-design)', () => {
 
   it('알림 방법을 불러오지 못하면 토글 대신 다시 시도 안내를 보여 준다', async () => {
     api.getMyNotificationSettings.mockRejectedValueOnce(new Error('서버 오류'));
-    const screen = render(withClient(<NotificationSettingsSection />));
+    const screen = await render(withClient(<NotificationSettingsSection />));
 
     await expect.element(screen.getByText(/설정을 불러오지 못했어요/)).toBeInTheDocument();
     expect(screen.getByRole('switch').elements()).toHaveLength(0);
@@ -412,7 +412,7 @@ describe('점검 후속 (2026-10-24 audit-fe-settings-design)', () => {
 
   // L-1: 프로필 전에는 카카오 계정인지 몰라 엉뚱한 본인 확인 단계로 갈 수 있다
   it('계정 확인 전에는 비밀번호 변경·탈퇴 버튼이 눌리지 않는다', async () => {
-    const screen = render(
+    const screen = await render(
       withClient(
         <>
           <PasswordChangeSection isAccountReady={false} isKakaoUser={false} />
@@ -426,7 +426,7 @@ describe('점검 후속 (2026-10-24 audit-fe-settings-design)', () => {
 
   // L-3
   it('비밀번호 칸은 현재·새 비밀번호를 구분해 자동 완성한다', async () => {
-    const screen = render(withClient(<PasswordChangeSection isKakaoUser={false} />));
+    const screen = await render(withClient(<PasswordChangeSection isKakaoUser={false} />));
     await screen.getByRole('button', { name: '변경' }).click();
 
     await expect.element(screen.getByLabelText('현재 비밀번호')).toHaveAttribute('autocomplete', 'current-password');
@@ -436,7 +436,7 @@ describe('점검 후속 (2026-10-24 audit-fe-settings-design)', () => {
 
   // L-4
   it('탈퇴 확인 창은 "취소"에 먼저 포커스를 두고, Tab은 창 안에서 돌고, Esc로 닫으면 탈퇴 버튼으로 돌아온다', async () => {
-    const screen = render(withClient(<AccountDeleteSection isKakaoUser={false} />));
+    const screen = await render(withClient(<AccountDeleteSection isKakaoUser={false} />));
     const openButton = screen.getByRole('button', { name: '탈퇴' });
     await openButton.click();
 
@@ -454,7 +454,7 @@ describe('점검 후속 (2026-10-24 audit-fe-settings-design)', () => {
 
   it('본인 확인 단계는 입력 칸에 포커스를 두고, 처리 중에는 Esc로 닫히지 않는다', async () => {
     api.deleteMyAccount.mockReturnValue(new Promise(() => undefined));
-    const screen = render(withClient(<AccountDeleteSection isKakaoUser={false} />));
+    const screen = await render(withClient(<AccountDeleteSection isKakaoUser={false} />));
     await screen.getByRole('button', { name: '탈퇴' }).click();
     await screen.getByRole('button', { name: '계속하기' }).click();
 

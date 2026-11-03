@@ -34,7 +34,7 @@ describe('GuardianMonitorContent (Chrome)', () => {
   });
 
   it('푸시로 연 카메라는 첫 열기에만 쓰고, 닫은 뒤 다시 열면 지정하지 않는다', async () => {
-    const screen = render(<GuardianMonitorContent />, { wrapper });
+    const screen = await render(<GuardianMonitorContent />, { wrapper });
     await expect.element(screen.getByText('세션:ward_push')).toBeInTheDocument();
 
     await screen.getByRole('button', { name: '모달 닫기' }).click();

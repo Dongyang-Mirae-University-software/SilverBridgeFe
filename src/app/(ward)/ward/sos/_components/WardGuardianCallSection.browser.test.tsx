@@ -3,7 +3,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 
 import type { IConnectionItem } from '@/service/interface/connection';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
@@ -49,7 +49,7 @@ describe('WardGuardianCallSection (Chrome)', () => {
 
   it('보호자 카드는 "이름 (관계)"를 보이고, 카드를 누르면 그 번호로 전화하며 GUARDIAN_CALL 기록을 부른다', async () => {
     const onGuardianCall = vi.fn();
-    const screen = renderSection(
+    const screen = await renderSection(
       [guardian(1, '박민수', '아들', '010-1234-5678'), guardian(2, '박지영', '며느리', '01023456789')],
       onGuardianCall,
     );
@@ -70,7 +70,7 @@ describe('WardGuardianCallSection (Chrome)', () => {
   });
 
   it('관계가 없으면 이름만, 전화번호가 없으면 링크 없이 "전화번호가 없어요"', async () => {
-    const screen = renderSection([guardian(1, '김보호', null, null)]);
+    const screen = await renderSection([guardian(1, '김보호', null, null)]);
 
     await expect.element(screen.getByText('김보호')).toBeVisible();
     expect(screen.getByText(/\(/).query()).toBeNull();
@@ -80,7 +80,7 @@ describe('WardGuardianCallSection (Chrome)', () => {
 
   it('375px에서는 카드가 한 줄에 하나씩, 가로로 넘치지 않는다', async () => {
     await page.viewport(375, 812);
-    const screen = renderSection([
+    const screen = await renderSection([
       guardian(1, '박민수', '아들', '01012345678'),
       guardian(2, '박지영', '며느리', '01023456789'),
     ]);

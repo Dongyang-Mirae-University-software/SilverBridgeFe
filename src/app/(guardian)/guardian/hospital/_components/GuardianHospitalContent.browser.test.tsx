@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
-import { userEvent } from '@vitest/browser/context';
+import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import { RESERVATION_DEMO_NOTICE } from '@/constants/reservation';
@@ -109,7 +109,7 @@ function axiosError(status: number, message = 'server text', code?: string) {
 }
 
 // 진행 막대의 단계(li) - 현재 단계에 aria-current="step"
-function step(screen: ReturnType<typeof renderContent>, label: string) {
+function step(screen: Awaited<ReturnType<typeof renderContent>>, label: string) {
   return screen.getByRole('list', { name: '예약 단계' }).getByRole('listitem').filter({ hasText: label });
 }
 
@@ -144,7 +144,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
   });
 
   it('새 진료 예약 - 병원 고르기 → 날짜·시간 → 확인 → 완료, 증상 없이 피보호자 번호로 예약한다', async () => {
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await expect.element(screen.getByText('잡혀 있는 예약이 없어요')).toBeVisible();
     await expect.element(screen.getByRole('heading', { name: '예약 현황 0건' })).toBeVisible();
@@ -221,13 +221,13 @@ describe('GuardianHospitalContent (Chrome)', () => {
         closedWeekdays: [tomorrowWeekday],
       },
     ]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /강남내과/ }).click();
 
     const closedDay = screen.getByRole('button', { name: `${formatDateShort(TOMORROW)} 휴진` });
     await expect.element(closedDay).toBeDisabled();
-    await expect.element(closedDay).toHaveTextContent('휴진');
+    await expect.element(closedDay).toMatchTextContent('휴진');
 
     const nextDay = addDays(TODAY, 2);
     await screen.getByRole('button', { name: formatDateShort(nextDay) }).click();
@@ -246,7 +246,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
       },
     ]);
     api.getAvailableSlots.mockResolvedValue(['09:00', '09:30', '10:00']);
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /강남내과/ }).click();
     await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
@@ -255,7 +255,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
   });
 
   it('예약 중 [예약 취소]를 누르면 입력을 지우고 목록으로 돌아간다', async () => {
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: '예약 취소' }).click();
@@ -266,7 +266,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it('피보호자 번호가 없으면 확인 단계에서 번호를 받아야 예약할 수 있다', async () => {
     wards.list = [ward('ward01', '김영희', null)];
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
@@ -283,7 +283,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it('이미 찬 시간(409)이면 서버 문구를 보여 주고 확인 단계에 머문다', async () => {
     api.createReservation.mockRejectedValue(axiosError(409, '이미 예약된 시간입니다.'));
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
@@ -291,21 +291,21 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await screen.getByRole('button', { name: '다음' }).click();
     await screen.getByRole('button', { name: '예약하기' }).click();
 
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('이미 예약된 시간입니다.');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('이미 예약된 시간입니다.');
     await expect.element(screen.getByText('이대로 예약할까요?')).toBeVisible();
   });
 
   it('다음 진료 카드에서 예약을 취소한다(확인 창으로 한 번 더 묻는다)', async () => {
     api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
-    const screen = renderContent();
+    const screen = await renderContent();
 
     const next = screen.getByRole('group', { name: '다음 진료' });
     await expect.element(next.getByText('내일')).toBeVisible();
-    await expect.element(next).toHaveTextContent(`${formatDateShort(TOMORROW)} 오전 10시`);
+    await expect.element(next).toMatchTextContent(`${formatDateShort(TOMORROW)} 오전 10시`);
     await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
     const dialog = screen.getByRole('dialog', { name: '이 예약을 취소할까요?' });
     // 취소해도 피보호자에게 알림은 가지 않는다 - 사실대로 "화면에서도 보인다"고만 안내한다
-    await expect.element(dialog).toHaveTextContent('김영희 님 화면에서도 취소된 것으로 보여요');
+    await expect.element(dialog).toMatchTextContent('김영희 님 화면에서도 취소된 것으로 보여요');
     await dialog.getByRole('button', { name: '예약 취소' }).click();
 
     await expect.element(screen.getByText('예약을 취소했어요.')).toBeVisible();
@@ -320,12 +320,12 @@ describe('GuardianHospitalContent (Chrome)', () => {
       reservation(3, addDays(TODAY, -5), '10:00', 'COMPLETED'),
       reservation(4, addDays(TODAY, -9), '10:00', 'COMPLETED', '사라진병원'),
     ]);
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await expect.element(screen.getByRole('heading', { name: '예약 현황 2건' })).toBeVisible();
     const more = screen.getByRole('group', { name: '그 밖의 예약' });
-    await expect.element(more).toHaveTextContent(formatDateShort(addDays(TODAY, 3)));
-    await expect.element(more).toHaveTextContent('3일 뒤');
+    await expect.element(more).toMatchTextContent(formatDateShort(addDays(TODAY, 3)));
+    await expect.element(more).toMatchTextContent('3일 뒤');
     const past = screen.getByRole('region', { name: '지난 진료' });
     // 병원 목록에 없는 병원은 다시 예약 버튼이 없다
     expect(past.getByRole('button', { name: /다시 예약$/ }).elements()).toHaveLength(1);
@@ -337,7 +337,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it('병원 목록은 5곳씩 나눠 보여 준다', async () => {
     api.getHospitals.mockResolvedValue(Array.from({ length: 7 }, (_, i) => hospital(i + 1, `병원${i + 1}`, ['내과'])));
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
 
     await expect.element(screen.getByRole('button', { name: /병원5/ })).toBeVisible();
@@ -347,7 +347,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
   });
 
   it('찾는 병원이 없으면 안내한다', async () => {
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('searchbox', { name: '병원 찾기' }).fill('없는이름');
     await expect.element(screen.getByText('찾는 병원이 없어요')).toBeVisible();
@@ -360,14 +360,14 @@ describe('GuardianHospitalContent (Chrome)', () => {
     [502, '예약 서비스에 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.'],
   ])('예약을 못 불러오면 상태(%i)별 문구를 보여 준다', async (status, text) => {
     api.getMyReservations.mockRejectedValue(axiosError(status));
-    const screen = renderContent();
-    await expect.element(screen.getByRole('alert')).toHaveTextContent(text);
+    const screen = await renderContent();
+    await expect.element(screen.getByRole('alert')).toMatchTextContent(text);
     await expect.element(screen.getByRole('button', { name: '다시 불러오기' })).toBeVisible();
   });
 
   it('피보호자가 두 명 이상이면 선택 칸이 보이고 바꾸면 그 사람의 예약을 부른다', async () => {
     wards.list = [ward('ward01', '김영희'), ward('ward02', '이철수')];
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await screen.getByRole('combobox', { name: '진료받으실 분' }).selectOptions('ward02');
     await vi.waitFor(() => expect(api.getMyReservations).toHaveBeenCalledWith('ward02'));
@@ -375,7 +375,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it('연결된 피보호자가 없으면 안내만 한다', async () => {
     wards.list = [];
-    const screen = renderContent();
+    const screen = await renderContent();
     await expect.element(screen.getByText(/연결된 피보호자가 없어요/)).toBeVisible();
     expect(api.getMyReservations).not.toHaveBeenCalled();
   });
@@ -383,7 +383,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
   it('M-3 예약하는 중에는 [예약 취소]·[이전]이 잠기고, 끝나면 보낸 병원 이름으로 완료를 보여 준다', async () => {
     let finish: (value: unknown) => void = () => {};
     api.createReservation.mockReturnValue(new Promise(resolve => (finish = resolve)));
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
@@ -406,21 +406,21 @@ describe('GuardianHospitalContent (Chrome)', () => {
       hospital(2, '푸른안과', ['안과']),
     ]);
     api.getMyReservations.mockResolvedValue([reservation(3, addDays(TODAY, -5), '10:00', 'COMPLETED')]);
-    const screen = renderContent();
+    const screen = await renderContent();
 
     // 지난 진료의 휴진 병원은 [다시 예약]을 두지 않는다
-    await expect.element(screen.getByRole('region', { name: '지난 진료' })).toHaveTextContent('강남내과');
+    await expect.element(screen.getByRole('region', { name: '지난 진료' })).toMatchTextContent('강남내과');
     expect(screen.getByRole('button', { name: /다시 예약$/ }).elements()).toHaveLength(0);
 
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     const closed = screen.getByRole('button', { name: /강남내과/ });
     await expect.element(closed).toBeDisabled();
-    await expect.element(closed).toHaveTextContent('지금은 예약을 받지 않아요');
+    await expect.element(closed).toMatchTextContent('지금은 예약을 받지 않아요');
     await expect.element(screen.getByRole('button', { name: /푸른안과/ })).toBeEnabled();
   });
 
   it('L-6 고른 시각이 그사이 지나면 [다음]에서 날짜·시간 단계에 머물고 다시 고르게 한다', async () => {
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: `${formatDateShort(TODAY)} 오늘` }).click();
@@ -429,14 +429,14 @@ describe('GuardianHospitalContent (Chrome)', () => {
     clock.now = '09:10';
     await screen.getByRole('button', { name: '다음' }).click();
 
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('고르신 시간이 이미 지났어요.');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('고르신 시간이 이미 지났어요.');
     await expect.element(step(screen, '2. 날짜·시간')).toHaveAttribute('aria-current', 'step');
     await expect.element(screen.getByRole('button', { name: '다음' })).toBeDisabled();
     expect(api.createReservation).not.toHaveBeenCalled();
   });
 
   it('L-6 확인 단계에서 [예약하기]를 누를 때 시각이 지났으면 보내지 않는다', async () => {
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: `${formatDateShort(TODAY)} 오늘` }).click();
@@ -446,13 +446,13 @@ describe('GuardianHospitalContent (Chrome)', () => {
     clock.now = '09:00';
     await screen.getByRole('button', { name: '예약하기' }).click();
 
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('고르신 시간이 이미 지났어요.');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('고르신 시간이 이미 지났어요.');
     expect(api.createReservation).not.toHaveBeenCalled();
   });
 
   it('L-5 번호 형식이 틀리면 이유를 글로 알려 준다', async () => {
     wards.list = [ward('ward01', '김영희', null)];
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
@@ -466,7 +466,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it('L-5 예약 취소를 누르면 확인 창의 [그대로 두기]로 포커스가 가고, Esc로 닫으면 누른 버튼으로 돌아온다', async () => {
     api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
-    const screen = renderContent();
+    const screen = await renderContent();
     const opener = screen.getByRole('button', { name: /강남내과 예약 취소$/ });
     await opener.click();
     await expect.element(screen.getByRole('button', { name: '그대로 두기' })).toHaveFocus();
@@ -478,7 +478,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
   });
 
   it('증상을 적으면 symptomSummary로 함께 보낸다(앞뒤 공백 제거, 200자까지)', async () => {
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
@@ -496,7 +496,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it('피보호자 번호가 줄표 없이 저장돼 있어도 줄표를 넣어 보이고, 보낼 때는 저장된 값 그대로 보낸다', async () => {
     wards.list = [ward('ward01', '김영희', '01012345678')];
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
@@ -510,7 +510,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
   });
 
   it('[바꾸기]로 연락처를 고치면 고친 번호로 예약하고, 줄표는 자동으로 넣는다', async () => {
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
@@ -532,7 +532,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
     api.createReservation.mockRejectedValue(
       axiosError(400, '동일 시간대에 이미 예약이 있습니다.', 'DUPLICATE_RESERVATION'),
     );
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
@@ -540,7 +540,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await screen.getByRole('button', { name: '다음' }).click();
     await screen.getByRole('button', { name: '예약하기' }).click();
 
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('김영희 님은 이 시간에 이미 예약이 있어요.');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('김영희 님은 이 시간에 이미 예약이 있어요.');
     await expect.element(screen.getByText('이대로 예약할까요?')).toBeVisible();
   });
 
@@ -551,7 +551,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
       reservation(3, addDays(TODAY, -4), '10:00', 'NO_SHOW'),
       reservation(4, addDays(TODAY, -5), '10:00', 'COMPLETED'),
     ]);
-    const screen = renderContent();
+    const screen = await renderContent();
     const past = screen.getByRole('region', { name: '지난 진료' });
     await expect.element(past.getByText('취소됨')).toBeVisible();
     await expect.element(past.getByText('병원이 거절함')).toBeVisible();
@@ -564,7 +564,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
       { ...hospital(1, '강남내과', ['내과']), bookingAvailable: false },
       hospital(2, '푸른안과', ['안과']),
     ]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await expect.element(screen.getByRole('button', { name: /푸른안과/ })).toBeVisible();
     expect(screen.getByRole('button', { name: /강남내과/ }).elements()).toHaveLength(0);
@@ -572,15 +572,15 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it('진료과가 넷 이상이면 병원 줄에 셋까지만 적고 "외 N개"로 줄인다', async () => {
     api.getHospitals.mockResolvedValue([hospital(1, '종합병원', ['내과', '외과', '안과', '치과', '피부과'])]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await expect
       .element(screen.getByRole('button', { name: /종합병원/ }))
-      .toHaveTextContent('내과 · 외과 · 안과 외 2개');
+      .toMatchTextContent('내과 · 외과 · 안과 외 2개');
   });
 
   it('진료과를 바꾸면 고른 시간을 지우고 그 진료과의 빈 시간을 다시 묻는다', async () => {
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /강남내과/ }).click();
     const dept = screen.getByRole('region', { name: '진료과' });
@@ -596,7 +596,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it('진료과가 여럿인 병원도 다시 예약하면 그 진료과를 미리 고른다', async () => {
     api.getMyReservations.mockResolvedValue([reservation(3, addDays(TODAY, -5), '10:00', 'COMPLETED')]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: /강남내과 내과 .* 다시 예약$/ }).click();
     await expect
       .element(screen.getByRole('region', { name: '진료과' }).getByRole('button', { name: '내과', exact: true }))
@@ -605,7 +605,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it('취소 확인 창은 바깥을 누르면 닫히고 취소하지 않는다', async () => {
     api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
     (document.querySelector('[role="presentation"]') as HTMLElement).click();
 
@@ -616,7 +616,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
   it('취소에 실패하면 창을 닫고 서버 문구로 이유를 알린다', async () => {
     api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
     api.cancelReservation.mockRejectedValue(axiosError(400, '취소할 수 없는 예약 상태입니다.'));
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
     await screen.getByRole('dialog').getByRole('button', { name: '예약 취소' }).click();
 
@@ -626,12 +626,12 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it('빈 시간 조회가 실패(502)하면 다시 불러오기로 다시 묻는다', async () => {
     api.getAvailableSlots.mockRejectedValueOnce(axiosError(502, '예약 서비스에 연결하지 못했습니다.'));
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await screen.getByRole('button', { name: /푸른안과/ }).click();
     await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
 
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('예약 서비스에 연결하지 못했어요');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('예약 서비스에 연결하지 못했어요');
     await screen.getByRole('button', { name: '다시 불러오기' }).click();
     await expect.element(screen.getByRole('button', { name: '오전 9시', exact: true })).toBeVisible();
     expect(api.getAvailableSlots).toHaveBeenCalledTimes(2);
@@ -648,14 +648,14 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     it('예약 내역 조회가 403이면 피보호자 목록을 새로 받는다', async () => {
       api.getMyReservations.mockRejectedValue(axiosError(403, '연결된 피보호자가 아니에요.'));
-      renderContent();
+      await renderContent();
       await vi.waitFor(() => expect(connectionsRefetched(spy)).toBe(true));
     });
 
     it('예약 취소가 403이면 피보호자 목록을 새로 받는다', async () => {
       api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
       api.cancelReservation.mockRejectedValue(axiosError(403, '연결된 피보호자가 아니에요.'));
-      const screen = renderContent();
+      const screen = await renderContent();
       await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
       await screen.getByRole('dialog').getByRole('button', { name: '예약 취소' }).click();
       await vi.waitFor(() => expect(connectionsRefetched(spy)).toBe(true));
@@ -663,7 +663,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     it('예약 만들기가 403이면 피보호자 목록을 새로 받는다', async () => {
       api.createReservation.mockRejectedValue(axiosError(403, '연결된 피보호자가 아니에요.'));
-      const screen = renderContent();
+      const screen = await renderContent();
       await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
       await screen.getByRole('button', { name: /푸른안과/ }).click();
       await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
@@ -675,21 +675,21 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     it('다른 오류(409)로는 피보호자 목록을 다시 받지 않는다', async () => {
       api.createReservation.mockRejectedValue(axiosError(409, '이미 예약된 시간입니다.'));
-      const screen = renderContent();
+      const screen = await renderContent();
       await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
       await screen.getByRole('button', { name: /푸른안과/ }).click();
       await screen.getByRole('button', { name: formatDateShort(TOMORROW) }).click();
       await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
       await screen.getByRole('button', { name: '다음' }).click();
       await screen.getByRole('button', { name: '예약하기' }).click();
-      await expect.element(screen.getByRole('alert')).toHaveTextContent('이미 예약된 시간입니다.');
+      await expect.element(screen.getByRole('alert')).toMatchTextContent('이미 예약된 시간입니다.');
       expect(connectionsRefetched(spy)).toBe(false);
     });
   });
 
   it('M-1 진료과가 하나도 없는 병원은 병원 목록에 두지 않는다(골라도 시간 칸을 못 묻는다)', async () => {
     api.getHospitals.mockResolvedValue([hospital(1, '빈진료과병원', []), hospital(2, '푸른안과', ['안과'])]);
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await expect.element(screen.getByRole('button', { name: /푸른안과/ })).toBeVisible();
     expect(screen.getByRole('button', { name: /빈진료과병원/ }).elements()).toHaveLength(0);
@@ -700,7 +700,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
       reservation(3, addDays(TODAY, -5), '10:00', 'CANCELED'),
       reservation(4, addDays(TODAY, -9), '10:00', 'COMPLETED'),
     ]);
-    const screen = renderContent();
+    const screen = await renderContent();
     const past = screen.getByRole('region', { name: '지난 진료' });
     await expect
       .element(
@@ -716,7 +716,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
     let finish: (value: unknown) => void = () => {};
     api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
     api.cancelReservation.mockReturnValue(new Promise(resolve => (finish = resolve)));
-    const screen = renderContent();
+    const screen = await renderContent();
     await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
     expect(document.body.style.overflow).toBe('hidden');
 
@@ -731,7 +731,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
   });
 
   describe('다른 화면에서 고른 피보호자 이어받기(전역 선택)', () => {
-    const picker = (screen: ReturnType<typeof renderContent>) =>
+    const picker = (screen: Awaited<ReturnType<typeof renderContent>>) =>
       screen.getByRole('combobox', { name: '진료받으실 분' }).element() as HTMLSelectElement;
 
     beforeEach(() => {
@@ -740,7 +740,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     it('대시보드·챗봇에서 고른 피보호자로 시작하고, 첫 번째 피보호자 예약은 부르지 않는다', async () => {
       setSelectedWardId('ward02');
-      const screen = renderContent();
+      const screen = await renderContent();
       await vi.waitFor(() => expect(picker(screen).value).toBe('ward02'));
       await vi.waitFor(() => expect(api.getMyReservations).toHaveBeenCalledWith('ward02'));
       expect(api.getMyReservations.mock.calls.map(call => call[0])).toEqual(['ward02']);
@@ -749,17 +749,17 @@ describe('GuardianHospitalContent (Chrome)', () => {
     it('목록을 불러오는 중에 들어와도 목록이 오면 고른 피보호자로 시작한다', async () => {
       setSelectedWardId('ward02');
       wards.loading = true;
-      const screen = renderContent();
+      const screen = await renderContent();
       expect(api.getMyReservations).not.toHaveBeenCalled();
       wards.loading = false;
-      screen.rerender(<GuardianHospitalContent />);
+      await screen.rerender(<GuardianHospitalContent />);
       await vi.waitFor(() => expect(picker(screen).value).toBe('ward02'));
       expect(api.getMyReservations.mock.calls.map(call => call[0])).toEqual(['ward02']);
     });
 
     it('고른 피보호자가 내 목록에 없으면(연결 해제 등) 첫 번째 피보호자로 시작한다', async () => {
       setSelectedWardId('ward99');
-      const screen = renderContent();
+      const screen = await renderContent();
       await vi.waitFor(() => expect(picker(screen).value).toBe('ward01'));
     });
 
@@ -769,8 +769,8 @@ describe('GuardianHospitalContent (Chrome)', () => {
         seen.push(useSelectedWardId());
         return null;
       }
-      const screen = renderContent();
-      render(<SelectedWardProbe />);
+      const screen = await renderContent();
+      await render(<SelectedWardProbe />);
       await vi.waitFor(() => expect(picker(screen).value).toBe('ward01'));
       await userEvent.selectOptions(picker(screen), 'ward02');
       await vi.waitFor(() => expect(seen.at(-1)).toBe('ward02'));
@@ -781,7 +781,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
         throw new DOMException('denied', 'SecurityError');
       });
       try {
-        const screen = renderContent();
+        const screen = await renderContent();
         await vi.waitFor(() => expect(picker(screen).value).toBe('ward01'));
       } finally {
         spy.mockRestore();

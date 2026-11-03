@@ -1,6 +1,6 @@
 // 로그인·가입 틀 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`)
 
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -32,7 +32,7 @@ describe('AuthShell (Chrome)', () => {
   it('데스크톱에서 틀 밖으로 밀려난 absolute 요소가 있어도 바깥 문서는 틀보다 길어지지 않는다', async () => {
     await page.viewport(1366, 768);
     document.body.style.margin = '0';
-    const screen = render(
+    const screen = await render(
       <AuthShell>
         <div style={{ height: '3000px' }} />
         <input aria-label="숨긴 선택" type="checkbox" style={{ position: 'absolute', top: '5000px', opacity: 0 }} />
@@ -52,7 +52,7 @@ describe('AuthShell (Chrome)', () => {
   // 핸드폰 배치(767px 이하, 2026-11-02)는 로그인뿐 아니라 회원가입·찾기 등 모든 인증 화면의 머리 부분에 적용된다
   it('767px 이하 다른 인증 화면도 앱 아이콘이 보이고 기능 아이콘 줄은 숨는다', async () => {
     await page.viewport(375, 667);
-    render(
+    await render(
       <AuthShell>
         <div>회원가입 양식</div>
       </AuthShell>,

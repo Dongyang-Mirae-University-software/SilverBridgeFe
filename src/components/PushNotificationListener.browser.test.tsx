@@ -1,7 +1,7 @@
 // 앱 안 웹푸시 토스트 - 문구 우선순위·종류별 구성·버튼 이동·반응형 위치. 실제 Chrome에서 돈다(`npm run test:browser`)
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 import { hydrateRoot } from 'react-dom/client';
@@ -70,7 +70,7 @@ afterEach(() => {
 
 describe('문구·구성', () => {
   it('data의 제목·본문을 먼저 쓰고 두 줄 본문을 줄바꿈으로 보여준다', async () => {
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({
       data: { type: 'MEDICATION_MISSED', title: '복약 확인 요청', body: '첫 문장\n둘째 문장', wardId: 'w1', doseDate: 'd' },
       notification: { title: '옛 제목', body: '옛 본문' },
@@ -85,7 +85,7 @@ describe('문구·구성', () => {
   });
 
   it('복약 미복용은 값이 있을 때만 N번 중 M번 막대를 그린다', async () => {
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'MEDICATION_MISSED', totalCount: '3', missedCount: '1', wardId: 'w', doseDate: 'a' } });
     await expect.element(screen.getByText('3번 중 2번 체크')).toBeVisible();
 
@@ -94,7 +94,7 @@ describe('문구·구성', () => {
   });
 
   it('SOS는 긴급(assertive)으로 알리고 두 버튼이 각 화면으로 간다', async () => {
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'WARD_SOS', sosEventId: '1', title: '긴급 SOS', body: '도움 요청' } });
 
     const toast = screen.getByRole('alert');
@@ -104,7 +104,7 @@ describe('문구·구성', () => {
   });
 
   it('SOS 제목·본문이 없으면 BE와 같은 형식의 예비 문구를 쓴다', async () => {
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'WARD_SOS', sosEventId: '2', wardName: '김영희' } });
 
     await expect.element(screen.getByText('[긴급] 김영희님 SOS')).toBeVisible();
@@ -112,7 +112,7 @@ describe('문구·구성', () => {
   });
 
   it('보호자 이상감지의 실시간 보기는 그 카메라를 연다', async () => {
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'ANOMALY_DETECTED', anomalyEventId: '9', sessionId: 'ward_x', detectedType: 'FIRE' } });
 
     await screen.getByRole('button', { name: '실시간 보기' }).click();
@@ -121,7 +121,7 @@ describe('문구·구성', () => {
 
   it('피보호자 본인 이상감지에는 영상 버튼이 없다', async () => {
     mocks.pathname = '/ward';
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'ANOMALY_DETECTED', anomalyEventId: '10', title: '실버브릿지', body: '불이 났어요' } });
 
     await expect.element(screen.getByText('불이 났어요')).toBeVisible();
@@ -130,7 +130,7 @@ describe('문구·구성', () => {
 
   it('연결 요청은 기존처럼 대기 요청을 저장하고 수락할 수 있다', async () => {
     mocks.pathname = '/ward';
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'CONNECTION_REQUEST', connectionId: '42' } });
 
     expect(mocks.savePending).toHaveBeenCalled();
@@ -139,7 +139,7 @@ describe('문구·구성', () => {
   });
 
   it('닫기 버튼에는 어떤 알림인지 이름이 있다', async () => {
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'INQUIRY_ANSWERED', inquiryId: '3', title: '문의 답변', body: '답변이 왔어요' } });
 
     await screen.getByRole('button', { name: '문의 답변 알림 닫기' }).click();
@@ -153,20 +153,20 @@ describe('SOS 예비 문구 - 서버 푸시·OS 알림과 같은 "○○님이"'
     ['김영희', '김영희님이 긴급 도움을 요청했습니다.'],
     [undefined, '피보호자님이 긴급 도움을 요청했습니다.'],
   ])('본문이 없으면 이름 %s → %s', async (wardName, body) => {
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'WARD_SOS', sosEventId: '1', ...(wardName ? { wardName } : {}) } });
     await expect.element(screen.getByText(body)).toBeVisible();
   });
 
   it('서버 본문이 오면 그대로 쓴다', async () => {
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'WARD_SOS', sosEventId: '1', wardName: '남궁명진', body: '남궁명진님이 계속 도움을 요청하고 있습니다.' } });
     await expect.element(screen.getByText('남궁명진님이 계속 도움을 요청하고 있습니다.')).toBeVisible();
   });
 
   it.each([375, 768, 1280])('%ipx 에서 예비 문구가 알림창 안에서 줄바꿈된다', async width => {
     await page.viewport(width, 800);
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'WARD_SOS', sosEventId: '1', wardName: '남궁명진' } });
     const body = screen.getByText('남궁명진님이 긴급 도움을 요청했습니다.');
     await expect.element(body).toBeVisible();
@@ -177,7 +177,7 @@ describe('SOS 예비 문구 - 서버 푸시·OS 알림과 같은 "○○님이"'
     expect(text.right).toBeLessThanOrEqual(section.right);
     expect(section.right).toBeLessThanOrEqual(width);
     expect(body.element().scrollWidth).toBeLessThanOrEqual(body.element().clientWidth);
-    screen.unmount();
+    await screen.unmount();
   });
 });
 
@@ -188,7 +188,7 @@ describe('반응형 위치', () => {
     [1280, 'bottom'],
   ])('%ipx 에서 잘리거나 겹치지 않는다', async (width, edge) => {
     await page.viewport(width, 800);
-    const screen = renderListener();
+    const screen = await renderListener();
     await receive({ data: { type: 'WARD_SOS', sosEventId: '1', title: '긴급 SOS', body: '첫 줄\n둘째 줄' } });
     await receive({ data: { type: 'CONNECTION_ACCEPTED', connectionId: '2', title: '연결 수락', body: '연결되었습니다.' } });
 
@@ -208,7 +208,7 @@ describe('반응형 위치', () => {
     if (edge === 'top') expect(area.top).toBeLessThan(40);
     else expect(800 - area.bottom).toBeLessThan(40);
     if (width > 520) expect(area.width).toBeLessThanOrEqual(360);
-    screen.unmount();
+    await screen.unmount();
   });
 });
 

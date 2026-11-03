@@ -4,7 +4,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { page, userEvent } from '@vitest/browser/context';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import ChatbotContent from './ChatbotContent';
@@ -97,7 +97,7 @@ describe('보호자 AI 의료 챗봇', () => {
   beforeEach(() => api.role.mockReturnValue('GUARDIAN'));
 
   it('헤더·상담 기록·피보호자 선택과 피보호자 이름 인사말을 보여 준다', async () => {
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await expect.element(page.getByRole('heading', { name: 'AI 의료 챗봇' })).toBeVisible();
     await expect.element(page.getByRole('button', { name: '상담 기록' })).toBeVisible();
@@ -110,7 +110,7 @@ describe('보호자 AI 의료 챗봇', () => {
     api.wards.mockReturnValue([]);
     api.wardsLoading.mockReturnValue(true);
     api.sendChatMessage.mockResolvedValue(REPLY);
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await expect.element(page.getByText('피보호자 정보를 불러오는 중이에요')).toBeVisible();
     await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeDisabled();
@@ -122,7 +122,7 @@ describe('보호자 AI 의료 챗봇', () => {
   it('피보호자 목록이 없는 보호자(로딩 끝)는 지금처럼 본인 상담으로 보낼 수 있다', async () => {
     api.wards.mockReturnValue([]);
     api.sendChatMessage.mockResolvedValue(REPLY);
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await expect.element(page.getByText('눌러서 물어보세요')).toBeVisible();
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
@@ -132,7 +132,7 @@ describe('보호자 AI 의료 챗봇', () => {
 
   it('추천 칩은 펼쳐져 있고 누르면 선택한 피보호자 context로 바로 보낸다', async () => {
     api.sendChatMessage.mockResolvedValue(REPLY);
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
 
@@ -144,7 +144,7 @@ describe('보호자 AI 의료 챗봇', () => {
   });
 
   it('예약 칩은 AI를 부르지 않고 내 말풍선을 남긴 뒤 병원 예약 화면으로 이동한다', async () => {
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
 
@@ -161,7 +161,7 @@ describe('보호자 AI 의료 챗봇', () => {
 
   it('챗봇에서 고른 피보호자는 전역 선택이 되어 예약 화면이 이어받는다(주소창엔 싣지 않음)', async () => {
     api.wards.mockReturnValue([WARD, WARD_2]);
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '이철수' }));
     await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
@@ -173,16 +173,16 @@ describe('보호자 AI 의료 챗봇', () => {
   it('다른 화면에서 고른 피보호자로 시작한다', async () => {
     api.wards.mockReturnValue([WARD, WARD_2]);
     setSelectedWardId('ward-2');
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await expect.element(page.getByText(/이철수의 증상을 말씀해 주시면/)).toBeVisible();
   });
 
   it('이동 전에 화면을 벗어나면(타이머 취소) 예약 화면으로 가지 않는다', async () => {
-    const screen = renderChat(<ChatbotContent />);
+    const screen = await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
-    screen.unmount();
+    await screen.unmount();
 
     await new Promise(resolve => setTimeout(resolve, 800));
     expect(api.push).not.toHaveBeenCalled();
@@ -193,7 +193,7 @@ describe('보호자 AI 의료 챗봇', () => {
       throw new DOMException('denied', 'QuotaExceededError');
     });
     try {
-      renderChat(<ChatbotContent />);
+      await renderChat(<ChatbotContent />);
       await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
       await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
     } finally {
@@ -203,7 +203,7 @@ describe('보호자 AI 의료 챗봇', () => {
 
   it('답을 기다리는 중에는 예약 칩도 누를 수 없다', async () => {
     api.sendChatMessage.mockReturnValue(new Promise(() => {}));
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
 
@@ -213,7 +213,7 @@ describe('보호자 AI 의료 챗봇', () => {
 
   it('직접 쓴 "병원 예약해줘"는 지금처럼 AI로 보내고 이동하지 않는다', async () => {
     api.sendChatMessage.mockResolvedValue(REPLY);
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '병원 예약해줘');
     await userEvent.click(page.getByRole('button', { name: '보내기' }));
@@ -226,7 +226,7 @@ describe('보호자 AI 의료 챗봇', () => {
 
   it('같은 대화창에서는 sessionId를 유지한다', async () => {
     api.sendChatMessage.mockResolvedValue(REPLY);
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
@@ -241,7 +241,7 @@ describe('보호자 AI 의료 챗봇', () => {
 
   it('입력창에서 보낸 뒤에는 입력창으로 포커스를 되돌린다', async () => {
     api.sendChatMessage.mockResolvedValue(REPLY);
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '무릎이 아파요');
     await userEvent.keyboard('{Enter}');
@@ -252,7 +252,7 @@ describe('보호자 AI 의료 챗봇', () => {
 
   it('휴대폰 키보드가 올라온 입력 중에는 칩 줄을 숨겨 대화를 가리지 않는다', async () => {
     await page.viewport(375, 700);
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await expect.element(page.getByRole('region', { name: '추천 질문' })).toBeVisible();
     await userEvent.click(page.getByRole('textbox', { name: '궁금한 점 입력' }));
@@ -268,7 +268,7 @@ describe('피보호자 AI 의료 챗봇', () => {
   beforeEach(() => api.role.mockReturnValue('WARD'));
 
   it('보호자용 헤더·상담 기록·피보호자 선택 없이 큰 빠른 질문 4개를 보여 준다', async () => {
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await expect.element(page.getByText(/안녕하세요, 박순자 님/)).toBeVisible();
     await expect.element(page.getByRole('region', { name: '추천 질문' })).toBeVisible();
@@ -283,7 +283,7 @@ describe('피보호자 AI 의료 챗봇', () => {
 
   it('빠른 질문은 본인 상담으로 보내고 피보호자 정보를 싣지 않는다', async () => {
     api.sendChatMessage.mockResolvedValue({ reply: '물을 한 잔 드시고 쉬어 보세요.', engine: 'ai', type: 'message' });
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
 
@@ -298,7 +298,7 @@ describe('피보호자 AI 의료 챗봇', () => {
 
   it('휴대폰 키보드가 올라오면 빠른 질문 칸을 숨기고, 키보드를 내리면 포커스가 남아도 다시 보여 준다', async () => {
     await page.viewport(375, 700);
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await expect.element(page.getByRole('button', { name: '머리가 아파요' })).toBeVisible();
     await userEvent.click(page.getByRole('textbox', { name: '궁금한 점 입력' }));
@@ -318,7 +318,7 @@ describe('피보호자 AI 의료 챗봇', () => {
       engine: 'ai',
       type: 'message',
     });
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: '배가 아파요' }));
     await expect.element(page.getByText('잠시 후 다시 시도해 주세요.')).toBeVisible();
@@ -338,7 +338,7 @@ describe('이어서 물어볼 질문(suggestedQuestions)', () => {
         suggestedQuestions: ['집에서 쉬면 될까요?', '언제 병원에 가요?', '병원 예약하고 싶어요'],
       })
       .mockResolvedValueOnce({ ...REPLY, reply: '내일 오전이 좋아요.', suggestedQuestions: [] });
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await expect.element(page.getByRole('button', { name: '언제 병원에 가요?' })).toBeVisible();
@@ -361,7 +361,7 @@ describe('이어서 물어볼 질문(suggestedQuestions)', () => {
       type: 'message',
       suggestedQuestions: ['병원에 가야 할까요?'],
     });
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
     await expect.element(page.getByRole('button', { name: '병원에 가야 할까요?' })).toBeVisible();
@@ -378,7 +378,7 @@ describe('이어서 물어볼 질문(suggestedQuestions)', () => {
       type: 'message',
       suggestedQuestions: [3, '  ', null],
     });
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: '배가 아파요' }));
     await expect.element(page.getByText('쉬어 보세요.')).toBeVisible();
@@ -400,7 +400,7 @@ describe('되묻기 답 칩(suggestedKind="answer")', () => {
     api.sendChatMessage
       .mockResolvedValueOnce(FOLLOWUP)
       .mockResolvedValueOnce({ ...REPLY, reply: '신경과 진료를 권해요.', suggestedQuestions: [] });
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
     await expect.element(page.getByText('눌러서 답해 보세요')).toBeVisible();
@@ -416,7 +416,7 @@ describe('되묻기 답 칩(suggestedKind="answer")', () => {
   it('피보호자: 이미 눌러 보낸 답 칩도 다음 되묻기 턴에는 다시 보인다', async () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage.mockResolvedValue(FOLLOWUP);
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
     await userEvent.click(page.getByRole('button', { name: '오늘부터 아파요' }));
@@ -427,7 +427,7 @@ describe('되묻기 답 칩(suggestedKind="answer")', () => {
   it('피보호자: 칩이 없는 답(응급 등) 뒤에는 기본 칩과 원래 제목', async () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage.mockResolvedValue({ ...REPLY, reply: '바로 119에 연락하세요.', riskLevel: 'high', suggestedQuestions: [] });
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: '배가 아파요' }));
     await expect.element(page.getByText('바로 119에 연락하세요.')).toBeVisible();
@@ -440,7 +440,7 @@ describe('되묻기 답 칩(suggestedKind="answer")', () => {
     api.sendChatMessage
       .mockResolvedValueOnce({ ...FOLLOWUP, suggestedKind: 'ANSWER' })
       .mockResolvedValueOnce({ ...FOLLOWUP, reply: '두 번째 답', suggestedKind: undefined });
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
     await expect.element(page.getByText('언제부터 그러셨나요?')).toBeVisible();
@@ -457,7 +457,7 @@ describe('되묻기 답 칩(suggestedKind="answer")', () => {
       ...FOLLOWUP,
       suggestedQuestions: ['오늘부터 아프시대요', '며칠째 계속 아프시대요', '점점 심해지신대요', '열도 나신대요'],
     });
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await expect.element(page.getByText('눌러서 답해 보세요')).toBeVisible();
@@ -480,7 +480,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
   it('보호자: 누른 고정 문장은 질문 없는 답 뒤에도 다시 나오지 않고, 예약 칩은 눌러도 남는다', async () => {
     api.role.mockReturnValue('GUARDIAN');
     api.sendChatMessage.mockResolvedValue({ ...REPLY, suggestedQuestions: [] });
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(1));
@@ -510,7 +510,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
         reply: '내일 오전이 좋아요.',
         suggestedQuestions: ['언제 병원에 가요?', '약은 언제 먹어요?'],
       });
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await userEvent.click(page.getByRole('button', { name: '언제 병원에 가요?' }));
@@ -521,7 +521,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
   it('입력창에 직접 쓴 같은 문장(앞뒤 공백 무시)도 뺀다', async () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '  어지러워요 ');
     await userEvent.click(page.getByRole('button', { name: '보내기' }));
@@ -532,7 +532,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
   it('피보호자: 다 쓰면 칸이 줄고, 남은 문장이 없으면 입력창 안내를 보여 준다', async () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     for (const [index, text] of ['머리가 아파요', '배가 아파요', '무릎이 아파요', '어지러워요'].entries()) {
       await userEvent.click(page.getByRole('button', { name: text }));
@@ -546,7 +546,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
     await page.viewport(375, 800);
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     const lastButtonSpan = () => {
       const buttons = page.getByRole('region', { name: '추천 질문' }).element().querySelectorAll('button');
@@ -578,7 +578,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
     await page.viewport(768, 1024);
-    renderChat(
+    await renderChat(
       <div style={{ '--ward-font-scale': '1.647' } as React.CSSProperties}>
         <ChatbotContent variant="ward" />
       </div>,
@@ -602,7 +602,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
     await page.viewport(768, 1024);
-    renderChat(<ChatbotContent variant="ward" />);
+    await renderChat(<ChatbotContent variant="ward" />);
 
     const lastButtonSpan = () => {
       const buttons = page.getByRole('region', { name: '추천 질문' }).element().querySelectorAll('button');
@@ -634,7 +634,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
   it('보내기에 실패한 문장은 버튼에 남는다', async () => {
     api.role.mockReturnValue('GUARDIAN');
     api.sendChatMessage.mockRejectedValueOnce(new Error('network'));
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await expect.element(page.getByText('잠시 후 다시 시도해 주세요.')).toBeVisible();
@@ -645,7 +645,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     api.role.mockReturnValue('GUARDIAN');
     api.wards.mockReturnValue([WARD, WARD_2]);
     api.sendChatMessage.mockResolvedValue({ ...REPLY, suggestedQuestions: [] });
-    renderChat(<ChatbotContent />);
+    await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();

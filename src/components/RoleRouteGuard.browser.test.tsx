@@ -58,7 +58,7 @@ describe('RoleRouteGuard', () => {
     });
     mocks.getMyProfile.mockResolvedValue(profile);
 
-    const screen = renderGuard();
+    const screen = await renderGuard();
 
     await expect.element(screen.getByText('보호자 화면')).toBeVisible();
     expect(mocks.restoreSession).toHaveBeenCalled();
@@ -69,7 +69,7 @@ describe('RoleRouteGuard', () => {
     document.cookie = 'careai_refresh_token=r1; path=/';
     mocks.restoreSession.mockReturnValue(new Promise(() => {}));
 
-    const screen = renderGuard();
+    const screen = await renderGuard();
 
     await expect.element(screen.getByText('로그인 상태를 확인하고 있어요')).toBeVisible();
     expect(mocks.replace).not.toHaveBeenCalled();
@@ -79,7 +79,7 @@ describe('RoleRouteGuard', () => {
     setAuthTokens({ accessToken: 'a1', refreshToken: 'r1' });
     mocks.getMyProfile.mockReturnValue(new Promise(() => {}));
 
-    const screen = renderGuard();
+    const screen = await renderGuard();
 
     await expect.element(screen.getByText('로그인 상태를 확인하고 있어요')).toBeVisible();
     expect(screen.getByText('보호자 화면').elements()).toHaveLength(0);
@@ -92,7 +92,7 @@ describe('RoleRouteGuard', () => {
       return { status: 'rejected' };
     });
 
-    renderGuard();
+    await renderGuard();
 
     await vi.waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/login'));
   });
@@ -102,7 +102,7 @@ describe('RoleRouteGuard', () => {
     mocks.restoreSession.mockResolvedValue({ status: 'unavailable' });
     mocks.getMyProfile.mockResolvedValue(profile);
 
-    const screen = renderGuard();
+    const screen = await renderGuard();
 
     await expect.element(screen.getByText('로그인 상태를 확인하지 못했어요')).toBeVisible();
     expect(document.cookie).toContain('careai_refresh_token=r1');
@@ -118,7 +118,7 @@ describe('RoleRouteGuard', () => {
   });
 
   it('refresh 토큰도 없으면 로그인 화면으로 보낸다', async () => {
-    renderGuard();
+    await renderGuard();
 
     await vi.waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/login'));
     expect(mocks.restoreSession).not.toHaveBeenCalled();
@@ -128,7 +128,7 @@ describe('RoleRouteGuard', () => {
     setAuthTokens({ accessToken: 'a1', refreshToken: 'r1', remember: true });
     mocks.getMyProfile.mockRejectedValueOnce({ response: { status: 503 } }).mockResolvedValueOnce(profile);
 
-    const screen = renderGuard();
+    const screen = await renderGuard();
 
     await expect.element(screen.getByText('로그인 상태를 확인하지 못했어요')).toBeVisible();
     expect(document.cookie).toContain('careai_refresh_token=r1');
@@ -142,7 +142,7 @@ describe('RoleRouteGuard', () => {
     setAuthTokens({ accessToken: 'a1', refreshToken: 'r1', remember: true });
     mocks.getMyProfile.mockRejectedValue({ response: { status: 403 } });
 
-    renderGuard();
+    await renderGuard();
 
     await vi.waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/login'));
     expect(document.cookie).not.toContain('careai_refresh_token');

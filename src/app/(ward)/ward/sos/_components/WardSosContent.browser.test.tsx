@@ -57,7 +57,7 @@ function renderPage() {
   );
 }
 
-async function confirmSos(screen: ReturnType<typeof render>) {
+async function confirmSos(screen: Awaited<ReturnType<typeof render>>) {
   await screen.getByRole('button', { name: /도움이 필요하면 누르세요/ }).click();
   await expect.element(screen.getByText('긴급 SOS를 보낼까요?')).toBeVisible();
   expect(mocks.triggerSosAsync).not.toHaveBeenCalled();
@@ -78,12 +78,12 @@ describe('WardSosContent (Chrome)', () => {
     mocks.sosAction = 'CALL_119_AND_NOTIFY';
     let resolveSos: (value: unknown) => void = () => {};
     mocks.triggerSosAsync.mockReturnValue(new Promise(resolve => (resolveSos = resolve)));
-    const screen = renderPage();
+    const screen = await renderPage();
 
     await confirmSos(screen);
 
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
-    await expect.element(screen.getByLabelText('입력된 번호')).toHaveTextContent('119');
+    await expect.element(screen.getByLabelText('입력된 번호')).toMatchTextContent('119');
     expect(screen.getByText(/보호자에게/).query()).toBeNull();
     expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1);
 
@@ -98,7 +98,7 @@ describe('WardSosContent (Chrome)', () => {
   it('CALL_119_AND_NOTIFY - 전송이 실패하면 키패드 위에 실패 안내가 뜬다', async () => {
     mocks.sosAction = 'CALL_119_AND_NOTIFY';
     mocks.triggerSosAsync.mockRejectedValue({ message: '서버 오류' });
-    const screen = renderPage();
+    const screen = await renderPage();
 
     await confirmSos(screen);
 
@@ -108,7 +108,7 @@ describe('WardSosContent (Chrome)', () => {
 
   it('NOTIFY_GUARDIAN_FIRST - 알림 완료 뒤 [119 화면 열기]를 눌러야 키패드가 열린다', async () => {
     mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
-    const screen = renderPage();
+    const screen = await renderPage();
 
     await confirmSos(screen);
 
@@ -124,7 +124,7 @@ describe('WardSosContent (Chrome)', () => {
   it('연결된 보호자가 없어도 SOS 이력을 남기고(전송 1회) 119 키패드를 바로 연다 - 보호자 안내는 없다', async () => {
     mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
     mocks.hasActiveGuardians = false;
-    const screen = renderPage();
+    const screen = await renderPage();
 
     await confirmSos(screen);
 
@@ -137,7 +137,7 @@ describe('WardSosContent (Chrome)', () => {
   it('연결된 보호자가 없을 때 전송이 실패해도 실패 창을 띄우지 않는다(알릴 사람이 없다)', async () => {
     mocks.hasActiveGuardians = false;
     mocks.triggerSosAsync.mockRejectedValue({ message: '서버 오류' });
-    const screen = renderPage();
+    const screen = await renderPage();
 
     await confirmSos(screen);
 

@@ -49,28 +49,28 @@ describe('LiveCameraModal (Chrome)', () => {
   it('닫으면(언마운트) 영상 <img>의 src를 지워 연결을 끊는다', async () => {
     // 응답이 끝나지 않는 주소 대신 빈 이미지 - src 속성이 지워지는지만 본다
     setMonitor({ frameSrc: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' });
-    const screen = render(<LiveCameraModal onClose={() => undefined} />);
+    const screen = await render(<LiveCameraModal onClose={() => undefined} />);
     await expect.element(screen.getByRole('img', { name: '실시간 영상' })).toBeInTheDocument();
     const img = document.querySelector('img')!;
     expect(img.hasAttribute('src')).toBe(true);
 
-    screen.unmount();
+    await screen.unmount();
     expect(img.hasAttribute('src')).toBe(false);
   });
 
   it('상태를 모르면(status=null) 세 번째 상태를 만들지 않고 영상 대기만 보인다', async () => {
     setMonitor({ status: null });
-    const screen = render(<LiveCameraModal onClose={() => undefined} />);
+    const screen = await render(<LiveCameraModal onClose={() => undefined} />);
 
     await expect.element(screen.getByText('영상을 불러오는 중이에요...')).toBeInTheDocument();
-    await expect.element(screen.getByRole('button', { name: /거실/ })).toHaveTextContent('거실');
+    await expect.element(screen.getByRole('button', { name: /거실/ })).toMatchTextContent('거실');
     expect(screen.getByText('확인 중').query()).toBeNull();
     expect(screen.getByText('영상이 오지 않아요').query()).toBeNull();
   });
 
   it('동시 시청 상한(429) 같은 서버 안내는 그대로 보인다', async () => {
     setMonitor({ streamErrorMessage: '동시에 볼 수 있는 영상 수를 넘었습니다.' });
-    const screen = render(<LiveCameraModal onClose={() => undefined} />);
+    const screen = await render(<LiveCameraModal onClose={() => undefined} />);
 
     await expect.element(screen.getByText('동시에 볼 수 있는 영상 수를 넘었습니다.')).toBeInTheDocument();
     expect(document.querySelector('img')).toBeNull();

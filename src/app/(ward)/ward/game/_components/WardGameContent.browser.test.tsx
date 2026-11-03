@@ -32,7 +32,7 @@ describe('WardGameContent (Chrome)', () => {
   });
 
   it('v13 카드에 게임 이름과 설명만 보이고, 처음 게임을 선택한다', async () => {
-    const screen = renderContent();
+    const screen = await renderContent();
 
     await expect.element(screen.getByRole('heading', { name: '게임을 골라 보세요' })).toBeVisible();
     await expect.element(screen.getByRole('button', { name: /짝 맞추기 카드 짝을 맞춰보세요/ })).toHaveAttribute('aria-pressed', 'true');
@@ -41,7 +41,7 @@ describe('WardGameContent (Chrome)', () => {
   });
 
   it('게임 카드를 누르면 해당 slug로 기존 AI iframe을 다시 연다', async () => {
-    const screen = renderContent();
+    const screen = await renderContent();
     const expectedUserId = toGameUserId('ward-game-test');
 
     await screen.getByRole('button', { name: /미로 찾기 길을 따라 도착해 보세요/ }).click();

@@ -34,7 +34,7 @@ const firstCardGap = () => {
 
 describe('NoticesPage', () => {
   it('피보호자 화면: 본문 폭 제한이 없고 첫 카드 위에 빈 칸이 없다', async () => {
-    const screen = renderPage('ward');
+    const screen = await renderPage('ward');
     const content = screen.getByText(/서버 점검이 예정되어/);
     await expect.element(content).toBeVisible();
     expect(getComputedStyle(content.element()).maxWidth).toBe('none');
@@ -43,7 +43,7 @@ describe('NoticesPage', () => {
   });
 
   it('기본(보호자 화면)은 지금처럼 78ch 폭과 새로고침 줄 간격을 유지한다', async () => {
-    const screen = renderPage();
+    const screen = await renderPage();
     const content = screen.getByText(/서버 점검이 예정되어/);
     await expect.element(content).toBeVisible();
     expect(getComputedStyle(content.element()).maxWidth).not.toBe('none');

@@ -1,6 +1,6 @@
 // 프로필 수정 칸 - 칸 이름이 입력칸과 이어져 화면 읽기 프로그램·자동 점검이 이름으로 찾는다. 실제 Chrome에서 돈다
 import { describe, expect, it, vi } from 'vitest';
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import { ProfileInfoPanel } from './ProfileInfoPanel';
@@ -9,7 +9,7 @@ const idleMutation = { isPending: false, mutate: vi.fn() } as never;
 
 describe('ProfileInfoPanel 수정 칸 이름 (Chrome)', () => {
   it('이름·전화번호·성별·주소·휴대폰 인증번호 칸을 이름으로 찾을 수 있다', async () => {
-    render(
+    await render(
       <ProfileInfoPanel
         form={{ name: '박보호', phone: '01012345678', gender: 'FEMALE', postcode: '12345', address: '서울', addressDetail: '', birthDate: '1960-01-01' }}
         isEditing

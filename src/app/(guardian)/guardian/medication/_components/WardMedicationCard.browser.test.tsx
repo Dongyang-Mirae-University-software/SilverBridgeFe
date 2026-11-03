@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Fragment, ReactNode } from 'react';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
-import { userEvent } from '@vitest/browser/context';
+import { userEvent } from 'vitest/browser';
 
 import type { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import useModalStore from '@/store/modalStore';
@@ -84,13 +84,13 @@ function ModalOutlet() {
   return modals.map(modal => <Fragment key={modal.id}>{modal.Component}</Fragment>);
 }
 
-function renderCard(medications: MedicationItem[]) {
+async function renderCard(medications: MedicationItem[]) {
   const queryClient = new QueryClient();
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  const screen = render(<WardMedicationCard summary={summary(medications)} />, { wrapper });
-  render(<ModalOutlet />, { wrapper });
+  const screen = await render(<WardMedicationCard summary={summary(medications)} />, { wrapper });
+  await render(<ModalOutlet />, { wrapper });
   return screen;
 }
 
@@ -107,45 +107,45 @@ describe('WardMedicationCard (Chrome)', () => {
   });
 
   it('시간대 칸을 고르면 그 시간대의 약과 상태를 보여 준다', async () => {
-    const screen = renderCard([
+    const screen = await renderCard([
       medication(2, { name: '수면제', timeSlot: 'BEDTIME', doseTime: '22:00:00', doseAmount: 0.5 }),
       medication(1, { name: '혈압약', timeSlot: 'MORNING', doseTime: '08:00:00', taken: true }),
     ]);
 
     const tiles = screen.getByRole('group', { name: '시간대 고르기' });
-    await expect.element(tiles.getByRole('button', { name: /아침/ })).toHaveTextContent('✓ 드셨어요');
+    await expect.element(tiles.getByRole('button', { name: /아침/ })).toMatchTextContent('✓ 드셨어요');
     // 끝나지 않은 첫 시간대가 기본으로 골라지고 "다음"으로 표시된다
     await expect.element(tiles.getByRole('button', { name: /취침 전/ })).toHaveAttribute('aria-pressed', 'true');
-    await expect.element(tiles.getByRole('button', { name: /취침 전/ })).toHaveTextContent('다음');
-    await expect.element(screen.getByRole('list', { name: '취침 전 약 목록' })).toHaveTextContent('수면제반 알');
+    await expect.element(tiles.getByRole('button', { name: /취침 전/ })).toMatchTextContent('다음');
+    await expect.element(screen.getByRole('list', { name: '취침 전 약 목록' })).toMatchTextContent('수면제반 알');
 
     await tiles.getByRole('button', { name: /아침/ }).click();
-    await expect.element(screen.getByRole('heading', { name: /아침 약/ })).toHaveTextContent('오전 8:00');
-    await expect.element(screen.getByRole('list', { name: '아침 약 목록' })).toHaveTextContent('혈압약');
+    await expect.element(screen.getByRole('heading', { name: /아침 약/ })).toMatchTextContent('오전 8:00');
+    await expect.element(screen.getByRole('list', { name: '아침 약 목록' })).toMatchTextContent('혈압약');
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
   it('시간대 칸은 시각과 상관없이 아침·점심·저녁·취침 전 순서다 (2026-10-30 gosky)', async () => {
-    const screen = renderCard([
+    const screen = await renderCard([
       medication(1, { name: '감기약', timeSlot: 'LUNCH', doseTime: '01:40:00' }),
       medication(2, { name: '혈압약', timeSlot: 'MORNING', doseTime: '08:00:00' }),
       medication(3, { name: '수면제', timeSlot: 'BEDTIME', doseTime: '00:30:00' }),
     ]);
 
     const tiles = screen.getByRole('group', { name: '시간대 고르기' }).getByRole('button');
-    await expect.element(tiles.first()).toHaveTextContent('아침');
+    await expect.element(tiles.first()).toMatchTextContent('아침');
     expect(tiles.elements().map(tile => tile.textContent?.slice(0, 2))).toEqual(['아침', '점심', '취침']);
   });
 
   it('지난 시간대는 "안 드셨어요"로 단정하지 않고, 오늘 늦게 등록한 약은 등록 전으로 보여 준다', async () => {
-    const screen = renderCard([
+    const screen = await renderCard([
       medication(1, { name: '혈압약', timeSlot: 'MORNING', doseTime: '06:00:00' }),
       medication(2, { name: '위장약', timeSlot: 'LUNCH', doseTime: '06:30:00', createdAt: `${TODAY}T06:50:00+09:00` }),
     ]);
 
     const tiles = screen.getByRole('group', { name: '시간대 고르기' });
-    await expect.element(tiles.getByRole('button', { name: /아침/ })).toHaveTextContent('체크되지 않았어요');
-    await expect.element(tiles.getByRole('button', { name: /점심/ })).toHaveTextContent('등록 전');
+    await expect.element(tiles.getByRole('button', { name: /아침/ })).toMatchTextContent('체크되지 않았어요');
+    await expect.element(tiles.getByRole('button', { name: /점심/ })).toMatchTextContent('등록 전');
     await tiles.getByRole('button', { name: /점심/ }).click();
     await expect.element(screen.getByText('오늘은 등록 전이었어요')).toBeVisible();
     expect(document.body.textContent).not.toContain('안 드셨어요');
@@ -155,7 +155,7 @@ describe('WardMedicationCard (Chrome)', () => {
     api.deleteGuardianMedication.mockResolvedValue({});
     api.getGuardianMedications.mockResolvedValue([]);
     const confirm = vi.spyOn(window, 'confirm');
-    const screen = renderCard([medication(1, { name: '혈압약' })]);
+    const screen = await renderCard([medication(1, { name: '혈압약' })]);
 
     await screen.getByRole('button', { name: '혈압약 수정' }).click();
     await expect.element(screen.getByRole('dialog', { name: '약 수정' })).toBeVisible();
@@ -178,15 +178,15 @@ describe('WardMedicationCard (Chrome)', () => {
   it('단건 삭제가 실패하면 안내를 보여 준다', async () => {
     api.deleteGuardianMedication.mockRejectedValue(new Error('network'));
     api.getGuardianMedications.mockResolvedValue([]);
-    const screen = renderCard([medication(1, { name: '혈압약' })]);
+    const screen = await renderCard([medication(1, { name: '혈압약' })]);
 
     await screen.getByRole('button', { name: '혈압약 삭제', exact: true }).click();
     await screen.getByRole('button', { name: '혈압약 삭제하기' }).click();
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('삭제하지 못했어요');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('삭제하지 못했어요');
   });
 
   it('삭제 확인은 Esc로 닫히고, 다른 시간대 칸을 눌러도 닫힌다 (점검 L-1)', async () => {
-    const screen = renderCard([
+    const screen = await renderCard([
       medication(1, { name: '혈압약', timeSlot: 'MORNING', doseTime: '08:00:00' }),
       medication(2, { name: '위장약', timeSlot: 'LUNCH', doseTime: '12:00:00' }),
     ]);
@@ -207,13 +207,13 @@ describe('WardMedicationCard (Chrome)', () => {
     api.deleteGuardianMedication.mockResolvedValue({});
     api.getGuardianMedications.mockResolvedValue([]);
     const meds = [medication(1, { name: '혈압약' }), medication(2, { name: '위장약' })];
-    const screen = renderCard(meds);
+    const screen = await renderCard(meds);
 
     await screen.getByRole('button', { name: '혈압약 삭제', exact: true }).click();
     await screen.getByRole('button', { name: '혈압약 삭제하기' }).click();
     await vi.waitFor(() => expect(api.deleteGuardianMedication).toHaveBeenCalledWith(1));
     // 다시 불러온 목록에서 그 약이 빠진 것처럼 다시 그린다
-    screen.rerender(<WardMedicationCard summary={summary([meds[1]])} />);
+    await screen.rerender(<WardMedicationCard summary={summary([meds[1]])} />);
     await expect.element(screen.getByRole('heading', { name: /아침 약/ })).toHaveFocus();
   });
 
@@ -221,7 +221,7 @@ describe('WardMedicationCard (Chrome)', () => {
     api.deleteWardMedicationBatch.mockResolvedValue(2);
     api.getGuardianMedications.mockResolvedValue([]);
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    const screen = renderCard([medication(1), medication(2)]);
+    const screen = await renderCard([medication(1), medication(2)]);
 
     // 고른 시간대 카드 밖에 두고 모든 시간대라고 밝힌다 (점검 M-2)
     const deleteAll = screen.getByRole('button', { name: '모든 시간대 약 전부 삭제' });
@@ -232,7 +232,7 @@ describe('WardMedicationCard (Chrome)', () => {
 
   it('알림 시각을 정할 수 있고, 어르신 기기 알림용 가짜 스위치는 없다', async () => {
     api.updateMedicationAlertSetting.mockResolvedValue({});
-    const screen = renderCard([medication(1)]);
+    const screen = await renderCard([medication(1)]);
 
     await expect.element(screen.getByRole('button', { name: /안 드시면 알림 받을 시각 오후 9:00/ })).toBeVisible();
     expect(screen.getByRole('checkbox').query()).toBeNull();
@@ -250,16 +250,16 @@ describe('WardMedicationCard (Chrome)', () => {
 
   it('알림 시각 저장이 실패하면 알린다 (점검 M-1)', async () => {
     api.updateMedicationAlertSetting.mockRejectedValue(new Error('network'));
-    const screen = renderCard([medication(1)]);
+    const screen = await renderCard([medication(1)]);
 
     await screen.getByRole('button', { name: /안 드시면 알림 받을 시각/ }).click();
     await screen.getByRole('group', { name: '시', exact: true }).getByRole('button', { name: '10', exact: true }).click();
     await screen.getByRole('button', { name: '오후 10:00로 정하기' }).click();
-    await expect.element(screen.getByRole('alert')).toHaveTextContent('알림 시각을 저장하지 못했어요');
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('알림 시각을 저장하지 못했어요');
   });
 
   it('알림 시각 창은 Esc로 저장하지 않고 닫히고 포커스가 버튼으로 돌아온다 (점검 L-1)', async () => {
-    const screen = renderCard([medication(1)]);
+    const screen = await renderCard([medication(1)]);
     const toggle = screen.getByRole('button', { name: /안 드시면 알림 받을 시각/ });
 
     await toggle.click();
@@ -271,7 +271,7 @@ describe('WardMedicationCard (Chrome)', () => {
   });
 
   it('등록된 약이 없어도 알림 시각 드롭다운은 항상 보여 준다', async () => {
-    const screen = renderCard([]);
+    const screen = await renderCard([]);
 
     await expect.element(screen.getByText('등록된 약이 없어요')).toBeVisible();
     await expect.element(screen.getByRole('button', { name: '첫 약 추가하기' })).toBeVisible();
@@ -280,7 +280,7 @@ describe('WardMedicationCard (Chrome)', () => {
 
   it('환경설정에서 복약 알림이 꺼져 있으면 켜기 안내를 제공한다', async () => {
     notificationSetting.value = { medication: { enabled: false } };
-    const screen = renderCard([medication(1)]);
+    const screen = await renderCard([medication(1)]);
 
     await expect.element(screen.getByText('지금 약 알림이 꺼져 있어요')).toBeVisible();
     await screen.getByRole('button', { name: '켜기' }).click();

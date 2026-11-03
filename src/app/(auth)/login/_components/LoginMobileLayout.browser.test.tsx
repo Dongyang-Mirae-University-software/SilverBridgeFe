@@ -1,7 +1,7 @@
 // 로그인 화면 핸드폰 전용 배치(767px 이하, Claude Design 시안) - 실제 Chrome에서 돈다(`npm run test:browser`)
 // 동작은 LoginContent.browser.test.tsx 가 본다. 여기서는 화면 폭에 따른 배치만 본다.
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -49,7 +49,7 @@ describe('로그인 화면 핸드폰 배치 (Chrome)', () => {
 
   it('767px 이하: 앱 아이콘이 보이고 기능 아이콘 줄·부제는 숨는다', async () => {
     await page.viewport(375, 667);
-    renderLoginScreen();
+    await renderLoginScreen();
     await vi.waitFor(() => expect(appIcon()).not.toBeNull());
 
     expect(isShown(appIcon())).toBe(true);
@@ -59,7 +59,7 @@ describe('로그인 화면 핸드폰 배치 (Chrome)', () => {
 
   it('767px 이하: 카드 요소가 시안 순서대로 놓인다', async () => {
     await page.viewport(375, 667);
-    const screen = renderLoginScreen();
+    const screen = await renderLoginScreen();
     await expect.element(screen.getByRole('heading', { name: '로그인' })).toBeInTheDocument();
 
     const card = document.querySelector('[data-auth-screen="login"]')?.closest('[class*="card"]') as HTMLElement;
@@ -89,17 +89,17 @@ describe('로그인 화면 핸드폰 배치 (Chrome)', () => {
 
   it('375×667(아이폰 SE)에서 세로·가로 스크롤 없이 한 화면에 들어간다', async () => {
     await page.viewport(375, 667);
-    const screen = renderLoginScreen();
+    const screen = await renderLoginScreen();
     await expect.element(screen.getByRole('button', { name: '회원가입' })).toBeInTheDocument();
 
     expect(document.documentElement.scrollHeight).toBeLessThanOrEqual(667);
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(375);
   });
 
-  // 점검 M-1(2026-11-02): 320px에서 '로그인 유\n지'처럼 글자 단위로 쪼개졌다 - 줄바꿈 금지 + 모자라면 찾기 링크를 다음 줄로
+  // 점검 M-1 (2026-11-02): 320px에서 '로그인 유\n지'처럼 글자 단위로 쪼개졌다 - 줄바꿈 금지 + 모자라면 찾기 링크를 다음 줄로
   it('320px 폭에서도 로그인 유지·찾기 링크가 한 줄 글자로 남는다(단어 쪼개짐 없음)', async () => {
     await page.viewport(320, 568);
-    const screen = renderLoginScreen();
+    const screen = await renderLoginScreen();
     await expect.element(screen.getByRole('button', { name: '비밀번호 찾기' })).toBeInTheDocument();
 
     for (const el of [
@@ -113,10 +113,10 @@ describe('로그인 화면 핸드폰 배치 (Chrome)', () => {
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(320);
   });
 
-  // 점검 L-1(2026-11-02): '로그인 유지'의 넓힌 터치 영역이 로그인 버튼 위 가장자리를 덮었다
+  // 점검 L-1 (2026-11-02): '로그인 유지'의 넓힌 터치 영역이 로그인 버튼 위 가장자리를 덮었다
   it('767px 이하: 넓힌 터치 영역이 이웃 버튼을 덮지 않는다', async () => {
     await page.viewport(375, 667);
-    const screen = renderLoginScreen();
+    const screen = await renderLoginScreen();
     await expect.element(screen.getByRole('button', { name: '회원가입' })).toBeInTheDocument();
 
     const targets = [
@@ -142,10 +142,10 @@ describe('로그인 화면 핸드폰 배치 (Chrome)', () => {
     }
   });
 
-  // 점검 L-2(2026-11-02): 오류 문구 한 줄이 떠도 아이폰 SE 크기에서 한 화면
+  // 점검 L-2 (2026-11-02): 오류 문구 한 줄이 떠도 아이폰 SE 크기에서 한 화면
   it('375×667에서 오류 문구가 떠도 스크롤 없이 한 화면에 들어간다', async () => {
     await page.viewport(375, 667);
-    const screen = renderLoginScreen();
+    const screen = await renderLoginScreen();
     (document.querySelector('button[type="submit"]') as HTMLButtonElement).click();
     await expect.element(screen.getByText('이메일과 비밀번호를 입력해주세요.')).toBeInTheDocument();
 
@@ -154,7 +154,7 @@ describe('로그인 화면 핸드폰 배치 (Chrome)', () => {
 
   it('768px 이상: 지금 화면 그대로 - 앱 아이콘은 숨고 기능 아이콘 줄·부제가 보인다', async () => {
     await page.viewport(1280, 800);
-    renderLoginScreen();
+    await renderLoginScreen();
     await vi.waitFor(() => expect(appIcon()).not.toBeNull());
 
     expect(isShown(appIcon())).toBe(false);

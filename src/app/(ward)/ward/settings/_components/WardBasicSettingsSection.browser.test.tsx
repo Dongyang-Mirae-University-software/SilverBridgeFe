@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import type { WardSettings } from '@/components/layout/dashboard/types';
@@ -43,7 +43,7 @@ afterEach(() => {
 
 describe('SOS 동작 (피보호자)', () => {
   it('두 값만 고를 수 있고, 보호자 알림은 항상 간다고 안내한다', async () => {
-    const screen = render(withClient(<Harness section="sos" />));
+    const screen = await render(withClient(<Harness section="sos" />));
 
     const radios = screen.getByRole('radio').elements() as HTMLInputElement[];
     expect(radios.map(r => r.value)).toEqual(['CALL_119_AND_NOTIFY', 'NOTIFY_GUARDIAN_FIRST']);
@@ -55,7 +55,7 @@ describe('SOS 동작 (피보호자)', () => {
   it('고르면 저장하고, 실패하면 이전 값으로 되돌리고 안내한다', async () => {
     let rejectSave!: (error: unknown) => void;
     api.updateWardSosSetting.mockReturnValue(new Promise((_, reject) => (rejectSave = reject)));
-    const screen = render(withClient(<Harness section="sos" />));
+    const screen = await render(withClient(<Harness section="sos" />));
     const first = screen.getByRole('radio', { name: /119 화면 바로 열기/ });
     const second = screen.getByRole('radio', { name: /보호자 알림 먼저/ });
     await expect.element(first).toBeChecked();
@@ -75,7 +75,7 @@ describe('SOS 동작 (피보호자)', () => {
 
 describe('글자 크기·진한 글자 (피보호자)', () => {
   it('진한 글자 스위치는 켜짐/꺼짐 글자로 상태를 보여 주고, 이 기기에서만 적용된다고 안내한다', async () => {
-    const screen = render(<Harness section="display" />);
+    const screen = await render(<Harness section="display" />);
     const toggle = screen.getByRole('switch', { name: '진한 글자로 보기' });
     await expect.element(toggle).not.toBeChecked();
     await expect.element(screen.getByText('꺼짐')).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe('글자 크기·진한 글자 (피보호자)', () => {
     scroller.style.cssText = 'position:fixed;inset:0;overflow:auto;padding:16px;box-sizing:border-box;';
     document.body.style.margin = '0';
     document.body.appendChild(scroller);
-    const screen = render(
+    const screen = await render(
       withClient(
         <>
           <Harness section="display" />

@@ -23,7 +23,7 @@ describe('SessionRestore', () => {
   it('갱신에 성공하면 역할 홈으로 보낸다', async () => {
     mocks.restoreSession.mockResolvedValue({ status: 'restored', homePath: '/ward' });
 
-    render(<SessionRestore />);
+    await render(<SessionRestore />);
 
     await vi.waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/ward'));
   });
@@ -31,7 +31,7 @@ describe('SessionRestore', () => {
   it('갱신하는 동안 확인 중 안내를 보인다', async () => {
     mocks.restoreSession.mockReturnValue(new Promise(() => {}));
 
-    const screen = render(<SessionRestore />);
+    const screen = await render(<SessionRestore />);
 
     await expect.element(screen.getByText('로그인 상태를 확인하고 있어요')).toBeVisible();
   });
@@ -39,7 +39,7 @@ describe('SessionRestore', () => {
   it('세션이 거절되면 로그인 화면으로 보낸다', async () => {
     mocks.restoreSession.mockResolvedValue({ status: 'rejected' });
 
-    render(<SessionRestore />);
+    await render(<SessionRestore />);
 
     await vi.waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/login'));
   });
@@ -47,7 +47,7 @@ describe('SessionRestore', () => {
   it('일시 장애면 로그인 화면으로 보내지 않고 다시 시도 안내를 보인다', async () => {
     mocks.restoreSession.mockResolvedValue({ status: 'unavailable' });
 
-    const screen = render(<SessionRestore />);
+    const screen = await render(<SessionRestore />);
 
     await expect.element(screen.getByText('로그인 상태를 확인하지 못했어요')).toBeVisible();
     expect(mocks.replace).not.toHaveBeenCalled();

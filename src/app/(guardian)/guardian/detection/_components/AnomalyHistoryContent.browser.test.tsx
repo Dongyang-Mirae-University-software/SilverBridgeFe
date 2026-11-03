@@ -79,7 +79,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
 
   it('피보호자 목록을 받기 전에는 전체 피보호자 기록·건수를 부르지 않고 불러오는 중으로 둔다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
-    const screen = render(
+    const screen = await render(
       <AnomalyHistoryContent wards={[]} selectedWardId={undefined} onSelectWard={() => undefined} wardsReady={false} />,
       { wrapper },
     );
@@ -92,13 +92,13 @@ describe('AnomalyHistoryContent (Chrome)', () => {
 
   it('칩 건수는 불러온 목록이 아니라 요약 값이고, 유형을 고르면 type 쿼리로 다시 받는다 - 둘 다 지금 등록된 카메라 기준', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
-    const screen = renderHistory();
+    const screen = await renderHistory();
 
     await expect.element(screen.getByRole('button', { name: '전체 37' })).toBeInTheDocument();
     await expect.element(screen.getByRole('button', { name: '화재 20' })).toBeInTheDocument();
     await expect.element(screen.getByRole('button', { name: '흉기 8' })).toBeInTheDocument();
     await expect.element(screen.getByRole('button', { name: '낙상 9' })).toBeInTheDocument();
-    await expect.element(screen.getByRole('status')).toHaveTextContent('확인 필요 5');
+    await expect.element(screen.getByRole('status')).toMatchTextContent('확인 필요 5');
     expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
       expect.objectContaining({ wardId: 'W1', page: 0, size: 4, type: undefined, camera: 'EXISTING' }),
     );
@@ -115,7 +115,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
   it('요약을 못 받으면 건수를 0으로 채우지 않고 비워 둔다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([]));
     api.getGuardianAnomalyHistorySummary.mockRejectedValue(new Error('down'));
-    const screen = renderHistory();
+    const screen = await renderHistory();
 
     await expect.element(screen.getByText('감지 기록이 없어요')).toBeInTheDocument();
     await expect.element(screen.getByRole('button', { name: '전체', exact: true })).toBeInTheDocument();
@@ -125,7 +125,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
   it('판정 전에는 두 버튼, 누르면 그 값으로 응답한다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(7)]));
     api.submitAnomalyFeedback.mockResolvedValue({ incidentId: 7, reviewStatus: 'REAL', myVerdict: 'REAL' });
-    const screen = renderHistory();
+    const screen = await renderHistory();
 
     await screen.getByRole('button', { name: '실제 위험이에요' }).click();
     await vi.waitFor(() => expect(api.submitAnomalyFeedback).toHaveBeenCalledWith(7, { verdict: 'REAL' }));
@@ -136,7 +136,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     api.submitAnomalyFeedback.mockResolvedValue({ incidentId: 12, reviewStatus: 'REAL', myVerdict: 'REAL' });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     client.setQueryData(['guardian-dashboard', 'all'], { total: 1 });
-    const screen = render(
+    const screen = await render(
       <AnomalyHistoryContent wards={[{ wardId: 'W1', wardName: '김순자' }]} selectedWardId="W1" onSelectWard={() => undefined} />,
       { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> },
     );
@@ -148,7 +148,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
   it('판정이 난 뒤에도 "되돌리기"로 다시 고를 수 있다(덮어쓰기)', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(8, { reviewStatus: 'REAL', myVerdict: 'REAL' })]));
     api.submitAnomalyFeedback.mockResolvedValue({ incidentId: 8, reviewStatus: 'FALSE_ALARM', myVerdict: 'FALSE_ALARM' });
-    const screen = renderHistory();
+    const screen = await renderHistory();
 
     await expect.element(screen.getByText('실제 위험', { exact: true })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '실제 위험이에요' }).query()).toBeNull();
@@ -162,7 +162,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
 
   it('내 표와 다수결 결과가 달라도 결과 배지만 보인다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(9, { reviewStatus: 'FALSE_ALARM', myVerdict: 'REAL' })]));
-    const screen = renderHistory();
+    const screen = await renderHistory();
 
     await expect.element(screen.getByText('괜찮았어요')).toBeInTheDocument();
     expect(screen.getByText('내 응답: 실제 위험이에요').query()).toBeNull();
@@ -170,7 +170,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
 
   it('동수(CONFLICTED)면 다시 답하도록 안내하고 버튼을 둔다 - 다른 보호자의 선택은 보이지 않는다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(10, { reviewStatus: 'CONFLICTED', myVerdict: 'FALSE_ALARM' })]));
-    const screen = renderHistory();
+    const screen = await renderHistory();
 
     await expect.element(screen.getByText('다른 보호자와 판정이 달라요. 다시 확인해 주세요.')).toBeInTheDocument();
     await expect.element(screen.getByRole('button', { name: '괜찮아요' })).toHaveAttribute('aria-pressed', 'true');
@@ -179,7 +179,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
 
   it('카메라 행이 없는 기록 카드는 위치 대신 회색 "삭제된 카메라"로 보인다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(11, { cameraLabel: null })]));
-    const screen = renderHistory();
+    const screen = await renderHistory();
 
     await expect.element(screen.getByText('삭제된 카메라')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /삭제된 카메라 기록/ }).query()).toBeNull();
@@ -188,7 +188,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
   it('삭제된 카메라 칩은 요약 건수로 보이고, 누르면 camera=DELETED, 유형 칩으로 옮기면 다시 camera=EXISTING', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1, { cameraLabel: null })]));
     api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 2 });
-    const screen = renderHistory();
+    const screen = await renderHistory();
 
     await screen.getByRole('button', { name: '삭제된 카메라 2' }).click();
     await vi.waitFor(() =>
@@ -209,7 +209,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
   it('삭제된 카메라 기록이 0건이면 칩을 보이지 않는다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
     api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 0 });
-    const screen = renderHistory();
+    const screen = await renderHistory();
 
     await expect.element(screen.getByRole('button', { name: '전체 37' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /삭제된 카메라/ }).query()).toBeNull();
@@ -218,7 +218,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
   it('"전체"가 비었는데 삭제된 카메라 기록이 있으면 없다고 하지 않고 "삭제된 카메라"로 안내한다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([]));
     api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, total: 0, deletedCameraCount: 4 });
-    const screen = renderHistory();
+    const screen = await renderHistory();
 
     await expect
       .element(screen.getByText('지금 카메라의 감지 기록이 없어요. 삭제된 카메라의 기록은 "삭제된 카메라"에서 볼 수 있어요'))
@@ -241,7 +241,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
         />
       );
     }
-    const screen = render(<Harness />, { wrapper });
+    const screen = await render(<Harness />, { wrapper });
 
     await screen.getByRole('button', { name: '삭제된 카메라 2' }).click();
     await screen.getByRole('button', { name: '2', exact: true }).click();
@@ -272,7 +272,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     const box = document.createElement('div');
     box.style.padding = '0 16px';
     document.body.appendChild(box);
-    const screen = render(
+    const screen = await render(
       <AnomalyHistoryContent
         wards={[{ wardId: 'W1', wardName: '김순자' }, { wardId: 'W2', wardName: '남궁명진' }]}
         selectedWardId="W1"
@@ -301,7 +301,7 @@ describe('AnomalyClipModal (Chrome)', () => {
   it('404면 "볼 수 없는 영상" 안내를 보인다', async () => {
     api.getGuardianAnomalyClips.mockResolvedValue([clip]);
     api.fetchGuardianAnomalyClipFile.mockRejectedValue({ status: 404, code: 'ANOMALY_CLIP_NOT_FOUND', message: '영상을 찾을 수 없습니다.' });
-    const screen = render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, { wrapper });
+    const screen = await render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, { wrapper });
 
     await expect.element(screen.getByText(CLIP_UNAVAILABLE_MESSAGE)).toBeInTheDocument();
     expect(document.querySelector('video')).toBeNull();
@@ -310,7 +310,7 @@ describe('AnomalyClipModal (Chrome)', () => {
   it('403은 서버 문구를 그대로 보인다(404와 다른 문구)', async () => {
     api.getGuardianAnomalyClips.mockResolvedValue([clip]);
     api.fetchGuardianAnomalyClipFile.mockRejectedValue({ status: 403, message: '연결된 피보호자의 기록만 볼 수 있습니다.' });
-    const screen = render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, { wrapper });
+    const screen = await render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, { wrapper });
 
     await expect.element(screen.getByText('연결된 피보호자의 기록만 볼 수 있습니다.')).toBeInTheDocument();
   });
@@ -319,7 +319,7 @@ describe('AnomalyClipModal (Chrome)', () => {
     api.getGuardianAnomalyClips.mockResolvedValueOnce([clip]).mockResolvedValue([]);
     api.fetchGuardianAnomalyClipFile.mockResolvedValue(new Blob(['x'], { type: 'video/webm' }));
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const screen = render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, {
+    const screen = await render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, {
       wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
     });
     await vi.waitFor(() => expect(document.querySelector('video')).not.toBeNull());
@@ -333,14 +333,14 @@ describe('AnomalyClipModal (Chrome)', () => {
     api.getGuardianAnomalyClips.mockResolvedValue([clip]);
     api.fetchGuardianAnomalyClipFile.mockResolvedValue(new Blob(['x'], { type: 'video/webm' }));
     const revoke = vi.spyOn(URL, 'revokeObjectURL');
-    const screen = render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, { wrapper });
+    const screen = await render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, { wrapper });
 
     await vi.waitFor(() => expect(document.querySelector('video')?.getAttribute('src')).toMatch(/^blob:/));
     const url = document.querySelector('video')!.getAttribute('src');
     expect(document.querySelector('a[download]')).toBeNull();
     await expect.element(screen.getByText('영상을 보고 알려 주세요')).toBeInTheDocument();
 
-    screen.unmount();
+    await screen.unmount();
     expect(revoke).toHaveBeenCalledWith(url);
   });
 });

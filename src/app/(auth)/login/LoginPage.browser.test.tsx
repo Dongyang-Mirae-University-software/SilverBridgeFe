@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { page, userEvent } from '@vitest/browser/context';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import { clearAuthTokens, setAuthTokens } from '@/lib/auth/tokenStore';
@@ -180,7 +180,7 @@ function LogoutButton() {
 describe('세션을 끝낸 뒤 /login (Chrome)', () => {
   it('로그아웃 직후 /login은 폼을 보이고 홈으로 튕기지 않는다', async () => {
     setAuthTokens({ accessToken: validAccess(), refreshToken: 'r1' });
-    render(withClient(<LogoutButton />));
+    await render(withClient(<LogoutButton />));
 
     await userEvent.click(page.getByRole('button', { name: '로그아웃' }));
     await vi.waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/login'));

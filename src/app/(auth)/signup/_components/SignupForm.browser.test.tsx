@@ -1,7 +1,7 @@
 // 회원가입 1단계 이메일 중복 확인 - 실제 Chrome에서 돈다(`npm run test:browser`)
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { page, userEvent } from '@vitest/browser/context';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import useSignupForm from '@/hooks/useSignupForm';
@@ -45,7 +45,7 @@ afterEach(() => {
 describe('회원가입 이메일 중복 확인 (Chrome)', () => {
   it('중복으로 실패한 이메일을 고치기 시작하면 지난 오류를 지운다', async () => {
     api.signupEmailCheck.mockRejectedValueOnce(new Error('이미 가입된 이메일입니다.'));
-    renderSignup();
+    await renderSignup();
 
     await userEvent.fill(emailInput(), 'taken@test.com');
     await userEvent.click(page.getByLabelText('이름'));
@@ -57,7 +57,7 @@ describe('회원가입 이메일 중복 확인 (Chrome)', () => {
   });
 
   it('확인을 통과한 뒤 이메일을 바꿔도 중복 오류를 띄우지 않는다', async () => {
-    renderSignup();
+    await renderSignup();
 
     await userEvent.fill(emailInput(), 'new@test.com');
     await userEvent.click(page.getByLabelText('이름'));
@@ -68,7 +68,7 @@ describe('회원가입 이메일 중복 확인 (Chrome)', () => {
   });
 
   it('형식이 틀린 이메일은 중복 확인 API를 부르지 않는다', async () => {
-    renderSignup();
+    await renderSignup();
 
     await userEvent.fill(emailInput(), 'not-an-email');
     await userEvent.click(page.getByLabelText('이름'));
@@ -104,7 +104,7 @@ function SignupSubmitHarness() {
 describe('이메일 회원가입 완료 (Chrome)', () => {
   it('가입에 성공하면 바로 이동하지 않고 완료 안내를 먼저 띄운다', async () => {
     const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-    render(
+    await render(
       <QueryClientProvider client={client}>
         <SignupSubmitHarness />
       </QueryClientProvider>,
