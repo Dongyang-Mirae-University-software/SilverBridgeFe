@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -5,6 +6,8 @@ import LoginContent from './_components/LoginContent';
 import LoginSessionGate from './_components/LoginSessionGate';
 import { resolveEntry } from '@/lib/auth/sessionEntry';
 import { getSafeReturnPath } from '@/lib/auth/returnPath';
+
+export const metadata: Metadata = { title: '로그인' };
 
 const ACCESS_TOKEN_KEY = 'careai_access_token';
 const REFRESH_TOKEN_KEY = 'careai_refresh_token';

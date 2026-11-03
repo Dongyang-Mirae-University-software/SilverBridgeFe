@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import SignupContent from './_components/SignupContent';
+
+export const metadata: Metadata = { title: '회원가입' };
 
 type SignupPageProps = {
   searchParams: Promise<{
