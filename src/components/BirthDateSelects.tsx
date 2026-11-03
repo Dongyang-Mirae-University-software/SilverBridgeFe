@@ -44,6 +44,7 @@ export function BirthDateSelects({ value, onChange, className }: Props) {
   return (
     <div className={cx('birthDateSelects', className)}>
       <select
+        aria-label="출생 연도"
         value={year}
         onChange={event => {
           const nextYear = event.target.value;
@@ -61,6 +62,7 @@ export function BirthDateSelects({ value, onChange, className }: Props) {
         ))}
       </select>
       <select
+        aria-label="출생 월"
         value={month}
         onChange={event => {
           const nextMonth = event.target.value;
@@ -78,6 +80,7 @@ export function BirthDateSelects({ value, onChange, className }: Props) {
         ))}
       </select>
       <select
+        aria-label="출생 일"
         value={normalizedDay}
         onChange={event => {
           updateParts({ year, month, day: event.target.value });

@@ -118,15 +118,16 @@ export default function SignupBasicInfoStep({
             </select>
           </span>
         </label>
-        <label className={cx('birthDateField')}>
-          <span className={cx('selectLabel')}>
+        {/* select가 셋이라 label 하나로는 첫 칸에만 이름이 붙는다 - 묶음(group)으로 이름을 준다 */}
+        <div className={cx('birthDateField')} role="group" aria-labelledby="signup-birth-date-label">
+          <span className={cx('selectLabel')} id="signup-birth-date-label">
             생년월일 <span className={cx('requiredMark')}>*</span>
           </span>
           <BirthDateSelects className={cx('birthDateSelects')} value={birthDateValue} onChange={onBirthDateChange} />
           {errors.birthDate?.message && allValues.birthDate && allValues.birthDate.trim() !== '' && (
             <span className={cx('birthDateError')}>{errors.birthDate.message}</span>
           )}
-        </label>
+        </div>
       </div>
       <div className={cx('addressSearchRow')}>
         <TextInput
