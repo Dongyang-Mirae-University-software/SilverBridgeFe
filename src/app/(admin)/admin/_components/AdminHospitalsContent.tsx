@@ -127,7 +127,7 @@ export function AdminHospitalsContent() {
         <label className={cx('filterSelect')}><span>지역</span><input value={region} maxLength={30} placeholder="전체" onChange={event => updateFilter(() => setRegion(event.target.value))} /></label>
         <label className={cx('filterSelect')}><span>진료과</span><select value={department} onChange={event => updateFilter(() => setDepartment(event.target.value))}><option value="">전체</option>{departmentOptions.map(item => <option key={item} value={item}>{item}</option>)}</select></label>
       </div>
-      <div className={cx('tableScroll')}><table className={cx('table')}><colgroup><col className={cx('hospitalColumn')} /><col className={cx('departmentColumn')} /><col className={cx('addressColumn')} /><col className={cx('phoneColumn')} /><col className={cx('registeredColumn')} /><col className={cx('actionColumn')} /></colgroup><thead><tr><th>병원명</th><th>진료과</th><th>주소</th><th>전화번호</th><th>제휴 시작</th><th><span className={cx('srOnly')}>관리</span></th></tr></thead><tbody>
+      <div className={cx('tableScroll')}><table className={cx('table')}><thead><tr><th>병원명</th><th>진료과</th><th>주소</th><th>전화번호</th><th>제휴 시작</th><th className={cx('actionHeading')}><span className={cx('srOnly')}>관리</span></th></tr></thead><tbody>
         {list.isLoading && <StateRow>제휴 병원 목록을 불러오는 중입니다.</StateRow>}
         {list.isError && <StateRow>제휴 병원 목록을 불러오지 못했습니다. <button type="button" onClick={() => void list.refetch()}>다시 시도</button></StateRow>}
         {!list.isLoading && !list.isError && list.data?.content.length === 0 && <StateRow>조건에 맞는 제휴 병원이 없습니다.</StateRow>}
