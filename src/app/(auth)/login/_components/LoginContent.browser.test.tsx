@@ -63,4 +63,17 @@ describe('LoginContent (Chrome)', () => {
     await expect.element(page.getByRole('alert')).toHaveTextContent('이메일 형식이 올바르지 않습니다.');
     expect(mocks.signin).not.toHaveBeenCalled();
   });
+
+  it('응답에 토큰이 없으면 이동하지 않고 실패를 알린다', async () => {
+    mocks.signin.mockResolvedValue({ data: { role: 'GUARDIAN' } });
+    renderLogin();
+    const form = document.querySelector('form') as HTMLFormElement;
+    await userEvent.fill(form.querySelector('input[name="email"]') as HTMLInputElement, 'user@test.com');
+    await userEvent.fill(form.querySelector('input[name="password"]') as HTMLInputElement, 'pw-1234');
+    await userEvent.click(form.querySelector('button[type="submit"]') as HTMLButtonElement);
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('로그인 정보를 받지 못했습니다');
+    expect(mocks.push).not.toHaveBeenCalled();
+    expect(mocks.complete).not.toHaveBeenCalled();
+  });
 });
