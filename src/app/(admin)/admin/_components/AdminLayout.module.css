@@ -4,7 +4,7 @@
   width: 100%;
   max-width: 100%;
   min-height: 100dvh;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--sb-bg);
   color: var(--sb-ink);
 }
@@ -13,7 +13,7 @@
   display: flex;
   min-width: 0;
   flex: 1;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .main > * {
@@ -26,4 +26,17 @@
 @media (max-width: 1260px) {
   .stage { flex-direction: column; }
   .main > * { padding: 18px 18px calc(28px + env(safe-area-inset-bottom)); }
+}
+
+@media (min-width: 1261px) {
+  .stage > aside {
+    position: fixed;
+    inset: 0 auto 0 0;
+  }
+
+  .main {
+    width: calc(100% - 240px);
+    flex: 0 1 calc(100% - 240px);
+    margin-left: 240px;
+  }
 }
