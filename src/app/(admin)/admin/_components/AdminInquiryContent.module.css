@@ -11,3 +11,4 @@
 .actionColumn { width: 82px; }
 .table td { overflow: hidden; text-overflow: ellipsis; }
 .categoryBadge { width: 72px; justify-content: center; }
+.categoryCell { width: 112px; min-width: 112px; max-width: 112px; }
