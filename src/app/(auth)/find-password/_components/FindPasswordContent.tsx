@@ -91,7 +91,7 @@ export default function FindPasswordContent({ onClose }: Props) {
       )}
       <div className={cx('header')}>
         <h1 className={cx('title')}>비밀번호 찾기</h1>
-        <button className={cx('closeButton')} type="button" onClick={close}>
+        <button aria-label="닫기" className={cx('closeButton')} type="button" onClick={close}>
           ✕
         </button>
       </div>

@@ -32,7 +32,7 @@ export default function FindEmailContent({ onClose }: Props) {
     <>
       <div className={cx('header')}>
         <h1 className={cx('title')}>아이디 찾기</h1>
-        <button className={cx('closeButton')} type="button" onClick={onClose ?? (() => router.push('/login'))}>
+        <button aria-label="닫기" className={cx('closeButton')} type="button" onClick={onClose ?? (() => router.push('/login'))}>
           ✕
         </button>
       </div>
