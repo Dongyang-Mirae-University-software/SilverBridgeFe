@@ -88,12 +88,8 @@ await write('app-192', appIcon, 192);
 await sharp(Buffer.from(appIcon)).resize(512, 512).png().toFile(`${OUT}app-512.png`);
 await sharp(Buffer.from(appIcon)).resize(180, 180).png().toFile(`${APP_DIR}apple-icon.png`);
 
-// 파비콘: 16px에서도 다리로 읽히게 현수교의 두 주탑·케이블·상판만 굵게 남긴다
-const faviconGlyph = `
-  <path d="M60 40 V158 M132 40 V158" stroke="#fff" stroke-width="18" stroke-linecap="round"/>
-  <path d="M24 112 Q44 86 60 46 Q96 132 132 46 Q148 86 168 112" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="20" y="108" width="152" height="20" rx="10" fill="#fff"/>`;
-const favicon = svg(`<rect width="192" height="192" rx="44" fill="${COLOR.brand}"/>${faviconGlyph}`);
+// 파비콘: 홈 화면·기본 알림 아이콘과 같은 다리 그림을 둥근 사각 바탕에 얹는다
+const favicon = svg(`<rect width="192" height="192" rx="44" fill="${COLOR.brand}"/>${GLYPHS.bridge()}`);
 writeFileSync(`${APP_DIR}icon.svg`, favicon);
 
 // favicon.ico: 16·32·48px PNG를 ICO 컨테이너에 그대로 담는다(sharp는 ICO를 못 쓴다)
