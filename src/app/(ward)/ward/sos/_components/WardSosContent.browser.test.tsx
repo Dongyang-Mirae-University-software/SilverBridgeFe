@@ -145,4 +145,9 @@ describe('WardSosContent (Chrome)', () => {
     await vi.waitFor(() => expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1));
     expect(screen.getByText('SOS 전송 실패').query()).toBeNull();
   });
+
+  it('보이지 않는 h1 "긴급 전화"를 둔다(시안에는 제목이 없다)', async () => {
+    const screen = await renderPage();
+    await expect.element(screen.getByRole('heading', { name: '긴급 전화', level: 1 })).toBeInTheDocument();
+  });
 });

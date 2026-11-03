@@ -137,6 +137,8 @@ export default function WardSosContent() {
 
   return (
     <div className={cx('page')}>
+      {/* 화면 제목은 시안에 없어 보이지 않게 두고, 화면 읽기 프로그램·자동 점검이 찾을 수 있게 h1만 둔다 */}
+      <h1 className={cx('srOnly')}>긴급 전화</h1>
       {/* v13 HTML 문구: 확인 창은 유지하되 버튼은 "SOS / 도움이 필요하면 누르세요"로 표시한다.
           이전 문구: "긴급 SOS / 누르면 도움을 요청해요" */}
       <button className={cx('hero')} type="button" disabled={isSending} onClick={openConfirmModal}>
