@@ -98,7 +98,7 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
     await expect.element(page.getByRole('link', { name: 'AI 이상감지, 확인 필요 1건' })).toBeVisible();
   });
 
-  it('실제 응답(약 2건·이상감지 0건·이번 달 SOS 0건)이면 아무 칸도 강조하지 않는다(시안에 약 강조가 없다)', async () => {
+  it('실제 응답(약 2건·이상감지 0건·이번 달 SOS 0건)이면 약 관리 칩만 강조한다', async () => {
     data.dashboard = {
       pendingActions: { total: 2, anomaly: 0, medication: 2 },
       wards: [{ wardId: 'ward01', wardName: '김철수', pendingCount: 2 }],
@@ -110,7 +110,7 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
     await renderDashboard();
 
     await expect.element(page.getByText('확인이 필요한 일 2건')).toBeVisible();
-    expect(borderOf(page.getByRole('link', { name: '약 관리' }).element()).background).toBe('rgb(243, 236, 227)');
+    expect(borderOf(page.getByRole('link', { name: '약 관리, 확인 안 한 복약 2건' }).element())).toMatchObject({ color: 'rgb(226, 164, 154)', background: 'rgb(255, 241, 238)' });
     expect(borderOf(page.getByRole('link', { name: 'SOS 내역' }).element()).background).toBe('rgb(243, 236, 227)');
     expect(borderOf(page.getByRole('link', { name: 'AI 이상감지' }).element()).width).not.toBe('3px');
   });

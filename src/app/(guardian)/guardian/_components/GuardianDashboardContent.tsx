@@ -59,9 +59,14 @@ export function GuardianDashboardContent() {
   const needsReview = !isAnomalyUnavailable && anomalyCount > 0;
   const isSosUnavailable = dashboard?.unavailable.includes('sos') ?? false;
   const sosCount = isSosUnavailable ? 0 : (dashboard?.sos.thisMonthCount ?? 0);
-  // v13.0 시안에서 강조하는 칩은 SOS 내역뿐이다(약 관리 등은 강조 없음)
-  const chipAlert = (href: string): ChipAlert | undefined =>
-    href === '/guardian/sos' && sosCount > 0 ? { label: `이번 달 SOS ${sosCount}건` } : undefined;
+  const isMedicationUnavailable = dashboard?.unavailable.includes('medication') ?? false;
+  const medicationCount = isMedicationUnavailable ? 0 : (dashboard?.medication.uncheckedCount ?? 0);
+  // 이번 달 SOS가 있으면 SOS 내역, 아직 확인 안 한 복약이 있으면 약 관리 칩을 시안의 강조 칩으로 그린다
+  const chipAlert = (href: string): ChipAlert | undefined => {
+    if (href === '/guardian/sos' && sosCount > 0) return { label: `이번 달 SOS ${sosCount}건` };
+    if (href === '/guardian/medication' && medicationCount > 0) return { label: `확인 안 한 복약 ${medicationCount}건` };
+    return undefined;
+  };
   // 이상감지 카드는 확인할 이상감지가 있거나 이번 달 SOS가 있으면 테두리·확인 필요 배지를 둔다
   const detectAlert = needsReview || sosCount > 0;
   const detectLabel = [needsReview && `확인 필요 ${anomalyCount}건`, sosCount > 0 && `이번 달 SOS ${sosCount}건`].filter(Boolean).join(', ');
