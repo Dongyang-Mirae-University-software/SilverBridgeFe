@@ -139,7 +139,7 @@ describe('보호자 AI 의료 챗봇', () => {
     await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
     const request = api.sendChatMessage.mock.calls[0][0];
     expect(request.message).toBe('무릎이 아프다고 하세요');
-    expect(request.context).toMatchObject({ role: 'GUARDIAN', wardId: 'ward-1', patientId: 'ward-1' });
+    expect(request.context).toEqual({ role: 'GUARDIAN', wardId: 'ward-1' });
     expect(request).not.toHaveProperty('history');
   });
 
