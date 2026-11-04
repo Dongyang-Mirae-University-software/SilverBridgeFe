@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import classNames from 'classnames/bind';
 
-import { Icon } from '@/components/Icon';
 import styles from './SignupContent.module.css';
 import SignupForm from './SignupForm';
 import { SIGNUP_STEP_LABEL, getSignupSteps } from './signupSteps';
@@ -42,26 +41,9 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
   const steps = getSignupSteps(isKakao);
   const stepKey = steps[signupStep - 1] ?? steps[0];
 
-  const handleBack = () => {
-    if (signupStep > 1) {
-      setSignupStep(step => step - 1);
-      return;
-    }
-
-    if (window.history.length > 1) {
-      router.back();
-      return;
-    }
-
-    router.push('/');
-  };
-
   return (
     <>
       <div className={cx('header')} data-auth-screen="signup">
-        <button className={cx('backButton')} type="button" aria-label="이전 페이지로 이동" onClick={handleBack}>
-          <Icon name="back" size={18} decorative />
-        </button>
         <h1 className={cx('title')}>회원가입</h1>
         <p className={cx('stepLabel')}>
           <b>{signupStep}</b> / {steps.length} · {SIGNUP_STEP_LABEL[stepKey]}
