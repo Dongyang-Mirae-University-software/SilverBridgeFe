@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { ChatUiPromptData } from '@/service/interface/chat';
-import { addDays, formatDateShort, kstToday } from '@/utils/reservation/reservationView';
+import { formatDateShort, kstToday } from '@/utils/reservation/reservationView';
 import { PERSONAL_FIELDS } from './reservationFlow';
 import styles from './ChatUiPrompt.module.css';
 
@@ -16,13 +16,9 @@ interface Props {
   onRestart?: () => void;
 }
 
-/** 날짜 단계에서 버튼으로 보이는 날 수(오늘부터). 그 밖의 날은 달력에서 고른다. */
-const DATE_BUTTON_DAYS = 7;
-
 export default function ChatUiPrompt({ ui, active, onSelect, variant = 'guardian', onRestart }: Props) {
   const [textVal, setTextVal] = useState('');
   const [dateVal, setDateVal] = useState('');
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const wrapClass = `${styles.wrap} ${variant === 'ward' ? styles.ward : styles.guardian}`;
 
@@ -106,61 +102,30 @@ export default function ChatUiPrompt({ ui, active, onSelect, variant = 'guardian
   }
 
   if (ui.kind === 'date') {
-    // 키보드·달력 없이 고를 수 있게 오늘부터 7일을 버튼으로 둔다. 값은 달력과 같은 YYYY-MM-DD.
+    // 가까운 날은 AI가 선택지(kind=select)로 준다(AI #175). 달력은 [달력에서 다른 날 고르기]를 누른 뒤에만 오므로 바로 펼친다.
     const today = kstToday();
-    const days = Array.from({ length: DATE_BUTTON_DAYS }, (_, i) => addDays(today, i));
     return (
       <div className={`${wrapClass} ${styles.dateSelect}`}>
-        <p className={styles.label}>진료 날짜를 골라 주세요</p>
-        <div className={styles.chips}>
-          {days.map((iso, i) => {
-            const label = formatDateShort(iso);
-            return (
-              <button
-                key={iso}
-                type="button"
-                disabled={!active}
-                className={`${styles.chip} ${selectedValue === iso ? styles.chipSelected : ''}`}
-                onClick={() => {
-                  setSelectedValue(iso);
-                  apply(iso, label);
-                }}
-              >
-                {i === 0 ? `오늘 ${label}` : i === 1 ? `내일 ${label}` : label}
-              </button>
-            );
-          })}
+        <p className={styles.label}>달력에서 날짜를 골라 주세요</p>
+        <div className={styles.inputRow}>
+          <input
+            type="date"
+            className={styles.dateInput}
+            aria-label={ui.label ?? '날짜 선택'}
+            min={today}
+            value={dateVal}
+            disabled={!active}
+            onChange={e => setDateVal(e.target.value)}
+          />
           <button
             type="button"
-            disabled={!active}
-            aria-expanded={calendarOpen}
-            className={`${styles.chip} ${styles.changeDateChip}`}
-            onClick={() => setCalendarOpen(open => !open)}
+            className={styles.applyBtn}
+            disabled={!active || !dateVal}
+            onClick={() => apply(dateVal, formatDateShort(dateVal))}
           >
-            달력에서 다른 날 고르기
+            적용
           </button>
         </div>
-        {calendarOpen && (
-          <div className={styles.inputRow}>
-            <input
-              type="date"
-              className={styles.dateInput}
-              aria-label={ui.label ?? '날짜 선택'}
-              min={today}
-              value={dateVal}
-              disabled={!active}
-              onChange={e => setDateVal(e.target.value)}
-            />
-            <button
-              type="button"
-              className={styles.applyBtn}
-              disabled={!active || !dateVal}
-              onClick={() => apply(dateVal, formatDateShort(dateVal))}
-            >
-              적용
-            </button>
-          </div>
-        )}
         {!active && <p className={styles.inactiveNote}>이전 대화의 선택지입니다.</p>}
       </div>
     );
