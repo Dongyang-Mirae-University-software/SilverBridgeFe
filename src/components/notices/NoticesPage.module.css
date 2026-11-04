@@ -85,3 +85,59 @@
 .content.wardContent {
   max-width: none;
 }
+
+.expandButton {
+  display: inline-flex;
+  min-height: calc(40px * var(--ward-font-scale, 1));
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  border: none;
+  background: none;
+  color: var(--sb-brand);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: calc(14px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  padding: 0;
+}
+
+.chevron {
+  font-size: 0.75em;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.detailState {
+  margin: 8px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: calc(13px * var(--ward-font-scale, 1));
+  font-weight: 600;
+}
+
+.detailError {
+  color: #b91c1c;
+}
+
+.moreButton {
+  min-height: calc(48px * var(--ward-font-scale, 1));
+  border: 1px solid var(--sb-line);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: calc(15px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+}
+
+.moreButton:hover:not(:disabled) {
+  background: var(--sb-bg-soft);
+}
+
+.moreButton:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
