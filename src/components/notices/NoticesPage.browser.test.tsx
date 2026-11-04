@@ -3,7 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import type { IAnnouncement } from '@/service/interface/common/announcement';
@@ -69,7 +69,7 @@ describe('NoticesPage', () => {
 });
 
 describe('NoticesPage 전체 본문·더 보기', () => {
-  it('100자로 잘린 미리보기는 …을 붙이고, 카드를 누르면 상세 본문을 펼치며 10분 안에 다시 펼쳐도 상세를 다시 부르지 않는다', async () => {
+  it('100자로 잘린 미리보기는 …을 붙이고, 카드를 누르면 상세 창에 전체 본문을 보이며 10분 안에 다시 열어도 상세를 다시 부르지 않는다', async () => {
     const full = `${'가'.repeat(99)}😀 그리고 이어지는 뒷부분 본문`;
     const preview = Array.from(full).slice(0, 100).join('');
     api.getAnnouncements.mockResolvedValue([notice(7, preview)]);
@@ -79,30 +79,33 @@ describe('NoticesPage 전체 본문·더 보기', () => {
     await expect.element(page.getByText(`${preview}…`)).toBeVisible();
     expect(api.getAnnouncementDetail).not.toHaveBeenCalled();
 
-    // 카드 본문을 눌러도 펼친다
-    await page.getByText(`${preview}…`).click();
-    await expect.element(page.getByText(full)).toBeVisible();
-    await expect.element(page.getByRole('button', { name: '공지 7' })).toHaveAttribute('aria-expanded', 'true');
+    await page.getByRole('button', { name: /공지 7/ }).click();
+    const dialog = page.getByRole('dialog', { name: '공지 7' });
+    await expect.element(dialog.getByText(full)).toBeVisible();
     expect(api.getAnnouncementDetail).toHaveBeenCalledTimes(1);
     expect(api.getAnnouncementDetail).toHaveBeenCalledWith(7);
 
-    await page.getByRole('button', { name: '공지 7' }).click();
-    await expect.element(page.getByText(`${preview}…`)).toBeVisible();
-    await page.getByRole('button', { name: '공지 7' }).click();
-    await expect.element(page.getByText(full)).toBeVisible();
+    await dialog.getByRole('button', { name: '닫기' }).click();
+    expect(page.getByRole('dialog').query()).toBeNull();
+    await page.getByRole('button', { name: /공지 7/ }).click();
+    await expect.element(page.getByRole('dialog').getByText(full)).toBeVisible();
     expect(api.getAnnouncementDetail).toHaveBeenCalledTimes(1);
   });
 
-  it('짧은 공지도 …없이 보이다가, 누르면 상세를 불러 연다(목록을 그릴 때는 부르지 않는다)', async () => {
-    api.getAnnouncementDetail.mockResolvedValue({ ...notice(1), title: '서비스 점검 안내', content: '2026년 6월 16일 오후 10시부터 서버 점검이 예정되어 있습니다.' });
+  it('짧은 공지도 …없이 보이다가, 누르면 상세를 불러 창으로 열고 Esc로 닫는다(목록을 그릴 때는 부르지 않는다)', async () => {
+    const content = '2026년 6월 16일 오후 10시부터 서버 점검이 예정되어 있습니다.';
+    api.getAnnouncementDetail.mockResolvedValue({ ...notice(1), title: '서비스 점검 안내', content });
     await renderPage();
 
-    await expect.element(page.getByText('2026년 6월 16일 오후 10시부터 서버 점검이 예정되어 있습니다.', { exact: true })).toBeVisible();
+    await expect.element(page.getByText(content, { exact: true })).toBeVisible();
     expect(api.getAnnouncementDetail).not.toHaveBeenCalled();
 
-    await page.getByRole('button', { name: '서비스 점검 안내' }).click();
-    await vi.waitFor(() => expect(api.getAnnouncementDetail).toHaveBeenCalledWith(1));
-    await expect.element(page.getByRole('button', { name: '서비스 점검 안내' })).toHaveAttribute('aria-expanded', 'true');
+    await page.getByRole('button', { name: /서비스 점검 안내/ }).click();
+    await expect.element(page.getByRole('dialog', { name: '서비스 점검 안내' }).getByText(content)).toBeVisible();
+    expect(api.getAnnouncementDetail).toHaveBeenCalledWith(1);
+
+    await userEvent.keyboard('{Escape}');
+    await vi.waitFor(() => expect(page.getByRole('dialog').query()).toBeNull());
   });
 
   it('20건을 받으면 더 보기로 다음 페이지를 이어 붙이고, 20건보다 적게 오면 버튼을 숨긴다', async () => {

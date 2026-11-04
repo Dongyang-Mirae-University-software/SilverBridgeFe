@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -38,6 +38,7 @@ export function NoticesPage({ variant = 'default' }: { variant?: 'default' | 'wa
   const queryClient = useQueryClient();
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery(announcementsQueryOptions);
+  const [openNotice, setOpenNotice] = useState<IAnnouncement | null>(null);
   // 서버가 최신순으로 준다 - 페이지를 이어 붙이기만 한다
   const announcements = data?.pages.flat() ?? [];
 
@@ -71,7 +72,7 @@ export function NoticesPage({ variant = 'default' }: { variant?: 'default' | 'wa
       )}
 
       {announcements.map(announcement => (
-        <NoticeCard key={announcement.id} announcement={announcement} ward={ward} />
+        <NoticeCard key={announcement.id} announcement={announcement} ward={ward} onOpen={() => setOpenNotice(announcement)} />
       ))}
 
       {hasNextPage && (
@@ -84,52 +85,76 @@ export function NoticesPage({ variant = 'default' }: { variant?: 'default' | 'wa
           {isFetchingNextPage ? '불러오는 중…' : '더 보기'}
         </button>
       )}
+
+      {openNotice && <NoticeDetailModal announcement={openNotice} onClose={() => setOpenNotice(null)} />}
     </section>
   );
 }
 
-function NoticeCard({ announcement, ward }: { announcement: IAnnouncement; ward: boolean }) {
-  const [expanded, setExpanded] = useState(false);
-  const truncated = isTruncatedPreview(announcement.content);
-  // 상세는 부를 때마다 조회수가 오른다 - 카드를 펼칠 때만 부른다(목록을 그릴 때 미리 부르지 않는다)
-  const detail = useQuery({ ...announcementDetailQueryOptions(announcement.id), enabled: expanded });
-  const bodyId = `notice-body-${announcement.id}`;
-  const toggle = () => setExpanded(value => !value);
-
-  // 펼치기 전·상세를 받기 전에는 목록 미리보기(잘렸으면 …)를 보인다
-  const body = expanded && detail.data ? detail.data.content : truncated ? `${announcement.content}…` : announcement.content;
+// 목록 카드는 높이가 바뀌지 않게 본문 두 줄 미리보기만 두고, 누르면 상세 창으로 전체 본문을 연다
+function NoticeCard({ announcement, ward, onOpen }: { announcement: IAnnouncement; ward: boolean; onOpen: () => void }) {
+  const preview = isTruncatedPreview(announcement.content) ? `${announcement.content}…` : announcement.content;
 
   return (
-    // 카드 어디를 눌러도 펼친다. 키보드·화면 읽기 프로그램은 제목 버튼으로 연다
-    <article className={cx('card', { open: expanded })} onClick={toggle}>
-      <div className={cx('metaRow')}>
-        {isNewNotice(announcement.createdAt) && <span className={cx('newBadge')}>NEW</span>}
-        <time className={cx('date')} dateTime={announcement.createdAt}>
-          {formatDate(announcement.createdAt)}
-        </time>
-      </div>
-      <h2 className={cx('title')}>
-        <button
-          className={cx('titleButton')}
-          type="button"
-          aria-expanded={expanded}
-          aria-controls={bodyId}
-          onClick={event => {
-            event.stopPropagation();
-            toggle();
-          }}
-        >
-          <span>{announcement.title}</span>
-          <span className={cx('chevron', { open: expanded })} aria-hidden="true">
-            ▼
-          </span>
-        </button>
-      </h2>
-      <p className={cx('content', { wardContent: ward, collapsed: !expanded })} id={bodyId}>
-        {body}
-      </p>
-      {expanded && detail.isLoading && <p className={cx('detailState')}>전체 내용을 불러오는 중…</p>}
-      {expanded && detail.isError && <p className={cx('detailState', 'detailError')}>전체 내용을 불러오지 못했습니다.</p>}
+    <article className={cx('card')}>
+      <button className={cx('cardButton')} type="button" aria-haspopup="dialog" onClick={onOpen}>
+        <span className={cx('metaRow')}>
+          {isNewNotice(announcement.createdAt) && <span className={cx('newBadge')}>NEW</span>}
+          <time className={cx('date')} dateTime={announcement.createdAt}>
+            {formatDate(announcement.createdAt)}
+          </time>
+        </span>
+        <span className={cx('title')} role="heading" aria-level={2}>
+          {announcement.title}
+        </span>
+        <span className={cx('content', 'collapsed', { wardContent: ward })}>{preview}</span>
+      </button>
     </article>
+  );
+}
+
+function NoticeDetailModal({ announcement, onClose }: { announcement: IAnnouncement; onClose: () => void }) {
+  // 상세는 부를 때마다 조회수가 오른다 - 창을 열 때만 부르고 10분 동안은 캐시를 쓴다
+  const detail = useQuery(announcementDetailQueryOptions(announcement.id));
+  const titleId = `notice-modal-title-${announcement.id}`;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div className={cx('overlay')} role="presentation" onClick={onClose}>
+      <section
+        className={cx('modal')}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={event => event.stopPropagation()}
+      >
+        <header className={cx('modalHead')}>
+          <div>
+            <time className={cx('date')} dateTime={announcement.createdAt}>
+              {formatDate(announcement.createdAt)}
+            </time>
+            <h2 className={cx('modalTitle')} id={titleId}>
+              {announcement.title}
+            </h2>
+          </div>
+          {/* 창을 열면 닫기에 초점을 둬 Esc·Enter로 바로 닫을 수 있게 한다 */}
+          <button className={cx('closeButton')} type="button" aria-label="닫기" autoFocus onClick={onClose}>
+            ✕
+          </button>
+        </header>
+        <div className={cx('modalBody')}>
+          {detail.isLoading && <p className={cx('detailState')}>내용을 불러오는 중…</p>}
+          {detail.isError && <p className={cx('detailState', 'detailError')}>내용을 불러오지 못했습니다.</p>}
+          {detail.data && <p className={cx('modalContent')}>{detail.data.content}</p>}
+        </div>
+      </section>
+    </div>
   );
 }
