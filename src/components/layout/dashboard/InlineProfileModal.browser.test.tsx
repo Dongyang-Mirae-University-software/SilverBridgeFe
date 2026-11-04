@@ -1,4 +1,4 @@
-// 피보호자 '내 프로필'(v13.0 시안) - 간단히 보기 ↔ 정보 바꾸기, 항목별 '바꾸기'로 그 자리에서 저장. 실제 Chrome에서 돈다
+// '내 프로필'(v13.0 시안) - 피보호자는 간단히 보기 ↔ 정보 바꾸기, 보호자는 처음부터 목록. 항목별 '바꾸기'로 그 자리에서 저장. 실제 Chrome에서 돈다
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
@@ -36,12 +36,12 @@ const PROFILE: IUserProfile = {
   createdAt: '2026-09-01T00:00:00Z',
 };
 
-async function renderModal() {
+async function renderModal(profile: IUserProfile = PROFILE) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
-  client.setQueryData(myProfileQueryKey, { code: 200, message: 'OK', success: true, data: PROFILE });
+  client.setQueryData(myProfileQueryKey, { code: 200, message: 'OK', success: true, data: profile });
   return render(
     <QueryClientProvider client={client}>
-      <ProfileModal onClose={vi.fn()} profile={PROFILE} role="WARD" userId={PROFILE.id} userEmail={PROFILE.email} userName={PROFILE.name} />
+      <ProfileModal onClose={vi.fn()} profile={profile} role={profile.role} userId={profile.id} userEmail={profile.email} userName={profile.name} />
     </QueryClientProvider>,
   );
 }
@@ -81,5 +81,17 @@ describe('WardProfileModal (Chrome)', () => {
       ...{ postcode: '06236', address: '서울 강남구 테헤란로 1', addressDetail: '101동 1203호', verificationNonce: null },
     });
     await expect.element(page.getByRole('button', { name: '이름 바꾸기' })).toMatchTextContent('김순희');
+  });
+
+  it('보호자는 처음부터 계정·내 정보 목록을 보이고, 내 ID 카드·정보 바꾸기 버튼은 없다', async () => {
+    await renderModal({ ...PROFILE, id: 'guardian01', name: '박보호', role: 'GUARDIAN', provider: 'KAKAO', email: 'kakao_1@kakao.com' });
+
+    await expect.element(page.getByRole('heading', { name: '박보호' })).toBeVisible();
+    await expect.element(page.getByText('카카오로 로그인')).toBeVisible();
+    await expect.element(page.getByText('여성 · 1950년 3월 5일')).toBeVisible();
+    expect(page.getByText('내 ID · 가족에게 알려 주세요').query()).toBeNull();
+    expect(page.getByRole('button', { name: '정보 바꾸기' }).query()).toBeNull();
+    // 카카오 가입은 비밀번호가 없어 비밀번호 줄을 두지 않는다
+    expect(page.getByText('비밀번호').query()).toBeNull();
   });
 });

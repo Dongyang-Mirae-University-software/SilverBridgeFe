@@ -69,3 +69,31 @@
   .itemValue { font-size: 17px; }
   .inlineRow { flex-direction: column; }
 }
+
+/* 보호자(guardian): 처음부터 펼친 목록, 사진 72px 옆에 이름·역할. 글자·칸이 작다(라벨 14 · 값 15 · 버튼 40 · 입력 44) */
+.rowHero { display: flex; align-items: center; gap: 16px; }
+.avatarRow { width: 72px; height: 72px; cursor: pointer; font-size: 28px; }
+.avatarRow input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.avatarRow .cameraBadge { right: -2px; bottom: -2px; width: 26px; height: 26px; border: 1px solid var(--sb-line); background: #fff; color: var(--sb-ink-soft); }
+.avatarRow:focus-within { outline: 3px solid rgba(176, 103, 77, .3); outline-offset: 3px; }
+.rowHeroText { min-width: 0; flex: 1; }
+.nameRow { display: flex; align-items: center; gap: 8px; }
+.nameRow h2 { margin: 0; overflow: hidden; color: var(--sb-ink); font-size: 22px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.nameEditButton { display: grid; width: 32px; height: 32px; flex-shrink: 0; place-items: center; border: none; background: none; color: var(--sb-ink-mute); cursor: pointer; }
+.guardian .rolePill { display: inline-block; margin-top: 4px; border: none; background: var(--sb-brand-50); color: var(--sb-brand); font-size: 12px; padding: 3px 10px; }
+.guardian .nameEditor { max-width: none; }
+.guardian .nameInput { text-align: left; font-size: 17px; }
+
+.guardian .ghostButton, .guardian .primaryButton { min-height: 40px; font-size: 14px; }
+.guardian .group { margin-top: 20px; }
+.guardian .group h3 { font-size: 13px; }
+.guardian .item { min-height: 44px; padding: 13px 0; }
+.guardian .itemLabel { width: 84px; font-size: 14px; }
+.guardian .itemValue { font-size: 15px; }
+.guardian .subValue { font-size: 14px; }
+.guardian .kakaoMark { width: 20px; height: 20px; font-size: 11px; }
+.guardian .editLink { min-height: 36px; font-size: 14px; }
+.guardian .input { height: 44px; font-size: 15px; }
+.guardian .genderButton { min-height: 40px; font-size: 14px; }
+.guardian .hint { font-size: 12px; }
+.guardian .error { font-size: 13px; }
