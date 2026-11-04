@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import { MoodFace } from '@/components/MoodFace';
 import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { guardianConnectionsQueryOptions, guardianDashboardQueryOptions } from '@/service/query/guardian';
 import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
@@ -182,29 +183,4 @@ function DashboardPill({ children, tone }: { children: string; tone: 'warn' }) {
 function getTime(value?: string | null) {
   const time = value ? new Date(value).getTime() : 0;
   return Number.isNaN(time) ? 0 : time;
-}
-
-function MoodFace() {
-  return (
-    <svg viewBox="0 0 60 60" aria-hidden="true">
-      <defs>
-        <radialGradient id="guardian-dashboard-mood" cx="42%" cy="32%" r="75%">
-          <stop offset="0" stopColor="#ffe6cc" />
-          <stop offset="70%" stopColor="#fdd3ae" />
-          <stop offset="100%" stopColor="#f8c399" />
-        </radialGradient>
-      </defs>
-      <ellipse cx="30" cy="56.2" rx="14" ry="2.2" fill="#000" opacity=".08" />
-      <circle cx="30" cy="33.5" r="20.5" fill="url(#guardian-dashboard-mood)" stroke="#ebae78" strokeWidth="1.3" />
-      <ellipse cx="22.5" cy="22.8" rx="5.6" ry="3.2" transform="rotate(-28 22.5 22.8)" fill="#fff" opacity=".6" />
-      <path d="M30 13.4V10.2" stroke="#6e9466" strokeLinecap="round" strokeWidth="1.6" />
-      <path d="M29.6 10.6Q25.6 7.4 21.8 9.6q3.2 3 7.8 1" fill="#a9d39b" />
-      <path d="M30.4 10.6q4-3.2 7.8-1-3.2 3-7.8 1" fill="#a9d39b" />
-      <ellipse cx="18.6" cy="37.2" rx="3.9" ry="2.6" fill="#ff9aa2" opacity=".8" />
-      <ellipse cx="41.4" cy="37.2" rx="3.9" ry="2.6" fill="#ff9aa2" opacity=".8" />
-      <path d="M21 33q3.5-4.4 7 0M32 33q3.5-4.4 7 0" fill="none" stroke="#2e2420" strokeLinecap="round" strokeWidth="2.1" />
-      <path d="M25.2 37h9.6q-.6 6.2-4.8 6.2T25.2 37Z" fill="#3a2a22" />
-      <path d="M27.2 41.6q2.8-2 5.6 0-1.2 1.6-2.8 1.6t-2.8-1.6Z" fill="#f07a86" />
-    </svg>
-  );
 }

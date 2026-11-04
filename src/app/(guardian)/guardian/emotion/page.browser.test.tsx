@@ -1,16 +1,26 @@
-// 정서 상태 체크 - 기능 준비 중이라 빈 화면 대신 준비 중 안내를 보인다. 실제 Chrome에서 돈다
-import { describe, expect, it } from 'vitest';
+// AI 기분 체크 페이지 - 제목과 오늘 안부 대화 화면을 붙인다. 실제 Chrome에서 돈다
+import { QueryClient, QueryClientProvider, queryOptions } from '@tanstack/react-query';
+import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import GuardianEmotionPage from './page';
 
-describe('정서 상태 체크 (Chrome)', () => {
-  it('제목과 함께 준비 중 안내를 보인다(설명을 빈 칸에 한 번 더 되풀이하지 않는다)', async () => {
-    await render(<GuardianEmotionPage />);
+vi.mock('@/service/query/guardian', () => ({
+  guardianConnectionsQueryOptions: queryOptions({ queryKey: ['test-connections'], queryFn: async () => ({ data: [] }) }),
+  wardCompanionTodayQueryOptions: () => queryOptions({ queryKey: ['test-companion'], queryFn: async () => null }),
+}));
 
-    await expect.element(page.getByRole('heading', { name: '정서 상태 체크', level: 1 })).toBeVisible();
-    await expect.element(page.getByText('AI 기분 체크는 준비 중이에요')).toBeVisible();
-    expect(page.getByText('피보호자의 정서 흐름과 최근 체크 결과를 확인합니다.').elements()).toHaveLength(1);
+describe('AI 기분 체크 페이지 (Chrome)', () => {
+  it('제목을 보이고 더는 준비 중 안내를 보이지 않는다', async () => {
+    await render(
+      <QueryClientProvider client={new QueryClient()}>
+        <GuardianEmotionPage />
+      </QueryClientProvider>,
+    );
+
+    await expect.element(page.getByRole('heading', { name: 'AI 기분 체크', level: 1 })).toBeVisible();
+    await expect.element(page.getByText('연결된 피보호자가 없습니다.')).toBeVisible();
+    expect(page.getByText('AI 기분 체크는 준비 중이에요').elements()).toHaveLength(0);
   });
 });

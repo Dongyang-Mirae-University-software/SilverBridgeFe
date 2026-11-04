@@ -30,3 +30,8 @@ export function getDirectionParticle(word: string): '으로' | '로' {
   const finalConsonant = ((word.at(-1) ?? '').charCodeAt(0) - 0xac00) % 28;
   return finalConsonant === 8 ? '로' : '으로';
 }
+
+// 보조사(은/는): 김영희는·박민철은
+export function getTopicParticle(word: string): '은' | '는' {
+  return hasFinalConsonant(word) ? '은' : '는';
+}

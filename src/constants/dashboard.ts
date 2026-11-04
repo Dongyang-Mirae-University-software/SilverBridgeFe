@@ -14,7 +14,7 @@ export const GUARDIAN_NAV: NavItem[] = [
   { href: '/guardian', icon: 'dashboard', label: '대시보드', key: 'dashboard' },
   { href: '/guardian/detection', icon: 'alert', label: '이상감지', key: 'detection' },
   { href: '/guardian/sos', icon: 'phone', label: 'SOS 이력', key: 'sos-history' },
-  { href: '/guardian/emotion', icon: 'heart', label: '정서 상태 체크', key: 'emotion' },
+  { href: '/guardian/emotion', icon: 'heart', label: 'AI 기분 체크', key: 'emotion' },
   { href: '/guardian/chatbot', icon: 'message', label: 'AI 의료 챗봇', key: 'chatbot' },
   { href: '/guardian/medication', icon: 'heart', label: '복약 관리', key: 'medication-management' },
   // 게임 관리: 아직 미공개. 사이드바에서만 숨김(/guardian/game 직접 접근은 가능)

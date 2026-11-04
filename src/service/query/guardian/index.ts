@@ -7,3 +7,4 @@ export * from './notification';
 export * from './sosHistory';
 export * from './reservation';
 export * from './game';
+export * from './companion';
