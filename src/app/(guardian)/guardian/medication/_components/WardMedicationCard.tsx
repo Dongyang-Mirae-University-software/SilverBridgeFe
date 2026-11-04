@@ -373,8 +373,9 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
       )}
 
       {/* 알림 - 시안대로 한 줄(2026-10-30): "이 시간까지 안 드시면 알려 드려요" 시각.
-          어르신 기기로 가는 "약 드실 시간" 알림은 늘 보내므로 켜고 끄는 스위치가 없다(2026-10-24 사용자 결정, BE #377).
-          나에게 오는 알림을 켜고 끄는 건 환경설정 > 알림 종류에서만 한다. 꺼져 있어도 시각은 미리 정해 둘 수 있게 드롭다운은 늘 둔다 */}
+          이 화면에는 켜고 끄는 스위치가 없다(2026-10-24 사용자 결정, BE #377). 어르신 기기로 가는 "약 드실 시간" 알림과
+          나에게 오는 미복용 요약은 환경설정 > 알림 종류의 "복약 알림" 하나로 함께 켜고 끈다(2026-11-04, BE #441 -
+          보호자 중 한 명이라도 켜 두면 어르신 알림이 나간다, 푸시만). 꺼져 있어도 시각은 미리 정해 둘 수 있게 드롭다운은 늘 둔다 */}
       <section className={cx('card', 'alertCard')} aria-label="알림 설정">
         <div className={cx('alertRow')}>
           <Icon name="bell" size={20} className={cx('alertIcon')} decorative />
