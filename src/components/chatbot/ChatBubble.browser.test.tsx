@@ -173,3 +173,48 @@ describe('ChatBubble 답 모양', () => {
     expect(document.querySelectorAll('[data-testid="wrap"] img, [data-testid="wrap"] script').length).toBe(0);
   });
 });
+
+describe('ChatBubble 피보호자 문장 줄바꿈 (2026-11-04)', () => {
+  const reply = '정형외과로 가시면 돼요. 가까운 정형외과를 찾아드릴게요. 어느 지역에서 찾을까요?';
+
+  function lineCount(el: Element): number {
+    const style = getComputedStyle(el);
+    return Math.round(el.getBoundingClientRect().height / Number.parseFloat(style.lineHeight));
+  }
+
+  it('피보호자 답 본문은 문장마다 줄을 나누고 원문 메시지는 그대로다', async () => {
+    const message = { content: reply };
+    await show(message, 'ward');
+    const p = page.getByTestId('wrap').element().querySelector('p')!;
+    expect(p.textContent).toBe('정형외과로 가시면 돼요.\n가까운 정형외과를 찾아드릴게요.\n어느 지역에서 찾을까요?');
+    expect(lineCount(p)).toBeGreaterThanOrEqual(3);
+    expect(message.content).toBe(reply);
+  });
+
+  it('피보호자 layout 핵심 줄·본문은 나누고 카드 항목은 그대로 둔다', async () => {
+    await show(
+      {
+        content: '',
+        layout: {
+          headline: '정형외과가 좋아요. 예약도 도와드려요.',
+          body: ['많이 아프시죠? 조금만 기다려 주세요.'],
+          questions: [],
+          homeCare: ['찜질을 하세요. 쉬세요.'],
+          visitHospitalIf: [],
+        },
+      },
+      'ward',
+    );
+    const texts = textOrder();
+    expect(texts).toContain('정형외과가 좋아요.\n예약도 도와드려요.');
+    expect(texts).toContain('많이 아프시죠?\n조금만 기다려 주세요.');
+    expect(texts).toContain('찜질을 하세요. 쉬세요.');
+  });
+
+  it('보호자 화면은 그대로 한 덩어리다', async () => {
+    await show({ content: reply }, 'guardian');
+    const p = page.getByTestId('wrap').element().querySelector('p')!;
+    expect(p.textContent).toBe(reply);
+  });
+});
+

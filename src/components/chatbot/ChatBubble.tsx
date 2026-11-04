@@ -2,6 +2,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import type { ChatLayout, ChatMessage } from '@/service/interface/chat';
 import ChatToolCard from './ChatToolCard';
 import ChatUiPrompt from './ChatUiPrompt';
+import { breakSentences } from './breakSentences';
 import styles from './ChatBubble.module.css';
 
 interface Props {
@@ -34,6 +35,8 @@ export default function ChatBubble({
   const isWardChat = variant === 'ward';
   const layout = normalizeLayout(message.layout);
   const warnings = strings(message.emergencyWarning);
+  // 피보호자 화면만 본문 문장을 문장마다 줄을 바꿔 보여 준다(표시용 - 원문은 그대로). 카드·응급 상자·선택지는 제외.
+  const prose = (text: string) => (isWardChat ? breakSentences(text) : text);
 
   if (isUser) {
     return (
@@ -75,14 +78,14 @@ export default function ChatBubble({
               <>
                 {layout.headline && (
                   <p className={styles.headline}>
-                    <Line text={layout.headline} />
+                    <Line text={prose(layout.headline)} />
                   </p>
                 )}
                 {layout.body.length > 0 && (
-                  <ul className={styles.lines}>
+                  <ul className={`${styles.lines} ${styles.bodyLines}`}>
                     {layout.body.map((line, i) => (
                       <li key={i}>
-                        <Line text={line} />
+                        <Line text={prose(line)} />
                       </li>
                     ))}
                   </ul>
@@ -93,7 +96,7 @@ export default function ChatBubble({
               </>
             ) : (
               <>
-                <p className={styles.replyText}>{message.content}</p>
+                <p className={styles.replyText}>{prose(message.content)}</p>
                 <SectionCard icon="🩺" title="가능한 원인" items={strings(message.possibleCauses)} tone="plain" />
                 <SectionCard icon="🏠" title="집에서 이렇게" items={strings(message.homeCare)} tone="home" />
                 <SectionCard icon="🏥" title="이럴 땐 병원으로" items={strings(message.visitHospitalIf)} tone="hospital" />
