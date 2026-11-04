@@ -13,7 +13,7 @@ import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api
 import { getHistoryWarning } from '@/service/api/chatPolicy';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
-import { calcAge, type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
+import { type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
 import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
@@ -228,29 +228,11 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       setFallback(false);
 
       try {
-        const wardBirthDate = selectedWard?.partnerBirthDate?.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
-        // 피보호자 본인 상담은 역할만 보낸다(개인정보는 서버에 싣지 않는다).
-        // 보호자 상담은 선택한 피보호자 정보를 예약 도구에 전달한다.
+        // 환자 정보(이름·전화·생년월일·나이·성별·주소)는 보내지 않는다 - 백엔드가 로그인 사용자 또는 검증한
+        // 피보호자의 DB 값으로 채우고 클라이언트 값은 버린다(BE #440·#444). 대리 상담은 피보호자 ID만 보낸다.
         const role = getAuthRole() ?? undefined;
         const context =
-          isGuardian && selectedWard
-            ? {
-                role: 'GUARDIAN',
-                name: selectedWard.partnerName,
-                age: wardBirthDate ? calcAge(wardBirthDate) : undefined,
-                birthDate: wardBirthDate,
-                phone: selectedWard.partnerPhone ?? undefined,
-                gender: selectedWard.partnerGender ?? undefined,
-                wardId: selectedWard.partnerUserId,
-                wardName: selectedWard.partnerName,
-                patientId: selectedWard.partnerUserId,
-                patientName: selectedWard.partnerName,
-                patientBirthDate: wardBirthDate,
-                patientPhone: selectedWard.partnerPhone ?? undefined,
-                patientGender: selectedWard.partnerGender ?? undefined,
-                relation: selectedWard.relation ?? undefined,
-              }
-            : { role };
+          isGuardian && selectedWard ? { role: 'GUARDIAN', wardId: selectedWard.partnerUserId } : { role };
 
         // 대화 맥락은 AI가 같은 sessionId의 서버 기록으로 만든다 - 이력은 보내지 않는다(2026-10-29, AI #91).
         const result = await sendChatMessage({
