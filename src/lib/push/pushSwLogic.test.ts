@@ -55,6 +55,18 @@ describe('알림 모양', () => {
     expect(options.actions.map((a: { action: string }) => a.action)).toEqual(['open-sos', 'family-contacts']);
   });
 
+  it('안부 대화 위험 신호는 대화마다 따로 남기고 다시 울린다, 기분 변화 안내는 예비 문구에 이어진 일수를 쓴다', () => {
+    const first = push.buildNotification({ data: { type: 'COMPANION_RISK', wardId: 'w1', sessionId: 's1' } }, 'GUARDIAN');
+    const second = push.buildNotification({ data: { type: 'COMPANION_RISK', wardId: 'w1', sessionId: 's2' } }, 'GUARDIAN');
+    expect(first.options.tag).toBe('COMPANION_RISK:s1');
+    expect(second.options.tag).not.toBe(first.options.tag);
+    expect(first.options.renotify).toBe(true);
+    expect(push.getContent({ data: { type: 'COMPANION_NOTICE', wardId: 'w1', days: '3' } })).toEqual({
+      title: '기분 변화 안내',
+      body: '걱정·우울한 기분이 3일째 이어지고 있어요.',
+    });
+  });
+
   it('복약 재알림은 회차마다 tag가 다르고 다시 울린다 - 남아 있는 첫 알림을 소리 없이 덮지 않게', () => {
     const base = { type: 'MEDICATION_REMINDER', medicationId: '3', doseDate: '2026-10-30' };
     const first = push.buildNotification({ data: { ...base, attempt: '1' } }, 'WARD');
@@ -111,6 +123,8 @@ describe('클릭 경로', () => {
     [{ type: 'CONNECTION_CANCELLED' }, 'GUARDIAN', undefined, '/guardian/wards'],
     [{ type: 'CONNECTION_FORCED' }, 'WARD', undefined, '/ward/guardians'],
     [{ type: 'INQUIRY_ANSWERED' }, 'GUARDIAN', undefined, '/guardian/inquiries'],
+    [{ type: 'COMPANION_RISK', wardId: 'w1', sessionId: 's1' }, 'GUARDIAN', undefined, '/guardian/emotion'],
+    [{ type: 'COMPANION_NOTICE', wardId: 'w1', days: '3' }, 'GUARDIAN', undefined, '/guardian/emotion'],
     [{ type: 'UNKNOWN' }, 'WARD', undefined, '/ward'],
     [{ type: 'UNKNOWN' }, null, undefined, '/guardian'],
   ])('%o (%s, %s) → %s', (data, role, action, path) => {

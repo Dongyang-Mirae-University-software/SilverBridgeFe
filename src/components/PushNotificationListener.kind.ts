@@ -87,6 +87,9 @@ export function getPushRoute(data: PushData, role?: 'WARD' | 'GUARDIAN' | null) 
       return '/guardian/detection';
     case 'INQUIRY_ANSWERED':
       return '/guardian/inquiries';
+    case 'COMPANION_RISK':
+    case 'COMPANION_NOTICE':
+      return '/guardian/emotion';
     default:
       return role === 'WARD' ? '/ward' : '/guardian';
   }

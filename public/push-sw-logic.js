@@ -45,6 +45,11 @@
     CONNECTION_DISCONNECTED: () => ['연결 해제', '연결이 해제되었습니다.'],
     DISCONNECTION: () => ['연결 해제', '연결이 해제되었습니다.'],
     INQUIRY_ANSWERED: () => ['문의 답변', '문의에 답변이 등록되었습니다.'],
+    COMPANION_RISK: () => ['안부 대화 확인 필요', '안부 대화에서 살펴볼 신호가 있었어요.'],
+    COMPANION_NOTICE: data => [
+      '기분 변화 안내',
+      `걱정·우울한 기분이 ${data && data.days ? `${data.days}일째` : '며칠째'} 이어지고 있어요.`,
+    ],
   };
 
   const ANOMALY_ICON = { FIRE: 'fire', FALL: 'fall', WEAPON: 'weapon' };
@@ -82,6 +87,8 @@
     if (type === 'MEDICATION_REMINDER' && data.medicationId) {
       return [type, data.medicationId, data.doseDate, data.attempt].filter(Boolean).join(':');
     }
+    // 안부 대화 위험 신호는 대화마다 한 번 온다 - 대화(sessionId)마다 따로 남긴다
+    if (type === 'COMPANION_RISK' && data.sessionId) return `${type}:${data.sessionId}`;
     const target =
       data.sosEventId ||
       data.incidentId ||
@@ -119,7 +126,7 @@
     const kind = getKind(data);
     const urgent = kind === 'sos' || data.type === 'ANOMALY_DETECTED';
     // 같은 tag의 알림이 남아 있으면 renotify가 false일 때 소리·진동 없이 교체된다 - 다시 알리는 종류는 true
-    const renotify = urgent || data.type === 'MEDICATION_REMINDER';
+    const renotify = urgent || data.type === 'MEDICATION_REMINDER' || data.type === 'COMPANION_RISK';
     return {
       title: content.title,
       options: {
@@ -193,6 +200,9 @@
         return guardianOr(role, '/guardian/wards', '/ward/guardians');
       case 'INQUIRY_ANSWERED':
         return '/guardian/inquiries';
+      case 'COMPANION_RISK':
+      case 'COMPANION_NOTICE':
+        return '/guardian/emotion';
       default:
         return guardianOr(role, '/guardian', '/ward');
     }
