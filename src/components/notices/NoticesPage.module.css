@@ -86,24 +86,50 @@
   max-width: none;
 }
 
-.expandButton {
-  display: inline-flex;
-  min-height: calc(40px * var(--ward-font-scale, 1));
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
+.card {
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.card:hover,
+.card.open {
+  border-color: var(--sb-line);
+}
+
+.titleButton {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   border: none;
   background: none;
-  color: var(--sb-brand);
+  color: inherit;
   cursor: pointer;
-  font-family: inherit;
-  font-size: calc(14px * var(--ward-font-scale, 1));
-  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  font: inherit;
   padding: 0;
+  text-align: left;
+}
+
+.titleButton:focus-visible {
+  outline: 3px solid rgba(176, 103, 77, 0.25);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* 접힌 카드는 본문을 두 줄까지만 보인다 */
+.content.collapsed {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .chevron {
-  font-size: 0.75em;
+  flex-shrink: 0;
+  margin-top: 0.35em;
+  color: var(--sb-ink-mute);
+  font-size: 0.6em;
 }
 
 .chevron.open {

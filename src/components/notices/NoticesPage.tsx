@@ -91,41 +91,45 @@ export function NoticesPage({ variant = 'default' }: { variant?: 'default' | 'wa
 function NoticeCard({ announcement, ward }: { announcement: IAnnouncement; ward: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const truncated = isTruncatedPreview(announcement.content);
-  // 상세는 부를 때마다 조회수가 오른다 - 잘린 공지를 펼칠 때만 부른다
-  const detail = useQuery({ ...announcementDetailQueryOptions(announcement.id), enabled: truncated && expanded });
+  // 상세는 부를 때마다 조회수가 오른다 - 카드를 펼칠 때만 부른다(목록을 그릴 때 미리 부르지 않는다)
+  const detail = useQuery({ ...announcementDetailQueryOptions(announcement.id), enabled: expanded });
   const bodyId = `notice-body-${announcement.id}`;
+  const toggle = () => setExpanded(value => !value);
 
-  let body = truncated ? `${announcement.content}…` : announcement.content;
-  if (expanded && detail.data) body = detail.data.content;
+  // 펼치기 전·상세를 받기 전에는 목록 미리보기(잘렸으면 …)를 보인다
+  const body = expanded && detail.data ? detail.data.content : truncated ? `${announcement.content}…` : announcement.content;
 
   return (
-    <article className={cx('card')}>
+    // 카드 어디를 눌러도 펼친다. 키보드·화면 읽기 프로그램은 제목 버튼으로 연다
+    <article className={cx('card', { open: expanded })} onClick={toggle}>
       <div className={cx('metaRow')}>
         {isNewNotice(announcement.createdAt) && <span className={cx('newBadge')}>NEW</span>}
         <time className={cx('date')} dateTime={announcement.createdAt}>
           {formatDate(announcement.createdAt)}
         </time>
       </div>
-      <h2 className={cx('title')}>{announcement.title}</h2>
-      <p className={cx('content', { wardContent: ward })} id={bodyId}>
-        {body}
-      </p>
-      {expanded && detail.isLoading && <p className={cx('detailState')}>전체 내용을 불러오는 중…</p>}
-      {expanded && detail.isError && <p className={cx('detailState', 'detailError')}>전체 내용을 불러오지 못했습니다.</p>}
-      {truncated && (
+      <h2 className={cx('title')}>
         <button
-          className={cx('expandButton')}
+          className={cx('titleButton')}
           type="button"
           aria-expanded={expanded}
           aria-controls={bodyId}
-          onClick={() => setExpanded(value => !value)}
+          onClick={event => {
+            event.stopPropagation();
+            toggle();
+          }}
         >
-          {expanded ? '접기' : '전체 보기'}
+          <span>{announcement.title}</span>
           <span className={cx('chevron', { open: expanded })} aria-hidden="true">
             ▼
           </span>
         </button>
-      )}
+      </h2>
+      <p className={cx('content', { wardContent: ward, collapsed: !expanded })} id={bodyId}>
+        {body}
+      </p>
+      {expanded && detail.isLoading && <p className={cx('detailState')}>전체 내용을 불러오는 중…</p>}
+      {expanded && detail.isError && <p className={cx('detailState', 'detailError')}>전체 내용을 불러오지 못했습니다.</p>}
     </article>
   );
 }
