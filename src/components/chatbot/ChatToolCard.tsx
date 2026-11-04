@@ -63,13 +63,16 @@ export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideL
                   {h.department && <span>{h.department}</span>}
                   {h.address && <span className={styles.address}>{h.address}</span>}
                 </div>
-                <button
-                  type="button"
-                  className={styles.reserveBtn}
-                  onClick={() => onUiSelect('hospital_confirm', h.name ?? '', h.name ? `${h.name} 예약하기` : undefined)}
-                >
-                  예약하기
-                </button>
+                {/* 병원 이름이 없으면 고를 값이 없다 - 빈 값으로 보내지 않게 버튼을 두지 않는다(점검 🟡) */}
+                {h.name?.trim() && (
+                  <button
+                    type="button"
+                    className={styles.reserveBtn}
+                    onClick={() => onUiSelect('hospital_confirm', h.name!.trim(), `${h.name!.trim()} 예약하기`)}
+                  >
+                    예약하기
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -123,27 +126,32 @@ export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideL
           <p className={styles.empty}>예약 내역이 없습니다.</p>
         ) : (
           <ul className={styles.apptList}>
-            {list.map((a, i) => (
-              <li key={a.reservation_id ?? a.id ?? i} className={styles.apptRow}>
-                <div>
-                  <strong>{a.hospital_name}</strong>
-                  <span>{a.department} · {shortDate(a.date)} {a.time}</span>
-                </div>
-                <button
-                  type="button"
-                  className={styles.detailBtn}
-                  onClick={() =>
-                    onUiSelect(
-                      'reservation_id',
-                      String(a.reservation_id ?? a.id ?? ''),
-                      [a.hospital_name, shortDate(a.date), a.time, '예약 보기'].filter(Boolean).join(' '),
-                    )
-                  }
-                >
-                  상세
-                </button>
-              </li>
-            ))}
+            {list.map((a, i) => {
+              const reservationId = String(a.reservation_id ?? a.id ?? '').trim();
+              return (
+                <li key={reservationId || i} className={styles.apptRow}>
+                  <div>
+                    <strong>{a.hospital_name}</strong>
+                    <span>{a.department} · {shortDate(a.date)} {a.time}</span>
+                  </div>
+                  {reservationId && (
+                    <button
+                      type="button"
+                      className={styles.detailBtn}
+                      onClick={() =>
+                        onUiSelect(
+                          'reservation_id',
+                          reservationId,
+                          [a.hospital_name, shortDate(a.date), a.time, '예약 보기'].filter(Boolean).join(' '),
+                        )
+                      }
+                    >
+                      상세
+                    </button>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

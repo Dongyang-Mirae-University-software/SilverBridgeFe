@@ -282,3 +282,67 @@ describe('보호자 챗봇 예약', () => {
     await expect.poll(() => api.push.mock.calls).toEqual([['/guardian/hospital']]);
   });
 });
+
+describe('예약 화면 점검 반영(2026-11-04)', () => {
+  it('보호자: 답을 기다리는 중에는 피보호자를 바꾸지 않아 그 답이 다른 피보호자 대화에 붙지 않는다', async () => {
+    api.role.mockReturnValue('GUARDIAN');
+    let resolve: (value: unknown) => void = () => {};
+    api.sendChatMessage.mockImplementationOnce(() => new Promise(r => (resolve = r)));
+    await renderChat(<ChatbotContent />);
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
+
+    await userEvent.click(page.getByRole('button', { name: '이철수' }));
+    resolve(ASK_SIDO);
+    await expect.element(page.getByText('어느 지역에서 찾을까요?')).toBeVisible();
+    await expect.element(page.getByText(/김영희의 증상을/)).toBeVisible();
+
+    api.sendChatMessage.mockResolvedValueOnce(ASK_DATE);
+    await userEvent.click(page.getByRole('button', { name: '서울' }));
+    await expect.element(page.getByText('언제 가실까요?')).toBeVisible();
+    expect(api.sendChatMessage.mock.calls[1][0].context).toEqual({ role: 'GUARDIAN', wardId: 'ward-1' });
+    expect(api.sendChatMessage.mock.calls[1][0].sessionId).toBe(api.sendChatMessage.mock.calls[0][0].sessionId);
+  });
+
+  it('예약 선택 뒤 보내기에 실패하면 안내를 보이고 같은 단계 선택지를 패널에 남겨 다시 고를 수 있다', async () => {
+    api.role.mockReturnValue('WARD');
+    await startWardReservation();
+    api.sendChatMessage.mockRejectedValueOnce(new Error('network'));
+    await userEvent.click(page.getByRole('button', { name: '서울' }));
+
+    await expect.element(page.getByText('잠시 후 다시 시도해 주세요.')).toBeVisible();
+    await expect.element(page.getByRole('region', { name: '예약 진행' })).toBeVisible();
+    await expect.element(page.getByRole('region', { name: '추천 질문' })).not.toBeInTheDocument();
+
+    api.sendChatMessage.mockResolvedValueOnce(ASK_DATE);
+    await userEvent.click(page.getByRole('button', { name: '서울' }));
+    await expect.element(page.getByText('언제 가실까요?')).toBeVisible();
+    expect(api.sendChatMessage.mock.calls.at(-1)?.[0].uiSelection).toEqual({ field: 'location_sido', value: '서울' });
+  });
+
+  it('병원 이름·예약 ID가 빈 항목에는 예약하기·상세 버튼을 두지 않는다(빈 값으로 보내지 않음)', async () => {
+    api.role.mockReturnValue('GUARDIAN');
+    api.sendChatMessage.mockResolvedValueOnce({
+      reply: '병원을 찾았어요.',
+      engine: 'ai',
+      type: 'tool_result',
+      intent: 'hospital_reservation',
+      tool: 'search_hospital',
+      toolData: [{ id: 1, name: '튼튼정형외과' }, { id: 2, name: '  ' }],
+    }).mockResolvedValueOnce({
+      reply: '예약 목록이에요.',
+      engine: 'ai',
+      type: 'tool_result',
+      intent: 'hospital_reservation',
+      tool: 'list_my_appointments',
+      toolData: [{ reservation_id: 7, hospital_name: '튼튼정형외과' }, { hospital_name: 'ID 없는 병원' }],
+    });
+    await renderChat(<ChatbotContent />);
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
+    await expect.element(page.getByText('병원을 찾았어요.')).toBeVisible();
+    expect(page.getByRole('button', { name: '예약하기', exact: true }).elements()).toHaveLength(1);
+
+    await userEvent.click(page.getByRole('button', { name: '혈압약을 같이 먹어도 되나요?' }));
+    await expect.element(page.getByText('예약 목록이에요.')).toBeVisible();
+    expect(page.getByRole('button', { name: '상세', exact: true }).elements()).toHaveLength(1);
+  });
+});

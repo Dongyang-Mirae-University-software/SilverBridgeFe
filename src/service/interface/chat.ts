@@ -25,6 +25,8 @@ export interface ChatMessage {
   role: ChatRole;
   content: string;
   timestamp: string;
+  /** 보내기 실패 안내(화면에서 만든 답). 예약 진행 판단은 이 답을 건너뛰고 직전 단계 선택지를 유지한다. */
+  failed?: boolean;
   engine?: string;
   modelName?: string;
   riskLevel?: ChatRiskLevel;

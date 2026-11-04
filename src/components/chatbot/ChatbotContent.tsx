@@ -163,9 +163,12 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const sendingRef = useRef(sending);
+  // 응답이 도착했을 때의 대화창 - 보낸 뒤 대화창이 바뀌었으면(피보호자 전환·처음으로) 그 응답을 버린다.
+  const sessionRef = useRef(sessionId);
   const reservationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   sendingRef.current = sending;
+  sessionRef.current = sessionId;
 
   useEffect(() => {
     if (!profile) return;
@@ -203,9 +206,11 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const lastAssistant = [...messages].reverse().find(message => message.role === 'assistant');
   const lastAssistantId = lastAssistant?.id;
   // 예약 진행 중(마지막 답이 예약 단계 선택지) - "눌러서 물어보세요" 칩 대신 선택지를 패널에 크게 보인다.
-  // 완료(예약 목록 보기 / 계속 상담하기)·취소·오류 답이 오면 풀려 칩이 돌아온다.
-  const reserving = isReservationStep(lastAssistant);
-  const reservationUi = reserving ? lastAssistant?.ui : undefined;
+  // 완료(예약 목록 보기 / 계속 상담하기)·취소 답이 오면 풀려 칩이 돌아온다. 보내기 실패 안내는 건너뛰어
+  // 직전 단계 선택지를 그대로 둔다 - 지난 선택지는 말풍선에 없어 다시 누를 길이 사라진다(2026-11-04 점검 🟡).
+  const stepSource = [...messages].reverse().find(message => message.role === 'assistant' && !message.failed);
+  const reserving = isReservationStep(stepSource);
+  const reservationUi = reserving ? stepSource?.ui : undefined;
   const showComposer = !isWardChat || !reserving || composerOpenedIn === sessionId;
   const suggested = latestSuggestions(messages);
   const quickTitle = waitingWards
@@ -255,6 +260,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           context,
           uiSelection: uiSelection ?? undefined,
         });
+        // 기다리는 사이 대화창이 바뀌었으면 버린다 - 이전 피보호자의 선택지가 새 피보호자 대화에 붙지 않게(점검 🟠).
+        if (sessionRef.current !== sessionId) return;
 
         setMessages(prev => [
           ...prev,
@@ -291,6 +298,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
         if (result.engine === 'fallback') setFallback(true);
       } catch (error) {
+        if (sessionRef.current !== sessionId) return;
         setMessages(prev => [
           ...prev,
           {
@@ -298,6 +306,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             role: 'assistant',
             content: getChatErrorMessage(error),
             timestamp: new Date().toISOString(),
+            failed: true,
           },
         ]);
       } finally {
@@ -323,6 +332,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     if (sendingRef.current || reservationTimerRef.current || waitingWards) return;
     setMessages(prev => [...prev, { id: makeId(), role: 'user', content: text, timestamp: new Date().toISOString() }]);
     reservationTimerRef.current = setTimeout(() => {
+      reservationTimerRef.current = null;
       router.push(path);
     }, RESERVATION_NAV_DELAY_MS);
   }
@@ -336,8 +346,15 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   }
 
   /** 새 대화창으로 처음부터 - 예약 초안은 대화창(sessionId)마다 AI가 들고 있어 함께 비워진다. */
+  /** 화면 이동 대기 중에 대화를 바꾸면 이동을 취소한다. */
+  function cancelPendingNavigation() {
+    if (reservationTimerRef.current) clearTimeout(reservationTimerRef.current);
+    reservationTimerRef.current = null;
+  }
+
   function restartConversation() {
     if (sendingRef.current) return;
+    cancelPendingNavigation();
     setSessionId(makeSessionId());
     setSentBySession({});
     setMessages([buildWelcomeMessage(isGuardian ? selectedWard?.partnerName : profile?.name, isGuardian)]);
@@ -347,6 +364,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
   function handleWardSelect(wardId: string) {
     if (wardId === selectedWard?.partnerUserId) return;
+    // 답을 기다리는 중에는 바꾸지 않는다 - 그 답은 지금 피보호자에 대한 것이다(점검 🟠).
+    if (sendingRef.current) return;
+    cancelPendingNavigation();
     const ward = activeWards.find(item => item.partnerUserId === wardId);
     setSelectedWardId(wardId);
     setSessionId(makeSessionId());
@@ -462,7 +482,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       >
         <p className={panelVariant === 'ward' ? styles.wardQuickTitle : styles.quickPromptTitle}>병원 예약 중이에요</p>
         <ChatUiPrompt
-          key={lastAssistantId}
+          key={stepSource?.id}
           ui={reservationUi}
           active
           onSelect={handleUiSelect}
