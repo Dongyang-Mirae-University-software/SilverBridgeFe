@@ -23,7 +23,25 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+}
+
+.progress {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.progress span {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #f4dccb;
+  transition: background 0.2s;
+}
+
+.progress span.active {
+  background: var(--sb-brand);
 }
 
 .title {
@@ -52,14 +70,10 @@
   flex-direction: column;
 }
 
-/* 한 화면에 들어가게 입력칸을 조금 낮춘다(48px → 44px) */
-.content input:not([type='radio']):not([type='hidden']) {
-  padding-top: 11px;
-  padding-bottom: 11px;
-}
+
 
 .footer {
-  margin-top: 14px;
+  margin-top: 16px;
   color: #8a7868;
   font-size: 0.8125rem;
   text-align: center;
@@ -83,12 +97,26 @@
   outline-offset: 3px;
 }
 
+
+/* 휴대폰: 한 화면에 들어가게 단계 표시·칸 사이를 조금 줄인다 */
 @media (max-width: 767px) {
   .header {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+  }
+
+  .progress {
+    margin-bottom: 16px;
   }
 
   .footer {
-    margin-top: 10px;
+    margin-top: 14px;
+  }
+
+  .content form {
+    gap: 12px;
+  }
+
+  .content [role='radiogroup'] label {
+    min-height: 60px;
   }
 }

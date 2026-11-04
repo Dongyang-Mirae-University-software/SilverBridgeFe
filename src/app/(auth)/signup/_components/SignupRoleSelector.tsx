@@ -15,8 +15,7 @@ interface SignupRoleSelectorProps {
 export default function SignupRoleSelector({ role, register }: SignupRoleSelectorProps) {
   return (
     <div className={cx('roleSection')}>
-      {/* 카드만 봐도 알 수 있어 글자는 화면 읽기 프로그램에만 둔다 */}
-      <span className={cx('srOnly')} id="signup-role-label">
+      <span className={cx('fieldLabel')} id="signup-role-label">
         가입 유형
       </span>
       <div className={cx('radioGroup')} role="radiogroup" aria-labelledby="signup-role-label">

@@ -3,8 +3,10 @@ import { useMutation } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import styles from './SignupForm.module.css';
-import SignupBasicInfoStep from './SignupBasicInfoStep';
+import SignupAccountStep from './SignupAccountStep';
+import SignupProfileStep from './SignupProfileStep';
 import SignupPhoneVerificationStep from './SignupPhoneVerificationStep';
+import { SignupStepKey } from './signupSteps';
 import { CommonModal } from '@/components/CommonModal';
 import useSignupForm, { type KakaoSignupData } from '@/hooks/useSignupForm';
 import { getPhoneDigits } from '@/utils/format/phone';
@@ -15,8 +17,9 @@ import { signupEmailCheck, signupSmsSend, signupSmsVerify } from '@/service/api/
 const cx = classNames.bind(styles);
 
 interface Props {
-  step: number;
-  onStepChange: (step: number) => void;
+  step: SignupStepKey;
+  onNext: () => void;
+  onPrev: () => void;
   kakaoData?: KakaoSignupData;
   returnTo?: string;
 }
@@ -29,7 +32,7 @@ function getVerificationNonce(response: unknown) {
   return typeof result.verificationNonce === 'string' ? result.verificationNonce : '';
 }
 
-export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: Props) {
+export default function SignupForm({ step, onNext, onPrev, kakaoData, returnTo }: Props) {
   const {
     register,
     onSubmit,
@@ -170,29 +173,26 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
   const emailErrorText = emailError
     ? (errors.email?.message ?? (emailCheckErrorMsg || '이메일이 중복되었습니다.'))
     : undefined;
-  const isStepOneValid =
+  const isAccountValid =
+    isKakaoSignup ||
+    (isEmailVerified &&
+      allValues.password.trim().length > 0 &&
+      allValues.passwordCheck.trim().length > 0 &&
+      !errors.email &&
+      !errors.password &&
+      !errors.passwordCheck);
+  const isProfileValid =
     allValues.name.trim().length >= 2 &&
-    allValues.email.trim().length > 0 &&
-    (isKakaoSignup || isEmailVerified) &&
-    (isKakaoSignup || allValues.password.trim().length > 0) &&
-    (isKakaoSignup || allValues.passwordCheck.trim().length > 0) &&
     allValues.birthDate.trim().length > 0 &&
     allValues.gender.trim().length > 0 &&
     allValues.postcode.trim().length > 0 &&
     allValues.address.trim().length > 0 &&
     allValues.addressDetail.trim().length > 0 &&
-    !errors.email &&
-    (isKakaoSignup || !errors.password) &&
-    (isKakaoSignup || !errors.passwordCheck) &&
     !errors.name &&
     !errors.gender &&
     !errors.birthDate &&
     !errors.postcode &&
     !errors.address;
-
-  const handleNextStep = () => {
-    if (isStepOneValid) onStepChange(2);
-  };
 
   const handleSignupSubmit = (event: FormEvent<HTMLFormElement>) => {
     if (!isKakaoSignup && !isEmailVerified) {
@@ -223,25 +223,30 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
   return (
     <>
       <form method="post" className={cx('container')} onSubmit={handleSignupSubmit}>
-        {step === 1 && (
-          <SignupBasicInfoStep
+        {step === 'account' && (
+          <SignupAccountStep
             allValues={allValues}
             errors={errors}
             emailError={Boolean(emailError)}
             emailErrorText={emailErrorText}
-            isStepOneValid={isStepOneValid}
-            isKakaoSignup={isKakaoSignup}
+            isValid={isAccountValid}
+            register={register}
+            emailField={register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
+            passwordField={register('password', passwordRules('비밀번호 형식이 올바르지 않습니다.'))}
+            passwordCheckField={register('passwordCheck', passwordCheckRules('비밀번호가 일치하지 않습니다.'))}
+            onEmailCheck={handleEmailCheck}
+            onNext={() => isAccountValid && onNext()}
+          />
+        )}
+
+        {step === 'profile' && (
+          <SignupProfileStep
+            allValues={allValues}
+            errors={errors}
+            isValid={isProfileValid}
+            showRoleSelector={isKakaoSignup}
             register={register}
             nameField={register('name', textRules('이름을 입력하세요.', 2))}
-            emailField={register('email', emailRules('이메일 형식이 올바르지 않습니다.'))}
-            passwordField={register(
-              'password',
-              isKakaoSignup ? undefined : passwordRules('비밀번호 형식이 올바르지 않습니다.'),
-            )}
-            passwordCheckField={register(
-              'passwordCheck',
-              isKakaoSignup ? undefined : passwordCheckRules('비밀번호가 일치하지 않습니다.'),
-            )}
             genderField={register('gender', { required: '성별을 선택하세요.' })}
             birthDateValue={allValues.birthDate}
             onBirthDateChange={value => setValue('birthDate', value, { shouldDirty: true, shouldValidate: true })}
@@ -249,12 +254,12 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
             addressField={register('address', textRules('주소를 입력하세요.', 1))}
             addressDetailField={register('addressDetail', textRules('상세주소를 입력하세요.', 1))}
             onAddressSearch={handleAddressSearch}
-            onEmailCheck={handleEmailCheck}
-            onNextStep={handleNextStep}
+            onNext={() => isProfileValid && onNext()}
+            onPrev={isKakaoSignup ? undefined : onPrev}
           />
         )}
 
-        {step === 2 && (
+        {step === 'phone' && (
           <SignupPhoneVerificationStep
             allValues={allValues}
             errors={errors}
@@ -272,7 +277,7 @@ export default function SignupForm({ step, onStepChange, kakaoData, returnTo }: 
             onPhoneChange={handlePhoneChange}
             onPhoneCheck={handlePhoneCheck}
             onPhoneReset={handlePhoneReset}
-            onPrevStep={() => onStepChange(1)}
+            onPrevStep={onPrev}
             onSmsVerify={handleSmsVerify}
           />
         )}

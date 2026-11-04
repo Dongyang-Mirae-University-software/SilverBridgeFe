@@ -1,7 +1,7 @@
 import { FieldErrors, UseFormRegister, UseFormRegisterReturn } from 'react-hook-form';
 import classNames from 'classnames/bind';
 
-import styles from './SignupBasicInfoStep.module.css';
+import styles from './SignupInfoStep.module.css';
 import SignupRoleSelector from './SignupRoleSelector';
 import TextInput from '@/components/TextInput';
 import { SignupFormValues } from '@/hooks/useSignupForm';
@@ -10,18 +10,14 @@ import { BirthDateSelects } from '@/components/BirthDateSelects';
 const cx = classNames.bind(styles);
 
 
-interface SignupBasicInfoStepProps {
+interface SignupProfileStepProps {
   allValues: SignupFormValues;
   errors: FieldErrors<SignupFormValues>;
-  emailError: boolean;
-  emailErrorText?: string;
-  isStepOneValid: boolean;
-  isKakaoSignup?: boolean;
+  isValid: boolean;
+  // 카카오 가입은 '계정' 단계가 없어 가입 유형을 여기서 고른다
+  showRoleSelector?: boolean;
   register: UseFormRegister<SignupFormValues>;
   nameField: UseFormRegisterReturn;
-  emailField: UseFormRegisterReturn;
-  passwordField: UseFormRegisterReturn;
-  passwordCheckField: UseFormRegisterReturn;
   genderField: UseFormRegisterReturn;
   addressField: UseFormRegisterReturn;
   addressDetailField: UseFormRegisterReturn;
@@ -29,22 +25,18 @@ interface SignupBasicInfoStepProps {
   onBirthDateChange: (value: string) => void;
   postcodeField: UseFormRegisterReturn;
   onAddressSearch: () => void;
-  onEmailCheck: () => void;
-  onNextStep: () => void;
+  onNext: () => void;
+  onPrev?: () => void;
 }
 
-export default function SignupBasicInfoStep({
+// 2단계(내 정보): 이름 · 성별·생년월일 · 주소 · 상세주소
+export default function SignupProfileStep({
   allValues,
   errors,
-  emailError,
-  emailErrorText,
-  isStepOneValid,
-  isKakaoSignup = false,
+  isValid,
+  showRoleSelector = false,
   register,
   nameField,
-  emailField,
-  passwordField,
-  passwordCheckField,
   genderField,
   addressField,
   addressDetailField,
@@ -52,59 +44,22 @@ export default function SignupBasicInfoStep({
   onBirthDateChange,
   postcodeField,
   onAddressSearch,
-  onEmailCheck,
-  onNextStep,
-}: SignupBasicInfoStepProps) {
+  onNext,
+  onPrev,
+}: SignupProfileStepProps) {
   return (
     <>
-      <SignupRoleSelector role={allValues.role} register={register} />
-      <div className={cx('pair', 'stackOnMobile')}>
-        <TextInput
-          variant="auth"
-          label="이름"
-          placeholder="홍길동"
-          required
-          {...nameField}
-          error={Boolean(errors.name && allValues.name && allValues.name.trim() !== '')}
-          errorText={errors.name?.message}
-        />
-        <TextInput
-          variant="auth"
-          label="이메일"
-          placeholder="example@email.com"
-          required
-          {...emailField}
-          disabled={isKakaoSignup}
-          readOnly={isKakaoSignup}
-          onBlur={isKakaoSignup ? undefined : onEmailCheck}
-          error={isKakaoSignup ? false : emailError}
-          errorText={isKakaoSignup ? undefined : emailErrorText}
-        />
-      </div>
-      {!isKakaoSignup && (
-        <div className={cx('pair')}>
-          <TextInput
-            variant="auth"
-            label="비밀번호"
-            placeholder="8자 이상"
-            required
-            type="password"
-            {...passwordField}
-            error={Boolean(errors.password && allValues.password && allValues.password.trim() !== '')}
-            errorText={errors.password?.message}
-          />
-          <TextInput
-            variant="auth"
-            label="비밀번호 확인"
-            placeholder="다시 입력"
-            required
-            type="password"
-            {...passwordCheckField}
-            error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
-            errorText={errors.passwordCheck?.message}
-          />
-        </div>
-      )}
+      {showRoleSelector && <SignupRoleSelector role={allValues.role} register={register} />}
+      <TextInput
+        variant="auth"
+        label="이름"
+        placeholder="홍길동"
+        required
+        autoComplete="name"
+        {...nameField}
+        error={Boolean(errors.name && allValues.name && allValues.name.trim() !== '')}
+        errorText={errors.name?.message}
+      />
       <div className={cx('fieldGroup')}>
         <label className={cx('selectField')}>
           <span className={cx('selectLabel')}>
@@ -158,9 +113,16 @@ export default function SignupBasicInfoStep({
         error={Boolean(errors.addressDetail && allValues.addressDetail && allValues.addressDetail.trim() !== '')}
         errorText={errors.addressDetail?.message}
       />
-      <button className={cx('button')} disabled={!isStepOneValid} type="button" onClick={onNextStep}>
-        다음
-      </button>
+      <div className={cx('stepActions')}>
+        {onPrev && (
+          <button className={cx('prevButton')} type="button" onClick={onPrev}>
+            이전
+          </button>
+        )}
+        <button className={cx('button')} disabled={!isValid} type="button" onClick={onNext}>
+          다음
+        </button>
+      </div>
     </>
   );
 }

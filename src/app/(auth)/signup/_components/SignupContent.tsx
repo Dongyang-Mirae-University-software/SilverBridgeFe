@@ -7,6 +7,7 @@ import classNames from 'classnames/bind';
 import { Icon } from '@/components/Icon';
 import styles from './SignupContent.module.css';
 import SignupForm from './SignupForm';
+import { SIGNUP_STEP_LABEL, getSignupSteps } from './signupSteps';
 import { getSafeReturnPath } from '@/lib/auth/returnPath';
 
 const cx = classNames.bind(styles);
@@ -38,7 +39,8 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
         profileImageUrl: profileImageUrl || undefined,
       }
     : undefined;
-  const currentStep = signupStep;
+  const steps = getSignupSteps(isKakao);
+  const stepKey = steps[signupStep - 1] ?? steps[0];
 
   const handleBack = () => {
     if (signupStep > 1) {
@@ -62,11 +64,22 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
         </button>
         <h1 className={cx('title')}>회원가입</h1>
         <p className={cx('stepLabel')}>
-          <b>{currentStep}</b> / 2 · {currentStep === 1 ? '기본 정보' : '전화번호 인증'}
+          <b>{signupStep}</b> / {steps.length} · {SIGNUP_STEP_LABEL[stepKey]}
         </p>
       </div>
+      <div className={cx('progress')} aria-hidden="true">
+        {steps.map((key, index) => (
+          <span key={key} className={cx({ active: index < signupStep })} />
+        ))}
+      </div>
       <div className={cx('content')}>
-        <SignupForm step={signupStep} onStepChange={setSignupStep} kakaoData={kakaoData} returnTo={returnTo ?? undefined} />
+        <SignupForm
+          step={stepKey}
+          onNext={() => setSignupStep(step => Math.min(step + 1, steps.length))}
+          onPrev={() => setSignupStep(step => Math.max(step - 1, 1))}
+          kakaoData={kakaoData}
+          returnTo={returnTo ?? undefined}
+        />
       </div>
 
       <div className={cx('footer')}>

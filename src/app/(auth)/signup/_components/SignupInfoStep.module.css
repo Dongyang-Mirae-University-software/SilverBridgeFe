@@ -1,12 +1,7 @@
-.pair,
 .fieldGroup {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.fieldGroup {
   grid-template-columns: 1fr 2fr;
+  gap: 10px;
 }
 
 .birthDateField {
@@ -38,7 +33,7 @@
 
 .selectBox {
   display: flex;
-  min-height: 44px;
+  min-height: 48px;
   align-items: center;
   border: 1.5px solid #f0d2bc;
   border-radius: 12px;
@@ -61,11 +56,6 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.birthDateField .birthDateSelects select {
-  min-height: 44px;
-  padding: 0 10px;
-}
-
 .birthDateError {
   color: #c94f35;
   font-size: 0.75rem;
@@ -81,14 +71,14 @@
 
 .addressSearchRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 96px;
+  grid-template-columns: minmax(0, 1fr) 104px;
   align-items: flex-start;
   gap: 8px;
 }
 
 .addressSearchButton {
-  min-height: 44px;
-  margin-top: 24px;
+  min-height: 48px;
+  margin-top: 25px;
   border: 1.5px solid #f0d2bc;
   border-radius: 12px;
   background: var(--sb-brand-50);
@@ -100,14 +90,14 @@
 }
 
 .button {
-  min-height: 46px;
+  min-height: 48px;
   border-radius: 12px;
   border: none;
   font-size: 0.9375rem;
   font-weight: 700;
   cursor: pointer;
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background: var(--sb-brand);
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(176, 103, 77, 0.22);
@@ -118,10 +108,31 @@
   cursor: not-allowed;
 }
 
-/* 좁은 화면: 이름·이메일만 한 줄씩. 비밀번호 둘·성별+생년월일·주소+검색은 그대로 한 줄에 둔다 */
+.stepActions {
+  display: flex;
+  gap: 10px;
+}
+
+.stepActions .button {
+  flex: 1;
+}
+
+.prevButton {
+  min-height: 48px;
+  flex: 0 0 90px;
+  border: 1.5px solid #f0d2bc;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #5c4d3f;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+/* 좁은 화면에서도 성별+생년월일·주소+검색은 한 줄에 둔다 */
 @media (max-width: 560px) {
-  .stackOnMobile {
-    grid-template-columns: 1fr;
+  .birthDateField .birthDateSelects select {
+    padding: 0 10px;
   }
 
   .fieldGroup {

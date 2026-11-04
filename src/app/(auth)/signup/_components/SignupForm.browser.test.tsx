@@ -1,4 +1,4 @@
-// 회원가입 1단계 이메일 중복 확인 - 실제 Chrome에서 돈다(`npm run test:browser`)
+// 회원가입 1단계(계정) 이메일 중복 확인 - 실제 Chrome에서 돈다(`npm run test:browser`)
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
@@ -27,7 +27,7 @@ function renderSignup() {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <SignupForm step={1} onStepChange={vi.fn()} />
+      <SignupForm step="account" onNext={vi.fn()} onPrev={vi.fn()} />
     </QueryClientProvider>,
   );
 }
@@ -48,7 +48,7 @@ describe('회원가입 이메일 중복 확인 (Chrome)', () => {
     await renderSignup();
 
     await userEvent.fill(emailInput(), 'taken@test.com');
-    await userEvent.click(page.getByLabelText('이름'));
+    await userEvent.click(page.getByLabelText('비밀번호', { exact: true }));
     await expect.element(page.getByText('이미 가입된 이메일입니다.')).toBeInTheDocument();
 
     await userEvent.fill(emailInput(), 'taken@test.co');
@@ -60,7 +60,7 @@ describe('회원가입 이메일 중복 확인 (Chrome)', () => {
     await renderSignup();
 
     await userEvent.fill(emailInput(), 'new@test.com');
-    await userEvent.click(page.getByLabelText('이름'));
+    await userEvent.click(page.getByLabelText('비밀번호', { exact: true }));
     await vi.waitFor(() => expect(api.signupEmailCheck).toHaveBeenCalledTimes(1));
 
     await userEvent.fill(emailInput(), 'new2@test.com');
@@ -71,7 +71,7 @@ describe('회원가입 이메일 중복 확인 (Chrome)', () => {
     await renderSignup();
 
     await userEvent.fill(emailInput(), 'not-an-email');
-    await userEvent.click(page.getByLabelText('이름'));
+    await userEvent.click(page.getByLabelText('비밀번호', { exact: true }));
     await expect.element(page.getByText('이메일 형식이 올바르지 않습니다.')).toBeInTheDocument();
     expect(api.signupEmailCheck).not.toHaveBeenCalled();
   });
