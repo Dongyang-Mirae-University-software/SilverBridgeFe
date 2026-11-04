@@ -5,9 +5,10 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Pagination } from '@/components/Pagination';
-import { AdminChatStats } from '@/service/interface/admin/aiStats';
+import { AdminChatStats, AdminCompanionStats } from '@/service/interface/admin/aiStats';
 import { AdminAnomalyItem, AdminAnomalyPage, AdminAnomalyPeriod, AdminAnomalyReviewStatus, AdminAnomalySummary, AdminAnomalyType } from '@/service/interface/admin/anomaly';
-import { adminAnomalyListQueryOptions, adminAnomalySummaryQueryOptions, adminChatStatsQueryOptions } from '@/service/query/admin';
+import { adminAnomalyListQueryOptions, adminAnomalySummaryQueryOptions, adminChatStatsQueryOptions, adminCompanionStatsQueryOptions } from '@/service/query/admin';
+import { COMPANION_MOOD_ROWS, CONTINUING_MOOD_LABEL, formatLastDialogue } from '@/utils/admin/companion';
 import styles from './AdminAiStatsContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -29,7 +30,7 @@ function getChatRange(kind: 'TODAY' | 'WEEK' | 'MONTH' | 'WEEK_7') { const today
 function isChatRangeValid(from: string, to: string) { if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) return false; return (new Date(`${to}T00:00:00Z`).getTime() - new Date(`${from}T00:00:00Z`).getTime()) / 86_400_000 <= 30; }
 
 export function AdminAiStatsContent() {
-  const [tab, setTab] = useState<'detect' | 'chat'>('detect');
+  const [tab, setTab] = useState<'detect' | 'chat' | 'talk'>('detect');
   const [period, setPeriod] = useState<AdminAnomalyPeriod>('TODAY');
   const [type, setType] = useState<TypeTab>('ALL');
   const [status, setStatus] = useState<StatusTab>('ALL');
@@ -44,12 +45,13 @@ export function AdminAiStatsContent() {
   const typeSummaries = useQueries({ queries: RATE_TYPES.map(rateType => adminAnomalySummaryQueryOptions({ period, type: rateType, keyword: normalizedKeyword })) });
   const chatRangeValid = isChatRangeValid(chatRange.from, chatRange.to);
   const chat = useQuery({ ...adminChatStatsQueryOptions(chatRange), enabled: tab === 'chat' && chatRangeValid });
+  const companion = useQuery({ ...adminCompanionStatsQueryOptions, enabled: tab === 'talk' });
   const chatErrorCode = (chat.error as { response?: { data?: { code?: string } } } | null)?.response?.data?.code;
   const reset = () => { setPage(0); setSelected(null); };
 
   return <section className={cx('page')}>
-    <header className={cx('pageHead')}><h1>AI 통계</h1><div className={cx('aiTabs')} role="tablist" aria-label="AI 통계 종류"><button className={cx({ active: tab === 'detect' })} type="button" role="tab" aria-selected={tab === 'detect'} onClick={() => setTab('detect')}>AI 이상감지</button><button className={cx({ active: tab === 'chat' })} type="button" role="tab" aria-selected={tab === 'chat'} onClick={() => setTab('chat')}>AI 의료 챗봇</button><button type="button" disabled role="tab" aria-selected={false}>AI 안부 말벗 · 정서 분석</button></div></header>
-    {tab === 'detect' ? <DetectionStats summary={summary.data} records={records.data} typeSummaries={typeSummaries.map(query => query.data)} isLoading={summary.isLoading || records.isLoading} isError={summary.isError || records.isError} isFetching={records.isFetching} period={period} type={type} status={status} keyword={keyword} onPeriod={value => { setPeriod(value); reset(); }} onType={value => { setType(value); reset(); }} onStatus={value => { setStatus(value); reset(); }} onKeyword={value => { setKeyword(value); reset(); }} onPage={setPage} onSelect={setSelected} onRetry={() => { void summary.refetch(); void records.refetch(); typeSummaries.forEach(query => { void query.refetch(); }); }} /> : <ChatStats data={chat.data} isLoading={chat.isLoading} isError={chat.isError} errorCode={chatErrorCode} range={chatRange} rangeValid={chatRangeValid} onRange={setChatRange} onRetry={() => void chat.refetch()} />}
+    <header className={cx('pageHead')}><h1>AI 통계</h1><div className={cx('aiTabs')} role="tablist" aria-label="AI 통계 종류"><button className={cx({ active: tab === 'detect' })} type="button" role="tab" aria-selected={tab === 'detect'} onClick={() => setTab('detect')}>AI 이상감지</button><button className={cx({ active: tab === 'chat' })} type="button" role="tab" aria-selected={tab === 'chat'} onClick={() => setTab('chat')}>AI 의료 챗봇</button><button className={cx({ active: tab === 'talk' })} type="button" role="tab" aria-selected={tab === 'talk'} onClick={() => setTab('talk')}>AI 안부 말벗 · 정서 분석</button></div></header>
+    {tab === 'detect' ? <DetectionStats summary={summary.data} records={records.data} typeSummaries={typeSummaries.map(query => query.data)} isLoading={summary.isLoading || records.isLoading} isError={summary.isError || records.isError} isFetching={records.isFetching} period={period} type={type} status={status} keyword={keyword} onPeriod={value => { setPeriod(value); reset(); }} onType={value => { setType(value); reset(); }} onStatus={value => { setStatus(value); reset(); }} onKeyword={value => { setKeyword(value); reset(); }} onPage={setPage} onSelect={setSelected} onRetry={() => { void summary.refetch(); void records.refetch(); typeSummaries.forEach(query => { void query.refetch(); }); }} /> : tab === 'talk' ? <CompanionStats data={companion.data} isLoading={companion.isLoading} isError={companion.isError} onRetry={() => void companion.refetch()} /> : <ChatStats data={chat.data} isLoading={chat.isLoading} isError={chat.isError} errorCode={chatErrorCode} range={chatRange} rangeValid={chatRangeValid} onRange={setChatRange} onRetry={() => void chat.refetch()} />}
     {selected && <AnomalyDetailModal item={selected} onClose={() => setSelected(null)} />}
   </section>;
 }
@@ -81,6 +83,23 @@ function ChatStats({ data, isLoading, isError, errorCode, range, rangeValid, onR
   if (isError || !data) return <>{rangeControls}<Notice retry={onRetry}>{errorCode === 'AI_STATS_TIMEOUT' ? 'AI 응답이 늦습니다. 잠시 후 다시 시도해 주세요.' : errorCode === 'AI_STATS_UNAVAILABLE' ? 'AI 통계를 지금 불러올 수 없습니다.' : 'AI 통계를 불러오는 중 문제가 발생했습니다.'}</Notice></>;
   const cards: Array<{ label: string; value: number | null; tone?: 'brand' | 'warn' | 'care' }> = [{ label: '기간 내 대화', value: data.totalChats }, { label: '쓴 사람', value: data.users }, { label: '예약 완료', value: data.reservationCompleted, tone: 'brand' }, { label: '119 안내', value: data.emergencyGuidance, tone: 'warn' }, { label: '기본 안내로 대신 답한 상담', value: data.fallbackReplies, tone: 'care' }];
   return <>{rangeControls}<section className={cx('statNums')} aria-label="AI 의료 챗봇 집계">{cards.map(card => <div key={card.label}><span>{card.label}</span><strong className={cx(card.tone)}>{formatCount(card.value)}</strong></div>)}</section><div className={cx('chatGrid')}><DataCard title="상담 사용자 역할" note="기간 내 상담 수"><DataRows rows={[['보호자', data.byRole.guardian, 'brand'], ['피보호자', data.byRole.ward, 'safe'], ['역할 모름', data.byRole.unknown, 'mute']]} /></DataCard><DataCard title="상담 경로" note="AI가 분류한 상담 목적"><DataRows rows={[['병원 예약', data.byRoute.reservation, 'brand'], ['증상 상담', data.byRoute.symptom, 'sun'], ['일반 상담', data.byRoute.general, 'safe'], ['분류 미확인', data.byRoute.unknown, 'mute']]} /></DataCard></div><section className={cx('chartCard')}><DataCard title="일별 상담 수" note={`${data.from} - ${data.to}`}><DailyChart daily={data.daily} /></DataCard></section><section className={cx('chatNotice')}><p>응급 안내 수는 고위험 판정 기준입니다. 역할 “모름”은 역할이 기록되지 않은 예전 상담이며, 시험 계정 상담도 포함됩니다.</p><p>탈퇴한 회원의 상담은 집계에서 빠져 과거 기간의 숫자가 바뀔 수 있습니다. 기준 시각 {formatDateTime(data.generatedAt)} · 같은 기간은 60초 동안 같은 결과를 제공합니다.</p></section></>;
+}
+function CompanionStats({ data, isLoading, isError, onRetry }: { data: AdminCompanionStats | null | undefined; isLoading: boolean; isError: boolean; onRetry: () => void }) {
+  if (isLoading) return <Notice>AI 안부 말벗 통계를 불러오는 중입니다.</Notice>;
+  if (isError || !data) return <Notice retry={onRetry}>AI 안부 말벗 통계를 불러오지 못했습니다.</Notice>;
+  const people = (value: number) => `${value.toLocaleString('ko-KR')}명`;
+  const cards: Array<{ label: string; value: string; tone?: 'brand' | 'care' }> = [{ label: '오늘 안부 질문', value: `${data.askedCount.toLocaleString('ko-KR')}번` }, { label: '어르신 응답률', value: data.responseRate === null ? '-' : `${data.responseRate}%`, tone: 'brand' }, { label: '오늘 대화 없는 어르신', value: people(data.noDialogueWardCount), tone: 'care' }, { label: '기분 변화 알림 보냄', value: formatCount(data.alertSentCount) }];
+  const mood = data.moodDistribution;
+  const moodTotal = COMPANION_MOOD_ROWS.reduce((sum, row) => sum + mood[row.key], 0);
+  return <>
+    <section className={cx('statNums', 'four')} aria-label="AI 안부 말벗 집계">{cards.map(card => <div key={card.label}><span>{card.label}</span><strong className={cx(card.tone)}>{card.value}</strong></div>)}</section>
+    <section className={cx('dataCard', 'moodCard')} aria-labelledby="companion-mood-title"><header><b id="companion-mood-title">오늘 기분 분포</b><small>마지막 대화 기준 · {people(mood.wardCount)}</small></header>{moodTotal === 0 ? <div className={cx('moodEmpty')}>오늘 마친 대화가 아직 없습니다.</div> : <div className={cx('moodBar')} role="img" aria-label={COMPANION_MOOD_ROWS.map(row => `${row.label} ${mood[row.key]}명`).join(', ')}>{COMPANION_MOOD_ROWS.filter(row => mood[row.key] > 0).map(row => <i key={row.key} className={cx(row.tone)} style={{ width: `${mood[row.key] / moodTotal * 100}%` }} />)}</div>}<p className={cx('moodLegend')}>{COMPANION_MOOD_ROWS.map(row => <span key={row.key}><i className={cx(row.tone)} />{row.label} {people(mood[row.key])}</span>)}{mood.unknown > 0 && <span className={cx('moodUnknown')}>확인할 수 없음 {people(mood.unknown)}</span>}</p></section>
+    <div className={cx('chatGrid')}>
+      <DataCard title="걱정·우울이 이어지는 어르신" note="3일 넘게 이어짐">{data.continuingWards.length === 0 ? <div className={cx('listEmpty')}>이어지는 어르신이 없습니다.</div> : <div className={cx('dataRows', 'wardRows')}>{data.continuingWards.map(ward => <div key={ward.wardId}><span>{ward.name ?? '탈퇴한 회원'}</span><strong className={cx(ward.mood === 'WORRY' ? 'sun' : 'mute')}>{CONTINUING_MOOD_LABEL[ward.mood]}</strong><small>{ward.days}일째</small></div>)}</div>}</DataCard>
+      <DataCard title="오늘 대화가 없는 어르신" note="안부 질문에 답 없음">{data.noDialogueWards.length === 0 ? <div className={cx('listEmpty')}>대화가 없는 어르신이 없습니다.</div> : <div className={cx('dataRows')}>{data.noDialogueWards.map(ward => <div key={ward.wardId}><span>{ward.name ?? '탈퇴한 회원'}</span><small>{formatLastDialogue(ward.lastDialogueAt)}</small></div>)}</div>}</DataCard>
+    </div>
+    <section className={cx('chatNotice')}><p>하루 기분은 그날 마지막으로 판정된 대화의 기분입니다. 걱정·우울이 섞여도 이어진 것으로 세며, 대화가 없는 날은 이어짐이 끊깁니다. 시험 계정 대화도 포함됩니다.</p><p>기준 시각 {formatDateTime(data.generatedAt)}</p></section>
+  </>;
 }
 function DataCard({ title, note, children }: { title: string; note: string; children: ReactNode }) { return <section className={cx('dataCard')}><header><b>{title}</b><small>{note}</small></header>{children}</section>; }
 function DataRows({ rows }: { rows: Array<[string, number | null, 'brand' | 'safe' | 'sun' | 'mute']> }) { return <div className={cx('dataRows')}>{rows.map(([label, value, tone]) => <div key={label}><span>{label}</span><strong className={cx(tone)}>{formatCount(value)}</strong></div>)}</div>; }

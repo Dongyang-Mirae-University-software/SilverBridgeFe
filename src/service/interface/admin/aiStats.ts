@@ -28,3 +28,39 @@ export interface AdminChatStats {
   }>;
   generatedAt: string;
 }
+
+// GET /api/admin/ai-stats/companion - 오늘(KST) 안부 말벗 집계. 대화 원문·요약은 없다
+// null은 모르는 값이라 0으로 채우지 않는다(보낸 질문이 없으면 responseRate null)
+export interface AdminCompanionMoodDistribution {
+  wardCount: number; // 오늘 마친 대화가 있는 어르신 수
+  joy: number;
+  calm: number;
+  worry: number;
+  depressed: number;
+  unknown: number; // 판단할 수 없음 - 막대에 넣지 않는다
+}
+
+export interface AdminCompanionContinuingWard {
+  wardId: string;
+  name: string | null; // 탈퇴 등으로 못 찾으면 null
+  mood: 'WORRY' | 'DEPRESSED';
+  days: number;
+}
+
+export interface AdminCompanionNoDialogueWard {
+  wardId: string;
+  name: string | null;
+  lastDialogueAt: string | null; // 한 번도 대답한 적 없으면 null
+}
+
+export interface AdminCompanionStats {
+  date: string;
+  askedCount: number;
+  responseRate: number | null; // 정수 %
+  noDialogueWardCount: number;
+  alertSentCount: number;
+  moodDistribution: AdminCompanionMoodDistribution;
+  continuingWards: AdminCompanionContinuingWard[]; // 며칠째 많은 순
+  noDialogueWards: AdminCompanionNoDialogueWard[]; // 오래전에 대답한 어르신부터
+  generatedAt: string;
+}
