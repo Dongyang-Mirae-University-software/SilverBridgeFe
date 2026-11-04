@@ -177,6 +177,22 @@ function LogoutButton() {
   );
 }
 
+describe('로그아웃 (Chrome)', () => {
+  it('서버 응답을 기다리지 않고 바로 세션을 지우고 로그인 화면으로 보낸다', async () => {
+    const access = validAccess();
+    setAuthTokens({ accessToken: access, refreshToken: 'r1' });
+    mocks.logout.mockReturnValue(new Promise(() => {}));
+    await render(withClient(<LogoutButton />));
+
+    await userEvent.click(page.getByRole('button', { name: '로그아웃' }));
+
+    await vi.waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/login'));
+    expect(document.cookie).not.toContain('careai_access_token=');
+    // 지우기 전에 꺼내 둔 토큰으로 서버 로그아웃을 뒤에서 보낸다
+    await vi.waitFor(() => expect(mocks.logout).toHaveBeenCalledWith(access));
+  });
+});
+
 describe('세션을 끝낸 뒤 /login (Chrome)', () => {
   it('로그아웃 직후 /login은 폼을 보이고 홈으로 튕기지 않는다', async () => {
     setAuthTokens({ accessToken: validAccess(), refreshToken: 'r1' });

@@ -2,7 +2,7 @@
 // Swagger 그룹: "공통 - 인증" (/api/auth/**)
 // signin/signup 계열은 토큰 없이 호출 가능, logout/refresh는 토큰 필요
 
-import { apiClient } from '@/lib/api/apiClient';
+import { apiClient, sendWithEndedSession } from '@/lib/api/apiClient';
 import { CommonResponse } from '../../interface/common';
 import {
   IFindEmailReq,
@@ -36,8 +36,9 @@ export async function signinKakao(body: IKakaoSigninReq) {
   return apiClient.post<CommonResponse<IKakaoSigninRes['data']>>(`${BASE}/signin/kakao`, body);
 }
 
-export async function logout() {
-  return apiClient.post<CommonResponse<null>>(`${BASE}/logout`);
+// 로그아웃은 이 기기의 세션을 먼저 지운 뒤 보낸다 - 지우기 전에 꺼내 둔 access 토큰을 받는다
+export async function logout(accessToken: string) {
+  return sendWithEndedSession<CommonResponse<null>>(accessToken, { method: 'post', url: `${BASE}/logout` });
 }
 
 export async function refresh(body: IRefreshReq) {

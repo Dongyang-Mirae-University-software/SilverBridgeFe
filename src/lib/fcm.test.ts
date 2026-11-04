@@ -45,7 +45,7 @@ beforeEach(() => {
 
 async function unregister() {
   const { unregisterFcmTokenForCurrentDevice } = await import('./fcm');
-  return unregisterFcmTokenForCurrentDevice();
+  return unregisterFcmTokenForCurrentDevice('access-1');
 }
 
 async function register() {
@@ -92,7 +92,7 @@ describe('로그아웃 토큰 해제', () => {
 
     await unregister();
 
-    expect(deleteToken).toHaveBeenCalledWith('token-1');
+    expect(deleteToken).toHaveBeenCalledWith('token-1', 'access-1');
     expect(local.getItem('careai_fcm_last_token')).toBeNull();
   });
 

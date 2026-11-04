@@ -2,7 +2,7 @@
 // Swagger 그룹: "공통 - 알림 설정" (/api/user/me/notification-settings, /api/notifications/fcm-token)
 // SOS 등 필수 알림은 이 설정과 무관하게 항상 발송됨
 
-import { apiClient } from '@/lib/api/apiClient';
+import { apiClient, sendWithEndedSession } from '@/lib/api/apiClient';
 import { CommonResponse } from '../../interface/common';
 import { IFcmTokenReq } from '../../interface/user/notification';
 import { IUserNotificationSettingsResponse, IUserNotificationSettingsUpdateReq } from '../../interface/user/user';
@@ -28,8 +28,16 @@ export async function registerNotificationFcmToken(body: IFcmTokenReq) {
   return apiClient.post<CommonResponse<null>>(`${NOTIFICATIONS_BASE}/fcm-token`, body);
 }
 
-// FCM 토큰 삭제 (로그아웃 시)
-export async function deleteNotificationFcmToken(token: string) {
+// FCM 토큰 삭제 (로그아웃 시). 세션을 지운 뒤 부르면 지우기 전에 꺼내 둔 access 토큰을 넘긴다
+export async function deleteNotificationFcmToken(token: string, endedSessionAccessToken?: string) {
+  if (endedSessionAccessToken) {
+    return sendWithEndedSession<CommonResponse<null>>(endedSessionAccessToken, {
+      method: 'delete',
+      url: `${NOTIFICATIONS_BASE}/fcm-token`,
+      params: { token },
+    });
+  }
+
   return apiClient.delete<CommonResponse<null>>(`${NOTIFICATIONS_BASE}/fcm-token`, {
     params: { token },
   });

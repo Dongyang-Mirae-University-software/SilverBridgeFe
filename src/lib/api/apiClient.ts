@@ -5,7 +5,7 @@
 // 서비스나 훅에서 이걸 import해서 apiClient.get(...) 형태로 쓰면 됨
 // ─────────────────────────────────────────────
 
-import axios, { AxiosError, AxiosHeaders, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosHeaders, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { resolveError, ServerErrorBody } from './errorHandler';
 import { CommonResponse } from '@/service/interface/common';
 import { IAuthTokenResponse } from '@/service/interface/auth/auth';
@@ -39,6 +39,21 @@ const refreshClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// 로그아웃 뒤 서버 정리(로그아웃·푸시 토큰 삭제) 전용. 이미 지운 세션의 토큰을 직접 싣고 보낸다.
+// 인터셉터를 거치지 않아 401이 나도 그 사이 새로 로그인한 세션을 지우거나 로그인 화면으로 보내지 않는다
+const detachedClient = axios.create({
+  baseURL: '/api',
+  timeout: 10_000,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export function sendWithEndedSession<T>(accessToken: string, config: Omit<AxiosRequestConfig, 'headers'>) {
+  return detachedClient.request<T>({ ...config, headers: { Authorization: `Bearer ${accessToken}` } });
+}
 
 let refreshRequest: Promise<string> | null = null;
 

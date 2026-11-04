@@ -135,14 +135,14 @@ export async function registerFcmTokenForCurrentDevice() {
   }
 }
 
-export async function unregisterFcmTokenForCurrentDevice() {
+export async function unregisterFcmTokenForCurrentDevice(endedSessionAccessToken?: string) {
   const storedToken = getSessionStorage()?.getItem(FCM_TOKEN_KEY);
   const token = storedToken ?? (await getCurrentFcmToken());
 
   if (!token) return;
 
   try {
-    await deleteNotificationFcmToken(token);
+    await deleteNotificationFcmToken(token, endedSessionAccessToken);
     // 서버에서 지운 뒤에만 잊는다 - 실패하면 남겨 두어 다음 등록 때 옛 토큰으로 다시 지운다
     getLocalStorage()?.removeItem(FCM_LAST_TOKEN_KEY);
   } finally {
