@@ -1,7 +1,7 @@
 // 챗봇 말풍선 안 입력형 선택지 - 실제 Chrome에서 돈다(`npm run test:browser`)
 
 import { describe, expect, it, vi } from 'vitest';
-import { page, userEvent } from 'vitest/browser';
+import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import ChatUiPrompt from './ChatUiPrompt';
@@ -29,8 +29,6 @@ describe('ChatUiPrompt 입력형', () => {
     );
 
     await expect.element(page.getByRole('textbox', { name: '지역을 입력해 주세요' })).toBeVisible();
-    // 날짜는 7일 버튼이 먼저, 달력은 [달력에서 다른 날 고르기]를 누르면 펼친다(2026-11-04)
-    await userEvent.click(page.getByRole('button', { name: '달력에서 다른 날 고르기' }));
     await expect.element(page.getByLabelText('날짜 선택')).toBeVisible();
   });
 });

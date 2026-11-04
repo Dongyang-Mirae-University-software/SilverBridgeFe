@@ -90,7 +90,26 @@ const ASK_DATE = {
   engine: 'ai',
   type: 'message',
   intent: 'hospital_reservation',
-  ui: { kind: 'date', field: 'date', label: '달력에서 진료 날짜를 선택해 주세요' },
+  // AI #175: 가까운 날은 선택지, 끝에 달력 고르기(__calendar__)
+  ui: {
+    kind: 'select',
+    field: 'date',
+    label: '서초내과 · 정형외과 예약 날짜를 선택해 주세요.',
+    options: [
+      { value: '2026-11-04', label: '오늘 11월 4일(수)' },
+      { value: '2026-11-05', label: '내일 11월 5일(목)' },
+      { value: '2026-11-06', label: '11월 6일(금)' },
+      { value: '__calendar__', label: '달력에서 다른 날 고르기' },
+    ],
+  },
+};
+
+const ASK_CALENDAR = {
+  reply: '달력에서 골라 주세요.',
+  engine: 'ai',
+  type: 'message',
+  intent: 'hospital_reservation',
+  ui: { kind: 'date', field: 'date', label: '진료 날짜를 골라 주세요.' },
 };
 
 const ASK_PHONE = {
@@ -185,21 +204,34 @@ describe('피보호자 챗봇 예약', () => {
     await expect.element(page.getByText('__type__')).not.toBeInTheDocument();
   });
 
-  it('날짜는 오늘부터 7일 버튼으로 고르고 말풍선엔 "11월 5일 (목)" 같은 글자가 보인다', async () => {
+  it('날짜는 AI 선택지를 큰 버튼으로 고르고, 말풍선엔 값이 아니라 "내일 11월 5일(목)"이 보인다', async () => {
     await startWardReservation();
     api.sendChatMessage.mockResolvedValueOnce(ASK_DATE);
     await userEvent.click(page.getByRole('button', { name: '서울' }));
-    await expect.element(page.getByText('진료 날짜를 골라 주세요')).toBeVisible();
+    await expect.element(page.getByText('언제 가실까요?')).toBeVisible();
 
-    const dayButtons = page.getByRole('region', { name: '예약 진행' }).getByRole('button').elements();
-    expect(dayButtons).toHaveLength(8); // 7일 + 달력
+    expect(page.getByRole('region', { name: '예약 진행' }).getByRole('button').elements()).toHaveLength(4);
     api.sendChatMessage.mockResolvedValueOnce(ASK_SIDO);
-    await userEvent.click(page.getByRole('button', { name: /^내일 / }));
+    await userEvent.click(page.getByRole('button', { name: '내일 11월 5일(목)' }));
 
-    const sent = api.sendChatMessage.mock.calls[3][0].uiSelection;
-    expect(sent.field).toBe('date');
-    expect(sent.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    await expect.element(page.getByText(sent.value)).not.toBeInTheDocument();
+    expect(api.sendChatMessage.mock.calls[3][0].uiSelection).toEqual({ field: 'date', value: '2026-11-05' });
+    await expect.element(page.getByText('내일 11월 5일(목)', { exact: true })).toBeVisible();
+    await expect.element(page.getByText('2026-11-05')).not.toBeInTheDocument();
+  });
+
+  it('[달력에서 다른 날 고르기] 뒤 달력 단계는 날짜 버튼 없이 달력을 바로 펼친다', async () => {
+    await startWardReservation();
+    api.sendChatMessage.mockResolvedValueOnce(ASK_DATE);
+    await userEvent.click(page.getByRole('button', { name: '서울' }));
+    api.sendChatMessage.mockResolvedValueOnce(ASK_CALENDAR);
+    await userEvent.click(page.getByRole('button', { name: '달력에서 다른 날 고르기' }));
+
+    await expect.element(page.getByText('달력에서 골라 주세요.')).toBeVisible();
+    expect(api.sendChatMessage.mock.calls[3][0].uiSelection).toEqual({ field: 'date', value: '__calendar__' });
+    await expect.element(page.getByText('__calendar__')).not.toBeInTheDocument();
+    const panel = page.getByRole('region', { name: '예약 진행' });
+    await expect.element(panel.getByLabelText('진료 날짜를 골라 주세요.')).toBeVisible();
+    expect(panel.getByRole('button').elements().map(b => b.textContent)).toEqual(['적용']);
   });
 
   it('전화번호 칸이 오면 입력 칸 없이 안내하고, [처음으로 돌아가기]는 새 대화로 시작한다', async () => {
