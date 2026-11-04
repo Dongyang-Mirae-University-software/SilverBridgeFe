@@ -7,7 +7,8 @@ import Link from 'next/link';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { AdminAiServiceStatus, AdminOperationDashboard, AdminSafetyDashboard } from '@/service/interface/admin/dashboard';
-import { adminAiServiceStatusQueryOptions, adminOperationDashboardQueryOptions, adminSafetyDashboardQueryOptions } from '@/service/query/admin';
+import { adminAiServiceStatusQueryOptions, adminCompanionStatsQueryOptions, adminOperationDashboardQueryOptions, adminSafetyDashboardQueryOptions } from '@/service/query/admin';
+import { COMPANION_MOOD_ROWS } from '@/utils/admin/companion';
 import { ADMIN_ANOMALY_TYPE_META, formatNullableCount, getReviewMetrics } from '@/utils/admin/dashboard';
 import styles from './AdminDashboardContent.module.css';
 
@@ -34,6 +35,11 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
   const review = getReviewMetrics(safety.todayAnomaly.review, safety.todayAnomaly.total);
   const falseAlarmRate = review.answered === 0 ? '-' : `${review.falseAlarmRate}%`;
   const typeTotal = safety.todayAnomaly.total || 1;
+  // 대시보드에 들어올 때만 부른다 - 안전·운영 현황과 달리 자동으로 다시 부르지 않는다
+  const companion = useQuery(adminCompanionStatsQueryOptions);
+  const talk = companion.data;
+  const continuingCount = talk ? talk.continuingWards.length : null;
+  const moodTotal = talk ? COMPANION_MOOD_ROWS.reduce((sum, row) => sum + talk.moodDistribution[row.key], 0) : 0;
   return <main className={cx('dashboard')}>
     <header className={cx('heading')}><div><h1>대시보드</h1><p>{dateLabel}</p></div></header>
     <section className={cx('aiBar', { warning: anomalyService.tone === 'warn' || chatbotService.tone === 'warn' })} aria-label="AI 서비스 상태"><div className={cx('aiBarHead')}><span><Icon name="activity" size={16} decorative />AI 서비스</span><time>{formatElapsed(aiStatus?.generatedAt)} 확인</time></div><div className={cx('aiServices')}><AiServiceCard label="AI 이상감지" state={anomalyService} /><AiServiceCard label="안부 말벗 · 기분 분석" state={{ label: '준비 중', tone: 'mute' }} /><AiServiceCard label="AI 의료 챗봇" state={chatbotService} /></div></section>
@@ -44,7 +50,7 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
             <TypeStack total={typeTotal} items={safety.todayAnomaly.byType.map(item => ({ label: ADMIN_ANOMALY_TYPE_META[item.detectedType].label, value: item.count, tone: ADMIN_ANOMALY_TYPE_META[item.detectedType].color }))} />
           </AiSummaryCard>
           <AiSummaryCard title="AI 의료 챗봇" marker="chat" items={[['서비스 상태', chatbotService.label], ['오늘 응답', '-'], ['통계 보기', 'AI 통계']]}><p className={cx('summaryNotice')}>상담 집계는 AI 의료 챗봇 통계 탭에서 확인할 수 있습니다.</p></AiSummaryCard>
-          <AiSummaryCard title="AI 안부 말벗 · 정서 분석" marker="sun" items={[['서비스 상태', '준비 중'], ['응답률', '-'], ['대화 없는 어르신', '-']]}><p className={cx('summaryNotice')}>집계 API가 준비되면 이 영역에 표시됩니다.</p></AiSummaryCard>
+          <AiSummaryCard title="AI 안부 말벗 · 정서 분석" marker="sun" items={[['응답률', talk?.responseRate == null ? '-' : `${talk.responseRate}%`, 'brand'], ['대화 없는 어르신', formatCount(talk?.noDialogueWardCount, '명'), talk && talk.noDialogueWardCount > 0 ? 'care' : undefined], ['걱정·우울 이어짐', formatCount(continuingCount, '명'), continuingCount ? 'care' : undefined]]}>{talk ? <TypeStack unit="명" total={moodTotal || 1} items={COMPANION_MOOD_ROWS.map(row => ({ label: row.label, value: talk.moodDistribution[row.key], tone: row.tone }))} /> : <p className={cx('summaryNotice')}>{companion.isLoading ? '오늘 안부 대화 집계를 불러오는 중입니다.' : '오늘 안부 대화 집계를 불러오지 못했습니다.'}</p>}</AiSummaryCard>
         </div>
       </DashboardSection>
       <DashboardSection icon="users" title="회원 관리" tone="brand" href="/admin/members" pill={safety.safetyEvents.wardsWithoutGuardian > 0 ? '살펴보기' : '정상'}>
@@ -71,6 +77,6 @@ function DashboardSection({ icon, title, tone, href, pill, wide = false, childre
 }
 function NumberGrid({ items }: { items: Array<[string, string, ('care' | 'danger' | 'brand')?]> }) { return <div className={cx('numberGrid')}>{items.map(([label, value, tone]) => <div key={label} className={cx(tone)}><span>{label}</span><b>{value}</b></div>)}</div>; }
 function SimpleRows({ rows }: { rows: Array<[string, string]> }) { return <div className={cx('simpleRows')}>{rows.map(([label, value]) => <div key={label}><span>{label}</span><b>{value}</b></div>)}</div>; }
-function AiSummaryCard({ title, marker, items, children }: { title: string; marker: string; items: Array<[string, string, ('danger' | 'brand')?]>; children: ReactNode }) { return <article className={cx('aiSummaryCard')}><h3><i className={cx(marker)} />{title}</h3><NumberGrid items={items} />{children}</article>; }
-function TypeStack({ total, items }: { total: number; items: Array<{ label: string; value: number; tone: string }> }) { return <div className={cx('typeStack')}><div>{items.filter(item => item.value > 0).map(item => <i key={item.label} className={cx(item.tone)} style={{ width: `${item.value / total * 100}%` }} />)}</div><p>{items.map(item => <span key={item.label}><i className={cx(item.tone)} />{item.label} {item.value}건</span>)}</p></div>; }
+function AiSummaryCard({ title, marker, items, children }: { title: string; marker: string; items: Array<[string, string, ('care' | 'danger' | 'brand')?]>; children: ReactNode }) { return <article className={cx('aiSummaryCard')}><h3><i className={cx(marker)} />{title}</h3><NumberGrid items={items} />{children}</article>; }
+function TypeStack({ total, items, unit = '건' }: { total: number; items: Array<{ label: string; value: number; tone: string }>; unit?: string }) { return <div className={cx('typeStack')}><div>{items.filter(item => item.value > 0).map(item => <i key={item.label} className={cx(item.tone)} style={{ width: `${item.value / total * 100}%` }} />)}</div><p>{items.map(item => <span key={item.label}><i className={cx(item.tone)} />{item.label} {item.value}{unit}</span>)}</p></div>; }
 function DashboardNotice({ children, retry }: { children: string; retry?: () => void }) { return <section className={cx('notice')} aria-live="polite"><p>{children}</p>{retry && <button type="button" onClick={retry}>다시 시도</button>}</section>; }
