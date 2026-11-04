@@ -230,7 +230,8 @@
   color: #fff;
 }
 
-/* 선택지가 하나뿐이면 가로 전체 폭으로 크게 */
+/* 선택지가 하나뿐이면 가로 전체 폭으로 크게. 색은 일반 버튼 그대로 - 하나뿐인 버튼이 [다른 지역으로 찾기]처럼
+   보조 선택일 때 말풍선의 [예약하기]보다 주 버튼처럼 보이지 않게 한다(2026-11-04 devdmu 실측). */
 .single .chips,
 .chips.single {
   display: grid;
@@ -240,18 +241,12 @@
 .guardian.single .chip,
 .guardian .single .chip {
   min-height: 56px;
-  border-color: var(--sb-brand);
-  background: var(--sb-brand);
-  color: #fff;
   font-size: calc(18px * var(--ward-font-scale, 1));
 }
 
 .ward.single .chip,
 .ward .single .chip {
   min-height: 72px;
-  border-color: var(--sb-brand);
-  background: var(--sb-brand);
-  color: #fff;
   font-size: calc(24px * var(--ward-font-scale, 1));
 }
 
