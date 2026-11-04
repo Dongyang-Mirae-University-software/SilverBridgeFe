@@ -1,21 +1,26 @@
+.pair,
 .fieldGroup {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.fieldGroup {
+  grid-template-columns: 1fr 2fr;
 }
 
 .birthDateField {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .selectField {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .selectLabel {
@@ -33,7 +38,7 @@
 
 .selectBox {
   display: flex;
-  min-height: 48px;
+  min-height: 44px;
   align-items: center;
   border: 1.5px solid #f0d2bc;
   border-radius: 12px;
@@ -56,6 +61,11 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.birthDateField .birthDateSelects select {
+  min-height: 44px;
+  padding: 0 10px;
+}
+
 .birthDateError {
   color: #c94f35;
   font-size: 0.75rem;
@@ -71,14 +81,14 @@
 
 .addressSearchRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 104px;
+  grid-template-columns: minmax(0, 1fr) 96px;
   align-items: flex-start;
   gap: 8px;
 }
 
 .addressSearchButton {
-  min-height: 48px;
-  margin-top: 25px;
+  min-height: 44px;
+  margin-top: 24px;
   border: 1.5px solid #f0d2bc;
   border-radius: 12px;
   background: var(--sb-brand-50);
@@ -90,14 +100,14 @@
 }
 
 .button {
-  min-height: 48px;
+  min-height: 46px;
   border-radius: 12px;
   border: none;
   font-size: 0.9375rem;
   font-weight: 700;
   cursor: pointer;
   width: 100%;
-  padding: 14px;
+  padding: 12px;
   background: var(--sb-brand);
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(176, 103, 77, 0.22);
@@ -108,17 +118,23 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 640px) {
-  .addressSearchRow {
+/* 좁은 화면: 이름·이메일만 한 줄씩. 비밀번호 둘·성별+생년월일·주소+검색은 그대로 한 줄에 둔다 */
+@media (max-width: 560px) {
+  .stackOnMobile {
     grid-template-columns: 1fr;
-  }
-
-  .addressSearchButton {
-    margin-top: 0;
   }
 
   .fieldGroup {
-    grid-template-columns: 1fr;
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .selectBox {
+    padding: 0 10px;
+  }
+
+  .addressSearchRow {
+    grid-template-columns: minmax(0, 1fr) 84px;
   }
 }
 

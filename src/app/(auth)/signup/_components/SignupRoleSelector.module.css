@@ -1,13 +1,17 @@
 .roleSection {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-.fieldLabel {
-  color: #5c4d3f;
-  font-size: 0.8125rem;
-  font-weight: 700;
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .radioGroup {
@@ -21,8 +25,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 72px;
-  padding: 12px 14px;
+  min-height: 48px;
+  padding: 6px 14px;
   border: 1.5px solid #f0d2bc;
   border-radius: 12px;
   background: var(--sb-bg);

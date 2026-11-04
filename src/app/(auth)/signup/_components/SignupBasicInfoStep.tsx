@@ -58,29 +58,31 @@ export default function SignupBasicInfoStep({
   return (
     <>
       <SignupRoleSelector role={allValues.role} register={register} />
-      <TextInput
-        variant="auth"
-        label="이름"
-        placeholder="홍길동"
-        required
-        {...nameField}
-        error={Boolean(errors.name && allValues.name && allValues.name.trim() !== '')}
-        errorText={errors.name?.message}
-      />
-      <TextInput
-        variant="auth"
-        label="이메일"
-        placeholder="example@email.com"
-        required
-        {...emailField}
-        disabled={isKakaoSignup}
-        readOnly={isKakaoSignup}
-        onBlur={isKakaoSignup ? undefined : onEmailCheck}
-        error={isKakaoSignup ? false : emailError}
-        errorText={isKakaoSignup ? undefined : emailErrorText}
-      />
+      <div className={cx('pair', 'stackOnMobile')}>
+        <TextInput
+          variant="auth"
+          label="이름"
+          placeholder="홍길동"
+          required
+          {...nameField}
+          error={Boolean(errors.name && allValues.name && allValues.name.trim() !== '')}
+          errorText={errors.name?.message}
+        />
+        <TextInput
+          variant="auth"
+          label="이메일"
+          placeholder="example@email.com"
+          required
+          {...emailField}
+          disabled={isKakaoSignup}
+          readOnly={isKakaoSignup}
+          onBlur={isKakaoSignup ? undefined : onEmailCheck}
+          error={isKakaoSignup ? false : emailError}
+          errorText={isKakaoSignup ? undefined : emailErrorText}
+        />
+      </div>
       {!isKakaoSignup && (
-        <>
+        <div className={cx('pair')}>
           <TextInput
             variant="auth"
             label="비밀번호"
@@ -94,14 +96,14 @@ export default function SignupBasicInfoStep({
           <TextInput
             variant="auth"
             label="비밀번호 확인"
-            placeholder="비밀번호 다시 입력"
+            placeholder="다시 입력"
             required
             type="password"
             {...passwordCheckField}
             error={Boolean(errors.passwordCheck && allValues.passwordCheck && allValues.passwordCheck.trim() !== '')}
             errorText={errors.passwordCheck?.message}
           />
-        </>
+        </div>
       )}
       <div className={cx('fieldGroup')}>
         <label className={cx('selectField')}>
@@ -129,18 +131,19 @@ export default function SignupBasicInfoStep({
           )}
         </div>
       </div>
+      {/* 우편번호는 주소 검색 결과로만 채워져 따로 보이지 않고 함께 보낸다 */}
+      <input type="hidden" {...postcodeField} />
       <div className={cx('addressSearchRow')}>
         <TextInput
           variant="auth"
-          label="우편번호"
-          placeholder="주소 검색"
+          label="주소"
+          placeholder="주소 검색을 눌러 주세요"
           required
-          inputMode="numeric"
-          maxLength={10}
           readOnly
-          {...postcodeField}
-          error={Boolean(errors.postcode && allValues.postcode && allValues.postcode.trim() !== '')}
-          errorText={errors.postcode?.message}
+          {...addressField}
+          onClick={onAddressSearch}
+          error={Boolean(errors.address && allValues.address && allValues.address.trim() !== '')}
+          errorText={errors.address?.message}
         />
         <button className={cx('addressSearchButton')} type="button" onClick={onAddressSearch}>
           주소 검색
@@ -148,18 +151,8 @@ export default function SignupBasicInfoStep({
       </div>
       <TextInput
         variant="auth"
-        label="주소"
-        placeholder="주소 검색으로 입력하세요"
-        required
-        readOnly
-        {...addressField}
-        error={Boolean(errors.address && allValues.address && allValues.address.trim() !== '')}
-        errorText={errors.address?.message}
-      />
-      <TextInput
-        variant="auth"
         label="상세주소"
-        placeholder="상세주소를 입력하세요"
+        placeholder="동·호수 등"
         required
         {...addressDetailField}
         error={Boolean(errors.addressDetail && allValues.addressDetail && allValues.addressDetail.trim() !== '')}

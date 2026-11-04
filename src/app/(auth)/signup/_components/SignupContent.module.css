@@ -19,44 +19,32 @@
   color: var(--sb-brand);
 }
 
-.progress {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 24px;
-}
-
-.progress span {
-  flex: 1;
-  height: 6px;
-  border-radius: 3px;
-  background: #f4dccb;
-  transition: background 0.2s;
-}
-
-.progress span.active {
-  background: var(--sb-brand);
-}
-
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
 .title {
   margin: 0;
   color: #1f1916;
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1.25;
 }
 
-.description {
-  margin: 8px 0 0;
+.stepLabel {
+  margin: 0 0 0 auto;
   color: #8a7868;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stepLabel b {
+  color: var(--sb-brand);
+  font-weight: 800;
 }
 
 .content {
@@ -64,8 +52,14 @@
   flex-direction: column;
 }
 
+/* 한 화면에 들어가게 입력칸을 조금 낮춘다(48px → 44px) */
+.content input:not([type='radio']):not([type='hidden']) {
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+
 .footer {
-  margin-top: 20px;
+  margin-top: 14px;
   color: #8a7868;
   font-size: 0.8125rem;
   text-align: center;
@@ -83,16 +77,18 @@
 }
 
 /* Signup step polish */
-.progress span {
-  overflow: hidden;
-}
-
-.progress span.active {
-  box-shadow: 0 0 0 3px rgba(176, 103, 77, 0.1);
-}
-
 .backButton:focus-visible,
 .loginLink:focus-visible {
   outline: 3px solid rgba(176, 103, 77, 0.2);
   outline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .header {
+    margin-bottom: 12px;
+  }
+
+  .footer {
+    margin-top: 10px;
+  }
 }

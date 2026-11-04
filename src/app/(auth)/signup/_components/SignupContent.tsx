@@ -56,23 +56,15 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
 
   return (
     <>
-      <div className={cx('progress')} aria-hidden="true">
-        <span className={cx({ active: currentStep >= 1 })} />
-        <span className={cx({ active: currentStep >= 2 })} />
-      </div>
-
-      <div className={cx('header')}>
+      <div className={cx('header')} data-auth-screen="signup">
         <button className={cx('backButton')} type="button" aria-label="이전 페이지로 이동" onClick={handleBack}>
           <Icon name="back" size={18} decorative />
         </button>
-        <div>
-          <h1 className={cx('title')}>회원가입</h1>
-          <p className={cx('description')}>
-            {currentStep === 1 ? '기본 정보를 입력해 주세요' : '전화번호 인증으로 마무리할게요'}
-          </p>
-        </div>
+        <h1 className={cx('title')}>회원가입</h1>
+        <p className={cx('stepLabel')}>
+          <b>{currentStep}</b> / 2 · {currentStep === 1 ? '기본 정보' : '전화번호 인증'}
+        </p>
       </div>
-
       <div className={cx('content')}>
         <SignupForm step={signupStep} onStepChange={setSignupStep} kakaoData={kakaoData} returnTo={returnTo ?? undefined} />
       </div>
