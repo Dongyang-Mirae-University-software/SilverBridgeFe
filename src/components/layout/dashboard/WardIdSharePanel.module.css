@@ -1,22 +1,16 @@
-.sharePanel { display: grid; gap: 10px; margin-top: 18px; overflow: hidden; border-radius: 20px; background: var(--sb-brand); color: #fff; padding: 20px 16px 16px; }
+.sharePanel { margin-top: 18px; overflow: hidden; border-radius: 20px; background: var(--sb-brand); color: #fff; }
 
-.heading { display: flex; align-items: flex-start; gap: 10px; }
-.headingIcon { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 10px; background: rgba(255,255,255,.16); color: #fff; }
-.heading h3 { margin: 0; color: #fff; font-size: 16px; font-weight: 700; }
-.heading p { margin: 3px 0 0; color: rgba(255,255,255,.84); font-size: 12px; line-height: 1.45; word-break: keep-all; }
+.idBox { padding: 20px 22px 18px; }
+.idBox h3 { margin: 0; color: #fff; font-size: 16px; font-weight: 700; opacity: .85; }
+.idBox strong { display: block; margin-top: 6px; color: #fff; font-family: ui-monospace, Menlo, monospace; font-size: 44px; font-weight: 800; letter-spacing: .14em; overflow-wrap: anywhere; }
 
-.idBox { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 2px dashed rgba(255,255,255,.35); padding: 4px 6px 16px; }
-.idBox span { color: rgba(255,255,255,.84); font-size: 14px; font-weight: 700; }
-.idBox strong { color: #fff; font-family: monospace; font-size: 32px; font-weight: 800; letter-spacing: .12em; }
+.divider { margin: 0 14px; border-top: 2px dashed rgba(255, 255, 255, .35); }
 
-.nativeShareButton { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 11px; background: transparent; color: #fff; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 800; }
-.nativeShareButton:disabled, .shareMethods button:disabled { cursor: not-allowed; opacity: .55; }
+.actions { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 16px; }
+.kakaoButton { display: flex; width: 100%; min-height: 58px; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 12px; background: #fee500; color: rgba(0, 0, 0, .85); cursor: pointer; font-family: inherit; font-size: 19px; font-weight: 700; }
+.kakaoButton:hover { background: #f4dc00; }
+.kakaoButton:disabled { cursor: not-allowed; opacity: .6; }
+.copyButton { display: flex; min-height: 48px; align-items: center; justify-content: center; gap: 6px; border: none; background: transparent; color: #fff; cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 700; }
+.notice { margin: 0; color: #fff; font-size: 14px; font-weight: 700; text-align: center; }
 
-.shareMethods { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 7px; }
-.shareMethods button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 5px; border: 0; border-radius: 10px; background: rgba(255,255,255,.14); color: #fff; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 700; padding: 0 10px; }
-.shareMethods .kakaoButton { grid-column: 1 / -1; min-height: 54px; background: #fee500; color: rgba(0,0,0,.85); font-size: 17px; }
-.shareMethods button:hover { background: rgba(255,255,255,.22); }
-.shareMethods .kakaoButton:hover { background: #f4dc00; }
-.notice { min-height: 17px; margin: -2px 0 0; color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
-
-@media (max-width: 420px) { .sharePanel { padding: 14px; } .shareMethods button { flex: 1; padding: 0 7px; } }
+@media (max-width: 420px) { .idBox { padding: 18px 18px 16px; } .idBox strong { font-size: 36px; } }

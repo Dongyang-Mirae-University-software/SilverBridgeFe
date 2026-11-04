@@ -18,6 +18,7 @@ import CheckIcon from '@/assets/icons/check.svg';
 import ChevronRightIcon from '@/assets/icons/chevron-right.svg';
 import CloseIcon from '@/assets/icons/close.svg';
 import DashboardIcon from '@/assets/icons/dashboard.svg';
+import EditIcon from '@/assets/icons/edit.svg';
 import EyeIcon from '@/assets/icons/eye.svg';
 import FileTextIcon from '@/assets/icons/file-text.svg';
 import FlameIcon from '@/assets/icons/flame.svg';
@@ -69,6 +70,7 @@ const ICONS = {
   chevronRight: ChevronRightIcon,
   close: CloseIcon,
   dashboard: DashboardIcon,
+  edit: EditIcon,
   eye: EyeIcon,
   fileText: FileTextIcon,
   flame: FlameIcon,
