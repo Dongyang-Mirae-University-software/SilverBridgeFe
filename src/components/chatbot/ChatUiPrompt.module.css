@@ -181,3 +181,133 @@
     width: 100%;
   }
 }
+
+/* ── 큰 선택지(2026-11-04): 시니어 기준. 피보호자는 빠른 질문 버튼(22px·72px)과 같은 급, 보호자는 터치 48px 이상 ── */
+.guardian .label {
+  color: var(--sb-ink);
+  font-size: calc(15px * var(--ward-font-scale, 1));
+}
+
+.guardian .chips {
+  gap: 8px;
+}
+
+.guardian .chip {
+  min-height: 48px;
+  border-radius: 14px;
+  font-size: calc(16px * var(--ward-font-scale, 1));
+  padding: 8px 18px;
+}
+
+.ward .label {
+  color: var(--sb-ink);
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  line-height: 1.4;
+}
+
+.ward .chips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ward .chip {
+  min-height: 64px;
+  border: 2px solid var(--sb-brand-soft);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--sb-ink);
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  line-height: 1.3;
+  padding: 8px 12px;
+  word-break: keep-all;
+}
+
+.ward .chipSelected {
+  border-color: var(--sb-brand);
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+/* 선택지가 하나뿐이면 가로 전체 폭으로 크게 */
+.single .chips,
+.chips.single {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.guardian.single .chip,
+.guardian .single .chip {
+  min-height: 56px;
+  border-color: var(--sb-brand);
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: calc(18px * var(--ward-font-scale, 1));
+}
+
+.ward.single .chip,
+.ward .single .chip {
+  min-height: 72px;
+  border-color: var(--sb-brand);
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: calc(24px * var(--ward-font-scale, 1));
+}
+
+.guardian .dateInput,
+.guardian .textInput,
+.guardian .applyBtn {
+  min-height: 48px;
+  font-size: calc(16px * var(--ward-font-scale, 1));
+}
+
+.ward .dateInput,
+.ward .textInput,
+.ward .applyBtn,
+.ward .reservationPicker,
+.ward .reservationApplyButton {
+  min-height: 64px;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+}
+
+.guardian .reservationPicker,
+.guardian .reservationApplyButton {
+  min-height: 48px;
+  font-size: calc(16px * var(--ward-font-scale, 1));
+}
+
+.noticeText {
+  margin: 0;
+  color: var(--sb-ink);
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.guardian .noticeText {
+  font-size: calc(16px * var(--ward-font-scale, 1));
+}
+
+.ward .noticeText {
+  font-size: calc(22px * var(--ward-font-scale, 1));
+}
+
+.ward .inactiveNote {
+  font-size: calc(16px * var(--ward-font-scale, 1));
+}
+
+.guardian .inactiveNote {
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 480px) {
+  .ward .chip {
+    min-height: 60px;
+    font-size: calc(20px * var(--ward-font-scale, 1));
+  }
+
+  .ward.timeSelect .chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

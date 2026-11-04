@@ -8,6 +8,12 @@ interface Props {
   message: ChatMessage;
   isLastAssistant: boolean;
   onUiSelect: (field: string, value: string, label?: string) => void;
+  /** 예약 목록 보기 - 병원 가는 날 화면으로 간다. */
+  onShowList: () => void;
+  /** 이름·전화 안내의 [처음으로 돌아가기] */
+  onRestart?: () => void;
+  /** 예약 단계 선택지는 아래 "예약 진행" 패널에 크게 보이므로(지난 단계는 고른 답이 내 말풍선에 있다) 말풍선에서는 뺀다. */
+  hidePrompt?: boolean;
   userImageUrl?: string | null;
   userName?: string | null;
   variant?: 'guardian' | 'ward';
@@ -17,6 +23,9 @@ export default function ChatBubble({
   message,
   isLastAssistant,
   onUiSelect,
+  onShowList,
+  onRestart,
+  hidePrompt = false,
   userImageUrl,
   userName,
   variant = 'guardian',
@@ -101,16 +110,21 @@ export default function ChatBubble({
                 tool={message.tool}
                 data={message.toolData}
                 onUiSelect={onUiSelect}
+                onShowList={onShowList}
+                hideListButton={message.ui?.field === 'reservation_followup'}
+                variant={variant}
               />
             )}
 
             {/* 응답 type과 무관하게 ui가 있으면 선택지를 표시한다.
                 예약 시간 응답은 type이 tool_result/message여도 ui.select를 함께 내려줄 수 있다. */}
-            {message.ui && (
+            {message.ui && !hidePrompt && (
               <ChatUiPrompt
                 ui={message.ui}
                 active={isLastAssistant}
                 onSelect={onUiSelect}
+                variant={variant}
+                onRestart={onRestart}
               />
             )}
             </div>

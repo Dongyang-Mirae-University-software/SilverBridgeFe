@@ -2,18 +2,29 @@
 
 import { useState } from 'react';
 import type { ChatUiPromptData } from '@/service/interface/chat';
+import { addDays, formatDateShort, kstToday } from '@/utils/reservation/reservationView';
+import { PERSONAL_FIELDS } from './reservationFlow';
 import styles from './ChatUiPrompt.module.css';
 
 interface Props {
   ui: ChatUiPromptData;
   active: boolean;
   onSelect: (field: string, value: string, label?: string) => void;
+  /** 피보호자 화면은 글자·버튼을 더 크게 한다(보호자 화면도 터치 48px 이상). */
+  variant?: 'guardian' | 'ward';
+  /** 이름·전화 칸이 왔을 때 [처음으로 돌아가기]를 누르면 대화를 새로 시작한다. */
+  onRestart?: () => void;
 }
 
-export default function ChatUiPrompt({ ui, active, onSelect }: Props) {
+/** 날짜 단계에서 버튼으로 보이는 날 수(오늘부터). 그 밖의 날은 달력에서 고른다. */
+const DATE_BUTTON_DAYS = 7;
+
+export default function ChatUiPrompt({ ui, active, onSelect, variant = 'guardian', onRestart }: Props) {
   const [textVal, setTextVal] = useState('');
   const [dateVal, setDateVal] = useState('');
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
+  const wrapClass = `${styles.wrap} ${variant === 'ward' ? styles.ward : styles.guardian}`;
 
   function apply(value: string, label?: string) {
     if (!value.trim() || !active) return;
@@ -27,7 +38,7 @@ export default function ChatUiPrompt({ ui, active, onSelect }: Props) {
 
     if (isReservationSelection) {
       return (
-        <div className={`${styles.wrap} ${styles.reservationSelect}`}>
+        <div className={`${wrapClass} ${styles.reservationSelect}`}>
           {ui.label && <p className={styles.label}>{ui.label}</p>}
           <div className={styles.reservationPickerRow}>
             <select
@@ -62,7 +73,11 @@ export default function ChatUiPrompt({ ui, active, onSelect }: Props) {
     }
 
     return (
-      <div className={`${styles.wrap} ${isTimeSelection ? styles.timeSelect : ''}`}>
+      <div
+        className={`${wrapClass} ${isTimeSelection ? styles.timeSelect : ''} ${
+          options.length === 1 ? styles.single : ''
+        }`}
+      >
         {ui.label && <p className={styles.label}>{ui.label}</p>}
         <div className={styles.chips}>
           {options.map(opt => {
@@ -91,34 +106,89 @@ export default function ChatUiPrompt({ ui, active, onSelect }: Props) {
   }
 
   if (ui.kind === 'date') {
+    // 키보드·달력 없이 고를 수 있게 오늘부터 7일을 버튼으로 둔다. 값은 달력과 같은 YYYY-MM-DD.
+    const today = kstToday();
+    const days = Array.from({ length: DATE_BUTTON_DAYS }, (_, i) => addDays(today, i));
     return (
-      <div className={styles.wrap}>
-        {ui.label && <p className={styles.label}>{ui.label}</p>}
-        <div className={styles.inputRow}>
-          <input
-            type="date"
-            className={styles.dateInput}
-            aria-label={ui.label ?? '날짜 선택'}
-            value={dateVal}
-            disabled={!active}
-            onChange={e => setDateVal(e.target.value)}
-          />
+      <div className={`${wrapClass} ${styles.dateSelect}`}>
+        <p className={styles.label}>진료 날짜를 골라 주세요</p>
+        <div className={styles.chips}>
+          {days.map((iso, i) => {
+            const label = formatDateShort(iso);
+            return (
+              <button
+                key={iso}
+                type="button"
+                disabled={!active}
+                className={`${styles.chip} ${selectedValue === iso ? styles.chipSelected : ''}`}
+                onClick={() => {
+                  setSelectedValue(iso);
+                  apply(iso, label);
+                }}
+              >
+                {i === 0 ? `오늘 ${label}` : i === 1 ? `내일 ${label}` : label}
+              </button>
+            );
+          })}
           <button
             type="button"
-            className={styles.applyBtn}
-            disabled={!active || !dateVal}
-            onClick={() => apply(dateVal)}
+            disabled={!active}
+            aria-expanded={calendarOpen}
+            className={`${styles.chip} ${styles.changeDateChip}`}
+            onClick={() => setCalendarOpen(open => !open)}
           >
-            적용
+            달력에서 다른 날 고르기
           </button>
         </div>
+        {calendarOpen && (
+          <div className={styles.inputRow}>
+            <input
+              type="date"
+              className={styles.dateInput}
+              aria-label={ui.label ?? '날짜 선택'}
+              min={today}
+              value={dateVal}
+              disabled={!active}
+              onChange={e => setDateVal(e.target.value)}
+            />
+            <button
+              type="button"
+              className={styles.applyBtn}
+              disabled={!active || !dateVal}
+              onClick={() => apply(dateVal, formatDateShort(dateVal))}
+            >
+              적용
+            </button>
+          </div>
+        )}
+        {!active && <p className={styles.inactiveNote}>이전 대화의 선택지입니다.</p>}
+      </div>
+    );
+  }
+
+  if (ui.kind === 'text' && PERSONAL_FIELDS.has(ui.field)) {
+    // 이름·전화는 서버가 계정 정보로 채운다 - 직접 입력하는 칸을 두지 않는다(등록된 전화가 없을 때만 이 칸이 온다).
+    return (
+      <div className={`${wrapClass} ${styles.notice}`} role="note">
+        <p className={styles.noticeText}>
+          {variant === 'ward'
+            ? '등록된 전화번호가 없어 여기서는 예약할 수 없어요. 보호자에게 예약을 부탁해 주세요.'
+            : '피보호자 전화번호가 등록되어 있지 않아 예약할 수 없어요. 피보호자 내 정보에서 전화번호를 등록한 뒤 다시 예약해 주세요.'}
+        </p>
+        {active && onRestart && (
+          <div className={`${styles.chips} ${styles.single}`}>
+            <button type="button" className={styles.chip} onClick={onRestart}>
+              처음으로 돌아가기
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
   if (ui.kind === 'text') {
     return (
-      <div className={styles.wrap}>
+      <div className={wrapClass}>
         {ui.label && <p className={styles.label}>{ui.label}</p>}
         <div className={styles.inputRow}>
           <input
