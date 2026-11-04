@@ -6,10 +6,12 @@
 }
 
 .codeGuide {
+  margin: 0;
   color: #5c4d3f;
   font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1.45;
+  word-break: keep-all;
 }
 
 .codeTimer {
@@ -44,7 +46,7 @@
 
 .inlineButton {
   min-height: 48px;
-  flex: 0 0 118px;
+  flex: 0 0 104px;
   border: none;
   border-radius: 12px;
   font-size: 0.9375rem;
@@ -61,18 +63,14 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 640px) {
-  .codeHeader {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
+@media (max-width: 560px) {
   .codeActionRow {
-    flex-direction: column;
+    gap: 8px;
   }
 
-  .codeActionRow .inlineButton {
-    width: 100%;
-    margin-top: 0;
+  .inlineButton {
+    flex-basis: 96px;
+    padding: 0 8px;
+    font-size: 0.875rem;
   }
 }
