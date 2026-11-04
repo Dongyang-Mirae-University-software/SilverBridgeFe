@@ -255,6 +255,12 @@
   font-size: calc(28px * var(--ward-font-scale, 1));
 }
 
+/* 문장마다 넣은 줄바꿈(breakSentences)을 보이게 한다. 카드 안 항목은 대상이 아니다. */
+.wardBubble .headline,
+.wardBubble .bodyLines li {
+  white-space: pre-line;
+}
+
 .wardBubble .lines li,
 .wardBubble .emergencyList {
   font-size: calc(26px * var(--ward-font-scale, 1));
