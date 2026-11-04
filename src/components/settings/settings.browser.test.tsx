@@ -96,21 +96,20 @@ afterEach(() => {
 });
 
 describe('알림 종류 (보호자)', () => {
-  it('SOS·이상 감지는 켜진 채 잠긴 스위치로 보이고, 이유 문구가 연결된다', async () => {
+  it('SOS·이상 감지·AI 기분 체크는 켜진 채 잠긴 스위치로 보이고, 이유 문구가 연결된다', async () => {
     const screen = await render(withClient(<AlertTypeSettingsSection />));
     await expect.element(screen.getByText('SOS 알림')).toBeInTheDocument();
 
-    for (const name of ['SOS 알림', '이상 감지 알림']) {
+    for (const name of ['SOS 알림', '이상 감지 알림', 'AI 기분 체크 알림']) {
       const locked = screen.getByRole('switch', { name });
       await expect.element(locked).toBeChecked();
       await expect.element(locked).toBeDisabled();
       await expect.element(locked).toHaveAccessibleDescription('안전을 위해 끌 수 없어요');
     }
     expect(document.body.textContent).not.toContain('항상 받아요');
-    // 잠긴 둘 + 끌 수 있는 판정 재촉·카메라 연결 끊김·복약 셋
-    expect(screen.getByRole('switch').elements()).toHaveLength(5);
+    // 잠긴 셋 + 끌 수 있는 판정 재촉·카메라 연결 끊김·복약·기분 변화 넷
+    expect(screen.getByRole('switch').elements()).toHaveLength(7);
     // BE가 보내지 않는 알림은 설정을 만들지 않는다
-    expect(document.body.textContent).not.toContain('정서 변화');
     expect(document.body.textContent).not.toContain('병원 예약');
   });
 
@@ -183,6 +182,22 @@ describe('알림 종류 (보호자)', () => {
     await expect.element(toggle).not.toBeChecked();
     expect(api.updateGuardianNotificationTypeSetting).toHaveBeenCalledWith({ cameraLinkLost: false });
     expect(toast.showToast).not.toHaveBeenCalled();
+  });
+
+  it('기분 변화 안내를 끄면 companionNotice만 저장하고, 옛 서버 응답에 값이 없으면 켜진 것으로 본다', async () => {
+    api.updateGuardianNotificationTypeSetting.mockResolvedValue({
+      ...TYPE_SETTING,
+      companionRisk: { enabled: true, required: true },
+      companionNotice: { enabled: false, required: false },
+    });
+    const screen = await render(withClient(<AlertTypeSettingsSection />));
+    const toggle = screen.getByRole('switch', { name: '기분 변화 안내' });
+    await expect.element(toggle).toBeChecked();
+
+    await toggle.click();
+
+    await expect.element(toggle).not.toBeChecked();
+    expect(api.updateGuardianNotificationTypeSetting).toHaveBeenCalledWith({ companionNotice: false });
   });
 
   it('저장 중에는 다른 토글을 막고, 서버 오류면 이전 값으로 되돌리고 안내한다', async () => {

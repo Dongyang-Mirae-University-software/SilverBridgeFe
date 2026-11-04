@@ -14,10 +14,15 @@ export interface GuardianNotificationTypeSetting {
   medication: GuardianNotificationTypeItem;
   // 카메라 연결 끊김 안내(BE V61). 옛 서버 응답에는 없을 수 있어 선택값으로 둔다 - 없으면 켜진 것으로 본다
   cameraLinkLost?: GuardianNotificationTypeItem;
+  // AI 말벗 안부 대화(2026-11-04). companionRisk는 대화의 위험 신호라 required 잠금, companionNotice는 걱정·우울이 3일 이상 이어질 때 하루 1번.
+  // 옛 서버 응답에는 없을 수 있어 선택값으로 둔다 - 없으면 켜진 것으로 본다
+  companionRisk?: GuardianNotificationTypeItem;
+  companionNotice?: GuardianNotificationTypeItem;
 }
 
 export interface UpdateGuardianNotificationTypeSettingReq {
   anomalyReviewReminder?: boolean;
   medication?: boolean;
   cameraLinkLost?: boolean;
+  companionNotice?: boolean;
 }

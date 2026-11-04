@@ -16,7 +16,7 @@ import styles from './AlertTypeSettingsSection.module.css';
 
 const cx = classNames.bind(styles);
 
-type ToggleableKey = 'anomalyReviewReminder' | 'medication' | 'cameraLinkLost';
+type ToggleableKey = 'anomalyReviewReminder' | 'medication' | 'cameraLinkLost' | 'companionNotice';
 
 const DEFAULT_SETTING: GuardianNotificationTypeSetting = {
   sos: { enabled: true, required: true },
@@ -24,6 +24,8 @@ const DEFAULT_SETTING: GuardianNotificationTypeSetting = {
   anomalyReviewReminder: { enabled: true, required: false },
   medication: { enabled: true, required: false },
   cameraLinkLost: { enabled: true, required: false },
+  companionRisk: { enabled: true, required: true },
+  companionNotice: { enabled: true, required: false },
 };
 
 const SAVE_ERROR_MESSAGE = '알림 설정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.';
@@ -31,8 +33,8 @@ const LOCKED_REASON = '안전을 위해 끌 수 없어요';
 // 안내 토스트가 떠 있는 동안(토스트 기본 4초)은 같은 줄의 안내를 다시 띄우지 않는다 - 연속 탭에 같은 토스트가 쌓이지 않게
 const LOCKED_TOAST_INTERVAL_MS = 4000;
 
-// SOS·이상 감지 발생 알림은 BE에서 required 잠금이라 끌 수 없다 - 켜진 채 잠긴 스위치로 보여 주고 저장하지 않는다.
-// 정서 변화·병원 예약 알림은 BE가 보내지 않는 알림이라 설정을 두지 않는다(거짓 설정 방지)
+// SOS·이상 감지 발생·안부 대화 위험 신호 알림은 BE에서 required 잠금이라 끌 수 없다 - 켜진 채 잠긴 스위치로 보여 주고 저장하지 않는다.
+// 병원 예약 알림은 BE가 보내지 않는 알림이라 설정을 두지 않는다(거짓 설정 방지)
 export function AlertTypeSettingsSection() {
   const { data, isLoading, isError, isFetching, refetch } = useQuery(guardianNotificationTypeSettingQueryOptions);
   const setting = data ?? DEFAULT_SETTING;
@@ -81,6 +83,19 @@ export function AlertTypeSettingsSection() {
             disabled={updateMutation.isPending}
             onChange={enabled => handleToggle('medication', enabled)}
           />
+
+          <LockedToggleRow groupHead label="AI 기분 체크 알림" desc="안부 대화에서 위험 신호가 보이면 바로 알려 드려요." />
+
+          <div className={cx('subGroup')}>
+            <ToggleRow
+              sub
+              label="기분 변화 안내"
+              desc="걱정·우울한 기분이 3일 이상 이어지면 하루 한 번 알려 드려요"
+              checked={setting.companionNotice?.enabled ?? true}
+              disabled={updateMutation.isPending}
+              onChange={enabled => handleToggle('companionNotice', enabled)}
+            />
+          </div>
         </div>
       )}
     </section>
