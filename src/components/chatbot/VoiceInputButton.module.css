@@ -1,0 +1,83 @@
+/* 챗봇 마이크 버튼 - 입력창(60px)·보내기 버튼과 같은 높이, 큰 글씨·큰 터치 영역 */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 60px;
+  min-width: 60px;
+  padding: 0 16px;
+  border: 2px solid var(--sb-brand);
+  border-radius: 16px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  white-space: nowrap;
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--sb-accent);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.wide {
+  min-height: 56px;
+  height: auto;
+  padding: 0 22px;
+}
+
+.recording {
+  border-color: var(--sb-danger);
+  background: var(--sb-danger-soft);
+  color: var(--sb-danger);
+}
+
+.icon {
+  width: 26px;
+  height: 26px;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--sb-danger);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation: none;
+  }
+}
+
+/* 좁은 화면: 입력창 자리를 남기려 아이콘만(녹음 중에는 초를 보인다) */
+@media (max-width: 480px) {
+  .button:not(.wide):not(.recording) .text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .button:not(.wide) {
+    padding: 0 12px;
+  }
+}

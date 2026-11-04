@@ -18,6 +18,8 @@ import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
 import ChatUiPrompt from './ChatUiPrompt';
+import VoiceInputButton from './VoiceInputButton';
+import { useVoiceInput } from './useVoiceInput';
 import { isReservationStep, isShowList, selectionText } from './reservationFlow';
 import styles from './ChatbotContent.module.css';
 
@@ -169,6 +171,13 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
   sendingRef.current = sending;
   sessionRef.current = sessionId;
+
+  // 말로 입력: 받은 글자는 입력창에만 채운다(자동 전송 안 함). 쓰던 글이 있으면 한 칸 띄워 뒤에 붙인다.
+  // 피보호자 예약 중 접힌 입력창이면 펼친다. 대화창이 바뀌면 cancel()로 버린다.
+  const voice = useVoiceInput(text => {
+    setInput(prev => (prev.trim() ? `${prev.trimEnd()} ${text}` : text));
+    setComposerOpenedIn(sessionRef.current);
+  });
 
   useEffect(() => {
     if (!profile) return;
@@ -355,6 +364,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   function restartConversation() {
     if (sendingRef.current) return;
     cancelPendingNavigation();
+    voice.cancel();
     setSessionId(makeSessionId());
     setSentBySession({});
     setMessages([buildWelcomeMessage(isGuardian ? selectedWard?.partnerName : profile?.name, isGuardian)]);
@@ -368,6 +378,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     if (sendingRef.current) return;
     cancelPendingNavigation();
     const ward = activeWards.find(item => item.partnerUserId === wardId);
+    voice.cancel();
     setSelectedWardId(wardId);
     setSessionId(makeSessionId());
     setSentBySession({});
@@ -437,15 +448,36 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     </section>
   );
 
+  // 음성 입력 안내(권한·못 알아들음·오류). 대화 말풍선이 아니라 입력창 아래 한 줄로 보인다
+  const voiceNotice = (
+    <p className={styles.voiceNotice} role="status" aria-live="polite">
+      {voice.state === 'recording' ? '말씀하세요. 다 하셨으면 다시 눌러 주세요.' : (voice.notice ?? '')}
+    </p>
+  );
+
   const composer = !showComposer ? (
     <footer className={`${styles.composer} ${styles.composerCollapsed}`}>
       <button type="button" className={styles.composerOpenButton} onClick={() => setComposerOpenedIn(sessionId)}>
         직접 써서 답하기
       </button>
+      <VoiceInputButton
+        variant="wide"
+        state={voice.state}
+        elapsedSec={voice.elapsedSec}
+        disabled={sending || waitingWards}
+        onToggle={voice.toggle}
+      />
+      {voiceNotice}
     </footer>
   ) : (
     <footer className={styles.composer}>
       <div className={styles.inputWrap}>
+        <VoiceInputButton
+          state={voice.state}
+          elapsedSec={voice.elapsedSec}
+          disabled={sending || waitingWards}
+          onToggle={voice.toggle}
+        />
         <textarea
           ref={textareaRef}
           className={styles.textarea}
@@ -471,6 +503,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           보내기
         </button>
       </div>
+      {voiceNotice}
     </footer>
   );
 

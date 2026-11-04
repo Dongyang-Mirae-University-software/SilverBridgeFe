@@ -1099,7 +1099,24 @@
 /* 피보호자 예약 중 입력창은 접고 [직접 써서 답하기]만 남긴다(키보드 없이 선택으로 진행) */
 .composerCollapsed {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 음성 입력 안내 - 비어 있으면 자리를 차지하지 않는다 */
+.voiceNotice {
+  flex-basis: 100%;
+  margin: 10px 0 0;
+  color: var(--sb-ink-soft);
+  font-size: calc(17px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  text-align: center;
+}
+
+.voiceNotice:empty {
+  display: none;
 }
 
 .composerOpenButton {
