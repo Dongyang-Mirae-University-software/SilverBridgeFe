@@ -1,0 +1,204 @@
+/* 병원 가는 날 카드 - /ward/hospital 다음 진료와 챗봇 예약 완료가 함께 쓴다. */
+.root {
+  background: #fff;
+  border-radius: var(--sb-radius);
+  box-shadow: var(--sb-shadow-sm);
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.2fr);
+  overflow: hidden;
+  border: 2px solid var(--sb-brand-soft);
+}
+
+.ddayPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 28px 20px;
+  background: var(--sb-brand);
+  color: #fff;
+  text-align: center;
+}
+
+.ddayCaption {
+  font-size: calc(24px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  opacity: 0.9;
+}
+
+.ddayBig {
+  font-size: calc(84px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.nextBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  min-width: 0;
+  padding: 30px 34px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.infoIcon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+}
+
+.infoIconBrand {
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.infoText {
+  min-width: 0;
+}
+
+.divider {
+  height: 2px;
+  background: var(--sb-line-soft);
+}
+
+.bigDate {
+  color: var(--sb-ink);
+  font-size: calc(38px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  line-height: 1.2;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.bigTime {
+  color: var(--sb-brand);
+}
+
+.hospital {
+  color: var(--sb-ink);
+  font-size: calc(36px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  line-height: 1.2;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.dept {
+  color: var(--sb-ink-soft);
+  font-size: calc(23px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+}
+
+.address {
+  margin-top: 6px;
+  color: var(--sb-ink-soft);
+  font-size: calc(23px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  line-height: 1.45;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .root {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ddayPanel {
+    padding: 22px 20px;
+  }
+
+  .ddayBig {
+    font-size: calc(64px * var(--ward-font-scale, 1));
+  }
+}
+
+@media (max-width: 480px) {
+  .nextBody {
+    gap: 18px;
+    padding: 22px 20px;
+  }
+
+  .infoRow {
+    gap: 14px;
+  }
+
+  .infoIcon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+  }
+
+  .bigDate {
+    font-size: calc(30px * var(--ward-font-scale, 1));
+  }
+
+  .hospital {
+    font-size: calc(28px * var(--ward-font-scale, 1));
+  }
+
+  .dept,
+  .address {
+    font-size: calc(20px * var(--ward-font-scale, 1));
+  }
+}
+
+/* 좁은 칸(챗봇 말풍선) - 화면 너비와 상관없이 한 열로 쌓고 글씨를 한 단계 줄인다. */
+.compact {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.compact .ddayPanel {
+  padding: 18px 16px;
+}
+
+.compact .ddayCaption {
+  font-size: calc(20px * var(--ward-font-scale, 1));
+}
+
+.compact .ddayBig {
+  font-size: calc(48px * var(--ward-font-scale, 1));
+}
+
+.compact .nextBody {
+  gap: 18px;
+  padding: 22px 20px;
+}
+
+.compact .infoRow {
+  gap: 14px;
+}
+
+.compact .infoIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+}
+
+.compact .bigDate {
+  font-size: calc(30px * var(--ward-font-scale, 1));
+}
+
+.compact .hospital {
+  font-size: calc(28px * var(--ward-font-scale, 1));
+}
+
+.compact .dept,
+.compact .address {
+  font-size: calc(20px * var(--ward-font-scale, 1));
+}

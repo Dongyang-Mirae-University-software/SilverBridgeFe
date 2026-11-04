@@ -177,3 +177,104 @@
   transform: translateY(-1px);
   box-shadow: 0 12px 24px rgba(43, 52, 39, 0.08);
 }
+
+/* ── 예약 완료 = 병원 가는 날 카드(2026-11-04) ── */
+.doneWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+  min-width: min(100%, 320px);
+}
+
+.doneTitle {
+  margin: 0;
+  color: var(--sb-brand);
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+}
+
+.donePatient {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+}
+
+.guardian .doneTitle {
+  font-size: calc(18px * var(--ward-font-scale, 1));
+}
+
+.ward .doneTitle {
+  font-size: calc(24px * var(--ward-font-scale, 1));
+}
+
+.guardian .donePatient {
+  font-size: calc(15px * var(--ward-font-scale, 1));
+}
+
+.ward .donePatient {
+  font-size: calc(20px * var(--ward-font-scale, 1));
+}
+
+/* ── 큰 버튼: 보호자 48px·16px, 피보호자 64px·22px ── */
+.guardian .reserveBtn,
+.guardian .listBtn,
+.guardian .detailBtn {
+  min-height: 48px;
+  border-radius: 14px;
+  font-size: calc(16px * var(--ward-font-scale, 1));
+  padding: 0 18px;
+}
+
+.ward .reserveBtn,
+.ward .listBtn,
+.ward .detailBtn {
+  min-height: 64px;
+  border-radius: 16px;
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  padding: 0 20px;
+}
+
+.doneWrap .listBtn {
+  width: 100%;
+}
+
+.guardian .cardTitle,
+.guardian .hospitalInfo strong,
+.guardian .apptRow strong {
+  font-size: calc(16px * var(--ward-font-scale, 1));
+}
+
+.guardian .hospitalInfo span,
+.guardian .apptRow span,
+.guardian .apptDetail dt,
+.guardian .apptDetail dd {
+  font-size: calc(14px * var(--ward-font-scale, 1));
+}
+
+.ward .cardTitle,
+.ward .hospitalInfo strong,
+.ward .apptRow strong {
+  font-size: calc(22px * var(--ward-font-scale, 1));
+}
+
+.ward .hospitalInfo span,
+.ward .apptRow span,
+.ward .apptDetail dt,
+.ward .apptDetail dd {
+  font-size: calc(19px * var(--ward-font-scale, 1));
+}
+
+@media (max-width: 480px) {
+  .ward .hospitalItem {
+    flex-wrap: wrap;
+  }
+
+  .ward .reserveBtn {
+    width: 100%;
+  }
+}
+
+.ward .address {
+  font-size: calc(17px * var(--ward-font-scale, 1)) !important;
+}

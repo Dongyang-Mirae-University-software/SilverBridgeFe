@@ -1085,3 +1085,39 @@
 /* 진한 글자로 보기: 중간 톤 배지·안내 글자색을 더 진하게 한다 */
 :global(.wardHighContrast) .targetBadge { color: #2a2a24; }
 :global(.wardHighContrast) .banner { color: #6b4e00; }
+
+/* ── 예약 진행 패널(2026-11-04): 예약 중에는 "눌러서 물어보세요" 칩 대신 지금 고를 선택지를 크게 보인다 ── */
+.reservationPanel {
+  overflow-y: auto;
+}
+
+.quickPromptPanel.reservationPanel {
+  max-height: 46dvh;
+  padding-bottom: 14px;
+}
+
+/* 피보호자 예약 중 입력창은 접고 [직접 써서 답하기]만 남긴다(키보드 없이 선택으로 진행) */
+.composerCollapsed {
+  display: flex;
+  justify-content: center;
+}
+
+.composerOpenButton {
+  min-height: 48px;
+  border: 0;
+  background: none;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  padding: 0 16px;
+}
+
+@media (max-width: 1024px) {
+  .wardQuickPanel.reservationPanel {
+    max-height: 52dvh;
+  }
+}

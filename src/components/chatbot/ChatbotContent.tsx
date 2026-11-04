@@ -17,6 +17,8 @@ import { type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
 import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
+import ChatUiPrompt from './ChatUiPrompt';
+import { isReservationStep, isShowList, selectionText } from './reservationFlow';
 import styles from './ChatbotContent.module.css';
 
 function makeId() {
@@ -68,6 +70,9 @@ const MAX_SUGGESTED = 4;
 const ANSWER_KIND = 'answer';
 
 const RESERVATION_PATH = '/guardian/hospital';
+/** 예약 목록 보기 = 역할별 "병원 가는 날" 화면(AI로 show_list 를 보내지 않는다). 보호자 화면은 고른 피보호자로 열린다. */
+const WARD_VISIT_LIST_PATH = '/ward/hospital';
+const GUARDIAN_VISIT_LIST_PATH = '/guardian/hospital';
 /** 남긴 말풍선을 잠깐 보여 준 뒤 이동한다. */
 const RESERVATION_NAV_DELAY_MS = 300;
 
@@ -148,6 +153,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const [isLogsLoading, setIsLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState<string | null>(null);
   const [composerFocused, setComposerFocused] = useState(false);
+  // 피보호자 예약 중에는 입력창을 접는다. [직접 써서 답하기]를 누른 대화창(sessionId)에서는 다시 펼친다.
+  const [composerOpenedIn, setComposerOpenedIn] = useState<string | null>(null);
   const softKeyboardOpen = useSoftKeyboardOpen();
   // 입력 중이고 화면 키보드가 떠 있을 때만 빠른 질문을 숨긴다(키보드를 내리면 포커스가 남아도 다시 보인다).
   const typingWithKeyboard = composerFocused && softKeyboardOpen;
@@ -193,7 +200,13 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     resizeComposer();
   }, [input, resizeComposer]);
 
-  const lastAssistantId = [...messages].reverse().find(message => message.role === 'assistant')?.id;
+  const lastAssistant = [...messages].reverse().find(message => message.role === 'assistant');
+  const lastAssistantId = lastAssistant?.id;
+  // 예약 진행 중(마지막 답이 예약 단계 선택지) - "눌러서 물어보세요" 칩 대신 선택지를 패널에 크게 보인다.
+  // 완료(예약 목록 보기 / 계속 상담하기)·취소·오류 답이 오면 풀려 칩이 돌아온다.
+  const reserving = isReservationStep(lastAssistant);
+  const reservationUi = reserving ? lastAssistant?.ui : undefined;
+  const showComposer = !isWardChat || !reserving || composerOpenedIn === sessionId;
   const suggested = latestSuggestions(messages);
   const quickTitle = waitingWards
     ? '피보호자 정보를 불러오는 중이에요'
@@ -218,7 +231,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       const userMessage: ChatMessage = {
         id: makeId(),
         role: 'user',
-        content: uiSelection ? (uiSelectionLabel ?? uiSelection.value) : trimmed,
+        // 선택지의 value(show_list·__type__·예약 ID)는 보이지 않고 label 만 보인다.
+        content: uiSelection ? selectionText(uiSelection.value, uiSelectionLabel) : trimmed,
         timestamp: new Date().toISOString(),
       };
 
@@ -304,13 +318,31 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   );
 
   // AI를 부르지 않으므로 챗 기록에 저장되지 않고, 보낸 문장 기억에도 넣지 않는다(칩은 항상 남는다).
-  function openReservation(text: string) {
+  // 예약·병원 가는 날 화면은 전역으로 고른 피보호자(selectedWardStore)로 열린다 - 따로 넘기지 않는다
+  function leaveTo(text: string, path: string) {
     if (sendingRef.current || reservationTimerRef.current || waitingWards) return;
     setMessages(prev => [...prev, { id: makeId(), role: 'user', content: text, timestamp: new Date().toISOString() }]);
-    // 예약 화면은 전역으로 고른 피보호자(selectedWardStore)로 시작한다 - 따로 넘기지 않는다
     reservationTimerRef.current = setTimeout(() => {
-      router.push(RESERVATION_PATH);
+      router.push(path);
     }, RESERVATION_NAV_DELAY_MS);
+  }
+
+  function openReservation(text: string) {
+    leaveTo(text, RESERVATION_PATH);
+  }
+
+  function openVisitList(text = '예약 목록 보기') {
+    leaveTo(text, isWardChat ? WARD_VISIT_LIST_PATH : GUARDIAN_VISIT_LIST_PATH);
+  }
+
+  /** 새 대화창으로 처음부터 - 예약 초안은 대화창(sessionId)마다 AI가 들고 있어 함께 비워진다. */
+  function restartConversation() {
+    if (sendingRef.current) return;
+    setSessionId(makeSessionId());
+    setSentBySession({});
+    setMessages([buildWelcomeMessage(isGuardian ? selectedWard?.partnerName : profile?.name, isGuardian)]);
+    setInput('');
+    setFallback(false);
   }
 
   function handleWardSelect(wardId: string) {
@@ -332,6 +364,10 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   }
 
   function handleUiSelect(field: string, value: string, label?: string) {
+    if (isShowList(field, value)) {
+      openVisitList(label);
+      return;
+    }
     void send('', { field, value }, label);
   }
 
@@ -360,6 +396,10 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             message={message}
             isLastAssistant={message.id === lastAssistantId}
             onUiSelect={handleUiSelect}
+            onShowList={() => openVisitList()}
+            onRestart={restartConversation}
+            // 예약 단계 선택지는 지금 단계면 아래 패널에, 지난 단계면 내 말풍선(고른 답)으로 이미 보이므로 말풍선에 그리지 않는다
+            hidePrompt={isReservationStep(message)}
             userImageUrl={profile?.profileImage}
             userName={profile?.name}
             variant={isWardChat ? 'ward' : 'guardian'}
@@ -377,7 +417,13 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     </section>
   );
 
-  const composer = (
+  const composer = !showComposer ? (
+    <footer className={`${styles.composer} ${styles.composerCollapsed}`}>
+      <button type="button" className={styles.composerOpenButton} onClick={() => setComposerOpenedIn(sessionId)}>
+        직접 써서 답하기
+      </button>
+    </footer>
+  ) : (
     <footer className={styles.composer}>
       <div className={styles.inputWrap}>
         <textarea
@@ -408,6 +454,24 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     </footer>
   );
 
+  const reservationPanel = (panelVariant: 'guardian' | 'ward') =>
+    reservationUi && (
+      <section
+        className={`${panelVariant === 'ward' ? styles.wardQuickPanel : styles.quickPromptPanel} ${styles.reservationPanel}`}
+        aria-label="예약 진행"
+      >
+        <p className={panelVariant === 'ward' ? styles.wardQuickTitle : styles.quickPromptTitle}>병원 예약 중이에요</p>
+        <ChatUiPrompt
+          key={lastAssistantId}
+          ui={reservationUi}
+          active
+          onSelect={handleUiSelect}
+          variant={panelVariant}
+          onRestart={restartConversation}
+        />
+      </section>
+    );
+
   if (isWardChat) {
     const wardQuickPrompts = wardPrompts(suggested, sentTexts);
     return (
@@ -420,29 +484,33 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
               {composer}
             </div>
 
-            <section className={styles.wardQuickPanel} aria-label="추천 질문">
-              <p className={styles.wardQuickTitle}>{quickTitle}</p>
-              {wardQuickPrompts.length === 0 ? (
-                <p className={styles.wardQuickEmpty}>궁금한 점을 입력창에 적어 주세요</p>
-              ) : (
-                <div className={styles.wardQuickGrid}>
-                  {wardQuickPrompts.map(prompt => (
-                    <button
-                      key={prompt.text}
-                      type="button"
-                      className={styles.wardQuickButton}
-                      disabled={sending}
-                      onClick={() => void send(prompt.text)}
-                    >
-                      <span className={styles.wardQuickIcon} aria-hidden="true">
-                        <Icon name={prompt.suggested ? 'message' : 'alert'} size={28} decorative />
-                      </span>
-                      <span>{prompt.text}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </section>
+            {reserving ? (
+              reservationPanel('ward')
+            ) : (
+              <section className={styles.wardQuickPanel} aria-label="추천 질문">
+                <p className={styles.wardQuickTitle}>{quickTitle}</p>
+                {wardQuickPrompts.length === 0 ? (
+                  <p className={styles.wardQuickEmpty}>궁금한 점을 입력창에 적어 주세요</p>
+                ) : (
+                  <div className={styles.wardQuickGrid}>
+                    {wardQuickPrompts.map(prompt => (
+                      <button
+                        key={prompt.text}
+                        type="button"
+                        className={styles.wardQuickButton}
+                        disabled={sending}
+                        onClick={() => void send(prompt.text)}
+                      >
+                        <span className={styles.wardQuickIcon} aria-hidden="true">
+                          <Icon name={prompt.suggested ? 'message' : 'alert'} size={28} decorative />
+                        </span>
+                        <span>{prompt.text}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
           </div>
         </section>
       </div>
@@ -502,25 +570,29 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         <div className={`${styles.body} ${typingWithKeyboard ? styles.typingWithKeyboard : ''}`}>
           {board}
 
-          <section className={styles.quickPromptPanel} aria-label="추천 질문">
-            <p className={styles.quickPromptTitle}>{quickTitle}</p>
-            <div className={styles.quickPromptRow}>
-              {guardianPrompts(suggested, sentTexts).map(prompt => (
-                <button
-                  key={prompt.text}
-                  type="button"
-                  className={`${styles.quickPromptButton} ${prompt.primary ? styles.quickPromptPrimary : ''}`}
-                  disabled={sending || waitingWards}
-                  onClick={() =>
-                    prompt.action === 'reservation' ? openReservation(prompt.text) : void send(prompt.text)
-                  }
-                >
-                  {prompt.primary && <Icon name="calendar" size={18} decorative />}
-                  {prompt.text}
-                </button>
-              ))}
-            </div>
-          </section>
+          {reserving ? (
+            reservationPanel('guardian')
+          ) : (
+            <section className={styles.quickPromptPanel} aria-label="추천 질문">
+              <p className={styles.quickPromptTitle}>{quickTitle}</p>
+              <div className={styles.quickPromptRow}>
+                {guardianPrompts(suggested, sentTexts).map(prompt => (
+                  <button
+                    key={prompt.text}
+                    type="button"
+                    className={`${styles.quickPromptButton} ${prompt.primary ? styles.quickPromptPrimary : ''}`}
+                    disabled={sending || waitingWards}
+                    onClick={() =>
+                      prompt.action === 'reservation' ? openReservation(prompt.text) : void send(prompt.text)
+                    }
+                  >
+                    {prompt.primary && <Icon name="calendar" size={18} decorative />}
+                    {prompt.text}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           {composer}
         </div>

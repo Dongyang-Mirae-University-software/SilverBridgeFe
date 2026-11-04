@@ -16,7 +16,7 @@ const base: ChatMessage = { id: 'a1', role: 'assistant', content: '', timestamp:
 function show(message: Partial<ChatMessage>, variant: 'guardian' | 'ward' = 'guardian') {
   return render(
     <div data-testid="wrap" style={{ width: 375 }}>
-      <ChatBubble message={{ ...base, ...message }} isLastAssistant onUiSelect={vi.fn()} variant={variant} />
+      <ChatBubble message={{ ...base, ...message }} isLastAssistant onUiSelect={vi.fn()} onShowList={vi.fn()} variant={variant} />
     </div>,
   );
 }
