@@ -1,0 +1,60 @@
+.notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 16px;
+  border: 2px solid var(--sb-warn);
+  border-radius: 16px;
+  background: var(--sb-warn-soft);
+  color: var(--sb-warn);
+  padding: 18px 22px;
+}
+
+.text {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.text strong {
+  color: var(--sb-ink);
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  word-break: keep-all;
+}
+
+.text p {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
+.allowButton {
+  min-height: 56px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 14px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  padding: 0 24px;
+}
+
+.allowButton:disabled {
+  cursor: progress;
+  opacity: .6;
+}
+
+@media (max-width: 560px) {
+  .allowButton {
+    width: 100%;
+  }
+}

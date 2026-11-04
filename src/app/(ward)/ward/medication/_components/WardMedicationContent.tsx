@@ -6,6 +6,7 @@ import classNames from 'classnames/bind';
 
 import { RefreshButton } from '@/components/RefreshButton';
 import { Icon } from '@/components/Icon';
+import { WardPushPermissionNotice } from '@/components/push/WardPushPermissionNotice';
 import useKstMidnightRefetch from '@/hooks/useKstMidnightRefetch';
 import { MedicationItem } from '@/service/interface/medication';
 import {
@@ -160,6 +161,8 @@ export function WardMedicationContent() {
       )}
       {!isLoading && !isError && medications.length > 0 && (
         <>
+          <WardPushPermissionNotice />
+
           {isAllTaken && (
             <section className={cx('allTaken')}>
               <Icon name="check" size={30} decorative />
