@@ -113,7 +113,8 @@
 
 .eventTime {
   display: flex;
-  min-width: 130px;
+  min-width: 0;
+  flex: 1;
   flex-direction: column;
 }
 
@@ -132,49 +133,28 @@
   white-space: nowrap;
 }
 
-.eventDescription {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 7px;
-  min-width: 0;
-  margin-left: auto;
-  color: var(--sb-ink-soft);
-  font-size: 15px;
-  font-weight: 700;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.eventDescription > span:first-child { overflow: hidden; text-overflow: ellipsis; }
-
 .pressBadge,
 .guardianChip {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 5px;
   border-radius: 999px;
-  font-size: 11px;
   font-weight: 800;
-  line-height: 1;
-  padding: 6px 8px;
+  white-space: nowrap;
 }
 
-.pressBadge { background: var(--sb-danger-soft); color: var(--sb-danger); }
+.pressBadge { gap: 6px; background: var(--sb-danger-soft); color: var(--sb-danger); font-size: 16px; padding: 6px 14px; }
 
-.guardianChip { background: #e6effa; color: #3b7dd8; }
+.guardianChip { gap: 8px; background: #f1f5fb; color: #2f5d8a; font-size: 15px; padding: 4px 14px 4px 4px; }
 
 .guardianChip i {
   display: grid;
-  width: 16px;
-  height: 16px;
+  width: 30px;
+  height: 30px;
   place-items: center;
   border-radius: 50%;
-  background: currentColor;
-  color: #fff;
-  font-size: 9px;
+  background: #fff;
+  font-size: 13px;
   font-style: normal;
 }
 
@@ -236,19 +216,11 @@
     font-size: 14px;
   }
 
-  .eventTime {
-    min-width: 0;
-    flex: 1;
-  }
-
   .eventTime strong {
     font-size: 16px;
   }
 
-  .eventDescription { display: flex; min-width: 0; flex: 0 1 auto; gap: 5px; font-size: 0; }
-  .eventDescription > span:first-child { display: none; }
-  .pressBadge, .guardianChip { font-size: 0; padding: 5px; }
-  .pressBadge::before { content: '연속'; font-size: 10px; }
-  .guardianChip { gap: 0; }
-  .guardianChip i { width: 18px; height: 18px; font-size: 10px; }
+  .pressBadge { font-size: 14px; padding: 6px 11px; }
+  .guardianChip { gap: 6px; font-size: 14px; padding: 3px 11px 3px 3px; }
+  .guardianChip i { width: 26px; height: 26px; font-size: 12px; }
 }

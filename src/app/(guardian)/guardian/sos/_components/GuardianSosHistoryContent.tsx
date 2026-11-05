@@ -17,9 +17,9 @@ import styles from './GuardianSosHistoryContent.module.css';
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 5;
 
-const TRIGGER_TYPE_META: Record<SosTriggerType, { filterLabel: string; description: string; tone: 'guardian' | 'sos' }> = {
-  SOS_BUTTON: { filterLabel: 'SOS 버튼', description: '긴급 SOS 버튼을 눌렀어요', tone: 'sos' },
-  GUARDIAN_CALL: { filterLabel: '보호자 연락', description: '보호자에게 직접 전화했어요', tone: 'guardian' },
+const TRIGGER_TYPE_META: Record<SosTriggerType, { filterLabel: string; tone: 'guardian' | 'sos' }> = {
+  SOS_BUTTON: { filterLabel: 'SOS 버튼', tone: 'sos' },
+  GUARDIAN_CALL: { filterLabel: '보호자 연락', tone: 'guardian' },
 };
 
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
@@ -160,11 +160,14 @@ export default function GuardianSosHistoryContent() {
                     <strong>{formatSosDate(item.triggeredAt)}</strong>
                     <span>{formatSosTime(item)}</span>
                   </div>
-                  <div className={cx('eventDescription')}>
-                    <span>{TRIGGER_TYPE_META[item.triggerType].description}</span>
-                    {item.pressCount !== undefined && item.pressCount >= 2 && <strong className={cx('pressBadge')}>{item.pressCount}번 연달아 누름</strong>}
-                    {item.calledGuardianName && <span className={cx('guardianChip')}><i>{item.calledGuardianName.slice(0, 1)}</i>{item.calledGuardianName}</span>}
-                  </div>
+                  {/* v13 시안: 설명 문구 없이 SOS는 연달아 누른 횟수, 보호자 연락은 받은 보호자만 뱃지로 */}
+                  {item.pressCount !== undefined && item.pressCount >= 2 && <strong className={cx('pressBadge')}>{item.pressCount}번 연달아 누름</strong>}
+                  {item.calledGuardianName && (
+                    <span className={cx('guardianChip')}>
+                      <i aria-hidden="true">{item.calledGuardianName.slice(0, 1)}</i>
+                      {item.calledGuardianName.split(' ')[0]}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
