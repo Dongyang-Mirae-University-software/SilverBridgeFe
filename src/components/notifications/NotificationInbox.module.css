@@ -53,7 +53,7 @@
 .panel.guardian { top: 72px; right: 14px; max-height: calc(100dvh - 88px); }
 .panel.ward { top: 86px; right: 24px; width: min(520px, calc(100vw - 24px)); max-height: calc(100dvh - 102px); }
 
-.head { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--sb-line-soft); padding: 14px 14px 12px 20px; }
+.head { display: flex; flex-shrink: 0; align-items: center; gap: 8px; border-bottom: 1px solid var(--sb-line-soft); padding: 14px 14px 12px 20px; }
 .head h2 { flex: 1; margin: 0; color: var(--sb-ink); font-size: 18px; font-weight: 800; }
 .readAll {
   min-height: 36px;
@@ -80,7 +80,8 @@
   cursor: pointer;
 }
 
-.tabs { display: flex; gap: 6px; overflow-x: auto; border-bottom: 1px solid var(--sb-line-soft); padding: 10px 14px; }
+/* 창 높이가 모자라도 줄어들지 않게(줄면 글자가 잘리고 위아래로 스크롤된다) - 넘치면 옆으로만 민다 */
+.tabs { display: flex; flex-shrink: 0; gap: 6px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; border-bottom: 1px solid var(--sb-line-soft); padding: 10px 14px; }
 .tab {
   min-height: 34px;
   flex-shrink: 0;
@@ -151,7 +152,7 @@
 }
 .more { display: block; width: calc(100% - 28px); margin: 10px 14px 14px; }
 .more:disabled { cursor: progress; opacity: 0.6; }
-.foot { margin: 0; border-top: 1px solid var(--sb-line-soft); background: var(--sb-bg-soft); color: var(--sb-ink-mute); font-size: 12px; padding: 9px 18px; }
+.foot { flex-shrink: 0; margin: 0; border-top: 1px solid var(--sb-line-soft); background: var(--sb-bg-soft); color: var(--sb-ink-mute); font-size: 12px; padding: 9px 18px; }
 
 /* 피보호자 - 본문 글자 크기 설정을 따른다 */
 .panel.ward .head h2 { font-size: calc(22px * var(--ward-font-scale, 1)); }
