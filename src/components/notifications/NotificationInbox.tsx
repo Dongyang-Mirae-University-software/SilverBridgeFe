@@ -39,10 +39,6 @@ const CATEGORY_TABS: Array<{ value: CategoryTab; label: string }> = [
 const listKey = [...notificationInboxQueryKey, 'list'] as const;
 const unreadKey = unreadNotificationCountQueryOptions.queryKey;
 
-function formatBadge(count: number) {
-  return count > 99 ? '99+' : String(count);
-}
-
 // 읽음으로 바꾼 항목을 받아 둔 모든 탭 목록에 그 자리에서 반영한다
 function markReadInCache(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -74,7 +70,8 @@ export function NotificationBellButton({ variant, open, onToggle }: { variant: '
       onClick={onToggle}
     >
       <Icon name="bell" size={variant === 'ward' ? 22 : 18} decorative />
-      {count > 0 && <span className={cx('badge')} aria-hidden="true">{formatBadge(count)}</span>}
+      {/* 개수 대신 빨간 점만 - 개수는 화면 읽기 프로그램용 이름(aria-label)에만 둔다 */}
+      {count > 0 && <span className={cx('badge')} aria-hidden="true" />}
     </button>
   );
 }
