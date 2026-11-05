@@ -50,6 +50,7 @@
       '기분 변화 안내',
       `걱정·우울한 기분이 ${data && data.days ? `${data.days}일째` : '며칠째'} 이어지고 있어요.`,
     ],
+    COMPANION_PROMPT: () => ['안부 말벗', '안부 인사 시간이에요. 오늘 이야기를 들려주세요.'],
   };
 
   const ANOMALY_ICON = { FIRE: 'fire', FALL: 'fall', WEAPON: 'weapon' };
@@ -89,6 +90,8 @@
     }
     // 안부 대화 위험 신호는 대화마다 한 번 온다 - 대화(sessionId)마다 따로 남긴다
     if (type === 'COMPANION_RISK' && data.sessionId) return `${type}:${data.sessionId}`;
+    // 안부 인사 안내는 시간대마다 한 번 - 앞 시간대 안내를 소리 없이 덮지 않게 시간대로 나눈다
+    if (type === 'COMPANION_PROMPT' && data.slot) return `${type}:${data.slot}`;
     const target =
       data.sosEventId ||
       data.incidentId ||
@@ -203,6 +206,8 @@
       case 'COMPANION_RISK':
       case 'COMPANION_NOTICE':
         return '/guardian/emotion';
+      case 'COMPANION_PROMPT':
+        return '/ward/companion';
       default:
         return guardianOr(role, '/guardian', '/ward');
     }
