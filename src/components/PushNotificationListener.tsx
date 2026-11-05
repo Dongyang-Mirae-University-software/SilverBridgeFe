@@ -15,6 +15,7 @@ import { guardianAnomalyHistoryQueryKey } from '@/service/query/guardian/anomaly
 import { guardianDashboardQueryKey } from '@/service/query/guardian/dashboard';
 import { wardConnectionsQueryKey } from '@/service/query/ward';
 import { wardTodayMedicationQueryKey } from '@/service/query/ward/medication';
+import { notificationInboxQueryKey } from '@/service/query/user/notificationInbox';
 import { CommonResponse } from '@/service/interface/common';
 import { IConnectionItem } from '@/service/interface/connection';
 import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/ward/connection';
@@ -35,6 +36,7 @@ const cx = classNames.bind(styles);
 const TOAST_LIFETIME_MS = 6000;
 const NOTIFICATION_DEDUPE_LIFETIME_MS = 8000;
 const RECEIVED_AT_TICK_MS = 30000;
+const INBOX_REFRESH_DELAY_MS = 1200;
 // 휴대폰 위쪽 토스트를 이만큼 위로 밀면 닫는다
 const SWIPE_DISMISS_PX = 48;
 // 복약 막대 칸 수 상한 - 더 많으면 비율로 줄여 그린다
@@ -433,6 +435,11 @@ export default function PushNotificationListener() {
     [queryClient, router],
   );
 
+  // 알림 기록은 발송 직후 남는다 - 조금 뒤에 종 뱃지·알림함을 다시 받는다
+  const refreshNotificationInbox = useCallback(() => {
+    window.setTimeout(() => void queryClient.invalidateQueries({ queryKey: notificationInboxQueryKey }), INBOX_REFRESH_DELAY_MS);
+  }, [queryClient]);
+
   const handleConnectionAction = async (toast: PushToast, action: 'accept' | 'refuse') => {
     const connectionId = getConnectionId(toast.data);
     if (!connectionId || processingToastIds.includes(toast.id)) return;
@@ -488,9 +495,10 @@ export default function PushNotificationListener() {
       if (isSosPush(payload.data)) void refreshSosPage();
       if (isMedicationPush(payload.data)) void refreshMedicationPage(payload.data);
       if (isAnomalyPush(payload.data) || isAnomalyReviewPush(payload.data)) void refreshAnomalyPage();
+      refreshNotificationInbox();
       addToast(toast);
     });
-  }, [addToast, currentRole, refreshAnomalyPage, refreshConnectionPage, refreshMedicationPage, refreshSosPage]);
+  }, [addToast, currentRole, refreshAnomalyPage, refreshConnectionPage, refreshMedicationPage, refreshNotificationInbox, refreshSosPage]);
 
   useEffect(() => {
     const handleLocalPush = (event: Event) => {
