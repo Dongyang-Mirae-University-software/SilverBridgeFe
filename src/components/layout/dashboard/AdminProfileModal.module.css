@@ -6,7 +6,3 @@
 .accessIcon { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border-radius: 11px; background: var(--sb-brand-50); color: var(--sb-brand); }
 .accessCard strong { color: var(--sb-ink); font-size: 14px; }
 .accessCard p { margin: 2px 0 0; color: var(--sb-ink-mute); font-size: 12px; line-height: 1.4; }
-.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
-.meta div { border: 1px solid var(--sb-line-soft); border-radius: 12px; background: #fff; padding: 10px 12px; }
-.meta dt { color: var(--sb-ink-mute); font-size: 11px; font-weight: 700; }
-.meta dd { margin: 3px 0 0; overflow: hidden; color: var(--sb-ink); font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }

@@ -41,15 +41,17 @@ type Draft = Partial<IUserUpdateReq> & {
 // v13.0 시안 '내 프로필' - 항목마다 '바꾸기'로 그 자리에서 고친다.
 // 피보호자(ward): 처음엔 사진·이름·전화와 내 ID 카드만 두고 '정보 바꾸기'로 펼친다. 글자·칸이 더 크다.
 // 보호자(guardian): 처음부터 펼친 목록, 사진 옆에 이름·역할.
+// 운영자는 보호자 목록을 그대로 쓰고 맨 위 카드만 hero로 바꿔 넣는다.
 export function InlineProfileModal({
   variant,
+  hero,
   onClose,
   profile,
   role,
   userId,
   userName,
   userEmail,
-}: RoleProfileModalProps & { variant: 'ward' | 'guardian' }) {
+}: RoleProfileModalProps & { variant: 'ward' | 'guardian'; hero?: ReactNode }) {
   const isWard = variant === 'ward';
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -259,6 +261,8 @@ export function InlineProfileModal({
             )}
             <span className={cx('rolePill')}>{getRoleLabel(role)}</span>
           </section>
+        ) : hero ? (
+          hero
         ) : (
           <section className={cx('rowHero')}>
             <label className={cx('avatar', 'avatarRow')} aria-label="프로필 사진 바꾸기">
@@ -423,6 +427,25 @@ export function InlineProfileModal({
             </Group>
 
             <Group title="내 정보">
+              {/* 운영자 카드(hero)에는 이름 바꾸기가 없어 목록 맨 위에 둔다 */}
+              {hero && (
+                <Item label="이름" action={editButton('name', { name: profile?.name ?? '' })}>
+                  {userName}
+                </Item>
+              )}
+              {hero && edit === 'name' && (
+                <div className={cx('panel')}>
+                  <input
+                    aria-label="이름"
+                    autoFocus
+                    className={cx('input')}
+                    maxLength={20}
+                    value={draft.name ?? ''}
+                    onChange={event => setDraft({ name: event.target.value })}
+                  />
+                  {saveRow(Boolean((draft.name ?? '').trim()), () => saveProfile({ name: (draft.name ?? '').trim() }))}
+                </div>
+              )}
               <Item label="전화번호" action={editButton('phone', { phone: '', code: '' })}>
                 {phone}
               </Item>
