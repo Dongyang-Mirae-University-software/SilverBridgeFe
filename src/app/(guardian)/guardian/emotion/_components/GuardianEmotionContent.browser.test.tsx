@@ -7,7 +7,8 @@ import { render } from 'vitest-browser-react';
 
 import type { ICompanionToday } from '@/service/interface/guardian/companion';
 import { clearSelectedWardId } from '@/store/selectedWardStore';
-import { formatSlotTime, GuardianEmotionContent } from './GuardianEmotionContent';
+import { formatSlotTime } from '@/utils/format/slotTime';
+import { GuardianEmotionContent } from './GuardianEmotionContent';
 
 const data = vi.hoisted(() => ({
   connections: (async () => ({ data: [] })) as () => Promise<unknown>,

@@ -17,6 +17,7 @@ import type {
 } from '@/service/interface/guardian/companion';
 import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 import { getTopicParticle } from '@/utils/format/korean';
+import { formatSlotTime } from '@/utils/format/slotTime';
 import styles from './GuardianEmotionContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -43,17 +44,6 @@ const ATTENTION_TEXT: Record<ICompanionAttention['mood'], string> = {
   WORRY: '걱정스러운 기분이',
   DEPRESSED: '우울한 기분이',
 };
-
-// "09:00" → "오전 9시", "12:00" → "낮 12시", "18:30" → "오후 6시 30분". 형식이 다르면 받은 값 그대로
-export function formatSlotTime(slot: string) {
-  const match = /^(\d{1,2}):(\d{2})$/.exec(slot);
-  if (!match) return slot;
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  const period = hour < 12 ? '오전' : hour === 12 ? '낮' : '오후';
-  const displayHour = hour % 12 || 12;
-  return `${period} ${displayHour}시${minute ? ` ${minute}분` : ''}`;
-}
 
 function isNotAuthorized(error: unknown) {
   return isAxiosError<{ code?: string }>(error) && error.response?.data?.code === 'COMPANION_NOT_AUTHORIZED';

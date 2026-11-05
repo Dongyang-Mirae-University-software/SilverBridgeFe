@@ -14,6 +14,13 @@ const MIN_RECORDING_MS = 300;
 
 type AudioContextCtor = typeof AudioContext;
 
+type VoiceInputOptions<T> = {
+  // 녹음한 WAV를 보낼 곳. 없으면 챗봇 받아쓰기(글자를 돌려준다)
+  send?: (audio: Blob, signal: AbortSignal) => Promise<T>;
+  // 실패를 직접 안내할 때(안부 말벗 - 오류 code마다 할 일이 다르다). 없으면 받아쓰기 안내 문구를 보인다
+  onError?: (error: unknown) => void;
+};
+
 function getAudioContextCtor(): AudioContextCtor | undefined {
   if (typeof window === 'undefined') return undefined;
   return window.AudioContext ?? (window as unknown as { webkitAudioContext?: AudioContextCtor }).webkitAudioContext;
@@ -33,15 +40,18 @@ type Recording = {
 
 // 챗봇 마이크 음성 입력. 누르면 녹음, 다시 누르면(또는 30초·말이 멈추면) 끝내고 서버에서 글자로 바꿔 onText로 넘긴다.
 // 자동 전송하지 않는다. 음성·글자는 메모리에만 두고 저장·로그하지 않는다. 브라우저 SpeechRecognition은 쓰지 않는다(팀 결정).
-export function useVoiceInput(onText: (text: string) => void) {
+// options.send를 주면 받아쓰기 대신 그곳으로 보내고 받은 결과를 넘긴다(안부 말벗 음성 대답)
+export function useVoiceInput<T = string>(onText: (result: T) => void, options?: VoiceInputOptions<T>) {
   const [state, setState] = useState<VoiceInputState>('idle');
   const [elapsedSec, setElapsedSec] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
 
   const onTextRef = useRef(onText);
+  const optionsRef = useRef(options);
   useEffect(() => {
     onTextRef.current = onText;
-  }, [onText]);
+    optionsRef.current = options;
+  }, [onText, options]);
   const recordingRef = useRef<Recording | null>(null);
   // 권한 창이 떠 있는 동안 두 번째 누름을 막는다(state는 비동기라 같은 틱을 못 막는다)
   const busyRef = useRef(false);
@@ -83,13 +93,16 @@ export function useVoiceInput(onText: (text: string) => void) {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const text = await transcribeChatAudio(blob, controller.signal);
+      const send = optionsRef.current?.send ?? (transcribeChatAudio as unknown as NonNullable<VoiceInputOptions<T>['send']>);
+      const result = await send(blob, controller.signal);
       if (!mountedRef.current || controller.signal.aborted) return;
-      if (text) onTextRef.current(text);
-      else setNotice(STT_MESSAGES.empty);
+      if (result === '') setNotice(STT_MESSAGES.empty);
+      else onTextRef.current(result);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted) return;
-      setNotice(getSttErrorMessage(error));
+      const onError = optionsRef.current?.onError;
+      if (onError) onError(error);
+      else setNotice(getSttErrorMessage(error));
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
       busyRef.current = false;
