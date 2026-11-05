@@ -1,20 +1,20 @@
-/* 챗봇 마이크 버튼 - 입력창(60px)·보내기 버튼과 같은 높이, 큰 글씨·큰 터치 영역 */
+/* 챗봇 마이크 버튼 - 입력창·보내기 버튼과 같은 높이로 늘어나고(피보호자 68px), 큰 글씨·큰 터치 영역 */
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
-  height: 60px;
-  min-width: 60px;
-  padding: 0 16px;
+  min-height: 60px;
+  min-width: 68px;
+  padding: 0 22px;
   border: 2px solid var(--sb-brand);
   border-radius: 16px;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
   cursor: pointer;
   font: inherit;
-  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-size: calc(21px * var(--ward-font-scale, 1));
   font-weight: calc(800 + var(--ward-weight-boost, 0));
   white-space: nowrap;
 }
@@ -29,9 +29,12 @@
   opacity: 0.55;
 }
 
+.button:not(.wide) {
+  align-self: stretch;
+}
+
 .wide {
   min-height: 56px;
-  height: auto;
   padding: 0 22px;
 }
 
@@ -42,8 +45,8 @@
 }
 
 .icon {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
 }
 
 .dot {
@@ -78,6 +81,6 @@
   }
 
   .button:not(.wide) {
-    padding: 0 12px;
+    padding: 0 14px;
   }
 }
