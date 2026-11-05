@@ -72,6 +72,10 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  /* 한국어를 글자 중간("바꾸/기")이 아니라 어절 단위로 줄바꿈한다. 모든 화면이 물려받는다.
+     띄어쓰기 없는 긴 글(이메일·링크·ID)은 칸을 넘칠 때만 글자 단위로 끊는다 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* 버튼·입력창은 브라우저 기본이 system-ui라 body 글꼴을 상속하지 않는다 */
