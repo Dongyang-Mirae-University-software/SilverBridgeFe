@@ -190,10 +190,7 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
                       {!item.read && <span className={cx('srOnly')}>안 읽음</span>}
                     </span>
                     {item.body && <span className={cx('message')}>{item.body}</span>}
-                    <span className={cx('meta')}>
-                      {item.wardName && <span className={cx('wardName')}>{item.wardName}</span>}
-                      <time dateTime={item.createdAt}>{formatNotificationTime(item.createdAt)}</time>
-                    </span>
+                    <time className={cx('meta')} dateTime={item.createdAt}>{formatNotificationTime(item.createdAt)}</time>
                   </span>
                   {!item.read && <span className={cx('dot')} aria-hidden="true" />}
                 </button>

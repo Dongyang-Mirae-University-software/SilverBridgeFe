@@ -87,14 +87,14 @@ describe('종 알림함 (Chrome)', () => {
     await expect.element(page.getByRole('button', { name: '알림', exact: true })).toBeVisible();
   });
 
-  it('열면 최신 알림을 보이고 본문 줄바꿈과 피보호자 이름을 그대로 둔다', async () => {
+  it('열면 최신 알림을 보이고 본문 줄바꿈을 그대로 둔다 - 피보호자 이름 뱃지는 붙이지 않는다', async () => {
     await renderInbox();
     await page.getByRole('button', { name: /^알림/ }).click();
 
     await expect.element(page.getByRole('dialog', { name: '알림' })).toBeVisible();
     await expect.element(page.getByText('[화재 감지] 김영자님 댁 거실')).toBeVisible();
     expect(page.getByText('거실 카메라에서', { exact: false }).element().textContent).toBe('거실 카메라에서 화재가 감지되었습니다.\n지금 확인해 주세요.');
-    await expect.element(page.getByText('김영자', { exact: true })).toBeVisible();
+    expect(page.getByText('김영자', { exact: true }).elements()).toHaveLength(0);
     expect(api.list).toHaveBeenLastCalledWith({ category: undefined, page: 0, size: 20 });
   });
 

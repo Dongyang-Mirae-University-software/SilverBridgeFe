@@ -122,8 +122,7 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
-.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 2px; color: var(--sb-ink-mute); font-size: 12px; font-weight: 600; }
-.wardName { border-radius: 999px; background: var(--sb-bg-soft); color: var(--sb-ink-soft); font-weight: 800; padding: 2px 8px; }
+.meta { margin-top: 2px; color: var(--sb-ink-mute); font-size: 12px; font-weight: 600; }
 .dot { width: 9px; height: 9px; flex: 0 0 9px; margin-top: 6px; border-radius: 50%; background: var(--sb-brand); }
 
 .state { display: grid; justify-items: center; gap: 12px; margin: 0; color: var(--sb-ink-mute); font-size: 14px; padding: 40px 20px; text-align: center; }
