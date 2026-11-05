@@ -460,7 +460,11 @@
 }
 
 .textarea::placeholder {
+  overflow: hidden;
   color: var(--sb-ink-mute);
+  /* 안내 글은 한 줄로 - 두 줄로 나뉘면 빈 입력창이 높아지고 글자가 아래로 쏠린다 */
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* outline을 지웠으므로 키보드 사용자에게 포커스 위치를 테두리로 보여 준다. */
@@ -941,7 +945,8 @@
     min-height: 52px;
     max-height: 74px;
     font-size: calc(18px * var(--ward-font-scale, 1));
-    padding: 13px 14px;
+    /* 한 줄(27px)+여백+테두리 = 61px - 옆 말하기 버튼(60px 이상)과 같은 높이로 글자가 가운데 온다 */
+    padding: 16px 14px;
   }
 
   .sendButton {

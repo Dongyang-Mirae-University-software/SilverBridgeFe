@@ -203,9 +203,12 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     const lineHeight = Number.parseFloat(computedStyle.lineHeight) || 24;
     const paddingTop = Number.parseFloat(computedStyle.paddingTop) || 0;
     const paddingBottom = Number.parseFloat(computedStyle.paddingBottom) || 0;
+    // box-sizing: border-box라 높이에 테두리도 들어간다. scrollHeight는 테두리를 빼고 재므로 더해 줘야
+    // 글자 위아래 여백이 같아진다(빼먹으면 테두리만큼 낮아져 '직접 쓰기'가 위로 붙었다)
+    const borders = (Number.parseFloat(computedStyle.borderTopWidth) || 0) + (Number.parseFloat(computedStyle.borderBottomWidth) || 0);
     const maxHeight = lineHeight * COMPOSER_MAX_LINES + paddingTop + paddingBottom;
 
-    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight) + borders}px`;
     textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
   }, []);
 
