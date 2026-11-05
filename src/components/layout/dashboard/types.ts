@@ -15,6 +15,7 @@ export type PageKey =
   | 'dashboard'
   | 'detection'
   | 'emotion'
+  | 'companion'
   | 'wards'
   | 'ward-register'
   | 'inquiries'

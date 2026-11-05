@@ -2,6 +2,7 @@ import { NavItem } from '@/components/layout/dashboard/types';
 
 export const WARD_NAV: NavItem[] = [
   { href: '/ward', icon: 'dashboard', label: '홈', key: 'home' },
+  { href: '/ward/companion', icon: 'heart', label: '안부 말벗', key: 'companion' },
   // { href: '/ward/sos', icon: 'phone', label: '긴급 전화', key: 'sos' },
   { href: '/ward/guardians', icon: 'users', label: '내 가족', key: 'guardians' },
   // 치매 예방 게임: 아직 미공개. 사이드바에서만 숨김(/ward/game 직접 접근은 가능)

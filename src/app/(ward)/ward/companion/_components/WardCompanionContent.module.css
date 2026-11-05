@@ -1,0 +1,269 @@
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
+
+.page { display: grid; width: 100%; min-width: 0; align-content: start; gap: 18px; }
+
+/* 오늘 현황 - 지금 열 수 있으면 갈색 카드에 큰 시작 버튼 */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border: 2px solid var(--sb-line-soft);
+  border-radius: 24px;
+  background: #fff;
+  padding: 36px 28px;
+  text-align: center;
+}
+.hero.open { border-color: color-mix(in srgb, var(--sb-brand) 20%, transparent); background: var(--sb-brand-50); }
+.hero h2 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: calc(36px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  line-height: 1.25;
+  word-break: keep-all;
+}
+.hero p,
+.endCard p {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: calc(24px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
+.startButton,
+.primaryButton,
+.micButton {
+  display: inline-flex;
+  min-height: 84px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(30px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  padding: 0 36px;
+  word-break: keep-all;
+}
+.startButton { width: min(100%, 480px); margin-top: 10px; }
+.primaryButton { min-height: 72px; font-size: calc(26px * var(--ward-font-scale, 1)); }
+.startButton:disabled,
+.primaryButton:disabled,
+.micButton:disabled,
+.switchButton:disabled,
+.stopButton:disabled { cursor: not-allowed; opacity: 0.6; }
+
+.slots { display: grid; gap: 12px; }
+.slotsTitle {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: calc(24px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+}
+.slots ul { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.slot {
+  display: flex;
+  min-width: 0;
+  min-height: 92px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 2px solid var(--sb-line);
+  border-radius: 18px;
+  background: #fff;
+  padding: 8px;
+  text-align: center;
+}
+.slot strong { color: var(--sb-ink); font-size: calc(24px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); word-break: keep-all; }
+/* 19px 굵게 = 큰 글자 기준 - 갈색·초록 글자 대비를 3:1 기준으로 맞춘다(복약 화면과 같음) */
+.slot span { color: var(--sb-ink-soft); font-size: calc(19px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
+.slot.done { border-color: var(--sb-safe); background: var(--sb-safe-soft); }
+.slot.done span { color: var(--sb-safe); }
+.slot.available,
+.slot.in_progress { border: 3px solid var(--sb-brand); background: var(--sb-brand-50); }
+.slot.available span,
+.slot.in_progress span { color: var(--sb-brand); }
+.slot.missed { background: var(--sb-bg-soft); }
+
+.stateText {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  color: var(--sb-ink-soft);
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  padding: 40px 24px;
+  text-align: center;
+  word-break: keep-all;
+}
+.stateText p { margin: 0; }
+
+.notice {
+  width: 100%;
+  margin: 0;
+  border: 2px solid var(--sb-warn);
+  border-radius: var(--sb-radius);
+  background: var(--sb-warn-soft);
+  color: var(--sb-warn);
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  padding: 14px 18px;
+  text-align: center;
+  word-break: keep-all;
+}
+.notice.recordingNotice { border-color: var(--sb-brand); background: var(--sb-brand-50); color: var(--sb-brand); }
+
+.privacy {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: calc(19px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  text-align: center;
+}
+
+/* 대화 */
+.talkHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.talkHead > div { display: flex; flex-direction: column; gap: 2px; }
+.talkSlot { color: var(--sb-ink); font-size: calc(28px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); }
+.talkTurns { color: var(--sb-ink-soft); font-size: calc(19px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
+.stopButton {
+  min-height: 64px;
+  border: 2px solid var(--sb-line);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  padding: 0 24px;
+}
+.resumed { margin: 0; color: var(--sb-ink-soft); font-size: calc(20px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
+
+.lines { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.line {
+  display: grid;
+  max-width: min(100%, 760px);
+  gap: 8px;
+  border-radius: 22px;
+  padding: 18px 22px;
+}
+.line p {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: calc(30px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+.who { font-size: calc(19px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
+.line.companion { justify-self: start; border: 2px solid color-mix(in srgb, var(--sb-brand) 20%, transparent); background: var(--sb-brand-50); }
+.line.companion .who { color: var(--sb-brand); }
+.line.me { justify-self: end; border: 2px solid var(--sb-line-soft); background: #fff; }
+.line.me p { font-size: calc(26px * var(--ward-font-scale, 1)); }
+.line.me .who { color: var(--sb-ink-soft); }
+
+.listenButton {
+  display: inline-flex;
+  min-height: 52px;
+  justify-self: start;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid color-mix(in srgb, var(--sb-brand) 35%, transparent);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--sb-brand);
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  padding: 0 16px;
+}
+.speakerIcon { width: 24px; height: 24px; }
+
+.dots { display: inline-flex; gap: 6px; margin-left: 10px; vertical-align: middle; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--sb-brand); animation: blink 1.2s infinite ease-in-out; }
+.dots i:nth-child(2) { animation-delay: 0.2s; }
+.dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dots i { animation: none; } }
+
+.answer { display: grid; justify-items: center; gap: 14px; border-top: 2px dashed var(--sb-line-soft); padding-top: 20px; }
+.micButton { width: min(100%, 520px); min-height: 104px; border-radius: 26px; font-size: calc(32px * var(--ward-font-scale, 1)); }
+.micButton.recording { background: var(--sb-danger); }
+.micIcon { width: 40px; height: 40px; }
+.recDot { width: 22px; height: 22px; border-radius: 50%; background: #fff; animation: blink 1.2s infinite ease-in-out; }
+.switchButton {
+  min-height: 60px;
+  border: 0;
+  background: transparent;
+  color: var(--sb-brand);
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  padding: 0 16px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.textForm { display: grid; width: min(100%, 760px); gap: 12px; }
+.textForm textarea {
+  width: 100%;
+  border: 2px solid var(--sb-line);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: calc(26px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  line-height: 1.45;
+  padding: 16px 18px;
+  resize: vertical;
+}
+.textForm textarea:focus { border-color: var(--sb-brand); outline: none; }
+
+.endCard {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  border: 2px solid var(--sb-safe);
+  border-radius: 24px;
+  background: var(--sb-safe-soft);
+  padding: 32px 24px;
+  text-align: center;
+}
+.endCard h2 { margin: 0; color: var(--sb-safe); font-size: calc(32px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); word-break: keep-all; }
+
+@media (max-width: 768px) {
+  .slots ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* 휴대폰 - 글자는 피보호자 화면 휴대폰 기준(20px)보다 줄이지 않는다 */
+@media (max-width: 640px) {
+  .hero { padding: 26px 18px; }
+  .hero h2 { font-size: calc(28px * var(--ward-font-scale, 1)); }
+  .hero p, .endCard p { font-size: calc(21px * var(--ward-font-scale, 1)); }
+  .startButton, .micButton { width: 100%; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 20px; }
+  .slots ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .slot { min-height: 80px; }
+  .slot strong { font-size: calc(22px * var(--ward-font-scale, 1)); }
+  .talkSlot { font-size: calc(24px * var(--ward-font-scale, 1)); }
+  .line { padding: 14px 16px; }
+  .line p { font-size: calc(24px * var(--ward-font-scale, 1)); }
+  .line.me p { font-size: calc(22px * var(--ward-font-scale, 1)); }
+  .endCard h2 { font-size: calc(26px * var(--ward-font-scale, 1)); }
+  .primaryButton { width: 100%; }
+}
