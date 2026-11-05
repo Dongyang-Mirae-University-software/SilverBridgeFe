@@ -74,7 +74,6 @@ export function NotificationBellButton({ variant, open, onToggle }: { variant: '
       onClick={onToggle}
     >
       <Icon name="bell" size={variant === 'ward' ? 22 : 18} decorative />
-      <span className={cx('bellLabel')}>알림</span>
       {count > 0 && <span className={cx('badge')} aria-hidden="true">{formatBadge(count)}</span>}
     </button>
   );
