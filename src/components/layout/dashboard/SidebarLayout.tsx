@@ -1,14 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
 import { SilverBridgeLogo } from '@/components/SilverBridgeLogo';
+import { NotificationBellButton, NotificationPanel } from '@/components/notifications/NotificationInbox';
 import { AuthRole } from '@/lib/auth/tokenStore';
 import { IUserProfile } from '@/service/interface/user/user';
+import { unreadNotificationCountQueryOptions } from '@/service/query/user/notificationInbox';
 import { Sidebar } from './Sidebar';
 import { NavItem } from './types';
 import styles from './SidebarLayout.module.css';
@@ -22,14 +25,29 @@ interface SidebarLayoutProps {
   rootPath: string;
 }
 
+// 상단 종 알림함(보호자·피보호자만 - 관리자는 403). 안 읽은 수는 실시간 이벤트가 없어 화면을 옮길 때마다 다시 받는다
+function useNotificationInbox(enabled: boolean, pathname: string) {
+  const queryClient = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const close = useCallback(() => setIsOpen(false), []);
+
+  useEffect(() => {
+    if (enabled) void queryClient.invalidateQueries({ queryKey: unreadNotificationCountQueryOptions.queryKey });
+  }, [enabled, pathname, queryClient]);
+
+  return { isOpen, toggle: () => setIsOpen(open => !open), close };
+}
+
 export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayoutProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isGuardianOverlay = role === 'GUARDIAN';
+  const inbox = useNotificationInbox(role === 'GUARDIAN' || role === 'WARD', pathname);
 
   if (role === 'WARD') {
     return (
       <WardSidebarLayout
+        inbox={inbox}
         isMobileMenuOpen={isMobileMenuOpen}
         navItems={navItems}
         pathname={pathname}
@@ -49,6 +67,7 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
             <SilverBridgeLogo subtitle={role === 'ADMIN' ? '관리자' : undefined} variant="compactHeader" />
           </Link>
         </div>
+        {role === 'GUARDIAN' && <NotificationBellButton variant="guardian" open={inbox.isOpen} onToggle={inbox.toggle} />}
         <button
           className={cx('topBarMenuButton')}
           type="button"
@@ -59,6 +78,7 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
           <span>메뉴</span>
         </button>
       </div>
+      {role === 'GUARDIAN' && inbox.isOpen && <NotificationPanel role="GUARDIAN" variant="guardian" onClose={inbox.close} />}
 
       <Sidebar
         isOpen={isMobileMenuOpen}
@@ -83,12 +103,14 @@ export function SidebarLayout({ navItems, profile, role, rootPath }: SidebarLayo
 }
 
 interface WardSidebarLayoutProps extends SidebarLayoutProps {
+  inbox: ReturnType<typeof useNotificationInbox>;
   isMobileMenuOpen: boolean;
   pathname: string;
   setIsMobileMenuOpen: (value: boolean) => void;
 }
 
 function WardSidebarLayout({
+  inbox,
   isMobileMenuOpen,
   navItems,
   pathname,
@@ -105,6 +127,7 @@ function WardSidebarLayout({
         </Link>
 
         <div className={cx('wardHeadActions')}>
+          <NotificationBellButton variant="ward" open={inbox.isOpen} onToggle={inbox.toggle} />
           {pathname !== rootPath && (
             <Link className={cx('hbtn')} href={rootPath}>
               <Icon name="arrowLeft" size={20} />
@@ -117,6 +140,7 @@ function WardSidebarLayout({
           </button>
         </div>
       </div>
+      {inbox.isOpen && <NotificationPanel role="WARD" variant="ward" onClose={inbox.close} />}
 
       <Sidebar
         isOpen={isMobileMenuOpen}

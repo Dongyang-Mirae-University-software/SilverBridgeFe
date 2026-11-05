@@ -315,3 +315,10 @@
   transform: translateY(-1px);
   box-shadow: 0 8px 18px rgba(20, 17, 12, 0.08);
 }
+
+/* 피보호자 휴대폰 - 알림 종이 더해져도 로고·버튼이 한 줄에 들어가게 여백만 줄인다 */
+@media (max-width: 480px) {
+  .wardHead { padding: 0 14px; }
+  .wardHeadActions { gap: 6px; }
+  .hbtn { padding: 0 12px; }
+}
