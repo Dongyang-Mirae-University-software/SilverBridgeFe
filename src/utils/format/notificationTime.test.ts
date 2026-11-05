@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatNotificationTime } from './notificationTime';
+import { formatNotificationTime, isNotificationToday } from './notificationTime';
 
 const NOW = new Date('2026-11-05T15:30:00+09:00');
 
@@ -19,5 +19,15 @@ describe('알림함 시각', () => {
 
   it('형식이 잘못되면 빈 글자', () => {
     expect(formatNotificationTime('x', NOW)).toBe('');
+  });
+});
+
+describe('알림함 오늘·이전 묶음', () => {
+  it('KST 날짜로 나눈다', () => {
+    expect(isNotificationToday('2026-11-05T00:00:00+09:00', NOW)).toBe(true);
+    expect(isNotificationToday('2026-11-04T23:59:00+09:00', NOW)).toBe(false);
+    // UTC 11/4 16:00 = KST 11/5 01:00
+    expect(isNotificationToday('2026-11-04T16:00:00Z', NOW)).toBe(true);
+    expect(isNotificationToday('x', NOW)).toBe(false);
   });
 });

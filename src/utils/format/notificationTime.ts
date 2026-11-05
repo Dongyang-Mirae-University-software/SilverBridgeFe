@@ -19,3 +19,9 @@ export function formatNotificationTime(value: string, now = new Date()) {
   if (dayGap === 1) return `어제 ${time}`;
   return `${KST_MONTH_DAY.format(date)} ${time}`;
 }
+
+// 알림함 묶음 - KST 오늘이면 true
+export function isNotificationToday(value: string, now = new Date()) {
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime()) && kstDayNumber(date) === kstDayNumber(now);
+}

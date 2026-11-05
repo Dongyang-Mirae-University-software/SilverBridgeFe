@@ -90,6 +90,20 @@
 
 .body { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
 .list { margin: 0; padding: 0; list-style: none; }
+/* 오늘 / 이전 묶음 제목 - 목록을 내려도 위에 붙어 있다 */
+.groupTitle {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  border-bottom: 1px solid var(--sb-line-soft);
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 18px;
+}
+.group + .group .groupTitle { border-top: 1px solid var(--sb-line-soft); }
 .list li + li { border-top: 1px solid var(--sb-line-soft); }
 .item {
   display: flex;
@@ -152,6 +166,7 @@
 .panel.ward .icon { width: 46px; height: 46px; flex-basis: 46px; }
 .panel.ward .titleRow strong { font-size: calc(19px * var(--ward-font-scale, 1)); }
 .panel.ward .message { font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: 600; }
+.panel.ward .groupTitle { font-size: calc(17px * var(--ward-font-scale, 1)); padding: 10px 20px; }
 .panel.ward .meta { font-size: calc(15px * var(--ward-font-scale, 1)); }
 .panel.ward .state,
 .panel.ward .retry,

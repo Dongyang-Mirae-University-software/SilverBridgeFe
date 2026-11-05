@@ -19,7 +19,7 @@ import {
   unreadNotificationCountQueryOptions,
 } from '@/service/query/user/notificationInbox';
 import { setSelectedWardId } from '@/store/selectedWardStore';
-import { formatNotificationTime } from '@/utils/format/notificationTime';
+import { formatNotificationTime, isNotificationToday } from '@/utils/format/notificationTime';
 import styles from './NotificationInbox.module.css';
 
 const cx = classNames.bind(styles);
@@ -84,6 +84,11 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
   const { data: unread = 0 } = useQuery(unreadNotificationCountQueryOptions);
   const list = useInfiniteQuery(notificationInboxListQueryOptions(tab === 'ALL' ? undefined : tab));
   const items = list.data?.pages.flatMap(page => page?.content ?? []) ?? [];
+  // 최신순이라 오늘 알림이 앞에 모인다 - 오늘 / 이전 두 묶음으로 나눠 보인다
+  const groups = [
+    { key: 'today', label: '오늘', items: items.filter(item => isNotificationToday(item.createdAt)) },
+    { key: 'earlier', label: '이전', items: items.filter(item => !isNotificationToday(item.createdAt)) },
+  ].filter(group => group.items.length > 0);
 
   // 열면 창으로 초점을 옮기고, Esc·바깥 누름으로 닫는다
   useEffect(() => {
@@ -178,25 +183,30 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
         ) : items.length === 0 ? (
           <p className={cx('state')}>{emptyText}</p>
         ) : (
-          <ul className={cx('list')}>
-            {items.map(item => (
-              <li key={item.id}>
-                <button className={cx('item', { unread: !item.read })} type="button" onClick={() => openItem(item)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- 푸시 토스트와 같은 정적 SVG 아이콘 */}
-                  <img className={cx('icon')} src={getPushIconSrc({ type: item.type })} alt="" />
-                  <span className={cx('text')}>
-                    <span className={cx('titleRow')}>
-                      <strong>{item.title || '알림'}</strong>
-                      {!item.read && <span className={cx('srOnly')}>안 읽음</span>}
-                    </span>
-                    {item.body && <span className={cx('message')}>{item.body}</span>}
-                    <time className={cx('meta')} dateTime={item.createdAt}>{formatNotificationTime(item.createdAt)}</time>
-                  </span>
-                  {!item.read && <span className={cx('dot')} aria-hidden="true" />}
-                </button>
-              </li>
-            ))}
-          </ul>
+          groups.map(group => (
+            <section key={group.key} className={cx('group')} aria-labelledby={`notification-group-${group.key}`}>
+              <h3 id={`notification-group-${group.key}`} className={cx('groupTitle')}>{group.label}</h3>
+              <ul className={cx('list')}>
+                {group.items.map(item => (
+                  <li key={item.id}>
+                    <button className={cx('item', { unread: !item.read })} type="button" onClick={() => openItem(item)}>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- 푸시 토스트와 같은 정적 SVG 아이콘 */}
+                      <img className={cx('icon')} src={getPushIconSrc({ type: item.type })} alt="" />
+                      <span className={cx('text')}>
+                        <span className={cx('titleRow')}>
+                          <strong>{item.title || '알림'}</strong>
+                          {!item.read && <span className={cx('srOnly')}>안 읽음</span>}
+                        </span>
+                        {item.body && <span className={cx('message')}>{item.body}</span>}
+                        <time className={cx('meta')} dateTime={item.createdAt}>{formatNotificationTime(item.createdAt)}</time>
+                      </span>
+                      {!item.read && <span className={cx('dot')} aria-hidden="true" />}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
         )}
         {list.hasNextPage && (
           <button className={cx('more')} type="button" disabled={list.isFetchingNextPage} onClick={() => void list.fetchNextPage()}>

@@ -98,6 +98,25 @@ describe('종 알림함 (Chrome)', () => {
     expect(api.list).toHaveBeenLastCalledWith({ category: undefined, page: 0, size: 20 });
   });
 
+  it('오늘 받은 알림과 그 전 알림을 오늘 / 이전으로 나눠 보인다', async () => {
+    await renderInbox();
+    await page.getByRole('button', { name: /^알림/ }).click();
+
+    const today = page.getByRole('region', { name: '오늘' });
+    const earlier = page.getByRole('region', { name: '이전' });
+    await expect.element(today.getByText('[화재 감지] 김영자님 댁 거실')).toBeVisible();
+    await expect.element(earlier.getByText('문의 답변 완료')).toBeVisible();
+  });
+
+  it('오늘 알림이 없으면 이전 묶음만 보인다', async () => {
+    api.list.mockResolvedValue(pageOf([INQUIRY]));
+    await renderInbox();
+    await page.getByRole('button', { name: /^알림/ }).click();
+
+    await expect.element(page.getByRole('heading', { name: '이전' })).toBeVisible();
+    expect(page.getByRole('heading', { name: '오늘' }).elements()).toHaveLength(0);
+  });
+
   it('묶음 탭은 category로 다시 부른다', async () => {
     await renderInbox();
     await page.getByRole('button', { name: /^알림/ }).click();
