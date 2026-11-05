@@ -106,6 +106,21 @@ describe('보호자 AI 의료 챗봇', () => {
     await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeVisible();
   });
 
+  it('상담 기록 창은 답을 문장마다 줄을 나누고 3줄 미리보기를 유지한다 (2026-11-05)', async () => {
+    const reply = '정형외과로 가시면 돼요. 가까운 정형외과를 찾아드릴게요. 어느 지역에서 찾을까요? 시연용 가상 병원입니다.';
+    api.getChatLogs.mockResolvedValue([{ id: 1, message: '무릎이 아파요', reply, createdAt: '2026-11-05T00:00:00Z' }]);
+    await renderChat(<ChatbotContent />);
+    await page.getByRole('button', { name: '상담 기록' }).click();
+
+    const item = page.getByText(/정형외과로 가시면 돼요/);
+    await expect.element(item).toBeVisible();
+    const el = item.element();
+    expect(el.textContent).toBe('정형외과로 가시면 돼요.\n가까운 정형외과를 찾아드릴게요.\n어느 지역에서 찾을까요?\n시연용 가상 병원입니다.');
+    const style = getComputedStyle(el);
+    expect(style.whiteSpace).toBe('pre-line');
+    expect(style.webkitLineClamp).toBe('3');
+  });
+
   it('피보호자 목록을 불러오는 동안에는 칩·입력·보내기를 잠그고 안내한다 - 본인 상담으로 새지 않게(2026-11-03 점검 M-1)', async () => {
     api.wards.mockReturnValue([]);
     api.wardsLoading.mockReturnValue(true);

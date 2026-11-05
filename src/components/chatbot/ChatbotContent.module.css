@@ -809,6 +809,7 @@
   color: var(--sb-ink-soft);
   font-size: calc(13px * var(--ward-font-scale, 1));
   line-height: 1.55;
+  white-space: pre-line; /* 문장마다 나눈 줄과 AI 답의 줄바꿈을 보인다(2026-11-05) */
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }

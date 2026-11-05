@@ -17,6 +17,7 @@ import { type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
 import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
+import { breakSentences } from './breakSentences';
 import ChatUiPrompt from './ChatUiPrompt';
 import VoiceInputButton from './VoiceInputButton';
 import { useVoiceInput } from './useVoiceInput';
@@ -689,7 +690,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                     <article key={log.id ?? `${log.createdAt ?? 'log'}-${index}`} className={styles.historyItem}>
                       <time>{formatLogDate(log.createdAt)}</time>
                       <strong>{log.message || '선택형 상담'}</strong>
-                      {log.reply && <p>{log.reply}</p>}
+                      {/* 답은 문장마다 줄을 나눠 보여 준다(표시용 - 원문은 그대로, 3줄 미리보기는 유지) */}
+                      {log.reply && <p>{breakSentences(log.reply)}</p>}
                       {warning && <p className={styles.historyWarning}>{warning}</p>}
                     </article>
                   );
