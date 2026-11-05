@@ -353,15 +353,18 @@
   gap: 16px;
 }
 
+/* 이름(방·촬영 방식)은 한 줄로 - 글자 크기를 키워도 칸이 늘어날 뿐 줄이 나뉘지 않는다 */
 .summary dt {
-  width: 80px;
+  min-width: 80px;
   flex: 0 0 auto;
+  white-space: nowrap;
   color: var(--sb-ink-mute);
   font-size: calc(16px * var(--ward-font-scale, 1));
   font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
 .summary dd {
+  min-width: 0;
   margin: 0;
   color: var(--sb-ink);
   font-size: calc(16px * var(--ward-font-scale, 1));

@@ -2,6 +2,7 @@
 // 화면 선택·카메라 권한 창과 서버 응답은 가짜로 바꾸고, 버튼 문구·오류 안내 위치·등록 호출만 본다
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type React from 'react';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -112,6 +113,24 @@ async function goToPreview(screen: Screen, facingLabel: string) {
 }
 
 describe('카메라 등록 4단계 (Chrome)', () => {
+  it('요약의 "촬영 방식"은 가장 큰 글자 설정에서도 한 줄로 보인다', async () => {
+    getUserMedia.mockReturnValue(deferred<MediaStream>().promise);
+    const screen = await render(
+      <div style={{ '--ward-font-scale': '1.647' } as React.CSSProperties}>
+        <CameraRegisterModal isOpen onClose={() => {}} />
+      </div>,
+      { wrapper },
+    );
+    await goToPreview(screen, '전면 카메라');
+
+    // 옆 값이 두 줄이면 칸 높이도 늘어나므로, 글자 자체가 몇 줄로 그려졌는지 센다
+    const label = screen.getByText('촬영 방식', { exact: true }).element();
+    const range = document.createRange();
+    range.selectNodeContents(label);
+    const lineTops = new Set([...range.getClientRects()].map(rect => Math.round(rect.top)));
+    expect(lineTops.size).toBe(1);
+  });
+
   it('화면을 고르는 동안에는 "카메라 다시 켜기"가 아니라 비활성 "화면을 고르는 중..."이 보인다', async () => {
     const picker = deferred<MediaStream>();
     getDisplayMedia.mockReturnValue(picker.promise);
