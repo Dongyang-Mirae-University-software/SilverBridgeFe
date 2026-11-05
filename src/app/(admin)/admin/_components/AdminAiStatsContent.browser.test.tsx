@@ -7,12 +7,12 @@ import { render } from 'vitest-browser-react';
 import type { AdminCompanionStats } from '@/service/interface/admin/aiStats';
 import { AdminAiStatsContent } from './AdminAiStatsContent';
 
-const data = vi.hoisted(() => ({ companion: vi.fn<() => Promise<unknown>>() }));
+const data = vi.hoisted(() => ({ companion: vi.fn<() => Promise<unknown>>(), chat: (() => new Promise(() => {})) as () => Promise<unknown> }));
 
 vi.mock('@/service/query/admin', () => ({
   adminAnomalySummaryQueryOptions: (params: unknown) => queryOptions({ queryKey: ['test-summary', params], queryFn: () => new Promise(() => {}) }),
   adminAnomalyListQueryOptions: (params: unknown) => queryOptions({ queryKey: ['test-list', params], queryFn: () => new Promise(() => {}) }),
-  adminChatStatsQueryOptions: (params: unknown) => queryOptions({ queryKey: ['test-chat', params], queryFn: () => new Promise(() => {}) }),
+  adminChatStatsQueryOptions: (params: unknown) => queryOptions({ queryKey: ['test-chat', params], queryFn: () => data.chat() }),
   adminCompanionStatsQueryOptions: queryOptions({ queryKey: ['test-companion'], queryFn: () => data.companion() }),
 }));
 
@@ -106,5 +106,23 @@ describe('AI 안부 말벗 · 정서 분석 탭 (Chrome)', () => {
     await expect.element(page.getByText('AI 안부 말벗 통계를 불러오지 못했습니다.')).toBeVisible();
     await page.getByRole('button', { name: '다시 시도' }).click();
     await expect.element(page.getByText('오늘 기분 분포')).toBeVisible();
+  });
+});
+
+describe('AI 의료 챗봇 탭 오류 안내 (Chrome)', () => {
+  it.each([
+    [429, undefined, '조회가 너무 잦습니다'],
+    [400, 'AI_STATS_INVALID_RANGE', '조회 기간이 올바르지 않습니다'],
+    [504, 'AI_STATS_TIMEOUT', 'AI 응답이 늦습니다'],
+  ])('%i %s → 이유를 알려 준다', async (status, code, text) => {
+    data.chat = () => Promise.reject({ response: { status, data: { code } } });
+    await render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <AdminAiStatsContent />
+      </QueryClientProvider>,
+    );
+    await page.getByRole('tab', { name: 'AI 의료 챗봇' }).click();
+
+    await expect.element(page.getByText(text)).toBeVisible();
   });
 });
