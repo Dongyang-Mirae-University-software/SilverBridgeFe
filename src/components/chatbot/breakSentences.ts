@@ -8,6 +8,7 @@
  *  - 괄호 ( ) [ ] 안
  *  - 뒤 공백에 이미 줄바꿈이 있을 때(빈 줄을 새로 만들지 않는다)
  *  - 다음 글자가 이모지일 때(이모지만 한 줄에 남지 않게)
+ *  - 다음 글자가 여는 괄호일 때("얼마나 심하신가요? (참을 만한지…)"처럼 앞 문장의 보충 설명 - 2026-11-05 점검 M-1)
  *  - 문자열 끝
  */
 const HANGUL_SYLLABLE = /[가-힣]/;
@@ -15,6 +16,7 @@ const SENTENCE_END = /[.?!]/;
 const CLOSING_QUOTE = /["'”’]/;
 const INLINE_SPACE = /[ \t ]/;
 const PICTOGRAPHIC = /^\p{Extended_Pictographic}/u;
+const OPENING_BRACKET = /^[(\[]/;
 
 export function breakSentences(text: string): string {
   if (!text) return text;
@@ -49,7 +51,8 @@ export function breakSentences(text: string): string {
       following.length > 0 &&
       following[0] !== '\n' &&
       following[0] !== '\r' &&
-      !PICTOGRAPHIC.test(following);
+      !PICTOGRAPHIC.test(following) &&
+      !OPENING_BRACKET.test(following);
 
     out += shouldBreak ? `${mark}\n` : text.slice(i, next);
     i = next;
