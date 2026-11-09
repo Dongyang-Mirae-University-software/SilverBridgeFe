@@ -61,6 +61,8 @@ export interface ChatLayout {
   questions?: string[];
   homeCare?: string[];
   visitHospitalIf?: string[];
+  /** 응급·위기(119·109) 답 표시(AI 2026-11-09). true 면 핵심 줄을 "긴급" 경고 상자에 넣는다 - 불리언 true 만 본다. */
+  urgent?: boolean;
 }
 
 export interface ChatContext {

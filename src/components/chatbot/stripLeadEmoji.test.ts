@@ -13,6 +13,11 @@ describe('stripLeadEmoji', () => {
     expect(stripLeadEmoji('👍🏻 좋아요')).toBe('좋아요');
   });
 
+  it('줄 머리 국기는 떼고 키캡(번호)은 남긴다 (2026-11-09 점검 L-2)', () => {
+    expect(stripLeadEmoji('🇰🇷 한국어 안내')).toBe('한국어 안내');
+    expect(stripLeadEmoji('1️⃣ 물을 드세요.\n2️⃣ 쉬세요.')).toBe('1️⃣ 물을 드세요.\n2️⃣ 쉬세요.');
+  });
+
   it('문장 중간 글자·이모지 없는 줄·숫자로 시작하는 줄은 그대로', () => {
     expect(stripLeadEmoji('오늘 ☀️ 맑아요')).toBe('오늘 ☀️ 맑아요');
     expect(stripLeadEmoji('119에 전화하세요.')).toBe('119에 전화하세요.');

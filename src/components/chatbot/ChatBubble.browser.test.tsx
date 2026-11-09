@@ -176,6 +176,34 @@ describe('ChatBubble 답 모양', () => {
     expect(alert.textContent).not.toContain('혼자 견디지');
   });
 
+  it('위기 뒤 해제 턴(경고·high 없음)도 AI layout.urgent 이면 109 핵심 줄을 긴급 상자에 넣는다 (2026-11-09 점검 M-1)', async () => {
+    await show({
+      content: '',
+      riskLevel: 'low',
+      layout: {
+        headline: '많이 힘드시면 109에 전화해 주세요.',
+        body: ['좋으시겠어요.'],
+        questions: [],
+        homeCare: [],
+        visitHospitalIf: [],
+        urgent: true,
+      },
+    });
+    const alert = page.getByRole('alert').element();
+    expect(alert.textContent).toBe('긴급많이 힘드시면 109에 전화해 주세요.');
+    expect(page.getByText('많이 힘드시면 109에 전화해 주세요.', { exact: true }).elements()).toHaveLength(1);
+  });
+
+  it.each(['true', 1])('layout.urgent 는 불리언 true 만 본다 - %s 는 긴급 상자 없음', async value => {
+    const urgent = value as unknown as boolean;
+    await show({
+      content: '',
+      layout: { headline: '내과 진료를 권해드려요.', body: [], questions: [], homeCare: [], visitHospitalIf: [], urgent },
+    });
+    await expect.element(page.getByText('내과 진료를 권해드려요.', { exact: true })).toBeVisible();
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+  });
+
   it('위험도가 낮고 경고도 없으면 긴급 상자를 그리지 않는다(🚨 글자만으로 판단하지 않음)', async () => {
     await show({
       content: '',
@@ -258,6 +286,21 @@ describe('ChatBubble 피보호자 문장 줄바꿈 (2026-11-04)', () => {
     expect(texts).toContain('정형외과가 좋아요.\n예약도 도와드려요.');
     expect(texts).toContain('많이 아프시죠?\n조금만 기다려 주세요.');
     expect(texts).toContain('찜질을 하세요. 쉬세요.');
+  });
+
+  it('피보호자 긴급 핵심 줄도 문장마다 줄을 나눈다 (2026-11-09 점검 L-3)', async () => {
+    await show(
+      {
+        content: '',
+        emergencyWarning: ['지금은 응급 상황일 수 있어요.'],
+        layout: { headline: '바로 119에 전화해 주세요. 기다리지 마세요.', body: [], questions: [], homeCare: [], visitHospitalIf: [] },
+      },
+      'ward',
+    );
+    const headline = page.getByRole('alert').element().querySelectorAll('p')[1]!;
+    expect(headline.textContent).toBe('바로 119에 전화해 주세요.\n기다리지 마세요.');
+    expect(getComputedStyle(headline).whiteSpace).toBe('pre-line');
+    expect(lineCount(headline)).toBeGreaterThanOrEqual(2);
   });
 
   it('보호자 화면은 그대로 한 덩어리다', async () => {

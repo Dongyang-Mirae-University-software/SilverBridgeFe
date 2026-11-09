@@ -689,14 +689,19 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                 <p className={styles.historyState}>아직 상담 기록이 없습니다.</p>
               ) : (
                 historyItems.map((log, index) => {
-                  const warning = getHistoryWarning(log.emergencyWarning);
+                  // 경고는 문장마다 줄 머리 이모지를 뗀 뒤 잇는다(이은 뒤 떼면 둘째 문장 앞 이모지가 남는다 - 점검 L-1)
+                  const warning = getHistoryWarning(
+                    Array.isArray(log.emergencyWarning)
+                      ? log.emergencyWarning.map(item => (typeof item === 'string' ? stripLeadEmoji(item) : item))
+                      : log.emergencyWarning,
+                  );
                   return (
                     <article key={log.id ?? `${log.createdAt ?? 'log'}-${index}`} className={styles.historyItem}>
                       <time>{formatLogDate(log.createdAt)}</time>
                       <strong>{log.message || '선택형 상담'}</strong>
                       {/* 답은 문장마다 줄을 나눠 보여 주고 줄 머리 이모지는 뗀다(표시용 - 원문은 그대로, 3줄 미리보기는 유지) */}
                       {log.reply && <p>{stripLeadEmoji(breakSentences(log.reply))}</p>}
-                      {warning && <p className={styles.historyWarning}>{stripLeadEmoji(warning)}</p>}
+                      {warning && <p className={styles.historyWarning}>{warning}</p>}
                     </article>
                   );
                 })
