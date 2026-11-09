@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
-import type { AdminCompanionStats } from '@/service/interface/admin/aiStats';
+import type { AdminChatStats, AdminCompanionStats } from '@/service/interface/admin/aiStats';
 import { AdminAiStatsContent } from './AdminAiStatsContent';
 
 const data = vi.hoisted(() => ({ companion: vi.fn<() => Promise<unknown>>(), chat: (() => new Promise(() => {})) as () => Promise<unknown> }));
@@ -124,5 +124,83 @@ describe('AI 의료 챗봇 탭 오류 안내 (Chrome)', () => {
     await page.getByRole('tab', { name: 'AI 의료 챗봇' }).click();
 
     await expect.element(page.getByText(text)).toBeVisible();
+  });
+});
+
+const CHAT: AdminChatStats = {
+  from: '2026-11-03',
+  to: '2026-11-09',
+  totalChats: 12,
+  users: 4,
+  byRole: { guardian: 7, ward: 5, unknown: 0 },
+  byRoute: { reservation: 2, symptom: 6, general: 4, unknown: 0 },
+  emergencyGuidance: 1,
+  reservationCompleted: 1,
+  fallbackReplies: 0,
+  routerFailures: 6,
+  routerFailuresByKind: { credit: 3, auth: 1, timeout: 2, other: 0 },
+  routerStatus: { state: 'ok', recentFailures: 0, windowSec: 600 },
+  daily: [{ date: '2026-11-09', totalChats: 12 }],
+  generatedAt: '2026-11-09T14:30:00+09:00',
+};
+
+async function openChatTab(stats: AdminChatStats) {
+  data.chat = () => Promise.resolve(stats);
+  await render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <AdminAiStatsContent />
+    </QueryClientProvider>,
+  );
+  await page.getByRole('tab', { name: 'AI 의료 챗봇' }).click();
+  await expect.element(page.getByText('라우터(분류 모델) 상태')).toBeVisible();
+}
+
+function routerRows() {
+  const card = document.querySelector('[aria-labelledby="chat-router-title"]');
+  return [...(card?.querySelectorAll('[class*="dataRows"] > div') ?? [])].map(row => row.textContent);
+}
+
+describe('AI 의료 챗봇 탭 라우터 상태 (Chrome)', () => {
+  it.each([
+    [{ state: 'ok', recentFailures: 0, windowSec: 600 }, '정상'],
+    [{ state: 'failing', recentFailures: 3, windowSec: 600 }, '실패 중 · 최근 10분 3회'],
+    [{ state: 'credit_exhausted', recentFailures: 0, windowSec: 600 }, '크레딧 소진'],
+    [{ state: 'off', recentFailures: 0, windowSec: 600 }, '꺼짐 (라우터 키 없음)'],
+    [null, '정보 없음'],
+    [undefined, '정보 없음'],
+  ] as const)('상태 %o → 배지 "%s"', async (routerStatus, label) => {
+    await openChatTab({ ...CHAT, routerStatus: routerStatus as AdminChatStats['routerStatus'] });
+
+    expect(routerRows()[0]).toBe(`지금 상태${label}`);
+  });
+
+  it('기간 내 실패 수와 원인별 횟수를 응답 그대로 보인다', async () => {
+    await openChatTab(CHAT);
+
+    expect(routerRows()).toEqual(['지금 상태정상', '기간 내 실패6건', '크레딧 부족3건', '키 인증 실패1건', '시간 초과2건', '그 밖0건']);
+  });
+
+  it('실패 수·원인별이 null이거나 칸이 없으면 0이 아니라 "정보 없음"이고 다른 집계는 그대로다', async () => {
+    const oldShape: AdminChatStats = { ...CHAT, routerFailures: null };
+    delete oldShape.routerFailuresByKind;
+    delete oldShape.routerStatus;
+    await openChatTab(oldShape);
+
+    expect(routerRows()).toEqual(['지금 상태정보 없음', '기간 내 실패정보 없음', '크레딧 부족정보 없음', '키 인증 실패정보 없음', '시간 초과정보 없음', '그 밖정보 없음']);
+    await expect.element(page.getByText('기간 내 대화')).toBeVisible();
+    expect(document.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('크레딧 소진일 때만 맨 위에 경고를 띄운다', async () => {
+    await openChatTab({ ...CHAT, routerStatus: { state: 'credit_exhausted', recentFailures: 2, windowSec: 600 } });
+
+    await expect.element(page.getByRole('alert')).toBeVisible();
+    expect(document.querySelector('[role="alert"]')?.textContent).toMatch(/^라우터 크레딧이 소진됐습니다\. .*Anthropic 크레딧·결제 상태를 확인해 주세요\./);
+  });
+
+  it.each(['ok', 'failing', 'off'] as const)('%s 상태에서는 크레딧 경고가 없다', async state => {
+    await openChatTab({ ...CHAT, routerStatus: { state, recentFailures: state === 'failing' ? 1 : 0, windowSec: 600 } });
+
+    expect(document.querySelector('[role="alert"]')).toBeNull();
   });
 });

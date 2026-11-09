@@ -4,8 +4,9 @@ import { useState, type ReactNode } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { Icon, type IconName } from '@/components/Icon';
 import { Pagination } from '@/components/Pagination';
-import { AdminChatStats, AdminCompanionStats } from '@/service/interface/admin/aiStats';
+import { AdminChatRouterState, AdminChatRouterStatus, AdminChatStats, AdminCompanionStats } from '@/service/interface/admin/aiStats';
 import { AdminAnomalyItem, AdminAnomalyPage, AdminAnomalyPeriod, AdminAnomalyReviewStatus, AdminAnomalySummary, AdminAnomalyType } from '@/service/interface/admin/anomaly';
 import { adminAnomalyListQueryOptions, adminAnomalySummaryQueryOptions, adminChatStatsQueryOptions, adminCompanionStatsQueryOptions } from '@/service/query/admin';
 import { COMPANION_MOOD_ROWS, CONTINUING_MOOD_LABEL, formatLastDialogue } from '@/utils/admin/companion';
@@ -19,10 +20,15 @@ const TYPE_TABS: Array<{ value: TypeTab; label: string }> = [{ value: 'ALL', lab
 const STATUS_TABS: Array<{ value: StatusTab; label: string }> = [{ value: 'ALL', label: '판정 전체' }, { value: 'REAL', label: '위험' }, { value: 'FALSE_ALARM', label: '오탐' }, { value: 'PENDING', label: '미판정' }, { value: 'CONFLICTED', label: '의견 충돌' }];
 const PERIOD_TABS: Array<{ value: AdminAnomalyPeriod; label: string }> = [{ value: 'TODAY', label: '오늘' }, { value: 'THIS_WEEK', label: '이번 주' }, { value: 'THIS_MONTH', label: '이번 달' }];
 const RATE_TYPES: AdminAnomalyType[] = ['FALL', 'FIRE', 'WEAPON'];
+// 라우터 상태 배지 - 색만으로 구분하지 않게 아이콘과 글자를 함께 쓴다
+const ROUTER_STATE: Record<AdminChatRouterState, { label: string; icon: IconName; tone: 'safe' | 'sun' | 'danger' | 'mute' }> = { ok: { label: '정상', icon: 'check', tone: 'safe' }, failing: { label: '실패 중', icon: 'warning', tone: 'sun' }, credit_exhausted: { label: '크레딧 소진', icon: 'alert', tone: 'danger' }, off: { label: '꺼짐 (라우터 키 없음)', icon: 'close', tone: 'mute' } };
+const ROUTER_KIND_ROWS = [['credit', '크레딧 부족'], ['auth', '키 인증 실패'], ['timeout', '시간 초과'], ['other', '그 밖']] as const;
 
 function formatCount(value: number | null | undefined) { return value === null || value === undefined ? '-' : `${value.toLocaleString('ko-KR')}건`; }
 function formatDateTime(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? '-' : new Intl.DateTimeFormat('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }).format(date).replace(/\. /g, '/').replace('.', ''); }
 function formatDuration(minutes: number) { if (minutes <= 0) return '순간'; return minutes < 60 ? `${minutes}분` : `${Math.floor(minutes / 60)}시간 ${minutes % 60 ? `${minutes % 60}분` : ''}`.trim(); }
+function formatWindow(seconds: number) { return seconds % 60 === 0 ? `${seconds / 60}분` : `${seconds}초`; }
+function routerCount(value: number | null | undefined) { return value === null || value === undefined ? '정보 없음' : `${value.toLocaleString('ko-KR')}건`; }
 function percent(value: number | null) { return value === null ? '-' : `${Math.round(value * 100)}%`; }
 function statusLabel(status: AdminAnomalyReviewStatus) { return ({ PENDING: '미판정', REAL: '위험', FALSE_ALARM: '오탐', CONFLICTED: '의견 충돌' })[status]; }
 function getKstDate(offset = 0) { const source = new Date(); const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(source); const year = Number(parts.find(part => part.type === 'year')?.value); const month = Number(parts.find(part => part.type === 'month')?.value); const day = Number(parts.find(part => part.type === 'day')?.value); return new Date(Date.UTC(year, month - 1, day + offset)).toISOString().slice(0, 10); }
@@ -83,7 +89,19 @@ function ChatStats({ data, isLoading, isError, errorCode, range, rangeValid, onR
   if (isLoading) return <>{rangeControls}<Notice>AI 의료 챗봇 통계를 불러오는 중입니다.</Notice></>;
   if (isError || !data) return <>{rangeControls}<Notice retry={onRetry}>{errorCode === 'AI_STATS_TIMEOUT' ? 'AI 응답이 늦습니다. 잠시 후 다시 시도해 주세요.' : errorCode === 'AI_STATS_UNAVAILABLE' ? 'AI 통계를 지금 불러올 수 없습니다.' : errorCode === 'TOO_MANY_REQUESTS' ? '조회가 너무 잦습니다. 1분쯤 뒤에 다시 시도해 주세요.' : errorCode === 'AI_STATS_INVALID_RANGE' ? '조회 기간이 올바르지 않습니다. 기간을 다시 골라 주세요.' : 'AI 통계를 불러오는 중 문제가 발생했습니다.'}</Notice></>;
   const cards: Array<{ label: string; value: number | null; tone?: 'brand' | 'warn' | 'care' }> = [{ label: '기간 내 대화', value: data.totalChats }, { label: '쓴 사람', value: data.users }, { label: '예약 완료', value: data.reservationCompleted, tone: 'brand' }, { label: '119 안내', value: data.emergencyGuidance, tone: 'warn' }, { label: '기본 안내로 대신 답한 상담', value: data.fallbackReplies, tone: 'care' }];
-  return <>{rangeControls}<section className={cx('statNums')} aria-label="AI 의료 챗봇 집계">{cards.map(card => <div key={card.label}><span>{card.label}</span><strong className={cx(card.tone)}>{formatCount(card.value)}</strong></div>)}</section><div className={cx('chatGrid')}><DataCard title="상담 사용자 역할" note="기간 내 상담 수"><DataRows rows={[['보호자', data.byRole.guardian, 'brand'], ['피보호자', data.byRole.ward, 'safe'], ['역할 모름', data.byRole.unknown, 'mute']]} /></DataCard><DataCard title="상담 경로" note="AI가 분류한 상담 목적"><DataRows rows={[['병원 예약', data.byRoute.reservation, 'brand'], ['증상 상담', data.byRoute.symptom, 'sun'], ['일반 상담', data.byRoute.general, 'safe'], ['분류 미확인', data.byRoute.unknown, 'mute']]} /></DataCard></div><section className={cx('chartCard')}><DataCard title="일별 상담 수" note={`${data.from} - ${data.to}`}><DailyChart daily={data.daily} /></DataCard></section><section className={cx('chatNotice')}><p>응급 안내 수는 고위험 판정 기준입니다. 역할 “모름”은 역할이 기록되지 않은 예전 상담이며, 시험 계정 상담도 포함됩니다.</p><p>탈퇴한 회원의 상담은 집계에서 빠져 과거 기간의 숫자가 바뀔 수 있습니다. 기준 시각 {formatDateTime(data.generatedAt)} · 같은 기간은 60초 동안 같은 결과를 제공합니다.</p></section></>;
+  return <>{rangeControls}{data.routerStatus?.state === 'credit_exhausted' && <CreditExhaustedAlert />}<section className={cx('statNums')} aria-label="AI 의료 챗봇 집계">{cards.map(card => <div key={card.label}><span>{card.label}</span><strong className={cx(card.tone)}>{formatCount(card.value)}</strong></div>)}</section><div className={cx('chatGrid')}><DataCard title="상담 사용자 역할" note="기간 내 상담 수"><DataRows rows={[['보호자', data.byRole.guardian, 'brand'], ['피보호자', data.byRole.ward, 'safe'], ['역할 모름', data.byRole.unknown, 'mute']]} /></DataCard><DataCard title="상담 경로" note="AI가 분류한 상담 목적"><DataRows rows={[['병원 예약', data.byRoute.reservation, 'brand'], ['증상 상담', data.byRoute.symptom, 'sun'], ['일반 상담', data.byRoute.general, 'safe'], ['분류 미확인', data.byRoute.unknown, 'mute']]} /></DataCard></div><RouterStatusCard data={data} /><section className={cx('chartCard')}><DataCard title="일별 상담 수" note={`${data.from} - ${data.to}`}><DailyChart daily={data.daily} /></DataCard></section><section className={cx('chatNotice')}><p>응급 안내 수는 고위험 판정 기준입니다. 역할 “모름”은 역할이 기록되지 않은 예전 상담이며, 시험 계정 상담도 포함됩니다.</p><p>탈퇴한 회원의 상담은 집계에서 빠져 과거 기간의 숫자가 바뀔 수 있습니다. 기준 시각 {formatDateTime(data.generatedAt)} · 같은 기간은 60초 동안 같은 결과를 제공합니다.</p></section></>;
+}
+function CreditExhaustedAlert() { return <section className={cx('routerAlert')} role="alert"><Icon name="warning" size={20} decorative /><p><b>라우터 크레딧이 소진됐습니다.</b> 지금 챗봇은 분류 모델 없이 키워드로만 상담을 나누고 있어 분류 정확도가 낮을 수 있습니다. Anthropic 크레딧·결제 상태를 확인해 주세요. 성공 호출이 생기면 자동으로 풀립니다.</p></section>; }
+function RouterBadge({ status }: { status: AdminChatRouterStatus | null | undefined }) {
+  if (!status) return <span className={cx('routerBadge', 'mute')}>정보 없음</span>;
+  const meta = ROUTER_STATE[status.state];
+  if (!meta) return <span className={cx('routerBadge', 'mute')}>정보 없음</span>;
+  const label = status.state === 'failing' ? `${meta.label} · 최근 ${formatWindow(status.windowSec)} ${status.recentFailures}회` : meta.label;
+  return <span className={cx('routerBadge', meta.tone)}><Icon name={meta.icon} size={14} decorative />{label}</span>;
+}
+function RouterStatusCard({ data }: { data: AdminChatStats }) {
+  const byKind = data.routerFailuresByKind;
+  return <section className={cx('dataCard')} aria-labelledby="chat-router-title"><header><b id="chat-router-title">라우터(분류 모델) 상태</b><small>상담 목적을 나누는 모델</small></header><div className={cx('dataRows')}><div><span>지금 상태</span><RouterBadge status={data.routerStatus} /></div><div><span>기간 내 실패</span><strong>{routerCount(data.routerFailures)}</strong></div>{ROUTER_KIND_ROWS.map(([key, label]) => <div key={key} className={cx('routerKind')}><span>{label}</span><strong className={cx('mute')}>{routerCount(byKind?.[key])}</strong></div>)}</div><p className={cx('routerNote')}>지금 상태는 조회 기간과 무관한 AI 서버 기준 값으로, 최대 60초 늦을 수 있고 AI 재시작 때 초기화됩니다. 11월 9일 이전 기간의 실패 수는 0으로 보입니다.</p></section>;
 }
 function CompanionStats({ data, isLoading, isError, onRetry }: { data: AdminCompanionStats | null | undefined; isLoading: boolean; isError: boolean; onRetry: () => void }) {
   if (isLoading) return <Notice>AI 안부 말벗 통계를 불러오는 중입니다.</Notice>;
