@@ -26,9 +26,7 @@ vi.mock('@/service/api/chat', () => ({
   getChatLogs: api.getChatLogs,
   getChatErrorMessage: () => '잠시 후 다시 시도해 주세요.',
 }));
-vi.mock('@/service/api/chatPolicy', () => ({
-  getHistoryWarning: (w: unknown) => (Array.isArray(w) && w.length > 0 ? w.join(' ') : null),
-}));
+// 기록 경고 문구는 실제 함수를 쓴다(따로 흉내 내면 실제 함수가 바뀔 때 테스트만 옛 동작을 본다 - 점검 L-4).
 vi.mock('@/service/query/user/profile', () => ({
   myProfileQueryOptions: { queryKey: ['test-profile'], queryFn: () => ({ name: '박순자', profileImage: null }) },
 }));
@@ -126,7 +124,14 @@ describe('보호자 AI 의료 챗봇', () => {
   it('상담 기록 창도 줄 머리 이모지를 그리지 않는다 - 답·경고 모두 그림 문자 0개 (2026-11-09)', async () => {
     const reply = '🏥 정형외과로 가시면 돼요.\n💬 많이 불편하시겠어요.\n🦵 무릎을 쉬게 해 주세요.';
     api.getChatLogs.mockResolvedValue([
-      { id: 1, message: '무릎이 아파요', reply, emergencyWarning: ['🚨 지금 바로 119에 전화하세요.'], createdAt: '2026-11-09T00:00:00Z' },
+      {
+        id: 1,
+        message: '무릎이 아파요',
+        reply,
+        // 둘째 문장 앞 이모지도 떼어야 한다(이은 뒤 떼면 문장 사이에 남는다 - 점검 L-1)
+        emergencyWarning: ['🚨 지금 바로 119에 전화하세요.', '⚠️ 혼자 움직이지 마세요.'],
+        createdAt: '2026-11-09T00:00:00Z',
+      },
     ]);
     await renderChat(<ChatbotContent />);
     await page.getByRole('button', { name: '상담 기록' }).click();
@@ -136,7 +141,15 @@ describe('보호자 AI 의료 챗봇', () => {
     const article = item.element().closest('article')!;
     expect(article.textContent).not.toMatch(/\p{Extended_Pictographic}/u);
     expect(item.element().textContent).toBe('정형외과로 가시면 돼요.\n많이 불편하시겠어요.\n무릎을 쉬게 해 주세요.');
-    expect(article.textContent).toContain('지금 바로 119에 전화하세요.');
+    expect(article.textContent).toContain('지금 바로 119에 전화하세요. 혼자 움직이지 마세요.');
+  });
+
+  it('휴대폰 폭(375px)에서도 누르는 칩은 48px 이상이다 (2026-11-09 점검 L-3)', async () => {
+    await page.viewport(375, 800);
+    await renderChat(<ChatbotContent />);
+    const chip = page.getByRole('button', { name: '무릎이 아프다고 하세요' });
+    await expect.element(chip).toBeVisible();
+    expect(chip.element().getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
   });
 
   it('피보호자 목록을 불러오는 동안에는 칩·입력·보내기를 잠그고 안내한다 - 본인 상담으로 새지 않게(2026-11-03 점검 M-1)', async () => {

@@ -64,3 +64,15 @@ AI #196부터 새 답에는 이모지가 붙지 않는다. 이번 FE 변경은 �
 - tsc 0 / eslint 0 errors(경고 20, 기준선과 같음) / vitest 53파일 538건 / 챗봇 브라우저 테스트 5파일 전부 통과
 - 추가 고정: 그림 문자 0개(layout·reply·기록 창), 긴급 상자·"긴급" 라벨·3px 테두리, 위험도 high만 있는 답, 낮은 위험도 + 🚨는 상자 없음, 질문 1개 큰 줄, `stripLeadEmoji` 단위(ZWJ·피부색·중간 글자 보존)
 - 전체 브라우저 실행에서 `GuardianDashboardContent` 1건 간헐 실패(단독 2회 통과, 챗봇과 무관)
+
+## 7. 반영 (2026-11-09, 같은 날)
+
+| # | 반영 | 위치 |
+|---|---|---|
+| M-1 | AI가 응급·위기(emergency·crisis) 답 layout에 `urgent: true`를 싣고(표시 전용, 판정 칸 불변), FE가 긴급 판정에 넣는다(불리언 `true`만) | AI #198 `chat_layout.py` / FE `ChatBubble.tsx`·`chat.ts` |
+| L-1 | 기록 창 경고는 문장마다 줄 머리 이모지를 뗀 뒤 잇는다 | `ChatbotContent.tsx` |
+| L-2 | 줄 머리 국기는 떼고 키캡(1️⃣)은 번호라 남긴다(사용자 결정 A) | `stripLeadEmoji.ts` |
+| L-3 | 테스트 추가: 피보호자 긴급 핵심 줄 문장 줄바꿈, 375px 칩 48px 이상 | 브라우저 테스트 |
+| L-4 | 테스트가 실제 `getHistoryWarning`을 쓴다(목 제거) | `ChatbotContent.browser.test.tsx` |
+
+함께 고친 것: `stripLeadEmoji` 정규식의 변형 선택자·ZWJ가 보이지 않는 실제 문자로 들어가 있던 것을 `️`·`‍` 이스케이프로 바꿨다(동작 같음).
