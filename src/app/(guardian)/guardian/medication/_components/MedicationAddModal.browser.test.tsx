@@ -22,6 +22,15 @@ vi.mock('@/service/api/guardian/medication', async importOriginal => ({
   addWardMedicationBatch: api.addWardMedicationBatch,
 }));
 
+// 사진 변환은 기본으로 실제 Chrome 것을 쓴다(변환 자체는 ocrImage.browser.test.tsx가 본다).
+// 변환 시간에 기대면 안 되는 테스트만 즉시 끝나게 바꾼다 - 전체 실행 중에는 변환이 1초를 넘기기도 한다
+const ocr = vi.hoisted(() => ({ prepareOcrImage: vi.fn() }));
+vi.mock('@/utils/medication/ocrImage', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/utils/medication/ocrImage')>();
+  ocr.prepareOcrImage.mockImplementation(actual.prepareOcrImage);
+  return { ...actual, prepareOcrImage: ocr.prepareOcrImage };
+});
+
 const OCR_TWO_DRUGS: MedicationOcrResponse = {
   readable: true,
   drugs: [
@@ -332,6 +341,8 @@ describe('MedicationAddModal (Chrome)', () => {
   it('닫으면(언마운트) 진행 중인 인식 요청을 취소한다', async () => {
     const pending = deferred<MedicationOcrResponse>();
     api.recognizeMedicationEnvelope.mockReturnValue(pending.promise);
+    // 이 테스트는 요청 취소를 본다 - 사진 변환을 기다리지 않고 바로 요청이 나가게 한다
+    ocr.prepareOcrImage.mockResolvedValueOnce(new Blob(['photo'], { type: 'image/jpeg' }));
     const { screen } = await renderModal();
     await choosePhoto();
     await expect.element(screen.getByText('약 이름을 읽는 중…')).toBeVisible();

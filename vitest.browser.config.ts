@@ -24,6 +24,8 @@ export default defineConfig({
       'next/link',
       'next/image',
       'react-hook-form',
+      // LoginPage 테스트가 불러온다 - 빠지면 빈 캐시 첫 실행에서 페이지를 다시 읽어 그때 돌던 파일이 통째로 깨지고 실행이 멈춘다
+      'next/headers',
     ],
   },
   esbuild: { jsx: 'automatic' },
