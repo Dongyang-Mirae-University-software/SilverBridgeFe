@@ -76,3 +76,33 @@ AI #196부터 새 답에는 이모지가 붙지 않는다. 이번 FE 변경은 �
 | L-4 | 테스트가 실제 `getHistoryWarning`을 쓴다(목 제거) | `ChatbotContent.browser.test.tsx` |
 
 함께 고친 것: `stripLeadEmoji` 정규식의 변형 선택자·ZWJ가 보이지 않는 실제 문자로 들어가 있던 것을 `️`·`‍` 이스케이프로 바꿨다(동작 같음).
+
+## 8. 반영분 기능 점검 (2026-11-09, AI #198 + FE #228)
+
+- 기준: FE `develop` `af7f3d3`(gosky dev 같음), AI `main` `90240dd`(gosky 21:57 기동 - 함께 올라간 #199는 `chat_layout.py` 변경 없음)
+- 방법: 모델 호출 없이 운영 AI 컨테이너 안에서 `chat_layout.apply`만 돌렸다(운영 설정 이모지 끔, 일반·피보호자 간결 모드).
+- 종합 판정: **PASS** (🔴🟠🟡 없음, 🟢 2건)
+
+| 답 종류 | `layout.urgent` | 핵심 줄 109·119 | 위험도·경고 | FE |
+|---|---|---|---|---|
+| 위기 뒤 해제 턴 | true | 있음 | low·0개 | 긴급 상자(M-1 해결) |
+| 자해 고정 응답 | true | 있음 | high·2개 | 긴급 상자 |
+| 응급 규칙 답 | true | 있음 | high·1개 | 긴급 상자 |
+| 일반 답 | 칸 없음 | - | 그대로 | 일반 |
+| 위기 뒤 해제 + 예약 선택지(ui) | layout 없음 | - | low·0개 | reply 글(🟢 L-5) |
+
+| 항목 | 결과 |
+|---|---|
+| AI 생성 경로 | `layout`을 만드는 곳은 `chat_service._process_message`의 `apply` 한 곳, 그 앞에 이른 반환 없음 → 응급·위기 답은 모두 `urgent`를 받는다 |
+| 판정 칸 불변 | `urgent`는 표시 전용 - `riskLevel`·`emergencyWarning`·답 칩(`followup_answer_chips`)은 이 칸을 보지 않는다(AI 테스트 고정) |
+| FE 사용처 | 응답 `layout`을 받는 곳은 전송 경로(`ChatbotContent.tsx:304`) 하나, 판정은 `ChatBubble.isUrgentLayout`(불리언 true만 - 문자열·숫자 무시 테스트 고정) |
+| 국기·키캡(L-2) | 🇰🇷·🇰🇷🇺🇸·🏥🇰🇷 줄 머리 → 뗌 / 반쪽 국기·1️⃣·#️⃣·문장 중간 국기 → 그대로. 10만 자 1ms |
+| 기록 창 경고(L-1) | 문장마다 뗀 뒤 이음 - 둘째 문장 이모지 0개(테스트 고정) |
+| XSS | 변경 없음(글자 노드만), 회귀 테스트 통과 |
+
+### 🟢 Low
+
+| # | 내용 | 처리 |
+|---|---|---|
+| L-5 | 위기 뒤 해제 턴이 예약 선택지(ui)와 겹치면 layout 이 없어 109 줄이 긴급 상자 없이 reply 첫 줄로 보인다 | #198 전과 같음(회귀 아님), 109 문장은 맨 위에 보인다 - 수용 |
+| L-6 | BE 기록 응답(`ChatLogProjection.projectLayout`)은 `urgent`를 걸러 낸다 | 기록 창은 layout 을 그리지 않아 영향 없음. 기록을 말풍선으로 다시 그리게 되면 BE 허용 목록에 `urgent`(불리언)를 더할 것 |
