@@ -198,6 +198,30 @@ describe('AI 의료 챗봇 탭 라우터 상태 (Chrome)', () => {
     expect(document.querySelector('[role="alert"]')?.textContent).toMatch(/^라우터 크레딧이 소진됐습니다\. .*Anthropic 크레딧·결제 상태를 확인해 주세요\./);
   });
 
+  it('카드에 기준 시각을 보이고, 새로 보기를 누를 때만 한 번 다시 부른다 - 부르는 동안 버튼을 잠그고 기존 값을 둔다', async () => {
+    let calls = 0;
+    await openChatTab(CHAT);
+    data.chat = () => { calls += 1; return new Promise(() => {}); };
+
+    await expect.element(page.getByText(/상담 목적을 나누는 모델 · 기준 11\/09.14:30/)).toBeVisible();
+    expect(calls).toBe(0);
+
+    await page.getByRole('button', { name: '새로 보기' }).click();
+    await expect.element(page.getByRole('button', { name: '불러오는 중' })).toBeDisabled();
+    expect(calls).toBe(1);
+    expect(routerRows()[0]).toBe('지금 상태정상');
+  });
+
+  it('새로 보기로 받은 새 상태를 그린다', async () => {
+    await openChatTab(CHAT);
+    data.chat = () => Promise.resolve({ ...CHAT, routerStatus: { state: 'credit_exhausted', recentFailures: 1, windowSec: 600 }, generatedAt: '2026-11-09T14:35:00+09:00' });
+
+    await page.getByRole('button', { name: '새로 보기' }).click();
+    await expect.element(page.getByRole('alert')).toBeVisible();
+    await expect.element(page.getByText(/기준 11\/09.14:35/)).toBeVisible();
+    expect(routerRows()[0]).toBe('지금 상태크레딧 소진');
+  });
+
   it.each(['ok', 'failing', 'off'] as const)('%s 상태에서는 크레딧 경고가 없다', async state => {
     await openChatTab({ ...CHAT, routerStatus: { state, recentFailures: state === 'failing' ? 1 : 0, windowSec: 600 } });
 
