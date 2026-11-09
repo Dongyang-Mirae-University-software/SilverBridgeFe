@@ -3,6 +3,7 @@ import type { ChatLayout, ChatMessage } from '@/service/interface/chat';
 import ChatToolCard from './ChatToolCard';
 import ChatUiPrompt from './ChatUiPrompt';
 import { breakSentences } from './breakSentences';
+import { stripLeadEmoji } from './stripLeadEmoji';
 import styles from './ChatBubble.module.css';
 
 interface Props {
@@ -35,6 +36,11 @@ export default function ChatBubble({
   const isWardChat = variant === 'ward';
   const layout = normalizeLayout(message.layout);
   const warnings = strings(message.emergencyWarning);
+  // 응급·위기 답(경고가 있거나 위험도 high - 자해 고정 응답은 경고 없이 high 만 온다): 핵심 줄을 빨간 경고 상자에 넣는다.
+  // 문구·이모지(🚨)는 보지 않고 칸이 있는지만 본다.
+  const urgent = warnings.length > 0 || message.riskLevel === 'high';
+  const urgentHeadline = urgent && layout?.headline ? layout.headline : null;
+  const singleQuestion = layout && layout.questions.length === 1 ? layout.questions[0] : null;
   // 피보호자 화면만 본문 문장을 문장마다 줄을 바꿔 보여 준다(표시용 - 원문은 그대로). 카드·응급 상자·선택지는 제외.
   const prose = (text: string) => (isWardChat ? breakSentences(text) : text);
 
@@ -60,23 +66,32 @@ export default function ChatBubble({
         <div className={styles.assistantMessageRow}>
           <div className={styles.messageColumnAssistant}>
             <div className={styles.bubbleAssistant}>
-            {/* 응급 경고 - 맨 위(빨간 상자). 문구는 비교하지 않고 있는지만 본다 */}
-            {warnings.length > 0 && (
+            {/* 응급 경고 상자 - 맨 위. "긴급" 글자 라벨 + 굵은 빨간 테두리(색만으로 구분하지 않는다) → 핵심 줄 → 경고 문장 */}
+            {(urgentHeadline || warnings.length > 0) && (
               <div className={styles.emergencyBox} role="alert">
-                <p className={styles.emergencyTitle}>응급 주의</p>
-                <ul className={styles.emergencyList}>
-                  {warnings.map((item, i) => (
-                    <li key={i}>
-                      <Emphasize text={item} />
-                    </li>
-                  ))}
-                </ul>
+                <p className={styles.emergencyTitle}>
+                  <span className={styles.urgentLabel}>긴급</span>
+                </p>
+                {urgentHeadline && (
+                  <p className={styles.emergencyHeadline}>
+                    <Line text={prose(urgentHeadline)} />
+                  </p>
+                )}
+                {warnings.length > 0 && (
+                  <ul className={styles.emergencyList}>
+                    {warnings.map((item, i) => (
+                      <li key={i}>
+                        <Line text={item} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
 
             {layout ? (
               <>
-                {layout.headline && (
+                {layout.headline && !urgentHeadline && (
                   <p className={styles.headline}>
                     <Line text={prose(layout.headline)} />
                   </p>
@@ -90,16 +105,24 @@ export default function ChatBubble({
                     ))}
                   </ul>
                 )}
-                <SectionCard icon="❓" title="이렇게 알려 주세요" items={layout.questions} tone="ask" />
-                <SectionCard icon="🏠" title="집에서 이렇게" items={layout.homeCare} tone="home" />
-                <SectionCard icon="🏥" title="이럴 땐 병원으로" items={layout.visitHospitalIf} tone="hospital" />
+                {/* 되묻기 질문이 하나면 카드 없이 크게 한 줄로(한 번에 한 질문). 둘 이상이면 질문 카드 */}
+                {singleQuestion ? (
+                  <p className={styles.singleQuestion}>
+                    <Line text={singleQuestion} />
+                  </p>
+                ) : (
+                  <SectionCard title="이렇게 알려 주세요" items={layout.questions} tone="ask" />
+                )}
+                <SectionCard title="집에서 이렇게" items={layout.homeCare} tone="home" />
+                <SectionCard title="이럴 땐 병원으로" items={layout.visitHospitalIf} tone="hospital" />
               </>
             ) : (
               <>
-                <p className={styles.replyText}>{prose(message.content)}</p>
-                <SectionCard icon="🩺" title="가능한 원인" items={strings(message.possibleCauses)} tone="plain" />
-                <SectionCard icon="🏠" title="집에서 이렇게" items={strings(message.homeCare)} tone="home" />
-                <SectionCard icon="🏥" title="이럴 땐 병원으로" items={strings(message.visitHospitalIf)} tone="hospital" />
+                {/* 옛 답·예약 흐름 답도 줄 머리 이모지는 그리지 않는다(문장 중간 글자는 그대로) */}
+                <p className={styles.replyText}>{stripLeadEmoji(prose(message.content))}</p>
+                <SectionCard title="가능한 원인" items={strings(message.possibleCauses)} tone="plain" />
+                <SectionCard title="집에서 이렇게" items={strings(message.homeCare)} tone="home" />
+                <SectionCard title="이럴 땐 병원으로" items={strings(message.visitHospitalIf)} tone="hospital" />
               </>
             )}
 
@@ -186,31 +209,20 @@ function Emphasize({ text }: { text: string }) {
   );
 }
 
-/** 줄 머리 이모지(AI가 붙인 장식) - 맨 앞 그림 문자 하나와 뒤 공백. 보이는 모양만 나눈다(판단에 쓰지 않는다). */
-const LEAD_EMOJI = /^(\p{Extended_Pictographic}\uFE0F?)\s+/u;
-
 /**
- * 답 한 줄. 줄 머리 이모지는 화면 읽기 프로그램이 이름("물방울" 등)을 먼저 읽지 않게 aria-hidden 으로 감싸고,
+ * 답 한 줄. 줄 머리 이모지(AI가 붙인 장식)는 그리지 않는다(2026-11-09 - 글자 위주 화면, 화면 읽기 프로그램도 읽지 않음).
  * 나머지 글은 그대로 글자로 넣는다(HTML 로 해석하지 않는다).
  */
 function Line({ text }: { text: string }) {
-  const match = LEAD_EMOJI.exec(text);
-  if (!match) return <Emphasize text={text} />;
-  return (
-    <>
-      <span aria-hidden="true">{match[1]} </span>
-      <Emphasize text={text.slice(match[0].length)} />
-    </>
-  );
+  return <Emphasize text={stripLeadEmoji(text)} />;
 }
 
+/** 카드 - 아이콘 없이 글자 제목만. 구분은 배경색 + 왼쪽 색 띠(CSS)로 한다. */
 function SectionCard({
-  icon,
   title,
   items,
   tone,
 }: {
-  icon: string;
   title: string;
   items: string[];
   tone: 'home' | 'hospital' | 'ask' | 'plain';
@@ -218,10 +230,7 @@ function SectionCard({
   if (items.length === 0) return null; // 빈 칸은 그리지 않는다
   return (
     <section className={`${styles.card} ${styles[`card_${tone}`] ?? ''}`}>
-      <p className={styles.cardTitle}>
-        <span aria-hidden="true">{icon} </span>
-        {title}
-      </p>
+      <p className={styles.cardTitle}>{title}</p>
       <ul className={styles.lines}>
         {items.map((item, i) => (
           <li key={i}>

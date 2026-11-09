@@ -991,8 +991,9 @@
     padding-bottom: 8px;
   }
 
+  /* 휴대폰에서도 누르는 칩은 48px 이상(되묻기 답 칩 - 2026-11-09) */
   .quickPromptButton {
-    min-height: 44px;
+    min-height: 48px;
     font-size: calc(16px * var(--ward-font-scale, 1));
     padding: 0 16px;
   }

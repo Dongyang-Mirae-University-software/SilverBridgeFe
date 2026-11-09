@@ -18,6 +18,7 @@ import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
 import { breakSentences } from './breakSentences';
+import { stripLeadEmoji } from './stripLeadEmoji';
 import ChatUiPrompt from './ChatUiPrompt';
 import VoiceInputButton from './VoiceInputButton';
 import { useVoiceInput } from './useVoiceInput';
@@ -693,9 +694,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                     <article key={log.id ?? `${log.createdAt ?? 'log'}-${index}`} className={styles.historyItem}>
                       <time>{formatLogDate(log.createdAt)}</time>
                       <strong>{log.message || '선택형 상담'}</strong>
-                      {/* 답은 문장마다 줄을 나눠 보여 준다(표시용 - 원문은 그대로, 3줄 미리보기는 유지) */}
-                      {log.reply && <p>{breakSentences(log.reply)}</p>}
-                      {warning && <p className={styles.historyWarning}>{warning}</p>}
+                      {/* 답은 문장마다 줄을 나눠 보여 주고 줄 머리 이모지는 뗀다(표시용 - 원문은 그대로, 3줄 미리보기는 유지) */}
+                      {log.reply && <p>{stripLeadEmoji(breakSentences(log.reply))}</p>}
+                      {warning && <p className={styles.historyWarning}>{stripLeadEmoji(warning)}</p>}
                     </article>
                   );
                 })
