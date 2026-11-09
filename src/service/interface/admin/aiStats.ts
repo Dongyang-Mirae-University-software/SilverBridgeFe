@@ -3,6 +3,21 @@ export interface AdminChatStatsParams {
   to: string;
 }
 
+export interface AdminChatRouterFailuresByKind {
+  credit: number; // 크레딧 부족
+  auth: number; // 키 인증 실패
+  timeout: number; // 시간 초과
+  other: number; // 그 밖
+}
+
+export type AdminChatRouterState = 'ok' | 'failing' | 'credit_exhausted' | 'off';
+
+export interface AdminChatRouterStatus {
+  state: AdminChatRouterState;
+  recentFailures: number; // 최근 창 안 실패 수
+  windowSec: number; // 실패를 세는 창 길이(초)
+}
+
 export interface AdminChatStats {
   from: string;
   to: string;
@@ -22,6 +37,10 @@ export interface AdminChatStats {
   emergencyGuidance: number | null;
   reservationCompleted: number | null;
   fallbackReplies: number | null;
+  // 라우터(분류 모델) 칸 - 선택 칸이라 옛 BE·AI면 없고(undefined), 형식이 어긋나면 null. 둘 다 "정보 없음"
+  routerFailures?: number | null; // 기간 안 라우터 실패로 키워드 경로를 탄 상담 수(2026-11-09 이전 기간은 0)
+  routerFailuresByKind?: AdminChatRouterFailuresByKind | null;
+  routerStatus?: AdminChatRouterStatus | null; // 조회 기간과 무관한 지금 상태
   daily: Array<{
     date: string;
     totalChats: number | null;
