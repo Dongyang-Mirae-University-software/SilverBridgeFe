@@ -49,6 +49,27 @@ describe('ChatBubble 답 모양', () => {
     expect(Number.parseFloat(getComputedStyle(headline).fontWeight)).toBeGreaterThanOrEqual(700);
   });
 
+  it('위기 뒤 해제 + 예약 선택지 답: 109 줄은 긴급 상자, 나머지 줄·선택지는 그대로 보인다 (AI #200, 2026-11-09 점검 L-5)', async () => {
+    await show({
+      content: '힘드시면 언제든 자살예방 상담전화 109(24시간)에 이야기해 보세요.\n어느 병원으로 예약할까요?',
+      riskLevel: 'low',
+      ui: { kind: 'select', field: 'hospital', options: [{ label: '가까운 내과', value: '1' }] },
+      layout: {
+        headline: '힘드시면 언제든 자살예방 상담전화 109(24시간)에 이야기해 보세요.',
+        body: ['어느 병원으로 예약할까요?'],
+        questions: [],
+        homeCare: [],
+        visitHospitalIf: [],
+        urgent: true,
+      },
+    });
+    const alert = page.getByRole('alert').element();
+    expect(alert.textContent).toContain('109(24시간)');
+    expect(alert.textContent).not.toContain('어느 병원으로');
+    await expect.element(page.getByText('어느 병원으로 예약할까요?', { exact: true })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '가까운 내과' })).toBeVisible();
+  });
+
   it('응급 답은 빨간 경고 상자가 맨 위 - "긴급" 라벨 → 119 핵심 줄 → 경고 문장, 🚨 없이', async () => {
     await show({
       content: '🚨 바로 119에 전화해 주세요.\n지금은 병원 예약보다 119 연락이 먼저예요.',
