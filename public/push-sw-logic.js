@@ -91,7 +91,8 @@
     // 안부 대화 위험 신호는 대화마다 한 번 온다 - 대화(sessionId)마다 따로 남긴다
     if (type === 'COMPANION_RISK' && data.sessionId) return `${type}:${data.sessionId}`;
     // 안부 인사 안내는 시간대마다 한 번 - 앞 시간대 안내를 소리 없이 덮지 않게 시간대로 나눈다
-    if (type === 'COMPANION_PROMPT' && data.slot) return `${type}:${data.slot}`;
+    // 테스트 안내는 정각 안내를 덮지 않게 따로 묶는다
+    if (type === 'COMPANION_PROMPT' && data.slot) return isCompanionTest(data) ? `${type}:test:${data.slot}` : `${type}:${data.slot}`;
     const target =
       data.sosEventId ||
       data.incidentId ||
@@ -157,6 +158,18 @@
     return (internal && internal.data) || notificationData;
   }
 
+  // 테스트 계정용 안부 안내(test=true) - 그 시간대 시작 버튼을 띄우려고 시간대를 주소에 싣는다
+  // FCM data 값은 문자열이라 'true'로 비교한다. 시간대가 정해진 5개가 아니면 일반 안내와 같게 연다
+  const COMPANION_SLOTS = ['09:00', '12:00', '15:00', '18:00', '21:00'];
+
+  function isCompanionTest(data) {
+    return Boolean(data) && (data.test === 'true' || data.test === true) && COMPANION_SLOTS.indexOf(data.slot) >= 0;
+  }
+
+  function getCompanionPromptPath(data) {
+    return isCompanionTest(data) ? `/ward/companion?testSlot=${encodeURIComponent(data.slot)}` : '/ward/companion';
+  }
+
   function guardianOr(role, guardianPath, wardPath) {
     return role === 'WARD' ? wardPath : guardianPath;
   }
@@ -207,7 +220,7 @@
       case 'COMPANION_NOTICE':
         return '/guardian/emotion';
       case 'COMPANION_PROMPT':
-        return '/ward/companion';
+        return getCompanionPromptPath(data);
       default:
         return guardianOr(role, '/guardian', '/ward');
     }
