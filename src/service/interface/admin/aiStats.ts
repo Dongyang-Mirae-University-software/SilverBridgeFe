@@ -3,11 +3,12 @@ export interface AdminChatStatsParams {
   to: string;
 }
 
+// 값이 없으면 null 이다(BE Long). 0 으로 바꿔 보이지 말 것 - 화면은 "정보 없음"으로 보인다
 export interface AdminChatRouterFailuresByKind {
-  credit: number; // 크레딧 부족
-  auth: number; // 키 인증 실패
-  timeout: number; // 시간 초과
-  other: number; // 그 밖
+  credit: number | null; // 크레딧 부족
+  auth: number | null; // 키 인증 실패
+  timeout: number | null; // 시간 초과
+  other: number | null; // 그 밖
 }
 
 export type AdminChatRouterState = 'ok' | 'failing' | 'credit_exhausted' | 'off';
