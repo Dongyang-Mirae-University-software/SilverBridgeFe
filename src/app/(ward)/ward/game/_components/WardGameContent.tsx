@@ -64,6 +64,8 @@ export function WardGameContent() {
           key={gameSlug}
           className={cx('frame')}
           title="치매 예방 게임"
+          // 게임 화면은 다른 출처(AI 서버)다. 스크립트·자기 출처 요청·확인 창만 허용하고 우리 탭 이동·새 창은 막는다
+          sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
           src={getEmbedUrl(toGameUserId(profileId), gameSlug)}
         />
       ) : (

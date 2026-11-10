@@ -47,6 +47,9 @@ export function getChatErrorMessage(error: unknown): string {
   if (code === 'CHAT_UNAVAILABLE') return UNAVAILABLE;
   if (code === 'CHAT_INVALID_REQUEST') return '입력 내용을 확인한 뒤 다시 보내주세요.';
   if (code === 'CHAT_LOG_NOT_FOUND') return '상담 기록을 찾을 수 없습니다.';
+  // 다시 보내도 같은 결과라 "잠시 후 다시 시도"로 안내하지 않는다(2026-11-10 전체 점검 F-2)
+  if (code === 'CHAT_WARD_NOT_CONNECTED') return '지금은 이 피보호자와 연결되어 있지 않아요. 연결 상태를 확인해 주세요.';
+  if (code === 'CHAT_REQUEST_TOO_LARGE' || status === 413) return '내용이 너무 길어요. 줄여서 다시 보내 주세요.';
 
   // 오류 code 없이 상태만 오는 경우(프록시 등)
   if (status === 429) return BUSY;

@@ -54,7 +54,10 @@ interface ConnectConnectionSocketOptions {
   userId: string;
 }
 
-const DEFAULT_SOCKET_URL = 'wss://api.devdmu.gosky.kr/ws';
+// 개발 서버(next dev)에서만 쓰는 기본 주소. 운영 빌드는 NEXT_PUBLIC_WS_URL 이 없으면 연결하지 않는다 -
+// 값이 빠진 운영 빌드가 로그인 토큰을 개발 서버로 보내지 않게 한다(2026-11-10 전체 점검 S-8)
+const DEV_SOCKET_URL = 'wss://api.devdmu.gosky.kr/ws';
+const IS_DEV = process.env.NODE_ENV !== 'production';
 const RECONNECT_DELAY_MS = 5000;
 // 서버가 정지·비밀번호 변경·역할 변경 등으로 세션을 닫을 때의 close 사유(close code 1008)
 const AUTH_INVALIDATED_REASON = 'AUTH_INVALIDATED';
@@ -80,9 +83,12 @@ const GUARDIAN_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionR
   { destination: 'camera-analysis', type: 'CAMERA_ANALYSIS' },
 ];
 
+export function resolveSocketBaseUrl(explicitUrl = process.env.NEXT_PUBLIC_WS_URL, isDev = IS_DEV) {
+  return explicitUrl || (isDev ? DEV_SOCKET_URL : null);
+}
+
 function getSocketUrl(accessToken: string) {
-  const explicitUrl = process.env.NEXT_PUBLIC_WS_URL;
-  const url = new URL(explicitUrl || DEFAULT_SOCKET_URL);
+  const url = new URL(resolveSocketBaseUrl() ?? DEV_SOCKET_URL);
   url.searchParams.set('token', accessToken);
   return url.toString();
 }
@@ -175,6 +181,11 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
     return () => {};
   }
 
+  if (!resolveSocketBaseUrl()) {
+    console.warn('[WS] NEXT_PUBLIC_WS_URL이 없어 실시간 연결을 시작하지 않았습니다.');
+    return () => {};
+  }
+
   let currentAccessToken = accessToken;
   let currentBrokerURL = getSocketUrl(accessToken);
   // 이 토큰으로는 다시 붙지 않고 먼저 갱신해야 하는지(서버가 세션을 끊었거나 연결에 계속 실패한 경우)
@@ -219,24 +230,26 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
       currentBrokerURL = getSocketUrl(latestAccessToken);
       client.brokerURL = currentBrokerURL;
     },
+    // STOMP 프레임에는 알림 본문(이름·위치·약 이름)이 그대로 들어 있다 - 개발 서버에서만 찍는다
     debug: message => {
-      console.debug('[WS]', message.replace(currentAccessToken, '***'));
+      if (IS_DEV) console.debug('[WS]', message.replace(currentAccessToken, '***'));
     },
   });
 
   client.onConnect = () => {
     failuresWithSameToken = 0;
-    console.info('[WS] CONNECTED - 구독 시작:', maskSocketUrl(currentBrokerURL), '| userId:', userId);
+    if (IS_DEV) console.info('[WS] CONNECTED - 구독 시작:', maskSocketUrl(currentBrokerURL));
 
     const topics = role === 'WARD' ? WARD_CONNECTION_TOPICS : role === 'GUARDIAN' ? GUARDIAN_CONNECTION_TOPICS : [];
 
     topics.forEach(topic => {
       const destination = `/topic/${userId}/${topic.destination}`;
-      console.info('[WS] SUBSCRIBE:', destination);
+      if (IS_DEV) console.info('[WS] SUBSCRIBE:', topic.destination);
 
       client.subscribe(destination, message => {
         const payload = normalizeMessage(message, topic.type);
-        console.info('[WS] 알림 받음:', payload);
+        // 내용(이름·위치·약 이름·감지 종류)은 콘솔에 남기지 않는다 - 종류만
+        if (IS_DEV) console.info('[WS] 알림 받음:', payload.type);
         if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST') savePendingConnectionRequest(payload);
         if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST_CANCELLED' && payload.connectionId) {
           removePendingConnectionRequest(Number(payload.connectionId));
@@ -247,7 +260,7 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
   };
 
   client.onStompError = frame => {
-    console.warn('[WS] STOMP ERROR:', frame.headers.message || frame.body || '(메시지 없음)');
+    console.warn('[WS] STOMP ERROR:', frame.headers.message || '(메시지 없음)');
   };
 
   client.onWebSocketError = () => {
