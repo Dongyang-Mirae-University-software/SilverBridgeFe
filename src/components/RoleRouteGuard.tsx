@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { myProfileQueryOptions } from '@/service/query/user';
 import { getRoleHomePath } from '@/utils/auth/routes';
 import { getUserProfileData } from '@/utils/auth/userProfile';
-import { AuthRole, clearAuthTokens, getAccessToken, getRefreshToken, setAuthRole } from '@/lib/auth/tokenStore';
+import { AuthRole, clearAuthTokens, getAccessToken, hasSession, setAuthRole } from '@/lib/auth/tokenStore';
 import { restoreSession, shouldEndSessionAfterProfileError } from '@/lib/auth/sessionRestore';
 import { registerFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { reportNonApiError } from '@/lib/api/reportError';
@@ -27,8 +27,8 @@ export default function RoleRouteGuard({ allowedRole, children, roleMismatchMess
   const router = useRouter();
   const queryClient = useQueryClient();
   const accessToken = getAccessToken();
-  // access 쿠키가 없어도 refresh 토큰이 있으면 로그인 화면으로 보내기 전에 먼저 갱신한다
-  const needsRestore = !accessToken && Boolean(getRefreshToken());
+  // access 쿠키가 없어도(30분 뒤 사라진다) 로그인 세션 표시가 있으면 로그인 화면으로 보내기 전에 먼저 갱신한다
+  const needsRestore = !accessToken && hasSession();
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [restoreUnavailable, setRestoreUnavailable] = useState(false);
   const [, setRestoredCount] = useState(0);
@@ -41,7 +41,7 @@ export default function RoleRouteGuard({ allowedRole, children, roleMismatchMess
   });
   const profile = getUserProfileData(profileResponse);
   const isAllowed = Boolean(accessToken && profile?.role === allowedRole);
-  const endsSession = isError && shouldEndSessionAfterProfileError(error, Boolean(getRefreshToken()));
+  const endsSession = isError && shouldEndSessionAfterProfileError(error, hasSession());
 
   useEffect(() => {
     if (!needsRestore) return;

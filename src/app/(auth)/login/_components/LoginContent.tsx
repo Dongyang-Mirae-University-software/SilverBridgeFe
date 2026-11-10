@@ -43,14 +43,13 @@ export default function LoginContent() {
       const data = getSigninData(response);
 
       // 토큰 없이 이동하면 역할 가드가 말없이 로그인 화면으로 되돌린다 - 여기서 실패로 알린다
-      if (!data.accessToken || !data.refreshToken) {
+      if (!data.accessToken) {
         setErrorMessage('로그인 정보를 받지 못했습니다. 잠시 후 다시 시도해주세요.');
         return;
       }
 
       completeSigninSession({
         accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
         role: data.role,
         remember,
       });

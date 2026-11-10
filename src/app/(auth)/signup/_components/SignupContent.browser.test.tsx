@@ -5,13 +5,16 @@ import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import SignupContent from './SignupContent';
+import { clearKakaoSignupHandoff, saveKakaoSignupHandoff } from '@/lib/auth/kakaoSignupHandoff';
+
+const nav = vi.hoisted(() => ({ replace: vi.fn() }));
 
 vi.mock('@/service/api/auth/auth', async importOriginal => ({
   ...(await importOriginal<typeof import('@/service/api/auth/auth')>()),
   signupEmailCheck: vi.fn().mockResolvedValue({ data: {} }),
 }));
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: nav.replace, back: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -26,6 +29,8 @@ function renderSignup(searchParams: Record<string, string> = {}) {
 
 afterEach(() => {
   document.body.innerHTML = '';
+  clearKakaoSignupHandoff();
+  nav.replace.mockReset();
 });
 
 describe('회원가입 단계 (Chrome)', () => {
@@ -53,12 +58,27 @@ describe('회원가입 단계 (Chrome)', () => {
   });
 
   it('카카오 가입: 계정 단계 없이 내 정보(가입 유형 포함)부터 2단계로 진행한다', async () => {
-    await renderSignup({ kakaoId: '123', email: 'kakao_123@kakao.com' });
+    // 카카오 ID·이메일은 주소가 아니라 카카오 로그인 콜백이 이 탭에 넣어 둔 값에서 온다(2026-11-10 전체 점검 S-6)
+    saveKakaoSignupHandoff({ kakaoId: '123', email: 'kakao_123@kakao.com', pendingToken: 'p-token' });
+    await renderSignup({ kakao: '1' });
 
     await expect.element(page.getByText('/ 2 · 내 정보')).toBeVisible();
     await expect.element(page.getByRole('radiogroup', { name: '가입 유형' })).toBeVisible();
     await expect.element(page.getByLabelText('이름')).toBeVisible();
     expect(page.getByLabelText('비밀번호', { exact: true }).query()).toBeNull();
     expect(page.getByRole('button', { name: '이전', exact: true }).query()).toBeNull();
+  });
+
+  it('카카오 가입인데 넘겨받은 정보가 없으면(새 탭·30분 초과) 폼을 그리지 않고 로그인 화면으로 보낸다', async () => {
+    await renderSignup({ kakao: '1', returnTo: '/guardian/wards/register' });
+
+    await vi.waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/login?returnTo=%2Fguardian%2Fwards%2Fregister'));
+    expect(page.getByLabelText('이름').query()).toBeNull();
+  });
+
+  it('주소에 카카오 ID·이메일을 실어도 카카오 가입으로 보지 않는다', async () => {
+    await renderSignup({ kakaoId: '123', email: 'kakao_123@kakao.com' });
+
+    await expect.element(page.getByText('/ 3 · 계정')).toBeVisible();
   });
 });
