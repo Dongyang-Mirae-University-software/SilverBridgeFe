@@ -11,8 +11,10 @@ import { CommonResponse } from '@/service/interface/common';
 import { IAuthTokenResponse } from '@/service/interface/auth/auth';
 import {
   clearAuthTokens,
+  clearLeftoverSessionTrace,
   getAccessToken,
-  getRefreshToken,
+  hasLeftoverSessionTrace,
+  hasSession,
   reloadAuthTokensFromStorage,
   setAuthTokens,
 } from '@/lib/auth/tokenStore';
@@ -148,44 +150,40 @@ async function withRefreshLock<T>(task: () => Promise<T>): Promise<T> {
   return result;
 }
 
-async function requestTokenRefresh(knownRefreshToken: string) {
-  // 락을 기다리는 사이 다른 탭이 먼저 갱신했으면 쿠키의 refresh 토큰이 바뀌어 있다.
-  // 회전된 옛 토큰으로 다시 부르지 않고 그 탭이 받은 토큰을 쓴다(그 access 토큰도 만료됐으면 새 refresh 토큰으로 갱신)
+// refresh 토큰은 HttpOnly 쿠키(careai_rt)로만 오간다 - 본문에 싣지 않고, 응답 본문의 값도 저장하지 않는다.
+// 프록시(api/[...path])가 이 경로에 한해 그 쿠키를 백엔드로 넘긴다
+async function requestTokenRefresh(knownAccessToken: string | null) {
+  // 락을 기다리는 사이 다른 탭이 먼저 갱신했으면 쿠키의 access 토큰이 바뀌어 있다.
+  // 다시 갱신하지 않고 그 탭이 받은 토큰을 쓴다(그 토큰도 만료됐으면 갱신한다)
   const stored = reloadAuthTokensFromStorage();
-  if (!stored.refreshToken) throw new SessionRejectedError('리프레시 토큰이 없습니다.');
-  if (stored.refreshToken !== knownRefreshToken && stored.accessToken && !isAccessTokenExpired(stored.accessToken)) {
+  if (!stored.hasSession) throw new SessionRejectedError('로그인 세션이 없습니다.');
+  if (stored.accessToken && stored.accessToken !== knownAccessToken && !isAccessTokenExpired(stored.accessToken)) {
     return stored.accessToken;
   }
 
-  const response = await refreshClient.post<CommonResponse<IAuthTokenResponse>>('/auth/refresh', {
-    refreshToken: stored.refreshToken,
-  });
+  const response = await refreshClient.post<CommonResponse<IAuthTokenResponse>>('/auth/refresh');
   const responseBody = response.data;
   const tokens = responseBody.data;
   const isSuccess = responseBody.success === true || responseBody.code === 200;
 
-  if (!isSuccess || !tokens?.accessToken || !tokens.refreshToken) {
+  if (!isSuccess || !tokens?.accessToken) {
     throw new SessionRejectedError(responseBody.message || '토큰 재발급에 실패했습니다.');
   }
 
-  setAuthTokens({
-    accessToken: tokens.accessToken,
-    refreshToken: tokens.refreshToken,
-  });
+  setAuthTokens({ accessToken: tokens.accessToken });
 
   return tokens.accessToken;
 }
 
 export async function refreshAccessToken() {
-  const refreshToken = getRefreshToken();
-
-  if (!refreshToken) {
+  if (!hasSession()) {
     clearSession();
-    throw new SessionRejectedError('리프레시 토큰이 없습니다.');
+    throw new SessionRejectedError('로그인 세션이 없습니다.');
   }
 
   if (!refreshRequest) {
-    refreshRequest = withRefreshLock(() => requestTokenRefresh(refreshToken))
+    const knownAccessToken = getAccessToken();
+    refreshRequest = withRefreshLock(() => requestTokenRefresh(knownAccessToken))
       .catch(error => {
         if (isSessionRejected(error)) clearSession();
         throw error;
@@ -196,6 +194,28 @@ export async function refreshAccessToken() {
   }
 
   return refreshRequest;
+}
+
+// "로그인 유지"를 끄고 로그인한 뒤 브라우저를 닫았다 열면 화면 쪽 쿠키는 사라졌지만 HttpOnly refresh 쿠키는 7일 남는다.
+// 로그인 화면이 열릴 때 그 세션을 서버에서 끝낸다(갱신으로 access 토큰을 받아 곧바로 로그아웃 - 로그아웃은 Bearer 가 필수다).
+// 실패해도 화면은 로그인 폼 그대로다. 일시 장애(429·5xx·네트워크)면 흔적을 남겨 다음에 다시 시도한다
+export async function endLeftoverSession() {
+  if (!hasLeftoverSessionTrace()) return;
+
+  await withRefreshLock(async () => {
+    // 락을 기다리는 사이 다른 탭이 새로 로그인했으면 그 세션을 건드리지 않는다
+    if (!hasLeftoverSessionTrace()) return;
+
+    try {
+      const response = await refreshClient.post<CommonResponse<IAuthTokenResponse>>('/auth/refresh');
+      const leftoverAccessToken = response.data?.data?.accessToken;
+      if (leftoverAccessToken) await sendWithEndedSession(leftoverAccessToken, { method: 'post', url: '/auth/logout' });
+      clearLeftoverSessionTrace();
+    } catch (error) {
+      // 401·403·404 = 남은 세션이 없다(서버가 쿠키도 지운다)
+      if (isSessionRejected(error)) clearLeftoverSessionTrace();
+    }
+  });
 }
 
 // ── request interceptor ───────────────────────

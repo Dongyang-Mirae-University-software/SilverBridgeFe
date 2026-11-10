@@ -15,14 +15,18 @@ self.addEventListener('activate', event => {
   event.waitUntil(self.clients.claim());
 });
 
-// 역할(보호자·피보호자)을 고른다: access token 쿠키 → 열린 탭 경로 → 모름(null).
-// cookieStore는 Chrome·안드로이드만 있다. 토큰은 role 값만 읽고 밖으로 보내지 않는다
+// 역할(보호자·피보호자)을 고른다: access token 쿠키 → 역할 표시 쿠키 → 열린 탭 경로 → 모름(null).
+// cookieStore는 Chrome·안드로이드만 있다. 토큰은 role 값만 읽고 밖으로 보내지 않는다.
+// access 쿠키는 30분 뒤 사라지므로(2026-11-10) 그 뒤에는 역할 표시 쿠키(careai_role)로 고른다 - 열 화면을 고르는 용도뿐이다
 async function resolveRole(clientList) {
   try {
     if (self.cookieStore) {
       const cookie = await self.cookieStore.get('careai_access_token');
       const role = push.getRoleFromToken(cookie && cookie.value);
       if (role) return role;
+
+      const hint = await self.cookieStore.get('careai_role');
+      if (hint && (hint.value === 'WARD' || hint.value === 'GUARDIAN')) return hint.value;
     }
   } catch {
     // 쿠키를 못 읽으면 탭 경로로 넘어간다

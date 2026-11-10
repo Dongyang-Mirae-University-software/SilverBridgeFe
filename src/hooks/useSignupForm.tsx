@@ -8,6 +8,7 @@ import { EMAIL_PATTRERN, PASSWORD_PATTRERN, PHONE_PATTRERN } from '@/constants/p
 import { useMutation } from '@tanstack/react-query';
 import { signup, signupKakao } from '@/service/api/auth/auth';
 import { useRouter } from 'next/navigation';
+import { clearKakaoSignupHandoff } from '@/lib/auth/kakaoSignupHandoff';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import { getRoleHomePath } from '@/utils/auth/routes';
 import { getPhoneDigits } from '@/utils/format/phone';
@@ -31,6 +32,8 @@ export type KakaoSignupData = {
   kakaoId: string;
   email: string;
   profileImageUrl?: string;
+  // 카카오 로그인 응답(신규 회원)에서 받은 일회용 값 - 가입 완료 요청에 그대로 싣는다
+  pendingToken: string;
 };
 
 type UseSignupFormOptions = {
@@ -148,6 +151,7 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
     if (isKakaoSignup && kakaoData) {
       const form: IKakaoSignupReq = {
         kakaoId: kakaoData.kakaoId,
+        pendingToken: kakaoData.pendingToken,
         name: formData.name,
         phone,
         verificationNonce: formData.verificationNonce,
@@ -164,15 +168,14 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
         onSuccess: response => {
           const data = getKakaoSignupResponseData(response) as {
             accessToken?: string;
-            refreshToken?: string;
             role?: RoleType;
           };
           const role = data.role ?? formData.role;
 
-          if (data.accessToken && data.refreshToken) {
+          clearKakaoSignupHandoff();
+          if (data.accessToken) {
             completeSigninSession({
               accessToken: data.accessToken,
-              refreshToken: data.refreshToken,
               role,
             });
           }

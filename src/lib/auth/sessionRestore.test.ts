@@ -7,16 +7,16 @@ import { resolveEntry } from './sessionEntry';
 
 describe('resolveEntry (첫 진입 /)', () => {
   it('유효한 access 토큰 → 역할 홈', () => {
-    expect(resolveEntry(validAccessToken('WARD'), 'r1')).toEqual({ kind: 'redirect', path: '/ward' });
+    expect(resolveEntry(validAccessToken('WARD'), true)).toEqual({ kind: 'redirect', path: '/ward' });
     expect(resolveEntry(validAccessToken('GUARDIAN'))).toEqual({ kind: 'redirect', path: '/guardian' });
   });
 
   it('access 만료 + refresh 있음 → 갱신(restore)', () => {
-    expect(resolveEntry(expiredAccessToken(), 'r1')).toEqual({ kind: 'restore' });
+    expect(resolveEntry(expiredAccessToken(), true)).toEqual({ kind: 'restore' });
   });
 
   it('access 없음 + refresh 있음 → 갱신(restore)', () => {
-    expect(resolveEntry(undefined, 'r1')).toEqual({ kind: 'restore' });
+    expect(resolveEntry(undefined, true)).toEqual({ kind: 'restore' });
   });
 
   it('refresh 없음 → /login', () => {

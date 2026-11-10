@@ -13,7 +13,6 @@ import {
   IFindPasswordSmsVerifyReq,
   IFindPasswordSendResponse,
   IAuthTokenResponse,
-  IRefreshReq,
   ISmsVerifyResponse,
   IKakaoSigninReq,
   IKakaoSigninRes,
@@ -39,10 +38,6 @@ export async function signinKakao(body: IKakaoSigninReq) {
 // 로그아웃은 이 기기의 세션을 먼저 지운 뒤 보낸다 - 지우기 전에 꺼내 둔 access 토큰을 받는다
 export async function logout(accessToken: string) {
   return sendWithEndedSession<CommonResponse<null>>(accessToken, { method: 'post', url: `${BASE}/logout` });
-}
-
-export async function refresh(body: IRefreshReq) {
-  return apiClient.post<CommonResponse<IAuthTokenResponse>>(`${BASE}/refresh`, body);
 }
 
 // ── 회원가입 ──────────────────────────────────────────────────────────────────

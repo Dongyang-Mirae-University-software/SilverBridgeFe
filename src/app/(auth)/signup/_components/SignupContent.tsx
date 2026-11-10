@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import classNames from 'classnames/bind';
 
@@ -8,14 +8,13 @@ import styles from './SignupContent.module.css';
 import SignupForm from './SignupForm';
 import { SIGNUP_STEP_LABEL, getSignupSteps } from './signupSteps';
 import { getSafeReturnPath } from '@/lib/auth/returnPath';
+import { KakaoSignupHandoff, readKakaoSignupHandoff } from '@/lib/auth/kakaoSignupHandoff';
 
 const cx = classNames.bind(styles);
 
 type SignupContentProps = {
   searchParams: {
-    kakaoId?: string;
-    email?: string;
-    profileImageUrl?: string;
+    kakao?: string;
     returnTo?: string;
   };
 };
@@ -24,22 +23,25 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
   const router = useRouter();
   const clientSearchParams = useSearchParams();
   const [signupStep, setSignupStep] = useState(1);
-  const kakaoId = searchParams.kakaoId || clientSearchParams.get('kakaoId') || '';
-  const email = searchParams.email || clientSearchParams.get('email') || '';
-  const profileImageUrl = searchParams.profileImageUrl || clientSearchParams.get('profileImageUrl') || '';
   const returnTo = getSafeReturnPath(searchParams.returnTo || clientSearchParams.get('returnTo'));
+  const isKakao = (searchParams.kakao || clientSearchParams.get('kakao')) === '1';
+  // 카카오 가입 정보는 카카오 로그인 콜백이 이 탭의 sessionStorage 에 넣어 둔다. 서버 렌더·첫 렌더에서는 읽을 수 없어 effect 에서 읽는다
+  const [kakaoData, setKakaoData] = useState<KakaoSignupHandoff | undefined>(undefined);
 
-  const isKakao = Boolean(kakaoId && email);
+  useEffect(() => {
+    if (!isKakao) return;
 
-  const kakaoData = isKakao
-    ? {
-        kakaoId: kakaoId!,
-        email: email!,
-        profileImageUrl: profileImageUrl || undefined,
-      }
-    : undefined;
+    const handoff = readKakaoSignupHandoff();
+    // 없으면(새 탭으로 열었거나 30분이 지남) 카카오 로그인부터 다시 한다
+    // 이미 읽었으면 그대로 둔다(같은 값을 새 객체로 다시 넣으면 다시 그려진다)
+    if (handoff) setKakaoData(current => current ?? handoff);
+    else router.replace(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login');
+  }, [isKakao, returnTo, router]);
+
   const steps = getSignupSteps(isKakao);
   const stepKey = steps[signupStep - 1] ?? steps[0];
+
+  if (isKakao && !kakaoData) return null;
 
   return (
     <>
