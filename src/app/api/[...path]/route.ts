@@ -16,6 +16,9 @@ const HOP_BY_HOP_HEADERS = new Set([
   'upgrade',
 ]);
 
+// 백엔드가 내리는 HttpOnly refresh 쿠키. 브라우저는 /api/auth/* 요청에 이 쿠키를 싣는다(Path=/api/auth)
+const REFRESH_COOKIE_NAME = 'careai_rt';
+
 type RouteContext = {
   params: Promise<{
     path: string[];
@@ -48,7 +51,13 @@ function getProxyRequestHeaders(request: NextRequest, path: string[]) {
   const accessToken = request.cookies.get('careai_access_token')?.value;
 
   HOP_BY_HOP_HEADERS.forEach(header => headers.delete(header));
-  if (isRefreshPath(path)) headers.delete('authorization');
+  if (isRefreshPath(path)) {
+    headers.delete('authorization');
+    // 요청 쿠키는 위에서 모두 지운다. 갱신 경로에만 refresh 쿠키 하나를 다시 실어 보낸다 -
+    // 다른 경로·다른 쿠키는 넘기지 않는다(백엔드는 Authorization 헤더로만 인증한다)
+    const refreshCookie = request.cookies.get(REFRESH_COOKIE_NAME)?.value;
+    if (refreshCookie) headers.set('cookie', `${REFRESH_COOKIE_NAME}=${encodeURIComponent(refreshCookie)}`);
+  }
   if (!headers.has('authorization') && accessToken && shouldAttachCookieAccessToken(path)) {
     headers.set('authorization', `Bearer ${accessToken}`);
   }

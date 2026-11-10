@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSafeReturnPath } from '@/lib/auth/returnPath';
+import { KAKAO_STATE_COOKIE, KAKAO_STATE_MAX_AGE_SECONDS, buildKakaoState } from '@/lib/auth/kakaoState';
 
 const KAKAO_AUTHORIZE_URL = 'https://kauth.kakao.com/oauth/authorize';
 const KAKAO_CALLBACK_PATH = '/oauth';
@@ -32,8 +33,18 @@ export function GET(request: NextRequest) {
     response_type: 'code',
   });
 
+  // state 에는 이 브라우저에만 있는 난수를 싣고 같은 값을 쿠키에 둔다 - 콜백 화면이 둘을 대조한다(로그인 CSRF 방지).
+  // 콜백 화면(브라우저 코드)이 읽어야 해서 HttpOnly 가 아니다. 토큰이 아니라 10분짜리 일회용 난수다
+  const nonce = crypto.randomUUID().replace(/-/g, '');
   const returnTo = getSafeReturnPath(request.nextUrl.searchParams.get('returnTo'));
-  if (returnTo) params.set('state', returnTo);
+  params.set('state', buildKakaoState(nonce, returnTo));
 
-  return NextResponse.redirect(`${KAKAO_AUTHORIZE_URL}?${params.toString()}`);
+  const response = NextResponse.redirect(`${KAKAO_AUTHORIZE_URL}?${params.toString()}`);
+  response.cookies.set(KAKAO_STATE_COOKIE, nonce, {
+    maxAge: KAKAO_STATE_MAX_AGE_SECONDS,
+    path: '/',
+    sameSite: 'lax',
+    secure: getRequestOrigin(request).startsWith('https://'),
+  });
+  return response;
 }

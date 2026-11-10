@@ -16,6 +16,18 @@ const eslintConfig = defineConfig([
       'react-hooks/immutability': 'warn',
     },
   },
+  // src/lib/server 는 서버 비밀값(예약 계정 비밀·송출 키 확인)을 다룬다 - BFF 라우트(src/app/api)에서만 가져다 쓴다.
+  // 화면 코드가 가져가면 그 코드가 브라우저 번들에 실린다(2026-11-10 전체 점검 S-11)
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/app/api/**', 'src/lib/server/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['@/lib/server/*', '**/lib/server/*'], message: 'src/lib/server 는 src/app/api 에서만 가져다 쓴다.' }] },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

@@ -57,6 +57,12 @@ describe('getChatErrorMessage', () => {
     expect(getChatErrorMessage(new AxiosError('t', 'ECONNABORTED'))).toContain('오래 걸리고');
   });
 
+  it('연결이 끊긴 피보호자·너무 긴 내용은 다시 시도 안내가 아니라 전용 문구다 (2026-11-10 전체 점검 F-2)', () => {
+    expect(getChatErrorMessage(axiosError(403, 'CHAT_WARD_NOT_CONNECTED'))).toContain('연결되어 있지 않아요');
+    expect(getChatErrorMessage(axiosError(413, 'CHAT_REQUEST_TOO_LARGE'))).toContain('너무 길어요');
+    expect(getChatErrorMessage(axiosError(413))).toContain('너무 길어요');
+  });
+
   it('역할 미확정·그 외 오류는 고정 문구이고 원문을 노출하지 않는다', () => {
     expect(getChatErrorMessage(new ChatRoleUnknownError())).toContain('로그인 정보');
     expect(getChatErrorMessage(new Error('secret detail'))).not.toContain('secret');

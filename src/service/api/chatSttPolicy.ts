@@ -5,6 +5,8 @@ import { ChatRoleUnknownError } from './chatPolicy';
 // 음성 입력(POST .../chat/stt) 안내. 문구는 서버 ErrorCode와 맞춘다
 export const STT_MESSAGES = {
   permission: '마이크 권한을 허용해 주세요.',
+  // 마이크 기능이 없는 브라우저·보안 연결(https)이 아닌 접속 - 권한을 줘도 쓸 수 없다
+  unsupported: '이 브라우저에서는 음성 입력을 쓸 수 없어요. 글로 입력해 주세요.',
   empty: '잘 못 들었어요. 다시 말씀해 주세요.',
   invalid: '음성을 읽을 수 없어요. 다시 말씀해 주세요.',
   tooLarge: '음성은 30초, 10MB까지 보낼 수 있어요.',

@@ -118,7 +118,7 @@ export function useVoiceInput<T = string>(onText: (result: T) => void, options?:
     const AudioCtx = getAudioContextCtor();
     if (!AudioCtx || typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
       busyRef.current = false;
-      setNotice(STT_MESSAGES.permission);
+      setNotice(STT_MESSAGES.unsupported);
       return;
     }
 
