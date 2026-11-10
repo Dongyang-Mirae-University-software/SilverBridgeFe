@@ -1,4 +1,4 @@
-import { AdminDetectedType, AdminSafetyDashboard } from '@/service/interface/admin/dashboard';
+import { AdminAiServiceStatus, AdminDetectedType, AdminSafetyDashboard } from '@/service/interface/admin/dashboard';
 
 export const ADMIN_ANOMALY_TYPE_META: Record<AdminDetectedType, { label: string; color: 'accent' | 'danger' | 'warn' }> = {
   FIRE: { label: '화재', color: 'danger' },
@@ -27,4 +27,15 @@ export function formatAdminTrendDate(value: string) {
 
 export function formatNullableCount(value: number | null, unit: string) {
   return value === null ? '확인 불가' : `${value}${unit}`;
+}
+
+export function getAiServiceState(status: AdminAiServiceStatus | null | undefined, kind: 'anomaly' | 'chat', loading: boolean, error: boolean) {
+  if (loading) return { label: '확인 중', tone: 'mute' };
+  if (error || !status) return { label: '확인 불가', tone: 'mute' };
+  const value: unknown = (kind === 'anomaly' ? status.anomalyDetection : status.chatbot)?.status ?? null;
+  if (value === null) return { label: kind === 'anomaly' ? '확인 중' : '확인 불가', tone: 'mute' };
+  if (value === 'OK') return { label: '정상', tone: 'safe' };
+  if (kind === 'anomaly' && value === 'DISCONNECTED') return { label: '연결 끊김', tone: 'warn' };
+  if (kind === 'chat' && value === 'DISABLED') return { label: '일시 중단', tone: 'warn' };
+  return { label: '확인 불가', tone: 'mute' };
 }

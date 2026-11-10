@@ -52,8 +52,14 @@ export interface AdminOperationDashboard {
 export type AdminAnomalyServiceStatus = 'OK' | 'DISCONNECTED' | null;
 export type AdminChatbotServiceStatus = 'OK' | 'DISABLED' | null;
 
+// 서비스마다 { status, checkedAt } 객체로 온다 - status null은 확인 중(이상감지)·확인 불가(챗봇)
+export interface AdminAiServiceItem<S> {
+  status: S;
+  checkedAt: string;
+}
+
 export interface AdminAiServiceStatus {
-  anomalyDetection: AdminAnomalyServiceStatus;
-  chatbot: AdminChatbotServiceStatus;
+  anomalyDetection: AdminAiServiceItem<AdminAnomalyServiceStatus>;
+  chatbot: AdminAiServiceItem<AdminChatbotServiceStatus>;
   generatedAt: string;
 }

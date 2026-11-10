@@ -9,7 +9,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { AdminAiServiceStatus, AdminOperationDashboard, AdminSafetyDashboard } from '@/service/interface/admin/dashboard';
 import { adminAiServiceStatusQueryOptions, adminCompanionStatsQueryOptions, adminOperationDashboardQueryOptions, adminSafetyDashboardQueryOptions } from '@/service/query/admin';
 import { COMPANION_MOOD_ROWS } from '@/utils/admin/companion';
-import { ADMIN_ANOMALY_TYPE_META, formatNullableCount, getReviewMetrics } from '@/utils/admin/dashboard';
+import { ADMIN_ANOMALY_TYPE_META, formatNullableCount, getAiServiceState, getReviewMetrics } from '@/utils/admin/dashboard';
 import styles from './AdminDashboardContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -17,7 +17,6 @@ const subscribeNothing = () => () => {};
 
 function formatCount(value: number | null | undefined, unit: string) { return value === null || value === undefined ? '-' : `${value.toLocaleString('ko-KR')}${unit}`; }
 function formatElapsed(value: string | undefined) { if (!value) return '방금'; const time = new Date(value).getTime(); if (Number.isNaN(time)) return '방금'; const minutes = Math.max(0, Math.floor((Date.now() - time) / 60_000)); return minutes < 1 ? '방금' : `${minutes}분 전`; }
-function serviceState(status: AdminAiServiceStatus | null | undefined, kind: 'anomaly' | 'chat', loading: boolean, error: boolean) { if (loading) return { label: '확인 중', tone: 'mute' }; if (error || !status) return { label: '확인 불가', tone: 'mute' }; const value: unknown = kind === 'anomaly' ? status.anomalyDetection : status.chatbot; if (value === null) return { label: kind === 'anomaly' ? '확인 중' : '확인 불가', tone: 'mute' }; if (value === 'OK') return { label: '정상', tone: 'safe' }; if (kind === 'anomaly' && value === 'DISCONNECTED') return { label: '연결 끊김', tone: 'warn' }; if (kind === 'chat' && value === 'DISABLED') return { label: '일시 중단', tone: 'warn' }; return { label: '확인 불가', tone: 'mute' }; }
 
 export function AdminDashboardContent() {
   const dateLabel = useSyncExternalStore(subscribeNothing, () => new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Seoul' }).format(new Date()), () => '오늘');
@@ -30,8 +29,8 @@ export function AdminDashboardContent() {
 }
 
 function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiStatusError, dateLabel }: { safety: AdminSafetyDashboard; operation: AdminOperationDashboard; aiStatus: AdminAiServiceStatus | null | undefined; aiStatusLoading: boolean; aiStatusError: boolean; dateLabel: string }) {
-  const anomalyService = serviceState(aiStatus, 'anomaly', aiStatusLoading, aiStatusError);
-  const chatbotService = serviceState(aiStatus, 'chat', aiStatusLoading, aiStatusError);
+  const anomalyService = getAiServiceState(aiStatus, 'anomaly', aiStatusLoading, aiStatusError);
+  const chatbotService = getAiServiceState(aiStatus, 'chat', aiStatusLoading, aiStatusError);
   const review = getReviewMetrics(safety.todayAnomaly.review, safety.todayAnomaly.total);
   const falseAlarmRate = review.answered === 0 ? '-' : `${review.falseAlarmRate}%`;
   const typeTotal = safety.todayAnomaly.total || 1;
