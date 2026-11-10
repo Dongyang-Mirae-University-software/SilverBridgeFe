@@ -140,10 +140,17 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const profile = getUserProfileData(profileResponse);
   const isGuardian = getAuthRole() === 'GUARDIAN';
   const isWardChat = variant === 'ward';
-  const { activeWards, isLoading: wardsLoading } = useGuardianActiveWards(isGuardian);
+  const {
+    activeWards,
+    isLoading: wardsLoading,
+    isError: wardsFailed,
+    refetch: refetchWards,
+  } = useGuardianActiveWards(isGuardian);
+  // 목록을 받지 못했으면(5xx·네트워크) 누구의 상담인지 모른다 - 잠근 채로 다시 불러오게 한다(2026-11-10 전체 점검 F-1)
+  const wardsUnavailable = isGuardian && Boolean(wardsFailed);
   // 보호자는 피보호자 목록을 받기 전에 보내면 wardId 없이 본인 상담으로 가고, 다음 턴(wardId 있음)에 되묻기 이어 붙이기가 끊긴다
-  // (2026-11-03 답 칩 점검 M-1). 목록을 받는 동안은 칩·입력·보내기를 잠근다.
-  const waitingWards = isGuardian && Boolean(wardsLoading);
+  // (2026-11-03 답 칩 점검 M-1). 목록을 받는 동안·받지 못했을 때는 칩·입력·보내기를 잠근다.
+  const waitingWards = isGuardian && (Boolean(wardsLoading) || wardsUnavailable);
   const selectedWard = useSelectedWard(activeWards, ward => ward.partnerUserId);
   const [sessionId, setSessionId] = useState(makeSessionId);
   // 대화창(sessionId)마다 이미 보낸 문장 - 빠른 질문에서 뺀다. 상담 내용이라 브라우저 저장소에 남기지 않는다(새로고침하면 비워진다).
@@ -227,11 +234,13 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const reservationUi = reserving ? stepSource?.ui : undefined;
   const showComposer = !isWardChat || !reserving || composerOpenedIn === sessionId;
   const suggested = latestSuggestions(messages);
-  const quickTitle = waitingWards
-    ? '피보호자 정보를 불러오는 중이에요'
-    : suggested.answer
-      ? '눌러서 답해 보세요'
-      : '눌러서 물어보세요';
+  const quickTitle = wardsUnavailable
+    ? '피보호자 정보를 불러오지 못했어요'
+    : waitingWards
+      ? '피보호자 정보를 불러오는 중이에요'
+      : suggested.answer
+        ? '눌러서 답해 보세요'
+        : '눌러서 물어보세요';
   const sentTexts = new Set(sentBySession[sessionId] ?? []);
   // 서버는 버튼·날짜·지역 선택도 "[선택] field: value" 형식의 별도 기록으로 남긴다.
   // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
@@ -632,8 +641,19 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             reservationPanel('guardian')
           ) : (
             <section className={styles.quickPromptPanel} aria-label="추천 질문">
-              <p className={styles.quickPromptTitle}>{quickTitle}</p>
+              <p className={styles.quickPromptTitle} role={wardsUnavailable ? 'alert' : undefined}>
+                {quickTitle}
+              </p>
               <div className={styles.quickPromptRow}>
+                {wardsUnavailable && (
+                  <button
+                    type="button"
+                    className={`${styles.quickPromptButton} ${styles.quickPromptPrimary}`}
+                    onClick={() => void refetchWards()}
+                  >
+                    다시 불러오기
+                  </button>
+                )}
                 {guardianPrompts(suggested, sentTexts).map(prompt => (
                   <button
                     key={prompt.text}

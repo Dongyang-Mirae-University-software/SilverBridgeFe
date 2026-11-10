@@ -45,7 +45,7 @@ vi.mock('@/lib/auth/tokenStore', () => ({ getAccessToken: () => mocks.accessToke
 // 만료 판단은 갱신 분기로 들어가게 고정한다
 vi.mock('@/lib/auth/tokenExpiry', () => ({ isAccessTokenExpired: () => true }));
 
-import { connectConnectionSocket } from './connectionSocket';
+import { connectConnectionSocket, resolveSocketBaseUrl } from './connectionSocket';
 
 const RECONNECT_DELAY_MS = 5000;
 
@@ -171,5 +171,20 @@ describe('피보호자 연결 요청 취소 신호 (connection-request-cancelled
     const client = mocks.clients.at(-1)! as unknown as { onConnect: () => void; subscribe: ReturnType<typeof vi.fn> };
     client.onConnect();
     expect(client.subscribe.mock.calls.map(([destination]) => destination)).not.toContain('/topic/g1/connection-request-cancelled');
+  });
+});
+
+describe('실시간 연결 주소 (2026-11-10 전체 점검 S-8)', () => {
+  it('설정한 주소가 있으면 그 주소를 쓴다', () => {
+    expect(resolveSocketBaseUrl('wss://example.test/ws', false)).toBe('wss://example.test/ws');
+  });
+
+  it('운영 빌드는 주소가 없으면 개발 서버로 붙지 않는다', () => {
+    expect(resolveSocketBaseUrl('', false)).toBeNull();
+    expect(resolveSocketBaseUrl(undefined, false)).toBeNull();
+  });
+
+  it('개발 서버에서만 기본 주소를 쓴다', () => {
+    expect(resolveSocketBaseUrl(undefined, true)).toContain('/ws');
   });
 });

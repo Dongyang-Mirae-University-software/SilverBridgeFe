@@ -16,6 +16,8 @@ const api = vi.hoisted(() => ({
   role: vi.fn(),
   wards: vi.fn(),
   wardsLoading: vi.fn(),
+  wardsFailed: vi.fn(),
+  refetchWards: vi.fn(),
   push: vi.fn(),
 }));
 
@@ -36,6 +38,8 @@ vi.mock('@/hooks/useActiveConnections', () => ({
   useGuardianActiveWards: (enabled: boolean) => ({
     activeWards: enabled ? api.wards() : [],
     isLoading: enabled ? api.wardsLoading() : false,
+    isError: enabled ? Boolean(api.wardsFailed()) : false,
+    refetch: api.refetchWards,
   }),
 }));
 vi.mock('@/components/connections/WardSelectorTabs', () => ({
@@ -89,6 +93,8 @@ beforeEach(() => {
   api.push.mockReset();
   api.wards.mockReturnValue([WARD]);
   api.wardsLoading.mockReturnValue(false);
+  api.wardsFailed.mockReturnValue(false);
+  api.refetchWards.mockReset();
   sessionStorage.clear();
   clearSelectedWardId();
 });
@@ -162,6 +168,20 @@ describe('보호자 AI 의료 챗봇', () => {
     await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeDisabled();
     await expect.element(page.getByRole('button', { name: '병원 예약하고 싶어요' })).toBeDisabled();
     await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeDisabled();
+    expect(api.sendChatMessage).not.toHaveBeenCalled();
+  });
+
+  it('피보호자 목록을 불러오지 못하면 잠근 채 다시 불러오기를 보인다 - 본인 상담으로 새지 않게(2026-11-10 전체 점검 F-1)', async () => {
+    api.wards.mockReturnValue([]);
+    api.wardsFailed.mockReturnValue(true);
+    api.sendChatMessage.mockResolvedValue(REPLY);
+    await renderChat(<ChatbotContent />);
+
+    await expect.element(page.getByRole('alert').filter({ hasText: '피보호자 정보를 불러오지 못했어요' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeDisabled();
+    await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeDisabled();
+    await userEvent.click(page.getByRole('button', { name: '다시 불러오기' }));
+    expect(api.refetchWards).toHaveBeenCalledTimes(1);
     expect(api.sendChatMessage).not.toHaveBeenCalled();
   });
 

@@ -46,7 +46,8 @@ export interface ChatMessage {
   /** 이 답에 이어서 물어볼 질문(0~3개, AI #135). 빠른 질문 칸을 대화 흐름대로 바꾼다. 되묻기 턴은 답 칩 4개. */
   suggestedQuestions?: string[];
   /** 칩 종류(AI 2026-11-02): "answer"면 되묻기에 눌러서 답하는 칩. 그 밖의 값·없음은 이어서 물어볼 질문. */
-  suggestedKind?: string;  /** 답 모양(AI 2026-11-01). 없으면 content 로 그린다. */
+  suggestedKind?: string;
+  /** 답 모양(AI 2026-11-01). 없으면 content 로 그린다. */
   layout?: ChatLayout | null;
 }
 
@@ -65,28 +66,11 @@ export interface ChatLayout {
   urgent?: boolean;
 }
 
+// 환자 정보(이름·전화·생년월일·주소 등)는 보내지 않는다 - 백엔드가 로그인 사용자·검증한 피보호자의 DB 값으로 채운다
+// (BE #440·#444). 칸을 늘리지 말 것: 여기에 없으면 화면이 실수로 실어 보낼 수 없다.
 export interface ChatContext {
-  age?: number;
-  email?: string;
-  name?: string;
-  phone?: string;
-  gender?: string;
-  birthDate?: string;
-  postcode?: string;
-  address?: string;
-  addressDetail?: string;
-  guardianId?: number;
-  wardId?: string;
-  wardName?: string;
-  wardPhone?: string;
-  patientId?: string;
-  patientName?: string;
-  patientBirthDate?: string;
-  patientPhone?: string;
-  patientGender?: string;
-  relation?: string;
-  location?: string;
   role?: string;
+  wardId?: string;
 }
 
 export function calcAge(birthDate: string): number {
