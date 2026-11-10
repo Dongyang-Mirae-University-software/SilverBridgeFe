@@ -73,6 +73,11 @@ describe('알림 모양', () => {
     expect(push.getContent({ data: { type: 'COMPANION_PROMPT', slot: '15:00' } }).title).toBe('안부 말벗');
   });
 
+  it('테스트 안부 안내는 같은 시간대 정각 안내를 덮지 않는다', () => {
+    expect(push.getTag({ type: 'COMPANION_PROMPT', slot: '15:00', test: 'true' })).toBe('COMPANION_PROMPT:test:15:00');
+    expect(push.getTag({ type: 'COMPANION_PROMPT', slot: '15:00', test: 'false' })).toBe('COMPANION_PROMPT:15:00');
+  });
+
   it('복약 재알림은 회차마다 tag가 다르고 다시 울린다 - 남아 있는 첫 알림을 소리 없이 덮지 않게', () => {
     const base = { type: 'MEDICATION_REMINDER', medicationId: '3', doseDate: '2026-10-30' };
     const first = push.buildNotification({ data: { ...base, attempt: '1' } }, 'WARD');
@@ -132,6 +137,7 @@ describe('클릭 경로', () => {
     [{ type: 'COMPANION_RISK', wardId: 'w1', sessionId: 's1' }, 'GUARDIAN', undefined, '/guardian/emotion'],
     [{ type: 'COMPANION_NOTICE', wardId: 'w1', days: '3' }, 'GUARDIAN', undefined, '/guardian/emotion'],
     [{ type: 'COMPANION_PROMPT', slot: '15:00' }, 'WARD', undefined, '/ward/companion'],
+    [{ type: 'COMPANION_PROMPT', slot: '15:00', test: 'true' }, 'WARD', undefined, '/ward/companion?testSlot=15%3A00'],
     [{ type: 'UNKNOWN' }, 'WARD', undefined, '/ward'],
     [{ type: 'UNKNOWN' }, null, undefined, '/guardian'],
   ])('%o (%s, %s) → %s', (data, role, action, path) => {

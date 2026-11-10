@@ -54,6 +54,19 @@ describe('토스트를 눌렀을 때도 브라우저 알림과 같은 화면으�
   });
 });
 
+describe('테스트 안부 안내(test=true)', () => {
+  it.each([
+    [{ type: 'COMPANION_PROMPT', slot: '15:00', test: 'true' }, '/ward/companion?testSlot=15%3A00'],
+    [{ type: 'COMPANION_PROMPT', slot: '15:00' }, '/ward/companion'],
+    [{ type: 'COMPANION_PROMPT', slot: '15:00', test: 'false' }, '/ward/companion'],
+    [{ type: 'COMPANION_PROMPT', slot: '16:00', test: 'true' }, '/ward/companion'],
+    [{ type: 'COMPANION_PROMPT', test: 'true' }, '/ward/companion'],
+  ])('%o → %s (토스트·브라우저 알림 같음)', (data, path) => {
+    expect(getPushRoute(data, 'WARD')).toBe(path);
+    expect(swPush.getPath(data, 'WARD')).toBe(path);
+  });
+});
+
 describe('복약 미복용 막대', () => {
   it('두 값이 있으면 체크한 횟수를 계산한다', () => {
     expect(getMedicationProgress({ type: 'MEDICATION_MISSED', totalCount: '3', missedCount: '1' })).toEqual({

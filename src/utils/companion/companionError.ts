@@ -10,7 +10,15 @@ export const COMPANION_MESSAGES = {
   unavailable: '지금은 말벗과 이야기할 수 없어요. 잠시 후 다시 해 주세요.',
   timeout: '말벗 대답이 늦어요. 다시 보내 주세요.',
   generic: '보내지 못했어요. 잠시 후 다시 해 주세요.',
+  frame: '사진을 보내지 못했어요. 이제 목소리만 보낼게요. 다시 말씀해 주세요.',
 } as const;
+
+const FRAME_CODES = new Set(['COMPANION_FRAME_INVALID', 'COMPANION_FRAME_TOO_LARGE', 'COMPANION_UPLOAD_TOO_LARGE']);
+
+// 사진 때문에 거절됐을 수 있는 오류 - 화면은 이 대화에서 사진을 끈다
+export function isCompanionFrameError(error: unknown) {
+  return isAxiosError<{ code?: string }>(error) && FRAME_CODES.has(error.response?.data?.code ?? '');
+}
 
 const BY_CODE: Record<string, { message: string; action: CompanionErrorAction }> = {
   COMPANION_NOT_IN_WINDOW: { message: '지금은 안부 대화 시간이 아니에요.', action: 'exit' },
@@ -24,9 +32,10 @@ const BY_CODE: Record<string, { message: string; action: CompanionErrorAction }>
   COMPANION_ANSWER_TOO_LONG: { message: '대답은 500자까지 보낼 수 있어요.', action: 'stay' },
   COMPANION_AUDIO_INVALID: { message: '목소리를 알아듣지 못했어요. 다시 말씀하시거나 글로 대답해 주세요.', action: 'stay' },
   COMPANION_AUDIO_TOO_LARGE: { message: '말씀이 너무 길어요. 조금 짧게 다시 말씀해 주세요.', action: 'stay' },
-  // 사진은 보내지 않지만 서버가 합계로 거절할 수 있다
-  COMPANION_FRAME_INVALID: { message: COMPANION_MESSAGES.generic, action: 'stay' },
-  COMPANION_FRAME_TOO_LARGE: { message: COMPANION_MESSAGES.generic, action: 'stay' },
+  // 사진을 받지 못하면 화면이 사진을 끄고 목소리만 다시 보내게 한다(isCompanionFrameError)
+  COMPANION_FRAME_INVALID: { message: COMPANION_MESSAGES.frame, action: 'stay' },
+  COMPANION_FRAME_TOO_LARGE: { message: COMPANION_MESSAGES.frame, action: 'stay' },
+  COMPANION_TEST_NOT_ALLOWED: { message: '테스트 계정만 쓸 수 있습니다.', action: 'stay' },
   COMPANION_UPLOAD_TOO_LARGE: { message: '말씀이 너무 길어요. 조금 짧게 다시 말씀해 주세요.', action: 'stay' },
   COMPANION_STT_UNAVAILABLE: { message: '지금은 목소리를 알아듣지 못해요. 글로 대답해 주세요.', action: 'text' },
   COMPANION_DISABLED: { message: COMPANION_MESSAGES.unavailable, action: 'stay' },

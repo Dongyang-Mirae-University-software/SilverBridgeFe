@@ -57,6 +57,15 @@ export function getMedicationProgress(data: PushData) {
 }
 
 // 토스트를 눌렀을 때 갈 화면 - 브라우저 알림(public/push-sw-logic.js getPath)과 같아야 한다
+// 테스트 계정용 안부 안내(test=true)는 그 시간대 시작 버튼을 띄우려고 시간대를 싣는다 - push-sw-logic.js와 같은 규칙
+export const COMPANION_TEST_SLOTS = ['09:00', '12:00', '15:00', '18:00', '21:00'] as const;
+
+function getCompanionPromptPath(data: PushData) {
+  const slot = data?.slot;
+  const isTest = data?.test === 'true' && slot !== undefined && (COMPANION_TEST_SLOTS as readonly string[]).includes(slot);
+  return isTest ? `/ward/companion?testSlot=${encodeURIComponent(slot)}` : '/ward/companion';
+}
+
 export function getPushRoute(data: PushData, role?: 'WARD' | 'GUARDIAN' | null) {
   switch (data?.type) {
     case 'CONNECTION_REQUEST':
@@ -91,7 +100,7 @@ export function getPushRoute(data: PushData, role?: 'WARD' | 'GUARDIAN' | null) 
     case 'COMPANION_NOTICE':
       return '/guardian/emotion';
     case 'COMPANION_PROMPT':
-      return '/ward/companion';
+      return getCompanionPromptPath(data);
     default:
       return role === 'WARD' ? '/ward' : '/guardian';
   }

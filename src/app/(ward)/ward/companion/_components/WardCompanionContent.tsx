@@ -3,26 +3,59 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Icon } from '@/components/Icon';
 import { useVoiceInput } from '@/components/chatbot/useVoiceInput';
 import { canSpeak, speak, stopSpeaking } from '@/lib/audio/speech';
+import { useFaceFrames } from '@/lib/camera/useFaceFrames';
 import {
   finishWardCompanionSession,
   openWardCompanionSession,
+  openWardCompanionTestSession,
   replyWardCompanionAudio,
   replyWardCompanionText,
+  sendWardCompanionTestPrompt,
 } from '@/service/api/ward/companion';
 import type { CompanionSlotStatus } from '@/service/interface/guardian/companion';
-import type { IWardCompanionReply, IWardCompanionToday } from '@/service/interface/ward/companion';
+import type {
+  IWardCompanionFinish,
+  IWardCompanionReply,
+  IWardCompanionSession,
+  IWardCompanionToday,
+} from '@/service/interface/ward/companion';
 import { wardCompanionTodayQueryKey, wardCompanionTodayQueryOptions } from '@/service/query/ward';
-import { getCompanionError } from '@/utils/companion/companionError';
+import { formatResultAnalysis, formatTurnAnalysis } from '@/utils/companion/companionAnalysis';
+import { COMPANION_MESSAGES, getCompanionError, isCompanionFrameError } from '@/utils/companion/companionError';
 import { formatSlotTime } from '@/utils/format/slotTime';
 import styles from './WardCompanionContent.module.css';
 
 const cx = classNames.bind(styles);
 
 const MAX_ANSWER_LENGTH = 500;
+
+// 테스트 계정이 고를 수 있는 시간대 - 서버 시간대와 같다
+const TEST_SLOTS = ['09:00', '12:00', '15:00', '18:00', '21:00'];
+
+// 사진 합계를 audio와 더해 서버 상한(10MB) 아래로 둔다 - multipart 머리 몫을 남긴다
+const UPLOAD_BUDGET_BYTES = 9.5 * 1024 * 1024;
+
+export const CAMERA_CONSENT_TEXT = '대답하실 때 얼굴 사진도 함께 보낼게요. 표정은 기분을 살피는 데만 쓰고 저장하지 않아요.';
+export const CAMERA_UNAVAILABLE_TEXT = '카메라를 쓸 수 없어 목소리만 보낼게요.';
+
+// 처음 대답할 때 한 번 묻는다. 선택은 이 화면 메모리에만 둔다(다시 들어오면 다시 묻는다, 권한 창은 브라우저가 기억)
+type CameraChoice = 'ask' | 'on' | 'off';
+
+function fitUploadBudget(audio: Blob, frames: Blob[]) {
+  const kept: Blob[] = [];
+  let total = audio.size;
+  for (const frame of frames) {
+    if (total + frame.size > UPLOAD_BUDGET_BYTES) break;
+    kept.push(frame);
+    total += frame.size;
+  }
+  return kept;
+}
 
 const STATUS_LABEL: Record<CompanionSlotStatus, string> = {
   DONE: '마쳤어요',
@@ -34,10 +67,20 @@ const STATUS_LABEL: Record<CompanionSlotStatus, string> = {
 
 type Line = { id: number; who: 'companion' | 'me'; text: string; heard?: boolean };
 
-// 대답·말벗 응답은 이 화면 메모리에만 둔다 - 서버도 저장하지 않으니 localStorage·로그에 남기지 않는다
-type Talk = { sessionId: number; slot: string; maxTurns: number | null; resumed: boolean; turns: number; lines: Line[]; ended: boolean };
+// 대답·말벗 응답·테스트 판정 결과는 이 화면 메모리에만 둔다 - 서버도 저장하지 않으니 localStorage·로그에 남기지 않는다
+type Talk = {
+  sessionId: number;
+  slot: string;
+  maxTurns: number | null;
+  resumed: boolean;
+  turns: number;
+  lines: Line[];
+  ended: boolean;
+  test: boolean;
+  results: { id: number; text: string }[];
+};
 
-type Pending = 'open' | 'reply' | 'finish' | null;
+type Pending = 'open' | 'reply' | 'finish' | 'prompt' | null;
 
 export function WardCompanionContent() {
   const queryClient = useQueryClient();
@@ -52,8 +95,27 @@ export function WardCompanionContent() {
     talkRef.current = talk;
   }, [talk]);
 
+  const camera = useFaceFrames();
+  // 화면에 그리는 값이 아니라 녹음 시작·전송 때만 읽는다
+  const cameraChoiceRef = useRef<CameraChoice>('ask');
+  const [askCamera, setAskCamera] = useState(false);
+  const [cameraNotice, setCameraNotice] = useState<string | null>(null);
+  const sentFramesRef = useRef(0);
+  const chooseCamera = useCallback((choice: CameraChoice) => {
+    cameraChoiceRef.current = choice;
+  }, []);
+
+  // [테스트 계정만] 시간대 선택·테스트 안내 푸시로 들어온 시간대(?testSlot=15:00)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pushedTestSlot = searchParams?.get('testSlot') ?? null;
+  const [testSlot, setTestSlot] = useState(TEST_SLOTS[0]);
+  const [testNotice, setTestNotice] = useState<string | null>(null);
+
   // 대화하는 동안에는 현황을 다시 받을 일이 없다. 대화 밖에서는 시간대가 바뀌면 시작 버튼이 열리도록 1분마다 받는다
   const today = useQuery({ ...wardCompanionTodayQueryOptions, refetchInterval: talk ? false : 60_000 });
+  const testMode = today.data?.testMode === true;
+  const testEntrySlot = testMode && pushedTestSlot && TEST_SLOTS.includes(pushedTestSlot) ? pushedTestSlot : null;
 
   useEffect(() => stopSpeaking, []);
 
@@ -66,17 +128,19 @@ export function WardCompanionContent() {
   }, [lineCount, ended]);
 
   const nextLine = (who: Line['who'], text: string, heard?: boolean): Line => ({ id: ++lineId.current, who, text, heard });
+  const nextResult = (text: string) => ({ id: ++lineId.current, text });
 
   const refreshToday = useCallback(() => void queryClient.invalidateQueries({ queryKey: wardCompanionTodayQueryKey }), [queryClient]);
 
   // 이어갈 수 없는 대화는 닫고 오늘 현황을 다시 받는다
   const leaveTalk = useCallback((message: string) => {
     stopSpeaking();
+    camera.cancel();
     setTalk(null);
     setDraft('');
     setNotice(message);
     refreshToday();
-  }, [refreshToday]);
+  }, [refreshToday, camera]);
 
   const handleError = useCallback((error: unknown) => {
     const { message, action } = getCompanionError(error);
@@ -88,31 +152,93 @@ export function WardCompanionContent() {
     setNotice(message);
   }, [leaveTalk]);
 
+  // [테스트 계정만] 마친 대화의 판정을 결과 칸에 붙인다
+  const addFinishResult = useCallback((result: IWardCompanionFinish | null | undefined) => {
+    const analysis = result?.analysis;
+    if (!analysis) return;
+    setTalk(current => (current ? { ...current, results: [...current.results, nextResult(formatResultAnalysis(analysis))] } : current));
+  }, []);
+
   const applyReply = useCallback((result: IWardCompanionReply | null, answer: string, heard: boolean) => {
     if (!result) return;
+    setCameraNotice(null);
     setTalk(current => {
       if (!current) return current;
       const lines = [...current.lines, nextLine('me', answer, heard)];
       if (result.reply) lines.push(nextLine('companion', result.reply));
-      return { ...current, turns: result.turnNo, lines, ended: result.ended };
+      const results = result.analysis ? [...current.results, nextResult(formatTurnAnalysis(result.turnNo, result.analysis))] : current.results;
+      return { ...current, turns: result.turnNo, lines, ended: result.ended, results };
     });
     if (result.reply) speak(result.reply);
-    if (result.ended) refreshToday();
-  }, [refreshToday]);
+    if (result.ended) {
+      refreshToday();
+      // 서버가 대화를 닫았으면 마치기는 부르지 않아도 되지만, 테스트 계정은 저장된 결과를 다시 받아 대화 판정을 보여 준다
+      const current = talkRef.current;
+      if (result.analysis && current) {
+        void finishWardCompanionSession(current.sessionId).then(addFinishResult).catch(() => undefined);
+      }
+    }
+  }, [refreshToday, addFinishResult]);
 
   const voiceOptions = useMemo(() => ({
-    send: (audio: Blob, signal: AbortSignal) => {
+    send: async (audio: Blob, signal: AbortSignal) => {
       const current = talkRef.current;
-      if (!current) return Promise.reject(new Error('대화가 열려 있지 않다'));
-      return replyWardCompanionAudio(current.sessionId, audio, signal);
+      // 녹음이 끝나는 순간 카메라를 끄고 찍은 사진을 받는다
+      const frames = fitUploadBudget(audio, await camera.take());
+      sentFramesRef.current = frames.length;
+      if (!current) throw new Error('대화가 열려 있지 않다');
+      return replyWardCompanionAudio(current.sessionId, audio, signal, frames);
     },
-    onError: handleError,
-  }), [handleError]);
+    onError: (error: unknown) => {
+      // 사진 때문에 거절됐으면 이 화면에서는 사진을 끄고 목소리만 다시 보내게 한다
+      if (sentFramesRef.current > 0 && isCompanionFrameError(error)) {
+        chooseCamera('off');
+        setNotice(COMPANION_MESSAGES.frame);
+        return;
+      }
+      handleError(error);
+    },
+  }), [handleError, camera, chooseCamera]);
 
   const voice = useVoiceInput<IWardCompanionReply | null>(
     result => applyReply(result, result?.transcript?.trim() || '말로 대답했어요', Boolean(result?.transcript?.trim())),
     voiceOptions,
   );
+
+  // 녹음이 시작되면 카메라를 켜고(사진을 쓰기로 했을 때만), 녹음이 버려지면 바로 끈다
+  // 보낼 때는 send가 먼저 take()로 끈다. 권한 창은 마이크 다음에 뜬다(둘을 따로 물어 카메라를 거부해도 마이크는 그대로)
+  const prevVoiceState = useRef(voice.state);
+  useEffect(() => {
+    const prev = prevVoiceState.current;
+    prevVoiceState.current = voice.state;
+    if (voice.state === 'idle') {
+      camera.cancel();
+      return;
+    }
+    if (voice.state !== 'recording' || prev === 'recording' || cameraChoiceRef.current !== 'on') return;
+    void camera.open().then(result => {
+      if (result !== 'denied' && result !== 'unsupported') return;
+      chooseCamera('off');
+      setCameraNotice(CAMERA_UNAVAILABLE_TEXT);
+    });
+  }, [voice.state, camera, chooseCamera]);
+
+  const startTalk = (session: IWardCompanionSession, test: boolean) => {
+    setMode('voice');
+    setDraft('');
+    setTalk({
+      sessionId: session.sessionId,
+      slot: session.slot,
+      maxTurns: session.maxTurns,
+      resumed: session.resumed,
+      turns: 0,
+      lines: [nextLine('companion', session.question)],
+      ended: false,
+      test,
+      results: [],
+    });
+    speak(session.question);
+  };
 
   const handleOpen = async () => {
     if (pending) return;
@@ -121,22 +247,43 @@ export function WardCompanionContent() {
     try {
       const session = await openWardCompanionSession();
       if (!session) throw new Error('빈 응답');
-      setMode('voice');
-      setDraft('');
-      setTalk({
-        sessionId: session.sessionId,
-        slot: session.slot,
-        maxTurns: session.maxTurns,
-        resumed: session.resumed,
-        turns: 0,
-        lines: [nextLine('companion', session.question)],
-        ended: false,
-      });
-      speak(session.question);
+      startTalk(session, false);
     } catch (error) {
       const { message, action } = getCompanionError(error);
       setNotice(message);
       if (action === 'exit') refreshToday();
+    } finally {
+      setPending(null);
+    }
+  };
+
+  // [테스트 계정만] 고른 시간대의 고정 질문으로 시작한다. 테스트 푸시로 들어왔으면 주소의 시간대를 지운다
+  const handleOpenTest = async (slot: string) => {
+    if (pending) return;
+    setPending('open');
+    setTestNotice(null);
+    setNotice(null);
+    try {
+      const session = await openWardCompanionTestSession(slot);
+      if (!session) throw new Error('빈 응답');
+      if (pushedTestSlot) router.replace('/ward/companion');
+      startTalk(session, true);
+    } catch (error) {
+      setTestNotice(getCompanionError(error).message);
+    } finally {
+      setPending(null);
+    }
+  };
+
+  const handleSendTestPrompt = async () => {
+    if (pending) return;
+    setPending('prompt');
+    setTestNotice(null);
+    try {
+      await sendWardCompanionTestPrompt(testSlot);
+      setTestNotice(`${formatSlotTime(testSlot)} 안부 알림을 보냈어요. 잠시 뒤 알림이 와요.`);
+    } catch (error) {
+      setTestNotice(getCompanionError(error).message);
     } finally {
       setPending(null);
     }
@@ -166,21 +313,37 @@ export function WardCompanionContent() {
 
   const handleVoice = () => {
     if (pending) return;
+    // 처음 대답할 때 사진을 함께 보낼지 먼저 묻는다
+    if (voice.state === 'idle' && cameraChoiceRef.current === 'ask') {
+      stopSpeaking();
+      setAskCamera(true);
+      return;
+    }
     stopSpeaking();
     setNotice(null);
     voice.clearNotice();
     voice.toggle();
   };
 
+  // 안내 카드에서 고른 뒤 바로 녹음을 시작한다(누른 그 동작으로 마이크 권한을 묻는다)
+  const handleCameraChoice = (useCamera: boolean) => {
+    chooseCamera(useCamera ? 'on' : 'off');
+    setAskCamera(false);
+    handleVoice();
+  };
+
   const handleFinish = async () => {
     if (!talk || pending) return;
     voice.cancel();
+    camera.cancel();
+    setAskCamera(false);
     stopSpeaking();
     setPending('finish');
     setNotice(null);
     try {
-      await finishWardCompanionSession(talk.sessionId);
+      const result = await finishWardCompanionSession(talk.sessionId);
       setTalk(current => (current ? { ...current, ended: true } : current));
+      addFinishResult(result);
       refreshToday();
     } catch (error) {
       handleError(error);
@@ -191,6 +354,8 @@ export function WardCompanionContent() {
 
   const closeTalk = () => {
     stopSpeaking();
+    camera.cancel();
+    setAskCamera(false);
     setTalk(null);
     setNotice(null);
     refreshToday();
@@ -206,7 +371,10 @@ export function WardCompanionContent() {
       <div className={cx('page')}>
         <header className={cx('talkHead')}>
           <div>
-            <span className={cx('talkSlot')}>{formatSlotTime(talk.slot)} 안부 대화</span>
+            <span className={cx('talkSlot')}>
+              {formatSlotTime(talk.slot)} 안부 대화
+              {talk.test && <span className={cx('testBadge')}>테스트</span>}
+            </span>
             {talk.maxTurns !== null && !talk.ended && (
               <span className={cx('talkTurns')}>{talk.maxTurns}번 중 {Math.min(talk.turns + 1, talk.maxTurns)}번째 대답</span>
             )}
@@ -259,7 +427,15 @@ export function WardCompanionContent() {
         ) : (
           <section className={cx('answer')} aria-label="대답하기">
             {message && <p className={cx('notice', { recordingNotice: recording })} role={recording ? undefined : 'alert'}>{message}</p>}
-            {mode === 'voice' ? (
+            {cameraNotice && <p className={cx('notice')} role="alert">{cameraNotice}</p>}
+            {camera.stream && <CameraPreview stream={camera.stream} />}
+            {mode === 'voice' && askCamera ? (
+              <div className={cx('cameraAsk')} role="group" aria-labelledby="companion-camera-ask">
+                <p id="companion-camera-ask">{CAMERA_CONSENT_TEXT}</p>
+                <button className={cx('primaryButton')} type="button" onClick={() => handleCameraChoice(true)}>좋아요</button>
+                <button className={cx('switchButton')} type="button" onClick={() => handleCameraChoice(false)}>사진 없이 할게요</button>
+              </div>
+            ) : mode === 'voice' ? (
               <button
                 className={cx('micButton', { recording })}
                 type="button"
@@ -291,12 +467,13 @@ export function WardCompanionContent() {
               className={cx('switchButton')}
               type="button"
               disabled={busy || recording}
-              onClick={() => { setNotice(null); voice.clearNotice(); setMode(mode === 'voice' ? 'text' : 'voice'); }}
+              onClick={() => { setNotice(null); voice.clearNotice(); setAskCamera(false); setMode(mode === 'voice' ? 'text' : 'voice'); }}
             >
               {mode === 'voice' ? '글로 대답하기' : '말로 대답하기'}
             </button>
           </section>
         )}
+        {testMode && <TestResults results={talk.results} />}
         <div ref={bottomRef} />
       </div>
     );
@@ -304,8 +481,45 @@ export function WardCompanionContent() {
 
   return (
     <div className={cx('page')}>
+      {testEntrySlot && (
+        <section className={cx('testPanel', 'testEntry')} aria-labelledby="companion-test-entry-title">
+          <h2 id="companion-test-entry-title">
+            <span className={cx('testBadge')}>테스트용</span>
+            {formatSlotTime(testEntrySlot)} 안부 알림으로 오셨어요
+          </h2>
+          <button className={cx('startButton')} type="button" disabled={Boolean(pending)} onClick={() => void handleOpenTest(testEntrySlot)}>
+            <Icon name="messageCircle" size={34} decorative />
+            {pending === 'open' ? '여는 중…' : `${formatSlotTime(testEntrySlot)} 대화 시작`}
+          </button>
+        </section>
+      )}
       <TodayPanel today={today.data} isLoading={today.isLoading} isError={today.isError} notice={notice} opening={pending === 'open'} onOpen={() => void handleOpen()} onRetry={() => void today.refetch()} />
-      <p className={cx('privacy')}>대답한 말과 목소리는 저장하지 않아요.</p>
+      {testMode && (
+        <section className={cx('testPanel')} aria-labelledby="companion-test-title">
+          <h2 id="companion-test-title">
+            <span className={cx('testBadge')}>테스트용</span>
+            테스트
+          </h2>
+          <p>시간대를 고르고 바로 시작하거나, 그 시간대 안부 알림을 받아 볼 수 있어요.</p>
+          <div className={cx('testSlots')} role="group" aria-label="테스트 시간대">
+            {TEST_SLOTS.map(slot => (
+              <button key={slot} type="button" className={cx('testSlot', { selected: slot === testSlot })} aria-pressed={slot === testSlot} onClick={() => setTestSlot(slot)}>
+                {formatSlotTime(slot)}
+              </button>
+            ))}
+          </div>
+          <div className={cx('testActions')}>
+            <button className={cx('primaryButton')} type="button" disabled={Boolean(pending)} onClick={() => void handleOpenTest(testSlot)}>
+              {pending === 'open' ? '여는 중…' : '바로 시작'}
+            </button>
+            <button className={cx('primaryButton', 'secondary')} type="button" disabled={Boolean(pending)} onClick={() => void handleSendTestPrompt()}>
+              {pending === 'prompt' ? '보내는 중…' : '안부 알림 보내기'}
+            </button>
+          </div>
+          {testNotice && <p className={cx('notice')} role="status">{testNotice}</p>}
+        </section>
+      )}
+      <p className={cx('privacy')}>대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.</p>
     </div>
   );
 }
@@ -369,6 +583,45 @@ function TodayPanel({ today, isLoading, isError, notice, opening, onOpen, onRetr
         </ul>
       </section>
     </>
+  );
+}
+
+// 녹음하는 동안만 보이는 작은 얼굴 미리보기 - 카메라가 켜져 있다는 것을 본인이 알 수 있게
+function CameraPreview({ stream }: { stream: MediaStream }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.srcObject = stream;
+    void video.play?.()?.catch?.(() => undefined);
+    return () => {
+      video.srcObject = null;
+    };
+  }, [stream]);
+  return (
+    <figure className={cx('cameraPreview')}>
+      <video ref={videoRef} muted playsInline aria-label="내 얼굴 미리보기" />
+      <figcaption>카메라 켜짐</figcaption>
+    </figure>
+  );
+}
+
+// [테스트 계정만] 턴마다·마치기 뒤 판정 결과 - 화면 메모리에만
+function TestResults({ results }: { results: { id: number; text: string }[] }) {
+  return (
+    <section className={cx('testPanel')} aria-labelledby="companion-test-results-title">
+      <h2 id="companion-test-results-title">
+        <span className={cx('testBadge')}>테스트용</span>
+        테스트 결과
+      </h2>
+      {results.length === 0 ? (
+        <p>대답하면 판정 결과가 여기에 나와요.</p>
+      ) : (
+        <ol className={cx('testResultList')} aria-live="polite">
+          {results.map(item => <li key={item.id}>{item.text}</li>)}
+        </ol>
+      )}
+    </section>
   );
 }
 

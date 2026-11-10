@@ -1,7 +1,7 @@
 import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it } from 'vitest';
 
-import { COMPANION_MESSAGES, getCompanionError } from './companionError';
+import { COMPANION_MESSAGES, getCompanionError, isCompanionFrameError } from './companionError';
 
 function axiosError(status: number, code?: string, headers: Record<string, string> = {}) {
   return new AxiosError('x', 'ERR_BAD_RESPONSE', undefined, undefined, {
@@ -44,6 +44,18 @@ describe('안부 말벗 오류 안내', () => {
       '너무 자주 보냈어요. 12초 뒤에 다시 해 주세요.',
     );
     expect(getCompanionError(axiosError(429)).message).toBe('너무 자주 보냈어요. 잠시 후 다시 해 주세요.');
+  });
+
+  it('테스트 계정이 아니면(403 COMPANION_TEST_NOT_ALLOWED) 그대로 알린다', () => {
+    expect(getCompanionError(axiosError(403, 'COMPANION_TEST_NOT_ALLOWED'))).toEqual({ message: '테스트 계정만 쓸 수 있습니다.', action: 'stay' });
+  });
+
+  it('사진 때문에 거절된 오류를 가려낸다', () => {
+    expect(isCompanionFrameError(axiosError(400, 'COMPANION_FRAME_INVALID'))).toBe(true);
+    expect(isCompanionFrameError(axiosError(400, 'COMPANION_FRAME_TOO_LARGE'))).toBe(true);
+    expect(isCompanionFrameError(axiosError(413, 'COMPANION_UPLOAD_TOO_LARGE'))).toBe(true);
+    expect(isCompanionFrameError(axiosError(400, 'COMPANION_AUDIO_INVALID'))).toBe(false);
+    expect(getCompanionError(axiosError(400, 'COMPANION_FRAME_INVALID')).message).toBe(COMPANION_MESSAGES.frame);
   });
 
   it('알 수 없는 오류는 대화를 그대로 두고 다시 보내게 한다', () => {
