@@ -186,12 +186,12 @@ describe('피보호자 챗봇 예약', () => {
     expect(Number.parseFloat(getComputedStyle(seoul).fontSize)).toBeGreaterThanOrEqual(20);
   });
 
-  it('예약 중에는 입력창을 접고, [직접 써서 답하기]를 누르면 펼친다', async () => {
+  it('예약 중에도 입력은 큰 마이크 버튼 하나 - 입력창·[직접 써서 답하기]는 없다(2026-11-11)', async () => {
     await startWardReservation();
 
-    await expect.element(page.getByRole('textbox', { name: '궁금한 점 입력' })).not.toBeInTheDocument();
-    await userEvent.click(page.getByRole('button', { name: '직접 써서 답하기' }));
-    await expect.element(page.getByRole('textbox', { name: '궁금한 점 입력' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '말로 입력하기' })).toBeVisible();
+    expect(page.getByRole('textbox', { name: '궁금한 점 입력' }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: '직접 써서 답하기' }).elements()).toHaveLength(0);
   });
 
   it('선택지를 누르면 value 가 아니라 label 이 내 말풍선에 보인다', async () => {
@@ -269,7 +269,7 @@ describe('피보호자 챗봇 예약', () => {
     // 같은 답의 [예약 목록 보기] 선택지와 겹치지 않게 카드 버튼은 숨긴다
     await expect.element(page.getByRole('button', { name: '병원 가는 날 보기' })).not.toBeInTheDocument();
     await expect.element(page.getByRole('region', { name: '추천 질문' })).toBeVisible();
-    await expect.element(page.getByRole('textbox', { name: '궁금한 점 입력' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '말로 입력하기' })).toBeVisible();
 
     const calls = api.sendChatMessage.mock.calls.length;
     await userEvent.click(page.getByRole('button', { name: '예약 목록 보기' }));

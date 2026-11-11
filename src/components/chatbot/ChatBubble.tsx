@@ -223,7 +223,7 @@ function Line({ text }: { text: string }) {
   return <Emphasize text={stripLeadEmoji(text)} />;
 }
 
-/** 카드 - 아이콘 없이 글자 제목만. 구분은 배경색 + 왼쪽 색 띠(CSS)로 한다. */
+/** 카드 - 아이콘 없이 글자 제목만. 구분은 얇은 구분선 + 소제목(CSS)으로 한다. */
 function SectionCard({
   title,
   items,

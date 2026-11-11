@@ -608,12 +608,14 @@
   font-weight: 700;
 }
 
+/* contain: 줄바꿈 없는 긴 주소의 폭이 바깥(PageLayout)까지 올라가 휴대폰에서 화면 밖으로 밀던 것을 막는다(2026-11-11) */
 .hospitalText {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  contain: inline-size;
 }
 
 .hospitalName {
@@ -723,16 +725,23 @@
   font-weight: 800;
 }
 
+/* 휴진: 칸 전체를 회색으로 채우고 "휴진" 글자를 함께 둔다(색만으로 구분하지 않는다) */
 .day.closed {
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink-mute);
+  border-color: #666c69;
+  background: #666c69;
+  color: #fff;
   cursor: not-allowed;
 }
 
+.day.closed .weekday,
+.day.closed .dayNumber {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 .dayOff {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
 }
 
 .day.selected {
@@ -815,16 +824,28 @@
   font-weight: 800;
 }
 
-.confirmWhen {
-  margin-top: 10px;
+.confirmSummary {
+  margin-top: 12px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: var(--sb-bg-soft);
+}
+
+.confirmDate {
   color: var(--sb-ink);
-  font-size: 28px;
-  font-weight: 900;
+  font-size: 22px;
+  font-weight: 800;
   word-break: keep-all;
 }
 
+.confirmTime {
+  font-size: 30px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .confirmWhere {
-  margin-top: 6px;
+  margin-top: 8px;
   color: var(--sb-ink);
   font-size: 20px;
   font-weight: 800;
@@ -833,51 +854,65 @@
 
 .confirmAddress {
   margin-top: 4px;
-  color: var(--sb-ink-soft);
-  font-size: 17px;
+  color: var(--sb-ink-mute);
+  font-size: 14px;
   font-weight: 600;
   word-break: keep-all;
 }
 
-.confirmRows {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin: 20px 0 0;
-  padding-top: 20px;
-  border-top: 1px solid var(--sb-line-soft);
-}
-
-.confirmRow {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-}
-
-.confirmRow dt {
-  flex-shrink: 0;
-  width: 130px;
-  padding-top: 2px;
-  color: var(--sb-ink-soft);
-  font-size: 17px;
-  font-weight: 800;
-}
-
-.confirmValue {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.phoneValue {
+/* 진료받으실 분·연락처 한 줄(좁으면 바꾸기 버튼만 아래로) */
+.confirmWho {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 6px 10px;
+  margin-top: 18px;
+  color: var(--sb-ink);
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.confirmWhoPhone {
+  color: var(--sb-ink-soft);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.confirmWho .smallButton {
+  margin-left: auto;
+}
+
+.confirmPhoneField {
+  margin-top: 12px;
+}
+
+.symptomToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 18px;
+  padding: 0 4px;
+  border: 0;
+  border-top: 1px solid var(--sb-line-soft);
+  background: none;
+  color: var(--sb-ink);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.symptomToggleMark {
+  color: var(--sb-ink-mute);
+  font-size: 24px;
+  transition: transform 0.15s;
+}
+
+.symptomToggleMark.open {
+  transform: rotate(90deg);
 }
 
 .phoneField {
@@ -924,7 +959,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 22px;
 }
 
 .symptomTitle {
@@ -1003,24 +1037,26 @@
   background: var(--sb-bg-soft);
 }
 
-.doneWhen {
+.doneDate {
   color: var(--sb-ink);
-  font-size: 24px;
-  font-weight: 900;
-  word-break: keep-all;
-}
-
-.doneWhere {
-  margin-top: 6px;
-  color: var(--sb-ink-soft);
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 800;
   word-break: keep-all;
 }
 
-.doneNote {
-  color: var(--sb-ink-mute);
-  font-size: 15px;
+.doneTime {
+  margin-top: 2px;
+  font-size: 28px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.doneWhere {
+  margin-top: 10px;
+  color: var(--sb-ink-soft);
+  font-size: 19px;
+  font-weight: 800;
+  word-break: keep-all;
 }
 
 .doneButton {

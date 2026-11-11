@@ -201,52 +201,51 @@
   font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
+/* 결과 카드(2026-11-11 B안): 상자·왼쪽 색 띠 없이 얇은 구분선 + 굵은 소제목 + 점 목록.
+   카드가 여러 개 이어져도 문서처럼 읽히게 한다. 종류는 소제목 글자로 구분한다(색은 보조) */
 .card {
-  border-left: 4px solid transparent;
-  border-radius: 12px;
-  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sb-line-soft, #e6e9e7);
 }
 
 .cardTitle {
   margin: 0;
+  color: var(--sb-ink);
   font-size: calc(18px * var(--ward-font-scale, 1));
   font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
-.card_home {
-  background: #eef5ee;
-  border-left-color: #4f8a57;
+.card .lines li {
+  position: relative;
+  padding-left: 0.9em;
+}
+
+.card .lines li::before {
+  content: '';
+  position: absolute;
+  top: 0.72em;
+  left: 0.15em;
+  width: 0.3em;
+  height: 0.3em;
+  border-radius: 50%;
+  background: var(--sb-ink-mute);
 }
 
 .card_home .cardTitle {
   color: #2f5d36;
 }
 
-.card_hospital {
-  background: #eef2f8;
-  border-left-color: #4a6fa5;
-}
-
 .card_hospital .cardTitle {
   color: #2b4a75;
-}
-
-.card_ask {
-  background: var(--sb-bg-soft);
-  border-left-color: var(--sb-ink-soft);
 }
 
 .card_ask .cardTitle,
 .card_plain .cardTitle {
   color: var(--sb-ink-soft);
-}
-
-.card_plain {
-  background: var(--sb-bg);
-  border-left-color: var(--sb-line, #d5dad6);
 }
 
 /* 피보호자 챗봇: 아바타·시각 없이 행 폭의 86%까지 쓰는 26px 말풍선. */
