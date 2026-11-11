@@ -290,6 +290,25 @@ describe('보호자 AI 의료 챗봇', () => {
     expect(c.context).toEqual({ role: 'GUARDIAN', wardId: 'ward-1' });
   });
 
+  it('연결이 끝난 피보호자와 나눈 대화는 목록을 받으면 탭 저장소에서 지운다 (점검 L-3)', async () => {
+    const saved = JSON.stringify({ v: 1, savedAt: Date.now(), sessionId: 'old', messages: [{ id: 'm', role: 'user', content: 'x', timestamp: 't' }], sent: [] });
+    sessionStorage.setItem('careai_chat_conv:user-1:GUARDIAN:ward-9', saved);
+    sessionStorage.setItem('careai_chat_conv:user-1:GUARDIAN:self', saved);
+    await renderChat(<ChatbotContent />);
+    await expect.element(page.getByText(/김영희의 증상을 말씀해 주시면/)).toBeVisible();
+    await vi.waitFor(() => expect(sessionStorage.getItem('careai_chat_conv:user-1:GUARDIAN:ward-9')).toBeNull());
+    expect(sessionStorage.getItem('careai_chat_conv:user-1:GUARDIAN:self')).not.toBeNull();
+  });
+
+  it('피보호자 목록을 받는 동안·못 받았을 때는 지우지 않는다 (점검 L-3)', async () => {
+    api.wards.mockReturnValue([]);
+    api.wardsFailed.mockReturnValue(true);
+    sessionStorage.setItem('careai_chat_conv:user-1:GUARDIAN:ward-1', JSON.stringify({ v: 1 }));
+    await renderChat(<ChatbotContent />);
+    await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeDisabled();
+    expect(sessionStorage.getItem('careai_chat_conv:user-1:GUARDIAN:ward-1')).not.toBeNull();
+  });
+
   it('탭 저장소를 쓸 수 없어도(사생활 보호 모드) 지금처럼 상담된다 (2026-11-11)', async () => {
     const set = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('blocked', 'SecurityError');
@@ -515,6 +534,18 @@ describe('보호자 AI 의료 챗봇', () => {
 });
 
 describe('휴대폰 폭 375px - 상담 기록·새 대화 (2026-11-11)', () => {
+  it('보호자 헤더 부제는 글자 중간에서 잘리지 않고 2줄까지 줄바꿈한다 (점검 L-1)', async () => {
+    api.role.mockReturnValue('GUARDIAN');
+    await page.viewport(375, 800);
+    await renderChat(<ChatbotContent />);
+    const subtitle = page.getByText('증상 상담부터 병원 예약까지 도와드려요');
+    await expect.element(subtitle).toBeVisible();
+    const style = getComputedStyle(subtitle.element());
+    expect(style.whiteSpace).toBe('normal');
+    expect(style.webkitLineClamp).toBe('2');
+    expect(subtitle.element().scrollHeight).toBeLessThanOrEqual(subtitle.element().clientHeight + 1);
+  });
+
   it('보호자 상담 기록 목록·대화 보기가 화면 밖으로 넘치지 않는다', async () => {
     api.role.mockReturnValue('GUARDIAN');
     await page.viewport(375, 800);

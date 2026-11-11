@@ -6,6 +6,7 @@ import {
   clearConversations,
   conversationKey,
   loadConversation,
+  pruneWardConversations,
   removeConversation,
   saveConversation,
 } from './chatConversationStore';
@@ -107,5 +108,56 @@ describe('챗봇 대화 탭 저장소 (2026-11-11)', () => {
     clearConversations();
     expect(loadConversation(other)).toBeNull();
     expect(storage.getItem('careai_selected_ward_id')).toBe('ward-1');
+  });
+
+  it('용량이 넘치면 도구 데이터를 빼고 다시 저장하고, 그래도 안 되면 옛 저장본을 지운다 (점검 L-2)', () => {
+    const base = fakeStorage();
+    let limit = Infinity;
+    const limited: Storage = {
+      ...base,
+      get length() {
+        return base.length;
+      },
+      setItem: (k: string, v: string) => {
+        if (v.length > limit) throw new DOMException('full', 'QuotaExceededError');
+        base.setItem(k, v);
+      },
+    };
+    vi.stubGlobal('window', { sessionStorage: limited });
+    const big = { hospitals: 'x'.repeat(5000) };
+    saveConversation(key, { sessionId: 'abc', messages: [msg('old')], sent: [] });
+
+    limit = 2000;
+    saveConversation(key, {
+      sessionId: 'abc',
+      messages: [msg('a', { role: 'assistant', toolData: big }), msg('b')],
+      sent: [],
+    });
+    const lighter = loadConversation(key)!;
+    expect(lighter.messages.map(m => m.id)).toEqual(['a', 'b']);
+    expect(lighter.messages[0].toolData).toBeUndefined();
+
+    limit = 10;
+    saveConversation(key, { sessionId: 'abc', messages: [msg('c')], sent: [] });
+    expect(loadConversation(key)).toBeNull();
+  });
+
+  it('연결 목록에 없는 피보호자의 대화만 지우고 본인 상담·다른 사람·다른 역할은 남긴다 (점검 L-3)', () => {
+    const keepWard = conversationKey('GUARDIAN', 'guardian-1', 'ward-1');
+    const gone = conversationKey('GUARDIAN', 'guardian-1', 'ward-9');
+    const self = conversationKey('GUARDIAN', 'guardian-1');
+    const other = conversationKey('GUARDIAN', 'guardian-2', 'ward-9');
+    for (const k of [keepWard, gone, self, other])
+      saveConversation(k, { sessionId: 'abc', messages: [msg('a')], sent: [] });
+
+    pruneWardConversations('GUARDIAN', 'guardian-1', ['ward-1']);
+    expect(loadConversation(keepWard)).not.toBeNull();
+    expect(loadConversation(gone)).toBeNull();
+    expect(loadConversation(self)).not.toBeNull();
+    expect(loadConversation(other)).not.toBeNull();
+
+    pruneWardConversations('GUARDIAN', 'guardian-1', []);
+    expect(loadConversation(keepWard)).toBeNull();
+    expect(loadConversation(self)).not.toBeNull();
   });
 });

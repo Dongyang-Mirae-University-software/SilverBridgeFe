@@ -13,7 +13,13 @@ import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
-import { conversationKey, loadConversation, removeConversation, saveConversation } from '@/store/chatConversationStore';
+import {
+  conversationKey,
+  loadConversation,
+  pruneWardConversations,
+  removeConversation,
+  saveConversation,
+} from '@/store/chatConversationStore';
 import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
@@ -169,6 +175,12 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       ? conversationKey(isGuardian ? 'GUARDIAN' : 'WARD', accountId, isGuardian ? selectedWard?.partnerUserId : null)
       : null;
   const [conversationOwner, setConversationOwner] = useState<string | null>(null);
+  // 연결이 끝난 피보호자와 나눈 대화는 탭 저장소에서 지운다 - 목록을 제대로 받았을 때만(2026-11-11 점검 L-3)
+  const activeWardIds = isGuardian && !waitingWards ? activeWards.map(ward => ward.partnerUserId).join(',') : null;
+  useEffect(() => {
+    if (!accountId || activeWardIds === null) return;
+    pruneWardConversations('GUARDIAN', accountId, activeWardIds ? activeWardIds.split(',') : []);
+  }, [accountId, activeWardIds]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
