@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { cancelReservation, createReservation } from '@/service/api/guardian/reservation';
 import { guardianConnectionsQueryKey } from '@/service/query/guardian/connection';
@@ -210,25 +211,26 @@ export function GuardianHospitalContent() {
       {(activeWards.length > 1 || inFlow) && (
         <div className={cx('head')}>
           {activeWards.length > 1 ? (
-            <label className={cx('wardPicker')}>
+            // 다른 보호자 화면(대시보드·챗봇·복약)과 같은 피보호자 버튼. 예약 진행 중에는 고른 사람만 누를 수 없게 보인다.
+            <section className={cx('wardPicker')} aria-label="진료받으실 분">
               <span>진료받으실 분</span>
-              <select
-                className={cx('select')}
-                value={ward.partnerUserId}
+              <WardSelectorTabs
+                ariaLabel="진료받으실 분"
+                wards={(inFlow ? [ward] : activeWards).map(item => ({
+                  wardId: item.partnerUserId,
+                  wardName: item.partnerName,
+                  profileImage: item.partnerProfileImage,
+                  relation: item.relation,
+                }))}
+                selectedWardId={ward.partnerUserId}
                 disabled={inFlow}
-                onChange={event => {
-                  setSelectedWardId(event.target.value);
+                onSelect={wardId => {
+                  setSelectedWardId(wardId);
                   setPastPage(0);
                   setListNotice(null);
                 }}
-              >
-                {activeWards.map(item => (
-                  <option key={item.partnerUserId} value={item.partnerUserId}>
-                    {item.partnerName}
-                  </option>
-                ))}
-              </select>
-            </label>
+              />
+            </section>
           ) : (
             <span />
           )}

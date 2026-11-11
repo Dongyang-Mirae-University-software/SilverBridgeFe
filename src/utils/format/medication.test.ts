@@ -152,19 +152,24 @@ describe('카드 맨 위 한 문장 - "N번 중"이 아니라 시간대로 (2026
     expect(head([at('MORNING', '08:00:00', true), at('LUNCH', '12:00:00')], '09:00')).toEqual({
       text: '아침 약을 다 드셨어요',
       tone: 'done',
-      sub: null,
     });
   });
 
-  it('지난 마지막 시간대가 남았으면 "아직 체크되지 않았어요"(단정하지 않는다), 앞 시간대가 남았으면 아래 줄로', () => {
+  it('체크되지 않은 시간대는 시간 순으로 묶어 한 문장으로(2026-11-11, 두 줄 → 한 줄), 단정하지 않는다', () => {
+    // 아침·점심 둘 다 남음 → 한 문장
+    expect(head([at('MORNING', '08:00:00'), at('LUNCH', '12:00:00')], '13:00')).toEqual({
+      text: '아침·점심 약이 아직 체크되지 않았어요',
+      tone: 'miss',
+    });
+    // 점심은 드셨고 아침만 남음 → 남은 것을 알린다
     expect(head([at('MORNING', '08:00:00'), at('LUNCH', '12:00:00', true)], '13:00')).toEqual({
-      text: '점심 약을 다 드셨어요',
-      tone: 'done',
-      sub: '아침 약도 아직 체크되지 않았어요',
+      text: '아침 약이 아직 체크되지 않았어요',
+      tone: 'miss',
     });
     const h = head([at('MORNING', '08:00:00', true), at('LUNCH', '12:00:00')], '13:00')!;
     expect(h.text).toBe('점심 약이 아직 체크되지 않았어요');
     expect(h.text).not.toContain('안 드셨');
+    expect(h.text).not.toContain('약도');
   });
 
   it('하루 약을 모두 드셨으면 "오늘 약을 모두 드셨어요", 아직 시간 전이면 첫 시간대 안내, 셀 약이 없으면 null', () => {

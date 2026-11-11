@@ -112,25 +112,20 @@
   gap: 10px;
 }
 
+/* 진료받으실 분: 다른 보호자 화면과 같은 피보호자 버튼(WardSelectorTabs). 사람이 많으면 버튼 줄만 가로로 넘긴다 */
 .wardPicker {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
   color: var(--sb-ink-soft);
   font-size: 14px;
   font-weight: 700;
 }
 
-.select {
-  min-height: 42px;
-  padding: 0 12px;
-  border: 1px solid var(--sb-line);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--sb-ink);
-  font: inherit;
-  font-size: 15px;
-  font-weight: 700;
+.wardPicker > span {
+  flex: 0 0 auto;
 }
 
 /* 진행 막대 */
@@ -728,7 +723,7 @@
   font-weight: 800;
 }
 
-/* 휴진: 칸 전체를 회색으로 채우고 "휴진" 글자를 함께 둔다(색만으로 구분하지 않는다) */
+/* 휴진: 칸 전체를 회색으로 채우고 요일·날짜 없이 "휴진"만 둔다(색만으로 구분하지 않는다) */
 .day.closed {
   border-color: #666c69;
   background: #666c69;
@@ -736,13 +731,8 @@
   cursor: not-allowed;
 }
 
-.day.closed .weekday,
-.day.closed .dayNumber {
-  color: rgba(255, 255, 255, 0.8);
-}
-
 .dayOff {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 800;
   color: #fff;
 }

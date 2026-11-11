@@ -246,7 +246,6 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
           {headline && (
             <p className={cx('headline')}>
               <strong className={cx('todayCount', headline.tone)}>{headline.text}</strong>
-              {headline.sub && <span className={cx('todayMiss')}>{headline.sub}</span>}
             </p>
           )}
 
