@@ -2,6 +2,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import type { ChatLayout, ChatMessage } from '@/service/interface/chat';
 import ChatToolCard from './ChatToolCard';
 import ChatUiPrompt from './ChatUiPrompt';
+import { emergencyWarnings, isUrgentAnswer } from './chatUrgency';
 import { breakSentences } from './breakSentences';
 import { stripLeadEmoji } from './stripLeadEmoji';
 import styles from './ChatBubble.module.css';
@@ -35,11 +36,9 @@ export default function ChatBubble({
   const isUser = message.role === 'user';
   const isWardChat = variant === 'ward';
   const layout = normalizeLayout(message.layout);
-  const warnings = strings(message.emergencyWarning);
-  // 응급·위기 답: 핵심 줄을 빨간 경고 상자에 넣는다. 경고가 있거나, 위험도 high(자해 고정 응답은 경고 없이 high 만 온다),
-  // 또는 AI layout.urgent === true(위기 뒤 해제 턴은 경고·high 가 없다 - 2026-11-09 점검 M-1).
-  // 문구·이모지(🚨)는 보지 않고 칸이 있는지만 본다.
-  const urgent = warnings.length > 0 || message.riskLevel === 'high' || isUrgentLayout(message.layout);
+  const warnings = emergencyWarnings(message);
+  // 응급·위기 답: 핵심 줄을 빨간 경고 상자에 넣는다(판정 규칙은 chatUrgency - 피보호자 119 패널과 같다).
+  const urgent = isUrgentAnswer(message);
   const urgentHeadline = urgent && layout?.headline ? layout.headline : null;
   const singleQuestion = layout && layout.questions.length === 1 ? layout.questions[0] : null;
   // 피보호자 화면만 본문 문장을 문장마다 줄을 바꿔 보여 준다(표시용 - 원문은 그대로). 카드·응급 상자·선택지는 제외.
@@ -169,11 +168,6 @@ interface NormalizedLayout {
   questions: string[];
   homeCare: string[];
   visitHospitalIf: string[];
-}
-
-/** AI 응급·위기 표시 칸 - 불리언 true 만 인정한다(문자열 "true"·숫자 1 은 무시). */
-function isUrgentLayout(layout: ChatLayout | null | undefined): boolean {
-  return !!layout && typeof layout === 'object' && !Array.isArray(layout) && layout.urgent === true;
 }
 
 /** 문자열만 남긴 목록(빈 칸·이상한 값은 그리지 않는다). */

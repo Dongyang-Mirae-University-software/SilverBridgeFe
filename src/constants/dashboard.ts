@@ -2,7 +2,8 @@ import { NavItem } from '@/components/layout/dashboard/types';
 
 export const WARD_NAV: NavItem[] = [
   { href: '/ward', icon: 'dashboard', label: '홈', key: 'home' },
-  { href: '/ward/companion', icon: 'heart', label: '안부 말벗', key: 'companion' },
+  // 안부 말벗은 고정 메뉴에 두지 않는다 - 피보호자는 대화 시간에 홈 카드·알림으로만 들어간다(2026-11-11 사용자 결정).
+  // 테스트 계정만 WardLayout이 아래 WARD_COMPANION_NAV를 '홈' 다음에 끼운다.
   // { href: '/ward/sos', icon: 'phone', label: '긴급 전화', key: 'sos' },
   { href: '/ward/guardians', icon: 'users', label: '내 가족', key: 'guardians' },
   // 치매 예방 게임: 아직 미공개. 사이드바에서만 숨김(/ward/game 직접 접근은 가능)
@@ -10,6 +11,14 @@ export const WARD_NAV: NavItem[] = [
   { href: '/ward/notices', icon: 'bell', label: '공지사항', key: 'notices' },
   { href: '/ward/settings', icon: 'settings', label: '환경설정', key: 'settings' },
 ];
+
+/** [테스트 계정만] 사이드바의 안부 말벗 메뉴 */
+export const WARD_COMPANION_NAV: NavItem = { href: '/ward/companion', icon: 'heart', label: '안부 말벗', key: 'companion' };
+
+/** 피보호자 사이드바 - 테스트 계정이면 '홈' 다음에 안부 말벗을 끼운다. */
+export function wardNavItems(companionTestMode: boolean): NavItem[] {
+  return companionTestMode ? [WARD_NAV[0], WARD_COMPANION_NAV, ...WARD_NAV.slice(1)] : WARD_NAV;
+}
 
 export const GUARDIAN_NAV: NavItem[] = [
   { href: '/guardian', icon: 'dashboard', label: '대시보드', key: 'dashboard' },

@@ -9,6 +9,61 @@
   gap: 18px;
 }
 
+/* 안부 대화 시간에만: 맨 위 한 줄 카드 + 아래 기능 카드 3×2 */
+.homeGrid.withCompanion {
+  grid-template-rows: auto repeat(2, minmax(0, 1fr));
+}
+
+.companionCard {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 20px;
+  min-height: 96px;
+  border: 3px solid var(--sb-brand);
+  border-radius: 24px;
+  background: var(--sb-brand-50);
+  color: var(--sb-ink);
+  padding: 16px 24px;
+  text-decoration: none;
+}
+
+.companionCard:focus-visible {
+  outline: 4px solid var(--sb-ink);
+  outline-offset: 3px;
+}
+
+.companionIcon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 18px;
+  background: #fff;
+  color: var(--sb-brand);
+}
+
+.companionCard strong {
+  flex: 1;
+  min-width: 0;
+  font-size: calc(28px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  line-height: 1.25;
+  word-break: keep-all;
+}
+
+.companionButton {
+  flex: 0 0 auto;
+  border-radius: 16px;
+  background: var(--sb-brand);
+  color: #fff;
+  font-size: calc(26px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  line-height: 1.2;
+  padding: 16px 24px;
+}
+
 /* 넓은 화면: 위(헤더 아래 여백 10px + 위 패딩 28px)와 아래 여백을 같게 맞춘다. */
 @media (min-width: 901px) {
   .homeGrid.homeGrid {
@@ -104,8 +159,33 @@
     grid-template-rows: none;
   }
 
+  .homeGrid.withCompanion {
+    grid-template-rows: none;
+  }
+
   .actionCard {
     min-height: 0;
     aspect-ratio: 1.8 / 1;
+  }
+
+  /* 휴대폰: 버튼을 글 아래로 내리고 폭을 채운다 */
+  .companionCard {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .companionIcon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .companionCard strong {
+    font-size: calc(24px * var(--ward-font-scale, 1));
+  }
+
+  .companionButton {
+    flex: 1 1 100%;
+    text-align: center;
   }
 }

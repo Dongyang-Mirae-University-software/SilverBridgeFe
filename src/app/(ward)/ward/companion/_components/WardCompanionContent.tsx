@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Icon } from '@/components/Icon';
@@ -17,7 +18,6 @@ import {
   replyWardCompanionText,
   sendWardCompanionTestPrompt,
 } from '@/service/api/ward/companion';
-import type { CompanionSlotStatus } from '@/service/interface/guardian/companion';
 import type {
   IWardCompanionFinish,
   IWardCompanionReply,
@@ -56,14 +56,6 @@ function fitUploadBudget(audio: Blob, frames: Blob[]) {
   }
   return kept;
 }
-
-const STATUS_LABEL: Record<CompanionSlotStatus, string> = {
-  DONE: '마쳤어요',
-  AVAILABLE: '지금',
-  IN_PROGRESS: '이야기 중',
-  MISSED: '지나갔어요',
-  UPCOMING: '예정',
-};
 
 type Line = { id: number; who: 'companion' | 'me'; text: string; heard?: boolean };
 
@@ -116,6 +108,12 @@ export function WardCompanionContent() {
   const today = useQuery({ ...wardCompanionTodayQueryOptions, refetchInterval: talk ? false : 60_000 });
   const testMode = today.data?.testMode === true;
   const testEntrySlot = testMode && pushedTestSlot && TEST_SLOTS.includes(pushedTestSlot) ? pushedTestSlot : null;
+  // 피보호자는 말벗 시간표를 알 필요가 없다 - 대화 시간 밖에 들어오면 안내 없이 홈으로(2026-11-11 사용자 결정).
+  // 대화 중(마친 화면 포함)·테스트 계정·불러오는 중·오류·남길 안내(대화가 끊긴 이유)가 있을 때는 머문다.
+  const outsideTalkTime = !talk && !notice && today.data != null && !testMode && !today.data.currentSlot;
+  useEffect(() => {
+    if (outsideTalkTime) router.replace('/ward');
+  }, [outsideTalkTime, router]);
 
   useEffect(() => stopSpeaking, []);
 
@@ -421,8 +419,8 @@ export function WardCompanionContent() {
         {talk.ended ? (
           <section className={cx('endCard')} aria-labelledby="companion-end-title">
             <h2 id="companion-end-title">오늘도 이야기 나눠 주셔서 고마워요</h2>
-            <NextSlotText today={today.data} />
-            <button className={cx('primaryButton')} type="button" onClick={closeTalk}>처음 화면으로</button>
+            <p>시간이 되면 또 알려 드릴게요.</p>
+            <button className={cx('primaryButton')} type="button" onClick={closeTalk}>{testMode ? '처음 화면으로' : '홈으로'}</button>
           </section>
         ) : (
           <section className={cx('answer')} aria-label="대답하기">
@@ -543,46 +541,32 @@ function TodayPanel({ today, isLoading, isError, notice, opening, onOpen, onRetr
     );
   }
 
-  const current = today.currentSlot ? today.slots.find(slot => slot.slot === today.currentSlot) : undefined;
+  // 대화 시간 밖: 일반 피보호자는 홈으로 돌아간다(위 outsideTalkTime). 대화가 끊긴 안내만 남기고 시간표·다음 시간은 보이지 않는다.
+  if (!today.currentSlot) {
+    if (!notice) return null;
+    return (
+      <section className={cx('hero')} aria-label="안부 대화 안내">
+        <p className={cx('notice')} role="alert">{notice}</p>
+        <Link className={cx('primaryButton')} href="/ward">홈으로</Link>
+      </section>
+    );
+  }
+
+  const current = today.slots.find(slot => slot.slot === today.currentSlot);
   const inProgress = current?.status === 'IN_PROGRESS';
 
   return (
-    <>
-      <section className={cx('hero', { open: Boolean(today.currentSlot) })} aria-labelledby="companion-hero-title">
-        {today.currentSlot ? (
-          <>
-            <h2 id="companion-hero-title">
-              {inProgress ? '이야기하던 안부 대화가 있어요' : `${formatSlotTime(today.currentSlot)} 안부 인사 시간이에요`}
-            </h2>
-            <p>{inProgress ? '이어서 이야기해 주세요.' : '말벗에게 오늘 이야기를 들려주세요.'}</p>
-            <button className={cx('startButton')} type="button" disabled={opening} onClick={onOpen}>
-              <Icon name="messageCircle" size={34} decorative />
-              {opening ? '여는 중…' : inProgress ? '이어서 이야기하기' : '이야기 시작하기'}
-            </button>
-          </>
-        ) : (
-          <>
-            <h2 id="companion-hero-title">
-              {today.slots.some(slot => slot.status === 'UPCOMING') ? '지금은 안부 대화 시간이 아니에요' : '오늘 안부 대화는 모두 끝났어요'}
-            </h2>
-            <NextSlotText today={today} />
-          </>
-        )}
-        {notice && <p className={cx('notice')} role="alert">{notice}</p>}
-      </section>
-
-      <section className={cx('slots')} aria-labelledby="companion-slots-title">
-        <h2 id="companion-slots-title" className={cx('slotsTitle')}>오늘 안부 시간</h2>
-        <ul>
-          {today.slots.map(slot => (
-            <li key={slot.slot} className={cx('slot', slot.status.toLowerCase())}>
-              <strong>{formatSlotTime(slot.slot)}</strong>
-              <span>{STATUS_LABEL[slot.status]}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </>
+    <section className={cx('hero', 'open')} aria-labelledby="companion-hero-title">
+      <h2 id="companion-hero-title">
+        {inProgress ? '이야기하던 안부 대화가 있어요' : `${formatSlotTime(today.currentSlot)} 안부 인사 시간이에요`}
+      </h2>
+      <p>{inProgress ? '이어서 이야기해 주세요.' : '말벗에게 오늘 이야기를 들려주세요.'}</p>
+      <button className={cx('startButton')} type="button" disabled={opening} onClick={onOpen}>
+        <Icon name="messageCircle" size={34} decorative />
+        {opening ? '여는 중…' : inProgress ? '이어서 이야기하기' : '이야기 시작하기'}
+      </button>
+      {notice && <p className={cx('notice')} role="alert">{notice}</p>}
+    </section>
   );
 }
 
@@ -623,14 +607,6 @@ function TestResults({ results }: { results: { id: number; text: string }[] }) {
       )}
     </section>
   );
-}
-
-// 다음에 열리는 시간대 - 없으면 내일 첫 시간대
-function NextSlotText({ today }: { today: IWardCompanionToday | null | undefined }) {
-  if (!today || today.slots.length === 0) return null;
-  const next = today.slots.find(slot => slot.status === 'UPCOMING');
-  if (next) return <p>다음 안부는 {formatSlotTime(next.slot)}예요. 시간이 되면 알려 드릴게요.</p>;
-  return <p>내일 {formatSlotTime(today.slots[0].slot)}에 다시 만나요.</p>;
 }
 
 function SpeakerIcon() {
