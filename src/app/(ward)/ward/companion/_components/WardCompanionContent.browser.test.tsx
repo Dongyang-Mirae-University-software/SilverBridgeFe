@@ -1,5 +1,6 @@
 // 피보호자 안부 말벗 - 오늘 현황 → 대화 열기 → 글·말로 대답 → 마치기. 실제 Chrome에서 돈다
 // 마이크 대신 Web Audio 발진기 스트림을 getUserMedia 결과로 넘겨 녹음·WAV 업로드 흐름을 그대로 탄다
+import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -33,6 +34,14 @@ vi.mock('@/service/api/ward/companion', () => ({
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(nav.search),
   useRouter: () => ({ replace: nav.replace }),
+}));
+vi.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ href, children, ...rest }: { href: string; children: ReactNode }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
 }));
 vi.mock('@/lib/audio/speech', () => ({ canSpeak: () => true, speak: api.speak, stopSpeaking: vi.fn() }));
 
@@ -149,23 +158,43 @@ afterEach(async () => {
 });
 
 describe('오늘 현황 (Chrome)', () => {
-  it('열 수 있는 시간대가 없으면 시작 버튼 없이 다음 시간대를 알려 준다', async () => {
-    api.today.mockResolvedValue(today(null, ['DONE', 'MISSED', 'UPCOMING', 'UPCOMING', 'UPCOMING']));
+  // 피보호자는 시간표를 알 필요가 없다 - 대화 시간 밖이면 안내·시간표 없이 홈으로(2026-11-11)
+  it.each([
+    ['다음 시간대가 남았을 때', ['DONE', 'MISSED', 'UPCOMING', 'UPCOMING', 'UPCOMING'] as const],
+    ['오늘 시간대가 모두 지났을 때', ['DONE', 'DONE', 'MISSED', 'DONE', 'DONE'] as const],
+  ])('열 수 있는 시간대가 없으면(%s) 시간표·안내 없이 홈으로 보낸다', async (_label, statuses) => {
+    api.today.mockResolvedValue(today(null, [...statuses]));
     await renderCompanion();
 
-    await expect.element(page.getByRole('heading', { name: '지금은 안부 대화 시간이 아니에요' })).toBeVisible();
-    await expect.element(page.getByText('다음 안부는 오후 3시예요.', { exact: false })).toBeVisible();
+    await vi.waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/ward'));
+    expect(document.querySelector('[aria-labelledby="companion-slots-title"]')).toBeNull();
+    expect(page.getByText('지금은 안부 대화 시간이 아니에요').elements()).toHaveLength(0);
+    expect(page.getByText('다음 안부는', { exact: false }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: '이야기 시작하기' }).elements()).toHaveLength(0);
-    const slots = [...document.querySelectorAll('[aria-labelledby="companion-slots-title"] li')].map(li => li.textContent);
-    expect(slots).toEqual(['오전 9시마쳤어요', '낮 12시지나갔어요', '오후 3시예정', '오후 6시예정', '오후 9시예정']);
   });
 
-  it('오늘 시간대가 모두 지나면 내일 첫 시간대를 알려 준다', async () => {
-    api.today.mockResolvedValue(today(null, ['DONE', 'DONE', 'MISSED', 'DONE', 'DONE']));
+  it('열 수 있는 시간대가 있으면 머물고, 시간표는 보이지 않는다', async () => {
     await renderCompanion();
 
-    await expect.element(page.getByRole('heading', { name: '오늘 안부 대화는 모두 끝났어요' })).toBeVisible();
-    await expect.element(page.getByText('내일 오전 9시에 다시 만나요.')).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: '낮 12시 안부 인사 시간이에요' })).toBeVisible();
+    expect(document.querySelector('[aria-labelledby="companion-slots-title"]')).toBeNull();
+    expect(nav.replace).not.toHaveBeenCalledWith('/ward');
+  });
+
+  it('테스트 계정은 대화 시간 밖이어도 홈으로 보내지 않는다(테스트 패널 유지)', async () => {
+    api.today.mockResolvedValue({ ...today(null, ['DONE', 'MISSED', 'UPCOMING', 'UPCOMING', 'UPCOMING']), testMode: true });
+    await renderCompanion();
+
+    await expect.element(page.getByRole('button', { name: '바로 시작' })).toBeVisible();
+    expect(nav.replace).not.toHaveBeenCalledWith('/ward');
+  });
+
+  it('오늘 현황을 불러오지 못하면 홈으로 보내지 않고 다시 불러오기를 보인다', async () => {
+    api.today.mockRejectedValue(apiError(503, 'SERVICE_UNAVAILABLE'));
+    await renderCompanion();
+
+    await expect.element(page.getByRole('button', { name: '다시 불러오기' })).toBeVisible();
+    expect(nav.replace).not.toHaveBeenCalledWith('/ward');
   });
 
   it('하던 대화가 있으면 이어서 이야기하기로 연다', async () => {
@@ -245,8 +274,22 @@ describe('대화 (Chrome)', () => {
 
     await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
     expect(api.finish).toHaveBeenCalledWith(42);
-    await page.getByRole('button', { name: '처음 화면으로' }).click();
+    expect(page.getByText('다음 안부는', { exact: false }).elements()).toHaveLength(0);
+    await page.getByRole('button', { name: '홈으로' }).click();
     await expect.element(page.getByRole('heading', { name: '낮 12시 안부 인사 시간이에요' })).toBeVisible();
+  });
+
+  it('대화를 마친 뒤 시간대가 닫혀 있으면 [홈으로]가 홈으로 보낸다', async () => {
+    api.finish.mockResolvedValue({ sessionId: 42, slot: '12:00', endReason: 'USER_STOP', mood: null, turnCount: 0 });
+    await openTalk();
+    await page.getByRole('button', { name: '그만하기' }).click();
+    await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
+    // 마친 화면을 보는 동안에는 시간대가 닫혀도 머문다
+    api.today.mockResolvedValue(today(null, ['DONE', 'DONE', 'UPCOMING', 'UPCOMING', 'UPCOMING']));
+    expect(nav.replace).not.toHaveBeenCalledWith('/ward');
+
+    await page.getByRole('button', { name: '홈으로' }).click();
+    await vi.waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/ward'));
   });
 
   it('대화가 끊기면(409 COMPANION_SESSION_LOST) 대화를 닫고 오늘 현황으로 돌아간다', async () => {

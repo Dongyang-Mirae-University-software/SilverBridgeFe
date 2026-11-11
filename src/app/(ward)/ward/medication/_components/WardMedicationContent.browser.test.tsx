@@ -81,6 +81,18 @@ describe('WardMedicationContent (Chrome)', () => {
     document.body.innerHTML = '';
   });
 
+  it('긴 약 이름은 끝의 용량 표기를 빼고 보여 주고, 짧은 이름은 그대로 둔다(원래 이름은 title)', async () => {
+    const long = medication('신일이부프로펜정 400mg', '08:00:00', 'MORNING');
+    const short = medication('게보린300mg', '08:00:00', 'MORNING');
+    api.getTodayMedication.mockResolvedValue(today([long, short]));
+    const screen = await renderContent();
+
+    await expect.element(screen.getByText('신일이부프로펜정', { exact: true })).toBeVisible();
+    expect(screen.getByText('신일이부프로펜정 400mg').query()).toBeNull();
+    expect(screen.getByText('신일이부프로펜정', { exact: true }).element().getAttribute('title')).toBe('신일이부프로펜정 400mg');
+    await expect.element(screen.getByText('게보린300mg', { exact: true })).toBeVisible();
+  });
+
   it('현재 시간대 약을 크게 보여 주고, 해당 시간대의 약을 함께 체크한 뒤 그 시간대에 머문다', async () => {
     const dinner = medication('수면제', '19:00:00', 'DINNER');
     const morning = medication('혈압약', '08:00:00', 'MORNING');

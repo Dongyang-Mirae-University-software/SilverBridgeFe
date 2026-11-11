@@ -25,6 +25,7 @@ import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 import ChatBubble from './ChatBubble';
 import ChatHistoryDialog from './ChatHistoryDialog';
 import ChatUiPrompt from './ChatUiPrompt';
+import { isUrgentAnswer } from './chatUrgency';
 import VoiceInputButton from './VoiceInputButton';
 import { useVoiceInput } from './useVoiceInput';
 import { isReservationStep, isShowList, selectionText } from './reservationFlow';
@@ -125,11 +126,13 @@ function guardianPrompts({ items: suggested, answer }: Suggestions, sent: Readon
 /**
  * 피보호자: 답에 딸린 칩(되묻기 답 칩·이어질 질문)이 있으면 그것만 - 상관없는 기본 증상으로 채우지 않는다(2026-11-02).
  * 없으면 기본 문장. 이미 보낸 문장은 빼므로 칸 수가 줄 수 있다(되묻기 답 칩은 빼지 않는다).
+ * 기본 문장까지 다 보냈으면 기본 문장을 처음부터 다시 보인다 - 패널이 빈 채로 남지 않게(2026-11-11 사용자 결정).
  */
 function wardPrompts({ items: suggested, answer }: Suggestions, sent: ReadonlySet<string>) {
   const related = suggested.filter(text => answer || !sent.has(text)).map(text => ({ text, suggested: true }));
   if (related.length > 0) return related;
-  return WARD_PROMPTS.filter(text => !sent.has(text)).map(text => ({ text, suggested: false }));
+  const unsent = WARD_PROMPTS.filter(text => !sent.has(text));
+  return (unsent.length > 0 ? unsent : WARD_PROMPTS).map(text => ({ text, suggested: false }));
 }
 
 const COMPOSER_MAX_LINES = 2;
@@ -311,6 +314,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   // 피보호자는 받아쓴 글을 바로 보낸다 - 녹음·변환 중에 칩·선택지를 누르면 두 질문이 나가거나(칩 → 받아쓴 글)
   // 답을 기다리는 사이 받아쓴 글이 버려진다. 그동안은 칩·예약 선택지를 잠근다(2026-11-11 기능 점검 F-1)
   const wardVoiceBusy = isWardChat && voice.state !== 'idle';
+  // 피보호자: 마지막 답(실패 안내 제외)이 응급·위기면 빠른 질문 대신 큰 119 버튼을 둔다. 다음 답이 응급이 아니면 돌아온다.
+  // 판정은 말풍선 긴급 상자와 같다(chatUrgency - 문구·이모지는 보지 않는다). 예약 진행 패널이 먼저다.
+  const wardUrgent = isWardChat && !reserving && !!stepSource && isUrgentAnswer(stepSource);
   const suggested = latestSuggestions(messages);
   const quickTitle = wardsUnavailable
     ? '피보호자 정보를 불러오지 못했어요'
@@ -675,29 +681,34 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
             {reserving ? (
               reservationPanel('ward')
+            ) : wardUrgent ? (
+              <section className={`${styles.wardQuickPanel} ${styles.wardEmergencyPanel}`} aria-label="119 전화">
+                <p className={styles.wardEmergencyTitle}>지금 바로 119에 전화하세요</p>
+                <a className={styles.wardEmergencyCall} href="tel:119">
+                  <Icon name="phone" size={40} decorative />
+                  119에 전화하기
+                </a>
+                <p className={styles.wardEmergencyHint}>전화가 어려우면 가까운 사람에게 도움을 청하세요.</p>
+              </section>
             ) : (
               <section className={styles.wardQuickPanel} aria-label="추천 질문">
                 <p className={styles.wardQuickTitle}>{quickTitle}</p>
-                {wardQuickPrompts.length === 0 ? (
-                  <p className={styles.wardQuickEmpty}>마이크를 누르고 궁금한 점을 말씀해 주세요</p>
-                ) : (
-                  <div className={styles.wardQuickGrid}>
-                    {wardQuickPrompts.map(prompt => (
-                      <button
-                        key={prompt.text}
-                        type="button"
-                        className={styles.wardQuickButton}
-                        disabled={sending || wardVoiceBusy}
-                        onClick={() => void send(prompt.text)}
-                      >
-                        <span className={styles.wardQuickIcon} aria-hidden="true">
-                          <Icon name={prompt.suggested ? 'message' : 'alert'} size={28} decorative />
-                        </span>
-                        <span>{prompt.text}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className={styles.wardQuickGrid}>
+                  {wardQuickPrompts.map(prompt => (
+                    <button
+                      key={prompt.text}
+                      type="button"
+                      className={styles.wardQuickButton}
+                      disabled={sending || wardVoiceBusy}
+                      onClick={() => void send(prompt.text)}
+                    >
+                      <span className={styles.wardQuickIcon} aria-hidden="true">
+                        <Icon name={prompt.suggested ? 'message' : 'alert'} size={28} decorative />
+                      </span>
+                      <span>{prompt.text}</span>
+                    </button>
+                  ))}
+                </div>
               </section>
             )}
           </div>

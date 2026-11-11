@@ -14,6 +14,7 @@ import {
   wardTodayMedicationQueryKey,
   wardTodayMedicationQueryOptions,
 } from '@/service/query/ward/medication';
+import { wardMedicationDisplayName } from '@/utils/medication/displayName';
 import { useKstNow } from '@/utils/reservation/useKstNow';
 import {
   formatDoseAmount,
@@ -219,7 +220,10 @@ export function WardMedicationContent() {
                     const beforeRegistered = !medication.taken && isRegisteredAfterDose(medication, doseDate);
                     return (
                       <li key={medication.medicationId} className={cx('medCell', { muted: beforeRegistered })}>
-                        <span className={cx('medName')}>{medication.name}</span>
+                        {/* 긴 이름은 끝의 용량 표기를 뺀다(줄바꿈 방지) - 원래 이름은 title 로 남긴다 */}
+                        <span className={cx('medName')} title={medication.name}>
+                          {wardMedicationDisplayName(medication.name)}
+                        </span>
                         <strong className={cx('medAmount')}>
                           {beforeRegistered ? '내일부터' : formatDoseAmount(medication.doseAmount)}
                         </strong>

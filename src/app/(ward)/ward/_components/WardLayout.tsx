@@ -1,6 +1,6 @@
 'use client';
 
-import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
+import { CSSProperties, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 import { usePathname } from 'next/navigation';
@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 import { DashboardProvider } from '@/components/layout/dashboard/DashboardContext';
 import { SidebarLayout } from '@/components/layout/dashboard/SidebarLayout';
 import { WardSettings } from '@/components/layout/dashboard/types';
-import { WARD_NAV } from '@/constants/dashboard';
+import { wardNavItems } from '@/constants/dashboard';
 import {
   DEFAULT_WARD_SETTINGS,
   WARD_SETTINGS_STORAGE_KEY,
@@ -21,6 +21,7 @@ import { getRealtimeNotification } from '@/utils/dashboard/realtime';
 import { useVisualViewportHeight } from '@/hooks/useVisualViewportHeight';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
+import { wardCompanionTodayQueryOptions } from '@/service/query/ward/companion';
 import { applyWardConnectionRequestCancelled } from '@/service/query/ward/connection';
 import { applyMedicationTakenToWardCache } from '@/service/query/ward/medication';
 import { hasUserSavedWardSosSetting, wardSosSettingQueryOptions } from '@/service/query/ward/sosSetting';
@@ -44,6 +45,11 @@ export function WardLayout({ children }: { children: ReactNode }) {
   useWardSosSettingSync(setWardSettings);
   useWardConnectionSocket(realtimeUserId);
   useWardRootFontSize(wardSettings.fontSize);
+  // 안부 말벗 메뉴는 테스트 계정만(시간대를 골라 시험한다). 일반 피보호자는 대화 시간에 홈 카드·알림으로 들어간다.
+  // 말벗이 꺼진 서버(오늘 상태 오류)에서는 메뉴가 없다. 홈·말벗 화면과 같은 캐시를 쓴다.
+  const { data: companionToday } = useQuery(wardCompanionTodayQueryOptions);
+  const companionTestMode = companionToday?.testMode === true;
+  const navItems = useMemo(() => wardNavItems(companionTestMode), [companionTestMode]);
   const isChatbotPage = pathname === '/ward/chatbot';
   const chatViewportHeight = useVisualViewportHeight(isChatbotPage);
   // 글자 크기·진한 글자 설정은 본문 CSS의 변수로 반영한다(헤더 로고·버튼은 그대로)
@@ -66,7 +72,7 @@ export function WardLayout({ children }: { children: ReactNode }) {
         })}
         style={stageStyle}
       >
-        <SidebarLayout navItems={WARD_NAV} profile={profile} role={role} rootPath={rootPath} />
+        <SidebarLayout navItems={navItems} profile={profile} role={role} rootPath={rootPath} />
         {/* 카메라 송출은 피보호자 웹 어느 화면에서든 이어지도록 레이아웃에 둔다 */}
         <WardCameraStreamProvider>
           <main className={cx('main', { chatMain: isChatbotPage })}>{children}</main>

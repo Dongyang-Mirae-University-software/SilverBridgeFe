@@ -53,45 +53,13 @@
   word-break: keep-all;
 }
 .startButton { width: min(100%, 480px); margin-top: 10px; }
-.primaryButton { min-height: 72px; font-size: calc(26px * var(--ward-font-scale, 1)); }
+.primaryButton { min-height: 72px; font-size: calc(26px * var(--ward-font-scale, 1)); text-decoration: none; }
 .startButton:disabled,
 .primaryButton:disabled,
 .micButton:disabled,
 .switchButton:disabled,
 .stopButton:disabled { cursor: not-allowed; opacity: 0.6; }
 
-.slots { display: grid; gap: 12px; }
-.slotsTitle {
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: calc(24px * var(--ward-font-scale, 1));
-  font-weight: calc(800 + var(--ward-weight-boost, 0));
-}
-.slots ul { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
-.slot {
-  display: flex;
-  min-width: 0;
-  min-height: 92px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  border: 2px solid var(--sb-line);
-  border-radius: 18px;
-  background: #fff;
-  padding: 8px;
-  text-align: center;
-}
-.slot strong { color: var(--sb-ink); font-size: calc(24px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); word-break: keep-all; }
-/* 19px 굵게 = 큰 글자 기준 - 갈색·초록 글자 대비를 3:1 기준으로 맞춘다(복약 화면과 같음) */
-.slot span { color: var(--sb-ink-soft); font-size: calc(19px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
-.slot.done { border-color: var(--sb-safe); background: var(--sb-safe-soft); }
-.slot.done span { color: var(--sb-safe); }
-.slot.available,
-.slot.in_progress { border: 3px solid var(--sb-brand); background: var(--sb-brand-50); }
-.slot.available span,
-.slot.in_progress span { color: var(--sb-brand); }
-.slot.missed { background: var(--sb-bg-soft); }
 
 .stateText {
   display: grid;
@@ -247,19 +215,12 @@
 }
 .endCard h2 { margin: 0; color: var(--sb-safe); font-size: calc(32px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); word-break: keep-all; }
 
-@media (max-width: 768px) {
-  .slots ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
 /* 휴대폰 - 글자는 피보호자 화면 휴대폰 기준(20px)보다 줄이지 않는다 */
 @media (max-width: 640px) {
   .hero { padding: 26px 18px; }
   .hero h2 { font-size: calc(28px * var(--ward-font-scale, 1)); }
   .hero p, .endCard p { font-size: calc(21px * var(--ward-font-scale, 1)); }
   .startButton, .micButton { width: 100%; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 20px; }
-  .slots ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .slot { min-height: 80px; }
-  .slot strong { font-size: calc(22px * var(--ward-font-scale, 1)); }
   .talkSlot { font-size: calc(24px * var(--ward-font-scale, 1)); }
   .line { padding: 14px 16px; }
   .line p { font-size: calc(24px * var(--ward-font-scale, 1)); }
