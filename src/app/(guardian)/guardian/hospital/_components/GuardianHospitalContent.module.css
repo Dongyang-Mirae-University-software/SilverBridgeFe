@@ -562,8 +562,11 @@
   background: #fff;
 }
 
+/* width: 0 - 입력칸의 기본 폭(약 20글자, 310px)이 최소 폭으로 PageLayout까지 올라가 360·375px 휴대폰에서
+   화면 오른쪽이 잘리던 것을 막는다(2026-11-11 실측 408px). 실제 폭은 flex: 1로 늘어난다 */
 .searchInput {
   flex: 1;
+  width: 0;
   min-width: 0;
   border: none;
   outline: none;

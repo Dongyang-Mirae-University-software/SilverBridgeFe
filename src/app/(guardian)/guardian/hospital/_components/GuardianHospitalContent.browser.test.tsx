@@ -818,8 +818,15 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
     await expect.element(screen.getByRole('button', { name: /강남하늘안과/ })).toBeVisible();
 
-    const layout = screen.getByTestId('page-layout').element();
+    const layout = screen.getByTestId('page-layout').element() as HTMLElement;
     expect(layout.getBoundingClientRect().width).toBeLessThanOrEqual(360);
+    // 글꼴에 따라 화면 폭 비교만으로는 놓친다(검색칸 기본 폭이 gosky 실측에서 408px로 밀었다) -
+    // 페이지가 줄어들 수 있는 최소 폭(min-content)이 충분히 작아야 한다(고치기 전 이 환경 264px, 고친 뒤 107px)
+    layout.style.flex = 'none';
+    layout.style.width = 'min-content';
+    expect(layout.getBoundingClientRect().width).toBeLessThanOrEqual(200);
+    layout.style.width = '';
+    layout.style.flex = '1 1 auto';
     for (const el of document.querySelectorAll('[data-testid="page-layout"] *')) {
       expect(el.getBoundingClientRect().right).toBeLessThanOrEqual(360.5);
     }
