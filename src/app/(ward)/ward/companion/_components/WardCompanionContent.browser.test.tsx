@@ -416,6 +416,19 @@ describe('테스트 계정 (Chrome)', () => {
     expect(page.getByRole('heading', { name: /테스트 결과/ }).elements()).toHaveLength(0);
   });
 
+  it('testMode가 아니면 analysis에 textMood가 와도 말로 본 기분을 보이지 않는다', async () => {
+    api.replyText.mockResolvedValue({
+      turnNo: 1, reply: '네.', ended: false, endReason: null, transcript: null,
+      analysis: { ...TURN_ANALYSIS, textMood: { label: 'WORRY', turnLabel: '슬픔', confidence: 0.82, usable: true, reason: null } },
+    });
+    await openTalk();
+    await page.getByRole('button', { name: '글로 대답하기' }).click();
+    await page.getByRole('textbox', { name: '대답 적기' }).fill('그냥 그래');
+    await page.getByRole('button', { name: '보내기' }).click();
+    await expect.element(page.getByText('네.')).toBeVisible();
+    expect(page.getByText('말로 본 기분', { exact: false }).elements()).toHaveLength(0);
+  });
+
   it('testMode가 아니면 테스트 푸시 주소로 와도 시작 버튼을 보이지 않는다', async () => {
     nav.search = 'testSlot=15:00';
     await renderCompanion();
@@ -453,6 +466,35 @@ describe('테스트 계정 (Chrome)', () => {
     await expect.element(page.getByText(
       '대화 마침 · 대화 기분: 걱정 · 턴 수: 1(대답 1·무응답 0) · 위험: 없음 · 알림 단계: 없음',
     )).toBeVisible();
+  });
+
+  async function sendTestTurn(textMood: unknown) {
+    api.today.mockResolvedValue(TEST_TODAY);
+    api.replyText.mockResolvedValue({ turnNo: 1, reply: '그러셨군요.', ended: false, endReason: null, transcript: null, analysis: { ...TURN_ANALYSIS, textMood } });
+    await renderCompanion();
+    await page.getByRole('button', { name: '바로 시작' }).click();
+    await page.getByRole('button', { name: '글로 대답하기' }).click();
+    await page.getByRole('textbox', { name: '대답 적기' }).fill('좀 걱정돼');
+    await page.getByRole('button', { name: '보내기' }).click();
+    await expect.element(page.getByText('1번째 대답', { exact: false })).toBeVisible();
+  }
+
+  it('턴 결과에 말로 본 기분(확신)을 표정 앞에 보여 준다', async () => {
+    await sendTestTurn({ label: 'WORRY', turnLabel: '슬픔', confidence: 0.82, usable: true, reason: null });
+    await expect.element(page.getByText(
+      '1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 말로 본 기분: 슬픔(확신 82%) · 표정: 평온(사진 3장 중 얼굴 3, 확신 80%) · 위험: 없음',
+    )).toBeVisible();
+  });
+
+  it('말을 판단에 쓰지 못했으면(usable=false) 판단 안 함과 이유를 보여 준다', async () => {
+    await sendTestTurn({ label: null, turnLabel: null, confidence: null, usable: false, reason: 'UNAVAILABLE' });
+    await expect.element(page.getByText('말로 본 기분: 판단 안 함(UNAVAILABLE)', { exact: false })).toBeVisible();
+  });
+
+  it('textMood가 null이면 말로 본 기분 칸이 없다', async () => {
+    await sendTestTurn(null);
+    await expect.element(page.getByText('1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 표정:', { exact: false })).toBeVisible();
+    expect(page.getByText('말로 본 기분', { exact: false }).elements()).toHaveLength(0);
   });
 
   it('서버가 대화를 끝내면 저장된 결과를 다시 받아 대화 판정을 붙인다', async () => {
