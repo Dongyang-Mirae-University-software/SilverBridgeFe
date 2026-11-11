@@ -1,6 +1,5 @@
 import classNames from 'classnames/bind';
 
-import { ReservationDemoNotice } from '@/components/reservation/ReservationDemoNotice';
 import { ReservationPager } from '@/components/reservation/ReservationPager';
 import { IHospital } from '@/service/interface/reservation';
 import { isHospitalOpenNow, reservationErrorMessage } from '@/utils/reservation/reservationView';
@@ -31,7 +30,6 @@ export function HospitalSearchStep({ hospitals, isLoading, error, onRetry, query
 
   return (
     <>
-      <ReservationDemoNotice />
       <label className={cx('searchBox')}>
         <SearchIcon />
         <input

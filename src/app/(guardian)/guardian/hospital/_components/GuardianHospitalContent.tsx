@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { ReservationDemoNotice } from '@/components/reservation/ReservationDemoNotice';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { cancelReservation, createReservation } from '@/service/api/guardian/reservation';
 import { guardianConnectionsQueryKey } from '@/service/query/guardian/connection';
@@ -39,7 +38,7 @@ import { CheckIcon, XIcon } from './hospitalIcons';
 const cx = classNames.bind(styles);
 
 type Step = 'list' | 'search' | 'datetime' | 'confirm' | 'done';
-type Booked = { date: string; time: string; hospitalName: string; department: string; wardName: string };
+type Booked = { date: string; time: string; hospitalName: string; department: string };
 
 const STEPS: { step: Step; label: string }[] = [
   { step: 'search', label: '병원 고르기' },
@@ -133,7 +132,6 @@ export function GuardianHospitalContent() {
         time: body.reservationTime,
         hospitalName,
         department: body.department,
-        wardName: body.patientName,
       });
       setStep('done');
     },
@@ -381,16 +379,14 @@ export function GuardianHospitalContent() {
           <div ref={doneTitleRef} tabIndex={-1} className={cx('doneTitle')}>
             예약했어요
           </div>
+          {/* 날짜와 시각을 따로 줄에 둔다 - 한 줄에 두면 좁은 화면에서 "오후 / 12시 30분"처럼 갈라진다 */}
           <div className={cx('doneSummary')}>
-            <div className={cx('doneWhen')}>
-              {formatDateShort(booked.date)} <span className={cx('brandText')}>{formatTime(booked.time)}</span>
-            </div>
+            <div className={cx('doneDate')}>{formatDateShort(booked.date)}</div>
+            <div className={cx('doneTime', 'brandText')}>{formatTime(booked.time)}</div>
             <div className={cx('doneWhere')}>
               {booked.hospitalName} · {booked.department}
             </div>
           </div>
-          <div className={cx('doneNote')}>{booked.wardName} 화면에서도 볼 수 있어요</div>
-          <ReservationDemoNotice />
           <button
             type="button"
             className={cx('btn', 'primary', 'doneButton')}

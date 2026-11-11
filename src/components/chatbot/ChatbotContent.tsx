@@ -127,6 +127,8 @@ function wardPrompts({ items: suggested, answer }: Suggestions, sent: ReadonlySe
 }
 
 const COMPOSER_MAX_LINES = 2;
+// 피보호자 챗봇은 말한 뒤 3초 조용하면 녹음을 끝내고 바로 보낸다(2026-11-11 사용자 결정 - 말벗은 1.5초 그대로)
+const WARD_SILENCE_STOP_MS = 3_000;
 
 interface ChatbotContentProps {
   /**
@@ -232,12 +234,22 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     saveConversation(conversationOwner, { sessionId, messages, sent: sentBySession[sessionId] ?? [] });
   }, [conversationId, conversationOwner, messages, sessionId, sentBySession]);
 
-  // 말로 입력: 받은 글자는 입력창에만 채운다(자동 전송 안 함). 쓰던 글이 있으면 한 칸 띄워 뒤에 붙인다.
-  // 피보호자 예약 중 접힌 입력창이면 펼친다. 대화창이 바뀌면 cancel()로 버린다.
-  const voice = useVoiceInput(text => {
-    setInput(prev => (prev.trim() ? `${prev.trimEnd()} ${text}` : text));
-    setComposerOpenedIn(sessionRef.current);
-  });
+  // 피보호자 화면은 마이크로만 입력한다(2026-11-11). 받아쓰기·권한이 실패했을 때만 [글자로 쓰기]로 입력창을 연다
+  const typingOpen = isWardChat && composerOpenedIn === sessionId;
+  const sendVoiceRef = useRef<(text: string) => void>(() => undefined);
+  // 말로 입력: 보호자(또는 피보호자가 입력창을 연 경우)는 받은 글자를 입력창에만 채운다(자동 전송 안 함).
+  // 쓰던 글이 있으면 한 칸 띄워 뒤에 붙인다. 피보호자 마이크 전용 화면은 받은 글자를 바로 보낸다(보낸 말풍선으로 확인).
+  // 대화창이 바뀌면 cancel()로 버린다.
+  const voice = useVoiceInput(
+    text => {
+      if (isWardChat && !typingOpen) {
+        sendVoiceRef.current(text);
+        return;
+      }
+      setInput(prev => (prev.trim() ? `${prev.trimEnd()} ${text}` : text));
+    },
+    isWardChat ? { silenceMs: WARD_SILENCE_STOP_MS } : undefined,
+  );
 
   useEffect(() => {
     if (!profile) return;
@@ -283,7 +295,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const stepSource = [...messages].reverse().find(message => message.role === 'assistant' && !message.failed);
   const reserving = isReservationStep(stepSource);
   const reservationUi = reserving ? stepSource?.ui : undefined;
-  const showComposer = !isWardChat || !reserving || composerOpenedIn === sessionId;
+  const showComposer = !isWardChat || typingOpen;
   const suggested = latestSuggestions(messages);
   const quickTitle = wardsUnavailable
     ? '피보호자 정보를 불러오지 못했어요'
@@ -391,6 +403,10 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     },
     [isGuardian, selectedWard, sessionId, waitingWards],
   );
+
+  useEffect(() => {
+    sendVoiceRef.current = text => void send(text);
+  }, [send]);
 
   useEffect(
     () => () => {
@@ -522,15 +538,19 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   // 음성 입력 안내(권한·못 알아들음·오류). 대화 말풍선이 아니라 입력창 아래 한 줄로 보인다
   const voiceNotice = (
     <p className={styles.voiceNotice} role="status" aria-live="polite">
-      {voice.state === 'recording' ? '말씀하세요. 다 하셨으면 다시 눌러 주세요.' : (voice.notice ?? '')}
+      {voice.state === 'recording'
+        ? isWardChat && !typingOpen
+          ? '듣고 있어요. 말씀을 마치면 저절로 보내요.'
+          : '말씀하세요. 다 하셨으면 다시 눌러 주세요.'
+        : voice.state === 'uploading' && isWardChat
+          ? '말씀을 글로 바꾸는 중이에요.'
+          : (voice.notice ?? '')}
     </p>
   );
 
+  // 피보호자: 큰 마이크 버튼만. 권한 거부·받아쓰기 실패 안내가 떠 있을 때만 [글자로 쓰기]를 보인다
   const composer = !showComposer ? (
     <footer className={`${styles.composer} ${styles.composerCollapsed}`}>
-      <button type="button" className={styles.composerOpenButton} onClick={() => setComposerOpenedIn(sessionId)}>
-        직접 써서 답하기
-      </button>
       <VoiceInputButton
         variant="wide"
         state={voice.state}
@@ -539,6 +559,11 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         onToggle={voice.toggle}
       />
       {voiceNotice}
+      {voice.notice && voice.state === 'idle' && (
+        <button type="button" className={styles.composerOpenButton} onClick={() => setComposerOpenedIn(sessionId)}>
+          글자로 쓰기
+        </button>
+      )}
     </footer>
   ) : (
     <footer className={styles.composer}>
@@ -638,7 +663,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
               <section className={styles.wardQuickPanel} aria-label="추천 질문">
                 <p className={styles.wardQuickTitle}>{quickTitle}</p>
                 {wardQuickPrompts.length === 0 ? (
-                  <p className={styles.wardQuickEmpty}>궁금한 점을 입력창에 적어 주세요</p>
+                  <p className={styles.wardQuickEmpty}>마이크를 누르고 궁금한 점을 말씀해 주세요</p>
                 ) : (
                   <div className={styles.wardQuickGrid}>
                     {wardQuickPrompts.map(prompt => (
