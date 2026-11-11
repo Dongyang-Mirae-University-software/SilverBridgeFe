@@ -308,6 +308,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const reserving = isReservationStep(stepSource);
   const reservationUi = reserving ? stepSource?.ui : undefined;
   const showComposer = !isWardChat || typingOpen;
+  // 피보호자는 받아쓴 글을 바로 보낸다 - 녹음·변환 중에 칩·선택지를 누르면 두 질문이 나가거나(칩 → 받아쓴 글)
+  // 답을 기다리는 사이 받아쓴 글이 버려진다. 그동안은 칩·예약 선택지를 잠근다(2026-11-11 기능 점검 F-1)
+  const wardVoiceBusy = isWardChat && voice.state !== 'idle';
   const suggested = latestSuggestions(messages);
   const quickTitle = wardsUnavailable
     ? '피보호자 정보를 불러오지 못했어요'
@@ -494,6 +497,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   }
 
   function handleUiSelect(field: string, value: string, label?: string) {
+    if (wardVoiceBusy) return;
     if (isShowList(field, value)) {
       openVisitList(label);
       return;
@@ -625,7 +629,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         <ChatUiPrompt
           key={stepSource?.id}
           ui={reservationUi}
-          active
+          active={!wardVoiceBusy}
           onSelect={handleUiSelect}
           variant={panelVariant}
           onRestart={restartConversation}
@@ -683,7 +687,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                         key={prompt.text}
                         type="button"
                         className={styles.wardQuickButton}
-                        disabled={sending}
+                        disabled={sending || wardVoiceBusy}
                         onClick={() => void send(prompt.text)}
                       >
                         <span className={styles.wardQuickIcon} aria-hidden="true">

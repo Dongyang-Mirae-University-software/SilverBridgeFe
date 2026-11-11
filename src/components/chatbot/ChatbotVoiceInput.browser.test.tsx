@@ -222,4 +222,26 @@ describe('챗봇 마이크 음성 입력', () => {
     await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(1));
     expect(api.transcribe).toHaveBeenCalledTimes(1);
   });
+
+  it('피보호자: 녹음·변환 중에는 추천 칩을 잠가 질문이 두 번 나가지 않게 하고, 끝나면 푼다(F-1)', async () => {
+    getUserMedia.mockImplementation(async () => fakeMicStream());
+    let resolve: (text: string) => void = () => undefined;
+    api.transcribe.mockImplementation(() => new Promise<string>(r => (resolve = r)));
+    api.sendChatMessage.mockResolvedValue({ reply: '네.', engine: 'ai', type: 'message' });
+    renderChat(<ChatbotContent variant="ward" />);
+    const chip = page.getByRole('button', { name: '머리가 아파요' });
+    await expect.element(chip).toBeEnabled();
+
+    await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+    await expect.element(chip).toBeDisabled();
+    await sleep(600);
+    await userEvent.click(page.getByRole('button', { name: '녹음 끝내기' }));
+    await expect.element(page.getByRole('button', { name: '말씀을 글로 바꾸는 중' })).toBeDisabled();
+    await expect.element(chip).toBeDisabled();
+
+    resolve('배가 아파요');
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(1));
+    expect(api.sendChatMessage.mock.calls[0][0].message).toBe('배가 아파요');
+    await expect.element(chip).toBeEnabled();
+  });
 });

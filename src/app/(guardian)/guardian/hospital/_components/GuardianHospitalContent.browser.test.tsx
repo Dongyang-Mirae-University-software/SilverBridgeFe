@@ -503,10 +503,19 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
     await screen.getByRole('button', { name: '다음' }).click();
 
-    await screen.getByRole('button', { name: /불편한 곳 적기/ }).click();
+    const toggle = screen.getByRole('button', { name: /불편한 곳 적기/ });
+    // 접혀 있어도 aria-controls가 가리키는 칸은 숨긴 채 남아 있다(F-3)
+    const controls = toggle.element().getAttribute('aria-controls')!;
+    expect((document.getElementById(controls) as HTMLElement).hidden).toBe(true);
+    await toggle.click();
     const symptom = screen.getByRole('textbox', { name: '불편한 곳' });
     await expect.element(symptom).toHaveAttribute('maxlength', '200');
     await symptom.fill('  며칠 전부터 눈이 침침해요 ');
+    // 적은 뒤 접으면 제목에 "(적음)"을 보이고, 적은 글은 그대로 함께 보낸다(F-4)
+    await toggle.click();
+    await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(toggle).toMatchTextContent('(적음)');
+    expect(screen.getByRole('textbox', { name: '불편한 곳' }).elements()).toHaveLength(0);
     await screen.getByRole('button', { name: '예약하기' }).click();
 
     await vi.waitFor(() => expect(api.createReservation).toHaveBeenCalledTimes(1));
