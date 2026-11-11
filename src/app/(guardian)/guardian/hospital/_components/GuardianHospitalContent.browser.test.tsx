@@ -389,8 +389,21 @@ describe('GuardianHospitalContent (Chrome)', () => {
     wards.list = [ward('ward01', '김영희'), ward('ward02', '이철수')];
     const screen = await renderContent();
 
-    await screen.getByRole('combobox', { name: '진료받으실 분' }).selectOptions('ward02');
+    // 브라우저 기본 선택 상자가 아니라 다른 보호자 화면과 같은 피보호자 버튼(2026-11-11)
+    expect(screen.getByRole('combobox').elements()).toHaveLength(0);
+    await screen.getByRole('tab', { name: /이철수/ }).click();
     await vi.waitFor(() => expect(api.getMyReservations).toHaveBeenCalledWith('ward02'));
+  });
+
+  it('예약을 진행하는 동안에는 고른 피보호자 한 명만 누를 수 없는 버튼으로 보인다', async () => {
+    wards.list = [ward('ward01', '김영희'), ward('ward02', '이철수')];
+    const screen = await renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+
+    const tabs = screen.getByRole('tablist', { name: '진료받으실 분' }).getByRole('tab');
+    await vi.waitFor(() => expect(tabs.elements()).toHaveLength(1));
+    await expect.element(tabs.first()).toBeDisabled();
+    await expect.element(tabs.first()).toMatchTextContent('김영희');
   });
 
   it('연결된 피보호자가 없으면 안내만 한다', async () => {
@@ -761,8 +774,16 @@ describe('GuardianHospitalContent (Chrome)', () => {
   });
 
   describe('다른 화면에서 고른 피보호자 이어받기(전역 선택)', () => {
-    const picker = (screen: Awaited<ReturnType<typeof renderContent>>) =>
-      screen.getByRole('combobox', { name: '진료받으실 분' }).element() as HTMLSelectElement;
+    // 지금 고른 피보호자 = 선택된 버튼의 이름. 값 비교는 화면 이름(ward01=김영희, ward02=이철수)으로 바꿔 본다.
+    const NAME_TO_ID: Record<string, string> = { 김영희: 'ward01', 이철수: 'ward02' };
+    const picker = (screen: Awaited<ReturnType<typeof renderContent>>) => {
+      const selected = screen
+        .getByRole('tablist', { name: '진료받으실 분' })
+        .getByRole('tab', { selected: true })
+        .element();
+      const name = Object.keys(NAME_TO_ID).find(key => selected.textContent?.includes(key)) ?? '';
+      return { value: NAME_TO_ID[name] ?? '' };
+    };
 
     beforeEach(() => {
       wards.list = [ward('ward01', '김영희'), ward('ward02', '이철수')];
@@ -802,7 +823,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
       const screen = await renderContent();
       await render(<SelectedWardProbe />);
       await vi.waitFor(() => expect(picker(screen).value).toBe('ward01'));
-      await userEvent.selectOptions(picker(screen), 'ward02');
+      await screen.getByRole('tab', { name: /이철수/ }).click();
       await vi.waitFor(() => expect(seen.at(-1)).toBe('ward02'));
     });
 

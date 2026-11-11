@@ -53,10 +53,12 @@
   word-break: keep-all;
 }
 
+/* 한 문장만 크게(2026-11-11 - 두 줄 안내를 한 줄로 합침) */
 .todayCount {
   color: var(--sb-ink);
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 800;
+  line-height: 1.35;
 }
 
 /* 다 드셨으면 초록, 체크 전이면 갈색 */
@@ -66,12 +68,6 @@
 
 .todayCount.miss {
   color: #8a5f12;
-}
-
-.todayMiss {
-  color: #8a5f12;
-  font-size: 15px;
-  font-weight: 700;
 }
 
 /* ── 시간대 칸(Claude Design 2026-10-30) ── */

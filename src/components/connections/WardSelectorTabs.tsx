@@ -20,9 +20,17 @@ interface WardSelectorTabsProps {
   selectedWardId?: string;
   onSelect: (wardId: string) => void;
   ariaLabel?: string;
+  /** 바꿀 수 없는 동안(예: 예약 진행 중) 누를 수 없게 한다. 기본은 누를 수 있음. */
+  disabled?: boolean;
 }
 
-export function WardSelectorTabs({ wards, selectedWardId, onSelect, ariaLabel = '피보호자 선택' }: WardSelectorTabsProps) {
+export function WardSelectorTabs({
+  wards,
+  selectedWardId,
+  onSelect,
+  ariaLabel = '피보호자 선택',
+  disabled = false,
+}: WardSelectorTabsProps) {
   return (
     <div className={cx('wardTabs')} role="tablist" aria-label={ariaLabel}>
       {wards.map(ward => {
@@ -33,6 +41,7 @@ export function WardSelectorTabs({ wards, selectedWardId, onSelect, ariaLabel = 
             type="button"
             role="tab"
             aria-selected={isActive}
+            disabled={disabled}
             className={cx('wardTab', { wardTabActive: isActive })}
             onClick={() => onSelect(ward.wardId)}
           >
