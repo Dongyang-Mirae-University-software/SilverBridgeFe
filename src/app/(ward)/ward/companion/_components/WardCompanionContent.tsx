@@ -27,6 +27,7 @@ import type {
 import { wardCompanionTodayQueryKey, wardCompanionTodayQueryOptions } from '@/service/query/ward';
 import { formatResultAnalysis, formatTurnAnalysis } from '@/utils/companion/companionAnalysis';
 import { COMPANION_MESSAGES, getCompanionError, isCompanionFrameError } from '@/utils/companion/companionError';
+import { openCompanionSlot } from '@/utils/companion/companionOpen';
 import { formatSlotTime } from '@/utils/format/slotTime';
 import styles from './WardCompanionContent.module.css';
 
@@ -109,8 +110,10 @@ export function WardCompanionContent() {
   const testMode = today.data?.testMode === true;
   const testEntrySlot = testMode && pushedTestSlot && TEST_SLOTS.includes(pushedTestSlot) ? pushedTestSlot : null;
   // 피보호자는 말벗 시간표를 알 필요가 없다 - 대화 시간 밖에 들어오면 안내 없이 홈으로(2026-11-11 사용자 결정).
-  // 대화 중(마친 화면 포함)·테스트 계정·불러오는 중·오류·남길 안내(대화가 끊긴 이유)가 있을 때는 머문다.
-  const outsideTalkTime = !talk && !notice && today.data != null && !testMode && !today.data.currentSlot;
+  // 이미 마친 시간대도 시간 밖으로 본다(openCompanionSlot - 2026-11-11 기능 점검 F-1).
+  // 대화 중(마친 화면 포함)·여는 중(F-3)·테스트 계정·불러오는 중·오류·남길 안내(대화가 끊긴 이유)가 있을 때는 머문다.
+  const outsideTalkTime =
+    !talk && !pending && !notice && today.data != null && !testMode && openCompanionSlot(today.data) === null;
   useEffect(() => {
     if (outsideTalkTime) router.replace('/ward');
   }, [outsideTalkTime, router]);
@@ -542,7 +545,8 @@ function TodayPanel({ today, isLoading, isError, notice, opening, onOpen, onRetr
   }
 
   // 대화 시간 밖: 일반 피보호자는 홈으로 돌아간다(위 outsideTalkTime). 대화가 끊긴 안내만 남기고 시간표·다음 시간은 보이지 않는다.
-  if (!today.currentSlot) {
+  const openSlot = openCompanionSlot(today);
+  if (!openSlot) {
     if (!notice) return null;
     return (
       <section className={cx('hero')} aria-label="안부 대화 안내">
@@ -552,13 +556,13 @@ function TodayPanel({ today, isLoading, isError, notice, opening, onOpen, onRetr
     );
   }
 
-  const current = today.slots.find(slot => slot.slot === today.currentSlot);
+  const current = today.slots.find(slot => slot.slot === openSlot);
   const inProgress = current?.status === 'IN_PROGRESS';
 
   return (
     <section className={cx('hero', 'open')} aria-labelledby="companion-hero-title">
       <h2 id="companion-hero-title">
-        {inProgress ? '이야기하던 안부 대화가 있어요' : `${formatSlotTime(today.currentSlot)} 안부 인사 시간이에요`}
+        {inProgress ? '이야기하던 안부 대화가 있어요' : `${formatSlotTime(openSlot)} 안부 인사 시간이에요`}
       </h2>
       <p>{inProgress ? '이어서 이야기해 주세요.' : '말벗에게 오늘 이야기를 들려주세요.'}</p>
       <button className={cx('startButton')} type="button" disabled={opening} onClick={onOpen}>

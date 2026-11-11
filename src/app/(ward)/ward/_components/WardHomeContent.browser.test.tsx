@@ -20,13 +20,16 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-function today(currentSlot: string | null): IWardCompanionToday {
+function today(
+  currentSlot: string | null,
+  currentStatus: IWardCompanionToday['slots'][number]['status'] = 'AVAILABLE',
+): IWardCompanionToday {
   return {
     date: '2026-11-11',
     currentSlot,
     slots: ['09:00', '12:00', '15:00', '18:00', '21:00'].map(slot => ({
       slot,
-      status: slot === currentSlot ? 'AVAILABLE' : 'UPCOMING',
+      status: slot === currentSlot ? currentStatus : 'UPCOMING',
       mood: null,
     })),
   };
@@ -75,6 +78,19 @@ describe('WardHomeContent (Chrome)', () => {
     await expect.element(companionLink()).toBeVisible();
     expect(companionLink().element().getAttribute('href')).toBe('/ward/companion');
     await expect.element(page.getByText('대화하기', { exact: true })).toBeVisible();
+  });
+
+  it('하던 대화가 있으면(IN_PROGRESS) 카드가 보이고, 이미 마친 시간대(DONE)면 창 안이어도 카드가 없다', async () => {
+    api.today.mockResolvedValue(today('12:00', 'IN_PROGRESS'));
+    await renderHome();
+    await expect.element(companionLink()).toBeVisible();
+    document.body.innerHTML = '';
+
+    api.today.mockResolvedValue(today('12:00', 'DONE'));
+    await renderHome();
+    await vi.waitFor(() => expect(api.today).toHaveBeenCalledTimes(2));
+    await expect.element(page.getByRole('link', { name: '긴급 전화' })).toBeVisible();
+    expect(companionLink().query()).toBeNull();
   });
 
   it('말벗이 꺼진 서버(오늘 현황 오류)면 카드가 없다', async () => {

@@ -6,6 +6,7 @@ import classNames from 'classnames/bind';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { wardCompanionTodayQueryOptions } from '@/service/query/ward/companion';
+import { openCompanionSlot } from '@/utils/companion/companionOpen';
 import styles from './WardHomeContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -27,10 +28,10 @@ const HOME_ACTIONS: Array<{
 ];
 
 export function WardHomeContent() {
-  // 안부 말벗은 대화를 열 수 있는 시간(currentSlot)에만 맨 위 카드로 보인다 - 시간표·대기 안내는 피보호자에게 보이지 않는다
+  // 안부 말벗은 대화를 열 수 있을 때(창 안 + 아직 열 수 있거나 하던 대화가 있음 - openCompanionSlot)에만 맨 위 카드로 보인다 - 시간표·대기 안내는 피보호자에게 보이지 않는다
   // (2026-11-11 사용자 결정). 시간대가 바뀌면 카드가 생기거나 사라지도록 1분마다 다시 받는다. 오류면 카드 없음.
   const { data: companionToday } = useQuery({ ...wardCompanionTodayQueryOptions, refetchInterval: 60_000 });
-  const companionOpen = Boolean(companionToday?.currentSlot);
+  const companionOpen = openCompanionSlot(companionToday) !== null;
 
   return (
     <div className={cx('homeGrid', { withCompanion: companionOpen })}>

@@ -1,7 +1,7 @@
 // 피보호자 안부 말벗 - 오늘 현황 → 대화 열기 → 글·말로 대답 → 마치기. 실제 Chrome에서 돈다
 // 마이크 대신 Web Audio 발진기 스트림을 getUserMedia 결과로 넘겨 녹음·WAV 업로드 흐름을 그대로 탄다
 import type { ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
@@ -179,6 +179,32 @@ describe('오늘 현황 (Chrome)', () => {
     await expect.element(page.getByRole('heading', { name: '낮 12시 안부 인사 시간이에요' })).toBeVisible();
     expect(document.querySelector('[aria-labelledby="companion-slots-title"]')).toBeNull();
     expect(nav.replace).not.toHaveBeenCalledWith('/ward');
+  });
+
+  it('창 안이어도 이미 마친 시간대(DONE)면 시작 버튼 없이 홈으로 보낸다', async () => {
+    api.today.mockResolvedValue(today('12:00', ['DONE', 'DONE', 'UPCOMING', 'UPCOMING', 'UPCOMING']));
+    await renderCompanion();
+
+    await vi.waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/ward'));
+    expect(page.getByRole('button', { name: '이야기 시작하기' }).elements()).toHaveLength(0);
+  });
+
+  it('대화를 여는 중에 창이 닫혀도 홈으로 보내지 않는다', async () => {
+    let resolveOpen: (value: typeof SESSION) => void = () => undefined;
+    api.open.mockReturnValue(new Promise(resolve => { resolveOpen = resolve; }));
+    await renderCompanion();
+    await page.getByRole('button', { name: '이야기 시작하기' }).click();
+
+    api.today.mockResolvedValue(today(null, ['DONE', 'IN_PROGRESS', 'UPCOMING', 'UPCOMING', 'UPCOMING']));
+    focusManager.setFocused(false);
+    focusManager.setFocused(true);
+    await vi.waitFor(() => expect(api.today).toHaveBeenCalledTimes(2));
+    expect(nav.replace).not.toHaveBeenCalledWith('/ward');
+
+    resolveOpen(SESSION);
+    await expect.element(page.getByText('점심은 무엇을 드셨어요?')).toBeVisible();
+    expect(nav.replace).not.toHaveBeenCalledWith('/ward');
+    focusManager.setFocused(undefined);
   });
 
   it('테스트 계정은 대화 시간 밖이어도 홈으로 보내지 않는다(테스트 패널 유지)', async () => {
