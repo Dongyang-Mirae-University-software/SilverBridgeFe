@@ -20,10 +20,11 @@ export function wardNavItems(companionTestMode: boolean): NavItem[] {
   return companionTestMode ? [WARD_NAV[0], WARD_COMPANION_NAV, ...WARD_NAV.slice(1)] : WARD_NAV;
 }
 
-// v13 시안대로 4개만 둔다 - 이상감지·SOS 이력·AI 기분 체크·AI 의료 챗봇·복약 관리·병원 예약·연결된 가족·가족 등록은
-// 홈(대시보드) 카드와 알림으로 들어간다
+// v13 시안의 4개에 AI 기분 체크를 더한다(사용자 결정) - 이상감지·SOS 이력·AI 의료 챗봇·복약 관리·병원 예약·
+// 연결된 가족·가족 등록은 홈(대시보드) 카드와 알림으로 들어간다
 export const GUARDIAN_NAV: NavItem[] = [
   { href: '/guardian', icon: 'dashboard', label: '홈', key: 'dashboard' },
+  { href: '/guardian/emotion', icon: 'heart', label: 'AI 기분 체크', key: 'emotion' },
   { href: '/guardian/notices', icon: 'bell', label: '공지사항', key: 'notices' },
   { href: '/guardian/inquiries', icon: 'inquiry', label: '문의하기', key: 'inquiries' },
   { href: '/guardian/settings', icon: 'settings', label: '환경설정', key: 'settings' },

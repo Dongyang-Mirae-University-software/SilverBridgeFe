@@ -10,7 +10,7 @@ describe('wardNavItems - 안부 말벗 메뉴는 테스트 계정만', () => {
     expect(wardNavItems(true).slice(0, 2).map(item => item.href)).toEqual(['/ward', '/ward/companion']);
   });
 
-  it('보호자 메뉴는 v13 시안대로 홈·공지사항·문의하기·환경설정 4개', () => {
-    expect(GUARDIAN_NAV.map(item => item.label)).toEqual(['홈', '공지사항', '문의하기', '환경설정']);
+  it('보호자 메뉴는 v13 시안의 4개에 AI 기분 체크를 더한 5개', () => {
+    expect(GUARDIAN_NAV.map(item => item.label)).toEqual(['홈', 'AI 기분 체크', '공지사항', '문의하기', '환경설정']);
   });
 });
