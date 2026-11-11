@@ -22,17 +22,24 @@ type Filter = 'all' | 'self' | `ward:${string}`;
 
 function noop() {}
 
-/** 기록의 상담 대상 이름. 알 수 없으면(옛 서버) null - 표시하지 않는다. */
-function targetLabel(wardId: string | null | undefined, wards: { id: string; name: string }[]) {
+type Target = Pick<ChatHistorySession, 'wardId' | 'withSelf'>;
+
+/**
+ * 기록의 상담 대상 이름. 알 수 없으면(옛 서버) null - 표시하지 않는다.
+ * 본인 상담 중 피보호자 예약을 했으면 "○○ 님 예약", 피보호자 턴만 있으면(선택 칸이 있던 때 기록) "○○ 님 상담".
+ */
+function targetLabel({ wardId, withSelf }: Target, wards: { id: string; name: string }[]) {
   if (wardId === undefined) return null;
   if (wardId === null) return '내 상담';
+  const kind = withSelf ? '예약' : '상담';
   const ward = wards.find(item => item.id === wardId);
-  return ward ? `${ward.name} 님 상담` : '연결이 끝난 피보호자 상담';
+  return ward ? `${ward.name} 님 ${kind}` : `연결이 끝난 피보호자 ${kind}`;
 }
 
-function matches(filter: Filter, wardId: string | null | undefined) {
+/** 본인 턴이 섞인 대화창은 "내 상담"에도, 그 피보호자에도 보인다. */
+function matches(filter: Filter, { wardId, withSelf }: Target) {
   if (filter === 'all') return true;
-  if (filter === 'self') return wardId === null;
+  if (filter === 'self') return wardId === null || Boolean(withSelf);
   return wardId === filter.slice('ward:'.length);
 }
 
@@ -66,10 +73,10 @@ export default function ChatHistoryDialog({
         ...targetWards
           .filter(ward => sessions.some(session => session.wardId === ward.id))
           .map(ward => ({ key: `ward:${ward.id}` as Filter, label: ward.name })),
-        ...(sessions.some(session => session.wardId === null) ? [{ key: 'self' as Filter, label: '내 상담' }] : []),
+        ...(sessions.some(session => matches('self', session)) ? [{ key: 'self' as Filter, label: '내 상담' }] : []),
       ]
     : [];
-  const shown = byTarget ? sessions.filter(session => matches(filter, session.wardId)) : sessions;
+  const shown = byTarget ? sessions.filter(session => matches(filter, session)) : sessions;
   const opened = openKey ? sessions.find(session => session.key === openKey) : undefined;
 
   return (
@@ -133,8 +140,8 @@ export default function ChatHistoryDialog({
                     <time>{formatLogDate(session.startedAt)}</time>
                     <span>질문 {session.logs.length}번</span>
                   </span>
-                  {byTarget && targetLabel(session.wardId, targetWards) && (
-                    <span className={styles.itemTarget}>{targetLabel(session.wardId, targetWards)}</span>
+                  {byTarget && targetLabel(session, targetWards) && (
+                    <span className={styles.itemTarget}>{targetLabel(session, targetWards)}</span>
                   )}
                   <strong>{session.title}</strong>
                   <span className={styles.itemMore}>대화 보기 ›</span>

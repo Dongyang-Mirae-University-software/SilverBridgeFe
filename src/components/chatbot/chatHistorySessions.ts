@@ -4,6 +4,7 @@ import { selectionText } from './reservationFlow';
 // 상담 기록(기록 1건 = 질문 1개와 답 1개)을 대화창(sessionId) 단위로 묶는다(2026-11-11).
 // AI 기록 목록은 본인 기록 전부를 최신순으로 준다 - 한 대화창의 질문·답은 FE에서 모아 시간순으로 다시 놓는다.
 // 보호자의 기록은 wardId 칸으로 누구의 상담인지 나눈다(2026-11-11, AI #236·BE #468).
+// 상담 대상 선택 칸을 없앤 뒤(2026-11-11)에는 본인 상담 중에 피보호자 예약을 하면 한 대화창에 둘이 섞인다(withSelf).
 
 export interface ChatHistorySession {
   key: string;
@@ -15,6 +16,8 @@ export interface ChatHistorySession {
   title: string;
   /** 대신한 피보호자 ID, 본인 상담은 null, 서버가 칸을 주지 않으면 undefined(알 수 없음) */
   wardId?: string | null;
+  /** 피보호자 턴과 본인 턴(wardId 없음)이 한 대화창에 섞였다 - 본인 상담 중 대리 예약 */
+  withSelf?: boolean;
 }
 
 const SELECTION = /^\s*\[선택\]\s*/;
@@ -74,20 +77,30 @@ export function groupChatSessions(logs: unknown): ChatHistorySession[] {
       startedAt: sorted[0]?.createdAt,
       lastAt: sorted[sorted.length - 1]?.createdAt,
       title: first?.message?.trim() || '선택형 상담',
-      wardId: wardIdOf(sorted),
+      ...targetOf(sorted),
     };
   });
   // 최근에 이어진 대화가 위로
   return sessions.sort((a, b) => compareLogs(b.logs[b.logs.length - 1], a.logs[a.logs.length - 1]));
 }
 
-/** 대화창의 상담 대상. 대화창은 피보호자마다 따로라 한 값이면 충분하다 - 칸이 있는 첫 기록을 본다. */
-function wardIdOf(logs: ChatLogItem[]): string | null | undefined {
+/**
+ * 대화창의 상담 대상. 피보호자 턴이 있으면 그 피보호자(첫 번째), 본인 턴만 있으면 null, 칸이 없으면 undefined.
+ * 대리 예약은 예약이 끝날 때까지 한 피보호자만 실으므로 첫 피보호자로 충분하다.
+ */
+function targetOf(logs: ChatLogItem[]): { wardId?: string | null; withSelf?: boolean } {
+  let wardId: string | undefined;
+  let self = false;
+  let known = false;
   for (const log of logs) {
     if (!('wardId' in log)) continue;
-    return typeof log.wardId === 'string' && log.wardId ? log.wardId : null;
+    known = true;
+    if (typeof log.wardId === 'string' && log.wardId) wardId ??= log.wardId;
+    else self = true;
   }
-  return undefined;
+  if (!known) return {};
+  if (!wardId) return { wardId: null };
+  return { wardId, withSelf: self };
 }
 
 const RISK_LEVELS = new Set(['low', 'medium', 'high']);

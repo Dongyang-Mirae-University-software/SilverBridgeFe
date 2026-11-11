@@ -85,26 +85,6 @@
   flex-shrink: 0;
 }
 
-.wardTarget {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  border-bottom: 1px solid var(--sb-line);
-  background: #fff;
-  padding: 10px 22px;
-}
-
-.wardTarget > span {
-  flex-shrink: 0;
-  color: var(--sb-ink-soft);
-  font-size: calc(13px * var(--ward-font-scale, 1));
-  font-weight: calc(750 + var(--ward-weight-boost, 0));
-}
-
-.wardTarget > div {
-  min-width: 0;
-}
-
 .historyButton {
   display: inline-flex;
   align-items: center;
@@ -824,20 +804,6 @@
 
   .headerActions {
     width: auto;
-  }
-
-  .wardTarget {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    min-height: 52px;
-    padding: 7px 14px;
-  }
-
-  .wardTarget > div {
-    flex: 1;
-    overflow-x: auto;
-    padding: 1px 0;
   }
 
   .brandCopy h1 {

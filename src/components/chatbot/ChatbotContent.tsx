@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@/components/Icon';
-import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { useSoftKeyboardOpen } from '@/hooks/useSoftKeyboardOpen';
 import { getAccessTokenSubject, getAuthRole } from '@/lib/auth/tokenStore';
@@ -20,7 +19,7 @@ import {
   removeConversation,
   saveConversation,
 } from '@/store/chatConversationStore';
-import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
+import { setSelectedWardId } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
 import ChatHistoryDialog from './ChatHistoryDialog';
@@ -28,7 +27,7 @@ import ChatUiPrompt from './ChatUiPrompt';
 import { isUrgentAnswer } from './chatUrgency';
 import VoiceInputButton from './VoiceInputButton';
 import { useVoiceInput } from './useVoiceInput';
-import { isReservationStep, isShowList, selectionText } from './reservationFlow';
+import { buttonWardId, isReservationStep, isShowList, selectionText, textWardId } from './reservationFlow';
 import styles from './ChatbotContent.module.css';
 
 function makeId() {
@@ -44,11 +43,12 @@ function makeSessionId() {
 }
 
 function buildWelcomeMessage(name?: string, isGuardian = false): ChatMessage {
-  if (isGuardian && name) {
+  // 보호자 챗봇은 보호자 본인 상담으로 시작한다 - 예약을 시작하면 AI가 누구의 예약인지 묻는다(2026-11-11 사용자 결정)
+  if (isGuardian) {
     return {
       id: 'welcome',
       role: 'assistant',
-      content: `안녕하세요\n${name}의 증상을 말씀해 주시면 맞는 진료과를 알려 드리고, 바로 병원 예약도 도와드려요.`,
+      content: '안녕하세요\n증상을 말씀해 주시면 맞는 진료과를 알려 드리고, 연결된 분의 병원 예약도 도와드려요.',
       timestamp: new Date().toISOString(),
     };
   }
@@ -65,12 +65,11 @@ function buildWelcomeMessage(name?: string, isGuardian = false): ChatMessage {
 type GuardianPrompt = {
   text: string;
   primary?: boolean;
-  /** send: AI에 보낸다(기본). reservation: AI를 부르지 않고 내 말풍선만 남긴 뒤 병원 예약 화면으로 이동한다. */
-  action?: 'send' | 'reservation';
 };
 
+// 예약 칩도 AI에 보낸다 - 챗봇 안에서 "누구의 병원 예약인가요?"부터 시작한다(2026-11-11 사용자 결정, 전에는 예약 화면으로 이동)
 const GUARDIAN_PROMPTS: GuardianPrompt[] = [
-  { text: '병원 예약하고 싶어요', primary: true, action: 'reservation' },
+  { text: '병원 예약하고 싶어요', primary: true },
   { text: '무릎이 아프다고 하세요' },
   { text: '혈압약을 같이 먹어도 되나요?' },
   { text: '다음 병원 예약 알려줘' },
@@ -82,8 +81,7 @@ const MAX_SUGGESTED = 4;
 /** 되묻기 답 칩(AI suggestedKind). 문구가 아니라 칸의 코드 값을 본다. */
 const ANSWER_KIND = 'answer';
 
-const RESERVATION_PATH = '/guardian/hospital';
-/** 예약 목록 보기 = 역할별 "병원 가는 날" 화면(AI로 show_list 를 보내지 않는다). 보호자 화면은 고른 피보호자로 열린다. */
+/** 예약 목록 보기 = 역할별 "병원 가는 날" 화면(AI로 show_list 를 보내지 않는다). 보호자 화면은 전역으로 고른 피보호자로 열린다. */
 const WARD_VISIT_LIST_PATH = '/ward/hospital';
 const GUARDIAN_VISIT_LIST_PATH = '/guardian/hospital';
 /** 남긴 말풍선을 잠깐 보여 준 뒤 이동한다. */
@@ -141,7 +139,7 @@ const WARD_SILENCE_STOP_MS = 3_000;
 
 interface ChatbotContentProps {
   /**
-   * 보호자 화면은 선택 대상·상담 기록·추천 질문 칩을 제공한다.
+   * 보호자 화면은 상담 기록·추천 질문 칩을 제공한다(상담 대상 선택 칸은 없다 - 예약 때 AI가 대상을 묻는다).
    * 피보호자 화면은 대화창과 큰 빠른 질문 버튼을 나란히 둔 큰 글씨 상담 화면을 사용한다.
    */
   variant?: 'guardian' | 'ward';
@@ -153,37 +151,24 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const profile = getUserProfileData(profileResponse);
   const isGuardian = getAuthRole() === 'GUARDIAN';
   const isWardChat = variant === 'ward';
-  const {
-    activeWards,
-    isLoading: wardsLoading,
-    isError: wardsFailed,
-    refetch: refetchWards,
-  } = useGuardianActiveWards(isGuardian);
-  // 목록을 받지 못했으면(5xx·네트워크) 누구의 상담인지 모른다 - 잠근 채로 다시 불러오게 한다(2026-11-10 전체 점검 F-1)
-  const wardsUnavailable = isGuardian && Boolean(wardsFailed);
-  // 보호자는 피보호자 목록을 받기 전에 보내면 wardId 없이 본인 상담으로 가고, 다음 턴(wardId 있음)에 되묻기 이어 붙이기가 끊긴다
-  // (2026-11-03 답 칩 점검 M-1). 목록을 받는 동안·받지 못했을 때는 칩·입력·보내기를 잠근다.
-  const waitingWards = isGuardian && (Boolean(wardsLoading) || wardsUnavailable);
-  const selectedWard = useSelectedWard(activeWards, ward => ward.partnerUserId);
+  // 피보호자 목록은 상담 기록의 대상 이름 표시에만 쓴다. 요청은 기본으로 wardId 없이 보내고(본인 상담),
+  // 예약 대상은 AI 질문의 선택지로 고른다 - 목록을 못 받아도 상담을 잠그지 않는다(BE가 guardianWards를 서버 값으로 채운다).
+  const { activeWards } = useGuardianActiveWards(isGuardian);
   const [sessionId, setSessionId] = useState(makeSessionId);
   // 대화창(sessionId)마다 이미 보낸 문장 - 빠른 질문에서 뺀다. 대화와 함께 탭 저장소에 둔다(아래 conversation 저장).
   const [sentBySession, setSentBySession] = useState<Record<string, string[]>>({});
   const [messages, setMessages] = useState<ChatMessage[]>(() => [buildWelcomeMessage()]);
-  // 메뉴를 오가도 대화가 이어지게 탭 저장소(sessionStorage)에 사용자·역할·피보호자별로 둔다(2026-11-11).
-  // 보호자는 피보호자 목록을 받기 전에는 누구의 상담인지 모르므로 저장·복원하지 않는다.
-  // conversationOwner = 지금 화면의 대화가 어느 키의 것인지. 피보호자를 바꾸는 사이 앞 대화가 새 키에 저장되지 않게 둘을 비교한다.
+  // 메뉴를 오가도 대화가 이어지게 탭 저장소(sessionStorage)에 사용자·역할별로 둔다(2026-11-11).
+  // 보호자도 대화 하나다 - 대리 예약 턴은 답마다 requestWardId 로 남는다.
+  // conversationOwner = 지금 화면의 대화가 어느 키의 것인지(첫 진입 때 저장한 대화를 한 번만 불러온다).
   const accountId = getAccessTokenSubject();
-  const conversationId =
-    accountId && !waitingWards
-      ? conversationKey(isGuardian ? 'GUARDIAN' : 'WARD', accountId, isGuardian ? selectedWard?.partnerUserId : null)
-      : null;
+  const conversationId = accountId ? conversationKey(isGuardian ? 'GUARDIAN' : 'WARD', accountId, null) : null;
   const [conversationOwner, setConversationOwner] = useState<string | null>(null);
-  // 연결이 끝난 피보호자와 나눈 대화는 탭 저장소에서 지운다 - 목록을 제대로 받았을 때만(2026-11-11 점검 L-3)
-  const activeWardIds = isGuardian && !waitingWards ? activeWards.map(ward => ward.partnerUserId).join(',') : null;
+  // 피보호자별로 나눠 두던 예전 대화(선택 칸이 있던 때)는 탭 저장소에서 지운다
   useEffect(() => {
-    if (!accountId || activeWardIds === null) return;
-    pruneWardConversations('GUARDIAN', accountId, activeWardIds ? activeWardIds.split(',') : []);
-  }, [accountId, activeWardIds]);
+    if (!accountId || !isGuardian) return;
+    pruneWardConversations('GUARDIAN', accountId, []);
+  }, [accountId, isGuardian]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
@@ -202,16 +187,16 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const sendingRef = useRef(sending);
-  // 응답이 도착했을 때의 대화창 - 보낸 뒤 대화창이 바뀌었으면(피보호자 전환·처음으로) 그 응답을 버린다.
+  // 응답이 도착했을 때의 대화창 - 보낸 뒤 대화창이 바뀌었으면(새 대화) 그 응답을 버린다.
   const sessionRef = useRef(sessionId);
   const reservationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   sendingRef.current = sending;
   sessionRef.current = sessionId;
   const welcomeRef = useRef(() => buildWelcomeMessage());
-  welcomeRef.current = () => buildWelcomeMessage(isGuardian ? selectedWard?.partnerName : profile?.name, isGuardian);
+  welcomeRef.current = () => buildWelcomeMessage(profile?.name, isGuardian);
 
-  // 대화 키가 정해지거나 바뀌면(첫 진입·피보호자 바꾸기) 저장한 대화를 불러오고, 없으면 새 대화창으로 시작한다.
+  // 대화 키가 정해지거나 바뀌면(첫 진입·다른 계정) 저장한 대화를 불러오고, 없으면 새 대화창으로 시작한다.
   useEffect(() => {
     if (!conversationId || conversationId === conversationOwner) return;
     const saved = loadConversation(conversationId);
@@ -271,9 +256,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
     setMessages(prev => {
       if (prev.length !== 1 || prev[0].id !== 'welcome') return prev;
-      return [buildWelcomeMessage(isGuardian ? selectedWard?.partnerName : profile.name, isGuardian)];
+      return [buildWelcomeMessage(profile.name, isGuardian)];
     });
-  }, [isGuardian, profile, selectedWard?.partnerName]);
+  }, [isGuardian, profile]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
@@ -318,13 +303,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   // 판정은 말풍선 긴급 상자와 같다(chatUrgency - 문구·이모지는 보지 않는다). 예약 진행 패널이 먼저다.
   const wardUrgent = isWardChat && !reserving && !!stepSource && isUrgentAnswer(stepSource);
   const suggested = latestSuggestions(messages);
-  const quickTitle = wardsUnavailable
-    ? '피보호자 정보를 불러오지 못했어요'
-    : waitingWards
-      ? '피보호자 정보를 불러오는 중이에요'
-      : suggested.answer
-        ? '눌러서 답해 보세요'
-        : '눌러서 물어보세요';
+  const quickTitle = suggested.answer ? '눌러서 답해 보세요' : '눌러서 물어보세요';
+  // 보호자 글·칩 입력에 이어 실을 피보호자(대리 예약 중일 때만 - reservationFlow.textWardId)
+  const carriedWardId = isGuardian ? textWardId(stepSource) : undefined;
   const sentTexts = new Set(sentBySession[sessionId] ?? []);
   // 서버는 버튼·날짜·지역 선택도 "[선택] field: value" 형식의 별도 기록으로 남긴다.
   // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
@@ -334,10 +315,11 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       uiSelection?: { field: string; value: string },
       uiSelectionLabel?: string,
       refocusComposer = false,
+      wardId?: string,
     ) => {
       const trimmed = text.trim();
       if (!trimmed && !uiSelection) return;
-      if (sendingRef.current || waitingWards) return;
+      if (sendingRef.current) return;
 
       const userMessage: ChatMessage = {
         id: makeId(),
@@ -354,10 +336,11 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
       try {
         // 환자 정보(이름·전화·생년월일·나이·성별·주소)는 보내지 않는다 - 백엔드가 로그인 사용자 또는 검증한
-        // 피보호자의 DB 값으로 채우고 클라이언트 값은 버린다(BE #440·#444). 대리 상담은 피보호자 ID만 보낸다.
+        // 피보호자의 DB 값으로 채우고 클라이언트 값은 버린다(BE #440·#444). 대리 예약은 피보호자 ID만 보낸다.
+        // 보호자는 기본으로 wardId 없이(본인 상담), 예약 대상을 고른 뒤 예약이 끝날 때까지만 싣는다(계약 ③).
         const role = getAuthRole() ?? undefined;
-        const context =
-          isGuardian && selectedWard ? { role: 'GUARDIAN', wardId: selectedWard.partnerUserId } : { role };
+        const requestWardId = isGuardian && wardId ? wardId : undefined;
+        const context = requestWardId ? { role: 'GUARDIAN', wardId: requestWardId } : { role };
 
         // 대화 맥락은 AI가 같은 sessionId의 서버 기록으로 만든다 - 이력은 보내지 않는다(2026-10-29, AI #91).
         const result = await sendChatMessage({
@@ -366,7 +349,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           context,
           uiSelection: uiSelection ?? undefined,
         });
-        // 기다리는 사이 대화창이 바뀌었으면 버린다 - 이전 피보호자의 선택지가 새 피보호자 대화에 붙지 않게(점검 🟠).
+        // 기다리는 사이 대화창이 바뀌었으면(새 대화) 버린다 - 앞 대화의 선택지가 새 대화에 붙지 않게(점검 🟠).
         if (sessionRef.current !== sessionId) return;
 
         setMessages(prev => [
@@ -376,6 +359,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             role: 'assistant',
             content: result.reply,
             timestamp: new Date().toISOString(),
+            requestWardId,
             engine: result.engine,
             modelName: result.modelName,
             riskLevel: result.riskLevel,
@@ -422,7 +406,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         if (refocusComposer) textareaRef.current?.focus();
       }
     },
-    [isGuardian, selectedWard, sessionId, waitingWards],
+    [isGuardian, sessionId],
   );
 
   useEffect(() => {
@@ -436,10 +420,10 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     [],
   );
 
-  // AI를 부르지 않으므로 챗 기록에 저장되지 않고, 보낸 문장 기억에도 넣지 않는다(칩은 항상 남는다).
-  // 예약·병원 가는 날 화면은 전역으로 고른 피보호자(selectedWardStore)로 열린다 - 따로 넘기지 않는다
+  // AI를 부르지 않으므로 챗 기록에 저장되지 않고, 보낸 문장 기억에도 넣지 않는다.
+  // 병원 가는 날 화면은 전역으로 고른 피보호자(selectedWardStore)로 열린다
   function leaveTo(text: string, path: string) {
-    if (sendingRef.current || reservationTimerRef.current || waitingWards) return;
+    if (sendingRef.current || reservationTimerRef.current) return;
     // AI에 보내지 않는 말풍선 - 돌아왔을 때 "답을 받기 전에 옮겼다"로 잘못 알리지 않게 표시한다
     setMessages(prev => [...prev, { id: `${NAV_MESSAGE_PREFIX}${makeId()}`, role: 'user', content: text, timestamp: new Date().toISOString() }]);
     reservationTimerRef.current = setTimeout(() => {
@@ -448,11 +432,13 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     }, RESERVATION_NAV_DELAY_MS);
   }
 
-  function openReservation(text: string) {
-    leaveTo(text, RESERVATION_PATH);
-  }
-
-  function openVisitList(text = '예약 목록 보기') {
+  /**
+   * 대리 예약 답의 [예약 목록 보기]는 그 피보호자의 목록이어야 한다(계약 ③ 버튼 규칙) - 그 답을 받은 요청의
+   * wardId 로 전역 선택을 맞춘 뒤 옮긴다. 본인 답이면 전역 선택을 건드리지 않는다.
+   */
+  function openVisitList(text = '예약 목록 보기', wardId?: string) {
+    if (sendingRef.current || reservationTimerRef.current) return;
+    if (isGuardian && wardId) setSelectedWardId(wardId);
     leaveTo(text, isWardChat ? WARD_VISIT_LIST_PATH : GUARDIAN_VISIT_LIST_PATH);
   }
 
@@ -470,7 +456,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     if (conversationOwner) removeConversation(conversationOwner);
     setSessionId(makeSessionId());
     setSentBySession({});
-    setMessages([buildWelcomeMessage(isGuardian ? selectedWard?.partnerName : profile?.name, isGuardian)]);
+    setMessages([buildWelcomeMessage(profile?.name, isGuardian)]);
     setInput('');
     setFallback(false);
   }
@@ -483,32 +469,22 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     restartConversation();
   }
 
-  function handleWardSelect(wardId: string) {
-    if (wardId === selectedWard?.partnerUserId) return;
-    // 답을 기다리는 중에는 바꾸지 않는다 - 그 답은 지금 피보호자에 대한 것이다(점검 🟠).
-    if (sendingRef.current) return;
-    cancelPendingNavigation();
-    voice.cancel();
-    // 대화창은 위 conversationId 효과가 바꾼다 - 그 피보호자와 나누던 대화가 있으면 이어서, 없으면 새로
-    setSelectedWardId(wardId);
-    setInput('');
-    setFallback(false);
-  }
-
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      void send(input, undefined, undefined, true);
+      void send(input, undefined, undefined, true, carriedWardId);
     }
   }
 
-  function handleUiSelect(field: string, value: string, label?: string) {
+  /** source = 그 선택지·버튼이 달린 답. 보호자는 그 답을 받은 요청의 wardId 를 이어 싣는다(계약 ③). */
+  function handleUiSelect(field: string, value: string, label: string | undefined, source: ChatMessage | undefined) {
     if (wardVoiceBusy) return;
+    const wardId = isGuardian ? buttonWardId(field, value, source) : undefined;
     if (isShowList(field, value)) {
-      openVisitList(label);
+      openVisitList(label, wardId);
       return;
     }
-    void send('', { field, value }, label);
+    void send('', { field, value }, label, false, wardId);
   }
 
   async function handleOpenHistory() {
@@ -535,8 +511,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             key={message.id}
             message={message}
             isLastAssistant={message.id === lastAssistantId}
-            onUiSelect={handleUiSelect}
-            onShowList={() => openVisitList()}
+            onUiSelect={(field, value, label) => handleUiSelect(field, value, label, message)}
+            onShowList={() => openVisitList(undefined, message.requestWardId)}
             onRestart={restartConversation}
             // 예약 단계 선택지는 지금 단계면 아래 패널에, 지난 단계면 내 말풍선(고른 답)으로 이미 보이므로 말풍선에 그리지 않는다
             hidePrompt={isReservationStep(message)}
@@ -577,7 +553,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         variant="wide"
         state={voice.state}
         elapsedSec={voice.elapsedSec}
-        disabled={sending || waitingWards}
+        disabled={sending}
         onToggle={voice.toggle}
       />
       {voiceNotice}
@@ -593,7 +569,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         <VoiceInputButton
           state={voice.state}
           elapsedSec={voice.elapsedSec}
-          disabled={sending || waitingWards}
+          disabled={sending}
           onToggle={voice.toggle}
         />
         <textarea
@@ -603,7 +579,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           aria-label="궁금한 점 입력"
           placeholder={isWardChat ? '직접 쓰기' : '여기에 궁금한 점을 써 주세요'}
           value={input}
-          disabled={sending || waitingWards}
+          disabled={sending}
           onChange={e => {
             setInput(e.target.value);
             resizeComposer();
@@ -615,8 +591,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         <button
           type="button"
           className={styles.sendButton}
-          disabled={sending || waitingWards || !input.trim()}
-          onClick={() => void send(input, undefined, undefined, true)}
+          disabled={sending || !input.trim()}
+          onClick={() => void send(input, undefined, undefined, true, carriedWardId)}
         >
           보내기
         </button>
@@ -636,7 +612,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           key={stepSource?.id}
           ui={reservationUi}
           active={!wardVoiceBusy}
-          onSelect={handleUiSelect}
+          onSelect={(field, value, label) => handleUiSelect(field, value, label, stepSource)}
           variant={panelVariant}
           onRestart={restartConversation}
         />
@@ -760,22 +736,6 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           </div>
         </header>
 
-        {isGuardian && activeWards.length > 0 && selectedWard && (
-          <section className={styles.wardTarget} aria-label="상담할 피보호자">
-            <span>상담할 피보호자</span>
-            <WardSelectorTabs
-              wards={activeWards.map(ward => ({
-                wardId: ward.partnerUserId,
-                wardName: ward.partnerName,
-                profileImage: ward.partnerProfileImage,
-                relation: ward.relation,
-              }))}
-              selectedWardId={selectedWard.partnerUserId}
-              onSelect={handleWardSelect}
-            />
-          </section>
-        )}
-
         <div className={`${styles.body} ${typingWithKeyboard ? styles.typingWithKeyboard : ''}`}>
           {board}
 
@@ -783,28 +743,15 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             reservationPanel('guardian')
           ) : (
             <section className={styles.quickPromptPanel} aria-label="추천 질문">
-              <p className={styles.quickPromptTitle} role={wardsUnavailable ? 'alert' : undefined}>
-                {quickTitle}
-              </p>
+              <p className={styles.quickPromptTitle}>{quickTitle}</p>
               <div className={styles.quickPromptRow}>
-                {wardsUnavailable && (
-                  <button
-                    type="button"
-                    className={`${styles.quickPromptButton} ${styles.quickPromptPrimary}`}
-                    onClick={() => void refetchWards()}
-                  >
-                    다시 불러오기
-                  </button>
-                )}
                 {guardianPrompts(suggested, sentTexts).map(prompt => (
                   <button
                     key={prompt.text}
                     type="button"
                     className={`${styles.quickPromptButton} ${prompt.primary ? styles.quickPromptPrimary : ''}`}
-                    disabled={sending || waitingWards}
-                    onClick={() =>
-                      prompt.action === 'reservation' ? openReservation(prompt.text) : void send(prompt.text)
-                    }
+                    disabled={sending}
+                    onClick={() => void send(prompt.text, undefined, undefined, false, carriedWardId)}
                   >
                     {prompt.primary && <Icon name="calendar" size={18} decorative />}
                     {prompt.text}

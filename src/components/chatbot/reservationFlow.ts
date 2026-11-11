@@ -40,6 +40,34 @@ export function isReservationStep(message: ChatMessage | undefined): boolean {
   return message.intent === RESERVATION_INTENT;
 }
 
+/**
+ * 보호자 챗봇 예약 대상 선택(AI #255·#256, BE #472 - 2026-11-11). AI가 wardId 없이 예약이 시작되면 이 칸으로
+ * "누구의 병원 예약인가요?"를 묻는다(값 = 피보호자 ID, 보호자 본인 선택지는 없다).
+ */
+export const RESERVATION_TARGET_FIELD = 'reservation_patient';
+/** 이 도구의 답이 오면 예약 흐름이 끝난 것이다 - 다음 글 입력부터 wardId 를 싣지 않는다. */
+const RESERVATION_END_TOOLS = new Set(['make_appointment', 'cancel_reservation']);
+
+/**
+ * 버튼(선택지·카드 버튼)을 눌렀을 때 실을 wardId(계약 ③). 대상 선택지는 고른 값,
+ * 그 밖의 버튼은 그 버튼이 달린 답을 받았던 요청의 wardId 를 그대로 싣는다.
+ * 코드 값(__self__ 등)은 피보호자가 아니므로 싣지 않는다.
+ */
+export function buttonWardId(field: string, value: string, source: ChatMessage | undefined): string | undefined {
+  if (field === RESERVATION_TARGET_FIELD) return value && !value.startsWith('__') ? value : undefined;
+  return source?.requestWardId;
+}
+
+/**
+ * 글·칩 입력에 실을 wardId(계약 ③). 직전 답이 wardId 를 실은 요청의 답이고, 아직 예약 흐름 안
+ * (intent 예약, 완료·취소 도구 아님)일 때만 싣는다. 새 대화는 답이 비워져 자연히 풀린다.
+ */
+export function textWardId(last: ChatMessage | undefined): string | undefined {
+  if (!last?.requestWardId || last.intent !== RESERVATION_INTENT) return undefined;
+  if (last.tool && RESERVATION_END_TOOLS.has(last.tool)) return undefined;
+  return last.requestWardId;
+}
+
 /** 예약 목록 보기는 AI로 보내지 않고 역할별 병원 가는 날 화면으로 간다. */
 export function isShowList(field: string, value: string) {
   return field === FOLLOWUP_FIELD && value === SHOW_LIST_VALUE;
