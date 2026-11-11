@@ -521,6 +521,12 @@
   gap: 12px;
 }
 
+.wardTitleActions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
 .wardNewChatButton {
   min-height: 44px;
   flex-shrink: 0;

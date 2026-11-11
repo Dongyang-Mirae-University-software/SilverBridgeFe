@@ -137,6 +137,8 @@ export interface ChatLogItem {
   emergencyWarning?: string[] | null;
   /** 답 모양(2026-11-01). 옛 기록은 null. */
   layout?: ChatLayout | null;
+  /** 보호자가 대신한 피보호자 ID(2026-11-11, AI #236·BE #468). 본인 상담은 null, 칸이 없으면(옛 서버) 알 수 없음. */
+  wardId?: string | null;
   createdAt?: string;
 }
 

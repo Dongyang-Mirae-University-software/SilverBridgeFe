@@ -27,6 +27,20 @@ describe('상담 기록 대화창 묶기 (2026-11-11)', () => {
     expect(groupChatSessions(null)).toEqual([]);
   });
 
+  it('대화창의 상담 대상: 피보호자 ID / 본인 상담 null / 칸이 없으면 undefined (2026-11-11)', () => {
+    const sessions = groupChatSessions([
+      { id: 3, sessionId: 'w', wardId: 'ward-1', message: 'a' },
+      { id: 2, sessionId: 's', wardId: null, message: 'b' },
+      { id: 4, sessionId: 'e', wardId: '', message: 'c' },
+      { id: 1, sessionId: 'old', message: 'd' },
+    ]);
+    const of = (key: string) => sessions.find(s => s.key === `s:${key}`)!.wardId;
+    expect(of('w')).toBe('ward-1');
+    expect(of('s')).toBeNull();
+    expect(of('e')).toBeNull();
+    expect(of('old')).toBeUndefined();
+  });
+
   it('첫 질문이 선택지 턴뿐이면 "선택형 상담"', () => {
     expect(groupChatSessions([{ id: 1, sessionId: 'a', message: '[선택] date: 2026-11-12' }])[0].title).toBe(
       '선택형 상담',
