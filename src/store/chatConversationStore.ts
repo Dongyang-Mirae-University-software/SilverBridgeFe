@@ -62,8 +62,21 @@ export function saveConversation(key: string, conversation: SavedConversation, n
   };
   try {
     store.setItem(key, JSON.stringify(value));
+    return;
   } catch {
-    // 용량 초과 등 - 이번 저장만 건너뛴다(메모리의 대화는 그대로)
+    // 용량 초과 등 - 큰 도구 데이터(병원 목록 등)를 빼고 한 번 더
+  }
+  try {
+    const lighter = {
+      ...value,
+      messages: value.messages.map(message =>
+        message.toolData === undefined ? message : { ...message, toolData: undefined },
+      ),
+    };
+    store.setItem(key, JSON.stringify(lighter));
+  } catch {
+    // 그래도 안 되면 지운다 - 최근 턴이 빠진 옛 저장본으로 복원되는 것보다 처음부터가 낫다(2026-11-11 점검 L-2)
+    removeConversation(key);
   }
 }
 
@@ -99,6 +112,26 @@ export function removeConversation(key: string) {
     storage()?.removeItem(key);
   } catch {
     // 저장소를 못 쓰면 지울 것도 없다
+  }
+}
+
+/** 보호자의 피보호자별 대화 중 지금 연결 목록에 없는 피보호자의 것을 지운다(본인 상담은 남긴다, 2026-11-11 점검 L-3). */
+export function pruneWardConversations(role: string, userId: string, keepWardIds: readonly string[]) {
+  const store = storage();
+  if (!store) return;
+  try {
+    const prefix = `${PREFIX}${encodeURIComponent(userId)}:${role}:`;
+    const keep = new Set(keepWardIds.map(id => encodeURIComponent(id)));
+    const keys: string[] = [];
+    for (let i = 0; i < store.length; i += 1) {
+      const key = store.key(i);
+      if (!key?.startsWith(prefix)) continue;
+      const target = key.slice(prefix.length);
+      if (target !== 'self' && !keep.has(target)) keys.push(key);
+    }
+    keys.forEach(key => store.removeItem(key));
+  } catch {
+    // 저장소를 못 쓰면 남은 것도 없다
   }
 }
 

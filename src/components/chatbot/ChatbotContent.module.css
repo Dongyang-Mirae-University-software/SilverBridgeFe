@@ -790,8 +790,14 @@
     font-size: calc(20px * var(--ward-font-scale, 1));
   }
 
+  /* 휴대폰 폭에서는 [새 대화]·[상담 기록]이 자리를 차지해 한 줄이면 글자 중간에서 잘린다 - 2줄까지 줄바꿈(2026-11-11 점검 L-1) */
   .brandCopy p {
+    display: -webkit-box;
     font-size: calc(13px * var(--ward-font-scale, 1));
+    white-space: normal;
+    word-break: keep-all;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .brandMark {
