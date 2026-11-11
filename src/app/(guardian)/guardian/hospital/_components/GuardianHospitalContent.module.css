@@ -964,6 +964,11 @@
   gap: 8px;
 }
 
+/* display: flex가 hidden 속성을 덮어쓰지 않게 한다(접힌 증상 칸) */
+.symptomField[hidden] {
+  display: none;
+}
+
 .symptomTitle {
   color: var(--sb-ink);
   font-size: 18px;

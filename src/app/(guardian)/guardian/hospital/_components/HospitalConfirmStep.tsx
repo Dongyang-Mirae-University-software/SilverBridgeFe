@@ -106,29 +106,28 @@ export function HospitalConfirmStep(props: Props) {
           onClick={() => setSymptomOpen(open => !open)}
         >
           <span>
-            불편한 곳 적기 <span className={cx('optional')}>(선택)</span>
+            불편한 곳 적기 <span className={cx('optional')}>{props.symptom.trim() ? '(적음)' : '(선택)'}</span>
           </span>
           <span className={cx('symptomToggleMark', { open: symptomOpen })} aria-hidden="true">
             ›
           </span>
         </button>
-        {symptomOpen && (
-          <div id="hospital-symptom" className={cx('symptomField')}>
-            <textarea
-              className={cx('textarea')}
-              rows={3}
-              maxLength={SYMPTOM_MAX}
-              aria-label="불편한 곳"
-              placeholder="예) 며칠 전부터 무릎이 아프세요"
-              value={props.symptom}
-              aria-describedby="hospital-symptom-count"
-              onChange={event => props.onSymptom(event.target.value)}
-            />
-            <span id="hospital-symptom-count" className={cx('fieldHint', 'counter')}>
-              {props.symptom.length}/{SYMPTOM_MAX}자
-            </span>
-          </div>
-        )}
+        {/* 접어도 지우지 않고 숨긴다 - aria-controls가 가리킬 대상이 남고, 적은 글은 그대로 함께 보낸다(F-3·F-4) */}
+        <div id="hospital-symptom" className={cx('symptomField')} hidden={!symptomOpen}>
+          <textarea
+            className={cx('textarea')}
+            rows={3}
+            maxLength={SYMPTOM_MAX}
+            aria-label="불편한 곳"
+            placeholder="예) 며칠 전부터 무릎이 아프세요"
+            value={props.symptom}
+            aria-describedby="hospital-symptom-count"
+            onChange={event => props.onSymptom(event.target.value)}
+          />
+          <span id="hospital-symptom-count" className={cx('fieldHint', 'counter')}>
+            {props.symptom.length}/{SYMPTOM_MAX}자
+          </span>
+        </div>
       </div>
       {props.errorText && (
         <p className={cx('notice', 'bad')} role="alert">
