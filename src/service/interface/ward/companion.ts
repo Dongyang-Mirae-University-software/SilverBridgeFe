@@ -38,7 +38,7 @@ export interface IWardCompanionReply {
 
 // 테스트 계정 확인용 턴 판정 - AI 값 그대로. 화면 메모리에만 두고 저장하지 않는다
 export interface IWardCompanionTurnAnalysis {
-  turnLabel: string | null; // 기쁨·평온·걱정·우울·판단 보류 등, 무응답이면 null
+  turnLabel: string | null; // 기쁨·평온·슬픔·우울·판단 보류 등(AI 턴 라벨, WORRY는 슬픔), 무응답이면 null
   turnSource: string | null; // TEXT·FACE·NO_RESPONSE 등
   face?: {
     usable?: boolean;

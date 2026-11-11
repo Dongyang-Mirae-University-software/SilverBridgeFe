@@ -34,6 +34,7 @@ function count(value: number | null | undefined) {
 function faceText(face: IWardCompanionTurnAnalysis['face']) {
   if (!face) return '사진 없음';
   const total = count(face.totalFrames) ?? count(face.frameCount);
+  if (total === 0) return '사진 없음'; // 글로 대답한 턴 등 사진 0장 - "확신 0%"를 붙이면 판정한 것처럼 보인다
   const found = count(face.facesFound);
   const frames = total !== null ? `사진 ${total}장 중 얼굴 ${found ?? '?'}` : null;
   const confidence = count(face.confidence);

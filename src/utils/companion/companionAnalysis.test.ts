@@ -44,6 +44,15 @@ describe('테스트 판정 결과 문장', () => {
       .toBe('1번째 대답 · 턴 기분: 없음 · 근거: 무응답 · 표정: 사진 없음 · 위험: 없음');
   });
 
+  it('사진 0장(글로 대답한 턴)이면 확신 0% 없이 사진 없음', () => {
+    expect(formatTurnAnalysis(1, {
+      turnLabel: '기쁨', turnSource: 'TEXT', riskFlag: false,
+      face: { usable: false, label: null, confidence: 0, frameCount: 0, totalFrames: 0, facesFound: 0 },
+    })).toBe('1번째 대답 · 턴 기분: 기쁨 · 근거: 말 · 표정: 사진 없음 · 위험: 없음');
+    expect(formatTurnAnalysis(1, { turnLabel: '기쁨', turnSource: 'TEXT', riskFlag: false, face: { usable: false, frameCount: 0 } }))
+      .toContain('표정: 사진 없음');
+  });
+
   it('대화 판정 - 기분 null은 판단 불가', () => {
     expect(formatResultAnalysis({ mood: null, turnCount: 3, riskFlag: false, alertLevel: 'INFO' }))
       .toBe('대화 마침 · 대화 기분: 판단 불가 · 턴 수: 3 · 위험: 없음 · 알림 단계: 안내');
