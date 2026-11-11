@@ -97,6 +97,7 @@ export function getPushRoute(data: PushData, role?: 'WARD' | 'GUARDIAN' | null) 
     case 'INQUIRY_ANSWERED':
       return '/guardian/inquiries';
     case 'COMPANION_RISK':
+    case 'COMPANION_RISK_PATTERN':
     case 'COMPANION_NOTICE':
       return '/guardian/emotion';
     case 'COMPANION_PROMPT':
