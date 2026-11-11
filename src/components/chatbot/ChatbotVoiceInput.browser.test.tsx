@@ -28,7 +28,7 @@ vi.mock('@/service/query/user/profile', () => ({
   myProfileQueryOptions: { queryKey: ['test-profile'], queryFn: () => ({ name: '박순자', profileImage: null }) },
 }));
 vi.mock('@/utils/auth/userProfile', () => ({ getUserProfileData: (response: unknown) => response }));
-vi.mock('@/lib/auth/tokenStore', () => ({ getAuthRole: api.role }));
+vi.mock('@/lib/auth/tokenStore', () => ({ getAuthRole: api.role, getAccessTokenSubject: () => 'user-1' }));
 vi.mock('@/hooks/useActiveConnections', () => ({
   useGuardianActiveWards: () => ({ activeWards: [], isLoading: false }),
 }));
@@ -68,6 +68,8 @@ function sttError(status: number, code: string) {
 const getUserMedia = vi.fn();
 
 beforeEach(() => {
+  // 대화는 탭 저장소에 남는다(2026-11-11) - 앞 테스트의 대화가 이어지지 않게 비운다
+  window.sessionStorage.clear();
   api.role.mockReturnValue('WARD');
   api.getChatLogs.mockResolvedValue([]);
   Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } });

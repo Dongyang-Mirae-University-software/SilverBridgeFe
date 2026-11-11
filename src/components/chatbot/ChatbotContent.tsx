@@ -8,17 +8,16 @@ import { Icon } from '@/components/Icon';
 import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { useSoftKeyboardOpen } from '@/hooks/useSoftKeyboardOpen';
-import { getAuthRole } from '@/lib/auth/tokenStore';
+import { getAccessTokenSubject, getAuthRole } from '@/lib/auth/tokenStore';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
-import { getHistoryWarning } from '@/service/api/chatPolicy';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
+import { conversationKey, loadConversation, removeConversation, saveConversation } from '@/store/chatConversationStore';
 import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
-import { breakSentences } from './breakSentences';
-import { stripLeadEmoji } from './stripLeadEmoji';
+import ChatHistoryDialog from './ChatHistoryDialog';
 import ChatUiPrompt from './ChatUiPrompt';
 import VoiceInputButton from './VoiceInputButton';
 import { useVoiceInput } from './useVoiceInput';
@@ -28,6 +27,9 @@ import styles from './ChatbotContent.module.css';
 function makeId() {
   return Math.random().toString(36).slice(2);
 }
+
+/** 화면 이동 칩(예약·예약 목록)이 남기는 내 말풍선 id 앞머리 - AI에 보내지 않아 답이 없는 것이 정상이다. */
+const NAV_MESSAGE_PREFIX = 'nav-';
 
 function makeSessionId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -153,9 +155,18 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const waitingWards = isGuardian && (Boolean(wardsLoading) || wardsUnavailable);
   const selectedWard = useSelectedWard(activeWards, ward => ward.partnerUserId);
   const [sessionId, setSessionId] = useState(makeSessionId);
-  // 대화창(sessionId)마다 이미 보낸 문장 - 빠른 질문에서 뺀다. 상담 내용이라 브라우저 저장소에 남기지 않는다(새로고침하면 비워진다).
+  // 대화창(sessionId)마다 이미 보낸 문장 - 빠른 질문에서 뺀다. 대화와 함께 탭 저장소에 둔다(아래 conversation 저장).
   const [sentBySession, setSentBySession] = useState<Record<string, string[]>>({});
   const [messages, setMessages] = useState<ChatMessage[]>(() => [buildWelcomeMessage()]);
+  // 메뉴를 오가도 대화가 이어지게 탭 저장소(sessionStorage)에 사용자·역할·피보호자별로 둔다(2026-11-11).
+  // 보호자는 피보호자 목록을 받기 전에는 누구의 상담인지 모르므로 저장·복원하지 않는다.
+  // conversationOwner = 지금 화면의 대화가 어느 키의 것인지. 피보호자를 바꾸는 사이 앞 대화가 새 키에 저장되지 않게 둘을 비교한다.
+  const accountId = getAccessTokenSubject();
+  const conversationId =
+    accountId && !waitingWards
+      ? conversationKey(isGuardian ? 'GUARDIAN' : 'WARD', accountId, isGuardian ? selectedWard?.partnerUserId : null)
+      : null;
+  const [conversationOwner, setConversationOwner] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [fallback, setFallback] = useState(false);
@@ -180,6 +191,46 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
   sendingRef.current = sending;
   sessionRef.current = sessionId;
+  const welcomeRef = useRef(() => buildWelcomeMessage());
+  welcomeRef.current = () => buildWelcomeMessage(isGuardian ? selectedWard?.partnerName : profile?.name, isGuardian);
+
+  // 대화 키가 정해지거나 바뀌면(첫 진입·피보호자 바꾸기) 저장한 대화를 불러오고, 없으면 새 대화창으로 시작한다.
+  useEffect(() => {
+    if (!conversationId || conversationId === conversationOwner) return;
+    const saved = loadConversation(conversationId);
+    if (saved) {
+      const last = saved.messages[saved.messages.length - 1];
+      // 답을 받기 전에 화면을 옮겼으면 그 답은 이 화면에 없다 - 그렇다고 알린다(답은 서버 상담 기록에 남는다)
+      const restored =
+        last?.role === 'user' && !last.id.startsWith(NAV_MESSAGE_PREFIX)
+          ? [
+              ...saved.messages,
+              {
+                id: makeId(),
+                role: 'assistant' as const,
+                content: '답을 받기 전에 화면을 옮겨서 답을 보여 드리지 못했어요. 다시 물어봐 주세요.',
+                timestamp: new Date().toISOString(),
+                failed: true,
+              },
+            ]
+          : saved.messages;
+      setSessionId(saved.sessionId);
+      setSentBySession({ [saved.sessionId]: saved.sent });
+      setMessages(restored);
+    } else if (conversationOwner !== null) {
+      setSessionId(makeSessionId());
+      setSentBySession({});
+      setMessages([welcomeRef.current()]);
+    }
+    setConversationOwner(conversationId);
+  }, [conversationId, conversationOwner]);
+
+  // 대화가 바뀔 때마다 저장한다. 첫 인사만 있으면 저장하지 않는다(새 대화·아직 묻지 않음).
+  useEffect(() => {
+    if (!conversationOwner || conversationOwner !== conversationId) return;
+    if (!messages.some(message => message.id !== 'welcome')) return;
+    saveConversation(conversationOwner, { sessionId, messages, sent: sentBySession[sessionId] ?? [] });
+  }, [conversationId, conversationOwner, messages, sessionId, sentBySession]);
 
   // 말로 입력: 받은 글자는 입력창에만 채운다(자동 전송 안 함). 쓰던 글이 있으면 한 칸 띄워 뒤에 붙인다.
   // 피보호자 예약 중 접힌 입력창이면 펼친다. 대화창이 바뀌면 cancel()로 버린다.
@@ -244,7 +295,6 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const sentTexts = new Set(sentBySession[sessionId] ?? []);
   // 서버는 버튼·날짜·지역 선택도 "[선택] field: value" 형식의 별도 기록으로 남긴다.
   // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
-  const historyItems = Array.isArray(chatLogs) ? chatLogs.filter(log => !isUiSelectionLog(log.message)) : [];
   const send = useCallback(
     async (
       text: string,
@@ -353,7 +403,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   // 예약·병원 가는 날 화면은 전역으로 고른 피보호자(selectedWardStore)로 열린다 - 따로 넘기지 않는다
   function leaveTo(text: string, path: string) {
     if (sendingRef.current || reservationTimerRef.current || waitingWards) return;
-    setMessages(prev => [...prev, { id: makeId(), role: 'user', content: text, timestamp: new Date().toISOString() }]);
+    // AI에 보내지 않는 말풍선 - 돌아왔을 때 "답을 받기 전에 옮겼다"로 잘못 알리지 않게 표시한다
+    setMessages(prev => [...prev, { id: `${NAV_MESSAGE_PREFIX}${makeId()}`, role: 'user', content: text, timestamp: new Date().toISOString() }]);
     reservationTimerRef.current = setTimeout(() => {
       reservationTimerRef.current = null;
       router.push(path);
@@ -379,6 +430,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     if (sendingRef.current) return;
     cancelPendingNavigation();
     voice.cancel();
+    if (conversationOwner) removeConversation(conversationOwner);
     setSessionId(makeSessionId());
     setSentBySession({});
     setMessages([buildWelcomeMessage(isGuardian ? selectedWard?.partnerName : profile?.name, isGuardian)]);
@@ -386,17 +438,22 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     setFallback(false);
   }
 
+  /** [새 대화] - 주고받은 대화가 있으면 한 번 묻는다(지난 대화는 서버 상담 기록에 남는다). */
+  function handleNewConversation() {
+    if (sendingRef.current) return;
+    const hasConversation = messages.some(message => message.id !== 'welcome');
+    if (hasConversation && !window.confirm('지금 대화를 닫고 새로 시작할까요?')) return;
+    restartConversation();
+  }
+
   function handleWardSelect(wardId: string) {
     if (wardId === selectedWard?.partnerUserId) return;
     // 답을 기다리는 중에는 바꾸지 않는다 - 그 답은 지금 피보호자에 대한 것이다(점검 🟠).
     if (sendingRef.current) return;
     cancelPendingNavigation();
-    const ward = activeWards.find(item => item.partnerUserId === wardId);
     voice.cancel();
+    // 대화창은 위 conversationId 효과가 바꾼다 - 그 피보호자와 나누던 대화가 있으면 이어서, 없으면 새로
     setSelectedWardId(wardId);
-    setSessionId(makeSessionId());
-    setSentBySession({});
-    setMessages([buildWelcomeMessage(ward?.partnerName, true)]);
     setInput('');
     setFallback(false);
   }
@@ -544,7 +601,12 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     return (
       <div className={`${styles.chatPage} ${styles.wardVariant}`}>
         <section className={styles.shell}>
-          <h1 className={styles.wardTitle}>AI 의료 챗봇</h1>
+          <div className={styles.wardTitleRow}>
+            <h1 className={styles.wardTitle}>AI 의료 챗봇</h1>
+            <button type="button" className={styles.wardNewChatButton} onClick={handleNewConversation} disabled={sending}>
+              새 대화
+            </button>
+          </div>
           <div className={`${styles.wardBody} ${typingWithKeyboard ? styles.typingWithKeyboard : ''}`}>
             <div className={styles.wardChatCard}>
               {board}
@@ -611,6 +673,14 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             </div>
           </div>
           <div className={styles.headerActions}>
+            <button
+              type="button"
+              className={styles.historyButton}
+              onClick={handleNewConversation}
+              disabled={sending}
+            >
+              새 대화
+            </button>
             <button type="button" className={styles.historyButton} onClick={() => void handleOpenHistory()}>
               <Icon name="message" size={16} decorative />
               상담 기록
@@ -677,70 +747,15 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       </section>
 
       {historyOpen && (
-        <div className={styles.historyOverlay} role="presentation" onClick={() => setHistoryOpen(false)}>
-          <section
-            className={styles.historyDialog}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="chat-history-title"
-            onClick={event => event.stopPropagation()}
-          >
-            <header className={styles.historyHeader}>
-              <div>
-                <h2 id="chat-history-title">내 상담 기록</h2>
-                <p>최근 상담 내용을 확인할 수 있어요.</p>
-              </div>
-              <button
-                type="button"
-                className={styles.historyCloseButton}
-                onClick={() => setHistoryOpen(false)}
-                aria-label="상담 기록 닫기"
-              >
-                ×
-              </button>
-            </header>
-
-            <div className={styles.historyList}>
-              {isLogsLoading ? (
-                <p className={styles.historyState}>상담 기록을 불러오는 중입니다.</p>
-              ) : logsError ? (
-                <p className={styles.historyState}>{logsError}</p>
-              ) : historyItems.length === 0 ? (
-                <p className={styles.historyState}>아직 상담 기록이 없습니다.</p>
-              ) : (
-                historyItems.map((log, index) => {
-                  // 경고는 문장마다 줄 머리 이모지를 뗀 뒤 잇는다(이은 뒤 떼면 둘째 문장 앞 이모지가 남는다 - 점검 L-1)
-                  const warning = getHistoryWarning(
-                    Array.isArray(log.emergencyWarning)
-                      ? log.emergencyWarning.map(item => (typeof item === 'string' ? stripLeadEmoji(item) : item))
-                      : log.emergencyWarning,
-                  );
-                  return (
-                    <article key={log.id ?? `${log.createdAt ?? 'log'}-${index}`} className={styles.historyItem}>
-                      <time>{formatLogDate(log.createdAt)}</time>
-                      <strong>{log.message || '선택형 상담'}</strong>
-                      {/* 답은 문장마다 줄을 나눠 보여 주고 줄 머리 이모지는 뗀다(표시용 - 원문은 그대로, 3줄 미리보기는 유지) */}
-                      {log.reply && <p>{stripLeadEmoji(breakSentences(log.reply))}</p>}
-                      {warning && <p className={styles.historyWarning}>{warning}</p>}
-                    </article>
-                  );
-                })
-              )}
-            </div>
-          </section>
-        </div>
+        <ChatHistoryDialog
+          logs={chatLogs}
+          loading={isLogsLoading}
+          error={logsError}
+          onClose={() => setHistoryOpen(false)}
+          userImageUrl={profile?.profileImage}
+          userName={profile?.name}
+        />
       )}
     </div>
   );
-}
-
-function formatLogDate(value?: string) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
-}
-
-function isUiSelectionLog(message?: string) {
-  return /^\s*\[선택\]\s*/.test(message ?? '');
 }
