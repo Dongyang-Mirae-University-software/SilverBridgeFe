@@ -85,9 +85,15 @@ export function HospitalDateTimeStep(props: Props) {
                 disabled={closed}
                 onClick={() => props.onDate(day.iso)}
               >
-                <span className={cx('weekday')}>{day.weekday}</span>
-                <span className={cx('dayNumber')}>{day.day}</span>
-                {closed && <span className={cx('dayOff')}>휴진</span>}
+                {/* 휴진일은 요일·날짜 없이 "휴진"만 보인다(날짜는 aria-label에 남겨 화면 낭독기에는 읽힌다) */}
+                {closed ? (
+                  <span className={cx('dayOff')}>휴진</span>
+                ) : (
+                  <>
+                    <span className={cx('weekday')}>{day.weekday}</span>
+                    <span className={cx('dayNumber')}>{day.day}</span>
+                  </>
+                )}
               </button>
             );
           })}

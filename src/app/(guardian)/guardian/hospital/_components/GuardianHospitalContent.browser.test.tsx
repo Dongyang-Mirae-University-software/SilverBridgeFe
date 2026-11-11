@@ -244,6 +244,8 @@ describe('GuardianHospitalContent (Chrome)', () => {
     const closedDay = screen.getByRole('button', { name: `${formatDateShort(TOMORROW)} 휴진` });
     await expect.element(closedDay).toBeDisabled();
     await expect.element(closedDay).toMatchTextContent('휴진');
+    // 요일·날짜 숫자 없이 "휴진"만 보인다(날짜는 aria-label로만)
+    expect(closedDay.element().textContent).toBe('휴진');
     // 칸 전체를 채워 한눈에 보이게 한다(흰 바탕이 아님)
     expect(getComputedStyle(closedDay.element()).backgroundColor).not.toBe('rgb(255, 255, 255)');
 
