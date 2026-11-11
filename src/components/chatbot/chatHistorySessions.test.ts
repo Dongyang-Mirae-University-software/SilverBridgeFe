@@ -53,6 +53,16 @@ describe('상담 기록 대화창 묶기 (2026-11-11)', () => {
     expect(of('w')).toMatchObject({ wardId: 'ward-1', withSelf: false });
   });
 
+  it('한 대화창에서 두 피보호자를 예약하면 둘 다 처음 나온 순서로 남긴다 (점검 M-2)', () => {
+    const [session] = groupChatSessions([
+      { id: 1, sessionId: 'm', wardId: null, message: '병원 예약하고 싶어요', createdAt: '2026-11-11T01:00:00Z' },
+      { id: 2, sessionId: 'm', wardId: 'ward-1', message: '서울', createdAt: '2026-11-11T01:01:00Z' },
+      { id: 3, sessionId: 'm', wardId: 'ward-2', message: '부산', createdAt: '2026-11-11T01:02:00Z' },
+      { id: 4, sessionId: 'm', wardId: 'ward-1', message: '고마워요', createdAt: '2026-11-11T01:03:00Z' },
+    ]);
+    expect(session).toMatchObject({ wardId: 'ward-1', withSelf: true, wardIds: ['ward-1', 'ward-2'] });
+  });
+
   it('첫 질문이 선택지 턴뿐이면 "선택형 상담"', () => {
     expect(groupChatSessions([{ id: 1, sessionId: 'a', message: '[선택] date: 2026-11-12' }])[0].title).toBe(
       '선택형 상담',

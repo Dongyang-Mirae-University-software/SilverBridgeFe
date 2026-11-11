@@ -433,6 +433,94 @@ describe('보호자 챗봇 예약', () => {
   });
 });
 
+describe('보호자 대리 예약 기능 점검 반영 (2026-11-11)', () => {
+  beforeEach(() => {
+    api.role.mockReturnValue('GUARDIAN');
+  });
+
+  const NOT_CONNECTED = { response: { status: 403, data: { code: 'CHAT_WARD_NOT_CONNECTED' } } };
+
+  it('대리 예약 중 연결이 끊겨 거절되면 안내하고 예약 패널을 닫으며, 다음 입력부터 wardId 를 싣지 않는다 (M-1)', async () => {
+    await startGuardianReservationFor();
+    api.sendChatMessage.mockRejectedValueOnce(NOT_CONNECTED);
+    await typeAndSend('서울이요');
+    await expect.element(page.getByText(/연결되어 있지 않아 예약을 이어갈 수 없어요/)).toBeVisible();
+    expect(contextOf(2)).toEqual({ role: 'GUARDIAN', wardId: 'ward-2' });
+    await expect.element(page.getByRole('region', { name: '예약 진행' })).not.toBeInTheDocument();
+    await expect.element(page.getByRole('region', { name: '추천 질문' })).toBeVisible();
+
+    api.sendChatMessage.mockResolvedValueOnce(GENERAL);
+    await typeAndSend('허리가 아파요');
+    await expect.element(page.getByText('좋아요.')).toBeVisible();
+    expect(contextOf(3)).toEqual({ role: 'GUARDIAN' });
+  });
+
+  it('화면을 옮겼다 돌아와도 끊긴 상태는 이어진다 - 저장한 대화에서 다시 싣지 않는다 (M-1)', async () => {
+    const first = await startGuardianReservationFor();
+    api.sendChatMessage.mockRejectedValueOnce(NOT_CONNECTED);
+    await typeAndSend('서울이요');
+    await expect.element(page.getByText(/연결되어 있지 않아 예약을 이어갈 수 없어요/)).toBeVisible();
+    await first.unmount();
+
+    await renderChat(<ChatbotContent />);
+    await expect.element(page.getByText(/연결되어 있지 않아 예약을 이어갈 수 없어요/)).toBeVisible();
+    api.sendChatMessage.mockResolvedValueOnce(GENERAL);
+    await typeAndSend('허리가 아파요');
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(4));
+    expect(contextOf(3)).toEqual({ role: 'GUARDIAN' });
+  });
+
+  it('그 밖의 실패(네트워크 등)는 예약을 이어 간다 - 다시 보내면 같은 wardId (M-1 경계)', async () => {
+    await startGuardianReservationFor();
+    api.sendChatMessage.mockRejectedValueOnce(new Error('network'));
+    await typeAndSend('서울이요');
+    await expect.element(page.getByText('잠시 후 다시 시도해 주세요.')).toBeVisible();
+    await expect.element(page.getByRole('region', { name: '예약 진행' })).toBeVisible();
+
+    api.sendChatMessage.mockResolvedValueOnce(ASK_DATE);
+    await typeAndSend('서울이요');
+    await expect.element(page.getByText('언제 가실까요?')).toBeVisible();
+    expect(contextOf(3)).toEqual({ role: 'GUARDIAN', wardId: 'ward-2' });
+  });
+
+  it('지난 답의 카드 버튼은 그 답을 받은 요청의 wardId 를 싣는다 - 본인 답 카드는 없음, 대리 답 카드는 그 피보호자 (L-2)', async () => {
+    const search = (name: string) => ({
+      reply: '병원을 찾았어요.',
+      engine: 'ai',
+      type: 'tool_result',
+      intent: 'hospital_reservation',
+      tool: 'search_hospital',
+      toolData: [{ id: name, name, department: '정형외과', address: '서울' }],
+    });
+    // 본인 답(병원 검색) → 예약 칩 → 대상 질문 → 이철수 → 대리 답(병원 검색)
+    api.sendChatMessage
+      .mockResolvedValueOnce(search('본인병원'))
+      .mockResolvedValueOnce(ASK_TARGET)
+      .mockResolvedValueOnce(search('대리병원'));
+    await renderChat(<ChatbotContent />);
+    await typeAndSend('근처 정형외과 찾아줘');
+    await expect.element(page.getByText('본인병원')).toBeVisible();
+    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
+    await userEvent.click(page.getByRole('button', { name: '이철수(아들)' }));
+    await expect.element(page.getByText('대리병원')).toBeVisible();
+    expect(contextOf(1)).toEqual({ role: 'GUARDIAN' });
+    expect(contextOf(2)).toEqual({ role: 'GUARDIAN', wardId: 'ward-2' });
+
+    const reserve = page.getByRole('button', { name: '예약하기' });
+    api.sendChatMessage.mockResolvedValueOnce(GENERAL);
+    await userEvent.click(reserve.nth(0));
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(4));
+    expect(api.sendChatMessage.mock.calls[3][0].uiSelection).toEqual({ field: 'hospital_confirm', value: '본인병원' });
+    expect(contextOf(3)).toEqual({ role: 'GUARDIAN' });
+
+    api.sendChatMessage.mockResolvedValueOnce(GENERAL);
+    await userEvent.click(reserve.nth(1));
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(5));
+    expect(api.sendChatMessage.mock.calls[4][0].uiSelection).toEqual({ field: 'hospital_confirm', value: '대리병원' });
+    expect(contextOf(4)).toEqual({ role: 'GUARDIAN', wardId: 'ward-2' });
+  });
+});
+
 describe('예약 화면 점검 반영(2026-11-04)', () => {
   it('예약 선택 뒤 보내기에 실패하면 안내를 보이고 같은 단계 선택지를 패널에 남겨 다시 고를 수 있다', async () => {
     api.role.mockReturnValue('WARD');

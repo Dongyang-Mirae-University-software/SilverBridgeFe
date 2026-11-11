@@ -18,6 +18,8 @@ export interface ChatHistorySession {
   wardId?: string | null;
   /** 피보호자 턴과 본인 턴(wardId 없음)이 한 대화창에 섞였다 - 본인 상담 중 대리 예약 */
   withSelf?: boolean;
+  /** 이 대화창에 나온 피보호자 전부(처음 나온 순서) - 한 대화에서 두 분을 예약할 수 있다(점검 M-2). wardId 는 그 첫 번째 */
+  wardIds?: string[];
 }
 
 const SELECTION = /^\s*\[선택\]\s*/;
@@ -85,22 +87,23 @@ export function groupChatSessions(logs: unknown): ChatHistorySession[] {
 }
 
 /**
- * 대화창의 상담 대상. 피보호자 턴이 있으면 그 피보호자(첫 번째), 본인 턴만 있으면 null, 칸이 없으면 undefined.
- * 대리 예약은 예약이 끝날 때까지 한 피보호자만 실으므로 첫 피보호자로 충분하다.
+ * 대화창의 상담 대상. 피보호자 턴이 있으면 첫 피보호자(+ 나온 피보호자 전부), 본인 턴만 있으면 null, 칸이 없으면 undefined.
+ * 예약 하나는 한 피보호자로 끝까지 가지만, 같은 대화에서 예약을 다시 시작해 다른 분을 고를 수 있다(점검 M-2).
  */
-function targetOf(logs: ChatLogItem[]): { wardId?: string | null; withSelf?: boolean } {
-  let wardId: string | undefined;
+function targetOf(logs: ChatLogItem[]): { wardId?: string | null; withSelf?: boolean; wardIds?: string[] } {
+  const wardIds: string[] = [];
   let self = false;
   let known = false;
   for (const log of logs) {
     if (!('wardId' in log)) continue;
     known = true;
-    if (typeof log.wardId === 'string' && log.wardId) wardId ??= log.wardId;
-    else self = true;
+    if (typeof log.wardId === 'string' && log.wardId) {
+      if (!wardIds.includes(log.wardId)) wardIds.push(log.wardId);
+    } else self = true;
   }
   if (!known) return {};
-  if (!wardId) return { wardId: null };
-  return { wardId, withSelf: self };
+  if (wardIds.length === 0) return { wardId: null };
+  return { wardId: wardIds[0], withSelf: self, wardIds };
 }
 
 const RISK_LEVELS = new Set(['low', 'medium', 'high']);

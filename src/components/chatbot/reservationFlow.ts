@@ -68,6 +68,18 @@ export function textWardId(last: ChatMessage | undefined): string | undefined {
   return last.requestWardId;
 }
 
+/** BE: 실은 wardId 가 지금 ACTIVE 연결이 아니면 403 이 코드로 답한다(BE #472). */
+const WARD_NOT_CONNECTED_CODE = 'CHAT_WARD_NOT_CONNECTED';
+
+/**
+ * 대리 예약 요청이 "연결되지 않은 피보호자"로 거절됐는가. 이 경우 같은 wardId 를 다시 실어도 같은 결과라
+ * 이어 싣기를 끊는다(2026-11-11 기능 점검 M-1). axios 에 기대지 않고 응답 code 만 본다.
+ */
+export function isWardNotConnected(error: unknown): boolean {
+  const code = (error as { response?: { data?: { code?: unknown } } } | null | undefined)?.response?.data?.code;
+  return code === WARD_NOT_CONNECTED_CODE;
+}
+
 /** 예약 목록 보기는 AI로 보내지 않고 역할별 병원 가는 날 화면으로 간다. */
 export function isShowList(field: string, value: string) {
   return field === FOLLOWUP_FIELD && value === SHOW_LIST_VALUE;

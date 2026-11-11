@@ -22,25 +22,33 @@ type Filter = 'all' | 'self' | `ward:${string}`;
 
 function noop() {}
 
-type Target = Pick<ChatHistorySession, 'wardId' | 'withSelf'>;
+type Target = Pick<ChatHistorySession, 'wardId' | 'withSelf' | 'wardIds'>;
+
+/** 대화창에 나온 피보호자 전부(옛 형태는 wardId 하나). */
+function wardsOf({ wardId, wardIds }: Target): string[] {
+  if (wardIds && wardIds.length > 0) return wardIds;
+  return typeof wardId === 'string' ? [wardId] : [];
+}
 
 /**
  * 기록의 상담 대상 이름. 알 수 없으면(옛 서버) null - 표시하지 않는다.
  * 본인 상담 중 피보호자 예약을 했으면 "○○ 님 예약", 피보호자 턴만 있으면(선택 칸이 있던 때 기록) "○○ 님 상담".
  */
-function targetLabel({ wardId, withSelf }: Target, wards: { id: string; name: string }[]) {
-  if (wardId === undefined) return null;
-  if (wardId === null) return '내 상담';
-  const kind = withSelf ? '예약' : '상담';
-  const ward = wards.find(item => item.id === wardId);
-  return ward ? `${ward.name} 님 ${kind}` : `연결이 끝난 피보호자 ${kind}`;
+function targetLabel(target: Target, wards: { id: string; name: string }[]) {
+  if (target.wardId === undefined) return null;
+  if (target.wardId === null) return '내 상담';
+  const kind = target.withSelf ? '예약' : '상담';
+  const [first, ...others] = wardsOf(target);
+  const ward = wards.find(item => item.id === first);
+  const more = others.length > 0 ? ` 외 ${others.length}명` : '';
+  return ward ? `${ward.name} 님${more} ${kind}` : `연결이 끝난 피보호자${more} ${kind}`;
 }
 
 /** 본인 턴이 섞인 대화창은 "내 상담"에도, 그 피보호자에도 보인다. */
-function matches(filter: Filter, { wardId, withSelf }: Target) {
+function matches(filter: Filter, target: Target) {
   if (filter === 'all') return true;
-  if (filter === 'self') return wardId === null || Boolean(withSelf);
-  return wardId === filter.slice('ward:'.length);
+  if (filter === 'self') return target.wardId === null || Boolean(target.withSelf);
+  return wardsOf(target).includes(filter.slice('ward:'.length));
 }
 
 export function formatLogDate(value?: string) {
@@ -71,7 +79,7 @@ export default function ChatHistoryDialog({
     ? [
         { key: 'all', label: '전체' },
         ...targetWards
-          .filter(ward => sessions.some(session => session.wardId === ward.id))
+          .filter(ward => sessions.some(session => wardsOf(session).includes(ward.id)))
           .map(ward => ({ key: `ward:${ward.id}` as Filter, label: ward.name })),
         ...(sessions.some(session => matches('self', session)) ? [{ key: 'self' as Filter, label: '내 상담' }] : []),
       ]

@@ -188,6 +188,28 @@ describe('보호자 AI 의료 챗봇', () => {
     expect(items.elements()).toHaveLength(1);
   });
 
+  it('한 대화창에서 두 피보호자를 예약하면 "○○ 님 외 1명 예약"으로, 두 피보호자 칩 모두에 보인다 (점검 M-2)', async () => {
+    api.wards.mockReturnValue([WARD, WARD_2]);
+    api.getChatLogs.mockResolvedValue([
+      { id: 3, sessionId: 's-m', wardId: 'ward-2', message: '부산', reply: 'c', createdAt: '2026-11-11T03:00:00Z' },
+      { id: 2, sessionId: 's-m', wardId: 'ward-1', message: '서울', reply: 'b', createdAt: '2026-11-11T02:00:00Z' },
+      { id: 1, sessionId: 's-m', wardId: null, message: '병원 예약하고 싶어요', reply: 'a', createdAt: '2026-11-11T01:00:00Z' },
+    ]);
+    await renderChat(<ChatbotContent />);
+    await page.getByRole('button', { name: '상담 기록' }).click();
+
+    const dialog = page.getByRole('dialog');
+    const group = dialog.getByRole('group', { name: '누구의 상담인지 고르기' });
+    await expect.element(group).toBeVisible();
+    expect(group.getByRole('button').elements().map(el => el.textContent)).toEqual(['전체', '김영희', '이철수', '내 상담']);
+    const items = dialog.getByRole('button', { name: /대화 보기/ });
+    expect(items.elements()[0].textContent).toContain('김영희 님 외 1명 예약');
+    await group.getByRole('button', { name: '이철수' }).click();
+    expect(items.elements()).toHaveLength(1);
+    await group.getByRole('button', { name: '김영희' }).click();
+    expect(items.elements()).toHaveLength(1);
+  });
+
   it('서버가 상담 대상 칸을 주지 않으면(옛 서버) 나누지 않고 한 목록으로 보인다 (2026-11-11)', async () => {
     api.wards.mockReturnValue([WARD, WARD_2]);
     api.getChatLogs.mockResolvedValue([
