@@ -1,5 +1,6 @@
 // 챗봇 병원 예약 흐름 화면 테스트(2026-11-04) - 선택지·결과 카드를 실제로 그린다(ChatbotContent 테스트는 둘을 비워 둔다).
-// 예약 중 칩 숨김·예약 진행 패널 / 끝나면 칩 복귀 / 말풍선엔 label / 목록 보기는 병원 가는 날 화면 / 보호자 피보호자 선택.
+// 예약 중 칩 숨김·예약 진행 패널 / 끝나면 칩 복귀 / 말풍선엔 label / 목록 보기는 병원 가는 날 화면 /
+// 보호자 예약 대상 선택(2026-11-11 - AI가 묻고, 고른 피보호자를 예약이 끝날 때까지 context.wardId 로 싣는다).
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
@@ -31,23 +32,6 @@ vi.mock('@/utils/auth/userProfile', () => ({ getUserProfileData: (response: unkn
 vi.mock('@/lib/auth/tokenStore', () => ({ getAuthRole: api.role, getAccessTokenSubject: () => 'user-1' }));
 vi.mock('@/hooks/useActiveConnections', () => ({
   useGuardianActiveWards: (enabled: boolean) => ({ activeWards: enabled ? api.wards() : [], isLoading: false }),
-}));
-vi.mock('@/components/connections/WardSelectorTabs', () => ({
-  WardSelectorTabs: ({
-    wards,
-    onSelect,
-  }: {
-    wards: { wardId: string; wardName: string }[];
-    onSelect: (wardId: string) => void;
-  }) => (
-    <div>
-      {wards.map(ward => (
-        <button key={ward.wardId} type="button" onClick={() => onSelect(ward.wardId)}>
-          {ward.wardName}
-        </button>
-      ))}
-    </div>
-  ),
 }));
 vi.mock('@/components/Icon', () => ({ Icon: () => <span data-testid="icon" /> }));
 vi.mock('@/components/UserAvatar', () => ({ UserAvatar: () => <span data-testid="avatar" /> }));
@@ -137,6 +121,44 @@ const DONE = {
     ],
   },
 };
+
+// AI #255·#256: 보호자가 wardId 없이 예약을 시작하면 대상을 먼저 묻는다(보호자 본인 선택지는 없다)
+const ASK_TARGET = {
+  reply: '누구의 병원 예약인가요?',
+  engine: 'ai',
+  type: 'ui',
+  intent: 'hospital_reservation',
+  ui: {
+    kind: 'select',
+    field: 'reservation_patient',
+    label: '누구의 병원 예약인가요?',
+    options: [
+      { value: 'ward-1', label: '김영희(딸)' },
+      { value: 'ward-2', label: '이철수(아들)' },
+    ],
+  },
+};
+
+const GENERAL = { reply: '좋아요.', engine: 'ai', type: 'message', intent: 'general_chat' };
+
+/** 보호자: 예약 칩 → 대상 질문 → 이철수 선택 → 시·도 질문까지 */
+async function startGuardianReservationFor(label = '이철수(아들)') {
+  api.sendChatMessage.mockResolvedValueOnce(ASK_TARGET).mockResolvedValueOnce(ASK_SIDO);
+  const screen = await renderChat(<ChatbotContent />);
+  await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
+  await userEvent.click(page.getByRole('button', { name: label }));
+  await expect.element(page.getByText('어느 지역에서 찾을까요?')).toBeVisible();
+  return screen;
+}
+
+function contextOf(call: number) {
+  return api.sendChatMessage.mock.calls[call][0].context;
+}
+
+async function typeAndSend(text: string) {
+  await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), text);
+  await userEvent.click(page.getByRole('button', { name: '보내기' }));
+}
 
 function renderChat(node: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -284,21 +306,96 @@ describe('보호자 챗봇 예약', () => {
     api.role.mockReturnValue('GUARDIAN');
   });
 
-  it('고른 피보호자로 대리 상담하고, 예약 중에는 칩 줄 대신 예약 진행 패널(버튼 48px 이상)을 보인다', async () => {
-    api.sendChatMessage.mockResolvedValueOnce(DEPARTMENT_ADVICE).mockResolvedValueOnce(ASK_SIDO);
+  it('예약을 시작하면 대상 질문을 예약 진행 패널에 보이고, 고른 피보호자를 그 턴부터 예약이 끝날 때까지 싣는다 (2026-11-11)', async () => {
+    api.sendChatMessage.mockResolvedValueOnce(ASK_TARGET);
     await renderChat(<ChatbotContent />);
-    await userEvent.click(page.getByRole('button', { name: '이철수' }));
-    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
-    await userEvent.click(page.getByRole('button', { name: '가까운 정형외과 찾기' }));
-    await expect.element(page.getByText('어느 지역에서 찾을까요?')).toBeVisible();
-
-    expect(api.sendChatMessage.mock.calls[1][0].context).toEqual({ role: 'GUARDIAN', wardId: 'ward-2' });
-    await expect.element(page.getByRole('button', { name: '병원 예약하고 싶어요' })).not.toBeInTheDocument();
+    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
     await expect.element(page.getByRole('region', { name: '예약 진행' })).toBeVisible();
-    const seoul = page.getByRole('button', { name: '서울' }).element() as HTMLElement;
-    expect(seoul.getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
+    expect(contextOf(0)).toEqual({ role: 'GUARDIAN' });
+    await expect.element(page.getByRole('button', { name: '병원 예약하고 싶어요' })).not.toBeInTheDocument();
+    const pick = page.getByRole('button', { name: '이철수(아들)' });
+    expect((pick.element() as HTMLElement).getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
+
+    // 선택 턴: uiSelection 과 같은 값을 context.wardId 로(BE는 둘이 다르면 400)
+    api.sendChatMessage.mockResolvedValueOnce(ASK_SIDO);
+    await userEvent.click(pick);
+    await expect.element(page.getByText('어느 지역에서 찾을까요?')).toBeVisible();
+    expect(api.sendChatMessage.mock.calls[1][0].uiSelection).toEqual({ field: 'reservation_patient', value: 'ward-2' });
+    expect(contextOf(1)).toEqual({ role: 'GUARDIAN', wardId: 'ward-2' });
+    expect(page.getByText('이철수(아들)', { exact: true }).elements().length).toBeGreaterThan(0);
+    await expect.element(page.getByText('ward-2')).not.toBeInTheDocument();
+
+    // 예약 중 글 입력: 직전 답이 wardId 요청의 예약 답이라 싣는다
+    api.sendChatMessage.mockResolvedValueOnce(ASK_DATE);
+    await typeAndSend('서울이요');
+    await expect.element(page.getByText('언제 가실까요?')).toBeVisible();
+    expect(contextOf(2)).toEqual({ role: 'GUARDIAN', wardId: 'ward-2' });
+
+    // 예약 중 버튼: 그 버튼이 달린 답을 받은 요청의 wardId
+    api.sendChatMessage.mockResolvedValueOnce(DONE);
+    await userEvent.click(page.getByRole('button', { name: '내일 11월 5일(목)' }));
+    await expect.element(page.getByRole('region', { name: '예약 완료' })).toBeVisible();
+    expect(contextOf(3)).toEqual({ role: 'GUARDIAN', wardId: 'ward-2' });
+
+    // 완료(make_appointment) 뒤 글 입력: 예약이 끝났으니 본인 상담
+    api.sendChatMessage.mockResolvedValueOnce(GENERAL);
+    await typeAndSend('고마워요');
+    await expect.element(page.getByText('좋아요.')).toBeVisible();
+    expect(contextOf(4)).toEqual({ role: 'GUARDIAN' });
     // 보호자 입력창은 그대로 둔다
     await expect.element(page.getByRole('textbox', { name: '궁금한 점 입력' })).toBeVisible();
+  });
+
+  it('예약 흐름이 아닌 답(intent 일반)이 오면 다음 글 입력부터 싣지 않는다 (2026-11-11)', async () => {
+    await startGuardianReservationFor();
+    api.sendChatMessage.mockResolvedValueOnce(GENERAL);
+    await typeAndSend('그만할게요');
+    await expect.element(page.getByText('좋아요.')).toBeVisible();
+    expect(contextOf(2)).toEqual({ role: 'GUARDIAN', wardId: 'ward-2' });
+
+    api.sendChatMessage.mockResolvedValueOnce(GENERAL);
+    await typeAndSend('허리가 아파요');
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(4));
+    expect(contextOf(3)).toEqual({ role: 'GUARDIAN' });
+  });
+
+  it('코드 값(__self__) 선택지는 피보호자가 아니라 싣지 않는다 (원래 계약 값, AI는 지금 내지 않는다)', async () => {
+    api.sendChatMessage.mockResolvedValueOnce({
+      ...ASK_TARGET,
+      ui: { ...ASK_TARGET.ui, options: [{ value: '__self__', label: '나' }, ...ASK_TARGET.ui.options] },
+    });
+    await renderChat(<ChatbotContent />);
+    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
+    api.sendChatMessage.mockResolvedValueOnce(GENERAL);
+    await userEvent.click(page.getByRole('button', { name: '나', exact: true }));
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(2));
+    expect(contextOf(1)).toEqual({ role: 'GUARDIAN' });
+  });
+
+  it('[새 대화]를 열면 고른 예약 대상이 풀린다 (2026-11-11)', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await startGuardianReservationFor();
+    await userEvent.click(page.getByRole('button', { name: '새 대화' }));
+    await expect.element(page.getByText('어느 지역에서 찾을까요?')).not.toBeInTheDocument();
+
+    api.sendChatMessage.mockResolvedValueOnce(GENERAL);
+    await typeAndSend('서울이요');
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(3));
+    expect(contextOf(2)).toEqual({ role: 'GUARDIAN' });
+    expect(api.sendChatMessage.mock.calls[2][0].sessionId).not.toBe(api.sendChatMessage.mock.calls[1][0].sessionId);
+    confirm.mockRestore();
+  });
+
+  it('화면을 옮겼다 돌아와도 예약 중이면 고른 대상을 이어 싣는다 (2026-11-11)', async () => {
+    const first = await startGuardianReservationFor();
+    await first.unmount();
+
+    await renderChat(<ChatbotContent />);
+    await expect.element(page.getByText('어느 지역에서 찾을까요?')).toBeVisible();
+    api.sendChatMessage.mockResolvedValueOnce(ASK_DATE);
+    await userEvent.click(page.getByRole('button', { name: '서울' }));
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(3));
+    expect(contextOf(2)).toEqual({ role: 'GUARDIAN', wardId: 'ward-2' });
   });
 
   it('전화번호 칸이 오면 보호자 문구로 안내한다', async () => {
@@ -308,35 +405,35 @@ describe('보호자 챗봇 예약', () => {
     await expect.element(page.getByText(/피보호자 전화번호가 등록되어 있지 않아/)).toBeVisible();
   });
 
-  it('[예약 목록 보기]는 /guardian/hospital 로 간다', async () => {
+  it('본인 예약 답의 [예약 목록 보기]는 /guardian/hospital 로 가고 전역 피보호자 선택은 건드리지 않는다', async () => {
     api.sendChatMessage.mockResolvedValueOnce(DONE);
     await renderChat(<ChatbotContent />);
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await userEvent.click(page.getByRole('button', { name: '예약 목록 보기' }));
     await expect.poll(() => api.push.mock.calls).toEqual([['/guardian/hospital']]);
+    expect(sessionStorage.getItem('careai_selected_ward_id')).toBeNull();
+  });
+
+  it('대리 예약 답의 [예약 목록 보기]는 그 피보호자를 전역 선택으로 맞춘 뒤 옮기고, 돌아와도 "답 없음" 안내가 없다 (2026-11-11)', async () => {
+    const first = await startGuardianReservationFor();
+    api.sendChatMessage.mockResolvedValueOnce(DONE);
+    await userEvent.click(page.getByRole('button', { name: '서울' }));
+    await expect.element(page.getByRole('region', { name: '예약 완료' })).toBeVisible();
+    const calls = api.sendChatMessage.mock.calls.length;
+
+    await userEvent.click(page.getByRole('button', { name: '예약 목록 보기' }));
+    await expect.poll(() => api.push.mock.calls).toEqual([['/guardian/hospital']]);
+    expect(sessionStorage.getItem('careai_selected_ward_id')).toBe('ward-2');
+    expect(api.sendChatMessage.mock.calls).toHaveLength(calls);
+    await first.unmount();
+
+    await renderChat(<ChatbotContent />);
+    await expect.element(page.getByRole('region', { name: '예약 완료' })).toBeVisible();
+    expect(page.getByText(/답을 받기 전에 화면을 옮겨서/).elements()).toHaveLength(0);
   });
 });
 
 describe('예약 화면 점검 반영(2026-11-04)', () => {
-  it('보호자: 답을 기다리는 중에는 피보호자를 바꾸지 않아 그 답이 다른 피보호자 대화에 붙지 않는다', async () => {
-    api.role.mockReturnValue('GUARDIAN');
-    let resolve: (value: unknown) => void = () => {};
-    api.sendChatMessage.mockImplementationOnce(() => new Promise(r => (resolve = r)));
-    await renderChat(<ChatbotContent />);
-    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
-
-    await userEvent.click(page.getByRole('button', { name: '이철수' }));
-    resolve(ASK_SIDO);
-    await expect.element(page.getByText('어느 지역에서 찾을까요?')).toBeVisible();
-    await expect.element(page.getByText(/김영희의 증상을/)).toBeVisible();
-
-    api.sendChatMessage.mockResolvedValueOnce(ASK_DATE);
-    await userEvent.click(page.getByRole('button', { name: '서울' }));
-    await expect.element(page.getByText('언제 가실까요?')).toBeVisible();
-    expect(api.sendChatMessage.mock.calls[1][0].context).toEqual({ role: 'GUARDIAN', wardId: 'ward-1' });
-    expect(api.sendChatMessage.mock.calls[1][0].sessionId).toBe(api.sendChatMessage.mock.calls[0][0].sessionId);
-  });
-
   it('예약 선택 뒤 보내기에 실패하면 안내를 보이고 같은 단계 선택지를 패널에 남겨 다시 고를 수 있다', async () => {
     api.role.mockReturnValue('WARD');
     await startWardReservation();

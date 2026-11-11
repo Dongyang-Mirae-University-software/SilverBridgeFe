@@ -1,5 +1,6 @@
 // AI 의료 챗봇 화면 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`)
-// 보호자·피보호자 화면은 일부러 다르게 보인다(2026-10-30): 보호자는 헤더·피보호자 선택·칩, 피보호자는 큰 빠른 질문 버튼.
+// 보호자·피보호자 화면은 일부러 다르게 보인다(2026-10-30): 보호자는 헤더·칩, 피보호자는 큰 빠른 질문 버튼.
+// 보호자 챗봇의 "상담할 피보호자" 선택 칸은 없앴다(2026-11-11) - 본인 상담으로 시작하고 예약 때 AI가 대상을 묻는다.
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
@@ -41,23 +42,6 @@ vi.mock('@/hooks/useActiveConnections', () => ({
     isError: enabled ? Boolean(api.wardsFailed()) : false,
     refetch: api.refetchWards,
   }),
-}));
-vi.mock('@/components/connections/WardSelectorTabs', () => ({
-  WardSelectorTabs: ({
-    wards,
-    onSelect,
-  }: {
-    wards: { wardId: string; wardName: string }[];
-    onSelect: (wardId: string) => void;
-  }) => (
-    <div>
-      {wards.map(ward => (
-        <button key={ward.wardId} type="button" onClick={() => onSelect(ward.wardId)}>
-          {ward.wardName}
-        </button>
-      ))}
-    </div>
-  ),
 }));
 vi.mock('@/components/Icon', () => ({ Icon: () => <span data-testid="icon" /> }));
 vi.mock('@/components/UserAvatar', () => ({ UserAvatar: () => <span data-testid="avatar" /> }));
@@ -111,14 +95,17 @@ beforeEach(() => {
 describe('보호자 AI 의료 챗봇', () => {
   beforeEach(() => api.role.mockReturnValue('GUARDIAN'));
 
-  it('헤더·상담 기록·피보호자 선택과 피보호자 이름 인사말을 보여 준다', async () => {
+  it('헤더·상담 기록과 보호자 본인 기준 인사말을 보여 준다 - 상담할 피보호자 선택 칸은 없다 (2026-11-11)', async () => {
+    api.wards.mockReturnValue([WARD, WARD_2]);
     await renderChat(<ChatbotContent />);
 
     await expect.element(page.getByRole('heading', { name: 'AI 의료 챗봇' })).toBeVisible();
     await expect.element(page.getByRole('button', { name: '상담 기록' })).toBeVisible();
-    await expect.element(page.getByRole('region', { name: '상담할 피보호자' })).toBeVisible();
-    await expect.element(page.getByText(/김영희의 증상을 말씀해 주시면/)).toBeVisible();
+    await expect.element(page.getByText(/연결된 분의 병원 예약도/)).toBeVisible();
     await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeVisible();
+    expect(page.getByRole('region', { name: '상담할 피보호자' }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: '이철수' }).elements()).toHaveLength(0);
+    expect(document.body.textContent).not.toContain('김영희');
   });
 
   it('상담 기록은 대화창 단위로 묶고, 누르면 그 대화의 질문·답 전체를 시간순으로 보인다 (2026-11-11)', async () => {
@@ -178,6 +165,27 @@ describe('보호자 AI 의료 챗봇', () => {
     await expect.element(group.getByRole('button', { name: '이철수' })).toHaveAttribute('aria-pressed', 'true');
     expect(items.elements()).toHaveLength(1);
     expect(items.elements()[0].textContent).toContain('아버지 기침');
+  });
+
+  it('본인 상담 중 피보호자 예약을 한 대화창은 "○○ 님 예약"으로, 그 피보호자와 내 상담 양쪽 칩에 보인다 (2026-11-11)', async () => {
+    api.wards.mockReturnValue([WARD, WARD_2]);
+    api.getChatLogs.mockResolvedValue([
+      { id: 2, sessionId: 's-m', wardId: 'ward-2', message: '[선택] reservation_patient: ward-2', reply: 'b', createdAt: '2026-11-11T02:00:00Z' },
+      { id: 1, sessionId: 's-m', wardId: null, message: '병원 예약하고 싶어요', reply: 'a', createdAt: '2026-11-11T01:00:00Z' },
+    ]);
+    await renderChat(<ChatbotContent />);
+    await page.getByRole('button', { name: '상담 기록' }).click();
+
+    const dialog = page.getByRole('dialog');
+    const group = dialog.getByRole('group', { name: '누구의 상담인지 고르기' });
+    await expect.element(group).toBeVisible();
+    expect(group.getByRole('button').elements().map(el => el.textContent)).toEqual(['전체', '이철수', '내 상담']);
+    const items = dialog.getByRole('button', { name: /대화 보기/ });
+    expect(items.elements()[0].textContent).toContain('이철수 님 예약');
+    await group.getByRole('button', { name: '내 상담' }).click();
+    expect(items.elements()).toHaveLength(1);
+    await group.getByRole('button', { name: '이철수' }).click();
+    expect(items.elements()).toHaveLength(1);
   });
 
   it('서버가 상담 대상 칸을 주지 않으면(옛 서버) 나누지 않고 한 목록으로 보인다 (2026-11-11)', async () => {
@@ -253,7 +261,7 @@ describe('보호자 AI 의료 챗봇', () => {
 
     await first.unmount();
     await renderChat(<ChatbotContent />);
-    await expect.element(page.getByText(/김영희의 증상을 말씀해 주시면/)).toBeVisible();
+    await expect.element(page.getByText(/연결된 분의 병원 예약도/)).toBeVisible();
     expect(page.getByText('정형외과 진료를 권해요.').elements()).toHaveLength(0);
     await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '다시 물어요');
     await userEvent.click(page.getByRole('button', { name: '보내기' }));
@@ -263,50 +271,53 @@ describe('보호자 AI 의료 챗봇', () => {
     confirm.mockRestore();
   });
 
-  it('피보호자마다 대화를 따로 이어 간다 - 바꿨다 돌아오면 그 피보호자 대화가 그대로 (2026-11-11)', async () => {
+  it('피보호자가 여럿이어도 대화는 하나로 이어 가고, 기본 요청에는 wardId 를 싣지 않는다 (2026-11-11)', async () => {
     api.wards.mockReturnValue([WARD, WARD_2]);
     api.sendChatMessage.mockResolvedValue(REPLY);
-    await renderChat(<ChatbotContent />);
+    const first = await renderChat(<ChatbotContent />);
     await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '무릎이 아파요');
     await userEvent.click(page.getByRole('button', { name: '보내기' }));
     await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
+    await first.unmount();
 
-    await page.getByRole('button', { name: '이철수' }).click();
-    await expect.element(page.getByText(/이철수의 증상을 말씀해 주시면/)).toBeVisible();
-    expect(page.getByText('정형외과 진료를 권해요.').elements()).toHaveLength(0);
-    await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '머리가 아파요');
-    await userEvent.click(page.getByRole('button', { name: '보내기' }));
-    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(2));
-
-    await page.getByRole('button', { name: '김영희' }).click();
+    await renderChat(<ChatbotContent />);
     await expect.element(page.getByText('무릎이 아파요', { exact: true })).toBeVisible();
-    expect(page.getByText('머리가 아파요', { exact: true }).elements()).toHaveLength(0);
     await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '언제 가요?');
     await userEvent.click(page.getByRole('button', { name: '보내기' }));
-    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(3));
-    const [a, b, c] = api.sendChatMessage.mock.calls.map(call => call[0]);
-    expect(b.sessionId).not.toBe(a.sessionId);
-    expect(c.sessionId).toBe(a.sessionId);
-    expect(c.context).toEqual({ role: 'GUARDIAN', wardId: 'ward-1' });
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(2));
+    const [a, b] = api.sendChatMessage.mock.calls.map(call => call[0]);
+    expect(b.sessionId).toBe(a.sessionId);
+    expect(a.context).toEqual({ role: 'GUARDIAN' });
+    expect(b.context).toEqual({ role: 'GUARDIAN' });
+    expect(Object.keys(sessionStorage).filter(key => key.startsWith('careai_chat_conv:'))).toEqual([
+      'careai_chat_conv:user-1:GUARDIAN:self',
+    ]);
   });
 
-  it('연결이 끝난 피보호자와 나눈 대화는 목록을 받으면 탭 저장소에서 지운다 (점검 L-3)', async () => {
+  it('선택 칸이 있던 때 피보호자별로 저장한 대화는 지우고 본인 대화는 남긴다 (2026-11-11)', async () => {
     const saved = JSON.stringify({ v: 1, savedAt: Date.now(), sessionId: 'old', messages: [{ id: 'm', role: 'user', content: 'x', timestamp: 't' }], sent: [] });
+    sessionStorage.setItem('careai_chat_conv:user-1:GUARDIAN:ward-1', saved);
     sessionStorage.setItem('careai_chat_conv:user-1:GUARDIAN:ward-9', saved);
     sessionStorage.setItem('careai_chat_conv:user-1:GUARDIAN:self', saved);
     await renderChat(<ChatbotContent />);
-    await expect.element(page.getByText(/김영희의 증상을 말씀해 주시면/)).toBeVisible();
     await vi.waitFor(() => expect(sessionStorage.getItem('careai_chat_conv:user-1:GUARDIAN:ward-9')).toBeNull());
+    expect(sessionStorage.getItem('careai_chat_conv:user-1:GUARDIAN:ward-1')).toBeNull();
     expect(sessionStorage.getItem('careai_chat_conv:user-1:GUARDIAN:self')).not.toBeNull();
   });
 
-  it('피보호자 목록을 받는 동안·못 받았을 때는 지우지 않는다 (점검 L-3)', async () => {
+  it('피보호자 목록을 받는 동안·못 받았어도 상담을 잠그지 않는다 - 목록은 기록 표시용이다 (2026-11-11)', async () => {
     api.wards.mockReturnValue([]);
+    api.wardsLoading.mockReturnValue(true);
     api.wardsFailed.mockReturnValue(true);
-    sessionStorage.setItem('careai_chat_conv:user-1:GUARDIAN:ward-1', JSON.stringify({ v: 1 }));
+    api.sendChatMessage.mockResolvedValue(REPLY);
     await renderChat(<ChatbotContent />);
-    await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeDisabled();
-    expect(sessionStorage.getItem('careai_chat_conv:user-1:GUARDIAN:ward-1')).not.toBeNull();
+
+    await expect.element(page.getByText('눌러서 물어보세요')).toBeVisible();
+    expect(page.getByText(/피보호자 정보를/).elements()).toHaveLength(0);
+    await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeEnabled();
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
+    await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
+    expect(api.sendChatMessage.mock.calls[0][0].context).toEqual({ role: 'GUARDIAN' });
   });
 
   it('탭 저장소를 쓸 수 없어도(사생활 보호 모드) 지금처럼 상담된다 (2026-11-11)', async () => {
@@ -326,19 +337,6 @@ describe('보호자 AI 의료 챗봇', () => {
       set.mockRestore();
       get.mockRestore();
     }
-  });
-
-  it('예약 칩으로 화면을 옮겼다 돌아오면 그 말풍선은 남고 "답 없음" 안내는 뜨지 않는다 (2026-11-11)', async () => {
-    const first = await renderChat(<ChatbotContent />);
-    await page.getByRole('button', { name: '병원 예약하고 싶어요' }).click();
-    await vi.waitFor(() => expect(api.push).toHaveBeenCalled());
-    await first.unmount();
-
-    await renderChat(<ChatbotContent />);
-    await expect.element(page.getByText(/김영희의 증상을 말씀해 주시면/)).toBeVisible();
-    await vi.waitFor(() => expect(page.getByText('병원 예약하고 싶어요', { exact: true }).elements().length).toBeGreaterThanOrEqual(2));
-    expect(page.getByText(/답을 받기 전에 화면을 옮겨서/).elements()).toHaveLength(0);
-    expect(api.sendChatMessage).not.toHaveBeenCalled();
   });
 
   it('답을 받기 전에 화면을 옮겼다 돌아오면 답이 없다고 알린다 (2026-11-11)', async () => {
@@ -361,33 +359,6 @@ describe('보호자 AI 의료 챗봇', () => {
     expect(chip.element().getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
   });
 
-  it('피보호자 목록을 불러오는 동안에는 칩·입력·보내기를 잠그고 안내한다 - 본인 상담으로 새지 않게(2026-11-03 점검 M-1)', async () => {
-    api.wards.mockReturnValue([]);
-    api.wardsLoading.mockReturnValue(true);
-    api.sendChatMessage.mockResolvedValue(REPLY);
-    await renderChat(<ChatbotContent />);
-
-    await expect.element(page.getByText('피보호자 정보를 불러오는 중이에요')).toBeVisible();
-    await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeDisabled();
-    await expect.element(page.getByRole('button', { name: '병원 예약하고 싶어요' })).toBeDisabled();
-    await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeDisabled();
-    expect(api.sendChatMessage).not.toHaveBeenCalled();
-  });
-
-  it('피보호자 목록을 불러오지 못하면 잠근 채 다시 불러오기를 보인다 - 본인 상담으로 새지 않게(2026-11-10 전체 점검 F-1)', async () => {
-    api.wards.mockReturnValue([]);
-    api.wardsFailed.mockReturnValue(true);
-    api.sendChatMessage.mockResolvedValue(REPLY);
-    await renderChat(<ChatbotContent />);
-
-    await expect.element(page.getByRole('alert').filter({ hasText: '피보호자 정보를 불러오지 못했어요' })).toBeVisible();
-    await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeDisabled();
-    await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeDisabled();
-    await userEvent.click(page.getByRole('button', { name: '다시 불러오기' }));
-    expect(api.refetchWards).toHaveBeenCalledTimes(1);
-    expect(api.sendChatMessage).not.toHaveBeenCalled();
-  });
-
   it('피보호자 목록이 없는 보호자(로딩 끝)는 지금처럼 본인 상담으로 보낼 수 있다', async () => {
     api.wards.mockReturnValue([]);
     api.sendChatMessage.mockResolvedValue(REPLY);
@@ -399,7 +370,7 @@ describe('보호자 AI 의료 챗봇', () => {
     expect(api.sendChatMessage.mock.calls[0][0].context ?? {}).not.toHaveProperty('wardId');
   });
 
-  it('추천 칩은 펼쳐져 있고 누르면 선택한 피보호자 context로 바로 보낸다', async () => {
+  it('추천 칩은 펼쳐져 있고 누르면 본인 상담(wardId 없음)으로 바로 보낸다', async () => {
     api.sendChatMessage.mockResolvedValue(REPLY);
     await renderChat(<ChatbotContent />);
 
@@ -408,66 +379,34 @@ describe('보호자 AI 의료 챗봇', () => {
     await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
     const request = api.sendChatMessage.mock.calls[0][0];
     expect(request.message).toBe('무릎이 아프다고 하세요');
-    expect(request.context).toEqual({ role: 'GUARDIAN', wardId: 'ward-1' });
+    expect(request.context).toEqual({ role: 'GUARDIAN' });
     expect(request).not.toHaveProperty('history');
   });
 
-  it('예약 칩은 AI를 부르지 않고 내 말풍선을 남긴 뒤 병원 예약 화면으로 이동한다', async () => {
+  it('예약 칩은 AI로 보내 챗봇 안에서 예약을 시작한다 - wardId 없이(AI가 대상을 묻는다), 화면 이동 없음 (2026-11-11)', async () => {
+    api.sendChatMessage.mockResolvedValue(REPLY);
     await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
 
-    const bubbles = () =>
-      page
-        .getByText('병원 예약하고 싶어요', { exact: true })
-        .elements()
-        .filter(element => !element.closest('button'));
-    await vi.waitFor(() => expect(bubbles()).toHaveLength(1));
-    await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
-    expect(api.push).toHaveBeenCalledTimes(1);
-    expect(api.sendChatMessage).not.toHaveBeenCalled();
-  });
-
-  it('챗봇에서 고른 피보호자는 전역 선택이 되어 예약 화면이 이어받는다(주소창엔 싣지 않음)', async () => {
-    api.wards.mockReturnValue([WARD, WARD_2]);
-    await renderChat(<ChatbotContent />);
-
-    await userEvent.click(page.getByRole('button', { name: '이철수' }));
-    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
-
-    await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
-    expect(sessionStorage.getItem('careai_selected_ward_id')).toBe('ward-2');
-  });
-
-  it('다른 화면에서 고른 피보호자로 시작한다', async () => {
-    api.wards.mockReturnValue([WARD, WARD_2]);
-    setSelectedWardId('ward-2');
-    await renderChat(<ChatbotContent />);
-
-    await expect.element(page.getByText(/이철수의 증상을 말씀해 주시면/)).toBeVisible();
-  });
-
-  it('이동 전에 화면을 벗어나면(타이머 취소) 예약 화면으로 가지 않는다', async () => {
-    const screen = await renderChat(<ChatbotContent />);
-
-    await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
-    await screen.unmount();
-
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
+    const request = api.sendChatMessage.mock.calls[0][0];
+    expect(request.message).toBe('병원 예약하고 싶어요');
+    expect(request.context).toEqual({ role: 'GUARDIAN' });
+    await new Promise(resolve => setTimeout(resolve, 400));
     expect(api.push).not.toHaveBeenCalled();
   });
 
-  it('저장소를 쓸 수 없어도 예약 화면으로는 이동한다', async () => {
-    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new DOMException('denied', 'QuotaExceededError');
-    });
-    try {
-      await renderChat(<ChatbotContent />);
-      await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
-      await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
-    } finally {
-      spy.mockRestore();
-    }
+  it('다른 화면의 전역 피보호자 선택은 챗봇 상담에 싣지 않고 바꾸지도 않는다 (2026-11-11)', async () => {
+    api.wards.mockReturnValue([WARD, WARD_2]);
+    api.sendChatMessage.mockResolvedValue(REPLY);
+    setSelectedWardId('ward-2');
+    await renderChat(<ChatbotContent />);
+
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
+    await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
+    expect(api.sendChatMessage.mock.calls[0][0].context).toEqual({ role: 'GUARDIAN' });
+    expect(sessionStorage.getItem('careai_selected_ward_id')).toBe('ward-2');
   });
 
   it('답을 기다리는 중에는 예약 칩도 누를 수 없다', async () => {
@@ -832,10 +771,9 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(3));
     await vi.waitFor(() => expect(quickButtons()).toEqual(['병원 예약하고 싶어요']));
 
-    // 예약 칩은 AI로 보내지 않고 보낸 문장 기억에도 넣지 않으므로 그대로 남는다.
+    // 예약 칩은 AI로 보내지만(2026-11-11) 맨 앞 칩이라 보낸 뒤에도 남는다.
     await userEvent.click(page.getByRole('button', { name: '병원 예약하고 싶어요' }));
-    await vi.waitFor(() => expect(api.push).toHaveBeenCalledWith('/guardian/hospital'));
-    expect(api.sendChatMessage).toHaveBeenCalledTimes(3);
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(4));
     await vi.waitFor(() => expect(quickButtons()).toEqual(['병원 예약하고 싶어요']));
   });
 
@@ -1039,18 +977,18 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeVisible();
   });
 
-  it('피보호자를 바꾸면 새 대화라 보낸 문장이 다시 보인다', async () => {
+  it('[새 대화]를 열면 보낸 문장이 다시 보인다', async () => {
     api.role.mockReturnValue('GUARDIAN');
-    api.wards.mockReturnValue([WARD, WARD_2]);
     api.sendChatMessage.mockResolvedValue({ ...REPLY, suggestedQuestions: [] });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
     expect(page.getByRole('button', { name: '무릎이 아프다고 하세요' }).elements()).toHaveLength(0);
 
-    await userEvent.click(page.getByRole('button', { name: '이철수' }));
-    await expect.element(page.getByText(/이철수의 증상을 말씀해 주시면/)).toBeVisible();
+    await userEvent.click(page.getByRole('button', { name: '새 대화' }));
     await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeVisible();
+    confirm.mockRestore();
   });
 });

@@ -41,6 +41,18 @@ describe('상담 기록 대화창 묶기 (2026-11-11)', () => {
     expect(of('old')).toBeUndefined();
   });
 
+  it('본인 턴과 피보호자 턴이 섞이면 그 피보호자 + withSelf (선택 칸 제거 뒤 대리 예약, 2026-11-11)', () => {
+    const sessions = groupChatSessions([
+      { id: 1, sessionId: 'm', wardId: null, message: '병원 예약하고 싶어요', createdAt: '2026-11-11T01:00:00Z' },
+      { id: 2, sessionId: 'm', wardId: 'ward-2', message: '[선택] reservation_patient: ward-2', createdAt: '2026-11-11T01:01:00Z' },
+      { id: 3, sessionId: 'm', wardId: 'ward-2', message: '서울', createdAt: '2026-11-11T01:02:00Z' },
+      { id: 4, sessionId: 'w', wardId: 'ward-1', message: 'a', createdAt: '2026-11-10T01:00:00Z' },
+    ]);
+    const of = (key: string) => sessions.find(s => s.key === `s:${key}`)!;
+    expect(of('m')).toMatchObject({ wardId: 'ward-2', withSelf: true, title: '병원 예약하고 싶어요' });
+    expect(of('w')).toMatchObject({ wardId: 'ward-1', withSelf: false });
+  });
+
   it('첫 질문이 선택지 턴뿐이면 "선택형 상담"', () => {
     expect(groupChatSessions([{ id: 1, sessionId: 'a', message: '[선택] date: 2026-11-12' }])[0].title).toBe(
       '선택형 상담',
