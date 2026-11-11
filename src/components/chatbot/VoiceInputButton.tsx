@@ -26,8 +26,19 @@ export default function VoiceInputButton({ state, elapsedSec, disabled, onToggle
   const recording = state === 'recording';
   const uploading = state === 'uploading';
 
-  const label = recording ? '녹음 끝내기' : uploading ? '말씀을 글로 바꾸는 중' : '말로 입력하기';
-  const text = recording ? `끝내기 ${elapsedSec}초` : uploading ? '글로 바꾸는 중…' : variant === 'wide' ? '말로 하기' : '말하기';
+  // wide(피보호자 마이크 전용): 말이 멈추면 저절로 끝나므로 "끝내기"를 보이지 않고 "듣고 있어요"만 둔다(2026-11-11 사용자 요청).
+  // 눌러서 바로 끝내는 동작은 그대로 둔다
+  const wide = variant === 'wide';
+  const label = recording ? (wide ? '듣고 있어요' : '녹음 끝내기') : uploading ? '말씀을 글로 바꾸는 중' : '말로 입력하기';
+  const text = recording
+    ? wide
+      ? '듣고 있어요'
+      : `끝내기 ${elapsedSec}초`
+    : uploading
+      ? '글로 바꾸는 중…'
+      : wide
+        ? '말로 하기'
+        : '말하기';
 
   return (
     <button

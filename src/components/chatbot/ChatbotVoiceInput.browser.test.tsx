@@ -91,10 +91,13 @@ afterEach(async () => {
 
 async function recordFor(ms: number) {
   await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
-  await expect.element(page.getByRole('button', { name: '녹음 끝내기' })).toBeInTheDocument();
+  await expect.element(page.getByRole('button', { name: STOP })).toBeInTheDocument();
   await new Promise(resolve => setTimeout(resolve, ms));
-  await userEvent.click(page.getByRole('button', { name: '녹음 끝내기' }));
+  await userEvent.click(page.getByRole('button', { name: STOP }));
 }
+
+// 녹음 중 버튼 이름 - 보호자는 "녹음 끝내기", 피보호자(마이크 전용)는 "듣고 있어요"
+const STOP = /^(녹음 끝내기|듣고 있어요)$/;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -180,7 +183,7 @@ describe('챗봇 마이크 음성 입력', () => {
     await sleep(4000);
 
     expect(api.transcribe).not.toHaveBeenCalled();
-    await expect.element(page.getByRole('button', { name: '녹음 끝내기' })).toBeInTheDocument();
+    await expect.element(page.getByRole('button', { name: STOP })).toBeInTheDocument();
   });
 
   it('지금 dev처럼 모델이 없으면(503 CHAT_STT_UNAVAILABLE) 글로 입력하라고 안내한다', async () => {
@@ -235,7 +238,7 @@ describe('챗봇 마이크 음성 입력', () => {
     await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
     await expect.element(chip).toBeDisabled();
     await sleep(600);
-    await userEvent.click(page.getByRole('button', { name: '녹음 끝내기' }));
+    await userEvent.click(page.getByRole('button', { name: STOP }));
     await expect.element(page.getByRole('button', { name: '말씀을 글로 바꾸는 중' })).toBeDisabled();
     await expect.element(chip).toBeDisabled();
 
@@ -243,5 +246,22 @@ describe('챗봇 마이크 음성 입력', () => {
     await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(1));
     expect(api.sendChatMessage.mock.calls[0][0].message).toBe('배가 아파요');
     await expect.element(chip).toBeEnabled();
+  });
+
+  it('피보호자: 녹음 중 버튼은 "듣고 있어요"만 보이고 "끝내기"는 보이지 않는다(보호자는 그대로)', async () => {
+    getUserMedia.mockImplementation(async () => fakeMicStream());
+    const { unmount } = await renderChat(<ChatbotContent variant="ward" />);
+    await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+    const listening = page.getByRole('button', { name: '듣고 있어요' });
+    await expect.element(listening).toBeInTheDocument();
+    expect(listening.element().textContent).not.toContain('끝내기');
+    await unmount();
+
+    api.role.mockReturnValue('GUARDIAN');
+    await renderChat(<ChatbotContent />);
+    await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+    const stop = page.getByRole('button', { name: '녹음 끝내기' });
+    await expect.element(stop).toBeInTheDocument();
+    expect(stop.element().textContent).toMatch(/끝내기 \d+초/);
   });
 });
