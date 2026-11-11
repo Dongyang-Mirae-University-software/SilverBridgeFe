@@ -46,6 +46,8 @@
     DISCONNECTION: () => ['연결 해제', '연결이 해제되었습니다.'],
     INQUIRY_ANSWERED: () => ['문의 답변', '문의에 답변이 등록되었습니다.'],
     COMPANION_RISK: () => ['안부 대화 확인 필요', '안부 대화에서 살펴볼 신호가 있었어요.'],
+    // 여러 날 위험 누적(BE 2026-11-11) - 피보호자당 7일에 1번
+    COMPANION_RISK_PATTERN: () => ['안부 대화 확인 필요', '최근 며칠 안부 대화에서 걱정되는 말이 여러 번 있었어요.'],
     COMPANION_NOTICE: data => [
       '기분 변화 안내',
       `걱정·우울한 기분이 ${data && data.days ? `${data.days}일째` : '며칠째'} 이어지고 있어요.`,
@@ -130,7 +132,11 @@
     const kind = getKind(data);
     const urgent = kind === 'sos' || data.type === 'ANOMALY_DETECTED';
     // 같은 tag의 알림이 남아 있으면 renotify가 false일 때 소리·진동 없이 교체된다 - 다시 알리는 종류는 true
-    const renotify = urgent || data.type === 'MEDICATION_REMINDER' || data.type === 'COMPANION_RISK';
+    const renotify =
+      urgent ||
+      data.type === 'MEDICATION_REMINDER' ||
+      data.type === 'COMPANION_RISK' ||
+      data.type === 'COMPANION_RISK_PATTERN';
     return {
       title: content.title,
       options: {
@@ -217,6 +223,7 @@
       case 'INQUIRY_ANSWERED':
         return '/guardian/inquiries';
       case 'COMPANION_RISK':
+      case 'COMPANION_RISK_PATTERN':
       case 'COMPANION_NOTICE':
         return '/guardian/emotion';
       case 'COMPANION_PROMPT':

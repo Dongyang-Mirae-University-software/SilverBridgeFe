@@ -61,6 +61,11 @@ describe('알림 모양', () => {
     expect(first.options.tag).toBe('COMPANION_RISK:s1');
     expect(second.options.tag).not.toBe(first.options.tag);
     expect(first.options.renotify).toBe(true);
+    // 여러 날 위험 누적도 다시 울리고, 예비 문구는 위험 알림과 같은 제목이다(BE data에 title·body가 없을 때만 쓰인다)
+    const pattern = push.buildNotification({ data: { type: 'COMPANION_RISK_PATTERN', wardId: 'w1', days: '2' } }, 'GUARDIAN');
+    expect(pattern.options.renotify).toBe(true);
+    expect(pattern.title).toBe('안부 대화 확인 필요');
+    expect(pattern.options.tag).toBe('COMPANION_RISK_PATTERN:w1');
     expect(push.getContent({ data: { type: 'COMPANION_NOTICE', wardId: 'w1', days: '3' } })).toEqual({
       title: '기분 변화 안내',
       body: '걱정·우울한 기분이 3일째 이어지고 있어요.',
@@ -135,6 +140,7 @@ describe('클릭 경로', () => {
     [{ type: 'CONNECTION_FORCED' }, 'WARD', undefined, '/ward/guardians'],
     [{ type: 'INQUIRY_ANSWERED' }, 'GUARDIAN', undefined, '/guardian/inquiries'],
     [{ type: 'COMPANION_RISK', wardId: 'w1', sessionId: 's1' }, 'GUARDIAN', undefined, '/guardian/emotion'],
+    [{ type: 'COMPANION_RISK_PATTERN', wardId: 'w1', days: '2' }, 'GUARDIAN', undefined, '/guardian/emotion'],
     [{ type: 'COMPANION_NOTICE', wardId: 'w1', days: '3' }, 'GUARDIAN', undefined, '/guardian/emotion'],
     [{ type: 'COMPANION_PROMPT', slot: '15:00' }, 'WARD', undefined, '/ward/companion'],
     [{ type: 'COMPANION_PROMPT', slot: '15:00', test: 'true' }, 'WARD', undefined, '/ward/companion?testSlot=15%3A00'],
