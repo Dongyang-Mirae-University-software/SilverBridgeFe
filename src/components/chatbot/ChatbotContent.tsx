@@ -27,7 +27,7 @@ import ChatUiPrompt from './ChatUiPrompt';
 import { isUrgentAnswer } from './chatUrgency';
 import VoiceInputButton from './VoiceInputButton';
 import { useVoiceInput } from './useVoiceInput';
-import { buttonWardId, isReservationStep, isShowList, selectionText, textWardId } from './reservationFlow';
+import { buttonWardId, isReservationStep, isShowList, isWardNotConnected, selectionText, textWardId } from './reservationFlow';
 import styles from './ChatbotContent.module.css';
 
 function makeId() {
@@ -86,6 +86,9 @@ const WARD_VISIT_LIST_PATH = '/ward/hospital';
 const GUARDIAN_VISIT_LIST_PATH = '/guardian/hospital';
 /** 남긴 말풍선을 잠깐 보여 준 뒤 이동한다. */
 const RESERVATION_NAV_DELAY_MS = 300;
+/** 대리 예약 중 연결이 끊긴 피보호자로 거절됐을 때(점검 M-1). 다음 입력부터는 본인 상담으로 간다. */
+const WARD_CARRY_ENDED_TEXT =
+  '지금은 이 피보호자와 연결되어 있지 않아 예약을 이어갈 수 없어요. 연결 상태를 확인해 주세요. 다른 궁금한 점은 그대로 물어보셔도 돼요.';
 
 type Suggestions = {
   items: string[];
@@ -293,7 +296,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   // 완료(예약 목록 보기 / 계속 상담하기)·취소 답이 오면 풀려 칩이 돌아온다. 보내기 실패 안내는 건너뛰어
   // 직전 단계 선택지를 그대로 둔다 - 지난 선택지는 말풍선에 없어 다시 누를 길이 사라진다(2026-11-04 점검 🟡).
   const stepSource = [...messages].reverse().find(message => message.role === 'assistant' && !message.failed);
-  const reserving = isReservationStep(stepSource);
+  // 대리 예약이 "연결되지 않은 피보호자"로 거절됐으면 그 예약 단계·wardId 를 더 잇지 않는다 - 같은 403 만 되풀이된다(점검 M-1)
+  const wardCarryEnded = Boolean(lastAssistant?.endsWardCarry);
+  const reserving = isReservationStep(stepSource) && !wardCarryEnded;
   const reservationUi = reserving ? stepSource?.ui : undefined;
   const showComposer = !isWardChat || typingOpen;
   // 피보호자는 받아쓴 글을 바로 보낸다 - 녹음·변환 중에 칩·선택지를 누르면 두 질문이 나가거나(칩 → 받아쓴 글)
@@ -305,7 +310,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const suggested = latestSuggestions(messages);
   const quickTitle = suggested.answer ? '눌러서 답해 보세요' : '눌러서 물어보세요';
   // 보호자 글·칩 입력에 이어 실을 피보호자(대리 예약 중일 때만 - reservationFlow.textWardId)
-  const carriedWardId = isGuardian ? textWardId(stepSource) : undefined;
+  const carriedWardId = isGuardian && !wardCarryEnded ? textWardId(stepSource) : undefined;
   const sentTexts = new Set(sentBySession[sessionId] ?? []);
   // 서버는 버튼·날짜·지역 선택도 "[선택] field: value" 형식의 별도 기록으로 남긴다.
   // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
@@ -334,12 +339,12 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       setSending(true);
       setFallback(false);
 
+      const requestWardId = isGuardian && wardId ? wardId : undefined;
       try {
         // 환자 정보(이름·전화·생년월일·나이·성별·주소)는 보내지 않는다 - 백엔드가 로그인 사용자 또는 검증한
         // 피보호자의 DB 값으로 채우고 클라이언트 값은 버린다(BE #440·#444). 대리 예약은 피보호자 ID만 보낸다.
         // 보호자는 기본으로 wardId 없이(본인 상담), 예약 대상을 고른 뒤 예약이 끝날 때까지만 싣는다(계약 ③).
         const role = getAuthRole() ?? undefined;
-        const requestWardId = isGuardian && wardId ? wardId : undefined;
         const context = requestWardId ? { role: 'GUARDIAN', wardId: requestWardId } : { role };
 
         // 대화 맥락은 AI가 같은 sessionId의 서버 기록으로 만든다 - 이력은 보내지 않는다(2026-10-29, AI #91).
@@ -389,14 +394,16 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         if (result.engine === 'fallback') setFallback(true);
       } catch (error) {
         if (sessionRef.current !== sessionId) return;
+        const carryEnded = Boolean(requestWardId) && isWardNotConnected(error);
         setMessages(prev => [
           ...prev,
           {
             id: makeId(),
             role: 'assistant',
-            content: getChatErrorMessage(error),
+            content: carryEnded ? WARD_CARRY_ENDED_TEXT : getChatErrorMessage(error),
             timestamp: new Date().toISOString(),
             failed: true,
+            ...(carryEnded ? { endsWardCarry: true } : {}),
           },
         ]);
       } finally {

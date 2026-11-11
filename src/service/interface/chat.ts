@@ -29,6 +29,8 @@ export interface ChatMessage {
   failed?: boolean;
   /** 이 답을 받은 요청에 실었던 피보호자 ID(보호자 대리 예약). 다음 요청에 이어 실을지 판단한다(reservationFlow). */
   requestWardId?: string;
+  /** 대리 예약 중 그 피보호자와 연결이 끊겨 거절됐다(403 CHAT_WARD_NOT_CONNECTED) - 이 뒤로는 wardId 를 이어 싣지 않는다. */
+  endsWardCarry?: boolean;
   engine?: string;
   modelName?: string;
   riskLevel?: ChatRiskLevel;

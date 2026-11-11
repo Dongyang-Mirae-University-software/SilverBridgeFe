@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ChatMessage } from '@/service/interface/chat';
-import { isReservationStep, isShowList, selectionText } from './reservationFlow';
+import { isReservationStep, isShowList, isWardNotConnected, selectionText } from './reservationFlow';
 
 const base: ChatMessage = { id: 'a', role: 'assistant', content: '', timestamp: '2026-11-04T00:00:00Z' };
 const step = (field: string, intent?: string): ChatMessage => ({
@@ -49,5 +49,16 @@ describe('isShowList', () => {
     expect(isShowList('reservation_followup', 'show_list')).toBe(true);
     expect(isShowList('reservation_followup', 'stay')).toBe(false);
     expect(isShowList('other', 'show_list')).toBe(false);
+  });
+});
+
+describe('isWardNotConnected (2026-11-11 기능 점검 M-1)', () => {
+  it('응답 code 가 CHAT_WARD_NOT_CONNECTED 일 때만 참', () => {
+    expect(isWardNotConnected({ response: { status: 403, data: { code: 'CHAT_WARD_NOT_CONNECTED' } } })).toBe(true);
+    expect(isWardNotConnected({ response: { status: 403, data: { code: 'FORBIDDEN' } } })).toBe(false);
+    expect(isWardNotConnected({ response: { status: 403 } })).toBe(false);
+    expect(isWardNotConnected(new Error('network'))).toBe(false);
+    expect(isWardNotConnected(null)).toBe(false);
+    expect(isWardNotConnected(undefined)).toBe(false);
   });
 });
