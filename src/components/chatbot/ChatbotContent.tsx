@@ -596,6 +596,20 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       </section>
     );
 
+  // 상담 기록 창 - 보호자·피보호자 화면 모두(피보호자 버튼 2026-11-11)
+  const historyDialog = historyOpen && (
+    <ChatHistoryDialog
+      logs={chatLogs}
+      loading={isLogsLoading}
+      error={logsError}
+      onClose={() => setHistoryOpen(false)}
+      userImageUrl={profile?.profileImage}
+      userName={profile?.name}
+      variant={isWardChat ? 'ward' : 'guardian'}
+      wards={isGuardian ? activeWards.map(ward => ({ id: ward.partnerUserId, name: ward.partnerName })) : undefined}
+    />
+  );
+
   if (isWardChat) {
     const wardQuickPrompts = wardPrompts(suggested, sentTexts);
     return (
@@ -603,9 +617,14 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         <section className={styles.shell}>
           <div className={styles.wardTitleRow}>
             <h1 className={styles.wardTitle}>AI 의료 챗봇</h1>
-            <button type="button" className={styles.wardNewChatButton} onClick={handleNewConversation} disabled={sending}>
-              새 대화
-            </button>
+            <div className={styles.wardTitleActions}>
+              <button type="button" className={styles.wardNewChatButton} onClick={() => void handleOpenHistory()}>
+                상담 기록
+              </button>
+              <button type="button" className={styles.wardNewChatButton} onClick={handleNewConversation} disabled={sending}>
+                새 대화
+              </button>
+            </div>
           </div>
           <div className={`${styles.wardBody} ${typingWithKeyboard ? styles.typingWithKeyboard : ''}`}>
             <div className={styles.wardChatCard}>
@@ -642,6 +661,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             )}
           </div>
         </section>
+        {historyDialog}
       </div>
     );
   }
@@ -746,16 +766,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         </div>
       </section>
 
-      {historyOpen && (
-        <ChatHistoryDialog
-          logs={chatLogs}
-          loading={isLogsLoading}
-          error={logsError}
-          onClose={() => setHistoryOpen(false)}
-          userImageUrl={profile?.profileImage}
-          userName={profile?.name}
-        />
-      )}
+      {historyDialog}
     </div>
   );
 }
