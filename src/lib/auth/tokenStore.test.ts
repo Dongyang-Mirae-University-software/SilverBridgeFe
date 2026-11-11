@@ -5,7 +5,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { installCookieJar, type StoredCookie, validAccessToken } from './__testutils__/fakeAuthEnv';
+import { fakeJwt, installCookieJar, type StoredCookie, validAccessToken } from './__testutils__/fakeAuthEnv';
 
 const ACCESS = 'careai_access_token';
 const SESSION = 'careai_session';
@@ -138,5 +138,47 @@ describe('completeSigninSession', () => {
 
     expect(jar.get(SESSION)?.maxAge).toBe(SEVEN_DAYS);
     expect(jar.has(SESSION_ONLY)).toBe(false);
+  });
+});
+
+describe('챗봇 대화 탭 저장소 정리 (2026-11-11)', () => {
+  function stubSessionStorage() {
+    const map = new Map<string, string>();
+    const storage = {
+      get length() {
+        return map.size;
+      },
+      key: (i: number) => [...map.keys()][i] ?? null,
+      getItem: (k: string) => map.get(k) ?? null,
+      setItem: (k: string, v: string) => void map.set(k, v),
+      removeItem: (k: string) => void map.delete(k),
+      clear: () => map.clear(),
+    };
+    vi.stubGlobal('window', { sessionStorage: storage });
+    return map;
+  }
+  const exp = () => Math.floor(Date.now() / 1000) + 1800;
+
+  it('로그아웃하면 저장한 대화를 모두 지운다', async () => {
+    const map = stubSessionStorage();
+    const conv = await import('@/store/chatConversationStore');
+    const key = conv.conversationKey('GUARDIAN', 'user-a', 'ward-1');
+    map.set(key, '{}');
+
+    store.clearAuthTokens();
+    expect(map.has(key)).toBe(false);
+  });
+
+  it('같은 사람의 토큰 갱신이면 남기고, 다른 계정으로 로그인하면 앞 사람 대화를 지운다', async () => {
+    const map = stubSessionStorage();
+    const conv = await import('@/store/chatConversationStore');
+    const mine = conv.conversationKey('GUARDIAN', 'user-a', 'ward-1');
+    map.set(mine, '{}');
+
+    store.setAuthTokens({ accessToken: fakeJwt({ sub: 'user-a', role: 'GUARDIAN', exp: exp() }) });
+    expect(map.has(mine)).toBe(true);
+
+    store.setAuthTokens({ accessToken: fakeJwt({ sub: 'user-b', role: 'WARD', exp: exp() }) });
+    expect(map.has(mine)).toBe(false);
   });
 });

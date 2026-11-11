@@ -1,0 +1,163 @@
+/* 내 상담 기록 창 (2026-11-11: 대화창 단위 목록 + 대화 전체 보기). 옛 ChatbotContent.module.css .history* 에서 옮겼다. */
+.overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 17, 12, 0.38);
+  padding: 20px;
+}
+
+.dialog {
+  display: flex;
+  width: min(560px, 100%);
+  max-height: min(680px, calc(100dvh - 40px));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: var(--sb-radius);
+  background: #fff;
+  box-shadow: var(--sb-shadow-lg);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--sb-line-soft);
+  padding: 18px 20px;
+}
+
+.headerText {
+  min-width: 0;
+}
+
+.header h2 {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+}
+
+.header p {
+  margin: 4px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: calc(13px * var(--ward-font-scale, 1));
+}
+
+.backButton {
+  margin: 0 0 8px;
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: calc(14px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+}
+
+.closeButton {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 1px solid var(--sb-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  line-height: 1;
+}
+
+.list {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 16px 20px 20px;
+}
+
+.item {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  padding: 14px;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--sb-ink);
+  outline-offset: 2px;
+}
+
+.itemMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--sb-ink-mute);
+  font-size: calc(12px * var(--ward-font-scale, 1));
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
+}
+
+.item strong {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--sb-ink);
+  font-size: calc(14px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.itemMore {
+  color: var(--sb-ink-soft);
+  font-size: calc(13px * var(--ward-font-scale, 1));
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
+}
+
+.detail {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 16px 20px;
+}
+
+.state {
+  margin: 24px 0;
+  color: var(--sb-ink-mute);
+  font-size: calc(14px * var(--ward-font-scale, 1));
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .overlay {
+    padding: 12px;
+  }
+
+  .header,
+  .list {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .detail {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+}

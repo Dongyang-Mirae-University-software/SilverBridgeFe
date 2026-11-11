@@ -30,7 +30,7 @@ export function installCookieJar() {
 }
 
 // 서명 없는 JWT 모양 토큰(화면 이동·만료 판단용 클레임만)
-export function fakeJwt(claims: { role?: string; exp?: number }) {
+export function fakeJwt(claims: { role?: string; exp?: number; sub?: string }) {
   const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
   return `${encode({ alg: 'none' })}.${encode(claims)}.sig`;
 }

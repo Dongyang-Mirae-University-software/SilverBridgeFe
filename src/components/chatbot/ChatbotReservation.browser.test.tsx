@@ -28,7 +28,7 @@ vi.mock('@/service/query/user/profile', () => ({
   myProfileQueryOptions: { queryKey: ['test-profile'], queryFn: () => ({ name: '박순자', profileImage: null }) },
 }));
 vi.mock('@/utils/auth/userProfile', () => ({ getUserProfileData: (response: unknown) => response }));
-vi.mock('@/lib/auth/tokenStore', () => ({ getAuthRole: api.role }));
+vi.mock('@/lib/auth/tokenStore', () => ({ getAuthRole: api.role, getAccessTokenSubject: () => 'user-1' }));
 vi.mock('@/hooks/useActiveConnections', () => ({
   useGuardianActiveWards: (enabled: boolean) => ({ activeWards: enabled ? api.wards() : [], isLoading: false }),
 }));
@@ -153,6 +153,8 @@ async function startWardReservation() {
 }
 
 beforeEach(() => {
+  // 대화는 탭 저장소에 남는다(2026-11-11) - 앞 테스트의 대화가 이어지지 않게 비운다
+  window.sessionStorage.clear();
   api.sendChatMessage.mockReset();
   api.push.mockReset();
   api.wards.mockReturnValue([WARD, WARD_2]);

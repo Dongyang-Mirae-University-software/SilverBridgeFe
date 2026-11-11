@@ -1,3 +1,4 @@
+import { clearConversations } from '@/store/chatConversationStore';
 import { clearSelectedWardId } from '@/store/selectedWardStore';
 import { decodeAccessTokenClaims } from './tokenClaims';
 
@@ -106,6 +107,9 @@ export function setAuthTokens(tokens: { accessToken: string; role?: AuthRole; re
 
   accessToken = tokens.accessToken;
   authRole = tokens.role ?? authRole;
+  // 다른 계정으로 로그인하면 앞 사람의 챗봇 대화를 지운다(같은 사람의 토큰 갱신이면 남긴다)
+  const subject = decodeAccessTokenClaims(tokens.accessToken)?.sub;
+  clearConversations(typeof subject === 'string' ? subject : null);
 
   const storage = getSessionStorage();
   storage?.removeItem(LEGACY_AUTH_ROLE_KEY);
@@ -181,4 +185,5 @@ export function clearAuthTokens() {
   removeCookie(SESSION_ONLY_TRACE_KEY);
   // 다음에 이 탭으로 로그인하는 사람에게 앞 사람이 고른 피보호자가 남지 않게 한다
   clearSelectedWardId();
+  clearConversations();
 }
