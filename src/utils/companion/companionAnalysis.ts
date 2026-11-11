@@ -43,6 +43,17 @@ function faceText(face: IWardCompanionTurnAnalysis['face']) {
   return detail ? `${label}(${detail})` : label;
 }
 
+function textMoodText(textMood: IWardCompanionTurnAnalysis['textMood']) {
+  if (!textMood) return null;
+  if (textMood.usable !== true) {
+    const why = textMood.reason || (textMood.label ? `라벨 ${textMood.label}` : null);
+    return why ? `판단 안 함(${why})` : '판단 안 함';
+  }
+  const label = moodText(textMood.turnLabel || textMood.label);
+  const confidence = count(textMood.confidence);
+  return confidence !== null && confidence >= 0 && confidence <= 1 ? `${label}(확신 ${Math.round(confidence * 100)}%)` : label;
+}
+
 function signalsText(signals: IWardCompanionTurnAnalysis['signals']) {
   if (!signals) return null;
   const items = Object.entries(signals)
@@ -56,9 +67,10 @@ export function formatTurnAnalysis(turnNo: number, analysis: IWardCompanionTurnA
     `${turnNo}번째 대답`,
     `턴 기분: ${analysis.turnLabel ? moodText(analysis.turnLabel) : '없음'}`,
     `근거: ${sourceText(analysis.turnSource)}`,
-    `표정: ${faceText(analysis.face)}`,
-    `위험: ${analysis.riskFlag ? '있음' : '없음'}`,
   ];
+  const textMood = textMoodText(analysis.textMood);
+  if (textMood) parts.push(`말로 본 기분: ${textMood}`);
+  parts.push(`표정: ${faceText(analysis.face)}`, `위험: ${analysis.riskFlag ? '있음' : '없음'}`);
   const signals = signalsText(analysis.signals);
   if (signals) parts.push(`신호: ${signals}`);
   return parts.join(' · ');

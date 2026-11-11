@@ -50,6 +50,14 @@ export interface IWardCompanionTurnAnalysis {
   } | null;
   riskFlag: boolean;
   signals?: Record<string, unknown> | null;
+  // 말(글) 기분 분류 - AI textMood 그대로. 무응답·되묻기 턴이나 AI가 주지 않으면 null
+  textMood?: {
+    label?: string | null; // 모델 원래 라벨
+    turnLabel?: string | null; // 턴 라벨로 바꾼 값(기쁨·평온·슬픔·우울 등)
+    confidence?: number | null; // 0~1
+    usable?: boolean;
+    reason?: string | null; // SHORT(최소 글자 수 미만)·UNAVAILABLE(모델 없음·시간 초과)
+  } | null;
 }
 
 export interface IWardCompanionFinish {
