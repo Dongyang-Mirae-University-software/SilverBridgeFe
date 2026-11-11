@@ -27,7 +27,7 @@ export default function VoiceInputButton({ state, elapsedSec, disabled, onToggle
   const uploading = state === 'uploading';
 
   const label = recording ? '녹음 끝내기' : uploading ? '말씀을 글로 바꾸는 중' : '말로 입력하기';
-  const text = recording ? `끝내기 ${elapsedSec}초` : uploading ? '듣는 중…' : variant === 'wide' ? '말로 하기' : '말하기';
+  const text = recording ? `끝내기 ${elapsedSec}초` : uploading ? '글로 바꾸는 중…' : variant === 'wide' ? '말로 하기' : '말하기';
 
   return (
     <button

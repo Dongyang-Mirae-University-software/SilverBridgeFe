@@ -19,6 +19,8 @@ type VoiceInputOptions<T> = {
   send?: (audio: Blob, signal: AbortSignal) => Promise<T>;
   // 실패를 직접 안내할 때(안부 말벗 - 오류 code마다 할 일이 다르다). 없으면 받아쓰기 안내 문구를 보인다
   onError?: (error: unknown) => void;
+  // 말한 뒤 이만큼 조용하면 녹음을 끝낸다(기본 1.5초 - 피보호자 챗봇은 3초)
+  silenceMs?: number;
 };
 
 function getAudioContextCtor(): AudioContextCtor | undefined {
@@ -39,7 +41,7 @@ type Recording = {
 };
 
 // 챗봇 마이크 음성 입력. 누르면 녹음, 다시 누르면(또는 30초·말이 멈추면) 끝내고 서버에서 글자로 바꿔 onText로 넘긴다.
-// 자동 전송하지 않는다. 음성·글자는 메모리에만 두고 저장·로그하지 않는다. 브라우저 SpeechRecognition은 쓰지 않는다(팀 결정).
+// 보낼지는 onText가 정한다(보호자: 입력창에 채움, 피보호자: 바로 보냄). 음성·글자는 메모리에만 두고 저장·로그하지 않는다. 브라우저 SpeechRecognition은 쓰지 않는다(팀 결정).
 // options.send를 주면 받아쓰기 대신 그곳으로 보내고 받은 결과를 넘긴다(안부 말벗 음성 대답)
 export function useVoiceInput<T = string>(onText: (result: T) => void, options?: VoiceInputOptions<T>) {
   const [state, setState] = useState<VoiceInputState>('idle');
@@ -145,7 +147,7 @@ export function useVoiceInput<T = string>(onText: (result: T) => void, options?:
       const source = context.createMediaStreamSource(stream);
       // AudioWorklet은 별도 모듈 파일이 필요해 모든 브라우저가 지원하는 ScriptProcessor를 쓴다
       const processor = context.createScriptProcessor(4096, 1, 1);
-      const limiter = new RecordingLimiter();
+      const limiter = new RecordingLimiter(MAX_RECORDING_MS, optionsRef.current?.silenceMs);
       const chunks: Float32Array[] = [];
       const startedAt = Date.now();
 

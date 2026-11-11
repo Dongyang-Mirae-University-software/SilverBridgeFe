@@ -8,7 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
-import { RESERVATION_DEMO_NOTICE } from '@/constants/reservation';
 import type { IHospital, IReservationItem } from '@/service/interface/reservation';
 import { addDays, formatDateLong, kstToday } from '@/utils/reservation/reservationView';
 import { WardHospitalContent } from './WardHospitalContent';
@@ -86,7 +85,7 @@ describe('WardHospitalContent (Chrome)', () => {
     const next = screen.getByRole('region', { name: '다음 진료' });
     await expect.element(next.getByText('병원 가는 날')).toBeVisible();
     await expect.element(next.getByText('2일 뒤')).toBeVisible();
-    expect(screen.getByText(RESERVATION_DEMO_NOTICE).elements()).toHaveLength(0);
+    expect(document.body.textContent).not.toMatch(/시연용|가상 병원/);
     await expect.element(next.getByText(formatDateLong(addDays(TODAY, 2)))).toBeVisible();
     await expect.element(next.getByText('오전 10시')).toBeVisible();
     // 주소는 병원 목록에서 이름으로 찾아 붙인다

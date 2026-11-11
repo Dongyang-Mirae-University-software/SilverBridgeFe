@@ -171,13 +171,40 @@ describe('ChatBubble 답 모양', () => {
     for (const text of ['내과 진료를 권해드려요.', '물을 자주 드세요.', '이모지 없는 줄', '가족과 함께 계세요.', '괜찮아질 거예요.', '푹 쉬세요.']) {
       await expect.element(page.getByText(text, { exact: true })).toBeVisible();
     }
-    // 카드 제목은 글자만, 구분은 왼쪽 색 띠
+    // 카드 제목은 글자만, 구분은 얇은 윗줄(2026-11-11 B안 - 왼쪽 색 띠·배경 상자 없음)
     const title = page.getByText('이럴 땐 병원으로', { exact: true }).element();
     expect(title.textContent).toBe('이럴 땐 병원으로');
     const card = title.closest('section')!;
-    expect(Number.parseFloat(getComputedStyle(card).borderLeftWidth)).toBeGreaterThanOrEqual(4);
+    expect(Number.parseFloat(getComputedStyle(card).borderLeftWidth)).toBe(0);
+    expect(Number.parseFloat(getComputedStyle(card).borderTopWidth)).toBeGreaterThanOrEqual(1);
+    expect(getComputedStyle(card).backgroundColor).toBe('rgba(0, 0, 0, 0)');
     // 119 굵게 강조는 이모지를 떼어 낸 뒤에도 그대로
     expect(root.querySelector('strong')?.textContent).toBe('119');
+  });
+
+  it('옛 형식(#196 이전)처럼 카드 3개가 함께 와도 같은 모양(윗줄·소제목·점 목록)으로 차례로 그린다', async () => {
+    await show({
+      content: '무릎 통증이 있으시군요.',
+      layout: null,
+      possibleCauses: ['관절염', '근육 긴장'],
+      homeCare: ['찜질을 해 보세요.'],
+      visitHospitalIf: ['붓고 열이 나면 가 보세요.'],
+    });
+
+    const titles = ['가능한 원인', '집에서 이렇게', '이럴 땐 병원으로'];
+    const cards = titles.map(t => page.getByText(t, { exact: true }).element().closest('section')!);
+    for (const card of cards) {
+      const style = getComputedStyle(card);
+      expect(Number.parseFloat(style.borderLeftWidth)).toBe(0);
+      expect(Number.parseFloat(style.borderTopWidth)).toBeGreaterThanOrEqual(1);
+      expect(style.backgroundColor).toBe('rgba(0, 0, 0, 0)');
+      // 줄 앞 점은 CSS 도형이다(글자·이모지 아님)
+      const li = card.querySelector('li')!;
+      expect(getComputedStyle(li, '::before').content).toBe('""');
+    }
+    // 화면 순서대로 위아래로 쌓인다
+    const tops = cards.map(card => card.getBoundingClientRect().top);
+    expect([...tops].sort((a, b) => a - b)).toEqual(tops);
   });
 
   it('옛 형식 reply 글도 줄마다 머리 이모지를 떼고 문장 중간 글자는 둔다', async () => {

@@ -5,10 +5,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
-import { userEvent } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
-import { RESERVATION_DEMO_NOTICE } from '@/constants/reservation';
 import useSelectedWardId, { clearSelectedWardId, setSelectedWardId } from '@/store/selectedWardStore';
 import type { IConnectionItem } from '@/service/interface/connection';
 import type { IHospital, IReservationItem } from '@/service/interface/reservation';
@@ -115,8 +114,15 @@ function step(screen: Awaited<ReturnType<typeof renderContent>>, label: string) 
 
 function renderContent() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  // 실제 화면처럼 flex 항목(PageLayout: flex 1 1 auto, min-width 없음) 안에 둔다 - 안쪽 글자 폭이 밖으로 새는지 보려고
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <div style={{ display: 'flex' }}>
+        <section data-testid="page-layout" style={{ display: 'flex', flex: '1 1 auto', flexDirection: 'column' }}>
+          {children}
+        </section>
+      </div>
+    </QueryClientProvider>
   );
   return render(<GuardianHospitalContent />, { wrapper });
 }
@@ -150,12 +156,12 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await expect.element(screen.getByRole('heading', { name: '예약 현황 0건' })).toBeVisible();
     // 피보호자가 한 명이면 선택 칸이 없다
     expect(screen.getByRole('combobox').elements()).toHaveLength(0);
-    // 예약 내역(첫 화면)에도 시연 안내가 보인다
-    await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
+    // 시연 안내는 어느 단계에도 없다(사전에 따로 알린다 - 2026-11-11)
+    expect(document.body.textContent).not.toMatch(/시연용|가상 병원/);
     await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
 
     await expect.element(step(screen, '1. 병원 고르기')).toHaveAttribute('aria-current', 'step');
-    await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
+    expect(document.body.textContent).not.toMatch(/시연용|가상 병원/);
     await screen.getByRole('searchbox', { name: '병원 찾기' }).fill('가정');
     // 병원 한 줄에 진료과 목록이 함께 보인다
     await expect.element(screen.getByRole('button', { name: /강남내과 내과 · 가정의학과/ })).toBeVisible();
@@ -178,9 +184,12 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await expect.element(screen.getByText('이대로 예약할까요?')).toBeVisible();
     // 2026-10-30 디자인: 주소·진료받으실 분·연락처를 함께 보여 준다
     await expect.element(screen.getByText('서울 강남구 강남내과로 1')).toBeVisible();
-    await expect.element(screen.getByText('진료받으실 분')).toBeVisible();
-    await expect.element(screen.getByText('010-1234-5678')).toBeVisible();
-    await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
+    // 진료받으실 분·연락처는 한 줄, 증상 칸은 접혀 있다
+    const who = screen.getByRole('group', { name: '진료받으실 분과 연락처' });
+    await expect.element(who).toMatchTextContent(/김영희 님\s*010-1234-5678/);
+    await expect.element(screen.getByRole('button', { name: /불편한 곳 적기/ })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('textbox', { name: '불편한 곳' }).elements()).toHaveLength(0);
+    expect(document.body.textContent).not.toMatch(/시연용|가상 병원/);
     // 피보호자 번호가 있으면 번호 칸 대신 [바꾸기]만 둔다
     expect(screen.getByRole('textbox', { name: '연락처' }).elements()).toHaveLength(0);
     await expect.element(screen.getByRole('button', { name: '연락처 바꾸기' })).toBeVisible();
@@ -188,8 +197,15 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await screen.getByRole('button', { name: '예약하기' }).click();
 
     await expect.element(screen.getByText('예약했어요')).toBeVisible();
-    await expect.element(screen.getByText('김영희 화면에서도 볼 수 있어요')).toBeVisible();
-    await expect.element(screen.getByText(RESERVATION_DEMO_NOTICE)).toBeVisible();
+    // 완료 카드: 날짜 한 줄 / 시각 한 줄 / 병원·진료과 - "○○ 화면에서도 볼 수 있어요"는 없다
+    const date = screen.getByText(formatDateShort(TOMORROW), { exact: true });
+    const time = screen.getByText('오전 9시', { exact: true });
+    await expect.element(date).toBeVisible();
+    await expect.element(time).toBeVisible();
+    expect(time.element().getBoundingClientRect().top).toBeGreaterThan(date.element().getBoundingClientRect().top);
+    await expect.element(screen.getByText('강남내과 · 가정의학과')).toBeVisible();
+    expect(document.body.textContent).not.toContain('화면에서도 볼 수 있어요');
+    expect(document.body.textContent).not.toMatch(/시연용|가상 병원/);
     // 시간 칸은 진료과별 - 고른 진료과로 빈 시간을 묻는다
     expect(api.getAvailableSlots).toHaveBeenCalledWith(1, TOMORROW, '가정의학과');
     expect(api.createReservation).toHaveBeenCalledTimes(1);
@@ -228,6 +244,8 @@ describe('GuardianHospitalContent (Chrome)', () => {
     const closedDay = screen.getByRole('button', { name: `${formatDateShort(TOMORROW)} 휴진` });
     await expect.element(closedDay).toBeDisabled();
     await expect.element(closedDay).toMatchTextContent('휴진');
+    // 칸 전체를 채워 한눈에 보이게 한다(흰 바탕이 아님)
+    expect(getComputedStyle(closedDay.element()).backgroundColor).not.toBe('rgb(255, 255, 255)');
 
     const nextDay = addDays(TODAY, 2);
     await screen.getByRole('button', { name: formatDateShort(nextDay) }).click();
@@ -485,7 +503,8 @@ describe('GuardianHospitalContent (Chrome)', () => {
     await screen.getByRole('button', { name: '오전 9시', exact: true }).click();
     await screen.getByRole('button', { name: '다음' }).click();
 
-    const symptom = screen.getByRole('textbox', { name: /어디가 불편하세요/ });
+    await screen.getByRole('button', { name: /불편한 곳 적기/ }).click();
+    const symptom = screen.getByRole('textbox', { name: '불편한 곳' });
     await expect.element(symptom).toHaveAttribute('maxlength', '200');
     await symptom.fill('  며칠 전부터 눈이 침침해요 ');
     await screen.getByRole('button', { name: '예약하기' }).click();
@@ -787,5 +806,23 @@ describe('GuardianHospitalContent (Chrome)', () => {
         spy.mockRestore();
       }
     });
+  });
+
+  it('휴대폰 폭(360px)에서 주소가 긴 병원 목록도 화면 밖으로 넘치지 않는다(2026-11-11)', async () => {
+    await page.viewport(360, 800);
+    api.getHospitals.mockResolvedValue([
+      { ...hospital(1, '강남하늘안과', ['안과', '내과']), address: '서울특별시 강남구 테헤란로 100길 23 하늘메디컬빌딩 5층 501호' },
+      hospital(2, '푸른안과', ['안과']),
+    ]);
+    const screen = await renderContent();
+    await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
+    await expect.element(screen.getByRole('button', { name: /강남하늘안과/ })).toBeVisible();
+
+    const layout = screen.getByTestId('page-layout').element();
+    expect(layout.getBoundingClientRect().width).toBeLessThanOrEqual(360);
+    for (const el of document.querySelectorAll('[data-testid="page-layout"] *')) {
+      expect(el.getBoundingClientRect().right).toBeLessThanOrEqual(360.5);
+    }
+    await page.viewport(375, 812);
   });
 });

@@ -33,9 +33,14 @@
   align-self: stretch;
 }
 
+/* 피보호자 챗봇의 유일한 입력 수단이라 크게 둔다(2026-11-11) */
 .wide {
-  min-height: 56px;
+  justify-content: center;
+  width: 100%;
+  max-width: 360px;
+  min-height: 72px;
   padding: 0 22px;
+  font-size: calc(22px * var(--ward-font-scale, 1));
 }
 
 .recording {

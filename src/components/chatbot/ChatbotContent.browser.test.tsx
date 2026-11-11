@@ -83,8 +83,17 @@ function renderChat(node: ReactNode) {
   return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>);
 }
 
+// 피보호자 화면은 마이크로만 입력한다(2026-11-11). 마이크를 못 쓰면 [글자로 쓰기]로 입력창을 연다
+async function openWardTyping() {
+  Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: undefined });
+  await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+  await userEvent.click(page.getByRole('button', { name: '글자로 쓰기' }));
+}
+
 afterEach(async () => {
   await page.viewport(1280, 800);
+  // openWardTyping이 가린 mediaDevices를 되돌린다(프로토타입의 원래 값이 다시 보인다)
+  delete (navigator as unknown as Record<string, unknown>).mediaDevices;
 });
 
 beforeEach(() => {
@@ -512,7 +521,11 @@ describe('피보호자 AI 의료 챗봇', () => {
     expect(page.getByRole('button', { name: '상담 기록' }).elements()).toHaveLength(0);
     expect(page.getByRole('region', { name: '상담할 피보호자' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: '병원 예약하고 싶어요' }).elements()).toHaveLength(0);
-    await expect.element(page.getByPlaceholder('직접 쓰기')).toBeVisible();
+    // 입력은 큰 마이크 버튼 하나 - 키보드 입력칸·보내기·[글자로 쓰기]는 없다
+    await expect.element(page.getByRole('button', { name: '말로 입력하기' })).toBeVisible();
+    expect(page.getByRole('textbox', { name: '궁금한 점 입력' }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: '보내기' }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: '글자로 쓰기' }).elements()).toHaveLength(0);
   });
 
   it('빠른 질문은 본인 상담으로 보내고 피보호자 정보를 싣지 않는다', async () => {
@@ -535,6 +548,7 @@ describe('피보호자 AI 의료 챗봇', () => {
     await renderChat(<ChatbotContent variant="ward" />);
 
     await expect.element(page.getByRole('button', { name: '머리가 아파요' })).toBeVisible();
+    await openWardTyping();
     await userEvent.click(page.getByRole('textbox', { name: '궁금한 점 입력' }));
     await page.viewport(375, 380); // 화면 키보드가 올라온 높이
     // display: none이 되면 접근성 트리에서 빠진다
@@ -757,6 +771,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
     await renderChat(<ChatbotContent variant="ward" />);
 
+    await openWardTyping();
     await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '  어지러워요 ');
     await userEvent.click(page.getByRole('button', { name: '보내기' }));
     await expect.element(page.getByText('쉬어 보세요.')).toBeVisible();
@@ -773,7 +788,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
       await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(index + 1));
       await vi.waitFor(() => expect(quickButtons()).toHaveLength(3 - index));
     }
-    await expect.element(page.getByText('궁금한 점을 입력창에 적어 주세요')).toBeVisible();
+    await expect.element(page.getByText('마이크를 누르고 궁금한 점을 말씀해 주세요')).toBeVisible();
   });
 
   it('피보호자 휴대폰: 버튼이 3개·1개 남으면 마지막 버튼을 두 칸 폭으로 놓는다(넓은 화면은 그대로)', async () => {
