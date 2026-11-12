@@ -868,3 +868,65 @@ describe('이어 하는 대화 턴 수·판정 칸 제목 (Chrome)', () => {
     expect((document.querySelector('details') as HTMLDetailsElement).open).toBe(false);
   });
 });
+
+// toBeVisible은 화면 밖 요소도 '보임'으로 본다 - 배치는 좌표로 확인한다(점검 L-3)
+function insideViewport(el: Element) {
+  const r = el.getBoundingClientRect();
+  return r.left >= 0 && r.right <= window.innerWidth + 1;
+}
+
+describe('폰 배치 회귀 (Chrome, 점검 H-1·M-1·L-1)', () => {
+  it('폰에서 글로 대답할 때·안내가 떠도 대답 줄이 화면 안에 있고 글 칸이 화면을 넘지 않는다(H-1)', async () => {
+    await page.viewport(390, 844);
+    await openTalk();
+    await page.getByRole('button', { name: '글로 대답하기' }).click();
+    const answer = page.getByRole('region', { name: '대답하기' });
+    const check = () => {
+      expect(insideViewport(answer.getByRole('button', { name: '말로 대답하기' }).element())).toBe(true);
+      expect(insideViewport(answer.getByRole('button', { name: '대화 그만하기' }).element())).toBe(true);
+      expect(answer.getByRole('textbox', { name: '대답 적기' }).element().getBoundingClientRect().height).toBeLessThan(300);
+      expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth + 1);
+    };
+    check();
+    await page.getByRole('button', { name: '보내기' }).click();
+    await expect.element(page.getByText('대답을 적어 주세요.')).toBeVisible();
+    check();
+  });
+
+  it('폰 시작 화면은 글자 아주 크게(1.47배)에서도 가로로 넘치지 않는다(M-1)', async () => {
+    await page.viewport(390, 844);
+    document.documentElement.style.setProperty('--ward-font-scale', '1.47');
+    // 실제 앱의 전역 box-sizing(globals.css)과 같은 조건으로 잰다(GuardianMedicationContent.layout 테스트와 같은 방식)
+    const boxSizing = document.createElement('style');
+    boxSizing.dataset.testBoxSizing = '';
+    boxSizing.textContent = '*, *::before, *::after { box-sizing: border-box; }';
+    document.head.appendChild(boxSizing);
+    try {
+      api.today.mockResolvedValue(TEST_TODAY);
+      await renderCompanion();
+      await expect.element(page.getByRole('button', { name: '바로 이야기하기' })).toBeVisible();
+      expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth + 1);
+      // 넘침 원인이던 머리 오른쪽 여백(테스트 표시 자리 72px)은 폰에서 두지 않는다 - 표시는 머리 위 줄
+      const heroHead = document.querySelector('[class*="heroHead"]') as HTMLElement;
+      expect(getComputedStyle(heroHead).paddingRight).toBe('0px');
+    } finally {
+      document.documentElement.style.removeProperty('--ward-font-scale');
+      boxSizing.remove();
+    }
+  });
+
+  it('판정 카드의 자세히 버튼은 44px 이상이다(L-1)', async () => {
+    await page.viewport(1280, 800);
+    api.today.mockResolvedValue(TEST_TODAY);
+    api.replyText.mockResolvedValue({ turnNo: 1, reply: '네.', ended: false, endReason: null, transcript: null, analysis: TURN_ANALYSIS });
+    await renderCompanion();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
+    await page.getByRole('button', { name: '글로 대답하기' }).click();
+    await page.getByRole('textbox', { name: '대답 적기' }).fill('좋아');
+    await page.getByRole('button', { name: '보내기' }).click();
+    await expect.element(page.getByText('자세히')).toBeVisible();
+    const r = page.getByText('자세히').element().getBoundingClientRect();
+    expect(r.width).toBeGreaterThanOrEqual(44);
+    expect(r.height).toBeGreaterThanOrEqual(44);
+  });
+});
