@@ -79,6 +79,7 @@
 .stateText p { margin: 0; }
 
 .notice {
+  box-sizing: border-box;
   width: 100%;
   margin: 0;
   border: 2px solid var(--sb-warn);
@@ -210,6 +211,7 @@
 }
 .textForm { display: grid; width: min(100%, 760px); gap: 12px; }
 .textForm textarea {
+  box-sizing: border-box;
   width: 100%;
   border: 2px solid var(--sb-line);
   border-radius: 18px;
@@ -244,8 +246,10 @@
   .startButton, .micButton { width: 100%; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 20px; }
   .talkSlot { font-size: calc(24px * var(--ward-font-scale, 1)); }
   .bubble { padding: 14px 16px; }
-  .answer { flex-direction: column; align-items: stretch; gap: 8px; }
-  .answerBar { display: grid; gap: 8px; }
+  /* 세로로 쌓을 때는 줄바꿈을 끄고 100% 기준을 푼다 - 세로에서 flex-basis 100%는 높이가 되고, 줄바꿈이 켜지면 다음 항목이 오른쪽 새 열(화면 밖)로 간다(점검 H-1) */
+  .answer { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px; }
+  .answer > .notice, .answer > .cameraAsk, .answer > .textForm { flex-basis: auto; }
+  .answerBar { display: grid; justify-content: stretch; gap: 8px; }
   .answerBar .switchButton { min-height: 52px; }
   .answerBar .stopButton { border-radius: 999px; padding: 0 12px; }
   .line p { font-size: calc(24px * var(--ward-font-scale, 1)); }
@@ -256,6 +260,7 @@
 
 /* 표정 사진 안내·미리보기 */
 .cameraAsk {
+  box-sizing: border-box;
   display: grid;
   gap: 12px;
   padding: 18px;
@@ -350,12 +355,10 @@
   cursor: pointer;
 }
 .testSlot.selected { border: 3px solid var(--sb-brand); background: var(--sb-brand); color: #fff; }
-.testActions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .primaryButton.secondary { background: var(--sb-ink-soft); }
 
 @media (max-width: 520px) {
   .testSlots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .testActions { grid-template-columns: 1fr; }
 }
 
 .testBadge.small { margin-left: 8px; padding: 1px 10px; font-size: calc(14px * var(--ward-font-scale, 1)); }
@@ -401,7 +404,7 @@
 .resultCell { border-radius: 10px; background: #fff; padding: 6px 4px; text-align: center; }
 .resultCell dt { color: var(--sb-ink-mute); font-size: calc(13px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
 .resultCell dd { margin: 0; font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); word-break: keep-all; }
-.resultDetail summary { display: inline-flex; min-height: 44px; align-items: center; color: var(--sb-ink-mute); cursor: pointer; font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
+.resultDetail summary { display: inline-flex; min-width: 44px; min-height: 44px; padding: 0 4px; align-items: center; color: var(--sb-ink-mute); cursor: pointer; font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
 .resultDetail p { margin: 0; color: var(--sb-ink-soft); font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(600 + var(--ward-weight-boost, 0)); line-height: 1.5; word-break: keep-all; }
 .earlierTitle { color: var(--sb-ink-mute); font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
 .earlierResults { display: grid; min-height: 0; align-content: start; gap: 6px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
@@ -434,11 +437,22 @@
 .consentCard > p.consentHint { font-size: calc(18px * var(--ward-font-scale, 1)); }
 
 @media (max-width: 640px) {
-  .testStart { padding: 18px 14px; }
-  .greeting { gap: 10px; }
+  /* 폰 시작 화면 - 테스트 표시는 머리 위 줄, 여백·제목을 줄여 글자 1.47배에서도 넘치지 않게(점검 M-1) */
+  .testHero { gap: 18px; padding: 20px 18px; }
+  .testBadge.heroBadge { top: 14px; right: 14px; }
+  .heroHead { margin-top: 26px; gap: 12px; padding-right: 0; }
+  .heroTitle { font-size: calc(30px * var(--ward-font-scale, 1)); }
+  .testPick { padding: 18px 16px; }
+  .testPick .startButton { min-height: 84px; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 16px; }
+  .promptButton { min-height: 72px; font-size: calc(22px * var(--ward-font-scale, 1)); }
+  .talkSlot { white-space: nowrap; }
+  .talkHeadText { flex: 1 1 auto; }
+  .progressDots { gap: 4px; }
+  .progressDots i { width: 11px; height: 11px; }
+  .progressCount { font-size: calc(15px * var(--ward-font-scale, 1)); }
   .greetingBubble { padding: 14px 16px; }
   .greetingBubble p { font-size: calc(24px * var(--ward-font-scale, 1)); }
-  .testStart .testActions, .consentActions { grid-template-columns: 1fr; }
+  .consentActions { grid-template-columns: 1fr; }
   .consentCard h2 { font-size: calc(24px * var(--ward-font-scale, 1)); }
   .lineFace svg { width: 40px; height: 40px; }
 }
