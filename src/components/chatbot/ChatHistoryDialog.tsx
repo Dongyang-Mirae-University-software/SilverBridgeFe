@@ -4,8 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChatLogItem } from '@/service/interface/chat';
 import ChatBubble from './ChatBubble';
 import { CloseIcon } from './chatIcons';
-import { RESERVATION_INTENT } from './reservationFlow';
-import { groupChatSessions, logToMessages, type ChatHistorySession } from './chatHistorySessions';
+import { groupChatSessions, isReservationSession, logToMessages, parseLogTime, type ChatHistorySession } from './chatHistorySessions';
 import styles from './ChatHistoryDialog.module.css';
 
 interface Props {
@@ -52,17 +51,16 @@ function matches(filter: Filter, target: Target) {
 }
 
 export function formatLogDate(value?: string) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+  const time = parseLogTime(value);
+  if (time === null) return '-';
+  return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Seoul' }).format(new Date(time));
 }
 
 /** 피보호자 목록의 날짜·시각 두 줄("오늘" / "오전 10:20", "11월 10일" / "오후 3:05"). */
 function wardLogDate(value?: string): [string, string] | null {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
+  const ms = parseLogTime(value);
+  if (ms === null) return null;
+  const date = new Date(ms);
   const dayKey = (d: Date) => new Intl.DateTimeFormat('ko-KR', { dateStyle: 'short', timeZone: 'Asia/Seoul' }).format(d);
   const day =
     dayKey(date) === dayKey(new Date())
@@ -72,10 +70,6 @@ function wardLogDate(value?: string): [string, string] | null {
   return [day, time];
 }
 
-/** 예약을 다룬 대화창인가(기록의 의도 값 - 문구는 보지 않는다). */
-function isReservationSession(session: ChatHistorySession) {
-  return session.logs.some(log => log.intent === RESERVATION_INTENT);
-}
 
 /** 내 상담 기록 - 대화창 단위 목록, 누르면 그 대화의 질문·답 전체(2026-11-11). */
 export default function ChatHistoryDialog({
@@ -214,7 +208,7 @@ export default function ChatHistoryDialog({
               shown.map(session => {
                 if (variant === 'ward') {
                   const when = wardLogDate(session.startedAt);
-                  const reservation = isReservationSession(session);
+                  const reservation = isReservationSession(session.logs);
                   return (
                     <button
                       key={session.key}
