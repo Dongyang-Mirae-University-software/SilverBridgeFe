@@ -4,7 +4,8 @@
 
 import type { CompanionMood, CompanionSlotStatus } from '../guardian/companion';
 
-export type CompanionEndReason = 'MAX_TURNS' | 'NO_RESPONSE' | 'USER_STOP';
+// AVOIDED (2026-11-12): 어르신이 한 대화에서 두 번 말을 피해 말벗이 마무리한 대화 (BE V72, AI #272)
+export type CompanionEndReason = 'MAX_TURNS' | 'NO_RESPONSE' | 'USER_STOP' | 'AVOIDED';
 
 export interface IWardCompanionSlot {
   slot: string; // "09:00"
