@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { ADMIN_ANOMALY_TYPE_META, formatAdminTrendDate, formatNullableCount, getAiServiceState, getReviewMetrics } from './dashboard';
+import type { AdminChatStats } from '@/service/interface/admin/aiStats';
+import { ADMIN_ANOMALY_TYPE_META, formatAdminTrendDate, formatNullableCount, formatTodayChats, getAiServiceState, getReviewMetrics } from './dashboard';
 
 describe('관리자 대시보드 집계 표시', () => {
   it('AI 연결 상태를 알 수 없는 null을 0으로 표시하지 않는다', () => {
@@ -58,5 +59,23 @@ describe('관리자 대시보드 집계 표시', () => {
     expect(getAiServiceState(ai(), 'companion', false, false)).toEqual({ label: '확인 불가', tone: 'mute' });
     expect(getAiServiceState(undefined, 'companion', true, false)).toEqual({ label: '확인 중', tone: 'mute' });
     expect(getAiServiceState(undefined, 'companion', false, true)).toEqual({ label: '확인 불가', tone: 'mute' });
+  });
+
+  it('AI 서비스 칸에 모르는 값이 오면 확인 불가', () => {
+    const at = '2026-11-12T18:00:00+09:00';
+    const ai = { anomalyDetection: { status: 'UNKNOWN', checkedAt: at }, chatbot: { status: 'UNKNOWN', checkedAt: at }, generatedAt: at } as never;
+
+    expect(getAiServiceState(ai, 'anomaly', false, false)).toEqual({ label: '확인 불가', tone: 'mute' });
+    expect(getAiServiceState(ai, 'chat', false, false)).toEqual({ label: '확인 불가', tone: 'mute' });
+  });
+
+  it('챗봇 오늘 응답은 totalChats이고, 로딩·실패·모르는 값은 0이 아니라 -', () => {
+    const stats = (totalChats: number | null) => ({ totalChats } as AdminChatStats);
+
+    expect(formatTodayChats(stats(3), false, false)).toBe('3건');
+    expect(formatTodayChats(stats(0), false, false)).toBe('0건');
+    expect(formatTodayChats(stats(null), false, false)).toBe('-');
+    expect(formatTodayChats(undefined, true, false)).toBe('-');
+    expect(formatTodayChats(undefined, false, true)).toBe('-');
   });
 });

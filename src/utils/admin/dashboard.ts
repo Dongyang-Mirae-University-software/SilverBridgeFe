@@ -1,3 +1,4 @@
+import type { AdminChatStats } from '@/service/interface/admin/aiStats';
 import { AdminAiServiceStatus, AdminDetectedType, AdminSafetyDashboard } from '@/service/interface/admin/dashboard';
 
 export const ADMIN_ANOMALY_TYPE_META: Record<AdminDetectedType, { label: string; color: 'accent' | 'danger' | 'warn' }> = {
@@ -39,4 +40,10 @@ export function getAiServiceState(status: AdminAiServiceStatus | null | undefine
   if (kind === 'anomaly' && value === 'DISCONNECTED') return { label: '연결 끊김', tone: 'warn' };
   if (kind !== 'anomaly' && value === 'DISABLED') return { label: '일시 중단', tone: 'warn' };
   return { label: '확인 불가', tone: 'mute' };
+}
+
+// 챗봇 카드 '오늘 응답' - 로딩·실패·모르는 값(null)은 0건이 아니라 '-'
+export function formatTodayChats(stats: AdminChatStats | null | undefined, loading: boolean, error: boolean) {
+  if (loading || error || stats?.totalChats == null) return '-';
+  return `${stats.totalChats.toLocaleString('ko-KR')}건`;
 }

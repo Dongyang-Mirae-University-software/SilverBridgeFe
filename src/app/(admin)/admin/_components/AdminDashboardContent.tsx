@@ -7,9 +7,10 @@ import Link from 'next/link';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { AdminAiServiceStatus, AdminOperationDashboard, AdminSafetyDashboard } from '@/service/interface/admin/dashboard';
-import { adminAiServiceStatusQueryOptions, adminCompanionStatsQueryOptions, adminOperationDashboardQueryOptions, adminSafetyDashboardQueryOptions } from '@/service/query/admin';
+import { adminAiServiceStatusQueryOptions, adminChatStatsQueryOptions, adminCompanionStatsQueryOptions, adminOperationDashboardQueryOptions, adminSafetyDashboardQueryOptions } from '@/service/query/admin';
 import { COMPANION_MOOD_ROWS } from '@/utils/admin/companion';
-import { ADMIN_ANOMALY_TYPE_META, formatNullableCount, getAiServiceState, getReviewMetrics } from '@/utils/admin/dashboard';
+import { ADMIN_ANOMALY_TYPE_META, formatNullableCount, formatTodayChats, getAiServiceState, getReviewMetrics } from '@/utils/admin/dashboard';
+import { kstToday } from '@/utils/reservation/reservationView';
 import styles from './AdminDashboardContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -38,6 +39,10 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
   // 대시보드에 들어올 때만 부른다 - 안전·운영 현황과 달리 자동으로 다시 부르지 않는다
   const companion = useQuery(adminCompanionStatsQueryOptions);
   const talk = companion.data;
+  // 챗봇 '오늘 응답' - AI 서버를 부르고 분 30회 제한이 있어 자동 반복 조회를 걸지 않는다. 실패해도 다른 카드는 그대로
+  const today = kstToday();
+  const todayChat = useQuery(adminChatStatsQueryOptions({ from: today, to: today }));
+  const todayChats = formatTodayChats(todayChat.data, todayChat.isLoading, todayChat.isError);
   const continuingCount = talk ? talk.continuingWards.length : null;
   const moodTotal = talk ? COMPANION_MOOD_ROWS.reduce((sum, row) => sum + talk.moodDistribution[row.key], 0) : 0;
   return <main className={cx('dashboard')}>
@@ -51,7 +56,7 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
             {/* 오탐률 분모는 판정에 응답한 상황 수 - 응답률과 함께 보여야 숫자가 거짓이 되지 않는다 */}
             <p className={cx('summaryNotice')}>{safety.todayAnomaly.total === 0 ? '오늘 감지된 상황이 없습니다.' : `판정 응답 ${review.answered} / ${safety.todayAnomaly.total}건 (응답률 ${review.responseRate}%) 기준`}</p>
           </AiSummaryCard>
-          <AiSummaryCard title="AI 의료 챗봇" marker="chat" items={[['서비스 상태', chatbotService.label], ['오늘 응답', '-'], ['통계 보기', 'AI 통계']]}><p className={cx('summaryNotice')}>상담 집계는 AI 의료 챗봇 통계 탭에서 확인할 수 있습니다.</p></AiSummaryCard>
+          <AiSummaryCard title="AI 의료 챗봇" marker="chat" items={[['서비스 상태', chatbotService.label], ['오늘 응답', todayChats], ['통계 보기', 'AI 통계']]}><p className={cx('summaryNotice')}>상담 집계는 AI 의료 챗봇 통계 탭에서 확인할 수 있습니다.</p></AiSummaryCard>
           <AiSummaryCard title="AI 안부 말벗 · 정서 분석" marker="sun" items={[['응답률', talk?.responseRate == null ? '-' : `${talk.responseRate}%`, 'brand'], ['대화 없는 어르신', formatCount(talk?.noDialogueWardCount, '명'), talk && talk.noDialogueWardCount > 0 ? 'care' : undefined], ['걱정·우울 이어짐', formatCount(continuingCount, '명'), continuingCount ? 'care' : undefined]]}>{talk ? <TypeStack unit="명" total={moodTotal || 1} items={COMPANION_MOOD_ROWS.map(row => ({ label: row.label, value: talk.moodDistribution[row.key], tone: row.tone }))} /> : <p className={cx('summaryNotice')}>{companion.isLoading ? '오늘 안부 대화 집계를 불러오는 중입니다.' : '오늘 안부 대화 집계를 불러오지 못했습니다.'}</p>}</AiSummaryCard>
         </div>
       </DashboardSection>
