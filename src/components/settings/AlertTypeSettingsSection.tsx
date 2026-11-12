@@ -78,7 +78,7 @@ export function AlertTypeSettingsSection() {
 
           <ToggleRow
             label="복약 알림"
-            desc="피보호자의 약 먹을 시간 알림과, 체크가 안 된 날 보호자 알림을 함께 켜고 꺼요 · 알려 드릴 시간은 '복약 관리' 화면에서 정해요"
+            desc="피보호자의 약 먹을 시간 알림과, 체크가 안 된 날 보호자 알림을 함께 켜고 꺼요 · 알려 드릴 시간은 '복약 관리' 화면에서 정해요 · 다른 보호자가 켜 두었다면 피보호자의 약 먹을 시간 알림은 계속 나가요"
             checked={setting.medication.enabled}
             disabled={updateMutation.isPending}
             onChange={enabled => handleToggle('medication', enabled)}
