@@ -1,4 +1,6 @@
 import type { ChatLogItem, ChatMessage, ChatRiskLevel } from '@/service/interface/chat';
+import { parseServerTime } from '@/utils/format/serverTime';
+
 import { RESERVATION_INTENT, isReservationField, selectionText } from './reservationFlow';
 
 // 상담 기록(기록 1건 = 질문 1개와 답 1개)을 대화창(sessionId) 단위로 묶는다(2026-11-11).
@@ -30,17 +32,8 @@ export function isSelectionLog(message?: string) {
   return SELECTION.test(message ?? '');
 }
 
-/**
- * 기록 시각(ms). AI 기록의 createdAt 은 시간대 표시 없는 UTC다("2026-11-12T05:23:39.095242" = 한국 14:23, 2026-11-12 gosky 실측).
- * 표시가 없으면 UTC로 읽는다 - 그대로 Date 에 넣으면 브라우저 시간대(한국)로 읽혀 9시간 이르게 보였다. Z·+09:00 등이 있으면 그대로.
- */
-export function parseLogTime(value?: string | null): number | null {
-  if (!value) return null;
-  const text = value.trim();
-  const hasZone = /(?:[zZ]|[+-]\d{2}:?\d{2})$/.test(text);
-  const parsed = Date.parse(hasZone || !text.includes('T') ? text : `${text}Z`);
-  return Number.isNaN(parsed) ? null : parsed;
-}
+/** 기록 시각(ms) - AI 서버 시각 읽기(시간대 표시 없으면 UTC)는 공용 함수와 같다(utils/format/serverTime). */
+export const parseLogTime = parseServerTime;
 
 function time(log: ChatLogItem) {
   return parseLogTime(log.createdAt);
