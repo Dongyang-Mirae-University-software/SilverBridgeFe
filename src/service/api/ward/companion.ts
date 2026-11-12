@@ -9,6 +9,7 @@ import {
   IWardCompanionReply,
   IWardCompanionSession,
   IWardCompanionToday,
+  IWardCompanionTranscriptConsent,
 } from '../../interface/ward/companion';
 
 const WARD_BASE = '/ward/companion';
@@ -76,4 +77,16 @@ export async function finishWardCompanionSession(sessionId: number) {
     { timeout: COMPANION_TIMEOUT_MS },
   );
   return getResponseData<IWardCompanionFinish>(response);
+}
+
+// 대화 내용 가족 공유 동의 상태
+export async function getWardCompanionTranscriptConsent() {
+  const response = await apiClient.get<CommonResponse<IWardCompanionTranscriptConsent>>(`${WARD_BASE}/transcript-consent`);
+  return getResponseData<IWardCompanionTranscriptConsent>(response);
+}
+
+// 동의(true)·철회(false). 철회하면 서버가 저장된 대화 내용을 바로 지운다
+export async function updateWardCompanionTranscriptConsent(consent: boolean) {
+  const response = await apiClient.put<CommonResponse<IWardCompanionTranscriptConsent>>(`${WARD_BASE}/transcript-consent`, { consent });
+  return getResponseData<IWardCompanionTranscriptConsent>(response);
 }

@@ -1,0 +1,57 @@
+.page { display: flex; flex-direction: column; gap: 16px; }
+.card { overflow: hidden; border: 1px solid var(--sb-line-soft); border-radius: var(--sb-radius); background: #fff; box-shadow: var(--sb-shadow-sm); }
+.cardTitle { margin: 0; border-bottom: 1px solid var(--sb-line-soft); color: var(--sb-ink); font-size: 17px; font-weight: 800; padding: 16px 24px; }
+
+.backLink { display: inline-flex; min-height: 44px; align-items: center; align-self: flex-start; gap: 6px; color: var(--sb-brand); font-size: 15px; font-weight: 800; text-decoration: none; }
+.backLink:focus-visible { outline: 3px solid var(--sb-brand-soft); outline-offset: 2px; }
+
+.state { display: grid; justify-items: center; gap: 12px; margin: 0; border: 1px solid var(--sb-line-soft); border-radius: var(--sb-radius); background: #fff; color: var(--sb-ink-soft); font-size: 16px; font-weight: 700; padding: 40px 24px; text-align: center; }
+.retryButton { min-height: 44px; border: 1px solid var(--sb-brand); border-radius: 12px; background: #fff; color: var(--sb-brand); cursor: pointer; font: inherit; font-weight: 800; padding: 0 18px; }
+
+.summary { display: flex; align-items: center; gap: 22px; padding: 22px 24px; }
+.summaryText { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--sb-ink-mute); font-size: 14px; font-weight: 700; }
+.testBadge { border-radius: 999px; background: var(--sb-warn-soft); color: var(--sb-warn); font-size: 12px; font-weight: 800; padding: 1px 8px; }
+.moodLine { color: var(--sb-ink); font-size: 22px; font-weight: 800; }
+.counts { color: var(--sb-ink-soft); font-size: 15px; font-weight: 700; }
+.status { color: var(--sb-ink-mute); font-size: 14px; font-weight: 700; }
+.risk { align-self: flex-start; border-radius: 999px; background: var(--sb-danger-soft); color: var(--sb-danger); font-size: 14px; font-weight: 800; padding: 3px 12px; }
+.unknownFace { width: 44px; height: 44px; flex: 0 0 auto; border: 2px dashed var(--sb-line); border-radius: 50%; }
+.unknownFace.large { width: 84px; height: 84px; }
+
+/* 기분 색 - AI 기분 체크 화면의 칩 색과 같다 */
+.joy { --mood: #a0732b; --mood-soft: #f6ead3; }
+.calm { --mood: var(--sb-brand); --mood-soft: var(--sb-brand-50); }
+.worry { --mood: #8a5f12; --mood-soft: #f7ebcd; }
+.depressed { --mood: #3f6e8c; --mood-soft: #e2edf4; }
+.unknown { --mood: var(--sb-ink-mute); --mood-soft: var(--sb-bg-soft); }
+.moodText { color: var(--mood); }
+
+.bars { display: flex; align-items: flex-end; gap: 10px; margin: 0; overflow-x: auto; padding: 18px 24px 16px; list-style: none; }
+.bar { display: grid; min-width: 48px; flex: 1 1 0; justify-items: center; gap: 4px; }
+.barFill { display: block; width: 100%; height: 72px; border-radius: 10px; background: var(--mood-soft); box-shadow: inset 0 -28px 0 var(--mood); }
+.calm .barFill { box-shadow: inset 0 -44px 0 var(--mood); }
+.joy .barFill { box-shadow: inset 0 -64px 0 var(--mood); }
+.worry .barFill { box-shadow: inset 0 -20px 0 var(--mood); }
+.depressed .barFill { box-shadow: inset 0 -12px 0 var(--mood); }
+.unknown .barFill { border: 2px dashed var(--sb-line); background: transparent; box-shadow: none; }
+.barLabel { color: var(--mood); font-size: 13px; font-weight: 800; white-space: nowrap; }
+.barNo { color: var(--sb-ink-mute); font-size: 12px; font-weight: 700; }
+
+.hiddenNote { margin: 0; color: var(--sb-ink-soft); font-size: 15px; font-weight: 700; line-height: 1.6; padding: 20px 24px; word-break: keep-all; }
+.talk { display: grid; gap: 10px; margin: 0; padding: 18px 20px; list-style: none; }
+.talkLine { display: grid; max-width: min(100%, 560px); gap: 4px; border-radius: 16px; padding: 12px 16px; }
+.talkLine p { margin: 0; color: var(--sb-ink); font-size: 16px; font-weight: 600; line-height: 1.55; overflow-wrap: anywhere; word-break: keep-all; }
+.talkLine.companion { justify-self: start; border-top-left-radius: 4px; background: var(--sb-brand-50); }
+.talkLine.ward { justify-self: end; border: 1px solid var(--sb-line-soft); border-top-right-radius: 4px; background: #fff; }
+.who { color: var(--sb-ink-mute); font-size: 13px; font-weight: 800; }
+.companion .who { color: var(--sb-brand); }
+.sentence { display: block; }
+
+@media (max-width: 560px) {
+  .summary { gap: 16px; padding: 18px; }
+  .moodLine { font-size: 20px; }
+  .bars { gap: 6px; padding: 14px 14px 12px; }
+  .bar { min-width: 32px; }
+  .talk { padding: 14px; }
+}

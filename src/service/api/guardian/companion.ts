@@ -5,11 +5,35 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
-import { ICompanionToday } from '../../interface/guardian/companion';
+import { ICompanionSessionDetail, ICompanionToday, ICompanionWeek } from '../../interface/guardian/companion';
 
 export async function getWardCompanionToday(wardId: string) {
   const response = await apiClient.get<CommonResponse<ICompanionToday>>(
     `/guardian/ward/${encodeURIComponent(wardId)}/companion/today`,
   );
   return getResponseData<ICompanionToday>(response);
+}
+
+// 최근 7일 하루 기분
+export async function getWardCompanionWeek(wardId: string) {
+  const response = await apiClient.get<CommonResponse<ICompanionWeek>>(
+    `/guardian/ward/${encodeURIComponent(wardId)}/companion/week`,
+  );
+  return getResponseData<ICompanionWeek>(response);
+}
+
+// 고른 날(최근 7일 안)의 시간대 목록 - today와 같은 모양. 범위 밖이면 400 COMPANION_DATE_OUT_OF_RANGE
+export async function getWardCompanionDay(wardId: string, date: string) {
+  const response = await apiClient.get<CommonResponse<ICompanionToday>>(
+    `/guardian/ward/${encodeURIComponent(wardId)}/companion/days/${encodeURIComponent(date)}`,
+  );
+  return getResponseData<ICompanionToday>(response);
+}
+
+// 대화 보기 - 기분은 항상, 글은 transcript=AVAILABLE일 때만
+export async function getWardCompanionSession(wardId: string, sessionId: number) {
+  const response = await apiClient.get<CommonResponse<ICompanionSessionDetail>>(
+    `/guardian/ward/${encodeURIComponent(wardId)}/companion/sessions/${sessionId}`,
+  );
+  return getResponseData<ICompanionSessionDetail>(response);
 }

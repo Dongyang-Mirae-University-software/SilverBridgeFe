@@ -4,40 +4,36 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 import { isAxiosError } from 'axios';
 
-import { MoodFace, MoodFaceKind } from '@/components/MoodFace';
+import { useState } from 'react';
+import Link from 'next/link';
+import { MoodFace } from '@/components/MoodFace';
 import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
-import { wardCompanionTodayQueryOptions } from '@/service/query/guardian';
+import {
+  wardCompanionDayQueryOptions,
+  wardCompanionTodayQueryOptions,
+  wardCompanionWeekQueryOptions,
+} from '@/service/query/guardian';
 import type {
-  CompanionMood,
-  CompanionSlotStatus,
   ICompanionAttention,
+  ICompanionDayMood,
   ICompanionSlot,
   ICompanionToday,
 } from '@/service/interface/guardian/companion';
 import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 import { getTopicParticle } from '@/utils/format/korean';
 import { formatSlotTime } from '@/utils/format/slotTime';
+import {
+  MOOD_META,
+  STATUS_LABEL,
+  UNKNOWN_MOOD,
+  companionSessionHref,
+  formatDateLabel,
+  parseDate,
+} from './companionMood';
 import styles from './GuardianEmotionContent.module.css';
 
 const cx = classNames.bind(styles);
-
-const UNKNOWN_MOOD = '확인할 수 없어요';
-
-const MOOD_META: Record<CompanionMood, { label: string; face: MoodFaceKind; tone: string }> = {
-  JOY: { label: '기쁨', face: 'happy', tone: 'joy' },
-  CALM: { label: '평온', face: 'calm', tone: 'calm' },
-  WORRY: { label: '걱정', face: 'worried', tone: 'worry' },
-  DEPRESSED: { label: '우울', face: 'sad', tone: 'depressed' },
-};
-
-const STATUS_LABEL: Record<CompanionSlotStatus, string> = {
-  DONE: '마침',
-  UPCOMING: '예정',
-  AVAILABLE: '지금 대화 가능',
-  IN_PROGRESS: '대화 중',
-  MISSED: '지나감',
-};
 
 // 병명이 아니라 관찰한 사실만 쓴다
 const ATTENTION_TEXT: Record<ICompanionAttention['mood'], string> = {
@@ -45,8 +41,12 @@ const ATTENTION_TEXT: Record<ICompanionAttention['mood'], string> = {
   DEPRESSED: '우울한 기분이',
 };
 
+function errorCode(error: unknown) {
+  return isAxiosError<{ code?: string }>(error) ? error.response?.data?.code : undefined;
+}
+
 function isNotAuthorized(error: unknown) {
-  return isAxiosError<{ code?: string }>(error) && error.response?.data?.code === 'COMPANION_NOT_AUTHORIZED';
+  return errorCode(error) === 'COMPANION_NOT_AUTHORIZED';
 }
 
 export function GuardianEmotionContent() {
@@ -124,7 +124,7 @@ export function GuardianEmotionContent() {
           )}
         </div>
       ) : data ? (
-        <CompanionToday wardName={selectedWard.partnerName} today={data} />
+        <CompanionToday key={wardId} wardId={wardId} wardName={selectedWard.partnerName} today={data} />
       ) : (
         <p className={cx('emptyState')}>오늘 안부 대화 정보가 없어요.</p>
       )}
@@ -132,8 +132,11 @@ export function GuardianEmotionContent() {
   );
 }
 
-function CompanionToday({ wardName, today }: { wardName: string; today: ICompanionToday }) {
+function CompanionToday({ wardId, wardName, today }: { wardId: string; wardName: string; today: ICompanionToday }) {
   const { current, attention } = today;
+  // 7일 줄에서 고른 날. null·오늘이면 위 오늘 목록만 보인다
+  const [pickedDate, setPickedDate] = useState<string | null>(null);
+  const pastDate = pickedDate && pickedDate !== today.date ? pickedDate : null;
   const currentMood = current?.mood ? MOOD_META[current.mood] : null;
 
   return (
@@ -168,21 +171,27 @@ function CompanionToday({ wardName, today }: { wardName: string; today: ICompani
         </section>
       )}
 
-      <section className={cx('card', 'slotCard')} aria-labelledby="companion-slots-title">
-        <h2 id="companion-slots-title" className={cx('slotTitle')}>
-          오늘의 안부 대화
-        </h2>
-        <ul className={cx('slots')}>
-          {today.slots.map(slot => (
-            <SlotRow key={slot.slot} slot={slot} />
-          ))}
-        </ul>
-      </section>
+      <WeekMoods wardId={wardId} today={today.date} picked={pastDate ?? today.date} onPick={setPickedDate} />
+
+      {pastDate ? (
+        <DaySlots wardId={wardId} date={pastDate} />
+      ) : (
+        <section className={cx('card', 'slotCard')} aria-labelledby="companion-slots-title">
+          <h2 id="companion-slots-title" className={cx('slotTitle')}>
+            오늘의 안부 대화
+          </h2>
+          <ul className={cx('slots')}>
+            {today.slots.map(slot => (
+              <SlotRow key={slot.slot} slot={slot} wardId={wardId} />
+            ))}
+          </ul>
+        </section>
+      )}
     </>
   );
 }
 
-function SlotRow({ slot }: { slot: ICompanionSlot }) {
+function SlotRow({ slot, wardId }: { slot: ICompanionSlot; wardId: string }) {
   const done = slot.status === 'DONE';
   const mood = slot.mood ? MOOD_META[slot.mood] : null;
 
@@ -202,6 +211,104 @@ function SlotRow({ slot }: { slot: ICompanionSlot }) {
           </span>
         )}
       </div>
+      {done && slot.sessionId != null && (
+        <Link
+          className={cx('viewLink')}
+          href={companionSessionHref(wardId, slot.sessionId)}
+          aria-label={`${formatSlotTime(slot.slot)} 대화 보기`}
+        >
+          대화 보기 <span aria-hidden="true">&gt;</span>
+        </Link>
+      )}
     </li>
+  );
+}
+
+// 최근 7일 하루 기분 - 날짜를 누르면 그날 시간대 목록을 아래에 연다
+function WeekMoods({ wardId, today, picked, onPick }: {
+  wardId: string;
+  today: string;
+  picked: string;
+  onPick: (date: string) => void;
+}) {
+  const { data, isLoading, isError, isFetching, refetch } = useQuery(wardCompanionWeekQueryOptions(wardId));
+
+  return (
+    <section className={cx('card', 'weekCard')} aria-labelledby="companion-week-title">
+      <h2 id="companion-week-title" className={cx('slotTitle')}>
+        최근 7일 기분
+      </h2>
+      {isLoading ? (
+        <p className={cx('weekState')} role="status">최근 기분을 불러오는 중이에요.</p>
+      ) : isError || !data ? (
+        <p className={cx('weekState')} role="alert">
+          최근 기분을 불러오지 못했어요.{' '}
+          <button className={cx('textButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>다시 불러오기</button>
+        </p>
+      ) : (
+        <ol className={cx('weekDays')}>
+          {data.days.map(day => (
+            <WeekDay key={day.date} day={day} isToday={day.date === today} selected={day.date === picked} onPick={onPick} />
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+function WeekDay({ day, isToday, selected, onPick }: {
+  day: ICompanionDayMood;
+  isToday: boolean;
+  selected: boolean;
+  onPick: (date: string) => void;
+}) {
+  const mood = day.mood ? MOOD_META[day.mood] : null;
+  const { day: dayOfMonth, weekday } = parseDate(day.date);
+  const name = `${isToday ? '오늘' : formatDateLabel(day.date)} 기분 ${mood?.label ?? '기록 없음'}`;
+
+  return (
+    <li>
+      <button className={cx('weekDay', { selected })} type="button" aria-pressed={selected} aria-label={name} onClick={() => onPick(day.date)}>
+        <span className={cx('weekLabel')}>{isToday ? '오늘' : weekday}</span>
+        {mood ? <MoodFace mood={mood.face} size={40} /> : <span className={cx('unknownFace', 'small')} aria-hidden="true" />}
+        <span className={cx('weekDate')}>{dayOfMonth}</span>
+      </button>
+    </li>
+  );
+}
+
+// 고른 지난 날의 시간대 목록
+function DaySlots({ wardId, date }: { wardId: string; date: string }) {
+  const { data, error, isLoading, isError, isFetching, refetch } = useQuery(wardCompanionDayQueryOptions(wardId, date));
+  const title = `${formatDateLabel(date)} 안부 대화`;
+  const code = errorCode(error);
+
+  return (
+    <section className={cx('card', 'slotCard')} aria-labelledby="companion-day-title">
+      <h2 id="companion-day-title" className={cx('slotTitle')}>{title}</h2>
+      {isLoading ? (
+        <p className={cx('weekState')} role="status">불러오는 중이에요.</p>
+      ) : isError || !data ? (
+        <p className={cx('weekState')} role="alert">
+          {code === 'COMPANION_NOT_AUTHORIZED'
+            ? '연결된 피보호자의 안부 대화만 볼 수 있습니다.'
+            : code === 'COMPANION_DATE_OUT_OF_RANGE'
+              ? '최근 7일 안의 날짜만 볼 수 있어요.'
+              : '그날 안부 대화를 불러오지 못했어요.'}
+          {code !== 'COMPANION_NOT_AUTHORIZED' && code !== 'COMPANION_DATE_OUT_OF_RANGE' && (
+            <>
+              {' '}
+              <button className={cx('textButton')} type="button" disabled={isFetching} onClick={() => void refetch()}>다시 불러오기</button>
+            </>
+          )}
+        </p>
+      ) : (
+        <ul className={cx('slots')}>
+          {data.slots.map(slot => (
+            <SlotRow key={slot.slot} slot={slot} wardId={wardId} />
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

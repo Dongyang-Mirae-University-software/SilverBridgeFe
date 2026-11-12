@@ -78,3 +78,12 @@ export interface IWardCompanionResultAnalysis {
   alertLevel?: string | null; // URGENT·INFO, 없으면 null
   test?: boolean;
 }
+
+// 대화 내용(글) 가족 공유 동의 - GET/PUT /api/ward/companion/transcript-consent
+// 동의하면 보호자가 '대화 보기'에서 글을 본다(보관 retentionDays일 뒤 지움). 철회하면 저장된 글을 바로 지운다
+export interface IWardCompanionTranscriptConsent {
+  consented: boolean;
+  consentedAt: string | null; // 처음 동의한 시각. 동의한 적이 없으면 null
+  retentionDays: number;
+  notice: string[]; // 동의 받을 때 그대로 보여 줄 고지 항목(순서대로)
+}

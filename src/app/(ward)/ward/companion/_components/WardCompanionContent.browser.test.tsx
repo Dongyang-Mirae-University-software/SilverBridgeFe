@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-
 import { AxiosError, AxiosHeaders } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import type { IWardCompanionTranscriptConsent } from '@/service/interface/ward/companion';
 import { render } from 'vitest-browser-react';
 
 import type { IWardCompanionToday } from '@/service/interface/ward/companion';
@@ -19,6 +20,8 @@ const api = vi.hoisted(() => ({
   openTest: vi.fn(),
   prompt: vi.fn(),
   speak: vi.fn(),
+  consent: vi.fn(),
+  setConsent: vi.fn(),
 }));
 const nav = vi.hoisted(() => ({ search: '', replace: vi.fn() }));
 
@@ -30,6 +33,8 @@ vi.mock('@/service/api/ward/companion', () => ({
   finishWardCompanionSession: api.finish,
   openWardCompanionTestSession: api.openTest,
   sendWardCompanionTestPrompt: api.prompt,
+  getWardCompanionTranscriptConsent: api.consent,
+  updateWardCompanionTranscriptConsent: api.setConsent,
 }));
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(nav.search),
@@ -130,6 +135,14 @@ async function recordOnce(waitMs = 500) {
 }
 
 const TEST_TODAY = { ...OPEN_NOON, testMode: true };
+// 이미 동의를 물은 계정(첫 대화 동의 카드가 뜨지 않는다) / 아직 묻지 않은 계정
+const CONSENT_ASKED: IWardCompanionTranscriptConsent = { consented: true, consentedAt: '2026-11-01T09:00:00+09:00', retentionDays: 30, notice: [] };
+const CONSENT_NEW: IWardCompanionTranscriptConsent = {
+  consented: false,
+  consentedAt: null,
+  retentionDays: 30,
+  notice: ['수집 목적: 가족이 안부 대화를 함께 보기 위해', '보유 기간: 30일'],
+};
 const TURN_ANALYSIS = {
   turnLabel: '걱정',
   turnSource: 'TEXT_FACE',
@@ -144,6 +157,8 @@ beforeEach(() => {
   api.open.mockResolvedValue(SESSION);
   api.openTest.mockResolvedValue({ ...SESSION, slot: '15:00', question: '오후는 어떻게 보내고 계세요?' });
   api.prompt.mockResolvedValue(undefined);
+  api.consent.mockResolvedValue(CONSENT_ASKED);
+  window.localStorage.removeItem('sb-companion-consent-asked');
   nav.search = '';
   nav.replace.mockReset();
   Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } });
@@ -154,6 +169,7 @@ afterEach(async () => {
   cameraTracks = [];
   await toneContext?.close().catch(() => undefined);
   toneContext = null;
+  await page.viewport(375, 812);
   document.body.innerHTML = '';
 });
 
@@ -211,7 +227,7 @@ describe('오늘 현황 (Chrome)', () => {
     api.today.mockResolvedValue({ ...today(null, ['DONE', 'MISSED', 'UPCOMING', 'UPCOMING', 'UPCOMING']), testMode: true });
     await renderCompanion();
 
-    await expect.element(page.getByRole('button', { name: '바로 시작' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '바로 이야기하기' })).toBeVisible();
     expect(nav.replace).not.toHaveBeenCalledWith('/ward');
   });
 
@@ -290,13 +306,13 @@ describe('대화 (Chrome)', () => {
 
     await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
     expect(api.finish).not.toHaveBeenCalled();
-    expect(page.getByRole('button', { name: '그만하기' }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: '대화 그만하기' }).elements()).toHaveLength(0);
   });
 
   it('그만하기를 누르면 대화를 마치고 처음 화면으로 돌아갈 수 있다', async () => {
     api.finish.mockResolvedValue({ sessionId: 42, slot: '12:00', endReason: 'USER_STOP', mood: null, turnCount: 0 });
     await openTalk();
-    await page.getByRole('button', { name: '그만하기' }).click();
+    await page.getByRole('button', { name: '대화 그만하기' }).click();
 
     await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
     expect(api.finish).toHaveBeenCalledWith(42);
@@ -308,7 +324,7 @@ describe('대화 (Chrome)', () => {
   it('대화를 마친 뒤 시간대가 닫혀 있으면 [홈으로]가 홈으로 보낸다', async () => {
     api.finish.mockResolvedValue({ sessionId: 42, slot: '12:00', endReason: 'USER_STOP', mood: null, turnCount: 0 });
     await openTalk();
-    await page.getByRole('button', { name: '그만하기' }).click();
+    await page.getByRole('button', { name: '대화 그만하기' }).click();
     await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
     // 마친 화면을 보는 동안에는 시간대가 닫혀도 머문다
     api.today.mockResolvedValue(today(null, ['DONE', 'DONE', 'UPCOMING', 'UPCOMING', 'UPCOMING']));
@@ -469,7 +485,7 @@ describe('표정 사진 (Chrome)', () => {
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
     await userEvent.click(page.getByRole('button', { name: '좋아요' }));
     await expect.element(page.getByText('카메라 켜짐')).toBeVisible();
-    await page.getByRole('button', { name: '그만하기' }).click();
+    await page.getByRole('button', { name: '대화 그만하기' }).click();
 
     await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
     await vi.waitFor(() => cameraTracks.forEach(track => expect(track.readyState).toBe('ended')));
@@ -482,7 +498,7 @@ describe('테스트 계정 (Chrome)', () => {
     api.replyText.mockResolvedValue({ turnNo: 1, reply: '네.', ended: false, endReason: null, transcript: null });
     await openTalk();
     expect(page.getByText('테스트용').elements()).toHaveLength(0);
-    expect(page.getByRole('heading', { name: /테스트 결과/ }).elements()).toHaveLength(0);
+    expect(page.getByRole('heading', { name: /판정 결과/ }).elements()).toHaveLength(0);
   });
 
   it('testMode가 아니면 analysis에 textMood가 와도 말로 본 기분을 보이지 않는다', async () => {
@@ -514,10 +530,10 @@ describe('테스트 계정 (Chrome)', () => {
     });
     await renderCompanion();
 
-    await expect.element(page.getByRole('heading', { name: /테스트/ }).first()).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: '안부 말벗 테스트' })).toBeVisible();
     await page.getByRole('button', { name: '오후 3시' }).click();
     await expect.element(page.getByRole('button', { name: '오후 3시' })).toHaveAttribute('aria-pressed', 'true');
-    await page.getByRole('button', { name: '바로 시작' }).click();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
 
     await expect.element(page.getByText('오후는 어떻게 보내고 계세요?')).toBeVisible();
     expect(api.openTest).toHaveBeenCalledWith('15:00');
@@ -531,7 +547,7 @@ describe('테스트 계정 (Chrome)', () => {
       '1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 표정: 평온(사진 3장 중 얼굴 3, 확신 80%) · 위험: 없음',
     )).toBeVisible();
 
-    await page.getByRole('button', { name: '그만하기' }).click();
+    await page.getByRole('button', { name: '대화 그만하기' }).click();
     await expect.element(page.getByText(
       '대화 마침 · 대화 기분: 걱정 · 턴 수: 1(대답 1·무응답 0) · 위험: 없음 · 알림 단계: 없음',
     )).toBeVisible();
@@ -541,7 +557,7 @@ describe('테스트 계정 (Chrome)', () => {
     api.today.mockResolvedValue(TEST_TODAY);
     api.replyText.mockResolvedValue({ turnNo: 1, reply: '그러셨군요.', ended: false, endReason: null, transcript: null, analysis: { ...TURN_ANALYSIS, textMood } });
     await renderCompanion();
-    await page.getByRole('button', { name: '바로 시작' }).click();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
     await page.getByRole('button', { name: '글로 대답하기' }).click();
     await page.getByRole('textbox', { name: '대답 적기' }).fill('좀 걱정돼');
     await page.getByRole('button', { name: '보내기' }).click();
@@ -574,7 +590,7 @@ describe('테스트 계정 (Chrome)', () => {
       analysis: { mood: null, turnCount: 8, answeredCount: 8, noResponseCount: 0, riskFlag: true, alertLevel: 'URGENT', test: true },
     });
     await renderCompanion();
-    await page.getByRole('button', { name: '바로 시작' }).click();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
     await page.getByRole('button', { name: '글로 대답하기' }).click();
     await page.getByRole('textbox', { name: '대답 적기' }).fill('힘들어');
     await page.getByRole('button', { name: '보내기' }).click();
@@ -588,7 +604,7 @@ describe('테스트 계정 (Chrome)', () => {
     api.today.mockResolvedValue(TEST_TODAY);
     await renderCompanion();
     await page.getByRole('button', { name: '오후 6시' }).click();
-    await page.getByRole('button', { name: '안부 알림 보내기' }).click();
+    await page.getByRole('button', { name: '안부 알림 받아 보기' }).click();
 
     await expect.element(page.getByText('오후 6시 안부 알림을 보냈어요. 잠시 뒤 알림이 와요.')).toBeVisible();
     expect(api.prompt).toHaveBeenCalledWith('18:00');
@@ -598,7 +614,7 @@ describe('테스트 계정 (Chrome)', () => {
     api.today.mockResolvedValue(TEST_TODAY);
     api.openTest.mockRejectedValue(apiError(403, 'COMPANION_TEST_NOT_ALLOWED'));
     await renderCompanion();
-    await page.getByRole('button', { name: '바로 시작' }).click();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
     await expect.element(page.getByText('테스트 계정만 쓸 수 있습니다.')).toBeVisible();
   });
 
@@ -619,7 +635,158 @@ describe('테스트 계정 (Chrome)', () => {
     api.today.mockResolvedValue(TEST_TODAY);
     nav.search = 'testSlot=16:00';
     await renderCompanion();
-    await expect.element(page.getByRole('button', { name: '바로 시작' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '바로 이야기하기' })).toBeVisible();
     expect(page.getByText('안부 알림으로 오셨어요', { exact: false }).elements()).toHaveLength(0);
+  });
+});
+
+describe('새 화면 배치 (Chrome)', () => {
+  function turnReply(turnNo: number) {
+    return { turnNo, reply: '그러셨군요. 또 무엇을 하셨어요?', ended: false, endReason: null, transcript: null, analysis: TURN_ANALYSIS };
+  }
+
+  async function startTestTalk() {
+    api.today.mockResolvedValue(TEST_TODAY);
+    let turn = 0;
+    api.replyText.mockImplementation(async () => turnReply(++turn));
+    await renderCompanion();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
+    await expect.element(page.getByText('오후는 어떻게 보내고 계세요?')).toBeVisible();
+    await page.getByRole('button', { name: '글로 대답하기' }).click();
+  }
+
+  async function answer(text: string) {
+    await page.getByRole('textbox', { name: '대답 적기' }).fill(text);
+    await page.getByRole('button', { name: '보내기' }).click();
+  }
+
+  it('테스트 시작 화면: 설명 문장 없이 말벗 인사 말풍선(두 문장)·시간대 5칸·두 버튼', async () => {
+    api.today.mockResolvedValue(TEST_TODAY);
+    await renderCompanion();
+
+    await expect.element(page.getByText('안녕하세요.', { exact: true })).toBeVisible();
+    await expect.element(page.getByText('오전 9시 안부 인사를 나눠 볼까요?', { exact: true })).toBeVisible();
+    expect(page.getByText('시간대를 고르고 바로 시작하거나', { exact: false }).elements()).toHaveLength(0);
+    expect(page.getByRole('group', { name: '안부 시간대' }).getByRole('button').elements()).toHaveLength(5);
+    await page.getByRole('button', { name: '오후 6시' }).click();
+    await expect.element(page.getByText('오후 6시 안부 인사를 나눠 볼까요?', { exact: true })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '안부 알림 받아 보기' })).toBeVisible();
+  });
+
+  it('말벗 문장은 문장 끝(?·.) 뒤에서 줄을 나눠 두 줄로 보인다', async () => {
+    await startTestTalk();
+    await answer('산책했어');
+
+    const first = page.getByText('그러셨군요.', { exact: true }).element() as HTMLElement;
+    const second = page.getByText('또 무엇을 하셨어요?', { exact: true }).element() as HTMLElement;
+    expect(second.getBoundingClientRect().top).toBeGreaterThan(first.getBoundingClientRect().top);
+  });
+
+  it('폰(390×844): 머리에 진행 점, 아래 줄에 글로 대답하기 | 대화 그만하기, 판정은 접힌 한 줄', async () => {
+    await page.viewport(390, 844);
+    await startTestTalk();
+    await answer('좋아');
+
+    const answerBar = page.getByRole('region', { name: '대답하기' });
+    await expect.element(answerBar.getByRole('button', { name: '대화 그만하기' })).toBeVisible();
+    expect(page.getByRole('complementary').elements()).toHaveLength(0);
+    expect(document.querySelectorAll('[class*="progressDots"] i')).toHaveLength(8);
+    await expect.element(page.getByText('1번째 대답', { exact: false })).toBeVisible();
+    const details = document.querySelector('details') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+  });
+
+  it('태블릿(1280×800): 오른쪽 칸에 카메라·판정 결과·대화 그만하기, 판정은 방금 대답 + 지난 대답 7줄(8개 누적)', async () => {
+    await page.viewport(1280, 800);
+    await startTestTalk();
+    for (let i = 1; i <= 8; i += 1) {
+      await answer(`대답 ${i}`);
+      await expect.element(page.getByText(`${i}번째 대답 · 턴 기분`, { exact: false }).first()).toBeInTheDocument();
+    }
+
+    const side = page.getByRole('complementary', { name: '카메라와 판정 결과' });
+    await expect.element(side.getByRole('button', { name: '대화 그만하기' })).toBeVisible();
+    await expect.element(side.getByText('말로 대답하는 동안 여기에 얼굴이 보여요')).toBeVisible();
+    expect(page.getByRole('region', { name: '대답하기' }).getByRole('button', { name: '대화 그만하기' }).elements()).toHaveLength(0);
+    await expect.element(side.getByText('방금 대답')).toBeVisible();
+    await expect.element(side.getByText('8번째 대답 · 턴 기분', { exact: false })).toBeVisible();
+    const earlier = side.getByRole('list', { name: '지난 대답 판정' }).getByRole('listitem').elements();
+    expect(earlier).toHaveLength(7);
+    expect(earlier[0].textContent).toContain('7번째 대답');
+    expect(earlier[6].textContent).toContain('1번째 대답');
+    // 지난 대답은 한 줄로 줄인다
+    expect(getComputedStyle(earlier[0]).whiteSpace).toBe('nowrap');
+  });
+
+  it('대화 그만하기는 위치만 옮겼고 마치기(USER_STOP)를 부른다', async () => {
+    await page.viewport(1280, 800);
+    api.finish.mockResolvedValue({ sessionId: 42, slot: '15:00', endReason: 'USER_STOP', mood: null, turnCount: 0 });
+    await startTestTalk();
+    await page.getByRole('complementary').getByRole('button', { name: '대화 그만하기' }).click();
+    await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
+    expect(api.finish).toHaveBeenCalledWith(42);
+  });
+});
+
+describe('대화 내용 공유 동의 (Chrome)', () => {
+  it('처음 대화를 시작하면 먼저 묻고, 보여 줄게요를 고르면 동의를 저장한 뒤 시작한다', async () => {
+    api.consent.mockResolvedValue(CONSENT_NEW);
+    api.setConsent.mockResolvedValue({ ...CONSENT_NEW, consented: true, consentedAt: '2026-11-12T10:00:00+09:00' });
+    await renderCompanion();
+    await expect.element(page.getByText('대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.')).toBeVisible();
+
+    await page.getByRole('button', { name: '이야기 시작하기' }).click();
+    await expect.element(page.getByRole('heading', { name: '안부 대화 내용을 가족에게 보여 줄까요?' })).toBeVisible();
+    await expect.element(page.getByText('수집 목적: 가족이 안부 대화를 함께 보기 위해')).toBeVisible();
+    expect(api.open).not.toHaveBeenCalled();
+
+    await page.getByRole('button', { name: '보여 줄게요' }).click();
+    await expect.element(page.getByText('점심은 무엇을 드셨어요?')).toBeVisible();
+    expect(api.setConsent).toHaveBeenCalledWith(true);
+    expect(api.open).toHaveBeenCalledTimes(1);
+  });
+
+  it('보여 주지 않을게요를 고르면 저장 없이 시작하고, 다시 들어와도 묻지 않는다', async () => {
+    api.consent.mockResolvedValue(CONSENT_NEW);
+    api.today.mockResolvedValue(TEST_TODAY);
+    await renderCompanion();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
+    await page.getByRole('button', { name: '보여 주지 않을게요' }).click();
+
+    await expect.element(page.getByText('오후는 어떻게 보내고 계세요?')).toBeVisible();
+    expect(api.setConsent).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem('sb-companion-consent-asked')).toBe('1');
+    document.body.innerHTML = '';
+
+    await renderCompanion();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
+    await expect.element(page.getByText('오후는 어떻게 보내고 계세요?')).toBeVisible();
+    expect(page.getByRole('heading', { name: '안부 대화 내용을 가족에게 보여 줄까요?' }).elements()).toHaveLength(0);
+  });
+
+  it('동의 저장에 실패하면 카드에 남아 다시 누르게 한다', async () => {
+    api.consent.mockResolvedValue(CONSENT_NEW);
+    api.setConsent.mockRejectedValueOnce(apiError(503, 'SERVICE_UNAVAILABLE'));
+    await renderCompanion();
+    await page.getByRole('button', { name: '이야기 시작하기' }).click();
+    await page.getByRole('button', { name: '보여 줄게요' }).click();
+
+    await expect.element(page.getByText('저장하지 못했어요. 다시 눌러 주세요.')).toBeVisible();
+    expect(api.open).not.toHaveBeenCalled();
+  });
+
+  it('이미 동의한 계정은 묻지 않고, 보관 안내 문구를 보인다', async () => {
+    await renderCompanion();
+    await expect.element(page.getByText('대답한 말은 가족이 볼 수 있게 30일 동안 보관해요.', { exact: false })).toBeVisible();
+    await page.getByRole('button', { name: '이야기 시작하기' }).click();
+    await expect.element(page.getByText('점심은 무엇을 드셨어요?')).toBeVisible();
+    expect(api.setConsent).not.toHaveBeenCalled();
+  });
+
+  it('동의 상태를 못 받으면 묻지 않고 대화를 막지 않는다', async () => {
+    api.consent.mockRejectedValue(apiError(503, 'SERVICE_UNAVAILABLE'));
+    await renderCompanion();
+    await page.getByRole('button', { name: '이야기 시작하기' }).click();
+    await expect.element(page.getByText('점심은 무엇을 드셨어요?')).toBeVisible();
   });
 });

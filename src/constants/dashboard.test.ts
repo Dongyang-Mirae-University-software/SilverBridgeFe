@@ -8,6 +8,9 @@ describe('wardNavItems - 안부 말벗 메뉴는 테스트 계정만', () => {
 
   it('테스트 계정은 홈 다음에 안부 말벗', () => {
     expect(wardNavItems(true).slice(0, 2).map(item => item.href)).toEqual(['/ward', '/ward/companion']);
+    // 메뉴 이름 옆에 작은 '테스트' 표시
+    expect(wardNavItems(true)[1]).toMatchObject({ label: '안부 말벗', badge: '테스트' });
+    expect(wardNavItems(false).some(item => item.badge)).toBe(false);
   });
 
   it('보호자 메뉴는 v13 시안의 4개에 AI 기분 체크를 더한 5개', () => {

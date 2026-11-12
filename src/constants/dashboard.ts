@@ -13,7 +13,7 @@ export const WARD_NAV: NavItem[] = [
 ];
 
 /** [테스트 계정만] 사이드바의 안부 말벗 메뉴 */
-export const WARD_COMPANION_NAV: NavItem = { href: '/ward/companion', icon: 'heart', label: '안부 말벗', key: 'companion' };
+export const WARD_COMPANION_NAV: NavItem = { href: '/ward/companion', icon: 'heart', label: '안부 말벗', key: 'companion', badge: '테스트' };
 
 /** 피보호자 사이드바 - 테스트 계정이면 '홈' 다음에 안부 말벗을 끼운다. */
 export function wardNavItems(companionTestMode: boolean): NavItem[] {

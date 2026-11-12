@@ -13,12 +13,18 @@ import { GuardianEmotionContent } from './GuardianEmotionContent';
 const data = vi.hoisted(() => ({
   connections: (async () => ({ data: [] })) as () => Promise<unknown>,
   today: (async () => null) as (wardId: string) => Promise<unknown>,
+  week: (async () => ({ days: [] })) as (wardId: string) => Promise<unknown>,
+  day: (async () => null) as (wardId: string, date: string) => Promise<unknown>,
 }));
 
 vi.mock('@/service/query/guardian', () => ({
   guardianConnectionsQueryOptions: queryOptions({ queryKey: ['test-connections'], queryFn: () => data.connections() }),
   wardCompanionTodayQueryOptions: (wardId: string) =>
     queryOptions({ queryKey: ['test-companion', wardId], queryFn: () => data.today(wardId) }),
+  wardCompanionWeekQueryOptions: (wardId: string) =>
+    queryOptions({ queryKey: ['test-companion-week', wardId], queryFn: () => data.week(wardId) }),
+  wardCompanionDayQueryOptions: (wardId: string, date: string) =>
+    queryOptions({ queryKey: ['test-companion-day', wardId, date], queryFn: () => data.day(wardId, date) }),
 }));
 
 const ward = (partnerUserId: string, partnerName: string) => ({
@@ -69,13 +75,28 @@ function renderEmotion() {
   );
 }
 
-function slotRows() {
-  return [...document.querySelectorAll('li')].map(row => row.textContent);
+// 오늘의 안부 대화 목록 줄(7일 줄·고른 날 목록은 빼고)
+function slotRows(titleId = 'companion-slots-title') {
+  return [...document.querySelectorAll(`[aria-labelledby="${titleId}"] li`)].map(row => row.textContent);
 }
+
+const WEEK = {
+  days: [
+    { date: '2026-10-29', mood: null },
+    { date: '2026-10-30', mood: 'CALM' },
+    { date: '2026-10-31', mood: 'JOY' },
+    { date: '2026-11-01', mood: null },
+    { date: '2026-11-02', mood: 'WORRY' },
+    { date: '2026-11-03', mood: 'DEPRESSED' },
+    { date: '2026-11-04', mood: 'JOY' },
+  ],
+};
 
 beforeEach(() => {
   clearSelectedWardId();
   data.connections = async () => ({ data: [ward('w1', '김영희')] });
+  data.week = async () => WEEK;
+  data.day = async () => null;
 });
 afterEach(() => {
   document.body.innerHTML = '';
@@ -167,6 +188,97 @@ describe('AI 기분 체크 (Chrome)', () => {
     await renderEmotion();
 
     await expect.element(page.getByText('연결된 피보호자가 없습니다.')).toBeVisible();
+  });
+});
+
+describe('최근 7일 기분·대화 보기 (Chrome)', () => {
+  it('최근 7일 기분을 날짜마다 보이고, 오늘이 골라져 있다', async () => {
+    data.today = async () => SAMPLE_TODAY;
+    await renderEmotion();
+
+    await expect.element(page.getByRole('heading', { name: '최근 7일 기분' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '오늘 기분 기쁨' })).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(page.getByRole('button', { name: '11월 2일 월요일 기분 걱정' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '11월 1일 일요일 기분 기록 없음' })).toBeVisible();
+    expect(document.getElementById('companion-day-title')).toBeNull();
+  });
+
+  it('지난 날을 누르면 그날 시간대 목록을 불러와 보이고, 마친 시간대에 대화 보기를 붙인다', async () => {
+    data.today = async () => SAMPLE_TODAY;
+    const asked: string[] = [];
+    data.day = async (wardId, date) => {
+      asked.push(`${wardId}/${date}`);
+      return {
+        ...EMPTY_TODAY,
+        date,
+        slots: [
+          { slot: '09:00', question: '잘 주무셨어요?', status: 'DONE', mood: 'WORRY', sessionId: 77 },
+          { slot: '12:00', question: null, status: 'MISSED', mood: null, sessionId: null },
+        ],
+      };
+    };
+    await renderEmotion();
+
+    await page.getByRole('button', { name: '11월 2일 월요일 기분 걱정' }).click();
+    await expect.element(page.getByRole('heading', { name: '11월 2일 월요일 안부 대화' })).toBeVisible();
+    expect(asked).toEqual(['w1/2026-11-02']);
+    // 고른 날 목록이 오늘 목록 자리를 대신한다
+    expect(page.getByRole('heading', { name: '오늘의 안부 대화' }).elements()).toHaveLength(0);
+    expect(slotRows('companion-day-title')).toEqual(['오전 9시“잘 주무셨어요?”걱정대화 보기 >', '낮 12시지나감']);
+    await expect
+      .element(page.getByRole('link', { name: '오전 9시 대화 보기' }))
+      .toHaveAttribute('href', '/guardian/emotion/sessions/77?wardId=w1');
+
+    await page.getByRole('button', { name: '오늘 기분 기쁨' }).click();
+    expect(page.getByRole('heading', { name: '11월 2일 월요일 안부 대화' }).elements()).toHaveLength(0);
+    await expect.element(page.getByRole('heading', { name: '오늘의 안부 대화' })).toBeVisible();
+  });
+
+  it('오늘 마친 시간대에도 대화 보기를 붙이고, 대화 ID가 없으면 붙이지 않는다', async () => {
+    data.today = async () => ({
+      ...SAMPLE_TODAY,
+      slots: SAMPLE_TODAY.slots.map(slot => (slot.slot === '12:00' ? { ...slot, sessionId: 5 } : slot)),
+    });
+    await renderEmotion();
+
+    await expect.element(page.getByRole('link', { name: '낮 12시 대화 보기' })).toHaveAttribute('href', '/guardian/emotion/sessions/5?wardId=w1');
+    expect(page.getByRole('link', { name: '오전 9시 대화 보기' }).elements()).toHaveLength(0);
+  });
+
+  it('고른 날이 7일 밖이라고 거절되면(400) 안내하고, 연결이 끊겼으면(403) 그 안내를 보인다', async () => {
+    data.today = async () => SAMPLE_TODAY;
+    const reject = (status: number, code: string) => {
+      throw new AxiosError('bad', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status,
+        statusText: 'Error',
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+        data: { success: false, code },
+      });
+    };
+    data.day = async (_wardId, date) => reject(date === '2026-11-02' ? 400 : 403, date === '2026-11-02' ? 'COMPANION_DATE_OUT_OF_RANGE' : 'COMPANION_NOT_AUTHORIZED');
+    await renderEmotion();
+
+    await page.getByRole('button', { name: '11월 2일 월요일 기분 걱정' }).click();
+    await expect.element(page.getByRole('alert')).toMatchTextContent('최근 7일 안의 날짜만 볼 수 있어요.');
+    await page.getByRole('button', { name: '11월 3일 화요일 기분 우울' }).click();
+    await expect.element(page.getByRole('alert')).toMatchTextContent('연결된 피보호자의 안부 대화만 볼 수 있습니다.');
+  });
+
+  it('7일 기분을 못 받아도 오늘 화면은 그대로 보이고 다시 불러올 수 있다', async () => {
+    data.today = async () => SAMPLE_TODAY;
+    let fail = true;
+    data.week = async () => {
+      if (fail) throw new Error('down');
+      return WEEK;
+    };
+    await renderEmotion();
+
+    await expect.element(page.getByText('최근 기분을 불러오지 못했어요.', { exact: false })).toBeVisible();
+    await expect.element(page.getByRole('region', { name: '지금 기분' })).toBeVisible();
+    fail = false;
+    await page.getByRole('button', { name: '다시 불러오기' }).click();
+    await expect.element(page.getByRole('button', { name: '오늘 기분 기쁨' })).toBeVisible();
   });
 });
 
