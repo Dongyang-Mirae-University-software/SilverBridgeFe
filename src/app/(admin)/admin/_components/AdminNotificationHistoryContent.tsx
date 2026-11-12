@@ -116,9 +116,9 @@ export function AdminNotificationHistoryContent() {
 
       <div className={cx('summaryGrid')} aria-label={`${PERIOD_LABEL[period]} 알림 요약`}>
         <SummaryCard icon="bell" label="전체 알림" value={summaryData?.total} tone="brand" />
-        <SummaryCard icon="check" label="전송 완료" value={summaryData?.delivered} tone="safe" detail={summaryData?.smsFallback ? `문자 대체 발송 ${summaryData.smsFallback}건 포함` : undefined} />
+        <SummaryCard icon="check" label="전송 완료" value={summaryData?.delivered} tone="safe" />
         <SummaryCard icon="warning" label="전송 실패" value={summaryData?.failed} tone="danger" interactive onClick={() => updateTab('FAILED')} />
-        <SummaryCard icon="bell" label="발송 안 함" value={summaryData?.notSent} tone="mute" detail="실패가 아닙니다" />
+        <SummaryCard icon="bell" label="발송 안 함" value={summaryData?.notSent} tone="mute" />
       </div>
 
       <section className={cx('card')}>
@@ -159,8 +159,8 @@ export function AdminNotificationHistoryContent() {
   );
 }
 
-function SummaryCard({ icon, label, value, tone, detail, interactive = false, onClick }: { icon: 'bell' | 'check' | 'warning'; label: string; value: number | undefined; tone: 'brand' | 'safe' | 'danger' | 'mute'; detail?: string; interactive?: boolean; onClick?: () => void }) {
-  const content = <><span className={cx('summaryLabel')}><span className={cx('summaryIcon', tone)}><Icon name={icon} size={16} decorative /></span>{label}</span><strong className={cx('summaryValue', tone)}>{value === undefined ? '-' : `${value}건`}</strong>{detail && <small>{detail}</small>}</>;
+function SummaryCard({ icon, label, value, tone, interactive = false, onClick }: { icon: 'bell' | 'check' | 'warning'; label: string; value: number | undefined; tone: 'brand' | 'safe' | 'danger' | 'mute'; interactive?: boolean; onClick?: () => void }) {
+  const content = <><span className={cx('summaryLabel')}><span className={cx('summaryIcon', tone)}><Icon name={icon} size={16} decorative /></span>{label}</span><strong className={cx('summaryValue', tone)}>{value === undefined ? '-' : `${value}건`}</strong></>;
   return interactive ? <button type="button" className={cx('summaryCard', 'interactive')} onClick={onClick}>{content}</button> : <div className={cx('summaryCard')}>{content}</div>;
 }
 
