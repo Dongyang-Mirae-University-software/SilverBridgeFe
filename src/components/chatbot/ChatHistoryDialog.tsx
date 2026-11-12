@@ -14,8 +14,6 @@ interface Props {
   error: string | null;
   onClose: () => void;
   variant?: 'guardian' | 'ward';
-  userImageUrl?: string | null;
-  userName?: string | null;
   /** 보호자의 연결된 피보호자 - 주면 기록을 누구의 상담인지 나눠 보인다(2026-11-11) */
   wards?: { id: string; name: string }[];
 }
@@ -86,8 +84,6 @@ export default function ChatHistoryDialog({
   error,
   onClose,
   variant = 'guardian',
-  userImageUrl,
-  userName,
   wards,
 }: Props) {
   const sessions = useMemo(() => groupChatSessions(logs), [logs]);
@@ -190,7 +186,7 @@ export default function ChatHistoryDialog({
         </header>
 
         {opened ? (
-          <SessionDetail session={opened} variant={variant} userImageUrl={userImageUrl} userName={userName} />
+          <SessionDetail session={opened} variant={variant} />
         ) : (
           <div className={styles.list}>
             {!loading && !error && filters.length > 2 && (
@@ -270,13 +266,9 @@ export default function ChatHistoryDialog({
 function SessionDetail({
   session,
   variant,
-  userImageUrl,
-  userName,
 }: {
   session: ChatHistorySession;
   variant: 'guardian' | 'ward';
-  userImageUrl?: string | null;
-  userName?: string | null;
 }) {
   const messages = session.logs.flatMap((log, index) => logToMessages(log, index));
   return (
@@ -289,8 +281,6 @@ function SessionDetail({
           onUiSelect={noop}
           onShowList={noop}
           hidePrompt
-          userImageUrl={userImageUrl}
-          userName={userName}
           variant={variant}
         />
       ))}

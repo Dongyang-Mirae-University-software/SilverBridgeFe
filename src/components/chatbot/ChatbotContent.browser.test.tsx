@@ -104,8 +104,8 @@ describe('보호자 AI 의료 챗봇', () => {
 
     await expect.element(page.getByRole('heading', { name: 'AI 의료 챗봇' })).toBeVisible();
     await expect.element(page.getByRole('button', { name: '상담 기록' })).toBeVisible();
-    await expect.element(page.getByText(/연결된 분의 병원 예약도/)).toBeVisible();
-    await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeVisible();
+    await expect.element(page.getByText(/진료과 안내와 병원 예약을 도와드려요/)).toBeVisible();
+    await expect.element(page.getByPlaceholder('증상이나 궁금한 점')).toBeVisible();
     expect(page.getByRole('region', { name: '상담할 피보호자' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: '이철수' }).elements()).toHaveLength(0);
     expect(document.body.textContent).not.toContain('김영희');
@@ -286,7 +286,7 @@ describe('보호자 AI 의료 챗봇', () => {
 
     await first.unmount();
     await renderChat(<ChatbotContent />);
-    await expect.element(page.getByText(/연결된 분의 병원 예약도/)).toBeVisible();
+    await expect.element(page.getByText(/진료과 안내와 병원 예약을 도와드려요/)).toBeVisible();
     expect(page.getByText('정형외과 진료를 권해요.').elements()).toHaveLength(0);
     await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '다시 물어요');
     await userEvent.click(page.getByRole('button', { name: '보내기' }));
@@ -339,7 +339,7 @@ describe('보호자 AI 의료 챗봇', () => {
 
     await expect.element(page.getByText('눌러서 물어보세요')).toBeVisible();
     expect(page.getByText(/피보호자 정보를/).elements()).toHaveLength(0);
-    await expect.element(page.getByPlaceholder('여기에 궁금한 점을 써 주세요')).toBeEnabled();
+    await expect.element(page.getByPlaceholder('증상이나 궁금한 점')).toBeEnabled();
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
     expect(api.sendChatMessage.mock.calls[0][0].context).toEqual({ role: 'GUARDIAN' });
@@ -1155,6 +1155,17 @@ describe('화면 개편 - 디자인 프로토타입 (2026-11-12)', () => {
       expect(rect.height).toBeGreaterThanOrEqual(48);
     }
     expect(page.getByRole('button', { name: '보내기' }).element().textContent).toBe('');
+    // 머리 버튼은 [새 대화] → [기록] 순서, 내 말풍선 옆 프로필은 없다(2026-11-12 디자인 프로토타입)
+    const headerEl = page.getByRole('heading', { name: 'AI 의료 챗봇' }).element().closest('header')!;
+    const header = [...headerEl.querySelectorAll('button')].map(b => b.getAttribute('aria-label') ?? b.textContent?.trim());
+    expect(header).toEqual(['새 대화', '상담 기록']);
+    api.sendChatMessage.mockResolvedValueOnce(REPLY);
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
+    await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
+    expect(page.getByTestId('avatar').elements()).toHaveLength(0);
+    // 칩이 바뀌면 칩 줄 가로 스크롤은 처음으로 - 맨 앞 예약 칩이 잘리지 않는다
+    const row = page.getByRole('button', { name: '병원 예약하고 싶어요' }).element().parentElement!;
+    expect(row.scrollLeft).toBe(0);
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
   });
 });

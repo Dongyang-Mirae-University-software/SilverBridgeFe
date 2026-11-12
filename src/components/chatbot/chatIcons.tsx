@@ -42,12 +42,11 @@ export function NewChatIcon(props: Props) {
   );
 }
 
-/** 보내기(종이비행기) */
+/** 보내기(위쪽 화살표) */
 export function SendIcon(props: Props) {
   return (
-    <Svg {...props} strokeWidth={2.2}>
-      <path d="M22 2 11 13" />
-      <path d="M22 2 15 22l-4-9-9-4z" />
+    <Svg {...props} strokeWidth={2.4}>
+      <path d="M12 19V5M5 12l7-7 7 7" />
     </Svg>
   );
 }

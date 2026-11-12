@@ -1,4 +1,3 @@
-import { UserAvatar } from '@/components/UserAvatar';
 import type { ChatLayout, ChatMessage } from '@/service/interface/chat';
 import ChatPeach from './ChatPeach';
 import ChatToolCard from './ChatToolCard';
@@ -19,8 +18,6 @@ interface Props {
   onRestart?: () => void;
   /** 예약 단계 선택지는 아래 "예약 진행" 패널에 크게 보이므로(지난 단계는 고른 답이 내 말풍선에 있다) 말풍선에서는 뺀다. */
   hidePrompt?: boolean;
-  userImageUrl?: string | null;
-  userName?: string | null;
   variant?: 'guardian' | 'ward';
 }
 
@@ -31,8 +28,6 @@ export default function ChatBubble({
   onShowList,
   onRestart,
   hidePrompt = false,
-  userImageUrl,
-  userName,
   variant = 'guardian',
 }: Props) {
   const isUser = message.role === 'user';
@@ -48,20 +43,19 @@ export default function ChatBubble({
 
   if (isUser) {
     return (
-      <div className={`${styles.rowUser} ${isWardChat ? styles.wardBubble : ''}`}>
+      // 내 말풍선은 프로필 없이 오른쪽에 둔다(보호자도 디자인 프로토타입대로 - 2026-11-12)
+      <div className={`${styles.rowUser} ${isWardChat ? styles.wardBubble : styles.guardianBubble}`}>
         <div className={styles.messageColumnUser}>
           <div className={styles.bubbleUser}>
             <p>{message.content}</p>
           </div>
         </div>
-        {/* 피보호자 화면은 아바타 없이 큰 말풍선만 둔다 */}
-        {!isWardChat && <UserAvatar imageUrl={userImageUrl} userName={userName} size="w-38" />}
       </div>
     );
   }
 
   return (
-    <div className={`${styles.rowAssistant} ${isWardChat ? styles.wardBubble : ''}`}>
+    <div className={`${styles.rowAssistant} ${isWardChat ? styles.wardBubble : styles.guardianBubble}`}>
       {/* 복숭아 얼굴(안부 말벗과 같은 캐릭터) - 장식이라 읽지 않는다 */}
       <ChatPeach className={styles.peach} />
       <div className={styles.assistantBody}>
