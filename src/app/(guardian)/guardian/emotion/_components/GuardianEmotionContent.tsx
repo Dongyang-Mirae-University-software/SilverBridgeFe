@@ -194,14 +194,14 @@ function CompanionToday({ wardId, wardName, today }: { wardId: string; wardName:
 function SlotRow({ slot, wardId }: { slot: ICompanionSlot; wardId: string }) {
   const done = slot.status === 'DONE';
   const mood = slot.mood ? MOOD_META[slot.mood] : null;
-
-  return (
-    <li className={cx('slot', { done })}>
+  const linked = done && slot.sessionId != null;
+  const content = (
+    <>
       <span className={cx('slotTime')}>{formatSlotTime(slot.slot)}</span>
       <span className={cx('slotFace')}>
-        {done && mood ? <MoodFace mood={mood.face} size={52} /> : <span className={cx('unknownFace')} aria-hidden="true" />}
+        {done && mood ? <MoodFace mood={mood.face} size={48} /> : <span className={cx('unknownFace')} aria-hidden="true" />}
       </span>
-      <div className={cx('slotBody')}>
+      <span className={cx('slotBody')}>
         {slot.question && <span className={cx('question')}>&ldquo;{slot.question}&rdquo;</span>}
         {done ? (
           <span className={cx('chip', 'moodChip', mood?.tone ?? 'unknown')}>{mood?.label ?? UNKNOWN_MOOD}</span>
@@ -210,15 +210,21 @@ function SlotRow({ slot, wardId }: { slot: ICompanionSlot; wardId: string }) {
             {STATUS_LABEL[slot.status]}
           </span>
         )}
-      </div>
-      {done && slot.sessionId != null && (
-        <Link
-          className={cx('viewLink')}
-          href={companionSessionHref(wardId, slot.sessionId)}
-          aria-label={`${formatSlotTime(slot.slot)} 대화 보기`}
-        >
-          대화 보기 <span aria-hidden="true">&gt;</span>
+      </span>
+    </>
+  );
+
+  // 마친 시간대는 줄 전체가 대화 보기로 가는 링크(프로토타입). 읽기 프로그램에는 '대화 보기'를 덧붙인다
+  return (
+    <li className={cx('slotItem')}>
+      {linked ? (
+        <Link className={cx('slot', 'done', 'linked')} href={companionSessionHref(wardId, slot.sessionId as number)}>
+          {content}
+          <span className={cx('srOnly')}> 대화 보기</span>
+          <span className={cx('chevron')} aria-hidden="true">›</span>
         </Link>
+      ) : (
+        <div className={cx('slot', { done })}>{content}</div>
       )}
     </li>
   );
@@ -235,9 +241,10 @@ function WeekMoods({ wardId, today, picked, onPick }: {
 
   return (
     <section className={cx('card', 'weekCard')} aria-labelledby="companion-week-title">
-      <h2 id="companion-week-title" className={cx('slotTitle')}>
-        최근 7일 기분
-      </h2>
+      <div className={cx('weekHead')}>
+        <h2 id="companion-week-title" className={cx('weekTitle')}>최근 7일 기분</h2>
+        <span className={cx('weekHint')}>날짜를 누르면 그날 대화</span>
+      </div>
       {isLoading ? (
         <p className={cx('weekState')} role="status">최근 기분을 불러오는 중이에요.</p>
       ) : isError || !data ? (
@@ -263,15 +270,15 @@ function WeekDay({ day, isToday, selected, onPick }: {
   onPick: (date: string) => void;
 }) {
   const mood = day.mood ? MOOD_META[day.mood] : null;
-  const { day: dayOfMonth, weekday } = parseDate(day.date);
+  const { weekday } = parseDate(day.date);
   const name = `${isToday ? '오늘' : formatDateLabel(day.date)} 기분 ${mood?.label ?? '기록 없음'}`;
 
   return (
     <li>
       <button className={cx('weekDay', { selected })} type="button" aria-pressed={selected} aria-label={name} onClick={() => onPick(day.date)}>
         <span className={cx('weekLabel')}>{isToday ? '오늘' : weekday}</span>
-        {mood ? <MoodFace mood={mood.face} size={40} /> : <span className={cx('unknownFace', 'small')} aria-hidden="true" />}
-        <span className={cx('weekDate')}>{dayOfMonth}</span>
+        <span className={cx('weekDot', mood?.tone ?? 'none')} aria-hidden="true" />
+        <span className={cx('weekMood', mood?.tone ?? 'unknown')}>{mood?.label ?? '없음'}</span>
       </button>
     </li>
   );

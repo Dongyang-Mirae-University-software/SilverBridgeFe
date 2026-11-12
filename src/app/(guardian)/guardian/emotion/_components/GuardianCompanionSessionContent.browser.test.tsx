@@ -84,17 +84,19 @@ describe('대화 보기 (Chrome)', () => {
     data.session.mockResolvedValue(SESSION);
     await renderDetail();
 
-    await expect.element(page.getByRole('region', { name: '기분 요약' })).toMatchTextContent('11월 11일 수요일 · 낮 12시대화 기분 걱정2번 대답 · 걱정·우울 1번');
+    await expect.element(page.getByRole('heading', { name: '낮 12시 안부 대화' })).toBeVisible();
+    await expect.element(page.getByText('11월 11일 수요일')).toBeVisible();
+    await expect.element(page.getByRole('region', { name: '이 대화의 상태' })).toMatchTextContent('이 대화의 기분 · 걱정2번 대답 · 걱정·우울 1번 · 위험 알림 없음');
     expect(data.session).toHaveBeenCalledWith('w1', 77);
-    await expect.element(page.getByRole('listitem', { name: '1번째 대답 기분 평온' })).toBeVisible();
-    await expect.element(page.getByRole('listitem', { name: '2번째 대답 기분 걱정' })).toBeVisible();
+    await expect.element(page.getByRole('img', { name: '대답별 기분: 평온, 걱정' })).toBeVisible();
+    await expect.element(page.getByText('어르신이 대화 내용 공유에 동의한 경우에만 보여요. 보관 기간이 지나면 지워져요.')).toBeVisible();
 
     const lines = [...document.querySelectorAll('[aria-labelledby="companion-transcript"] li')].map(li => li.textContent);
     expect(lines).toEqual([
       '말벗점심은 무엇을 드셨어요?',
-      '어르신국수 먹었어',
+      '어르신국수 먹었어평온',
       '말벗국수 맛있으셨겠어요. 누구랑 드셨어요?',
-      '어르신혼자 먹었지',
+      '어르신혼자 먹었지걱정',
       '말벗그러셨군요.',
     ]);
     const first = page.getByText('국수 맛있으셨겠어요.', { exact: true }).element() as HTMLElement;
@@ -115,7 +117,7 @@ describe('대화 보기 (Chrome)', () => {
     await renderDetail();
 
     await expect.element(page.getByRole('note')).toHaveTextContent(text);
-    await expect.element(page.getByRole('listitem', { name: '2번째 대답 기분 걱정' })).toBeVisible();
+    await expect.element(page.getByRole('img', { name: '대답별 기분: 평온, 걱정' })).toBeVisible();
     expect(page.getByText('국수 먹었어').elements()).toHaveLength(0);
     expect(document.querySelectorAll('[aria-labelledby="companion-transcript"] li')).toHaveLength(0);
   });
@@ -124,7 +126,7 @@ describe('대화 보기 (Chrome)', () => {
     data.session.mockResolvedValue({ ...SESSION, riskAlerted: true, test: true, status: 'LOST' });
     await renderDetail();
 
-    await expect.element(page.getByText('이 대화로 위험 알림을 보냈어요')).toBeVisible();
+    await expect.element(page.getByText('위험 알림 보냄', { exact: false })).toBeVisible();
     await expect.element(page.getByText('테스트', { exact: true })).toBeVisible();
     await expect.element(page.getByText('대화가 중간에 끊겼어요')).toBeVisible();
   });
@@ -150,7 +152,7 @@ describe('대화 보기 (Chrome)', () => {
     await renderDetail();
     await expect.element(page.getByText('대화를 불러오지 못했어요.')).toBeVisible();
     await page.getByRole('button', { name: '다시 불러오기' }).click();
-    await expect.element(page.getByRole('region', { name: '기분 요약' })).toBeVisible();
+    await expect.element(page.getByRole('region', { name: '이 대화의 상태' })).toBeVisible();
   });
 
   it('주소에 피보호자가 없으면 부르지 않는다', async () => {

@@ -1,23 +1,27 @@
 .page { display: flex; flex-direction: column; gap: 16px; }
 .card { overflow: hidden; border: 1px solid var(--sb-line-soft); border-radius: var(--sb-radius); background: #fff; box-shadow: var(--sb-shadow-sm); }
-.cardTitle { margin: 0; border-bottom: 1px solid var(--sb-line-soft); color: var(--sb-ink); font-size: 17px; font-weight: 800; padding: 16px 24px; }
 
-.backLink { display: inline-flex; min-height: 44px; align-items: center; align-self: flex-start; gap: 6px; color: var(--sb-brand); font-size: 15px; font-weight: 800; text-decoration: none; }
+.backLink { display: inline-flex; width: 44px; height: 44px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 12px; color: var(--sb-ink); font-size: 30px; font-weight: 700; text-decoration: none; }
+.backLink:hover { background: var(--sb-bg-soft); }
 .backLink:focus-visible { outline: 3px solid var(--sb-brand-soft); outline-offset: 2px; }
+.page > .backLink { align-self: flex-start; }
 
 .state { display: grid; justify-items: center; gap: 12px; margin: 0; border: 1px solid var(--sb-line-soft); border-radius: var(--sb-radius); background: #fff; color: var(--sb-ink-soft); font-size: 16px; font-weight: 700; padding: 40px 24px; text-align: center; }
 .retryButton { min-height: 44px; border: 1px solid var(--sb-brand); border-radius: 12px; background: #fff; color: var(--sb-brand); cursor: pointer; font: inherit; font-weight: 800; padding: 0 18px; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
 
-.summary { display: flex; align-items: center; gap: 22px; padding: 22px 24px; }
-.summaryText { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
-.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--sb-ink-mute); font-size: 14px; font-weight: 700; }
-.testBadge { border-radius: 999px; background: var(--sb-warn-soft); color: var(--sb-warn); font-size: 12px; font-weight: 800; padding: 1px 8px; }
-.moodLine { color: var(--sb-ink); font-size: 22px; font-weight: 800; }
+/* 머리 - 뒤로 + "오후 3시 안부 대화" */
+.detailHead { display: flex; align-items: center; gap: 6px; }
+.headDate { display: block; color: var(--sb-ink-mute); font-size: 13px; font-weight: 700; }
+.headTitle { margin: 0; color: var(--sb-ink); font-size: 24px; font-weight: 900; }
+
+/* 이 대화의 상태 */
+.summary { display: grid; gap: 8px; padding: 16px 18px; }
+.summaryHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.moodLine { color: var(--sb-ink); font-size: 20px; font-weight: 800; }
+.testBadge { border: 1px solid var(--sb-line); border-radius: 999px; color: var(--sb-ink-mute); font-size: 12px; font-weight: 800; padding: 3px 10px; white-space: nowrap; }
 .counts { color: var(--sb-ink-soft); font-size: 15px; font-weight: 700; }
 .status { color: var(--sb-ink-mute); font-size: 14px; font-weight: 700; }
-.risk { align-self: flex-start; border-radius: 999px; background: var(--sb-danger-soft); color: var(--sb-danger); font-size: 14px; font-weight: 800; padding: 3px 12px; }
-.unknownFace { width: 44px; height: 44px; flex: 0 0 auto; border: 2px dashed var(--sb-line); border-radius: 50%; }
-.unknownFace.large { width: 84px; height: 84px; }
 
 /* 기분 색 - AI 기분 체크 화면의 칩 색과 같다 */
 .joy { --mood: #a0732b; }
@@ -25,36 +29,35 @@
 .worry { --mood: #8a5f12; }
 .depressed { --mood: #3f6e8c; }
 .unknown { --mood: var(--sb-ink-mute); }
-/* 연한 바탕은 기분 색에서 만든다(따로 색을 두지 않는다) */
-.joy, .calm, .worry, .depressed { --mood-soft: color-mix(in srgb, var(--mood) 16%, #fff); }
-.unknown { --mood-soft: var(--sb-bg-soft); }
 .moodText { color: var(--mood); }
 
-.bars { display: flex; align-items: flex-end; gap: 10px; margin: 0; overflow-x: auto; padding: 18px 24px 16px; list-style: none; }
-.bar { display: grid; min-width: 48px; flex: 1 1 0; justify-items: center; gap: 4px; }
-.barFill { display: block; width: 100%; height: 72px; border-radius: 10px; background: var(--mood-soft); box-shadow: inset 0 -28px 0 var(--mood); }
-.calm .barFill { box-shadow: inset 0 -44px 0 var(--mood); }
-.joy .barFill { box-shadow: inset 0 -64px 0 var(--mood); }
-.worry .barFill { box-shadow: inset 0 -20px 0 var(--mood); }
-.depressed .barFill { box-shadow: inset 0 -12px 0 var(--mood); }
-.unknown .barFill { border: 2px dashed var(--sb-line); background: transparent; box-shadow: none; }
-.barLabel { color: var(--mood); font-size: 13px; font-weight: 800; white-space: nowrap; }
-.barNo { color: var(--sb-ink-mute); font-size: 12px; font-weight: 700; }
+/* 대답별 기분 띠 - 대답 하나가 한 칸 */
+.strip { display: flex; gap: 3px; margin-top: 4px; }
+.segment { height: 8px; flex: 1 1 0; border-radius: 4px; background: color-mix(in srgb, var(--mood) 70%, #fff); }
+.segment.depressed { background: var(--mood); }
+.segment.unknown { background: var(--sb-line); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--sb-ink-mute); font-size: 12px; font-weight: 700; }
+.legendItem { display: inline-flex; align-items: center; gap: 4px; }
+.legendItem::before { content: ''; width: 8px; height: 8px; border-radius: 2px; background: color-mix(in srgb, var(--mood) 70%, #fff); }
+.legendItem.depressed::before { background: var(--mood); }
+.legendItem.unknown::before { background: var(--sb-line); }
 
-.hiddenNote { margin: 0; color: var(--sb-ink-soft); font-size: 15px; font-weight: 700; line-height: 1.6; padding: 20px 24px; word-break: keep-all; }
-.talk { display: grid; gap: 10px; margin: 0; padding: 18px 20px; list-style: none; }
-.talkLine { display: grid; max-width: min(100%, 560px); gap: 4px; border-radius: 16px; padding: 12px 16px; }
-.talkLine p { margin: 0; color: var(--sb-ink); font-size: 16px; font-weight: 600; line-height: 1.55; overflow-wrap: anywhere; word-break: keep-all; }
-.talkLine.companion { justify-self: start; border-top-left-radius: 4px; background: var(--sb-brand-50); }
-.talkLine.ward { justify-self: end; border: 1px solid var(--sb-line-soft); border-top-right-radius: 4px; background: #fff; }
-.who { color: var(--sb-ink-mute); font-size: 13px; font-weight: 800; }
-.companion .who { color: var(--sb-brand); }
+/* 나눈 이야기 */
+.transcriptSection { display: grid; gap: 10px; }
+.sectionTitle { margin: 0; color: var(--sb-ink); font-size: 17px; font-weight: 800; }
+.hiddenNote { margin: 0; border: 1px solid var(--sb-line-soft); border-radius: 14px; background: #fff; color: var(--sb-ink-soft); font-size: 15px; font-weight: 700; line-height: 1.6; padding: 16px 18px; word-break: keep-all; }
+.talk { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.talkLine { display: flex; max-width: min(85%, 560px); flex-direction: column; gap: 4px; }
+.talkLine.companion { align-self: flex-start; }
+.talkLine.ward { align-items: flex-end; align-self: flex-end; }
+.bubble { margin: 0; color: var(--sb-ink); font-size: 15px; font-weight: 600; line-height: 1.55; overflow-wrap: anywhere; padding: 10px 14px; word-break: keep-all; }
+.companion .bubble { border-radius: 16px 16px 16px 4px; background: var(--sb-brand-50); }
+.ward .bubble { border: 1px solid var(--sb-line-soft); border-radius: 16px 16px 4px 16px; background: #fff; }
 .sentence { display: block; }
+.moodChip { border-radius: 999px; background: var(--sb-brand-50); color: var(--mood); font-size: 12px; font-weight: 800; padding: 2px 10px; }
+.footNote { margin: 0; color: var(--sb-ink-soft); font-size: 13px; font-weight: 600; line-height: 1.5; word-break: keep-all; }
 
 @media (max-width: 560px) {
-  .summary { gap: 16px; padding: 18px; }
-  .moodLine { font-size: 20px; }
-  .bars { gap: 6px; padding: 14px 14px 12px; }
-  .bar { min-width: 32px; }
-  .talk { padding: 14px; }
+  .summary { padding: 14px 16px; }
+  .moodLine { font-size: 19px; }
 }

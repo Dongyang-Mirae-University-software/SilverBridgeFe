@@ -115,7 +115,7 @@
   background: var(--sb-bg-soft);
 }
 
-.slot + .slot {
+.slotItem + .slotItem {
   border-top: 1px solid var(--sb-line-soft);
 }
 
@@ -268,64 +268,63 @@
   }
 }
 
-/* 마친 시간대 '대화 보기 >' - 줄 끝에 붙인다 */
-.slot:has(.viewLink) {
-  grid-template-columns: 96px 64px minmax(0, 1fr) auto;
-}
-.viewLink {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  gap: 4px;
-  border-radius: 12px;
-  color: var(--sb-brand);
-  font-size: 15px;
-  font-weight: 800;
-  padding: 0 10px;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.viewLink:hover { background: var(--sb-brand-50); }
-.viewLink:focus-visible { outline: 3px solid var(--sb-brand-soft); outline-offset: 2px; }
+/* 마친 시간대는 줄 전체가 링크(프로토타입) - 끝에 꺾쇠 */
+.slotItem { margin: 0; list-style: none; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
+.slot.linked { grid-template-columns: 96px 64px minmax(0, 1fr) 20px; color: inherit; text-decoration: none; }
+.slot.linked:hover { background: var(--sb-bg); }
+.slot.linked:focus-visible { outline: 3px solid var(--sb-brand-soft); outline-offset: -3px; }
+.chevron { color: var(--sb-ink-mute); font-size: 24px; font-weight: 700; line-height: 1; }
 
 /* 최근 7일 기분 */
-.weekCard { overflow: hidden; }
+.weekCard { overflow: hidden; padding: 14px 16px; }
+.weekHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.weekTitle { margin: 0; color: var(--sb-ink); font-size: 16px; font-weight: 800; }
+.weekHint { color: var(--sb-ink-mute); font-size: 12px; font-weight: 700; }
 .weekDays {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-  margin: 0;
-  padding: 14px 16px 16px;
+  gap: 4px;
+  margin: 10px 0 0;
+  padding: 0;
   list-style: none;
 }
 .weekDay {
   display: flex;
   width: 100%;
-  min-height: 92px;
+  min-height: 76px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  border: 1.5px solid transparent;
-  border-radius: 14px;
+  border: 0;
+  border-radius: 10px;
   background: transparent;
-  color: var(--sb-ink-soft);
+  color: var(--sb-ink-mute);
   cursor: pointer;
   font: inherit;
-  padding: 6px 2px;
+  padding: 4px 0;
 }
-.weekDay:hover { background: var(--sb-bg-soft); }
-.weekDay.selected { border-color: var(--sb-brand); background: var(--sb-brand-50); color: var(--sb-brand); }
+.weekDay:hover { background: var(--sb-bg); }
+.weekDay.selected { background: var(--sb-brand-50); color: var(--sb-ink); }
 .weekDay:focus-visible { outline: 3px solid var(--sb-brand-soft); outline-offset: 2px; }
-.weekLabel { font-size: 13px; font-weight: 800; }
-.weekDate { font-size: 13px; font-weight: 700; }
-.unknownFace.small { width: 36px; height: 36px; margin: 2px; }
-.weekState { margin: 0; color: var(--sb-ink-soft); font-size: 15px; font-weight: 700; padding: 18px 24px; }
+.weekLabel { font-size: 12px; font-weight: 800; }
+/* 하루 기분 색 원 - 기분 칩 색에서 만든 연한 색 */
+.weekDot { width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; }
+.weekDot.joy { background: color-mix(in srgb, #a0732b 30%, #fff); }
+.weekDot.calm { background: color-mix(in srgb, var(--sb-brand) 32%, #fff); }
+.weekDot.worry { background: color-mix(in srgb, #8a5f12 25%, #fff); }
+.weekDot.depressed { background: color-mix(in srgb, #3f6e8c 32%, #fff); }
+.weekDot.none { border: 2px dashed var(--sb-line); }
+.weekMood { font-size: 11px; font-weight: 800; }
+.weekMood.joy { color: #a0732b; }
+.weekMood.calm { color: var(--sb-brand); }
+.weekMood.worry { color: #8a5f12; }
+.weekMood.depressed { color: #3f6e8c; }
+.weekMood.unknown { color: var(--sb-ink-mute); }
+.weekState { margin: 10px 0 0; color: var(--sb-ink-soft); font-size: 15px; font-weight: 700; }
 .textButton { min-height: 44px; border: 0; background: none; color: var(--sb-brand); cursor: pointer; font: inherit; font-weight: 800; padding: 0 6px; text-decoration: underline; }
 
 @media (max-width: 560px) {
-  .slot:has(.viewLink) { grid-template-columns: 64px 48px minmax(0, 1fr); }
-  .slot:has(.viewLink) .viewLink { grid-column: 1 / -1; justify-self: end; }
-  .weekDays { gap: 2px; padding: 12px 8px 14px; }
-  .weekDay { min-height: 84px; }
+  .slot.linked { grid-template-columns: 64px 48px minmax(0, 1fr) 20px; }
 }

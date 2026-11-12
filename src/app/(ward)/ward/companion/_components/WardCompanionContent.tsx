@@ -33,7 +33,7 @@ import {
   wardCompanionTodayQueryKey,
   wardCompanionTodayQueryOptions,
 } from '@/service/query/ward';
-import { formatResultAnalysis, formatTurnAnalysis } from '@/utils/companion/companionAnalysis';
+import { type AnalysisSummary, summarizeResultAnalysis, summarizeTurnAnalysis } from '@/utils/companion/companionAnalysis';
 import { COMPANION_MESSAGES, getCompanionError, isCompanionFrameError } from '@/utils/companion/companionError';
 import { openCompanionSlot } from '@/utils/companion/companionOpen';
 import { markConsentAsked, readConsentAsked } from '@/utils/companion/consentAsked';
@@ -54,6 +54,8 @@ const UPLOAD_BUDGET_BYTES = 9.5 * 1024 * 1024;
 export const CAMERA_CONSENT_TEXT = '대답하실 때 얼굴 사진도 함께 보낼게요. 표정은 기분을 살피는 데만 쓰고 저장하지 않아요.';
 export const CAMERA_UNAVAILABLE_TEXT = '카메라를 쓸 수 없어 목소리만 보낼게요.';
 export const PRIVACY_TEXT = '대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.';
+// 테스트 시작 칸 아래 안내(프로토타입) - 동의와 무관하게 사실인 문장
+export const MEDIA_PRIVACY_TEXT = '목소리와 얼굴 사진은 저장하지 않아요';
 // 보관 일수는 서버 설정값(retentionDays)을 쓴다
 export function privacySharedText(retentionDays: number) {
   return `대답한 말은 가족이 볼 수 있게 ${retentionDays}일 동안 보관해요. 목소리와 얼굴 사진은 저장하지 않아요.`;
@@ -66,6 +68,12 @@ const WIDE_QUERY = '(min-width: 1024px)';
 // 처음 대답할 때 한 번 묻는다. 선택은 이 화면 메모리에만 둔다(다시 들어오면 다시 묻는다, 권한 창은 브라우저가 기억)
 type CameraChoice = 'ask' | 'on' | 'off';
 
+// "오후 3시" → ["오후", "3시"] (시간대 버튼 두 줄 표기)
+function splitSlotLabel(label: string): [string, string] {
+  const space = label.indexOf(' ');
+  return space > 0 ? [label.slice(0, space), label.slice(space + 1)] : ['', label];
+}
+
 function fitUploadBudget(audio: Blob, frames: Blob[]) {
   const kept: Blob[] = [];
   let total = audio.size;
@@ -76,6 +84,9 @@ function fitUploadBudget(audio: Blob, frames: Blob[]) {
   }
   return kept;
 }
+
+// [테스트] 판정 결과 한 건 - 칸 요약 + 자세히 문구. 화면 메모리에만
+type TestResult = AnalysisSummary & { id: number };
 
 type Line = { id: number; who: 'companion' | 'me'; text: string; heard?: boolean };
 
@@ -89,7 +100,7 @@ type Talk = {
   lines: Line[];
   ended: boolean;
   test: boolean;
-  results: { id: number; text: string }[];
+  results: TestResult[];
 };
 
 type Pending = 'open' | 'reply' | 'finish' | 'prompt' | null;
@@ -194,7 +205,7 @@ export function WardCompanionContent() {
   }, [lineCount, ended]);
 
   const nextLine = (who: Line['who'], text: string, heard?: boolean): Line => ({ id: ++lineId.current, who, text, heard });
-  const nextResult = (text: string) => ({ id: ++lineId.current, text });
+  const nextResult = (summary: AnalysisSummary): TestResult => ({ ...summary, id: ++lineId.current });
 
   const refreshToday = useCallback(() => void queryClient.invalidateQueries({ queryKey: wardCompanionTodayQueryKey }), [queryClient]);
 
@@ -222,7 +233,7 @@ export function WardCompanionContent() {
   const addFinishResult = useCallback((result: IWardCompanionFinish | null | undefined) => {
     const analysis = result?.analysis;
     if (!analysis) return;
-    setTalk(current => (current ? { ...current, results: [...current.results, nextResult(formatResultAnalysis(analysis))] } : current));
+    setTalk(current => (current ? { ...current, results: [...current.results, nextResult(summarizeResultAnalysis(analysis))] } : current));
   }, []);
 
   const applyReply = useCallback((result: IWardCompanionReply | null, answer: string, heard: boolean) => {
@@ -232,7 +243,7 @@ export function WardCompanionContent() {
       if (!current) return current;
       const lines = [...current.lines, nextLine('me', answer, heard)];
       if (result.reply) lines.push(nextLine('companion', result.reply));
-      const results = result.analysis ? [...current.results, nextResult(formatTurnAnalysis(result.turnNo, result.analysis))] : current.results;
+      const results = result.analysis ? [...current.results, nextResult(summarizeTurnAnalysis(result.turnNo, result.analysis))] : current.results;
       return { ...current, turns: result.turnNo, lines, ended: result.ended, results };
     });
     if (result.reply) speak(result.reply);
@@ -445,17 +456,20 @@ export function WardCompanionContent() {
           <header className={cx('talkHead')}>
             {!wide && camera.stream && <CameraPreview stream={camera.stream} size="small" />}
             <div className={cx('talkHeadText')}>
-              <span className={cx('talkSlot')}>
-                {formatSlotTime(talk.slot)} 안부 대화
-                {talk.test && <span className={cx('testBadge')}>테스트</span>}
-              </span>
-              {talk.maxTurns !== null && !talk.ended && (
-                <span className={cx('talkTurns')}>{talk.maxTurns}번 중 {Math.min(talk.turns + 1, talk.maxTurns)}번째 대답</span>
-              )}
+              <span className={cx('talkSlot')}>{formatSlotTime(talk.slot)} 안부</span>
+              {talk.test && <span className={cx('testBadge', 'small')}>테스트</span>}
             </div>
-            {/* 최대 턴 수를 모르면(null) 숫자처럼 점도 그리지 않는다 */}
+            {/* 최대 턴 수를 모르면(null) 숫자처럼 점도 그리지 않는다. 숫자는 읽기용 문장(talkTurns)으로 읽힌다 */}
             {talk.maxTurns !== null && (
-              <ProgressDots total={talk.maxTurns} done={talk.ended ? talk.maxTurns : Math.min(talk.turns, talk.maxTurns)} />
+              <div className={cx('talkProgress')}>
+                <ProgressDots total={talk.maxTurns} done={talk.ended ? talk.maxTurns : Math.min(talk.turns, talk.maxTurns)} />
+                {!talk.ended && (
+                  <>
+                    <span className={cx('progressCount')} aria-hidden="true">{Math.min(talk.turns + 1, talk.maxTurns)} / {talk.maxTurns}</span>
+                    <span className={cx('srOnly', 'talkTurns')}>{talk.maxTurns}번 중 {Math.min(talk.turns + 1, talk.maxTurns)}번째 대답</span>
+                  </>
+                )}
+              </div>
             )}
           </header>
 
@@ -466,9 +480,9 @@ export function WardCompanionContent() {
               <li key={line.id} className={cx('line', line.who)}>
                 {line.who === 'companion' ? (
                   <>
-                    <span className={cx('lineFace')}><MoodFace mood="happy" size={wide ? 64 : 48} /></span>
+                    <span className={cx('lineFace')}><MoodFace mood="happy" size={wide ? 56 : 40} /></span>
                     <div className={cx('bubble')}>
-                      <span className={cx('who')}>말벗</span>
+                      <span className={cx('srOnly')}>말벗</span>
                       <Sentences text={line.text} />
                       {canSpeak() && (
                         <button className={cx('listenButton')} type="button" onClick={() => speak(line.text)}>
@@ -488,9 +502,8 @@ export function WardCompanionContent() {
             ))}
             {thinking && (
               <li className={cx('line', 'companion', 'thinking')} role="status">
-                <span className={cx('lineFace')}><MoodFace mood="calm" size={wide ? 64 : 48} /></span>
+                <span className={cx('lineFace')}><MoodFace mood="calm" size={wide ? 56 : 40} /></span>
                 <div className={cx('bubble')}>
-                  <span className={cx('who')}>말벗</span>
                   <p>말벗이 생각하고 있어요<span className={cx('dots')} aria-hidden="true"><i /><i /><i /></span></p>
                 </div>
               </li>
@@ -595,39 +608,57 @@ export function WardCompanionContent() {
           )}
           <TodayPanel today={today.data} isLoading={today.isLoading} isError={today.isError} notice={notice} opening={pending === 'open'} onOpen={() => void withConsent(() => void handleOpen())} onRetry={() => void today.refetch()} />
           {testMode && (
-            <section className={cx('testStart')} aria-labelledby="companion-test-title">
-              <h2 id="companion-test-title" className={cx('testStartTitle')}>
-                안부 말벗
-                <span className={cx('testBadge', 'small')}>테스트</span>
-              </h2>
-              <div className={cx('greeting')}>
-                <MoodFace mood="happy" size={wide ? 132 : 96} />
+            <section className={cx('testStart', { wide })} aria-label="안부 말벗 테스트">
+              <div className={cx('testHero')}>
+                <span className={cx('testBadge', 'heroBadge')}>테스트</span>
+                <div className={cx('heroHead')}>
+                  <MoodFace mood="happy" size={wide ? 132 : 88} />
+                  <div>
+                    <span className={cx('heroLabel')}>말벗</span>
+                    <h2 id="companion-test-title" className={cx('heroTitle')}>안부 말벗</h2>
+                  </div>
+                </div>
                 <div className={cx('greetingBubble')}>
+                  <span className={cx('greetingLabel')}>{formatSlotTime(testSlot)} 안부 인사</span>
                   <Sentences text={`안녕하세요. ${formatSlotTime(testSlot)} 안부 인사를 나눠 볼까요?`} />
                 </div>
               </div>
-              <div className={cx('testSlots')} role="group" aria-label="안부 시간대">
-                {TEST_SLOTS.map(slot => (
-                  <button key={slot} type="button" className={cx('testSlot', { selected: slot === testSlot })} aria-pressed={slot === testSlot} onClick={() => setTestSlot(slot)}>
-                    {formatSlotTime(slot)}
-                  </button>
-                ))}
-              </div>
-              <div className={cx('testActions')}>
+              <div className={cx('testPick')}>
+                <h3 className={cx('pickTitle')}>시간대</h3>
+                <div className={cx('testSlots')} role="group" aria-label="안부 시간대">
+                  {TEST_SLOTS.map(slot => {
+                    const [period, hour] = splitSlotLabel(formatSlotTime(slot));
+                    return (
+                      <button key={slot} type="button" className={cx('testSlot', { selected: slot === testSlot })} aria-label={formatSlotTime(slot)} aria-pressed={slot === testSlot} onClick={() => setTestSlot(slot)}>
+                        {period && <span className={cx('slotPeriod')} aria-hidden="true">{period}</span>}
+                        <span aria-hidden="true">{hour}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className={cx('pickSpacer')} />
                 <button className={cx('startButton')} type="button" disabled={Boolean(pending)} onClick={() => void withConsent(() => void handleOpenTest(testSlot))}>
-                  <Icon name="messageCircle" size={34} decorative />
+                  <MicIcon />
                   {pending === 'open' ? '여는 중…' : '바로 이야기하기'}
                 </button>
-                <button className={cx('primaryButton', 'secondary')} type="button" disabled={Boolean(pending)} onClick={() => void handleSendTestPrompt()}>
+                <button className={cx('promptButton')} type="button" disabled={Boolean(pending)} onClick={() => void handleSendTestPrompt()}>
+                  <Icon name="bell" size={28} decorative />
                   {pending === 'prompt' ? '보내는 중…' : '안부 알림 받아 보기'}
                 </button>
+                {testNotice && <p className={cx('notice')} role="status">{testNotice}</p>}
+                <p className={cx('mediaPrivacy')}>
+                  <Icon name="lock" size={18} decorative />
+                  {MEDIA_PRIVACY_TEXT}
+                </p>
               </div>
-              {testNotice && <p className={cx('notice')} role="status">{testNotice}</p>}
             </section>
           )}
         </>
       )}
-      <p className={cx('privacy')}>{consent.data?.consented ? privacySharedText(consent.data.retentionDays) : PRIVACY_TEXT}</p>
+      {/* 테스트 시작 칸은 자체 안내(MEDIA_PRIVACY_TEXT)를 둔다 */}
+      {!(testMode && !consentAsk) && (
+        <p className={cx('privacy')}>{consent.data?.consented ? privacySharedText(consent.data.retentionDays) : PRIVACY_TEXT}</p>
+      )}
     </div>
   );
 }
@@ -737,30 +768,70 @@ function CameraPanel({ stream }: { stream: MediaStream | null }) {
   );
 }
 
-// [테스트] 턴마다·마치기 뒤 판정 결과 - 화면 메모리에만. 방금 결과는 크게, 지난 결과는 한 줄씩(최근 것부터)
-// 폰(compact)은 방금 결과 한 줄만 보이고 눌러서 지난 결과를 편다
-function TestResults({ results, compact = false }: { results: { id: number; text: string }[]; compact?: boolean }) {
+// [테스트] 턴마다·마치기 뒤 판정 결과 - 화면 메모리에만. 방금 결과는 칸으로(기분 글자 + 말·표정·위험), 지난 결과는 한 줄씩(최근 것부터).
+// 기존 한 줄 문구(확신·근거·신호)는 '자세히'에 남긴다 - 테스트하는 사람이 판정 근거를 확인할 수 있게.
+// 폰(compact)은 방금 결과 한 줄을 접기 줄로 보이고 눌러서 편다
+function TestResults({ results, compact = false }: { results: TestResult[]; compact?: boolean }) {
   const latest = results.at(-1);
   const earlier = results.slice(0, -1).reverse();
+  const latestCard = latest && (
+    <div className={cx('latestCard')}>
+      <div className={cx('latestHead')}>
+        <span className={cx('latestLabel')}>{latest.rowLabel === '마침' ? latest.title : `방금 대답 · ${latest.title}`}</span>
+        <strong className={cx('moodText', latest.tone)}>{latest.mood}</strong>
+      </div>
+      <dl className={cx('resultCells')}>
+        {latest.cells.map(cell => (
+          <div key={cell.label} className={cx('resultCell')}>
+            <dt>{cell.label}</dt>
+            <dd className={cx('moodText', cell.tone)}>{cell.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <details className={cx('resultDetail')}>
+        <summary>자세히</summary>
+        <p>{latest.detail}</p>
+      </details>
+    </div>
+  );
   const earlierList = earlier.length > 0 && (
-    <ol className={cx('earlierResults')} aria-label="지난 대답 판정">
-      {earlier.map(item => <li key={item.id} title={item.text}>{item.text}</li>)}
-    </ol>
+    <>
+      <span className={cx('earlierTitle')}>지난 대답</span>
+      <ol className={cx('earlierResults')} aria-label="지난 대답 판정">
+        {earlier.map(item => (
+          <li key={item.id} title={item.detail}>
+            <span className={cx('earlierNo')}>{item.rowLabel}</span>
+            <span className={cx('earlierLine')}>{item.line}</span>
+            <strong className={cx('moodText', item.tone)}>{item.mood}</strong>
+          </li>
+        ))}
+      </ol>
+    </>
   );
 
   if (compact) {
     return (
-      // 제목은 접기 버튼(summary) 밖에 둔다 - summary 안의 h2는 버튼 이름에 묻혀 제목으로 읽히지 않는다(점검 L-4)
+      // 제목은 접기 버튼(summary) 밖에 둔다 - summary 안의 제목은 버튼 이름에 묻혀 제목으로 읽히지 않는다(점검 L-4)
       <section className={cx('testResults', 'compact')} aria-labelledby="companion-test-results-title">
-        <h2 id="companion-test-results-title" className={cx('resultsTitle')}>
-          판정 결과
-          <span className={cx('testBadge', 'small')}>테스트</span>
-        </h2>
+        <h2 id="companion-test-results-title" className={cx('srOnly')}>판정 결과</h2>
         <details className={cx('resultsDetails')}>
           <summary>
-            <span className={cx('latestLine')} aria-live="polite">{latest ? latest.text : '대답하면 판정 결과가 여기에 나와요.'}</span>
+            <span className={cx('compactLabel')}>
+              <span className={cx('testBadge', 'small')}>테스트</span>
+              방금 대답 판정
+            </span>
+            <span className={cx('latestLine')} aria-live="polite">
+              {latest ? (
+                <>
+                  {latest.line} · <strong className={cx('moodText', latest.tone)}>{latest.mood}</strong>
+                </>
+              ) : '대답하면 판정 결과가 여기에 나와요.'}
+            </span>
           </summary>
-          {earlierList}
+          <div className={cx('compactBody')}>
+            {latestCard}
+            {earlierList}
+          </div>
         </details>
       </section>
     );
@@ -768,18 +839,11 @@ function TestResults({ results, compact = false }: { results: { id: number; text
 
   return (
     <section className={cx('testResults')} aria-labelledby="companion-test-results-title">
-      <h2 id="companion-test-results-title" className={cx('resultsTitle')}>
-        판정 결과
+      <div className={cx('resultsHead')}>
+        <h2 id="companion-test-results-title" className={cx('resultsTitle')}>판정 결과</h2>
         <span className={cx('testBadge', 'small')}>테스트</span>
-      </h2>
-      {latest ? (
-        <div className={cx('latestCard')} aria-live="polite">
-          <span className={cx('latestLabel')}>방금 대답</span>
-          <p>{latest.text}</p>
-        </div>
-      ) : (
-        <p className={cx('resultsEmpty')}>대답하면 판정 결과가 여기에 나와요.</p>
-      )}
+      </div>
+      {latestCard ?? <p className={cx('resultsEmpty')}>대답하면 판정 결과가 여기에 나와요.</p>}
       {earlierList}
     </section>
   );
