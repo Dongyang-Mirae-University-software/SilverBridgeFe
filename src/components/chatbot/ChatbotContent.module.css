@@ -468,34 +468,81 @@
   opacity: 0.55;
 }
 
-/* 보호자 입력 줄(2026-11-12): 알약 테두리 안에 둥근 마이크 48px + 입력칸 + 둥근 보내기 48px */
+/* 보호자 입력 줄(2026-11-12 디자인 프로토타입): 둥근 마이크 52px · 알약 입력칸 · 둥근 보내기 52px(위쪽 화살표) */
 .guardianInputWrap {
   align-items: center;
-  gap: 6px;
-  border: 1.5px solid var(--sb-line);
-  border-radius: 999px;
-  background: #fff;
-  padding: 5px;
+  gap: 8px;
 }
 
-.guardianInputWrap:focus-within {
+.guardianInputWrap .textarea {
+  min-height: 52px;
+  border: 1px solid var(--sb-line);
+  border-radius: 26px;
+  background: var(--sb-bg-soft);
+  font-size: calc(17px * var(--ward-font-scale, 1));
+  padding: 12px 18px;
+}
+
+.guardianInputWrap .textarea:focus {
   border-color: var(--sb-brand);
 }
 
-.guardianInputWrap .textarea,
-.guardianInputWrap .textarea:focus {
-  min-height: 48px;
-  border: 0;
-  background: transparent;
-  font-size: calc(18px * var(--ward-font-scale, 1));
-  padding: 10px 6px;
-}
-
 .guardianSendButton {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   padding: 0;
   border-radius: 50%;
+}
+
+/* ── 보호자 화면 틀(2026-11-12 디자인 프로토타입): 바탕 위에 머리·흰 대화 카드·칩 줄, 맨 아래 흰 입력 띠 ── */
+.guardianVariant .shell {
+  gap: 10px;
+  border: 0;
+  background: var(--sb-bg);
+  padding: 12px 16px 0;
+}
+
+.guardianVariant .header {
+  background: transparent;
+  padding: 0;
+}
+
+.guardianVariant .brandCopy h1 {
+  font-size: calc(24px * var(--ward-font-scale, 1));
+  letter-spacing: -0.02em;
+}
+
+.guardianVariant .body {
+  gap: 10px;
+  overflow: visible;
+}
+
+.guardianVariant .board {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.guardianVariant .messageList {
+  padding: 14px 12px;
+}
+
+.guardianVariant .quickPromptPanel {
+  border-top: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.guardianVariant .quickPromptRow {
+  padding-bottom: 0;
+}
+
+/* 입력 띠는 화면 끝까지 흰색 - 틀 좌우 여백(16px)을 넘어 편다 */
+.guardianVariant .composer {
+  margin: 0 -16px;
+  border-top: 1px solid var(--sb-line-soft);
+  background: #fff;
+  padding: 10px 12px 14px;
 }
 
 /* 피보호자 챗봇: 왼쪽 대화 카드 + 오른쪽 큰 빠른 질문 버튼(디자인 2열).
@@ -1089,23 +1136,34 @@
     font-size: calc(17px * var(--ward-font-scale, 1));
   }
 
-  .guardianInputWrap {
-    gap: 4px;
-  }
-
-  .guardianInputWrap .textarea,
-  .guardianInputWrap .textarea:focus {
-    min-height: 48px;
+  .guardianInputWrap .textarea {
+    min-height: 52px;
     max-height: 74px;
     font-size: calc(17px * var(--ward-font-scale, 1));
-    padding: 11px 4px;
+    padding: 13px 16px;
   }
 
   .guardianSendButton {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     padding: 0;
     border-radius: 50%;
+  }
+
+  .guardianVariant .brandCopy h1 {
+    font-size: calc(22px * var(--ward-font-scale, 1));
+  }
+
+  .guardianVariant .messageList {
+    padding: 14px 12px;
+  }
+
+  .guardianVariant .quickPromptPanel {
+    padding: 0;
+  }
+
+  .guardianVariant .composer {
+    padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
   }
 
   .composer {

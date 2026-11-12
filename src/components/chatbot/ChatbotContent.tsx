@@ -45,12 +45,13 @@ function makeSessionId() {
 }
 
 function buildWelcomeMessage(name?: string, isGuardian = false): ChatMessage {
-  // 보호자 챗봇은 보호자 본인 상담으로 시작한다 - 예약을 시작하면 AI가 누구의 예약인지 묻는다(2026-11-11 사용자 결정)
+  // 보호자 챗봇은 보호자 본인 상담으로 시작한다 - 예약을 시작하면 AI가 누구의 예약인지 묻는다(2026-11-11 사용자 결정).
+  // 문구는 디자인 프로토타입대로(2026-11-12)
   if (isGuardian) {
     return {
       id: 'welcome',
       role: 'assistant',
-      content: '안녕하세요\n증상을 말씀해 주시면 맞는 진료과를 알려 드리고, 연결된 분의 병원 예약도 도와드려요.',
+      content: '증상을 알려 주세요.\n진료과 안내와 병원 예약을 도와드려요.',
       timestamp: new Date().toISOString(),
     };
   }
@@ -189,6 +190,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const typingWithKeyboard = composerFocused && softKeyboardOpen;
 
   const listRef = useRef<HTMLDivElement>(null);
+  const quickRowRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const sendingRef = useRef(sending);
@@ -314,6 +316,12 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   // 보호자 글·칩 입력에 이어 실을 피보호자(대리 예약 중일 때만 - reservationFlow.textWardId)
   const carriedWardId = isGuardian && !wardCarryEnded ? textWardId(stepSource) : undefined;
   const sentTexts = new Set(sentBySession[sessionId] ?? []);
+  // 보호자 칩 줄(휴대폰은 가로 스크롤) - 칩이 바뀌면 처음으로 되돌린다. 누른 칩이 빠진 뒤 스크롤 위치가 남아 맨 앞 예약 칩이 잘려 보였다(2026-11-12)
+  const guardianQuick = isWardChat ? [] : guardianPrompts(suggested, sentTexts);
+  const guardianQuickKey = guardianQuick.map(prompt => prompt.text).join('\n');
+  useLayoutEffect(() => {
+    quickRowRef.current?.scrollTo({ left: 0 });
+  }, [guardianQuickKey]);
   // 서버는 버튼·날짜·지역 선택도 "[선택] field: value" 형식의 별도 기록으로 남긴다.
   // 이는 실제 상담 시작점이 아니므로 내 상담 기록 목록에서는 제외한다.
   const send = useCallback(
@@ -541,8 +549,6 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             onRestart={restartConversation}
             // 예약 단계 선택지는 지금 단계면 아래 패널에, 지난 단계면 내 말풍선(고른 답)으로 이미 보이므로 말풍선에 그리지 않는다
             hidePrompt={isReservationStep(message)}
-            userImageUrl={profile?.profileImage}
-            userName={profile?.name}
             variant={isWardChat ? 'ward' : 'guardian'}
           />
         ))}
@@ -605,7 +611,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           className={styles.textarea}
           rows={1}
           aria-label="궁금한 점 입력"
-          placeholder={isWardChat ? '직접 쓰기' : '여기에 궁금한 점을 써 주세요'}
+          placeholder={isWardChat ? '직접 쓰기' : '증상이나 궁금한 점'}
           value={input}
           disabled={sending}
           onChange={e => {
@@ -623,7 +629,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           aria-label={isWardChat ? undefined : '보내기'}
           onClick={() => void send(input, undefined, undefined, true, carriedWardId)}
         >
-          {isWardChat ? '보내기' : <SendIcon size={22} />}
+          {isWardChat ? '보내기' : <SendIcon size={24} />}
         </button>
       </div>
       {voiceNotice}
@@ -700,8 +706,6 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       loading={isLogsLoading}
       error={logsError}
       onClose={() => setHistoryOpen(false)}
-      userImageUrl={profile?.profileImage}
-      userName={profile?.name}
       variant={isWardChat ? 'ward' : 'guardian'}
       wards={isGuardian ? activeWards.map(ward => ({ id: ward.partnerUserId, name: ward.partnerName })) : undefined}
     />
@@ -779,7 +783,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   }
 
   return (
-    <div className={styles.chatPage}>
+    <div className={`${styles.chatPage} ${styles.guardianVariant}`}>
       <section className={styles.shell}>
         <header className={styles.header}>
           <div className={styles.brand}>
@@ -789,21 +793,21 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             </div>
           </div>
           <div className={styles.headerActions}>
-            {/* 보이는 글자는 "기록" - 화면 읽기 이름은 "상담 기록" */}
-            <button type="button" className={styles.historyButton} onClick={() => void handleOpenHistory()}>
-              <HistoryIcon size={20} />
-              <span>
-                <span className={styles.visuallyHidden}>상담 </span>기록
-              </span>
-            </button>
             <button
               type="button"
               className={styles.historyButton}
               onClick={() => handleNewConversation()}
               disabled={sending}
             >
-              <NewChatIcon size={20} />
+              <NewChatIcon size={18} />
               새 대화
+            </button>
+            {/* 보이는 글자는 "기록" - 화면 읽기 이름은 "상담 기록" */}
+            <button type="button" className={styles.historyButton} onClick={() => void handleOpenHistory()}>
+              <HistoryIcon size={18} />
+              <span>
+                <span className={styles.visuallyHidden}>상담 </span>기록
+              </span>
             </button>
           </div>
         </header>
@@ -816,8 +820,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           ) : (
             <section className={styles.quickPromptPanel} aria-label="추천 질문">
               <p className={styles.quickPromptTitle}>{quickTitle}</p>
-              <div className={styles.quickPromptRow}>
-                {guardianPrompts(suggested, sentTexts).map(prompt => (
+              <div ref={quickRowRef} className={styles.quickPromptRow}>
+                {guardianQuick.map(prompt => (
                   <button
                     key={prompt.text}
                     type="button"

@@ -286,6 +286,52 @@
   color: var(--sb-ink-soft);
 }
 
+/* 보호자 챗봇(2026-11-12 디자인 프로토타입): 복숭아 34px, 답은 연한 살구 말풍선 + 흰 상자(제목 색으로 구분). 글자 크기는 그대로(18px 아래로 줄이지 않는다) */
+.guardianBubble .peach {
+  width: 34px;
+  height: 34px;
+}
+
+.guardianBubble.rowAssistant {
+  gap: 8px;
+}
+
+.guardianBubble .bubbleUser {
+  border-radius: 18px 18px 6px 18px;
+  box-shadow: none;
+}
+
+/* 낱말 중간에서 줄을 바꾸지 않는다("도와드/려요") */
+.guardianBubble .bubbleUser p,
+.guardianBubble .replyText,
+.guardianBubble .lines li {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.guardianBubble .bubbleAssistant {
+  background: var(--sb-brand-50, #f7eae1);
+  box-shadow: none;
+}
+
+.guardianBubble .bubbleUrgent {
+  background: var(--sb-danger-soft, #fbe5e0);
+}
+
+.guardianBubble .card_home,
+.guardianBubble .card_hospital {
+  background: #fff;
+  border-radius: 12px;
+}
+
+.guardianBubble .card_home .cardTitle {
+  color: #2f5d36;
+}
+
+.guardianBubble .card_hospital .cardTitle {
+  color: #2b4a75;
+}
+
 /* 피보호자 챗봇: 왼쪽 복숭아(60px) + 행 폭의 86%까지 쓰는 26px 말풍선. */
 .wardBubble .peach {
   width: 60px;

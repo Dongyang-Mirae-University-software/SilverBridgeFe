@@ -74,19 +74,19 @@
   height: 30px;
 }
 
-/* 보호자 입력 줄 안의 둥근 마이크(48px) - 글자 없이 아이콘만, 이름은 aria-label */
+/* 보호자 입력 줄의 둥근 마이크(52px) - 글자 없이 아이콘만, 이름은 aria-label */
 .round {
-  width: 48px;
-  min-width: 48px;
-  height: 48px;
-  min-height: 48px;
+  width: 52px;
+  min-width: 52px;
+  height: 52px;
+  min-height: 52px;
   padding: 0;
   border-radius: 50%;
 }
 
 .round .icon {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
 }
 
 .recording,
