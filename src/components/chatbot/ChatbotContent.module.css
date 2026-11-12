@@ -36,15 +36,10 @@
   min-width: 0;
 }
 
-.brandMark {
-  display: grid;
-  width: 54px;
-  height: 54px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: none;
+/* 복숭아 얼굴 38px(2026-11-12 화면 개편 - 부제는 뺐다) */
+.brandPeach {
+  width: 38px;
+  height: 38px;
 }
 
 .brandCopy {
@@ -64,20 +59,6 @@
   white-space: nowrap;
 }
 
-.brandCopy p {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--sb-ink-soft);
-  font-size: calc(17px * var(--ward-font-scale, 1));
-  font-weight: calc(400 + var(--ward-weight-boost, 0));
-  line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .headerActions {
   display: flex;
   align-items: center;
@@ -88,15 +69,26 @@
 .historyButton {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  min-height: 44px;
   border: 1px solid var(--sb-line);
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
-  font-size: calc(13px * var(--ward-font-scale, 1));
-  font-weight: calc(600 + var(--ward-weight-boost, 0));
-  padding: 9px 14px;
+  font-size: calc(15px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  padding: 0 12px;
+}
+
+/* 화면에는 숨기고 화면 읽기 프로그램은 읽는다 */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .backButton {
@@ -219,7 +211,7 @@
   min-height: 52px;
   border: 1.5px solid var(--sb-brand-soft);
   border-radius: 999px;
-  background: var(--sb-brand-50);
+  background: #fff;
   color: var(--sb-brand);
   cursor: pointer;
   flex-shrink: 0;
@@ -231,7 +223,7 @@
 }
 
 .quickPromptButton:hover:not(:disabled) {
-  background: var(--sb-brand-50);
+  border-color: var(--sb-brand);
 }
 
 /* 디자인에서 예약 칩만 진한 색 + 달력 아이콘으로 강조한다. */
@@ -476,6 +468,36 @@
   opacity: 0.55;
 }
 
+/* 보호자 입력 줄(2026-11-12): 알약 테두리 안에 둥근 마이크 48px + 입력칸 + 둥근 보내기 48px */
+.guardianInputWrap {
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--sb-line);
+  border-radius: 999px;
+  background: #fff;
+  padding: 5px;
+}
+
+.guardianInputWrap:focus-within {
+  border-color: var(--sb-brand);
+}
+
+.guardianInputWrap .textarea,
+.guardianInputWrap .textarea:focus {
+  min-height: 48px;
+  border: 0;
+  background: transparent;
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  padding: 10px 6px;
+}
+
+.guardianSendButton {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+}
+
 /* 피보호자 챗봇: 왼쪽 대화 카드 + 오른쪽 큰 빠른 질문 버튼(디자인 2열).
    보호자 화면(헤더·칩·기록 보기)은 위 기본 스타일을 그대로 쓴다. */
 .wardVariant .shell {
@@ -487,7 +509,7 @@
 .wardTitle {
   margin: 0;
   color: var(--sb-ink);
-  font-size: calc(24px * var(--ward-font-scale, 1));
+  font-size: calc(30px * var(--ward-font-scale, 1));
   font-weight: calc(900 + var(--ward-weight-boost, 0));
   line-height: 1.3;
   padding: 2px 4px 0;
@@ -508,16 +530,19 @@
 }
 
 .wardNewChatButton {
-  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
   flex-shrink: 0;
-  border: 1px solid var(--sb-line);
-  border-radius: 12px;
+  border: 1.5px solid var(--sb-line);
+  border-radius: 16px;
   background: #fff;
-  color: var(--sb-ink-soft);
+  color: var(--sb-ink);
   cursor: pointer;
-  font-size: calc(15px * var(--ward-font-scale, 1));
-  font-weight: calc(700 + var(--ward-weight-boost, 0));
-  padding: 8px 14px;
+  font-size: calc(19px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  padding: 0 18px;
 }
 
 .wardNewChatButton:disabled,
@@ -529,21 +554,77 @@
 .wardBody {
   display: grid;
   flex: 1;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'chat panel'
+    'composer panel';
+  gap: 16px 28px;
   min-height: 0;
   overflow: hidden;
 }
 
 .wardChatCard {
   display: flex;
+  grid-area: chat;
   min-width: 0;
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 20px;
+  border-radius: 28px;
   background: #fff;
+}
+
+.wardComposerArea {
+  grid-area: composer;
+  min-width: 0;
+}
+
+.wardBody > .wardQuickPanel {
+  grid-area: panel;
+}
+
+/* 처음 화면(환영 인사 하나뿐): 큰 복숭아 얼굴 + 두 줄 인사 */
+.wardGreeting {
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #fff;
+  padding: 20px;
+  text-align: center;
+}
+
+.wardGreetingPeach {
+  width: 168px;
+  height: 168px;
+}
+
+.wardGreetingText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wardGreetingName,
+.wardGreetingAsk {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.wardGreetingName {
+  color: var(--sb-ink-soft);
+  font-size: calc(28px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  line-height: 1.35;
+}
+
+.wardGreetingAsk {
+  color: var(--sb-ink);
+  font-size: calc(44px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
 .wardVariant .board {
@@ -558,9 +639,17 @@
   padding-left: 4px;
 }
 
+/* 입력은 대화 카드 밖(아래)에 둔다. 마이크만 있을 때는 바탕 없이 가운데, [글자로 쓰기]로 연 입력 줄은 흰 카드 */
 .wardVariant .composer {
-  border-top: 1px solid var(--sb-line-soft);
-  padding: 14px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 20px;
+  padding: 12px;
+}
+
+.wardVariant .composerCollapsed {
+  border: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .wardVariant .inputWrap {
@@ -610,25 +699,26 @@
 .wardQuickTitle {
   margin: 0;
   color: var(--sb-ink);
-  font-size: calc(24px * var(--ward-font-scale, 1));
+  font-size: calc(26px * var(--ward-font-scale, 1));
   font-weight: calc(900 + var(--ward-weight-boost, 0));
   line-height: 1.3;
-  padding: 2px 4px;
+  padding: 10px 4px 0;
 }
 
 /* 응급·위기 답 뒤: 빠른 질문 대신 큰 119 전화 버튼(tel:119). 색만으로 구분하지 않게 글자로도 알린다. */
 .wardEmergencyPanel {
   justify-content: center;
-  border: 3px solid var(--sb-danger, #b3312b);
-  border-radius: 24px;
-  background: var(--sb-danger-soft, #fbe5e0);
-  padding: 20px;
+  gap: 24px;
+  border: 2px solid var(--sb-danger);
+  border-radius: 28px;
+  background: var(--sb-danger-soft);
+  padding: 32px 28px;
 }
 
 .wardEmergencyTitle {
   margin: 0;
-  color: var(--sb-danger, #b3312b);
-  font-size: calc(28px * var(--ward-font-scale, 1));
+  color: #7d1f1a;
+  font-size: calc(34px * var(--ward-font-scale, 1));
   font-weight: calc(900 + var(--ward-weight-boost, 0));
   line-height: 1.3;
   text-align: center;
@@ -640,9 +730,10 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  min-height: 120px;
-  border-radius: 20px;
-  background: var(--sb-danger, #b3312b);
+  min-height: 128px;
+  border-radius: 28px;
+  background: var(--sb-danger);
+  box-shadow: 0 6px 0 #861f1a;
   color: #fff;
   font-size: calc(34px * var(--ward-font-scale, 1));
   font-weight: calc(900 + var(--ward-weight-boost, 0));
@@ -656,37 +747,42 @@
   outline-offset: 3px;
 }
 
+.wardEmergencyIcon {
+  flex-shrink: 0;
+}
+
 .wardEmergencyHint {
   margin: 0;
-  color: var(--sb-ink);
-  font-size: calc(20px * var(--ward-font-scale, 1));
+  color: var(--sb-ink-soft);
+  font-size: calc(24px * var(--ward-font-scale, 1));
   font-weight: calc(700 + var(--ward-weight-boost, 0));
   line-height: 1.4;
   text-align: center;
   word-break: keep-all;
 }
 
+/* 4칸이 패널 높이를 나눠 채운다(칸이 줄어도 한 칸 크기는 같게) */
 .wardQuickGrid {
-  display: flex;
+  display: grid;
   flex: 1;
   min-height: 0;
-  flex-direction: column;
-  gap: 12px;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .wardQuickButton {
   display: flex;
-  flex: 1;
   align-items: center;
-  gap: 18px;
+  gap: 20px;
   min-height: 92px;
   border: 2px solid var(--sb-brand-soft);
-  border-radius: 20px;
+  border-radius: 24px;
   background: #fff;
+  box-shadow: 0 2px 8px rgba(176, 103, 77, 0.06);
   color: var(--sb-ink);
   cursor: pointer;
   font: inherit;
-  font-size: calc(26px * var(--ward-font-scale, 1));
+  font-size: calc(30px * var(--ward-font-scale, 1));
   font-weight: calc(900 + var(--ward-weight-boost, 0));
   line-height: 1.3;
   padding: 0 24px;
@@ -710,17 +806,105 @@
 
 .wardQuickIcon {
   display: grid;
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   flex-shrink: 0;
   place-items: center;
-  border-radius: 16px;
+  border-radius: 50%;
   background: var(--sb-brand-50);
   color: var(--sb-brand);
 }
 
+/* 예약 진행 패널(2026-11-12): brand 테두리 카드 + 단계 표시 + 큰 선택지 + [예약 그만하기] */
+.wardReservePanel {
+  gap: 16px;
+  border: 2px solid var(--sb-brand);
+  border-radius: 28px;
+  background: #fff;
+  padding: 22px;
+}
+
+.wardReserveTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--sb-brand);
+  font-size: calc(28px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  line-height: 1.3;
+}
+
+.wardSteps {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wardStep {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--sb-ink-soft);
+  font-size: calc(18px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+}
+
+.wardStepDot {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sb-line-soft);
+  color: var(--sb-ink);
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+}
+
+.wardStepDone .wardStepDot {
+  background: var(--sb-safe);
+  color: #fff;
+}
+
+.wardStepCurrent {
+  color: var(--sb-ink);
+}
+
+.wardStepCurrent .wardStepDot {
+  background: var(--sb-brand);
+  color: #fff;
+}
+
+.wardReserveOptions {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.wardReserveStop {
+  flex-shrink: 0;
+  min-height: 60px;
+  border: 1.5px solid var(--sb-line);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+}
+
+.wardReserveStop:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* 태블릿: 2열이 좁아지면 빠른 질문을 대화 아래 2×2로 내린다. */
 @media (max-width: 1024px) {
+  /* 대화 → 빠른 질문·119·예약 → 마이크(손이 닿는 맨 아래) */
   .wardBody {
     display: flex;
     flex-direction: column;
@@ -729,6 +913,19 @@
 
   .wardChatCard {
     flex: 1;
+  }
+
+  .wardComposerArea {
+    flex-shrink: 0;
+  }
+
+  .wardGreetingPeach {
+    width: 130px;
+    height: 130px;
+  }
+
+  .wardGreetingAsk {
+    font-size: calc(36px * var(--ward-font-scale, 1));
   }
 
   .wardQuickPanel {
@@ -744,6 +941,7 @@
     display: grid;
     flex: 0 0 auto;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
     gap: 10px;
   }
 
@@ -755,21 +953,32 @@
   }
 
   .wardQuickIcon {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
   }
 
   .wardEmergencyPanel {
-    padding: 14px;
+    gap: 14px;
+    padding: 16px;
   }
 
   .wardEmergencyTitle {
-    font-size: calc(24px * var(--ward-font-scale, 1));
+    font-size: calc(26px * var(--ward-font-scale, 1));
   }
 
   .wardEmergencyCall {
-    min-height: 88px;
-    font-size: calc(30px * var(--ward-font-scale, 1));
+    min-height: 96px;
+    border-radius: 24px;
+    font-size: calc(32px * var(--ward-font-scale, 1));
+  }
+
+  .wardEmergencyHint {
+    font-size: calc(20px * var(--ward-font-scale, 1));
+  }
+
+  .wardReservePanel {
+    gap: 12px;
+    padding: 16px;
   }
 
   /* 화면 키보드가 올라온 입력 중에는 빠른 질문 칸을 숨겨 대화가 보이게 한다. */
@@ -810,31 +1019,10 @@
     font-size: calc(20px * var(--ward-font-scale, 1));
   }
 
-  /* 휴대폰 폭에서는 [새 대화]·[상담 기록]이 자리를 차지해 한 줄이면 글자 중간에서 잘린다 - 2줄까지 줄바꿈(2026-11-11 점검 L-1) */
-  .brandCopy p {
-    display: -webkit-box;
-    font-size: calc(13px * var(--ward-font-scale, 1));
-    white-space: normal;
-    word-break: keep-all;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-
-  .brandMark {
-    width: 42px;
-    height: 42px;
-  }
-
-  .brandMark svg {
-    width: 30px;
-    height: 30px;
-  }
-
   .historyButton {
     gap: 4px;
-    border-radius: 9px;
-    font-size: calc(12px * var(--ward-font-scale, 1));
-    padding: 8px 10px;
+    font-size: calc(14px * var(--ward-font-scale, 1));
+    padding: 0 10px;
   }
 
   .body {
@@ -897,6 +1085,25 @@
     font-size: calc(17px * var(--ward-font-scale, 1));
   }
 
+  .guardianInputWrap {
+    gap: 4px;
+  }
+
+  .guardianInputWrap .textarea,
+  .guardianInputWrap .textarea:focus {
+    min-height: 48px;
+    max-height: 74px;
+    font-size: calc(17px * var(--ward-font-scale, 1));
+    padding: 11px 4px;
+  }
+
+  .guardianSendButton {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
   .composer {
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   }
@@ -935,11 +1142,68 @@
   }
 
   .wardTitle {
-    font-size: calc(20px * var(--ward-font-scale, 1));
+    font-size: calc(22px * var(--ward-font-scale, 1));
+  }
+
+  .wardTitleActions {
+    gap: 6px;
+  }
+
+  .wardNewChatButton {
+    gap: 5px;
+    min-height: 48px;
+    border-radius: 14px;
+    font-size: calc(16px * var(--ward-font-scale, 1));
+    padding: 0 12px;
+  }
+
+  /* 휴대폰: "상담 기록" → "기록"(화면 읽기 이름은 그대로) */
+  .wardWideOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .wardChatCard {
-    border-radius: 16px;
+    border-radius: 22px;
+  }
+
+  .wardGreeting {
+    gap: 12px;
+  }
+
+  .wardGreetingPeach {
+    width: 110px;
+    height: 110px;
+  }
+
+  .wardGreetingName {
+    font-size: calc(22px * var(--ward-font-scale, 1));
+  }
+
+  .wardGreetingAsk {
+    font-size: calc(30px * var(--ward-font-scale, 1));
+  }
+
+  .wardReserveTitle {
+    font-size: calc(22px * var(--ward-font-scale, 1));
+  }
+
+  .wardStep {
+    font-size: calc(15px * var(--ward-font-scale, 1));
+  }
+
+  .wardStepDot {
+    width: 30px;
+    height: 30px;
+  }
+
+  .wardReserveStop {
+    min-height: 52px;
+    font-size: calc(19px * var(--ward-font-scale, 1));
   }
 
   .wardVariant .messageList {
@@ -948,6 +1212,10 @@
 
   .wardVariant .composer {
     padding: 10px;
+  }
+
+  .wardVariant .composerCollapsed {
+    padding: 0;
   }
 
   .wardVariant .inputWrap {

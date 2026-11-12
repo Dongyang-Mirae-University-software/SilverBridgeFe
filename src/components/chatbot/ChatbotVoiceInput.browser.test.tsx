@@ -10,6 +10,9 @@ import { render } from 'vitest-browser-react';
 
 import ChatbotContent from './ChatbotContent';
 
+// 마이크 버튼 이름 - 보호자 "말로 입력하기", 피보호자는 보이는 글자와 같다(처음 "말로 물어보기"·답 뒤 "말로 답하기"·응급 뒤 "말로 더 묻기", 2026-11-12)
+const MIC = /^말로 (입력하기|물어보기|답하기|더 묻기)$/;
+
 const api = vi.hoisted(() => ({
   sendChatMessage: vi.fn(),
   getChatLogs: vi.fn(),
@@ -90,7 +93,7 @@ afterEach(async () => {
 });
 
 async function recordFor(ms: number) {
-  await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+  await userEvent.click(page.getByRole('button', { name: MIC }));
   await expect.element(page.getByRole('button', { name: STOP })).toBeInTheDocument();
   await new Promise(resolve => setTimeout(resolve, ms));
   await userEvent.click(page.getByRole('button', { name: STOP }));
@@ -103,7 +106,11 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 describe('챗봇 마이크 음성 입력', () => {
   it('피보호자·보호자 화면 모두 마이크 버튼이 보인다', async () => {
-    renderChat(<ChatbotContent variant="ward" />);
+    const { unmount } = await renderChat(<ChatbotContent variant="ward" />);
+    await expect.element(page.getByRole('button', { name: '말로 물어보기' })).toBeInTheDocument();
+    await unmount();
+    api.role.mockReturnValue('GUARDIAN');
+    await renderChat(<ChatbotContent />);
     await expect.element(page.getByRole('button', { name: '말로 입력하기' })).toBeInTheDocument();
   });
 
@@ -112,7 +119,7 @@ describe('챗봇 마이크 음성 입력', () => {
     renderChat(<ChatbotContent variant="ward" />);
     expect(page.getByRole('button', { name: '글자로 쓰기' }).elements()).toHaveLength(0);
 
-    await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+    await userEvent.click(page.getByRole('button', { name: MIC }));
 
     await expect.element(page.getByText('마이크 권한을 허용해 주세요.')).toBeInTheDocument();
     expect(api.transcribe).not.toHaveBeenCalled();
@@ -163,7 +170,7 @@ describe('챗봇 마이크 음성 입력', () => {
     api.sendChatMessage.mockResolvedValue({ reply: '쉬어 보세요.', engine: 'ai', type: 'message' });
     renderChat(<ChatbotContent variant="ward" />);
 
-    await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+    await userEvent.click(page.getByRole('button', { name: MIC }));
     await expect.element(page.getByText('듣고 있어요. 말씀을 마치면 저절로 보내요.')).toBeInTheDocument();
     await sleep(700);
     setToneLevel(0);
@@ -179,7 +186,7 @@ describe('챗봇 마이크 음성 입력', () => {
     getUserMedia.mockImplementation(async () => fakeMicStream(0));
     renderChat(<ChatbotContent variant="ward" />);
 
-    await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+    await userEvent.click(page.getByRole('button', { name: MIC }));
     await sleep(4000);
 
     expect(api.transcribe).not.toHaveBeenCalled();
@@ -195,7 +202,7 @@ describe('챗봇 마이크 음성 입력', () => {
     await recordFor(500);
 
     await expect.element(page.getByText('지금은 음성을 알아듣지 못해요. 글로 입력해 주세요.')).toBeInTheDocument();
-    await expect.element(page.getByRole('button', { name: '말로 입력하기' })).toBeEnabled();
+    await expect.element(page.getByRole('button', { name: MIC })).toBeEnabled();
   });
 
   it('피보호자: 빈 글자가 오면 다시 말씀해 달라고 안내하고 보내지 않으며 [글자로 쓰기]를 보인다', async () => {
@@ -235,7 +242,7 @@ describe('챗봇 마이크 음성 입력', () => {
     const chip = page.getByRole('button', { name: '머리가 아파요' });
     await expect.element(chip).toBeEnabled();
 
-    await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+    await userEvent.click(page.getByRole('button', { name: MIC }));
     await expect.element(chip).toBeDisabled();
     await sleep(600);
     await userEvent.click(page.getByRole('button', { name: STOP }));
@@ -251,7 +258,7 @@ describe('챗봇 마이크 음성 입력', () => {
   it('피보호자: 녹음 중 버튼은 "듣고 있어요"만 보이고 "끝내기"는 보이지 않는다(보호자는 그대로)', async () => {
     getUserMedia.mockImplementation(async () => fakeMicStream());
     const { unmount } = await renderChat(<ChatbotContent variant="ward" />);
-    await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+    await userEvent.click(page.getByRole('button', { name: MIC }));
     const listening = page.getByRole('button', { name: '듣고 있어요' });
     await expect.element(listening).toBeInTheDocument();
     expect(listening.element().textContent).not.toContain('끝내기');
@@ -259,9 +266,10 @@ describe('챗봇 마이크 음성 입력', () => {
 
     api.role.mockReturnValue('GUARDIAN');
     await renderChat(<ChatbotContent />);
-    await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+    await userEvent.click(page.getByRole('button', { name: MIC }));
+    // 보호자는 입력 줄 안 둥근 아이콘 버튼(2026-11-12) - 끝내는 방법은 버튼 이름과 아래 안내 줄로 알린다
     const stop = page.getByRole('button', { name: '녹음 끝내기' });
     await expect.element(stop).toBeInTheDocument();
-    expect(stop.element().textContent).toMatch(/끝내기 \d+초/);
+    await expect.element(page.getByText('말씀하세요. 다 하셨으면 다시 눌러 주세요.')).toBeInTheDocument();
   });
 });

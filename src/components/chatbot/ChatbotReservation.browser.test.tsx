@@ -11,6 +11,9 @@ import { render } from 'vitest-browser-react';
 import ChatbotContent from './ChatbotContent';
 import { clearSelectedWardId } from '@/store/selectedWardStore';
 
+// 마이크 버튼 이름 - 보호자 "말로 입력하기", 피보호자는 보이는 글자와 같다(처음 "말로 물어보기"·답 뒤 "말로 답하기"·응급 뒤 "말로 더 묻기", 2026-11-12)
+const MIC = /^말로 (입력하기|물어보기|답하기|더 묻기)$/;
+
 const api = vi.hoisted(() => ({
   sendChatMessage: vi.fn(),
   role: vi.fn(),
@@ -211,7 +214,7 @@ describe('피보호자 챗봇 예약', () => {
   it('예약 중에도 입력은 큰 마이크 버튼 하나 - 입력창·[직접 써서 답하기]는 없다(2026-11-11)', async () => {
     await startWardReservation();
 
-    await expect.element(page.getByRole('button', { name: '말로 입력하기' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: MIC })).toBeVisible();
     expect(page.getByRole('textbox', { name: '궁금한 점 입력' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: '직접 써서 답하기' }).elements()).toHaveLength(0);
   });
@@ -234,7 +237,14 @@ describe('피보호자 챗봇 예약', () => {
     await userEvent.click(page.getByRole('button', { name: '서울' }));
     await expect.element(page.getByText('언제 가실까요?')).toBeVisible();
 
-    expect(page.getByRole('region', { name: '예약 진행' }).getByRole('button').elements()).toHaveLength(4);
+    // 날짜 선택지 4개 + 맨 아래 [예약 그만하기]
+    const panelButtons = page.getByRole('region', { name: '예약 진행' }).getByRole('button').elements();
+    expect(panelButtons).toHaveLength(5);
+    expect(panelButtons.at(-1)?.textContent).toBe('예약 그만하기');
+    // 단계 표시: 진료과·병원 마침, 지금은 날짜(2026-11-12 - 묻는 칸으로 정한다)
+    const steps = page.getByRole('list', { name: '예약 단계' });
+    await expect.element(steps).toBeVisible();
+    expect(steps.element().querySelector('[aria-current="step"]')?.textContent).toBe('3날짜');
     api.sendChatMessage.mockResolvedValueOnce(ASK_SIDO);
     await userEvent.click(page.getByRole('button', { name: '내일 11월 5일(목)' }));
 
@@ -255,7 +265,7 @@ describe('피보호자 챗봇 예약', () => {
     await expect.element(page.getByText('__calendar__')).not.toBeInTheDocument();
     const panel = page.getByRole('region', { name: '예약 진행' });
     await expect.element(panel.getByLabelText('진료 날짜를 골라 주세요.')).toBeVisible();
-    expect(panel.getByRole('button').elements().map(b => b.textContent)).toEqual(['적용']);
+    expect(panel.getByRole('button').elements().map(b => b.textContent)).toEqual(['적용', '예약 그만하기']);
   });
 
   it('전화번호 칸이 오면 입력 칸 없이 안내하고, [처음으로 돌아가기]는 새 대화로 시작한다', async () => {
@@ -291,7 +301,7 @@ describe('피보호자 챗봇 예약', () => {
     // 같은 답의 [예약 목록 보기] 선택지와 겹치지 않게 카드 버튼은 숨긴다
     await expect.element(page.getByRole('button', { name: '병원 가는 날 보기' })).not.toBeInTheDocument();
     await expect.element(page.getByRole('region', { name: '추천 질문' })).toBeVisible();
-    await expect.element(page.getByRole('button', { name: '말로 입력하기' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: MIC })).toBeVisible();
 
     const calls = api.sendChatMessage.mock.calls.length;
     await userEvent.click(page.getByRole('button', { name: '예약 목록 보기' }));

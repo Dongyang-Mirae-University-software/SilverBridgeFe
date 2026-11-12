@@ -88,10 +88,11 @@ describe('ChatBubble 답 모양', () => {
     // 핵심 줄은 경고 상자 안에 한 번만(상자 밖에 다시 그리지 않는다)
     expect(alert.textContent).toContain('바로 119에 전화해 주세요.');
     expect(page.getByText('바로 119에 전화해 주세요.', { exact: true }).elements()).toHaveLength(1);
-    // 굵은 테두리·연한 빨강 배경 + 글자 라벨(색만으로 구분하지 않음)
-    const box = getComputedStyle(alert);
-    expect(Number.parseFloat(box.borderTopWidth)).toBeGreaterThanOrEqual(3);
-    expect(box.backgroundColor).toBe('rgb(255, 245, 245)');
+    // 말풍선 전체가 빨간 테두리·연한 빨강 바탕(2026-11-12 화면 개편) + "긴급" 꼬리표 글자(색만으로 구분하지 않음)
+    const bubble = getComputedStyle(alert.parentElement!);
+    expect(Number.parseFloat(bubble.borderTopWidth)).toBeGreaterThanOrEqual(2);
+    expect(bubble.borderTopColor).toBe('rgb(179, 49, 43)');
+    expect(bubble.backgroundColor).toBe('rgb(251, 229, 224)');
     expect(alert.textContent).not.toMatch(/\p{Extended_Pictographic}/u);
     // 119는 굵게(보이는 모양만)
     const strong = page.getByTestId('wrap').element().querySelector('strong');
@@ -122,7 +123,7 @@ describe('ChatBubble 답 모양', () => {
     await expect.element(page.getByText('대체 답')).toBeVisible();
   });
 
-  it('되묻기 질문은 질문 칸에, 글자는 18px 이상', async () => {
+  it('되묻는 질문이 여럿이어도 카드 없이 굵은 줄로 하나씩, 글자는 18px 이상 (2026-11-12)', async () => {
     await show({
       content: '',
       layout: {
@@ -134,7 +135,12 @@ describe('ChatBubble 답 모양', () => {
       },
     });
 
-    await expect.element(page.getByText('이렇게 알려 주세요', { exact: true })).toBeVisible();
+    expect(page.getByText('이렇게 알려 주세요').elements()).toHaveLength(0);
+    for (const text of ['언제부터 그러셨나요?', '얼마나 심하신가요? (참을 만한지, 점점 심해지는지)']) {
+      const el = page.getByText(text, { exact: true }).element();
+      expect(el.tagName).toBe('LI');
+      expect(Number(getComputedStyle(el).fontWeight)).toBeGreaterThanOrEqual(700);
+    }
     for (const el of page.getByTestId('wrap').element().querySelectorAll('li')) {
       expect(Number.parseFloat(getComputedStyle(el).fontSize)).toBeGreaterThanOrEqual(18);
     }
@@ -167,22 +173,24 @@ describe('ChatBubble 답 모양', () => {
 
     const root = page.getByTestId('wrap').element();
     expect(root.textContent).not.toMatch(/\p{Extended_Pictographic}/u);
-    expect(root.querySelectorAll('[aria-hidden="true"]').length).toBe(0);
+    // 숨긴 것은 글자 없는 장식(복숭아 얼굴)뿐 - 읽어야 할 글자를 숨기지 않는다
+    for (const hidden of root.querySelectorAll('[aria-hidden="true"]')) {
+      expect(hidden.textContent?.trim()).toBe('');
+    }
     for (const text of ['내과 진료를 권해드려요.', '물을 자주 드세요.', '이모지 없는 줄', '가족과 함께 계세요.', '괜찮아질 거예요.', '푹 쉬세요.']) {
       await expect.element(page.getByText(text, { exact: true })).toBeVisible();
     }
-    // 카드 제목은 글자만, 구분은 얇은 윗줄(2026-11-11 B안 - 왼쪽 색 띠·배경 상자 없음)
+    // 카드 제목은 글자만. 병원으로는 파랑 상자(2026-11-12 화면 개편 - 왼쪽 색 띠 없음)
     const title = page.getByText('이럴 땐 병원으로', { exact: true }).element();
     expect(title.textContent).toBe('이럴 땐 병원으로');
     const card = title.closest('section')!;
     expect(Number.parseFloat(getComputedStyle(card).borderLeftWidth)).toBe(0);
-    expect(Number.parseFloat(getComputedStyle(card).borderTopWidth)).toBeGreaterThanOrEqual(1);
-    expect(getComputedStyle(card).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    expect(getComputedStyle(card).backgroundColor).toBe('rgb(226, 237, 243)');
     // 119 굵게 강조는 이모지를 떼어 낸 뒤에도 그대로
     expect(root.querySelector('strong')?.textContent).toBe('119');
   });
 
-  it('옛 형식(#196 이전)처럼 카드 3개가 함께 와도 같은 모양(윗줄·소제목·점 목록)으로 차례로 그린다', async () => {
+  it('옛 형식(#196 이전)처럼 카드 3개가 함께 와도 차례로 그린다 - 원인은 윗줄·점 목록, 집에서는 초록·병원으로는 파랑 상자', async () => {
     await show({
       content: '무릎 통증이 있으시군요.',
       layout: null,
@@ -193,15 +201,16 @@ describe('ChatBubble 답 모양', () => {
 
     const titles = ['가능한 원인', '집에서 이렇게', '이럴 땐 병원으로'];
     const cards = titles.map(t => page.getByText(t, { exact: true }).element().closest('section')!);
-    for (const card of cards) {
+    const backgrounds = ['rgba(0, 0, 0, 0)', 'rgb(220, 238, 227)', 'rgb(226, 237, 243)'];
+    cards.forEach((card, i) => {
       const style = getComputedStyle(card);
       expect(Number.parseFloat(style.borderLeftWidth)).toBe(0);
-      expect(Number.parseFloat(style.borderTopWidth)).toBeGreaterThanOrEqual(1);
-      expect(style.backgroundColor).toBe('rgba(0, 0, 0, 0)');
-      // 줄 앞 점은 CSS 도형이다(글자·이모지 아님)
-      const li = card.querySelector('li')!;
-      expect(getComputedStyle(li, '::before').content).toBe('""');
-    }
+      expect(style.backgroundColor).toBe(backgrounds[i]);
+    });
+    // 원인 카드는 얇은 윗줄 + 줄 앞 점(CSS 도형 - 글자·이모지 아님). 색 상자 안은 점 없이
+    expect(Number.parseFloat(getComputedStyle(cards[0]).borderTopWidth)).toBeGreaterThanOrEqual(1);
+    expect(getComputedStyle(cards[0].querySelector('li')!, '::before').content).toBe('""');
+    expect(getComputedStyle(cards[1].querySelector('li')!, '::before').content).toBe('none');
     // 화면 순서대로 위아래로 쌓인다
     const tops = cards.map(card => card.getBoundingClientRect().top);
     expect([...tops].sort((a, b) => a - b)).toEqual(tops);

@@ -14,13 +14,15 @@ interface Props {
   variant?: 'guardian' | 'ward';
   /** 이름·전화 칸이 왔을 때 [처음으로 돌아가기]를 누르면 대화를 새로 시작한다. */
   onRestart?: () => void;
+  /** 피보호자 예약 진행 패널 안 - 선택지를 한 줄에 하나씩 큰 버튼(96px)으로 놓는다(2026-11-12 화면 개편). */
+  panel?: boolean;
 }
 
-export default function ChatUiPrompt({ ui, active, onSelect, variant = 'guardian', onRestart }: Props) {
+export default function ChatUiPrompt({ ui, active, onSelect, variant = 'guardian', onRestart, panel = false }: Props) {
   const [textVal, setTextVal] = useState('');
   const [dateVal, setDateVal] = useState('');
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
-  const wrapClass = `${styles.wrap} ${variant === 'ward' ? styles.ward : styles.guardian}`;
+  const wrapClass = `${styles.wrap} ${variant === 'ward' ? styles.ward : styles.guardian} ${panel ? styles.panel : ''}`;
 
   function apply(value: string, label?: string) {
     if (!value.trim() || !active) return;
