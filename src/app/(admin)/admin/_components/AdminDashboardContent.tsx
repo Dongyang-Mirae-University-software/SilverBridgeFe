@@ -31,6 +31,7 @@ export function AdminDashboardContent() {
 function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiStatusError, dateLabel }: { safety: AdminSafetyDashboard; operation: AdminOperationDashboard; aiStatus: AdminAiServiceStatus | null | undefined; aiStatusLoading: boolean; aiStatusError: boolean; dateLabel: string }) {
   const anomalyService = getAiServiceState(aiStatus, 'anomaly', aiStatusLoading, aiStatusError);
   const chatbotService = getAiServiceState(aiStatus, 'chat', aiStatusLoading, aiStatusError);
+  const companionService = getAiServiceState(aiStatus, 'companion', aiStatusLoading, aiStatusError);
   const review = getReviewMetrics(safety.todayAnomaly.review, safety.todayAnomaly.total);
   const falseAlarmRate = review.answered === 0 ? '-' : `${review.falseAlarmRate}%`;
   const typeTotal = safety.todayAnomaly.total || 1;
@@ -41,7 +42,7 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
   const moodTotal = talk ? COMPANION_MOOD_ROWS.reduce((sum, row) => sum + talk.moodDistribution[row.key], 0) : 0;
   return <main className={cx('dashboard')}>
     <header className={cx('heading')}><div><h1>대시보드</h1><p>{dateLabel}</p></div></header>
-    <section className={cx('aiBar', { warning: anomalyService.tone === 'warn' || chatbotService.tone === 'warn' })} aria-label="AI 서비스 상태"><div className={cx('aiBarHead')}><span><Icon name="activity" size={16} decorative />AI 서비스</span><time>{formatElapsed(aiStatus?.generatedAt)} 확인</time></div><div className={cx('aiServices')}><AiServiceCard label="AI 이상감지" state={anomalyService} /><AiServiceCard label="안부 말벗 · 기분 분석" state={{ label: '준비 중', tone: 'mute' }} /><AiServiceCard label="AI 의료 챗봇" state={chatbotService} /></div></section>
+    <section className={cx('aiBar', { warning: anomalyService.tone === 'warn' || chatbotService.tone === 'warn' || companionService.tone === 'warn' })} aria-label="AI 서비스 상태"><div className={cx('aiBarHead')}><span><Icon name="activity" size={16} decorative />AI 서비스</span><time>{formatElapsed(aiStatus?.generatedAt)} 확인</time></div><div className={cx('aiServices')}><AiServiceCard label="AI 이상감지" state={anomalyService} /><AiServiceCard label="안부 말벗 · 기분 분석" state={companionService} /><AiServiceCard label="AI 의료 챗봇" state={chatbotService} /></div></section>
     <div className={cx('sectionGrid')}>
       <DashboardSection wide icon="activity" title="AI 통계" tone="danger" href="/admin/ai-stats" pill={safety.todayAnomaly.review.real > 0 ? `위험 ${safety.todayAnomaly.review.real}건` : undefined}>
         <div className={cx('aiStatsGrid')}>

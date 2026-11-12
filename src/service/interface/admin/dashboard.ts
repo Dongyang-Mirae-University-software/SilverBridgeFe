@@ -51,8 +51,9 @@ export interface AdminOperationDashboard {
 
 export type AdminAnomalyServiceStatus = 'OK' | 'DISCONNECTED' | null;
 export type AdminChatbotServiceStatus = 'OK' | 'DISABLED' | null;
+export type AdminCompanionServiceStatus = 'OK' | 'DISABLED' | null;
 
-// 서비스마다 { status, checkedAt } 객체로 온다 - status null은 확인 중(이상감지)·확인 불가(챗봇)
+// 서비스마다 { status, checkedAt } 객체로 온다 - status null은 확인 중(이상감지)·확인 불가(챗봇·말벗)
 export interface AdminAiServiceItem<S> {
   status: S;
   checkedAt: string;
@@ -61,5 +62,7 @@ export interface AdminAiServiceItem<S> {
 export interface AdminAiServiceStatus {
   anomalyDetection: AdminAiServiceItem<AdminAnomalyServiceStatus>;
   chatbot: AdminAiServiceItem<AdminChatbotServiceStatus>;
+  // 옛 BE 응답에는 없다 - 없으면 확인 불가로 보인다
+  companion?: AdminAiServiceItem<AdminCompanionServiceStatus>;
   generatedAt: string;
 }

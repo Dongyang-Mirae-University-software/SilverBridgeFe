@@ -32,7 +32,7 @@ describe('관리자 대시보드 집계 표시', () => {
 
   it('AI 서비스 상태는 서비스마다 온 { status } 객체에서 읽는다', () => {
     const at = '2026-11-10T10:00:00+09:00';
-    const ai = (anomaly: 'OK' | 'DISCONNECTED' | null, chat: 'OK' | 'DISABLED' | null) => ({ anomalyDetection: { status: anomaly, checkedAt: at }, chatbot: { status: chat, checkedAt: at }, generatedAt: at });
+    const ai = (anomaly: 'OK' | 'DISCONNECTED' | null, chat: 'OK' | 'DISABLED' | null) => ({ anomalyDetection: { status: anomaly, checkedAt: at }, chatbot: { status: chat, checkedAt: at }, companion: { status: chat, checkedAt: at }, generatedAt: at });
 
     expect(getAiServiceState(ai('OK', 'OK'), 'anomaly', false, false)).toEqual({ label: '정상', tone: 'safe' });
     expect(getAiServiceState(ai('OK', 'OK'), 'chat', false, false)).toEqual({ label: '정상', tone: 'safe' });
@@ -41,5 +41,22 @@ describe('관리자 대시보드 집계 표시', () => {
     expect(getAiServiceState(ai(null, null), 'anomaly', false, false)).toEqual({ label: '확인 중', tone: 'mute' });
     expect(getAiServiceState(ai(null, null), 'chat', false, false)).toEqual({ label: '확인 불가', tone: 'mute' });
     expect(getAiServiceState(undefined, 'chat', false, true)).toEqual({ label: '확인 불가', tone: 'mute' });
+  });
+
+  it('안부 말벗 칸은 companion.status를 읽고, 칸이 없는 옛 응답이면 확인 불가', () => {
+    const at = '2026-11-12T18:00:00+09:00';
+    const ai = (companion?: 'OK' | 'DISABLED' | null) => ({
+      anomalyDetection: { status: 'OK' as const, checkedAt: at },
+      chatbot: { status: 'OK' as const, checkedAt: at },
+      ...(companion === undefined ? {} : { companion: { status: companion, checkedAt: at } }),
+      generatedAt: at,
+    });
+
+    expect(getAiServiceState(ai('OK'), 'companion', false, false)).toEqual({ label: '정상', tone: 'safe' });
+    expect(getAiServiceState(ai('DISABLED'), 'companion', false, false)).toEqual({ label: '일시 중단', tone: 'warn' });
+    expect(getAiServiceState(ai(null), 'companion', false, false)).toEqual({ label: '확인 불가', tone: 'mute' });
+    expect(getAiServiceState(ai(), 'companion', false, false)).toEqual({ label: '확인 불가', tone: 'mute' });
+    expect(getAiServiceState(undefined, 'companion', true, false)).toEqual({ label: '확인 중', tone: 'mute' });
+    expect(getAiServiceState(undefined, 'companion', false, true)).toEqual({ label: '확인 불가', tone: 'mute' });
   });
 });

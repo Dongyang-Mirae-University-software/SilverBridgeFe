@@ -29,13 +29,14 @@ export function formatNullableCount(value: number | null, unit: string) {
   return value === null ? '확인 불가' : `${value}${unit}`;
 }
 
-export function getAiServiceState(status: AdminAiServiceStatus | null | undefined, kind: 'anomaly' | 'chat', loading: boolean, error: boolean) {
+export function getAiServiceState(status: AdminAiServiceStatus | null | undefined, kind: 'anomaly' | 'chat' | 'companion', loading: boolean, error: boolean) {
   if (loading) return { label: '확인 중', tone: 'mute' };
   if (error || !status) return { label: '확인 불가', tone: 'mute' };
-  const value: unknown = (kind === 'anomaly' ? status.anomalyDetection : status.chatbot)?.status ?? null;
+  const item = kind === 'anomaly' ? status.anomalyDetection : kind === 'chat' ? status.chatbot : status.companion;
+  const value: unknown = item?.status ?? null;
   if (value === null) return { label: kind === 'anomaly' ? '확인 중' : '확인 불가', tone: 'mute' };
   if (value === 'OK') return { label: '정상', tone: 'safe' };
   if (kind === 'anomaly' && value === 'DISCONNECTED') return { label: '연결 끊김', tone: 'warn' };
-  if (kind === 'chat' && value === 'DISABLED') return { label: '일시 중단', tone: 'warn' };
+  if (kind !== 'anomaly' && value === 'DISABLED') return { label: '일시 중단', tone: 'warn' };
   return { label: '확인 불가', tone: 'mute' };
 }
