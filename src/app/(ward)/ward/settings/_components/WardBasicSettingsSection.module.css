@@ -56,3 +56,7 @@
   .sosOptionLabel { font-size: calc(17px * var(--ward-font-scale, 1)); }
   .sosFootnotes { font-size: calc(13px * var(--ward-font-scale, 1)); }
 }
+
+/* 안부 대화 내용 공유 동의 */
+.consentError { padding: 0 26px 18px; color: var(--sb-danger); }
+.consentNoticeList { display: grid; gap: 4px; margin: 0; border-top: 1px solid var(--sb-line-soft); color: var(--sb-ink-mute); font-size: calc(15px * var(--ward-font-scale, 1)); line-height: 1.5; padding: 16px 26px 18px 44px; word-break: keep-all; }

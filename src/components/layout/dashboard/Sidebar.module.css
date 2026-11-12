@@ -327,3 +327,15 @@
 .userCard:hover {
   box-shadow: 0 8px 18px rgba(31, 25, 22, 0.08);
 }
+
+/* 메뉴 이름 옆 작은 표시(테스트 메뉴) */
+.navBadge {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--sb-warn-soft);
+  color: var(--sb-warn);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}

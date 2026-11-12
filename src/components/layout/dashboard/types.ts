@@ -55,6 +55,7 @@ export interface NavItem {
   icon: NavIconName;
   label: string;
   key: PageKey;
+  badge?: string; // 메뉴 이름 옆 작은 표시(예: 테스트)
 }
 
 export interface DashboardLayoutProps {

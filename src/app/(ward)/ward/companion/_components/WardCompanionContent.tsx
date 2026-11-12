@@ -7,9 +7,11 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Icon } from '@/components/Icon';
+import { MoodFace } from '@/components/MoodFace';
 import { useVoiceInput } from '@/components/chatbot/useVoiceInput';
 import { canSpeak, speak, stopSpeaking } from '@/lib/audio/speech';
 import { useFaceFrames } from '@/lib/camera/useFaceFrames';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import {
   finishWardCompanionSession,
   openWardCompanionSession,
@@ -17,6 +19,7 @@ import {
   replyWardCompanionAudio,
   replyWardCompanionText,
   sendWardCompanionTestPrompt,
+  updateWardCompanionTranscriptConsent,
 } from '@/service/api/ward/companion';
 import type {
   IWardCompanionFinish,
@@ -24,10 +27,16 @@ import type {
   IWardCompanionSession,
   IWardCompanionToday,
 } from '@/service/interface/ward/companion';
-import { wardCompanionTodayQueryKey, wardCompanionTodayQueryOptions } from '@/service/query/ward';
+import {
+  wardCompanionConsentQueryKey,
+  wardCompanionConsentQueryOptions,
+  wardCompanionTodayQueryKey,
+  wardCompanionTodayQueryOptions,
+} from '@/service/query/ward';
 import { formatResultAnalysis, formatTurnAnalysis } from '@/utils/companion/companionAnalysis';
 import { COMPANION_MESSAGES, getCompanionError, isCompanionFrameError } from '@/utils/companion/companionError';
 import { openCompanionSlot } from '@/utils/companion/companionOpen';
+import { splitSentences } from '@/utils/companion/splitSentences';
 import { formatSlotTime } from '@/utils/format/slotTime';
 import styles from './WardCompanionContent.module.css';
 
@@ -43,6 +52,31 @@ const UPLOAD_BUDGET_BYTES = 9.5 * 1024 * 1024;
 
 export const CAMERA_CONSENT_TEXT = '대답하실 때 얼굴 사진도 함께 보낼게요. 표정은 기분을 살피는 데만 쓰고 저장하지 않아요.';
 export const CAMERA_UNAVAILABLE_TEXT = '카메라를 쓸 수 없어 목소리만 보낼게요.';
+export const PRIVACY_TEXT = '대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.';
+export const PRIVACY_SHARED_TEXT = '대답한 말은 가족이 볼 수 있게 30일 동안 보관해요. 목소리와 얼굴 사진은 저장하지 않아요.';
+
+// 진행 점 개수 - 서버가 최대 턴 수를 주지 않을 때
+const DEFAULT_TURN_DOTS = 8;
+// 태블릿 이상은 왼쪽 대화 · 오른쪽 카메라·판정 두 칸
+const WIDE_QUERY = '(min-width: 1024px)';
+
+// 대화 내용 공유 동의를 이 기기에서 이미 물었는지 - 값은 '1'뿐(대화 원문은 남기지 않는다).
+// 동의하면 서버에 consentedAt이 남아 다시 묻지 않고, 거절은 서버에 남지 않아 여기에만 적는다
+const CONSENT_ASKED_KEY = 'sb-companion-consent-asked';
+function readConsentAsked() {
+  try {
+    return window.localStorage.getItem(CONSENT_ASKED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+function markConsentAsked() {
+  try {
+    window.localStorage.setItem(CONSENT_ASKED_KEY, '1');
+  } catch {
+    // 저장소를 못 쓰면 다음에 다시 묻는다
+  }
+}
 
 // 처음 대답할 때 한 번 묻는다. 선택은 이 화면 메모리에만 둔다(다시 들어오면 다시 묻는다, 권한 창은 브라우저가 기억)
 type CameraChoice = 'ask' | 'on' | 'off';
@@ -97,6 +131,44 @@ export function WardCompanionContent() {
   const chooseCamera = useCallback((choice: CameraChoice) => {
     cameraChoiceRef.current = choice;
   }, []);
+
+  const wide = useMediaQuery(WIDE_QUERY);
+
+  // 대화 내용 공유 동의 - 첫 대화 시작 전에 한 번 묻는다. 상태를 못 받으면 묻지 않고 대화를 막지 않는다
+  const consent = useQuery(wardCompanionConsentQueryOptions);
+  const [consentAsk, setConsentAsk] = useState<(() => void) | null>(null);
+  const [consentSaving, setConsentSaving] = useState(false);
+  const [consentError, setConsentError] = useState<string | null>(null);
+  const withConsent = (start: () => void) => {
+    const state = consent.data;
+    if (state && !state.consented && !state.consentedAt && !readConsentAsked()) {
+      setConsentError(null);
+      setConsentAsk(() => start);
+      return;
+    }
+    start();
+  };
+  const handleConsentChoice = async (agree: boolean) => {
+    const start = consentAsk;
+    if (!start || consentSaving) return;
+    if (agree) {
+      setConsentSaving(true);
+      setConsentError(null);
+      try {
+        const saved = await updateWardCompanionTranscriptConsent(true);
+        if (saved) queryClient.setQueryData(wardCompanionConsentQueryKey, saved);
+        else void queryClient.invalidateQueries({ queryKey: wardCompanionConsentQueryKey });
+      } catch {
+        setConsentError('저장하지 못했어요. 다시 눌러 주세요.');
+        return;
+      } finally {
+        setConsentSaving(false);
+      }
+    }
+    markConsentAsked();
+    setConsentAsk(null);
+    start();
+  };
 
   // [테스트 계정만] 시간대 선택·테스트 안내 푸시로 들어온 시간대(?testSlot=15:00)
   const router = useRouter();
@@ -367,160 +439,199 @@ export function WardCompanionContent() {
     const busy = Boolean(pending) || voice.state === 'uploading';
     const recording = voice.state === 'recording';
     const message = recording ? '말씀하세요. 다 하셨으면 다시 눌러 주세요.' : (notice ?? voice.notice);
+    const totalTurns = talk.maxTurns ?? DEFAULT_TURN_DOTS;
+    const stopButton = !talk.ended && (
+      <button className={cx('stopButton')} type="button" disabled={busy} onClick={() => void handleFinish()}>
+        {pending === 'finish' ? '마치는 중…' : '대화 그만하기'}
+      </button>
+    );
 
     return (
-      <div className={cx('page')}>
-        <header className={cx('talkHead')}>
-          <div>
-            <span className={cx('talkSlot')}>
-              {formatSlotTime(talk.slot)} 안부 대화
-              {talk.test && <span className={cx('testBadge')}>테스트</span>}
-            </span>
-            {talk.maxTurns !== null && !talk.ended && (
-              <span className={cx('talkTurns')}>{talk.maxTurns}번 중 {Math.min(talk.turns + 1, talk.maxTurns)}번째 대답</span>
-            )}
-          </div>
-          {!talk.ended && (
-            <button className={cx('stopButton')} type="button" disabled={busy} onClick={() => void handleFinish()}>
-              {pending === 'finish' ? '마치는 중…' : '그만하기'}
-            </button>
-          )}
-        </header>
-
-        {talk.resumed && <p className={cx('resumed')}>하던 이야기를 이어서 해요.</p>}
-
-        <ol className={cx('lines')} aria-label="안부 대화" aria-live="polite">
-          {talk.lines.map(line => (
-            <li key={line.id} className={cx('line', line.who)}>
-              {line.who === 'companion' ? (
-                <>
-                  <span className={cx('who')}>말벗</span>
-                  <p>{line.text}</p>
-                  {canSpeak() && (
-                    <button className={cx('listenButton')} type="button" onClick={() => speak(line.text)}>
-                      <SpeakerIcon />
-                      다시 듣기
-                    </button>
-                  )}
-                </>
-              ) : (
-                <>
-                  <span className={cx('who')}>{line.heard ? '이렇게 들었어요' : '나'}</span>
-                  <p>{line.text}</p>
-                </>
+      <div className={cx('talkPage', { wide })}>
+        <div className={cx('talkMain')}>
+          <header className={cx('talkHead')}>
+            {!wide && camera.stream && <CameraPreview stream={camera.stream} size="small" />}
+            <div className={cx('talkHeadText')}>
+              <span className={cx('talkSlot')}>
+                {formatSlotTime(talk.slot)} 안부 대화
+                {talk.test && <span className={cx('testBadge')}>테스트</span>}
+              </span>
+              {talk.maxTurns !== null && !talk.ended && (
+                <span className={cx('talkTurns')}>{talk.maxTurns}번 중 {Math.min(talk.turns + 1, talk.maxTurns)}번째 대답</span>
               )}
-            </li>
-          ))}
-          {thinking && (
-            <li className={cx('line', 'companion', 'thinking')} role="status">
-              <span className={cx('who')}>말벗</span>
-              <p>말벗이 생각하고 있어요<span className={cx('dots')} aria-hidden="true"><i /><i /><i /></span></p>
-            </li>
-          )}
-        </ol>
+            </div>
+            <ProgressDots total={totalTurns} done={talk.ended ? totalTurns : Math.min(talk.turns, totalTurns)} />
+          </header>
 
-        {talk.ended ? (
-          <section className={cx('endCard')} aria-labelledby="companion-end-title">
-            <h2 id="companion-end-title">오늘도 이야기 나눠 주셔서 고마워요</h2>
-            <p>시간이 되면 또 알려 드릴게요.</p>
-            <button className={cx('primaryButton')} type="button" onClick={closeTalk}>{testMode ? '처음 화면으로' : '홈으로'}</button>
-          </section>
-        ) : (
-          <section className={cx('answer')} aria-label="대답하기">
-            {message && <p className={cx('notice', { recordingNotice: recording })} role={recording ? undefined : 'alert'}>{message}</p>}
-            {cameraNotice && <p className={cx('notice')} role="alert">{cameraNotice}</p>}
-            {camera.stream && <CameraPreview stream={camera.stream} />}
-            {mode === 'voice' && askCamera ? (
-              <div className={cx('cameraAsk')} role="group" aria-labelledby="companion-camera-ask">
-                <p id="companion-camera-ask">{CAMERA_CONSENT_TEXT}</p>
-                <button className={cx('primaryButton')} type="button" onClick={() => handleCameraChoice(true)}>좋아요</button>
-                <button className={cx('switchButton')} type="button" onClick={() => handleCameraChoice(false)}>사진 없이 할게요</button>
-              </div>
-            ) : mode === 'voice' ? (
-              <button
-                className={cx('micButton', { recording })}
-                type="button"
-                disabled={busy && !recording}
-                aria-pressed={recording}
-                onClick={handleVoice}
-              >
-                {recording ? <span className={cx('recDot')} aria-hidden="true" /> : <MicIcon />}
-                {recording ? `다 했어요 · ${voice.elapsedSec}초` : thinking ? '듣고 있어요…' : '말로 대답하기'}
-              </button>
-            ) : (
-              <form className={cx('textForm')} onSubmit={event => { event.preventDefault(); void handleSendText(); }}>
-                <label className={cx('srOnly')} htmlFor="companion-answer">대답 적기</label>
-                <textarea
-                  id="companion-answer"
-                  value={draft}
-                  maxLength={MAX_ANSWER_LENGTH}
-                  rows={3}
-                  placeholder="여기에 대답을 적어 주세요"
-                  disabled={busy}
-                  onChange={event => setDraft(event.target.value)}
-                />
-                <button className={cx('primaryButton')} type="submit" disabled={busy}>
-                  {pending === 'reply' ? '보내는 중…' : '보내기'}
-                </button>
-              </form>
+          {talk.resumed && <p className={cx('resumed')}>하던 이야기를 이어서 해요.</p>}
+
+          <ol className={cx('lines')} aria-label="안부 대화" aria-live="polite">
+            {talk.lines.map(line => (
+              <li key={line.id} className={cx('line', line.who)}>
+                {line.who === 'companion' ? (
+                  <>
+                    <span className={cx('lineFace')}><MoodFace mood="happy" size={wide ? 64 : 48} /></span>
+                    <div className={cx('bubble')}>
+                      <span className={cx('who')}>말벗</span>
+                      <Sentences text={line.text} />
+                      {canSpeak() && (
+                        <button className={cx('listenButton')} type="button" onClick={() => speak(line.text)}>
+                          <SpeakerIcon />
+                          다시 듣기
+                        </button>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className={cx('bubble')}>
+                    <span className={cx('who')}>{line.heard ? '이렇게 들었어요' : '나'}</span>
+                    <p>{line.text}</p>
+                  </div>
+                )}
+              </li>
+            ))}
+            {thinking && (
+              <li className={cx('line', 'companion', 'thinking')} role="status">
+                <span className={cx('lineFace')}><MoodFace mood="calm" size={wide ? 64 : 48} /></span>
+                <div className={cx('bubble')}>
+                  <span className={cx('who')}>말벗</span>
+                  <p>말벗이 생각하고 있어요<span className={cx('dots')} aria-hidden="true"><i /><i /><i /></span></p>
+                </div>
+              </li>
             )}
-            <button
-              className={cx('switchButton')}
-              type="button"
-              disabled={busy || recording}
-              onClick={() => { setNotice(null); voice.clearNotice(); setAskCamera(false); setMode(mode === 'voice' ? 'text' : 'voice'); }}
-            >
-              {mode === 'voice' ? '글로 대답하기' : '말로 대답하기'}
-            </button>
-          </section>
+          </ol>
+
+          {talk.ended ? (
+            <section className={cx('endCard')} aria-labelledby="companion-end-title">
+              <h2 id="companion-end-title">오늘도 이야기 나눠 주셔서 고마워요</h2>
+              <p>시간이 되면 또 알려 드릴게요.</p>
+              <button className={cx('primaryButton')} type="button" onClick={closeTalk}>{testMode ? '처음 화면으로' : '홈으로'}</button>
+            </section>
+          ) : (
+            <section className={cx('answer')} aria-label="대답하기">
+              {message && <p className={cx('notice', { recordingNotice: recording })} role={recording ? undefined : 'alert'}>{message}</p>}
+              {cameraNotice && <p className={cx('notice')} role="alert">{cameraNotice}</p>}
+              {mode === 'voice' && askCamera ? (
+                <div className={cx('cameraAsk')} role="group" aria-labelledby="companion-camera-ask">
+                  <p id="companion-camera-ask">{CAMERA_CONSENT_TEXT}</p>
+                  <button className={cx('primaryButton')} type="button" onClick={() => handleCameraChoice(true)}>좋아요</button>
+                  <button className={cx('switchButton')} type="button" onClick={() => handleCameraChoice(false)}>사진 없이 할게요</button>
+                </div>
+              ) : mode === 'voice' ? (
+                <button
+                  className={cx('micButton', { recording })}
+                  type="button"
+                  disabled={busy && !recording}
+                  aria-pressed={recording}
+                  onClick={handleVoice}
+                >
+                  {recording ? <span className={cx('recDot')} aria-hidden="true" /> : <MicIcon />}
+                  {recording ? `다 했어요 · ${voice.elapsedSec}초` : thinking ? '듣고 있어요…' : '말로 대답하기'}
+                </button>
+              ) : (
+                <form className={cx('textForm')} onSubmit={event => { event.preventDefault(); void handleSendText(); }}>
+                  <label className={cx('srOnly')} htmlFor="companion-answer">대답 적기</label>
+                  <textarea
+                    id="companion-answer"
+                    value={draft}
+                    maxLength={MAX_ANSWER_LENGTH}
+                    rows={3}
+                    placeholder="여기에 대답을 적어 주세요"
+                    disabled={busy}
+                    onChange={event => setDraft(event.target.value)}
+                  />
+                  <button className={cx('primaryButton')} type="submit" disabled={busy}>
+                    {pending === 'reply' ? '보내는 중…' : '보내기'}
+                  </button>
+                </form>
+              )}
+              <div className={cx('answerBar')}>
+                <button
+                  className={cx('switchButton')}
+                  type="button"
+                  disabled={busy || recording}
+                  onClick={() => { setNotice(null); voice.clearNotice(); setAskCamera(false); setMode(mode === 'voice' ? 'text' : 'voice'); }}
+                >
+                  {mode === 'voice' ? '글로 대답하기' : '말로 대답하기'}
+                </button>
+                {!wide && stopButton}
+              </div>
+            </section>
+          )}
+          {!wide && testMode && <TestResults results={talk.results} compact />}
+          <div ref={bottomRef} />
+        </div>
+
+        {wide && (
+          <aside className={cx('talkSide')} aria-label="카메라와 판정 결과">
+            <CameraPanel stream={camera.stream} />
+            {testMode && <TestResults results={talk.results} />}
+            {stopButton}
+          </aside>
         )}
-        {testMode && <TestResults results={talk.results} />}
-        <div ref={bottomRef} />
       </div>
     );
   }
 
   return (
     <div className={cx('page')}>
-      {testEntrySlot && (
-        <section className={cx('testPanel', 'testEntry')} aria-labelledby="companion-test-entry-title">
-          <h2 id="companion-test-entry-title">
-            <span className={cx('testBadge')}>테스트용</span>
-            {formatSlotTime(testEntrySlot)} 안부 알림으로 오셨어요
-          </h2>
-          <button className={cx('startButton')} type="button" disabled={Boolean(pending)} onClick={() => void handleOpenTest(testEntrySlot)}>
-            <Icon name="messageCircle" size={34} decorative />
-            {pending === 'open' ? '여는 중…' : `${formatSlotTime(testEntrySlot)} 대화 시작`}
-          </button>
-        </section>
-      )}
-      <TodayPanel today={today.data} isLoading={today.isLoading} isError={today.isError} notice={notice} opening={pending === 'open'} onOpen={() => void handleOpen()} onRetry={() => void today.refetch()} />
-      {testMode && (
-        <section className={cx('testPanel')} aria-labelledby="companion-test-title">
-          <h2 id="companion-test-title">
-            <span className={cx('testBadge')}>테스트용</span>
-            테스트
-          </h2>
-          <p>시간대를 고르고 바로 시작하거나, 그 시간대 안부 알림을 받아 볼 수 있어요.</p>
-          <div className={cx('testSlots')} role="group" aria-label="테스트 시간대">
-            {TEST_SLOTS.map(slot => (
-              <button key={slot} type="button" className={cx('testSlot', { selected: slot === testSlot })} aria-pressed={slot === testSlot} onClick={() => setTestSlot(slot)}>
-                {formatSlotTime(slot)}
+      {consentAsk ? (
+        <ConsentCard
+          notice={consent.data?.notice ?? []}
+          retentionDays={consent.data?.retentionDays ?? 30}
+          saving={consentSaving}
+          error={consentError}
+          onChoose={agree => void handleConsentChoice(agree)}
+        />
+      ) : (
+        <>
+          {testEntrySlot && (
+            <section className={cx('testPanel', 'testEntry')} aria-labelledby="companion-test-entry-title">
+              <h2 id="companion-test-entry-title">
+                <span className={cx('testBadge')}>테스트</span>
+                {formatSlotTime(testEntrySlot)} 안부 알림으로 오셨어요
+              </h2>
+              <button className={cx('startButton')} type="button" disabled={Boolean(pending)} onClick={() => withConsent(() => void handleOpenTest(testEntrySlot))}>
+                <Icon name="messageCircle" size={34} decorative />
+                {pending === 'open' ? '여는 중…' : `${formatSlotTime(testEntrySlot)} 대화 시작`}
               </button>
-            ))}
-          </div>
-          <div className={cx('testActions')}>
-            <button className={cx('primaryButton')} type="button" disabled={Boolean(pending)} onClick={() => void handleOpenTest(testSlot)}>
-              {pending === 'open' ? '여는 중…' : '바로 시작'}
-            </button>
-            <button className={cx('primaryButton', 'secondary')} type="button" disabled={Boolean(pending)} onClick={() => void handleSendTestPrompt()}>
-              {pending === 'prompt' ? '보내는 중…' : '안부 알림 보내기'}
-            </button>
-          </div>
-          {testNotice && <p className={cx('notice')} role="status">{testNotice}</p>}
-        </section>
+            </section>
+          )}
+          <TodayPanel today={today.data} isLoading={today.isLoading} isError={today.isError} notice={notice} opening={pending === 'open'} onOpen={() => withConsent(() => void handleOpen())} onRetry={() => void today.refetch()} />
+          {testMode && (
+            <section className={cx('testStart')} aria-labelledby="companion-test-title">
+              <h2 id="companion-test-title" className={cx('testStartTitle')}>
+                안부 말벗
+                <span className={cx('testBadge', 'small')}>테스트</span>
+              </h2>
+              <div className={cx('greeting')}>
+                <MoodFace mood="happy" size={wide ? 132 : 96} />
+                <div className={cx('greetingBubble')}>
+                  <Sentences text={`안녕하세요. ${formatSlotTime(testSlot)} 안부 인사를 나눠 볼까요?`} />
+                </div>
+              </div>
+              <div className={cx('testSlots')} role="group" aria-label="안부 시간대">
+                {TEST_SLOTS.map(slot => (
+                  <button key={slot} type="button" className={cx('testSlot', { selected: slot === testSlot })} aria-pressed={slot === testSlot} onClick={() => setTestSlot(slot)}>
+                    {formatSlotTime(slot)}
+                  </button>
+                ))}
+              </div>
+              <div className={cx('testActions')}>
+                <button className={cx('startButton')} type="button" disabled={Boolean(pending)} onClick={() => withConsent(() => void handleOpenTest(testSlot))}>
+                  <Icon name="messageCircle" size={34} decorative />
+                  {pending === 'open' ? '여는 중…' : '바로 이야기하기'}
+                </button>
+                <button className={cx('primaryButton', 'secondary')} type="button" disabled={Boolean(pending)} onClick={() => void handleSendTestPrompt()}>
+                  {pending === 'prompt' ? '보내는 중…' : '안부 알림 받아 보기'}
+                </button>
+              </div>
+              {testNotice && <p className={cx('notice')} role="status">{testNotice}</p>}
+            </section>
+          )}
+        </>
       )}
-      <p className={cx('privacy')}>대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.</p>
+      <p className={cx('privacy')}>{consent.data?.consented ? PRIVACY_SHARED_TEXT : PRIVACY_TEXT}</p>
     </div>
   );
 }
@@ -574,8 +685,34 @@ function TodayPanel({ today, isLoading, isError, notice, opening, onOpen, onRetr
   );
 }
 
-// 녹음하는 동안만 보이는 작은 얼굴 미리보기 - 카메라가 켜져 있다는 것을 본인이 알 수 있게
-function CameraPreview({ stream }: { stream: MediaStream }) {
+// 질문·말벗 문장은 문장마다 줄을 나눈다. 문장 사이 공백을 남겨 읽기 프로그램·복사 때 이어 읽힌다
+function Sentences({ text }: { text: string }) {
+  const sentences = splitSentences(text);
+  return (
+    <p className={cx('sentences')}>
+      {sentences.map((sentence, index) => (
+        <span key={index} className={cx('sentence')}>
+          {index > 0 && ' '}
+          {sentence}
+        </span>
+      ))}
+    </p>
+  );
+}
+
+// 대답 진행 - 점은 그림이고 숫자는 옆 글(talkTurns)이 읽힌다
+function ProgressDots({ total, done }: { total: number; done: number }) {
+  return (
+    <span className={cx('progressDots')} aria-hidden="true">
+      {Array.from({ length: total }, (_, index) => (
+        <i key={index} className={cx({ filled: index < done, current: index === done })} />
+      ))}
+    </span>
+  );
+}
+
+// 녹음하는 동안만 보이는 얼굴 미리보기 - 카메라가 켜져 있다는 것을 본인이 알 수 있게
+function CameraPreview({ stream, size }: { stream: MediaStream; size: 'small' | 'large' }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const video = videoRef.current;
@@ -587,28 +724,96 @@ function CameraPreview({ stream }: { stream: MediaStream }) {
     };
   }, [stream]);
   return (
-    <figure className={cx('cameraPreview')}>
+    <figure className={cx('cameraPreview', size)}>
       <video ref={videoRef} muted playsInline aria-label="내 얼굴 미리보기" />
       <figcaption>카메라 켜짐</figcaption>
     </figure>
   );
 }
 
-// [테스트 계정만] 턴마다·마치기 뒤 판정 결과 - 화면 메모리에만
-function TestResults({ results }: { results: { id: number; text: string }[] }) {
+// [태블릿] 오른쪽 큰 카메라 칸 - 꺼져 있으면 언제 켜지는지만 알린다
+function CameraPanel({ stream }: { stream: MediaStream | null }) {
+  if (stream) return <CameraPreview stream={stream} size="large" />;
   return (
-    <section className={cx('testPanel')} aria-labelledby="companion-test-results-title">
-      <h2 id="companion-test-results-title">
-        <span className={cx('testBadge')}>테스트용</span>
-        테스트 결과
+    <div className={cx('cameraPlaceholder')}>
+      <p>말로 대답하는 동안 여기에 얼굴이 보여요</p>
+    </div>
+  );
+}
+
+// [테스트] 턴마다·마치기 뒤 판정 결과 - 화면 메모리에만. 방금 결과는 크게, 지난 결과는 한 줄씩(최근 것부터)
+// 폰(compact)은 방금 결과 한 줄만 보이고 눌러서 지난 결과를 편다
+function TestResults({ results, compact = false }: { results: { id: number; text: string }[]; compact?: boolean }) {
+  const latest = results.at(-1);
+  const earlier = results.slice(0, -1).reverse();
+  const earlierList = earlier.length > 0 && (
+    <ol className={cx('earlierResults')} aria-label="지난 대답 판정">
+      {earlier.map(item => <li key={item.id} title={item.text}>{item.text}</li>)}
+    </ol>
+  );
+
+  if (compact) {
+    return (
+      <details className={cx('testResults', 'compact')}>
+        <summary>
+          <h2 id="companion-test-results-title" className={cx('resultsTitle')}>
+            판정 결과
+            <span className={cx('testBadge', 'small')}>테스트</span>
+          </h2>
+          <span className={cx('latestLine')} aria-live="polite">{latest ? latest.text : '대답하면 판정 결과가 여기에 나와요.'}</span>
+        </summary>
+        {earlierList}
+      </details>
+    );
+  }
+
+  return (
+    <section className={cx('testResults')} aria-labelledby="companion-test-results-title">
+      <h2 id="companion-test-results-title" className={cx('resultsTitle')}>
+        판정 결과
+        <span className={cx('testBadge', 'small')}>테스트</span>
       </h2>
-      {results.length === 0 ? (
-        <p>대답하면 판정 결과가 여기에 나와요.</p>
+      {latest ? (
+        <div className={cx('latestCard')} aria-live="polite">
+          <span className={cx('latestLabel')}>방금 대답</span>
+          <p>{latest.text}</p>
+        </div>
       ) : (
-        <ol className={cx('testResultList')} aria-live="polite">
-          {results.map(item => <li key={item.id}>{item.text}</li>)}
-        </ol>
+        <p className={cx('resultsEmpty')}>대답하면 판정 결과가 여기에 나와요.</p>
       )}
+      {earlierList}
+    </section>
+  );
+}
+
+// 첫 대화 전 한 번 묻는 대화 내용 공유 동의 - 고지 항목은 서버 문구 그대로
+function ConsentCard({ notice, retentionDays, saving, error, onChoose }: {
+  notice: string[];
+  retentionDays: number;
+  saving: boolean;
+  error: string | null;
+  onChoose: (agree: boolean) => void;
+}) {
+  return (
+    <section className={cx('consentCard')} aria-labelledby="companion-consent-title">
+      <MoodFace mood="happy" size={88} />
+      <h2 id="companion-consent-title">안부 대화 내용을 가족에게 보여 줄까요?</h2>
+      <p>보여 주시면 연결된 가족이 나눈 이야기를 볼 수 있어요. {retentionDays}일 뒤에는 지워져요.</p>
+      {notice.length > 0 && (
+        <ul className={cx('consentNotice')} aria-label="개인정보 수집·이용 안내">
+          {notice.map(item => <li key={item}>{item}</li>)}
+        </ul>
+      )}
+      {error && <p className={cx('notice')} role="alert">{error}</p>}
+      <div className={cx('consentActions')}>
+        <button className={cx('primaryButton')} type="button" disabled={saving} onClick={() => onChoose(true)}>
+          {saving ? '저장하는 중…' : '보여 줄게요'}
+        </button>
+        <button className={cx('primaryButton', 'secondary')} type="button" disabled={saving} onClick={() => onChoose(false)}>
+          보여 주지 않을게요
+        </button>
+      </div>
+      <p className={cx('consentHint')}>환경설정에서 언제든 바꿀 수 있어요.</p>
     </section>
   );
 }

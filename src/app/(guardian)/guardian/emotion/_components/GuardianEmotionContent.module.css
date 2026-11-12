@@ -267,3 +267,65 @@
     height: 64px;
   }
 }
+
+/* 마친 시간대 '대화 보기 >' - 줄 끝에 붙인다 */
+.slot:has(.viewLink) {
+  grid-template-columns: 96px 64px minmax(0, 1fr) auto;
+}
+.viewLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 12px;
+  color: var(--sb-brand);
+  font-size: 15px;
+  font-weight: 800;
+  padding: 0 10px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.viewLink:hover { background: var(--sb-brand-50); }
+.viewLink:focus-visible { outline: 3px solid var(--sb-brand-soft); outline-offset: 2px; }
+
+/* 최근 7일 기분 */
+.weekCard { overflow: hidden; }
+.weekDays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 14px 16px 16px;
+  list-style: none;
+}
+.weekDay {
+  display: flex;
+  width: 100%;
+  min-height: 92px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--sb-ink-soft);
+  cursor: pointer;
+  font: inherit;
+  padding: 6px 2px;
+}
+.weekDay:hover { background: var(--sb-bg-soft); }
+.weekDay.selected { border-color: var(--sb-brand); background: var(--sb-brand-50); color: var(--sb-brand); }
+.weekDay:focus-visible { outline: 3px solid var(--sb-brand-soft); outline-offset: 2px; }
+.weekLabel { font-size: 13px; font-weight: 800; }
+.weekDate { font-size: 13px; font-weight: 700; }
+.unknownFace.small { width: 36px; height: 36px; margin: 2px; }
+.weekState { margin: 0; color: var(--sb-ink-soft); font-size: 15px; font-weight: 700; padding: 18px 24px; }
+.textButton { border: 0; background: none; color: var(--sb-brand); cursor: pointer; font: inherit; font-weight: 800; padding: 0; text-decoration: underline; }
+
+@media (max-width: 560px) {
+  .slot:has(.viewLink) { grid-template-columns: 64px 48px minmax(0, 1fr); }
+  .slot:has(.viewLink) .viewLink { grid-column: 1 / -1; justify-self: end; }
+  .weekDays { gap: 2px; padding: 12px 8px 14px; }
+  .weekDay { min-height: 84px; }
+}

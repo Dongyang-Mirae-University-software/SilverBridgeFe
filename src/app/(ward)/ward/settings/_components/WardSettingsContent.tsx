@@ -10,14 +10,16 @@ import { useDashboard } from '@/components/layout/dashboard/DashboardContext';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { myProfileQueryOptions } from '@/service/query/user';
 import { WardDisplaySettingsSection, WardSosSettingsSection } from './WardBasicSettingsSection';
+import { WardCompanionConsentSection } from './WardCompanionConsentSection';
 
 import styles from './WardSettingsContent.module.css';
 
-type SettingsTab = 'screen' | 'sos' | 'account';
+type SettingsTab = 'screen' | 'sos' | 'companion' | 'account';
 
 const SETTINGS_TABS: Array<{ icon: IconName; label: string; value: SettingsTab }> = [
   { icon: 'eye', label: '글자 크기', value: 'screen' },
   { icon: 'phone', label: 'SOS 동작', value: 'sos' },
+  { icon: 'heart', label: '안부 대화', value: 'companion' },
   { icon: 'user', label: '계정 · 보안', value: 'account' },
 ];
 
@@ -59,6 +61,8 @@ export function WardSettingsContent() {
       )}
 
       {activeTab === 'sos' && <WardSosSettingsSection updateWardSettings={updateWardSettings} wardSettings={wardSettings} />}
+
+      {activeTab === 'companion' && <WardCompanionConsentSection />}
 
       {activeTab === 'account' && (
         <section className={styles.accountCard}>

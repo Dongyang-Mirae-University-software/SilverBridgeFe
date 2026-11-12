@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 
-import { getWardCompanionToday } from '@/service/api/ward/companion';
+import { getWardCompanionToday, getWardCompanionTranscriptConsent } from '@/service/api/ward/companion';
 
 export const wardCompanionTodayQueryKey = ['ward-companion-today'] as const;
 
@@ -11,5 +11,14 @@ export const wardCompanionTodayQueryOptions = queryOptions({
   refetchOnMount: 'always',
   refetchOnWindowFocus: 'always',
   staleTime: 10 * 1000,
+  retry: false,
+});
+
+export const wardCompanionConsentQueryKey = ['ward-companion-transcript-consent'] as const;
+
+export const wardCompanionConsentQueryOptions = queryOptions({
+  queryKey: wardCompanionConsentQueryKey,
+  queryFn: getWardCompanionTranscriptConsent,
+  staleTime: 60 * 1000,
   retry: false,
 });

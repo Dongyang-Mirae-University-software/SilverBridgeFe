@@ -11,6 +11,7 @@ export interface ICompanionSlot {
   question: string | null;
   status: CompanionSlotStatus;
   mood: CompanionMood | null; // 마치지 않았거나 판단할 수 없으면 null
+  sessionId?: number | null; // 그 시간대 대화 ID('대화 보기'용). 대화가 없으면 null
 }
 
 // 오늘 가장 최근에 마친 대화
@@ -35,4 +36,42 @@ export interface ICompanionToday {
   nextSlot: string | null;
   slots: ICompanionSlot[];
   attention: ICompanionAttention | null;
+}
+
+// 최근 7일 하루 기분 - GET .../companion/week (오래된 날부터 오늘까지 7개)
+export interface ICompanionDayMood {
+  date: string; // "2026-11-11"
+  mood: CompanionMood | null; // 판정된 대화가 없으면 null
+}
+
+export interface ICompanionWeek {
+  days: ICompanionDayMood[];
+}
+
+// 대화 내용(글) 공개 상태 - 글은 AVAILABLE일 때만 온다
+export type CompanionTranscriptState = 'AVAILABLE' | 'NO_CONSENT' | 'EXPIRED';
+
+export interface ICompanionTurn {
+  turnNo: number;
+  mood: CompanionMood | null;
+  botText: string | null; // 이 대답 뒤에 말벗이 한 말. 동의 없음·만료면 null
+  answerText: string | null; // 어르신 대답. 동의 없음·만료면 null
+}
+
+// 대화 보기 - GET .../companion/sessions/{sessionId}
+export interface ICompanionSessionDetail {
+  sessionId: number;
+  date: string;
+  slot: string;
+  question: string | null;
+  status: 'OPEN' | 'FINISHED' | 'LOST';
+  mood: CompanionMood | null;
+  test: boolean;
+  turnCount: number;
+  negativeCount: number;
+  riskAlerted: boolean;
+  startedAt?: string | null;
+  endedAt: string | null;
+  turns: ICompanionTurn[];
+  transcript: CompanionTranscriptState;
 }

@@ -92,6 +92,7 @@ export function Sidebar({ isOpen, navItems, onClose, pathname, profile, role, ro
                 <Icon name={item.icon} size={18} />
               </span>
               <span>{item.label}</span>
+              {item.badge && <span className={cx('navBadge')}>{item.badge}</span>}
             </Link>
           ))}
         </nav>
