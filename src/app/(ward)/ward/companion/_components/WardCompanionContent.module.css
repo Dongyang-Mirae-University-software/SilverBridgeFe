@@ -370,13 +370,14 @@
 .latestCard p { margin: 0; color: var(--sb-ink); font-size: calc(18px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); line-height: 1.5; word-break: keep-all; }
 .earlierResults { display: grid; min-height: 0; align-content: start; gap: 6px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
 .earlierResults li { overflow: hidden; border-bottom: 1px solid color-mix(in srgb, var(--sb-warn) 25%, transparent); color: var(--sb-ink-soft); font-size: calc(16px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); line-height: 1.6; padding-bottom: 4px; text-overflow: ellipsis; white-space: nowrap; }
-.testResults.compact { display: block; padding: 0; }
+.testResults.compact { display: grid; grid-template-rows: none; gap: 2px; padding: 12px 0 0; }
+.testResults.compact .resultsTitle { padding: 0 16px; }
 .testResults.compact summary { display: grid; min-height: 64px; align-content: center; gap: 4px; cursor: pointer; list-style: none; padding: 12px 16px; }
 .testResults.compact summary::-webkit-details-marker { display: none; }
 .testResults.compact summary::after { content: '펼쳐 보기 ▾'; justify-self: end; color: var(--sb-warn); font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: 800; }
-.testResults.compact[open] summary::after { content: '접기 ▴'; }
+.resultsDetails[open] summary::after { content: '접기 ▴'; }
 .latestLine { overflow: hidden; color: var(--sb-ink); font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); text-overflow: ellipsis; white-space: nowrap; }
-.testResults.compact[open] .latestLine { white-space: normal; word-break: keep-all; }
+.resultsDetails[open] .latestLine { white-space: normal; word-break: keep-all; }
 .testResults.compact .earlierResults { max-height: 240px; padding: 0 16px 14px; }
 
 /* 대화 내용 공유 동의 카드 - 카메라 묻기와 같은 모양 */
