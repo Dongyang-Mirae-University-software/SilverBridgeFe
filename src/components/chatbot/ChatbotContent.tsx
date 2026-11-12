@@ -515,8 +515,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
 
   // 피보호자 처음 화면(환영 인사 하나뿐) - 말풍선 대신 큰 복숭아 얼굴과 두 줄 인사(2026-11-12 화면 개편)
   const wardStart = isWardChat && messages.length === 1 && messages[0].id === 'welcome' && !sending;
-  // 답을 하나라도 받았으면 마이크 글자를 "말로 답하기"로(되묻기에 답하는 흐름)
-  const hasAnswer = messages.some(message => message.role === 'assistant' && message.id !== 'welcome');
+  // 답을 하나라도 받았으면 마이크 글자를 "말로 답하기"로(되묻기에 답하는 흐름). 보내기 실패 안내는 답이 아니다
+  const hasAnswer = messages.some(message => message.role === 'assistant' && message.id !== 'welcome' && !message.failed);
 
   const board = wardStart ? (
     <section className={`${styles.board} ${styles.wardGreeting}`} aria-label="상담 대화">

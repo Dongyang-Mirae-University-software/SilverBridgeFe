@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChatLogItem } from '@/service/interface/chat';
 import ChatBubble from './ChatBubble';
 import { CloseIcon } from './chatIcons';
@@ -107,6 +107,25 @@ export default function ChatHistoryDialog({
     : [];
   const shown = byTarget ? sessions.filter(session => matches(filter, session)) : sessions;
   const opened = openKey ? sessions.find(session => session.key === openKey) : undefined;
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // 열면 [닫기]로 포커스를 옮기고, Escape로 닫으며, 닫히면 연 버튼으로 포커스를 돌려준다(2026-11-12 기능 점검 - 키보드·화면 읽기 사용자가 창 밖에 남지 않게)
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCloseRef.current();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      opener?.focus();
+    };
+  }, []);
 
   return (
     <div className={styles.overlay} role="presentation" onClick={onClose}>
@@ -134,12 +153,12 @@ export default function ChatHistoryDialog({
           )}
           {variant === 'ward' ? (
             // 피보호자: 글자 "닫기"가 보이는 큰 버튼(화면 읽기 이름은 그대로 "상담 기록 닫기")
-            <button type="button" className={styles.wardCloseButton} onClick={onClose} aria-label="상담 기록 닫기">
+            <button ref={closeRef} type="button" className={styles.wardCloseButton} onClick={onClose} aria-label="상담 기록 닫기">
               <CloseIcon size={24} />
               닫기
             </button>
           ) : (
-            <button type="button" className={styles.closeButton} onClick={onClose} aria-label="상담 기록 닫기">
+            <button ref={closeRef} type="button" className={styles.closeButton} onClick={onClose} aria-label="상담 기록 닫기">
               ×
             </button>
           )}
