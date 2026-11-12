@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react';
 import type { ChatLogItem } from '@/service/interface/chat';
 import ChatBubble from './ChatBubble';
+import { CloseIcon } from './chatIcons';
+import { RESERVATION_INTENT } from './reservationFlow';
 import { groupChatSessions, logToMessages, type ChatHistorySession } from './chatHistorySessions';
 import styles from './ChatHistoryDialog.module.css';
 
@@ -58,6 +60,25 @@ export function formatLogDate(value?: string) {
   return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
 
+/** 피보호자 목록의 날짜·시각 두 줄("오늘" / "오전 10:20", "11월 10일" / "오후 3:05"). */
+function wardLogDate(value?: string): [string, string] | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const dayKey = (d: Date) => new Intl.DateTimeFormat('ko-KR', { dateStyle: 'short', timeZone: 'Asia/Seoul' }).format(d);
+  const day =
+    dayKey(date) === dayKey(new Date())
+      ? '오늘'
+      : new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric', timeZone: 'Asia/Seoul' }).format(date);
+  const time = new Intl.DateTimeFormat('ko-KR', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Seoul' }).format(date);
+  return [day, time];
+}
+
+/** 예약을 다룬 대화창인가(기록의 의도 값 - 문구는 보지 않는다). */
+function isReservationSession(session: ChatHistorySession) {
+  return session.logs.some(log => log.intent === RESERVATION_INTENT);
+}
+
 /** 내 상담 기록 - 대화창 단위 목록, 누르면 그 대화의 질문·답 전체(2026-11-11). */
 export default function ChatHistoryDialog({
   logs,
@@ -90,7 +111,7 @@ export default function ChatHistoryDialog({
   return (
     <div className={styles.overlay} role="presentation" onClick={onClose}>
       <section
-        className={styles.dialog}
+        className={`${styles.dialog} ${variant === 'ward' ? styles.wardDialog : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="chat-history-title"
@@ -111,9 +132,17 @@ export default function ChatHistoryDialog({
               <p>상담을 누르면 주고받은 대화를 모두 볼 수 있어요.</p>
             </div>
           )}
-          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="상담 기록 닫기">
-            ×
-          </button>
+          {variant === 'ward' ? (
+            // 피보호자: 글자 "닫기"가 보이는 큰 버튼(화면 읽기 이름은 그대로 "상담 기록 닫기")
+            <button type="button" className={styles.wardCloseButton} onClick={onClose} aria-label="상담 기록 닫기">
+              <CloseIcon size={24} />
+              닫기
+            </button>
+          ) : (
+            <button type="button" className={styles.closeButton} onClick={onClose} aria-label="상담 기록 닫기">
+              ×
+            </button>
+          )}
         </header>
 
         {opened ? (
@@ -142,7 +171,37 @@ export default function ChatHistoryDialog({
             ) : shown.length === 0 ? (
               <p className={styles.state}>아직 상담 기록이 없습니다.</p>
             ) : (
-              shown.map(session => (
+              shown.map(session => {
+                if (variant === 'ward') {
+                  const when = wardLogDate(session.startedAt);
+                  const reservation = isReservationSession(session);
+                  return (
+                    <button
+                      key={session.key}
+                      type="button"
+                      className={styles.wardItem}
+                      onClick={() => setOpenKey(session.key)}
+                    >
+                      <time className={styles.wardItemDate} dateTime={session.startedAt}>
+                        {when ? (
+                          <>
+                            {when[0]}{' '}
+                            <br />
+                            {when[1]}
+                          </>
+                        ) : (
+                          '-'
+                        )}
+                      </time>
+                      <strong className={styles.wardItemTitle}>{session.title}</strong>
+                      <span className={`${styles.wardItemTag} ${reservation ? styles.wardItemTagReserve : ''}`}>
+                        {reservation ? '예약' : '상담'}
+                      </span>
+                      <span className={styles.wardItemMore}>보기 ›</span>
+                    </button>
+                  );
+                }
+                return (
                 <button key={session.key} type="button" className={styles.item} onClick={() => setOpenKey(session.key)}>
                   <span className={styles.itemMeta}>
                     <time>{formatLogDate(session.startedAt)}</time>
@@ -154,7 +213,8 @@ export default function ChatHistoryDialog({
                   <strong>{session.title}</strong>
                   <span className={styles.itemMore}>대화 보기 ›</span>
                 </button>
-              ))
+                );
+              })
             )}
           </div>
         )}

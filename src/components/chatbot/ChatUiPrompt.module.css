@@ -296,6 +296,46 @@
   font-size: 0.8125rem;
 }
 
+/* 피보호자 예약 진행 패널(2026-11-12): 선택지 한 줄에 하나, 96px·28px. 시간은 2칸 */
+.ward.panel .chips {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.ward.panel .chip {
+  min-height: 96px;
+  border: 1.5px solid var(--sb-line);
+  border-radius: 22px;
+  font-size: calc(28px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  padding: 10px 22px;
+  text-align: left;
+}
+
+.ward.panel .chipSelected {
+  border-color: var(--sb-brand);
+}
+
+.ward.panel.timeSelect .chips {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ward.panel.timeSelect .chip {
+  text-align: center;
+}
+
+.ward.panel .label {
+  font-size: calc(22px * var(--ward-font-scale, 1));
+}
+
+@media (max-width: 760px) {
+  .ward.panel .chip {
+    min-height: 72px;
+    font-size: calc(24px * var(--ward-font-scale, 1));
+    padding: 8px 18px;
+  }
+}
+
 @media (max-width: 480px) {
   .ward .chip {
     min-height: 60px;

@@ -1,6 +1,8 @@
 import { UserAvatar } from '@/components/UserAvatar';
 import type { ChatLayout, ChatMessage } from '@/service/interface/chat';
+import ChatPeach from './ChatPeach';
 import ChatToolCard from './ChatToolCard';
+import { WarningIcon } from './chatIcons';
 import ChatUiPrompt from './ChatUiPrompt';
 import { emergencyWarnings, isUrgentAnswer } from './chatUrgency';
 import { breakSentences } from './breakSentences';
@@ -60,17 +62,21 @@ export default function ChatBubble({
 
   return (
     <div className={`${styles.rowAssistant} ${isWardChat ? styles.wardBubble : ''}`}>
-      {!isWardChat && <div className={styles.avatar}>AI</div>}
+      {/* 복숭아 얼굴(안부 말벗과 같은 캐릭터) - 장식이라 읽지 않는다 */}
+      <ChatPeach className={styles.peach} />
       <div className={styles.assistantBody}>
         {/* 메시지 본문 */}
         <div className={styles.assistantMessageRow}>
           <div className={styles.messageColumnAssistant}>
-            <div className={styles.bubbleAssistant}>
+            <div className={`${styles.bubbleAssistant} ${urgent ? styles.bubbleUrgent : ''}`}>
             {/* 응급 경고 상자 - 맨 위. "긴급" 글자 라벨 + 굵은 빨간 테두리(색만으로 구분하지 않는다) → 핵심 줄 → 경고 문장 */}
             {(urgentHeadline || warnings.length > 0) && (
               <div className={styles.emergencyBox} role="alert">
                 <p className={styles.emergencyTitle}>
-                  <span className={styles.urgentLabel}>긴급</span>
+                  <span className={styles.urgentLabel}>
+                    <WarningIcon size={18} className={styles.urgentIcon} />
+                    긴급
+                  </span>
                 </p>
                 {urgentHeadline && (
                   <p className={styles.emergencyHeadline}>
@@ -105,13 +111,21 @@ export default function ChatBubble({
                     ))}
                   </ul>
                 )}
-                {/* 되묻기 질문이 하나면 카드 없이 크게 한 줄로(한 번에 한 질문). 둘 이상이면 질문 카드 */}
+                {/* 되묻는 질문은 카드 없이 굵게 한 줄씩(2026-11-12 화면 개편 - 하나면 한 줄, 여럿이면 줄마다) */}
                 {singleQuestion ? (
                   <p className={styles.singleQuestion}>
                     <Line text={singleQuestion} />
                   </p>
                 ) : (
-                  <SectionCard title="이렇게 알려 주세요" items={layout.questions} tone="ask" />
+                  layout.questions.length > 0 && (
+                    <ul className={styles.questionLines}>
+                      {layout.questions.map((question, i) => (
+                        <li key={i} className={styles.singleQuestion}>
+                          <Line text={question} />
+                        </li>
+                      ))}
+                    </ul>
+                  )
                 )}
                 <SectionCard title="집에서 이렇게" items={layout.homeCare} tone="home" />
                 <SectionCard title="이럴 땐 병원으로" items={layout.visitHospitalIf} tone="hospital" />
@@ -217,7 +231,7 @@ function Line({ text }: { text: string }) {
   return <Emphasize text={stripLeadEmoji(text)} />;
 }
 
-/** 카드 - 아이콘 없이 글자 제목만. 구분은 얇은 구분선 + 소제목(CSS)으로 한다. */
+/** 카드 - 아이콘 없이 글자 제목만. 집에서(초록)·병원으로(파랑)는 색 상자, 그 밖은 얇은 구분선 + 소제목. 종류는 제목 글자로도 구분한다. */
 function SectionCard({
   title,
   items,
@@ -225,7 +239,7 @@ function SectionCard({
 }: {
   title: string;
   items: string[];
-  tone: 'home' | 'hospital' | 'ask' | 'plain';
+  tone: 'home' | 'hospital' | 'plain';
 }) {
   if (items.length === 0) return null; // 빈 칸은 그리지 않는다
   return (

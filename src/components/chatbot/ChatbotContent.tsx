@@ -4,7 +4,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
-import { Icon } from '@/components/Icon';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { useSoftKeyboardOpen } from '@/hooks/useSoftKeyboardOpen';
 import { getAccessTokenSubject, getAuthRole } from '@/lib/auth/tokenStore';
@@ -23,8 +22,11 @@ import { setSelectedWardId } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
 import ChatHistoryDialog from './ChatHistoryDialog';
+import ChatPeach from './ChatPeach';
 import ChatUiPrompt from './ChatUiPrompt';
+import { CalendarIcon, HistoryIcon, NewChatIcon, PhoneIcon, QuickPromptIcon, SendIcon } from './chatIcons';
 import { isUrgentAnswer } from './chatUrgency';
+import { RESERVATION_STEPS, reservationStepIndex } from './reservationStep';
 import VoiceInputButton from './VoiceInputButton';
 import { useVoiceInput } from './useVoiceInput';
 import { buttonWardId, isReservationStep, isShowList, isWardNotConnected, selectionText, textWardId } from './reservationFlow';
@@ -468,11 +470,14 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     setFallback(false);
   }
 
-  /** [새 대화] - 주고받은 대화가 있으면 한 번 묻는다(지난 대화는 서버 상담 기록에 남는다). */
-  function handleNewConversation() {
+  /**
+   * [새 대화] - 주고받은 대화가 있으면 한 번 묻는다(지난 대화는 서버 상담 기록에 남는다).
+   * 피보호자 예약 패널의 [예약 그만하기]도 같은 길이다 - 예약 초안은 대화창마다 AI가 들고 있어 새 대화창이면 비워진다.
+   */
+  function handleNewConversation(question = '지금 대화를 닫고 새로 시작할까요?') {
     if (sendingRef.current) return;
     const hasConversation = messages.some(message => message.id !== 'welcome');
-    if (hasConversation && !window.confirm('지금 대화를 닫고 새로 시작할까요?')) return;
+    if (hasConversation && !window.confirm(question)) return;
     restartConversation();
   }
 
@@ -508,7 +513,20 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     }
   }
 
-  const board = (
+  // 피보호자 처음 화면(환영 인사 하나뿐) - 말풍선 대신 큰 복숭아 얼굴과 두 줄 인사(2026-11-12 화면 개편)
+  const wardStart = isWardChat && messages.length === 1 && messages[0].id === 'welcome' && !sending;
+  // 답을 하나라도 받았으면 마이크 글자를 "말로 답하기"로(되묻기에 답하는 흐름)
+  const hasAnswer = messages.some(message => message.role === 'assistant' && message.id !== 'welcome');
+
+  const board = wardStart ? (
+    <section className={`${styles.board} ${styles.wardGreeting}`} aria-label="상담 대화">
+      <ChatPeach className={styles.wardGreetingPeach} badge />
+      <div className={styles.wardGreetingText}>
+        <p className={styles.wardGreetingName}>{profile?.name ? `안녕하세요, ${profile.name} 님` : '안녕하세요'}</p>
+        <p className={styles.wardGreetingAsk}>어디가 불편하세요?</p>
+      </div>
+    </section>
+  ) : (
     <section className={styles.board}>
       {fallback && <div className={styles.banner}>AI 서버가 응답하지 않아 기본 응답으로 처리됐습니다.</div>}
 
@@ -558,6 +576,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     <footer className={`${styles.composer} ${styles.composerCollapsed}`}>
       <VoiceInputButton
         variant="wide"
+        idleText={wardUrgent ? '말로 더 묻기' : hasAnswer ? '말로 답하기' : '말로 물어보기'}
+        quiet={wardUrgent}
         state={voice.state}
         elapsedSec={voice.elapsedSec}
         disabled={sending}
@@ -572,8 +592,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     </footer>
   ) : (
     <footer className={styles.composer}>
-      <div className={styles.inputWrap}>
+      <div className={`${styles.inputWrap} ${isWardChat ? '' : styles.guardianInputWrap}`}>
         <VoiceInputButton
+          variant={isWardChat ? 'compact' : 'round'}
           state={voice.state}
           elapsedSec={voice.elapsedSec}
           disabled={sending}
@@ -597,24 +618,70 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
         />
         <button
           type="button"
-          className={styles.sendButton}
+          className={`${styles.sendButton} ${isWardChat ? '' : styles.guardianSendButton}`}
           disabled={sending || !input.trim()}
+          aria-label={isWardChat ? undefined : '보내기'}
           onClick={() => void send(input, undefined, undefined, true, carriedWardId)}
         >
-          보내기
+          {isWardChat ? '보내기' : <SendIcon size={22} />}
         </button>
       </div>
       {voiceNotice}
     </footer>
   );
 
+  // 예약 단계 표시(진료과·병원·날짜·시간) - 지금 묻는 칸으로 정한다. 새 예약이 아닌 칸이면 그리지 않는다(reservationStep)
+  const stepIndex = reservationStepIndex(reservationUi?.field);
   const reservationPanel = (panelVariant: 'guardian' | 'ward') =>
-    reservationUi && (
-      <section
-        className={`${panelVariant === 'ward' ? styles.wardQuickPanel : styles.quickPromptPanel} ${styles.reservationPanel}`}
-        aria-label="예약 진행"
-      >
-        <p className={panelVariant === 'ward' ? styles.wardQuickTitle : styles.quickPromptTitle}>병원 예약 중이에요</p>
+    reservationUi &&
+    (panelVariant === 'ward' ? (
+      <section className={`${styles.wardQuickPanel} ${styles.reservationPanel} ${styles.wardReservePanel}`} aria-label="예약 진행">
+        <p className={styles.wardReserveTitle}>
+          <CalendarIcon size={32} />
+          병원 예약 중이에요
+        </p>
+        {stepIndex !== null && (
+          <ol className={styles.wardSteps} aria-label="예약 단계">
+            {RESERVATION_STEPS.map((step, index) => (
+              <li
+                key={step}
+                className={`${styles.wardStep} ${index < stepIndex ? styles.wardStepDone : ''} ${
+                  index === stepIndex ? styles.wardStepCurrent : ''
+                }`}
+                aria-current={index === stepIndex ? 'step' : undefined}
+              >
+                <span className={styles.wardStepDot} aria-hidden="true">
+                  {index < stepIndex ? '✓' : index + 1}
+                </span>
+                {step}
+                {index < stepIndex && <span className={styles.visuallyHidden}> 마침</span>}
+              </li>
+            ))}
+          </ol>
+        )}
+        <div className={styles.wardReserveOptions}>
+          <ChatUiPrompt
+            key={stepSource?.id}
+            ui={reservationUi}
+            active={!wardVoiceBusy}
+            onSelect={(field, value, label) => handleUiSelect(field, value, label, stepSource)}
+            variant="ward"
+            panel
+            onRestart={restartConversation}
+          />
+        </div>
+        <button
+          type="button"
+          className={styles.wardReserveStop}
+          disabled={sending}
+          onClick={() => handleNewConversation('예약을 그만하고 새 대화로 시작할까요?')}
+        >
+          예약 그만하기
+        </button>
+      </section>
+    ) : (
+      <section className={`${styles.quickPromptPanel} ${styles.reservationPanel}`} aria-label="예약 진행">
+        <p className={styles.quickPromptTitle}>병원 예약 중이에요</p>
         <ChatUiPrompt
           key={stepSource?.id}
           ui={reservationUi}
@@ -624,7 +691,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           onRestart={restartConversation}
         />
       </section>
-    );
+    ));
 
   // 상담 기록 창 - 보호자·피보호자 화면 모두(피보호자 버튼 2026-11-11)
   const historyDialog = historyOpen && (
@@ -648,19 +715,26 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           <div className={styles.wardTitleRow}>
             <h1 className={styles.wardTitle}>AI 의료 챗봇</h1>
             <div className={styles.wardTitleActions}>
+              {/* 휴대폰은 "기록"만 보인다 - 화면 읽기 이름은 어디서나 "상담 기록" */}
               <button type="button" className={styles.wardNewChatButton} onClick={() => void handleOpenHistory()}>
-                상담 기록
+                <HistoryIcon size={24} />
+                <span>
+                  <span className={styles.wardWideOnly}>상담 </span>기록
+                </span>
               </button>
-              <button type="button" className={styles.wardNewChatButton} onClick={handleNewConversation} disabled={sending}>
+              <button
+                type="button"
+                className={styles.wardNewChatButton}
+                onClick={() => handleNewConversation()}
+                disabled={sending}
+              >
+                <NewChatIcon size={24} />
                 새 대화
               </button>
             </div>
           </div>
           <div className={`${styles.wardBody} ${typingWithKeyboard ? styles.typingWithKeyboard : ''}`}>
-            <div className={styles.wardChatCard}>
-              {board}
-              {composer}
-            </div>
+            <div className={styles.wardChatCard}>{board}</div>
 
             {reserving ? (
               reservationPanel('ward')
@@ -668,7 +742,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
               <section className={`${styles.wardQuickPanel} ${styles.wardEmergencyPanel}`} aria-label="119 전화">
                 <p className={styles.wardEmergencyTitle}>지금 바로 119에 전화하세요</p>
                 <a className={styles.wardEmergencyCall} href="tel:119">
-                  <Icon name="phone" size={40} decorative />
+                  <PhoneIcon size={40} className={styles.wardEmergencyIcon} />
                   119에 전화하기
                 </a>
                 <p className={styles.wardEmergencyHint}>전화가 어려우면 가까운 사람에게 도움을 청하세요.</p>
@@ -685,8 +759,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                       disabled={sending || wardVoiceBusy}
                       onClick={() => void send(prompt.text)}
                     >
+                      {/* 기본 문장은 부위 그림, 답에 딸린 칩(되묻기 답·이어질 질문)은 말풍선 */}
                       <span className={styles.wardQuickIcon} aria-hidden="true">
-                        <Icon name={prompt.suggested ? 'message' : 'alert'} size={28} decorative />
+                        <QuickPromptIcon text={prompt.suggested ? '' : prompt.text} size={36} />
                       </span>
                       <span>{prompt.text}</span>
                     </button>
@@ -694,6 +769,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                 </div>
               </section>
             )}
+            {/* 입력(마이크)은 패널 뒤 - 휴대폰·세로 태블릿에서 119·빠른 질문 아래에 놓이고 읽는 순서도 같다. 넓은 화면은 대화 아래(CSS 칸) */}
+            <div className={styles.wardComposerArea}>{composer}</div>
           </div>
         </section>
         {historyDialog}
@@ -706,39 +783,27 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       <section className={styles.shell}>
         <header className={styles.header}>
           <div className={styles.brand}>
-            <div className={styles.brandMark}>
-              <svg width="38" height="38" viewBox="0 0 60 60" aria-hidden="true">
-                <circle cx="14" cy="16" r="8" fill="#C9986A" />
-                <circle cx="46" cy="16" r="8" fill="#C9986A" />
-                <circle cx="14" cy="16" r="4" fill="#F5C9A8" />
-                <circle cx="46" cy="16" r="4" fill="#F5C9A8" />
-                <ellipse cx="30" cy="32" rx="20" ry="18" fill="#F5C9A8" />
-                <ellipse cx="30" cy="38" rx="11" ry="9" fill="#FFE4D0" />
-                <circle cx="22" cy="28" r="2" fill="#3D2A1E" />
-                <circle cx="38" cy="28" r="2" fill="#3D2A1E" />
-                <ellipse cx="30" cy="35" rx="2" ry="1.4" fill="#3D2A1E" />
-                <path d="M28 38 Q30 41 32 38" fill="none" stroke="#3D2A1E" strokeLinecap="round" strokeWidth="1.4" />
-                <circle cx="17" cy="34" r="2.4" fill="#FFB3B8" opacity="0.7" />
-                <circle cx="43" cy="34" r="2.4" fill="#FFB3B8" opacity="0.7" />
-              </svg>
-            </div>
+            <ChatPeach className={styles.brandPeach} />
             <div className={styles.brandCopy}>
               <h1>AI 의료 챗봇</h1>
-              <p>증상 상담부터 병원 예약까지 도와드려요</p>
             </div>
           </div>
           <div className={styles.headerActions}>
+            {/* 보이는 글자는 "기록" - 화면 읽기 이름은 "상담 기록" */}
+            <button type="button" className={styles.historyButton} onClick={() => void handleOpenHistory()}>
+              <HistoryIcon size={20} />
+              <span>
+                <span className={styles.visuallyHidden}>상담 </span>기록
+              </span>
+            </button>
             <button
               type="button"
               className={styles.historyButton}
-              onClick={handleNewConversation}
+              onClick={() => handleNewConversation()}
               disabled={sending}
             >
+              <NewChatIcon size={20} />
               새 대화
-            </button>
-            <button type="button" className={styles.historyButton} onClick={() => void handleOpenHistory()}>
-              <Icon name="message" size={16} decorative />
-              상담 기록
             </button>
           </div>
         </header>
@@ -760,7 +825,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                     disabled={sending}
                     onClick={() => void send(prompt.text, undefined, undefined, false, carriedWardId)}
                   >
-                    {prompt.primary && <Icon name="calendar" size={18} decorative />}
+                    {prompt.primary && <CalendarIcon size={20} />}
                     {prompt.text}
                   </button>
                 ))}

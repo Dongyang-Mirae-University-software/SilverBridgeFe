@@ -11,6 +11,9 @@ import { render } from 'vitest-browser-react';
 import ChatbotContent from './ChatbotContent';
 import { clearSelectedWardId, setSelectedWardId } from '@/store/selectedWardStore';
 
+// 마이크 버튼 이름 - 보호자 "말로 입력하기", 피보호자는 보이는 글자와 같다(처음 "말로 물어보기"·답 뒤 "말로 답하기"·응급 뒤 "말로 더 묻기", 2026-11-12)
+const MIC = /^말로 (입력하기|물어보기|답하기|더 묻기)$/;
+
 const api = vi.hoisted(() => ({
   sendChatMessage: vi.fn(),
   getChatLogs: vi.fn(),
@@ -70,7 +73,7 @@ function renderChat(node: ReactNode) {
 // 피보호자 화면은 마이크로만 입력한다(2026-11-11). 마이크를 못 쓰면 [글자로 쓰기]로 입력창을 연다
 async function openWardTyping() {
   Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: undefined });
-  await userEvent.click(page.getByRole('button', { name: '말로 입력하기' }));
+  await userEvent.click(page.getByRole('button', { name: MIC }));
   await userEvent.click(page.getByRole('button', { name: '글자로 쓰기' }));
 }
 
@@ -495,16 +498,21 @@ describe('보호자 AI 의료 챗봇', () => {
 });
 
 describe('휴대폰 폭 375px - 상담 기록·새 대화 (2026-11-11)', () => {
-  it('보호자 헤더 부제는 글자 중간에서 잘리지 않고 2줄까지 줄바꿈한다 (점검 L-1)', async () => {
+  it('보호자 머리는 복숭아 + 제목만, [기록]·[새 대화]는 44px 이상으로 화면 안에 들어온다 (2026-11-12)', async () => {
     api.role.mockReturnValue('GUARDIAN');
     await page.viewport(375, 800);
     await renderChat(<ChatbotContent />);
-    const subtitle = page.getByText('증상 상담부터 병원 예약까지 도와드려요');
-    await expect.element(subtitle).toBeVisible();
-    const style = getComputedStyle(subtitle.element());
-    expect(style.whiteSpace).toBe('normal');
-    expect(style.webkitLineClamp).toBe('2');
-    expect(subtitle.element().scrollHeight).toBeLessThanOrEqual(subtitle.element().clientHeight + 1);
+    await expect.element(page.getByRole('heading', { name: 'AI 의료 챗봇' })).toBeVisible();
+    expect(page.getByText('증상 상담부터 병원 예약까지 도와드려요').elements()).toHaveLength(0);
+    // 보이는 글자는 "기록" - 화면 읽기 이름은 "상담 기록"
+    for (const name of ['상담 기록', '새 대화']) {
+      const button = page.getByRole('button', { name });
+      await expect.element(button).toBeVisible();
+      const rect = button.element().getBoundingClientRect();
+      expect(rect.height).toBeGreaterThanOrEqual(44);
+      expect(rect.right).toBeLessThanOrEqual(375);
+    }
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(375);
   });
 
   it('보호자 상담 기록 목록·대화 보기가 화면 밖으로 넘치지 않는다', async () => {
@@ -551,7 +559,12 @@ describe('휴대폰 폭 375px - 상담 기록·새 대화 (2026-11-11)', () => {
     const dialog = page.getByRole('dialog');
     // 피보호자는 본인 기록뿐이라 나누지 않는다
     expect(dialog.getByRole('group').elements()).toHaveLength(0);
-    await dialog.getByRole('button', { name: /대화 보기/ }).click();
+    // 피보호자 목록 한 줄: 날짜·시각 / 첫 질문 / 상담·예약 꼬리표 / 보기 ›(2026-11-12)
+    const item = dialog.getByRole('button', { name: /무릎이 아파요/ });
+    await expect.element(item).toBeVisible();
+    expect(item.element().textContent).toMatch(/상담\s*보기 ›$/);
+    expect(item.element().getBoundingClientRect().height).toBeGreaterThanOrEqual(96);
+    await item.click();
     await expect.element(dialog.getByLabelText('상담 대화').getByText('내일 가 보세요.')).toBeVisible();
     expect(api.getChatLogs).toHaveBeenCalledTimes(1);
   });
@@ -571,8 +584,8 @@ describe('피보호자 AI 의료 챗봇', () => {
     // [상담 기록]은 피보호자도 제목 옆에 있다(2026-11-11) - 보호자용 헤더·피보호자 선택은 없다
     expect(page.getByRole('region', { name: '상담할 피보호자' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: '병원 예약하고 싶어요' }).elements()).toHaveLength(0);
-    // 입력은 큰 마이크 버튼 하나 - 키보드 입력칸·보내기·[글자로 쓰기]는 없다
-    await expect.element(page.getByRole('button', { name: '말로 입력하기' })).toBeVisible();
+    // 입력은 큰 마이크 버튼 하나("말로 물어보기") - 키보드 입력칸·보내기·[글자로 쓰기]는 없다
+    await expect.element(page.getByRole('button', { name: '말로 물어보기' })).toBeVisible();
     expect(page.getByRole('textbox', { name: '궁금한 점 입력' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: '보내기' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: '글자로 쓰기' }).elements()).toHaveLength(0);
@@ -1012,5 +1025,68 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     await userEvent.click(page.getByRole('button', { name: '새 대화' }));
     await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeVisible();
     confirm.mockRestore();
+  });
+});
+
+describe('화면 개편 - 디자인 프로토타입 (2026-11-12)', () => {
+  it('피보호자 처음 화면(환영 인사 하나뿐)은 말풍선 대신 두 줄 인사, 대화가 생기면 일반 말풍선 목록', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage.mockResolvedValueOnce(REPLY);
+    await renderChat(<ChatbotContent variant="ward" />);
+
+    const greeting = page.getByRole('region', { name: '상담 대화' });
+    await expect.element(greeting.getByText('안녕하세요, 박순자 님', { exact: true })).toBeVisible();
+    await expect.element(greeting.getByText('어디가 불편하세요?', { exact: true })).toBeVisible();
+    expect(page.getByText(/버튼을 눌러 물어보세요/).elements()).toHaveLength(0);
+    await expect.element(page.getByRole('button', { name: '말로 물어보기' })).toBeVisible();
+
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
+    expect(page.getByRole('region', { name: '상담 대화' }).query()).toBeNull();
+    // 환영 인사는 이제 일반 말풍선으로 남는다
+    await expect.element(page.getByText(/버튼을 눌러 물어보세요/)).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '말로 답하기' })).toBeVisible();
+  });
+
+  it('피보호자 입력에는 상시 [글로 쓰기] 링크가 없다 - 받아쓰기·권한 실패 때만 [글자로 쓰기]', async () => {
+    api.role.mockReturnValue('WARD');
+    await renderChat(<ChatbotContent variant="ward" />);
+    await expect.element(page.getByRole('button', { name: '말로 물어보기' })).toBeVisible();
+    expect(page.getByRole('button', { name: /글로 쓰기|글자로 쓰기/ }).elements()).toHaveLength(0);
+    expect(page.getByRole('link', { name: /글로 쓰기|글자로 쓰기/ }).elements()).toHaveLength(0);
+  });
+
+  it('피보호자 응급 답 뒤: 119 패널 + 마이크는 "말로 더 묻기"로 낮추고, 휴대폰은 119 버튼이 마이크 위', async () => {
+    api.role.mockReturnValue('WARD');
+    await page.viewport(390, 844);
+    api.sendChatMessage.mockResolvedValueOnce({ ...REPLY, reply: '지금 119에 전화하세요.', emergencyWarning: ['가슴 통증이 계속되면 위험해요'] });
+    await renderChat(<ChatbotContent variant="ward" />);
+
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    const panel = page.getByRole('region', { name: '119 전화' });
+    await expect.element(panel.getByText('지금 바로 119에 전화하세요', { exact: true })).toBeVisible();
+    const call = page.getByRole('link', { name: '119에 전화하기' });
+    const mic = page.getByRole('button', { name: '말로 더 묻기' });
+    await expect.element(mic).toBeVisible();
+    expect(call.element().getBoundingClientRect().height).toBeGreaterThanOrEqual(96);
+    expect(call.element().getBoundingClientRect().bottom).toBeLessThanOrEqual(mic.element().getBoundingClientRect().top);
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
+  });
+
+  it('보호자: 예약 칩이 맨 앞, 입력 줄은 둥근 마이크·입력칸·둥근 [보내기](48px)', async () => {
+    api.role.mockReturnValue('GUARDIAN');
+    await page.viewport(390, 844);
+    await renderChat(<ChatbotContent />);
+
+    const chips = page.getByRole('region', { name: '추천 질문' }).getByRole('button').elements();
+    expect(chips[0].textContent).toBe('병원 예약하고 싶어요');
+    const mic = page.getByRole('button', { name: '말로 입력하기' }).element().getBoundingClientRect();
+    const send = page.getByRole('button', { name: '보내기' }).element().getBoundingClientRect();
+    for (const rect of [mic, send]) {
+      expect(rect.width).toBeGreaterThanOrEqual(48);
+      expect(rect.height).toBeGreaterThanOrEqual(48);
+    }
+    expect(page.getByRole('button', { name: '보내기' }).element().textContent).toBe('');
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
   });
 });
