@@ -790,3 +790,51 @@ describe('대화 내용 공유 동의 (Chrome)', () => {
     await expect.element(page.getByText('점심은 무엇을 드셨어요?')).toBeVisible();
   });
 });
+
+describe('기능 점검 반영 (Chrome)', () => {
+  it('최대 턴 수를 모르면(maxTurns null) 진행 점도 숫자도 그리지 않는다(L-1)', async () => {
+    api.open.mockResolvedValue({ ...SESSION, maxTurns: null });
+    await openTalk();
+    expect(document.querySelectorAll('[class*="progressDots"]')).toHaveLength(0);
+    expect(page.getByText('번째 대답', { exact: false }).elements()).toHaveLength(0);
+  });
+
+  it('동의 상태를 받기 전에 시작을 눌러도 받아 본 뒤 동의를 묻는다(L-2)', async () => {
+    let resolveConsent: (value: IWardCompanionTranscriptConsent) => void = () => undefined;
+    api.consent.mockImplementation(() => new Promise(resolve => { resolveConsent = resolve; }));
+    await renderCompanion();
+    await page.getByRole('button', { name: '이야기 시작하기' }).click();
+    expect(api.open).not.toHaveBeenCalled();
+
+    resolveConsent(CONSENT_NEW);
+    await expect.element(page.getByRole('heading', { name: '안부 대화 내용을 가족에게 보여 줄까요?' })).toBeVisible();
+    expect(api.open).not.toHaveBeenCalled();
+  });
+
+  it('보관 안내의 일수는 서버 값(retentionDays)을 쓴다(L-3)', async () => {
+    api.consent.mockResolvedValue({ ...CONSENT_ASKED, retentionDays: 14 });
+    await renderCompanion();
+    await expect.element(page.getByText('대답한 말은 가족이 볼 수 있게 14일 동안 보관해요.', { exact: false })).toBeVisible();
+  });
+
+  it('환경설정에서 정한 뒤(물어봄 표시)에는 철회 상태여도 다시 묻지 않는다(M-1)', async () => {
+    window.localStorage.setItem('sb-companion-consent-asked', '1');
+    api.consent.mockResolvedValue(CONSENT_NEW);
+    await renderCompanion();
+    await page.getByRole('button', { name: '이야기 시작하기' }).click();
+    await expect.element(page.getByText('점심은 무엇을 드셨어요?')).toBeVisible();
+    expect(page.getByRole('heading', { name: '안부 대화 내용을 가족에게 보여 줄까요?' }).elements()).toHaveLength(0);
+  });
+
+  it('대화 중 폰 → 태블릿으로 넓어져도 적던 대답이 남고, 그만하기가 오른쪽 칸으로 옮겨진다', async () => {
+    await openTalk();
+    await page.getByRole('button', { name: '글로 대답하기' }).click();
+    await page.getByRole('textbox', { name: '대답 적기' }).fill('적던 대답');
+    expect(page.getByRole('complementary').elements()).toHaveLength(0);
+
+    await page.viewport(1280, 800);
+    await expect.element(page.getByRole('complementary', { name: '카메라와 판정 결과' }).getByRole('button', { name: '대화 그만하기' })).toBeVisible();
+    await expect.element(page.getByRole('textbox', { name: '대답 적기' })).toHaveValue('적던 대답');
+    expect(page.getByRole('region', { name: '대답하기' }).getByRole('button', { name: '대화 그만하기' }).elements()).toHaveLength(0);
+  });
+});

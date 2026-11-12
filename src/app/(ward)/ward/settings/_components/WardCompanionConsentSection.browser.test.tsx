@@ -26,6 +26,7 @@ function renderSection() {
 }
 
 beforeEach(() => {
+  window.localStorage.removeItem('sb-companion-consent-asked');
   api.get.mockReset();
   api.put.mockReset();
 });
@@ -48,18 +49,40 @@ describe('안부 대화 공유 동의 토글 (Chrome)', () => {
     await toggle.click();
     await expect.element(toggle).toBeChecked();
     expect(api.put).toHaveBeenCalledWith(true);
+    // 본인이 정했으니 말벗 화면에서 동의 카드를 다시 띄우지 않는다(점검 M-1)
+    expect(window.localStorage.getItem('sb-companion-consent-asked')).toBe('1');
   });
 
-  it('켜진 상태에서 끄면 철회를 저장한다', async () => {
+  it('끄면 바로 지워진다고 한 번 더 묻고, 끄고 지우기를 눌러야 철회를 저장한다(점검 M-2)', async () => {
     api.get.mockResolvedValue(ON);
-    api.put.mockResolvedValue({ ...ON, consented: false });
+    api.put.mockResolvedValue({ ...ON, consented: false, consentedAt: null });
     await renderSection();
 
     const toggle = page.getByRole('switch', { name: COMPANION_CONSENT_LABEL });
     await expect.element(toggle).toBeChecked();
     await toggle.click();
+    await expect.element(page.getByText('끄면 지금까지 보관한 대화 내용이 바로 지워져요. 끌까요?')).toBeVisible();
+    expect(api.put).not.toHaveBeenCalled();
+    await expect.element(toggle).toBeChecked();
+
+    await page.getByRole('button', { name: '끄고 지우기' }).click();
     await expect.element(toggle).not.toBeChecked();
     expect(api.put).toHaveBeenCalledWith(false);
+    expect(window.localStorage.getItem('sb-companion-consent-asked')).toBe('1');
+  });
+
+  it('그대로 두기를 누르면 켜진 채로 두고 저장하지 않는다', async () => {
+    api.get.mockResolvedValue(ON);
+    await renderSection();
+
+    const toggle = page.getByRole('switch', { name: COMPANION_CONSENT_LABEL });
+    await expect.element(toggle).toBeChecked();
+    await toggle.click();
+    await page.getByRole('button', { name: '그대로 두기' }).click();
+    expect(page.getByText('끌까요?', { exact: false }).elements()).toHaveLength(0);
+    await expect.element(toggle).toBeChecked();
+    await expect.element(toggle).toBeEnabled();
+    expect(api.put).not.toHaveBeenCalled();
   });
 
   it('저장에 실패하면 원래 상태로 두고 안내한다', async () => {

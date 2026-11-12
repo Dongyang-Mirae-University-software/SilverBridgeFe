@@ -16,10 +16,10 @@ import styles from './GuardianCompanionSessionContent.module.css';
 
 const cx = classNames.bind(styles);
 
-// 글이 없을 때 안내 - 대화 내용은 어르신 동의가 있을 때만, 30일 동안만 보인다
+// 글이 없을 때 안내 - 대화 내용은 어르신 동의가 있을 때만, 보관 기간(서버 설정) 동안만 보인다
 export const TRANSCRIPT_HIDDEN_TEXT: Record<Exclude<CompanionTranscriptState, 'AVAILABLE'>, string> = {
   NO_CONSENT: '어르신이 대화 내용 공유에 동의하지 않아 기분만 보여 드려요.',
-  EXPIRED: '보관 기간 30일이 지나 대화 내용을 지웠어요. 기분만 보여 드려요.',
+  EXPIRED: '보관 기간이 지나 대화 내용을 지웠어요. 기분만 보여 드려요.',
 };
 
 const STATUS_TEXT: Record<ICompanionSessionDetail['status'], string | null> = {
