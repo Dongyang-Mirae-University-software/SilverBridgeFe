@@ -1073,6 +1073,53 @@ describe('화면 개편 - 디자인 프로토타입 (2026-11-12)', () => {
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
   });
 
+  it('상담 기록 창: 열면 [닫기]에 포커스, Escape로 닫고 [상담 기록]으로 포커스가 돌아온다 (2026-11-12 기능 점검)', async () => {
+    api.role.mockReturnValue('WARD');
+    api.getChatLogs.mockResolvedValue([]);
+    await renderChat(<ChatbotContent variant="ward" />);
+    const opener = page.getByRole('button', { name: '상담 기록' });
+    await userEvent.click(opener);
+    const close = page.getByRole('button', { name: '상담 기록 닫기' });
+    await expect.element(close).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+    await expect.element(opener).toHaveFocus();
+  });
+
+  it('보내기 실패 안내만 받았으면 마이크는 "말로 물어보기" 그대로 (2026-11-12 기능 점검)', async () => {
+    api.role.mockReturnValue('WARD');
+    api.sendChatMessage.mockRejectedValueOnce(new Error('network'));
+    await renderChat(<ChatbotContent variant="ward" />);
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    await expect.element(page.getByText('잠시 후 다시 시도해 주세요.')).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '말로 물어보기' })).toBeVisible();
+  });
+
+  it('글자 최대(1.65배)·1280에서도 빠른 질문 글자가 버튼 밖으로 넘치지 않는다 (2026-11-12 기능 점검)', async () => {
+    api.role.mockReturnValue('WARD');
+    await page.viewport(1280, 800);
+    api.sendChatMessage.mockResolvedValueOnce({
+      ...REPLY,
+      suggestedQuestions: ['진통제를 먹어도 되나요?', '어느 병원에 가요?', '다른 곳도 아파요', '언제까지 쉬어야 하나요?'],
+    });
+    await renderChat(
+      <div style={{ height: '100vh', display: 'flex', ['--ward-font-scale' as string]: '1.647' } as React.CSSProperties}>
+        <ChatbotContent variant="ward" />
+      </div>,
+    );
+    await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    const chip = page.getByRole('button', { name: '언제까지 쉬어야 하나요?' });
+    await expect.element(chip).toBeInTheDocument();
+    for (const button of page.getByRole('region', { name: '추천 질문' }).getByRole('button').elements()) {
+      const box = button.getBoundingClientRect();
+      const range = document.createRange();
+      range.selectNodeContents(button);
+      const text = range.getBoundingClientRect();
+      expect(text.top).toBeGreaterThanOrEqual(box.top - 1);
+      expect(text.bottom).toBeLessThanOrEqual(box.bottom + 1);
+    }
+  });
+
   it('보호자: 예약 칩이 맨 앞, 입력 줄은 둥근 마이크·입력칸·둥근 [보내기](48px)', async () => {
     api.role.mockReturnValue('GUARDIAN');
     await page.viewport(390, 844);
