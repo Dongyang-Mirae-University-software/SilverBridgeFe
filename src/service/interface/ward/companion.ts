@@ -25,6 +25,7 @@ export interface IWardCompanionSession {
   question: string; // 첫 질문 - 크게 보여 주고 읽어 준다
   maxTurns: number | null; // null이면 표시하지 않는다
   resumed: boolean; // 열려 있던 대화를 이어 가면 true
+  turnCount?: number; // 이미 마친 대답 수 - 새 대화 0, 이어 가면 지금까지 기록된 턴 수(옛 서버는 없음)
 }
 
 export interface IWardCompanionReply {

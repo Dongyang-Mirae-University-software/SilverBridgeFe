@@ -838,3 +838,31 @@ describe('기능 점검 반영 (Chrome)', () => {
     expect(page.getByRole('region', { name: '대답하기' }).getByRole('button', { name: '대화 그만하기' }).elements()).toHaveLength(0);
   });
 });
+
+describe('이어 하는 대화 턴 수·판정 칸 제목 (Chrome)', () => {
+  it('이어 하는 대화는 서버가 준 turnCount부터 센다 - 3번 마쳤으면 "8번 중 4번째"·점 3개 채움', async () => {
+    api.open.mockResolvedValue({ ...SESSION, resumed: true, turnCount: 3 });
+    await openTalk();
+    await expect.element(page.getByText('하던 이야기를 이어서 해요.')).toBeVisible();
+    await expect.element(page.getByText('8번 중 4번째 대답')).toBeVisible();
+    expect(document.querySelectorAll('[class*="progressDots"] i[class*="filled"]')).toHaveLength(3);
+  });
+
+  it('turnCount가 없는 응답(옛 서버)은 지금처럼 0부터 센다', async () => {
+    api.open.mockResolvedValue({ ...SESSION, resumed: true });
+    await openTalk();
+    await expect.element(page.getByText('8번 중 1번째 대답')).toBeVisible();
+    expect(document.querySelectorAll('[class*="progressDots"] i[class*="filled"]')).toHaveLength(0);
+  });
+
+  it('폰 판정 칸의 제목은 접기 버튼 밖에서 제목으로 읽힌다(점검 L-4)', async () => {
+    await page.viewport(390, 844);
+    api.today.mockResolvedValue(TEST_TODAY);
+    await renderCompanion();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
+    await expect.element(page.getByRole('heading', { name: '판정 결과 테스트' })).toBeVisible();
+    const heading = page.getByRole('heading', { name: '판정 결과 테스트' }).element();
+    expect(heading.closest('summary')).toBeNull();
+    expect((document.querySelector('details') as HTMLDetailsElement).open).toBe(false);
+  });
+});

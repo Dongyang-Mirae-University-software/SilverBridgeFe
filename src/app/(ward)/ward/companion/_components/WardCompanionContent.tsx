@@ -297,7 +297,8 @@ export function WardCompanionContent() {
       slot: session.slot,
       maxTurns: session.maxTurns,
       resumed: session.resumed,
-      turns: 0,
+      // 이어 하는 대화는 서버가 준 턴 수부터 센다("8번 중 N번째"·진행 점이 처음부터 다시 세지 않게)
+      turns: session.turnCount ?? 0,
       lines: [nextLine('companion', session.question)],
       ended: false,
       test,
@@ -749,16 +750,19 @@ function TestResults({ results, compact = false }: { results: { id: number; text
 
   if (compact) {
     return (
-      <details className={cx('testResults', 'compact')}>
-        <summary>
-          <h2 id="companion-test-results-title" className={cx('resultsTitle')}>
-            판정 결과
-            <span className={cx('testBadge', 'small')}>테스트</span>
-          </h2>
-          <span className={cx('latestLine')} aria-live="polite">{latest ? latest.text : '대답하면 판정 결과가 여기에 나와요.'}</span>
-        </summary>
-        {earlierList}
-      </details>
+      // 제목은 접기 버튼(summary) 밖에 둔다 - summary 안의 h2는 버튼 이름에 묻혀 제목으로 읽히지 않는다(점검 L-4)
+      <section className={cx('testResults', 'compact')} aria-labelledby="companion-test-results-title">
+        <h2 id="companion-test-results-title" className={cx('resultsTitle')}>
+          판정 결과
+          <span className={cx('testBadge', 'small')}>테스트</span>
+        </h2>
+        <details className={cx('resultsDetails')}>
+          <summary>
+            <span className={cx('latestLine')} aria-live="polite">{latest ? latest.text : '대답하면 판정 결과가 여기에 나와요.'}</span>
+          </summary>
+          {earlierList}
+        </details>
+      </section>
     );
   }
 
