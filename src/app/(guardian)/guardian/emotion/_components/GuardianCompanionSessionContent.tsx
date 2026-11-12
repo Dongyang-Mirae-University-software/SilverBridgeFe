@@ -6,9 +6,8 @@ import { isAxiosError } from 'axios';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 
-import { MoodFace } from '@/components/MoodFace';
 import { wardCompanionSessionQueryOptions } from '@/service/query/guardian';
-import type { CompanionTranscriptState, ICompanionSessionDetail } from '@/service/interface/guardian/companion';
+import type { CompanionTranscriptState, ICompanionSessionDetail, ICompanionTurn } from '@/service/interface/guardian/companion';
 import { splitSentences } from '@/utils/companion/splitSentences';
 import { formatSlotTime } from '@/utils/format/slotTime';
 import { MOOD_META, UNKNOWN_MOOD, formatDateLabel } from './companionMood';
@@ -45,8 +44,8 @@ export function GuardianCompanionSessionContent() {
   });
 
   const back = (
-    <Link className={cx('backLink')} href="/guardian/emotion">
-      <span aria-hidden="true">&lt;</span> AI 기분 체크
+    <Link className={cx('backLink')} href="/guardian/emotion" aria-label="AI 기분 체크로 돌아가기">
+      <span aria-hidden="true">‹</span>
     </Link>
   );
 
@@ -94,57 +93,58 @@ export function GuardianCompanionSessionContent() {
 
   return (
     <div className={cx('page')}>
-      {back}
+      <header className={cx('detailHead')}>
+        {back}
+        <div>
+          <span className={cx('headDate')}>{formatDateLabel(data.date)}</span>
+          <h2 className={cx('headTitle')}>{formatSlotTime(data.slot)} 안부 대화</h2>
+        </div>
+      </header>
       <SessionSummary session={data} />
-      <TurnMoods session={data} />
       <Transcript session={data} />
+      <p className={cx('footNote')}>어르신이 대화 내용 공유에 동의한 경우에만 보여요. 보관 기간이 지나면 지워져요.</p>
     </div>
   );
 }
 
+// 턴 기분 글자 - 판단 보류는 '판단 안 함'(프로토타입)
+const TURN_UNKNOWN = '판단 안 함';
+const LEGEND_ORDER = ['joy', 'calm', 'worry', 'depressed', 'unknown'] as const;
+
 function SessionSummary({ session }: { session: ICompanionSessionDetail }) {
   const mood = session.mood ? MOOD_META[session.mood] : null;
   const statusText = STATUS_TEXT[session.status];
-
-  return (
-    <section className={cx('card', 'summary')} aria-label="기분 요약">
-      {mood ? <MoodFace mood={mood.face} size={84} /> : <span className={cx('unknownFace', 'large')} aria-hidden="true" />}
-      <div className={cx('summaryText')}>
-        <span className={cx('meta')}>
-          {formatDateLabel(session.date)} · {formatSlotTime(session.slot)}
-          {session.test && <span className={cx('testBadge')}>테스트</span>}
-        </span>
-        <strong className={cx('moodLine')}>
-          대화 기분 <span className={cx('moodText', mood?.tone ?? 'unknown')}>{mood?.label ?? UNKNOWN_MOOD}</span>
-        </strong>
-        <span className={cx('counts')}>
-          {session.turnCount}번 대답 · 걱정·우울 {session.negativeCount}번
-        </span>
-        {statusText && <span className={cx('status')}>{statusText}</span>}
-        {session.riskAlerted && <span className={cx('risk')}>이 대화로 위험 알림을 보냈어요</span>}
-      </div>
-    </section>
+  const turnMoods = session.turns.map(turn => (turn.mood ? MOOD_META[turn.mood] : null));
+  const legend = LEGEND_ORDER.filter(tone => turnMoods.some(m => (m?.tone ?? 'unknown') === tone)).map(tone =>
+    tone === 'unknown' ? { tone, label: TURN_UNKNOWN } : { tone, label: Object.values(MOOD_META).find(m => m.tone === tone)!.label },
   );
-}
 
-// 턴별 기분 막대 - 기분은 동의와 관계없이 항상 보인다
-function TurnMoods({ session }: { session: ICompanionSessionDetail }) {
-  if (session.turns.length === 0) return null;
   return (
-    <section className={cx('card')} aria-labelledby="companion-turn-moods">
-      <h2 id="companion-turn-moods" className={cx('cardTitle')}>대답마다 기분</h2>
-      <ol className={cx('bars')}>
-        {session.turns.map(turn => {
-          const mood = turn.mood ? MOOD_META[turn.mood] : null;
-          return (
-            <li key={turn.turnNo} className={cx('bar', mood?.tone ?? 'unknown')} aria-label={`${turn.turnNo}번째 대답 기분 ${mood?.label ?? UNKNOWN_MOOD}`}>
-              <span className={cx('barFill')} aria-hidden="true" />
-              <span className={cx('barLabel')} aria-hidden="true">{mood?.label ?? '?'}</span>
-              <span className={cx('barNo')} aria-hidden="true">{turn.turnNo}</span>
-            </li>
-          );
-        })}
-      </ol>
+    <section className={cx('card', 'summary')} aria-label="이 대화의 상태">
+      <div className={cx('summaryHead')}>
+        <strong className={cx('moodLine')}>
+          이 대화의 기분 · <span className={cx('moodText', mood?.tone ?? 'unknown')}>{mood?.label ?? UNKNOWN_MOOD}</span>
+        </strong>
+        {session.test && <span className={cx('testBadge')}>테스트</span>}
+      </div>
+      <span className={cx('counts')}>
+        {session.turnCount}번 대답 · 걱정·우울 {session.negativeCount}번 · 위험 알림 {session.riskAlerted ? '보냄' : '없음'}
+      </span>
+      {statusText && <span className={cx('status')}>{statusText}</span>}
+      {turnMoods.length > 0 && (
+        <>
+          <div className={cx('strip')} role="img" aria-label={`대답별 기분: ${turnMoods.map(m => m?.label ?? TURN_UNKNOWN).join(', ')}`}>
+            {turnMoods.map((m, index) => (
+              <span key={session.turns[index].turnNo} className={cx('segment', m?.tone ?? 'unknown')} />
+            ))}
+          </div>
+          <div className={cx('legend')} aria-hidden="true">
+            {legend.map(item => (
+              <span key={item.tone} className={cx('legendItem', item.tone)}>{item.label}</span>
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -152,8 +152,8 @@ function TurnMoods({ session }: { session: ICompanionSessionDetail }) {
 function Transcript({ session }: { session: ICompanionSessionDetail }) {
   const hidden = session.transcript !== 'AVAILABLE';
   return (
-    <section className={cx('card')} aria-labelledby="companion-transcript">
-      <h2 id="companion-transcript" className={cx('cardTitle')}>나눈 이야기</h2>
+    <section className={cx('transcriptSection')} aria-labelledby="companion-transcript">
+      <h2 id="companion-transcript" className={cx('sectionTitle')}>나눈 이야기</h2>
       {hidden ? (
         <p className={cx('hiddenNote')} role="note">
           {TRANSCRIPT_HIDDEN_TEXT[session.transcript as Exclude<CompanionTranscriptState, 'AVAILABLE'>] ?? TRANSCRIPT_HIDDEN_TEXT.NO_CONSENT}
@@ -162,7 +162,7 @@ function Transcript({ session }: { session: ICompanionSessionDetail }) {
         <ol className={cx('talk')}>
           {session.question && <TalkLine who="companion" text={session.question} />}
           {session.turns.map(turn => (
-            <TurnLines key={turn.turnNo} answer={turn.answerText} bot={turn.botText} />
+            <TurnLines key={turn.turnNo} answer={turn.answerText} bot={turn.botText} mood={turn.mood} />
           ))}
         </ol>
       )}
@@ -170,21 +170,22 @@ function Transcript({ session }: { session: ICompanionSessionDetail }) {
   );
 }
 
-function TurnLines({ answer, bot }: { answer: string | null; bot: string | null }) {
+function TurnLines({ answer, bot, mood }: { answer: string | null; bot: string | null; mood: ICompanionTurn['mood'] }) {
+  const meta = mood ? MOOD_META[mood] : null;
   return (
     <>
-      {answer && <TalkLine who="ward" text={answer} />}
+      {answer && <TalkLine who="ward" text={answer} mood={{ label: meta?.label ?? TURN_UNKNOWN, tone: meta?.tone ?? 'unknown' }} />}
       {bot && <TalkLine who="companion" text={bot} />}
     </>
   );
 }
 
-function TalkLine({ who, text }: { who: 'companion' | 'ward'; text: string }) {
+function TalkLine({ who, text, mood }: { who: 'companion' | 'ward'; text: string; mood?: { label: string; tone: string } }) {
   const sentences = who === 'companion' ? splitSentences(text) : [text];
   return (
     <li className={cx('talkLine', who)}>
-      <span className={cx('who')}>{who === 'companion' ? '말벗' : '어르신'}</span>
-      <p>
+      <span className={cx('srOnly')}>{who === 'companion' ? '말벗' : '어르신'}</span>
+      <p className={cx('bubble')}>
         {sentences.map((sentence, index) => (
           <span key={index} className={cx('sentence')}>
             {index > 0 && ' '}
@@ -192,6 +193,7 @@ function TalkLine({ who, text }: { who: 'companion' | 'ward'; text: string }) {
           </span>
         ))}
       </p>
+      {mood && <span className={cx('moodChip', mood.tone)}>{mood.label}</span>}
     </li>
   );
 }

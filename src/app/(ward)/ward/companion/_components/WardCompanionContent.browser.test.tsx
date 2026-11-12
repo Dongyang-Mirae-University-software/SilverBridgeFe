@@ -530,7 +530,7 @@ describe('테스트 계정 (Chrome)', () => {
     });
     await renderCompanion();
 
-    await expect.element(page.getByRole('heading', { name: '안부 말벗 테스트' })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: '안부 말벗' })).toBeVisible();
     await page.getByRole('button', { name: '오후 3시' }).click();
     await expect.element(page.getByRole('button', { name: '오후 3시' })).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: '바로 이야기하기' }).click();
@@ -545,12 +545,12 @@ describe('테스트 계정 (Chrome)', () => {
     await page.getByRole('button', { name: '보내기' }).click();
     await expect.element(page.getByText(
       '1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 표정: 평온(사진 3장 중 얼굴 3, 확신 80%) · 위험: 없음',
-    )).toBeVisible();
+    )).toBeInTheDocument();
 
     await page.getByRole('button', { name: '대화 그만하기' }).click();
     await expect.element(page.getByText(
       '대화 마침 · 대화 기분: 걱정 · 턴 수: 1(대답 1·무응답 0) · 위험: 없음 · 알림 단계: 없음',
-    )).toBeVisible();
+    )).toBeInTheDocument();
   });
 
   async function sendTestTurn(textMood: unknown) {
@@ -561,24 +561,24 @@ describe('테스트 계정 (Chrome)', () => {
     await page.getByRole('button', { name: '글로 대답하기' }).click();
     await page.getByRole('textbox', { name: '대답 적기' }).fill('좀 걱정돼');
     await page.getByRole('button', { name: '보내기' }).click();
-    await expect.element(page.getByText('1번째 대답', { exact: false })).toBeVisible();
+    await expect.element(page.getByText('1번째 대답', { exact: false })).toBeInTheDocument();
   }
 
   it('턴 결과에 말로 본 기분(확신)을 표정 앞에 보여 준다', async () => {
     await sendTestTurn({ label: 'WORRY', turnLabel: '슬픔', confidence: 0.82, usable: true, reason: null });
     await expect.element(page.getByText(
       '1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 말로 본 기분: 슬픔(확신 82%) · 표정: 평온(사진 3장 중 얼굴 3, 확신 80%) · 위험: 없음',
-    )).toBeVisible();
+    )).toBeInTheDocument();
   });
 
   it('말을 판단에 쓰지 못했으면(usable=false) 판단 안 함과 이유를 보여 준다', async () => {
     await sendTestTurn({ label: null, turnLabel: null, confidence: null, usable: false, reason: 'UNAVAILABLE' });
-    await expect.element(page.getByText('말로 본 기분: 판단 안 함(UNAVAILABLE)', { exact: false })).toBeVisible();
+    await expect.element(page.getByText('말로 본 기분: 판단 안 함(UNAVAILABLE)', { exact: false })).toBeInTheDocument();
   });
 
   it('textMood가 null이면 말로 본 기분 칸이 없다', async () => {
     await sendTestTurn(null);
-    await expect.element(page.getByText('1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 표정:', { exact: false })).toBeVisible();
+    await expect.element(page.getByText('1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 표정:', { exact: false })).toBeInTheDocument();
     expect(page.getByText('말로 본 기분', { exact: false }).elements()).toHaveLength(0);
   });
 
@@ -595,9 +595,9 @@ describe('테스트 계정 (Chrome)', () => {
     await page.getByRole('textbox', { name: '대답 적기' }).fill('힘들어');
     await page.getByRole('button', { name: '보내기' }).click();
 
-    await expect.element(page.getByText('위험: 있음', { exact: false }).first()).toBeVisible();
-    await expect.element(page.getByText('대화 기분: 판단 불가', { exact: false })).toBeVisible();
-    await expect.element(page.getByText('알림 단계: 긴급', { exact: false })).toBeVisible();
+    await expect.element(page.getByText('위험: 있음', { exact: false }).first()).toBeInTheDocument();
+    await expect.element(page.getByText('대화 기분: 판단 불가', { exact: false })).toBeInTheDocument();
+    await expect.element(page.getByText('알림 단계: 긴급', { exact: false })).toBeInTheDocument();
   });
 
   it('안부 알림 보내기는 고른 시간대로 test/prompt를 부르고 안내한다', async () => {
@@ -691,7 +691,8 @@ describe('새 화면 배치 (Chrome)', () => {
     await expect.element(answerBar.getByRole('button', { name: '대화 그만하기' })).toBeVisible();
     expect(page.getByRole('complementary').elements()).toHaveLength(0);
     expect(document.querySelectorAll('[class*="progressDots"] i')).toHaveLength(8);
-    await expect.element(page.getByText('1번째 대답', { exact: false })).toBeVisible();
+    await expect.element(page.getByText('방금 대답 판정')).toBeVisible();
+    await expect.element(page.getByText('말 없음 · 표정 평온', { exact: false })).toBeVisible();
     const details = document.querySelector('details') as HTMLDetailsElement;
     expect(details.open).toBe(false);
   });
@@ -708,14 +709,15 @@ describe('새 화면 배치 (Chrome)', () => {
     await expect.element(side.getByRole('button', { name: '대화 그만하기' })).toBeVisible();
     await expect.element(side.getByText('말로 대답하는 동안 여기에 얼굴이 보여요')).toBeVisible();
     expect(page.getByRole('region', { name: '대답하기' }).getByRole('button', { name: '대화 그만하기' }).elements()).toHaveLength(0);
-    await expect.element(side.getByText('방금 대답')).toBeVisible();
-    await expect.element(side.getByText('8번째 대답 · 턴 기분', { exact: false })).toBeVisible();
+    await expect.element(side.getByText('방금 대답 · 8번째')).toBeVisible();
+    await expect.element(side.getByText('8번째 대답 · 턴 기분', { exact: false })).toBeInTheDocument();
     const earlier = side.getByRole('list', { name: '지난 대답 판정' }).getByRole('listitem').elements();
     expect(earlier).toHaveLength(7);
-    expect(earlier[0].textContent).toContain('7번째 대답');
-    expect(earlier[6].textContent).toContain('1번째 대답');
-    // 지난 대답은 한 줄로 줄인다
-    expect(getComputedStyle(earlier[0]).whiteSpace).toBe('nowrap');
+    expect(earlier[0].textContent).toMatch(/^7번/);
+    expect(earlier[6].textContent).toMatch(/^1번/);
+    // 지난 대답은 'N번 · 말·표정 · 기분' 한 줄(말·표정 글은 넘치면 줄임)
+    expect(earlier[0].textContent).toContain('말 없음 · 표정 평온');
+    expect(getComputedStyle(earlier[0].querySelector('[class*="earlierLine"]') as Element).whiteSpace).toBe('nowrap');
   });
 
   it('대화 그만하기는 위치만 옮겼고 마치기(USER_STOP)를 부른다', async () => {
@@ -860,8 +862,8 @@ describe('이어 하는 대화 턴 수·판정 칸 제목 (Chrome)', () => {
     api.today.mockResolvedValue(TEST_TODAY);
     await renderCompanion();
     await page.getByRole('button', { name: '바로 이야기하기' }).click();
-    await expect.element(page.getByRole('heading', { name: '판정 결과 테스트' })).toBeVisible();
-    const heading = page.getByRole('heading', { name: '판정 결과 테스트' }).element();
+    await expect.element(page.getByRole('heading', { name: '판정 결과' })).toBeInTheDocument();
+    const heading = page.getByRole('heading', { name: '판정 결과' }).element();
     expect(heading.closest('summary')).toBeNull();
     expect((document.querySelector('details') as HTMLDetailsElement).open).toBe(false);
   });

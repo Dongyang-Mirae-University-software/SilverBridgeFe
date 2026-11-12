@@ -224,9 +224,9 @@ describe('최근 7일 기분·대화 보기 (Chrome)', () => {
     expect(asked).toEqual(['w1/2026-11-02']);
     // 고른 날 목록이 오늘 목록 자리를 대신한다
     expect(page.getByRole('heading', { name: '오늘의 안부 대화' }).elements()).toHaveLength(0);
-    expect(slotRows('companion-day-title')).toEqual(['오전 9시“잘 주무셨어요?”걱정대화 보기 >', '낮 12시지나감']);
+    expect(slotRows('companion-day-title')).toEqual(['오전 9시“잘 주무셨어요?”걱정 대화 보기›', '낮 12시지나감']);
     await expect
-      .element(page.getByRole('link', { name: '오전 9시 대화 보기' }))
+      .element(page.getByRole('link', { name: /^오전 9시.*대화 보기$/ }))
       .toHaveAttribute('href', '/guardian/emotion/sessions/77?wardId=w1');
 
     await page.getByRole('button', { name: '오늘 기분 기쁨' }).click();
@@ -241,8 +241,8 @@ describe('최근 7일 기분·대화 보기 (Chrome)', () => {
     });
     await renderEmotion();
 
-    await expect.element(page.getByRole('link', { name: '낮 12시 대화 보기' })).toHaveAttribute('href', '/guardian/emotion/sessions/5?wardId=w1');
-    expect(page.getByRole('link', { name: '오전 9시 대화 보기' }).elements()).toHaveLength(0);
+    await expect.element(page.getByRole('link', { name: /^낮 12시.*대화 보기$/ })).toHaveAttribute('href', '/guardian/emotion/sessions/5?wardId=w1');
+    expect(page.getByRole('link', { name: /^오전 9시.*대화 보기$/ }).elements()).toHaveLength(0);
   });
 
   it('고른 날이 7일 밖이라고 거절되면(400) 안내하고, 연결이 끊겼으면(403) 그 안내를 보인다', async () => {

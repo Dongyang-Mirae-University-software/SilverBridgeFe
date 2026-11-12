@@ -91,3 +91,78 @@ export function formatResultAnalysis(analysis: IWardCompanionResultAnalysis) {
     `알림 단계: ${analysis.alertLevel ? (ALERT_LABEL[analysis.alertLevel] ?? analysis.alertLevel) : '없음'}`,
   ].join(' · ');
 }
+
+// ---- 화면 칸용 요약(프로토타입 판정 카드: 방금 대답 · N번째 + 기분 글자 + 말·표정·위험 3칸) ----
+
+export type MoodTone = 'joy' | 'calm' | 'worry' | 'depressed' | 'unknown';
+export type ResultTone = MoodTone | 'danger' | 'safe';
+
+export interface AnalysisSummary {
+  title: string; // "3번째" · "대화 마침"
+  rowLabel: string; // 지난 대답 줄 앞머리 "3번" · "마침"
+  mood: string; // 큰 기분 글자
+  tone: MoodTone;
+  cells: { label: string; value: string; tone?: ResultTone }[];
+  line: string; // 한 줄 요약 "말 걱정 · 표정 평온"
+  detail: string; // 자세히 - 기존 한 줄 문구(확신·근거·신호 포함)
+}
+
+const TONE_BY_LABEL: Record<string, MoodTone> = {
+  기쁨: 'joy', 평온: 'calm', 걱정: 'worry', 슬픔: 'worry', 우울: 'depressed',
+  JOY: 'joy', CALM: 'calm', WORRY: 'worry', DEPRESSED: 'depressed',
+};
+
+function toneOf(label: string | null | undefined): MoodTone {
+  return (label && TONE_BY_LABEL[label.toUpperCase()]) || (label && TONE_BY_LABEL[label]) || 'unknown';
+}
+
+function shortFace(face: IWardCompanionTurnAnalysis['face']) {
+  if (!face) return '사진 없음';
+  const total = count(face.totalFrames) ?? count(face.frameCount);
+  if (total === 0) return '사진 없음';
+  if (face.usable === false || !face.label) return '판단 못 함';
+  return moodText(face.label);
+}
+
+function shortTextMood(textMood: IWardCompanionTurnAnalysis['textMood']) {
+  if (!textMood) return '없음';
+  if (textMood.usable !== true) return '판단 안 함';
+  return moodText(textMood.turnLabel || textMood.label);
+}
+
+export function summarizeTurnAnalysis(turnNo: number, analysis: IWardCompanionTurnAnalysis): AnalysisSummary {
+  const mood = analysis.turnLabel ? moodText(analysis.turnLabel) : '판단 안 함';
+  const speech = shortTextMood(analysis.textMood);
+  const face = shortFace(analysis.face);
+  return {
+    title: `${turnNo}번째`,
+    rowLabel: `${turnNo}번`,
+    mood,
+    tone: toneOf(analysis.turnLabel),
+    cells: [
+      { label: '말', value: speech, tone: toneOf(speech) },
+      { label: '표정', value: face, tone: toneOf(face) },
+      { label: '위험', value: analysis.riskFlag ? '있음' : '없음', tone: analysis.riskFlag ? 'danger' : 'safe' },
+    ],
+    line: `말 ${speech} · 표정 ${face}`,
+    detail: formatTurnAnalysis(turnNo, analysis),
+  };
+}
+
+export function summarizeResultAnalysis(analysis: IWardCompanionResultAnalysis): AnalysisSummary {
+  const mood = moodText(analysis.mood);
+  const alert = analysis.alertLevel ? (ALERT_LABEL[analysis.alertLevel] ?? analysis.alertLevel) : '없음';
+  return {
+    title: '대화 마침',
+    rowLabel: '마침',
+    mood,
+    tone: toneOf(analysis.mood),
+    cells: [
+      { label: '턴 수', value: String(analysis.turnCount) },
+      { label: '위험', value: analysis.riskFlag ? '있음' : '없음', tone: analysis.riskFlag ? 'danger' : 'safe' },
+      { label: '알림', value: alert, tone: analysis.alertLevel === 'URGENT' ? 'danger' : undefined },
+    ],
+    line: `턴 ${analysis.turnCount} · 위험 ${analysis.riskFlag ? '있음' : '없음'}`,
+    detail: formatResultAnalysis(analysis),
+  };
+}
