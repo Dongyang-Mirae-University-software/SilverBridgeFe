@@ -13,14 +13,17 @@ import {
   wardGameSummaryQueryKey,
   wardGameSummaryQueryOptions,
 } from '@/service/query/guardian/game';
+import { parseServerTime } from '@/utils/format/serverTime';
 import { toGameUserId } from '@/utils/game/userId';
 import { ActivityHeatmap } from './ActivityHeatmap';
 import styles from './GuardianGameContent.module.css';
 
 const cx = classNames.bind(styles);
 
+// AI 게임 기록 시각은 시간대 표시 없는 UTC라 그대로 읽으면 9시간 이르게 보였다(2026-11-12) - UTC로 읽어 화면 시간대로 보인다
 function formatPlayedAt(value: string | null) {
-  return value ? dayjs(value).format('M월 D일 HH:mm') : '기록 없음';
+  const time = parseServerTime(value);
+  return time === null ? '기록 없음' : dayjs(time).format('M월 D일 HH:mm');
 }
 
 interface WardGameCardProps {
