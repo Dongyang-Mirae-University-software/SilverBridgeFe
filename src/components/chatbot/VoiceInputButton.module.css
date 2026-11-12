@@ -49,7 +49,8 @@
   font-weight: calc(900 + var(--ward-weight-boost, 0));
   white-space: normal;
   word-break: keep-all;
-  box-shadow: 0 10px 24px rgba(176, 103, 77, 0.28);
+  /* 아래로 퍼지는 폭(6+16 = 22px)은 입력 줄 아래 여백(.wardVariant .composerCollapsed)과 맞춘다 - 넘으면 대화 칸(overflow: hidden)에 잘린다 */
+  box-shadow: 0 6px 16px rgba(176, 103, 77, 0.28);
 }
 
 .wide .icon {

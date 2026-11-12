@@ -1086,6 +1086,27 @@ describe('화면 개편 - 디자인 프로토타입 (2026-11-12)', () => {
     await expect.element(opener).toHaveFocus();
   });
 
+  it('상담 기록 창: Tab·Shift+Tab은 창 안에서만 돈다 (2026-11-12)', async () => {
+    api.role.mockReturnValue('WARD');
+    api.getChatLogs.mockResolvedValue([
+      { id: 2, sessionId: 's-2', message: '배가 아파요', reply: '쉬세요.', createdAt: '2026-11-11T00:02:00Z' },
+      { id: 1, sessionId: 's-1', message: '무릎이 아파요', reply: '정형외과 진료를 권해요.', createdAt: '2026-11-10T00:01:00Z' },
+    ]);
+    await renderChat(<ChatbotContent variant="ward" />);
+    await userEvent.click(page.getByRole('button', { name: '상담 기록' }));
+    const dialog = page.getByRole('dialog');
+    const close = dialog.getByRole('button', { name: '상담 기록 닫기' });
+    const last = dialog.getByRole('button', { name: /무릎이 아파요/ });
+    await expect.element(last).toBeVisible();
+    await expect.element(close).toHaveFocus();
+    await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
+    await expect.element(last).toHaveFocus();
+    await userEvent.keyboard('{Tab}');
+    await expect.element(close).toHaveFocus();
+    await userEvent.keyboard('{Tab}');
+    expect(dialog.element().contains(document.activeElement)).toBe(true);
+  });
+
   it('보내기 실패 안내만 받았으면 마이크는 "말로 물어보기" 그대로 (2026-11-12 기능 점검)', async () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage.mockRejectedValueOnce(new Error('network'));

@@ -108,17 +108,41 @@ export default function ChatHistoryDialog({
   const shown = byTarget ? sessions.filter(session => matches(filter, session)) : sessions;
   const opened = openKey ? sessions.find(session => session.key === openKey) : undefined;
   const closeRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const onCloseRef = useRef(onClose);
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
 
-  // 열면 [닫기]로 포커스를 옮기고, Escape로 닫으며, 닫히면 연 버튼으로 포커스를 돌려준다(2026-11-12 기능 점검 - 키보드·화면 읽기 사용자가 창 밖에 남지 않게)
+  // 열면 [닫기]로 포커스를 옮기고, Escape로 닫으며, 닫히면 연 버튼으로 포커스를 돌려준다(2026-11-12 기능 점검 - 키보드·화면 읽기 사용자가 창 밖에 남지 않게).
+  // Tab·Shift+Tab은 창 안에서만 돈다 - 뒤에 깔린 챗봇 화면으로 빠져나가지 않게
   useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     closeRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onCloseRef.current();
+      if (event.key === 'Escape') {
+        onCloseRef.current();
+        return;
+      }
+      const dialog = dialogRef.current;
+      if (event.key !== 'Tab' || !dialog) return;
+      const focusable = [
+        ...dialog.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+      ];
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (!dialog.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => {
@@ -130,6 +154,7 @@ export default function ChatHistoryDialog({
   return (
     <div className={styles.overlay} role="presentation" onClick={onClose}>
       <section
+        ref={dialogRef}
         className={`${styles.dialog} ${variant === 'ward' ? styles.wardDialog : ''}`}
         role="dialog"
         aria-modal="true"
