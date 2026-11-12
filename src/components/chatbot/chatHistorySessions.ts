@@ -1,5 +1,5 @@
 import type { ChatLogItem, ChatMessage, ChatRiskLevel } from '@/service/interface/chat';
-import { selectionText } from './reservationFlow';
+import { RESERVATION_INTENT, isReservationField, selectionText } from './reservationFlow';
 
 // 상담 기록(기록 1건 = 질문 1개와 답 1개)을 대화창(sessionId) 단위로 묶는다(2026-11-11).
 // AI 기록 목록은 본인 기록 전부를 최신순으로 준다 - 한 대화창의 질문·답은 FE에서 모아 시간순으로 다시 놓는다.
@@ -30,9 +30,38 @@ export function isSelectionLog(message?: string) {
   return SELECTION.test(message ?? '');
 }
 
+/**
+ * 기록 시각(ms). AI 기록의 createdAt 은 시간대 표시 없는 UTC다("2026-11-12T05:23:39.095242" = 한국 14:23, 2026-11-12 gosky 실측).
+ * 표시가 없으면 UTC로 읽는다 - 그대로 Date 에 넣으면 브라우저 시간대(한국)로 읽혀 9시간 이르게 보였다. Z·+09:00 등이 있으면 그대로.
+ */
+export function parseLogTime(value?: string | null): number | null {
+  if (!value) return null;
+  const text = value.trim();
+  const hasZone = /(?:[zZ]|[+-]\d{2}:?\d{2})$/.test(text);
+  const parsed = Date.parse(hasZone || !text.includes('T') ? text : `${text}Z`);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 function time(log: ChatLogItem) {
-  const value = log.createdAt ? Date.parse(log.createdAt) : Number.NaN;
-  return Number.isNaN(value) ? null : value;
+  return parseLogTime(log.createdAt);
+}
+
+/** 예약을 시작·조회했던 도구(AI tool 값) */
+const RESERVATION_TOOLS = new Set(['search_hospital', 'make_appointment', 'list_my_appointments', 'get_reservation', 'cancel_reservation']);
+const SELECTION_FIELD = /^\s*\[선택\]\s*([a-z_]+)\s*:/;
+
+/**
+ * 예약을 다룬 대화창인가 - 상담 기록 "예약" 꼬리표. 기록의 intent 는 지금 비어 오므로(2026-11-12 gosky 실측 292건 전부)
+ * 예약 칸(ui.field)·예약 도구(tool)·예약 칸 선택 기록("[선택] location: …")도 본다. 문구는 보지 않고 AI 계약 코드만 본다.
+ */
+export function isReservationSession(logs: ChatLogItem[]): boolean {
+  return logs.some(
+    log =>
+      log.intent === RESERVATION_INTENT ||
+      isReservationField(log.ui?.field) ||
+      (!!log.tool && RESERVATION_TOOLS.has(log.tool)) ||
+      isReservationField(SELECTION_FIELD.exec(log.message ?? '')?.[1]),
+  );
 }
 
 function compareLogs(a: ChatLogItem, b: ChatLogItem) {

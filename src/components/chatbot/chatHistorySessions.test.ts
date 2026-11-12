@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupChatSessions, logToMessages, userTextOf } from './chatHistorySessions';
+import { groupChatSessions, isReservationSession, logToMessages, parseLogTime, userTextOf } from './chatHistorySessions';
 
 describe('상담 기록 대화창 묶기 (2026-11-11)', () => {
   it('sessionId 로 묶고 안은 시간순, 대화창은 최근에 이어진 것부터', () => {
@@ -95,5 +95,40 @@ describe('상담 기록 대화창 묶기 (2026-11-11)', () => {
     expect(a.emergencyWarning).toEqual(['119에 전화하세요.']);
     expect(a.ui).toBeUndefined();
     expect(a.tool).toBeUndefined();
+  });
+});
+
+describe('parseLogTime - 기록 시각', () => {
+  it('시간대 표시 없는 AI 기록 시각은 UTC로 읽는다 (2026-11-12 gosky 실측: 05:23 = 한국 14:23)', () => {
+    expect(parseLogTime('2026-11-12T05:23:39.095242')).toBe(Date.UTC(2026, 10, 12, 5, 23, 39, 95));
+  });
+
+  it('Z·+09:00 이 붙어 있으면 그대로 읽는다', () => {
+    expect(parseLogTime('2026-11-12T05:23:39Z')).toBe(Date.UTC(2026, 10, 12, 5, 23, 39));
+    expect(parseLogTime('2026-11-12T14:23:39+09:00')).toBe(Date.UTC(2026, 10, 12, 5, 23, 39));
+  });
+
+  it('없거나 읽을 수 없으면 null', () => {
+    expect(parseLogTime(undefined)).toBeNull();
+    expect(parseLogTime('')).toBeNull();
+    expect(parseLogTime('어제')).toBeNull();
+  });
+});
+
+describe('isReservationSession - 상담 기록 예약 꼬리표', () => {
+  const base = { sessionId: 's', message: '무릎이 아파요' };
+
+  it('intent 가 비어 있어도 예약 칸(ui.field)·예약 도구·예약 칸 선택 기록이 있으면 예약', () => {
+    expect(isReservationSession([{ ...base, ui: { kind: 'select', field: 'location_sido' } }])).toBe(true);
+    expect(isReservationSession([{ ...base, tool: 'search_hospital' }])).toBe(true);
+    expect(isReservationSession([{ ...base, message: '[선택] location: 서울 강남구' }])).toBe(true);
+    expect(isReservationSession([{ ...base, intent: 'hospital_reservation' }])).toBe(true);
+  });
+
+  it('일반 상담·예약이 아닌 선택(되묻기 답)·진료과 안내만 있으면 상담', () => {
+    expect(isReservationSession([base])).toBe(false);
+    expect(isReservationSession([{ ...base, message: '[선택] answer: 네' }])).toBe(false);
+    // 진료과 답의 [가까운 ○○ 찾기]는 의도가 예약일 때만 예약 단계(reservationFlow 와 같은 기준)
+    expect(isReservationSession([{ ...base, intent: 'medical_advice', ui: { kind: 'select', field: 'department' } }])).toBe(false);
   });
 });

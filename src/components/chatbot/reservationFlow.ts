@@ -33,6 +33,11 @@ export const SHOW_LIST_VALUE = 'show_list';
 /** 이름·전화는 서버가 채운다 - 이 칸이 오면 입력 칸 대신 안내를 보인다(등록된 전화가 없을 때만 온다). */
 export const PERSONAL_FIELDS = new Set(['patient_name', 'phone']);
 
+/** 예약 진행·관리 칸인가(AI 계약 코드). 상담 기록의 "예약" 꼬리표 판정에도 쓴다. */
+export function isReservationField(field: string | undefined): boolean {
+  return !!field && RESERVATION_FIELDS.has(field);
+}
+
 export function isReservationStep(message: ChatMessage | undefined): boolean {
   const field = message?.ui?.field;
   if (!message || !field || field === FOLLOWUP_FIELD) return false;
