@@ -36,6 +36,7 @@ import {
 import { formatResultAnalysis, formatTurnAnalysis } from '@/utils/companion/companionAnalysis';
 import { COMPANION_MESSAGES, getCompanionError, isCompanionFrameError } from '@/utils/companion/companionError';
 import { openCompanionSlot } from '@/utils/companion/companionOpen';
+import { markConsentAsked, readConsentAsked } from '@/utils/companion/consentAsked';
 import { splitSentences } from '@/utils/companion/splitSentences';
 import { formatSlotTime } from '@/utils/format/slotTime';
 import styles from './WardCompanionContent.module.css';
@@ -53,30 +54,14 @@ const UPLOAD_BUDGET_BYTES = 9.5 * 1024 * 1024;
 export const CAMERA_CONSENT_TEXT = '대답하실 때 얼굴 사진도 함께 보낼게요. 표정은 기분을 살피는 데만 쓰고 저장하지 않아요.';
 export const CAMERA_UNAVAILABLE_TEXT = '카메라를 쓸 수 없어 목소리만 보낼게요.';
 export const PRIVACY_TEXT = '대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.';
-export const PRIVACY_SHARED_TEXT = '대답한 말은 가족이 볼 수 있게 30일 동안 보관해요. 목소리와 얼굴 사진은 저장하지 않아요.';
+// 보관 일수는 서버 설정값(retentionDays)을 쓴다
+export function privacySharedText(retentionDays: number) {
+  return `대답한 말은 가족이 볼 수 있게 ${retentionDays}일 동안 보관해요. 목소리와 얼굴 사진은 저장하지 않아요.`;
+}
 
-// 진행 점 개수 - 서버가 최대 턴 수를 주지 않을 때
-const DEFAULT_TURN_DOTS = 8;
 // 태블릿 이상은 왼쪽 대화 · 오른쪽 카메라·판정 두 칸
 const WIDE_QUERY = '(min-width: 1024px)';
 
-// 대화 내용 공유 동의를 이 기기에서 이미 물었는지 - 값은 '1'뿐(대화 원문은 남기지 않는다).
-// 동의하면 서버에 consentedAt이 남아 다시 묻지 않고, 거절은 서버에 남지 않아 여기에만 적는다
-const CONSENT_ASKED_KEY = 'sb-companion-consent-asked';
-function readConsentAsked() {
-  try {
-    return window.localStorage.getItem(CONSENT_ASKED_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-function markConsentAsked() {
-  try {
-    window.localStorage.setItem(CONSENT_ASKED_KEY, '1');
-  } catch {
-    // 저장소를 못 쓰면 다음에 다시 묻는다
-  }
-}
 
 // 처음 대답할 때 한 번 묻는다. 선택은 이 화면 메모리에만 둔다(다시 들어오면 다시 묻는다, 권한 창은 브라우저가 기억)
 type CameraChoice = 'ask' | 'on' | 'off';
@@ -134,13 +119,21 @@ export function WardCompanionContent() {
 
   const wide = useMediaQuery(WIDE_QUERY);
 
-  // 대화 내용 공유 동의 - 첫 대화 시작 전에 한 번 묻는다. 상태를 못 받으면 묻지 않고 대화를 막지 않는다
+  // 대화 내용 공유 동의 - 첫 대화 시작 전에 한 번 묻는다. 상태를 아직 못 받았으면 받아 본 뒤 판단하고(L-2),
+  // 끝내 못 받으면 묻지 않고 대화를 막지 않는다
   const consent = useQuery(wardCompanionConsentQueryOptions);
   const [consentAsk, setConsentAsk] = useState<(() => void) | null>(null);
   const [consentSaving, setConsentSaving] = useState(false);
   const [consentError, setConsentError] = useState<string | null>(null);
-  const withConsent = (start: () => void) => {
-    const state = consent.data;
+  const withConsent = async (start: () => void) => {
+    let state = consent.data;
+    if (!state) {
+      try {
+        state = await queryClient.fetchQuery(wardCompanionConsentQueryOptions);
+      } catch {
+        state = undefined;
+      }
+    }
     if (state && !state.consented && !state.consentedAt && !readConsentAsked()) {
       setConsentError(null);
       setConsentAsk(() => start);
@@ -439,7 +432,6 @@ export function WardCompanionContent() {
     const busy = Boolean(pending) || voice.state === 'uploading';
     const recording = voice.state === 'recording';
     const message = recording ? '말씀하세요. 다 하셨으면 다시 눌러 주세요.' : (notice ?? voice.notice);
-    const totalTurns = talk.maxTurns ?? DEFAULT_TURN_DOTS;
     const stopButton = !talk.ended && (
       <button className={cx('stopButton')} type="button" disabled={busy} onClick={() => void handleFinish()}>
         {pending === 'finish' ? '마치는 중…' : '대화 그만하기'}
@@ -460,7 +452,10 @@ export function WardCompanionContent() {
                 <span className={cx('talkTurns')}>{talk.maxTurns}번 중 {Math.min(talk.turns + 1, talk.maxTurns)}번째 대답</span>
               )}
             </div>
-            <ProgressDots total={totalTurns} done={talk.ended ? totalTurns : Math.min(talk.turns, totalTurns)} />
+            {/* 최대 턴 수를 모르면(null) 숫자처럼 점도 그리지 않는다 */}
+            {talk.maxTurns !== null && (
+              <ProgressDots total={talk.maxTurns} done={talk.ended ? talk.maxTurns : Math.min(talk.turns, talk.maxTurns)} />
+            )}
           </header>
 
           {talk.resumed && <p className={cx('resumed')}>하던 이야기를 이어서 해요.</p>}
@@ -591,13 +586,13 @@ export function WardCompanionContent() {
                 <span className={cx('testBadge')}>테스트</span>
                 {formatSlotTime(testEntrySlot)} 안부 알림으로 오셨어요
               </h2>
-              <button className={cx('startButton')} type="button" disabled={Boolean(pending)} onClick={() => withConsent(() => void handleOpenTest(testEntrySlot))}>
+              <button className={cx('startButton')} type="button" disabled={Boolean(pending)} onClick={() => void withConsent(() => void handleOpenTest(testEntrySlot))}>
                 <Icon name="messageCircle" size={34} decorative />
                 {pending === 'open' ? '여는 중…' : `${formatSlotTime(testEntrySlot)} 대화 시작`}
               </button>
             </section>
           )}
-          <TodayPanel today={today.data} isLoading={today.isLoading} isError={today.isError} notice={notice} opening={pending === 'open'} onOpen={() => withConsent(() => void handleOpen())} onRetry={() => void today.refetch()} />
+          <TodayPanel today={today.data} isLoading={today.isLoading} isError={today.isError} notice={notice} opening={pending === 'open'} onOpen={() => void withConsent(() => void handleOpen())} onRetry={() => void today.refetch()} />
           {testMode && (
             <section className={cx('testStart')} aria-labelledby="companion-test-title">
               <h2 id="companion-test-title" className={cx('testStartTitle')}>
@@ -618,7 +613,7 @@ export function WardCompanionContent() {
                 ))}
               </div>
               <div className={cx('testActions')}>
-                <button className={cx('startButton')} type="button" disabled={Boolean(pending)} onClick={() => withConsent(() => void handleOpenTest(testSlot))}>
+                <button className={cx('startButton')} type="button" disabled={Boolean(pending)} onClick={() => void withConsent(() => void handleOpenTest(testSlot))}>
                   <Icon name="messageCircle" size={34} decorative />
                   {pending === 'open' ? '여는 중…' : '바로 이야기하기'}
                 </button>
@@ -631,7 +626,7 @@ export function WardCompanionContent() {
           )}
         </>
       )}
-      <p className={cx('privacy')}>{consent.data?.consented ? PRIVACY_SHARED_TEXT : PRIVACY_TEXT}</p>
+      <p className={cx('privacy')}>{consent.data?.consented ? privacySharedText(consent.data.retentionDays) : PRIVACY_TEXT}</p>
     </div>
   );
 }

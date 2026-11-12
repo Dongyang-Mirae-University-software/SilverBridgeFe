@@ -20,11 +20,14 @@
 .unknownFace.large { width: 84px; height: 84px; }
 
 /* 기분 색 - AI 기분 체크 화면의 칩 색과 같다 */
-.joy { --mood: #a0732b; --mood-soft: #f6ead3; }
-.calm { --mood: var(--sb-brand); --mood-soft: var(--sb-brand-50); }
-.worry { --mood: #8a5f12; --mood-soft: #f7ebcd; }
-.depressed { --mood: #3f6e8c; --mood-soft: #e2edf4; }
-.unknown { --mood: var(--sb-ink-mute); --mood-soft: var(--sb-bg-soft); }
+.joy { --mood: #a0732b; }
+.calm { --mood: var(--sb-brand); }
+.worry { --mood: #8a5f12; }
+.depressed { --mood: #3f6e8c; }
+.unknown { --mood: var(--sb-ink-mute); }
+/* 연한 바탕은 기분 색에서 만든다(따로 색을 두지 않는다) */
+.joy, .calm, .worry, .depressed { --mood-soft: color-mix(in srgb, var(--mood) 16%, #fff); }
+.unknown { --mood-soft: var(--sb-bg-soft); }
 .moodText { color: var(--mood); }
 
 .bars { display: flex; align-items: flex-end; gap: 10px; margin: 0; overflow-x: auto; padding: 18px 24px 16px; list-style: none; }

@@ -104,7 +104,7 @@ describe('대화 보기 (Chrome)', () => {
 
   it.each([
     ['NO_CONSENT', '어르신이 대화 내용 공유에 동의하지 않아 기분만 보여 드려요.'],
-    ['EXPIRED', '보관 기간 30일이 지나 대화 내용을 지웠어요. 기분만 보여 드려요.'],
+    ['EXPIRED', '보관 기간이 지나 대화 내용을 지웠어요. 기분만 보여 드려요.'],
   ] as const)('%s면 안내만 보이고 글은 없다(기분은 보인다)', async (transcript, text) => {
     data.session.mockResolvedValue({
       ...SESSION,

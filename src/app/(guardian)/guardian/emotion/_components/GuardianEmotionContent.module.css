@@ -321,7 +321,7 @@
 .weekDate { font-size: 13px; font-weight: 700; }
 .unknownFace.small { width: 36px; height: 36px; margin: 2px; }
 .weekState { margin: 0; color: var(--sb-ink-soft); font-size: 15px; font-weight: 700; padding: 18px 24px; }
-.textButton { border: 0; background: none; color: var(--sb-brand); cursor: pointer; font: inherit; font-weight: 800; padding: 0; text-decoration: underline; }
+.textButton { min-height: 44px; border: 0; background: none; color: var(--sb-brand); cursor: pointer; font: inherit; font-weight: 800; padding: 0 6px; text-decoration: underline; }
 
 @media (max-width: 560px) {
   .slot:has(.viewLink) { grid-template-columns: 64px 48px minmax(0, 1fr); }
