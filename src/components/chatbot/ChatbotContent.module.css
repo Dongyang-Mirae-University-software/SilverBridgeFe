@@ -649,7 +649,8 @@
 .wardVariant .composerCollapsed {
   border: 0;
   background: transparent;
-  padding: 0;
+  /* 마이크 알약 그림자가 아래로 퍼지는 만큼(22px) 여백 - 대화 칸(.wardBody overflow: hidden)이 그림자를 자르지 않게(2026-11-12) */
+  padding: 0 0 22px;
 }
 
 .wardVariant .inputWrap {
@@ -1218,7 +1219,7 @@
   }
 
   .wardVariant .composerCollapsed {
-    padding: 0;
+    padding: 0 0 22px;
   }
 
   .wardVariant .inputWrap {
