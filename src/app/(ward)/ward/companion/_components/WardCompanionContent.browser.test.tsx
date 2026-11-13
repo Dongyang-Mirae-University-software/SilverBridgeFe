@@ -1273,6 +1273,64 @@ describe('말벗 목소리 (Chrome)', () => {
     expect(speakCount('국수 맛있으셨겠어요.')).toBe(0);
   });
 
+  it('받는 중인 문장의 다시 듣기는 받기를 끊지 않고, 도착한 목소리를 그대로 튼다(점검 L-3)', async () => {
+    let arrive: (blob: Blob) => void = () => undefined;
+    let signal: AbortSignal | undefined;
+    api.audio.mockImplementation((_id: number, _index: number, given: AbortSignal) => {
+      signal = given;
+      return new Promise<Blob>(resolve => {
+        arrive = resolve;
+      });
+    });
+    await openTalk();
+
+    await page.getByRole('button', { name: '다시 듣기' }).click();
+    expect(signal?.aborted).toBe(false);
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(0);
+    arrive(VOICE);
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(1));
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(0);
+  });
+
+  it('audio.index가 정수가 아니면 받지 않고 기기 음성으로 읽는다(점검 L-4)', async () => {
+    api.open.mockResolvedValue({ ...SESSION, audio: { index: '0' } });
+    await openTalk();
+
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(1);
+    expect(api.audio).not.toHaveBeenCalled();
+  });
+
+  it('테스트 계정 시작도 누른 순간 무음으로 권한을 얻고 질문 목소리를 튼다(점검 L-4)', async () => {
+    api.today.mockResolvedValue(TEST_TODAY);
+    api.openTest.mockResolvedValue({ ...SESSION, slot: '15:00', question: '오후는 어떻게 보내고 계세요?', audio: { index: 0 } });
+    api.audio.mockResolvedValue(VOICE);
+    await renderCompanion();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
+
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(1));
+    expect(played[0]).toMatch(/^data:audio\/wav/);
+    expect(speakCount('오후는 어떻게 보내고 계세요?')).toBe(0);
+  });
+
+  it('동의 카드에서 보여 줄게요를 누르면 저장을 기다리기 전에 권한을 얻는다(점검 L-1)', async () => {
+    api.consent.mockResolvedValue(CONSENT_NEW);
+    let saved: (value: IWardCompanionTranscriptConsent) => void = () => undefined;
+    api.setConsent.mockImplementation(() => new Promise(resolve => {
+      saved = resolve;
+    }));
+    api.audio.mockResolvedValue(VOICE);
+    await renderCompanion();
+    await page.getByRole('button', { name: '이야기 시작하기' }).click();
+    await expect.element(page.getByRole('heading', { name: '안부 대화 내용을 가족에게 보여 줄까요?' })).toBeVisible();
+    played = [];
+
+    await page.getByRole('button', { name: '보여 줄게요' }).click();
+    // 저장이 끝나기 전 - 이미 무음 재생으로 권한을 얻었다
+    expect(played.filter(src => src.startsWith('data:'))).toHaveLength(1);
+    saved({ ...CONSENT_NEW, consented: true, consentedAt: '2026-11-13T10:00:00+09:00' });
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(1));
+  });
+
   it('화면을 떠나면 멈추고 해제한다', async () => {
     api.audio.mockResolvedValue(VOICE);
     const screen = await renderCompanion();

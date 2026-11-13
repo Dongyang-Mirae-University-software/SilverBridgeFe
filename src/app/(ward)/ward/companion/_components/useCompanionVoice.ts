@@ -28,6 +28,8 @@ export function useCompanionVoice() {
   // 문장마다 1씩 오른다 - 늦게 끝난 받기·재생 결과가 지금 문장이 아니면 버린다
   const turnRef = useRef(0);
   const blobsRef = useRef(new Map<number, Blob>());
+  // 지금 목소리를 받는 중인 문장 - 그 문장의 다시 듣기는 받기를 끊지 않는다(점검 L-3)
+  const fetchingLineRef = useRef<number | null>(null);
   const [audioLineIds, setAudioLineIds] = useState<ReadonlySet<number>>(() => new Set());
   const [blockedLineId, setBlockedLineId] = useState<number | null>(null);
 
@@ -54,6 +56,7 @@ export function useCompanionVoice() {
     turnRef.current += 1;
     abortRef.current?.abort();
     abortRef.current = null;
+    fetchingLineRef.current = null;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = null;
     releaseUrl();
@@ -103,11 +106,13 @@ export function useCompanionVoice() {
     }
     const controller = new AbortController();
     abortRef.current = controller;
+    fetchingLineRef.current = line.id;
     let settled = false;
     const fallback = () => {
       if (settled || turnRef.current !== turn) return;
       settled = true;
       abortRef.current = null;
+      fetchingLineRef.current = null;
       speak(line.text);
     };
     timerRef.current = setTimeout(() => {
@@ -120,6 +125,7 @@ export function useCompanionVoice() {
         if (settled || turnRef.current !== turn) return;
         settled = true;
         abortRef.current = null;
+        fetchingLineRef.current = null;
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = null;
         blobsRef.current.set(line.id, blob);
@@ -138,7 +144,9 @@ export function useCompanionVoice() {
   }, [stop, playBlob]);
 
   // 다시 듣기·"들려 주세요" - 받아 둔 소리를 다시 틀고, 없으면 대신 읽는다(다시 받지 않는다)
+  // 받는 중인 문장이면 아무것도 하지 않는다 - 끊으면 그 문장은 서버 목소리를 영영 못 듣는다(받기는 최대 8초 안에 끝난다)
   const replay = useCallback((line: VoiceLine) => {
+    if (fetchingLineRef.current === line.id) return;
     stop();
     const blob = blobsRef.current.get(line.id);
     if (blob) playBlob(line, blob, turnRef.current);
