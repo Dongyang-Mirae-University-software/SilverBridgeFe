@@ -145,6 +145,13 @@ const CONSENT_NEW: IWardCompanionTranscriptConsent = {
 };
 // 마침 제목은 "주셔서" 뒤에서 일부러 줄을 나눈다(<br>)
 const END_TITLE = /오늘도 이야기 나눠 주셔서\s*고마워요/;
+// 지난 대답 표의 턴 행(숨긴 판정 근거 행 제외)과 칸 글(턴 칸은 버튼의 보이는 글만)
+function turnRows(table: HTMLTableElement) {
+  return [...table.tBodies[0].rows].filter(row => !row.hidden);
+}
+function rowCells(row: HTMLTableRowElement) {
+  return [...row.cells].map(cell => cell.querySelector('button')?.firstChild?.textContent ?? cell.textContent);
+}
 const TURN_ANALYSIS = {
   turnLabel: '걱정',
   turnSource: 'TEXT_FACE',
@@ -584,8 +591,8 @@ describe('테스트 계정 (Chrome)', () => {
     visible.querySelectorAll('details[class*="resultDetail"] p').forEach(node => node.remove());
     expect(visible.textContent?.match(/대화 마침/g)).toHaveLength(1);
     // 지난 대답 표에는 턴만, 표정은 한국어
-    const rows = [...(side.getByRole('table', { name: '지난 대답 판정' }).element() as HTMLTableElement).tBodies[0].rows];
-    expect([...rows[0].cells].map(cell => cell.textContent)).toEqual(['1번', '없음', '슬픔', '평온']);
+    const rows = turnRows(side.getByRole('table', { name: '지난 대답 판정' }).element() as HTMLTableElement);
+    expect(rowCells(rows[0])).toEqual(['1번', '없음', '슬픔', '평온']);
     expect(side.element().textContent).not.toMatch(/Sadness|Neutral/);
   });
 
@@ -608,7 +615,7 @@ describe('테스트 계정 (Chrome)', () => {
     await expect.element(side.getByText('방금 대답 · 2번째')).toBeVisible();
     const cells = [...side.element().querySelectorAll('[class*="resultCell"] dd')].map(dd => dd.textContent);
     expect(cells[1]).toBe('-');
-    const row = (side.getByRole('table', { name: '지난 대답 판정' }).element() as HTMLTableElement).tBodies[0].rows[0];
+    const row = turnRows(side.getByRole('table', { name: '지난 대답 판정' }).element() as HTMLTableElement)[0];
     expect(row.cells[2].textContent).toBe('담담함');
   });
 
@@ -760,6 +767,58 @@ describe('새 화면 배치 (Chrome)', () => {
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
   });
 
+  // 점검 M-1(2026-11-13): 표 칸이 nowrap 이면 글자 크게(1.471배)에서 태블릿 페이지가 1327px로 넘쳤다
+  it.each([[375, 812, '1'], [375, 812, '1.471'], [1280, 800, '1'], [1280, 800, '1.471']])('지난 대답 표(%i×%i, 글자 %s배): 가장 긴 판정 값도 표·페이지가 가로로 넘치지 않는다', async (width, height, scale) => {
+    await page.viewport(width, height);
+    document.documentElement.style.setProperty('--ward-font-scale', scale);
+    try {
+      api.today.mockResolvedValue(TEST_TODAY);
+      let turn = 0;
+      api.replyText.mockImplementation(async () => ({ turnNo: ++turn, reply: '네.', ended: false, endReason: null, transcript: null,
+        analysis: { turnLabel: null, turnSource: 'TEXT_FACE', riskFlag: true, signals: null,
+          face: { usable: false, label: null, totalFrames: 3, facesFound: 0 },
+          textMood: { label: null, turnLabel: null, confidence: null, usable: false, reason: 'SHORT' } } }));
+      await renderCompanion();
+      await page.getByRole('button', { name: '바로 이야기하기' }).click();
+      await page.getByRole('button', { name: '글로 대답하기' }).click();
+      for (const text of ['하나', '둘']) await answer(text);
+      await expect.element(page.getByText('2번째 대답', { exact: false }).first()).toBeInTheDocument();
+      const details = document.querySelector('[class*="resultsDetails"]') as HTMLDetailsElement | null;
+      if (details) details.open = true;
+      const wrap = await vi.waitFor(() => {
+        const found = document.querySelector('[class*="earlierWrap"]') as HTMLElement | null;
+        if (!found || found.clientWidth === 0) throw new Error('표가 아직 안 보임');
+        return found;
+      });
+      expect(rowCells(turnRows(wrap.querySelector('table') as HTMLTableElement)[0])).toEqual(['1번', '판단 안 함', '판단 못 함', '판단 안 함 · 위험']);
+      expect(wrap.scrollWidth).toBeLessThanOrEqual(wrap.clientWidth);
+      expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
+    } finally {
+      document.documentElement.style.removeProperty('--ward-font-scale');
+    }
+  });
+
+  it('지난 대답의 턴 번호를 누르면 판정 근거를 펼치고 다시 누르면 접는다(터치 기기용)', async () => {
+    await page.viewport(1280, 1100); // 800 높이는 오른쪽 칸의 표 영역이 머리줄만큼밖에 안 남아 클릭 대상이 가려진다(표만 스크롤)
+    await startTestTalk();
+    for (const text of ['하나', '둘']) await answer(text);
+    const side = page.getByRole('complementary', { name: '카메라와 판정 결과' });
+    await expect.element(side.getByText('방금 대답 · 2번째')).toBeVisible();
+    const toggle = side.getByRole('button', { name: /1번 판정 근거 보기/ });
+    await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
+    const detailRow = document.getElementById(toggle.element().getAttribute('aria-controls') as string) as HTMLTableRowElement;
+    expect(detailRow.hidden).toBe(true);
+    toggle.element().scrollIntoView({ block: 'nearest' }); // 오른쪽 칸 안에서 표만 스크롤된다
+    await toggle.click();
+    await expect.element(side.getByRole('button', { name: /1번 판정 근거 접기/ })).toHaveAttribute('aria-expanded', 'true');
+    expect(detailRow.hidden).toBe(false);
+    expect(detailRow.textContent).toContain('1번째 대답 · 턴 기분');
+    const close = side.getByRole('button', { name: /1번 판정 근거 접기/ });
+    close.element().scrollIntoView({ block: 'nearest' });
+    await close.click();
+    expect(detailRow.hidden).toBe(true);
+  });
+
   it('폰(390×844): 머리에 진행 점, 아래 줄에 글로 대답하기 | 대화 그만하기, 판정은 접힌 한 줄', async () => {
     await page.viewport(390, 844);
     await startTestTalk();
@@ -792,11 +851,11 @@ describe('새 화면 배치 (Chrome)', () => {
     const table = side.getByRole('table', { name: '지난 대답 판정' }).element() as HTMLTableElement;
     // 지난 대답은 표(턴 | 말 | 표정 | 결과) - 기분은 결과 칸에 한 번만
     expect([...table.tHead!.rows[0].cells].map(cell => cell.textContent)).toEqual(['턴', '말', '표정', '결과']);
-    const rows = [...table.tBodies[0].rows];
+    const rows = turnRows(table);
     expect(rows).toHaveLength(7);
-    expect(rows[0].cells[0].textContent).toBe('7번');
-    expect(rows[6].cells[0].textContent).toBe('1번');
-    expect([...rows[0].cells].map(cell => cell.textContent)).toEqual(['7번', '없음', '무표정', '걱정']);
+    expect(rowCells(rows[0])[0]).toBe('7번');
+    expect(rowCells(rows[6])[0]).toBe('1번');
+    expect(rowCells(rows[0])).toEqual(['7번', '없음', '무표정', '걱정']);
     expect(rows[0].textContent?.match(/걱정/g)).toHaveLength(1);
   });
 
