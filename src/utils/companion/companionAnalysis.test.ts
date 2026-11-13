@@ -85,11 +85,32 @@ describe('summarizeTurnAnalysis·summarizeResultAnalysis (판정 칸)', () => {
 
   it('대화 마침은 한 줄 - 턴 수·위험·알림을 이어 붙이고 기분은 따로 한 번', () => {
     const s = summarizeResultAnalysis({ mood: 'WORRY', turnCount: 8, riskFlag: true, alertLevel: 'URGENT' });
+    expect(s.rowLabel).toBeUndefined();
     expect(s).toMatchObject({ kind: 'end', title: '대화 마침', mood: '걱정', tone: 'worry', line: '대화 마침 · 8턴 · 위험 있음 · 알림 긴급' });
     expect(s.cells.map(c => c.tone)).toEqual([undefined, 'danger', 'danger']);
     const calm = summarizeResultAnalysis({ mood: 'CALM', turnCount: 6, riskFlag: false, alertLevel: 'INFO' });
     expect(calm.line).toBe('대화 마침 · 6턴 · 위험 없음 · 알림 안내');
     expect(summarizeResultAnalysis({ mood: 'CALM', turnCount: 2, riskFlag: false, alertLevel: null }).line).toBe('대화 마침 · 2턴 · 위험 없음 · 알림 없음');
+  });
+});
+
+describe('AI 값 타입이 어긋날 때 (점검 L-1)', () => {
+  it('문자열이 아닌 라벨·기분·알림 단계는 없는 값으로 보고 예외를 던지지 않는다', () => {
+    const odd = { x: 1 } as unknown as string;
+    expect(faceLabel({ label: odd, labelKo: 3 as unknown as string })).toBe('-');
+    const turn = summarizeTurnAnalysis(1, { turnLabel: odd, turnSource: odd, riskFlag: false, face: { usable: true, label: 7 as unknown as string, totalFrames: 2, facesFound: 2 } });
+    expect(turn.mood).toBe('판단 불가');
+    expect(turn.tone).toBe('unknown');
+    expect(turn.cells[1].value).toBe('-');
+    expect(() => formatTurnAnalysis(1, { turnLabel: odd, turnSource: odd, riskFlag: false, face: null })).not.toThrow();
+    const end = summarizeResultAnalysis({ mood: odd as never, turnCount: 1, riskFlag: false, alertLevel: odd });
+    expect(end.line).toBe('대화 마침 · 1턴 · 위험 없음 · 알림 없음');
+    expect(end.mood).toBe('판단 불가');
+  });
+
+  it('알림 단계는 대소문자를 가리지 않고, 긴급만 위험 색', () => {
+    const s = summarizeResultAnalysis({ mood: 'CALM', turnCount: 1, riskFlag: false, alertLevel: 'urgent' });
+    expect(s.cells[2]).toEqual({ label: '알림', value: '알림 긴급', tone: 'danger' });
   });
 });
 

@@ -395,7 +395,7 @@
 .mediaPrivacy { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 2px 0 0; color: var(--sb-ink-mute); font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); text-align: center; }
 
 /* 판정 결과(프로토타입) - 방금 대답 카드(기분 글자 + 말·표정·위험 칸) + 지난 대답 줄, 칸 안에서만 스크롤 */
-.testResults { display: flex; min-height: 0; flex-direction: column; gap: 10px; border: 1px solid var(--sb-line-soft); border-radius: 24px; background: #fff; padding: 16px; }
+.testResults { display: flex; min-width: 0; min-height: 0; flex-direction: column; gap: 10px; border: 1px solid var(--sb-line-soft); border-radius: 24px; background: #fff; padding: 16px; }
 .resultsHead { display: flex; align-items: center; justify-content: space-between; }
 .resultsTitle { margin: 0; color: var(--sb-ink); font-size: calc(20px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); }
 .resultsEmpty { margin: 0; color: var(--sb-ink-soft); font-size: calc(18px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); word-break: keep-all; }
@@ -413,10 +413,15 @@
 .endSummary strong { font-weight: calc(900 + var(--ward-weight-boost, 0)); }
 /* 지난 대답 표 - 턴 | 말 | 표정 | 결과. 칸이 많아지면 표만 안에서 내린다 */
 .earlierWrap { min-height: 0; flex: 1 1 auto; overflow-y: auto; }
-.earlierResults { width: 100%; border-collapse: collapse; font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
+.earlierResults { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
 .earlierResults thead th { position: sticky; top: 0; background: #fff; color: var(--sb-ink-mute); font-size: calc(13px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); padding: 4px 6px; text-align: left; }
-.earlierResults tbody th, .earlierResults td { border-top: 1px solid var(--sb-line-soft); padding: 8px 6px; text-align: left; white-space: nowrap; }
-.earlierResults tbody th { color: var(--sb-ink-mute); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
+/* 칸은 줄바꿈을 허용한다(낱말 단위) - nowrap 이면 글자 크게(1.471배)에서 표가 칸보다 넓어져 태블릿은 페이지 전체가 가로로 밀렸다 */
+.earlierResults thead th:first-child { width: 4.2em; }
+.earlierResults tbody th, .earlierResults td { border-top: 1px solid var(--sb-line-soft); padding: 11px 6px; text-align: left; vertical-align: top; overflow-wrap: anywhere; word-break: keep-all; }
+.earlierToggle { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; border: 0; background: none; color: var(--sb-ink-mute); cursor: pointer; font: inherit; padding: 0; text-decoration: underline dotted; text-underline-offset: 3px; }
+.earlierToggle[aria-expanded='true'] { color: var(--sb-ink); }
+.earlierResults .earlierDetail td { border-top: 0; padding-top: 0; color: var(--sb-ink-soft); font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(600 + var(--ward-weight-boost, 0)); line-height: 1.5; }
+.earlierResults tbody th { padding-top: 0; padding-bottom: 0; color: var(--sb-ink-mute); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
 .earlierResults td strong { font-weight: calc(900 + var(--ward-weight-boost, 0)); }
 /* 기분·결과 글자 색 - 보호자 기분 칩과 같은 색 */
 .moodText.joy { color: #a0732b; }

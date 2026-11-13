@@ -788,6 +788,34 @@ function EndSummaryLine({ result }: { result: TestResult }) {
   );
 }
 
+// 지난 대답 한 줄 - 턴 번호를 누르면 아래에 판정 근거(자세히)를 펼친다(마우스 올림 title은 터치 기기에서 볼 수 없다)
+function EarlierRow({ item }: { item: TestResult }) {
+  const [open, setOpen] = useState(false);
+  const [speech, face, risk] = item.cells;
+  const detailId = `companion-earlier-detail-${item.id}`;
+  return (
+    <>
+      <tr>
+        <th scope="row">
+          <button className={cx('earlierToggle')} type="button" aria-expanded={open} aria-controls={detailId} onClick={() => setOpen(value => !value)}>
+            {item.rowLabel}
+            <span className={cx('srOnly')}> 판정 근거 {open ? '접기' : '보기'}</span>
+          </button>
+        </th>
+        <td className={cx('moodText', speech?.tone)}>{speech?.value}</td>
+        <td className={cx('moodText', face?.tone)}>{face?.value}</td>
+        <td>
+          <strong className={cx('moodText', item.tone)}>{item.mood}</strong>
+          {risk?.value === '있음' && <span className={cx('moodText', 'danger')}> · 위험</span>}
+        </td>
+      </tr>
+      <tr id={detailId} className={cx('earlierDetail')} hidden={!open}>
+        <td colSpan={4}>{item.detail}</td>
+      </tr>
+    </>
+  );
+}
+
 function TestResults({ results, compact = false }: { results: TestResult[]; compact?: boolean }) {
   const latest = results.at(-1);
   const earlier = results.slice(0, -1).filter(item => item.kind === 'turn').reverse();
@@ -826,20 +854,7 @@ function TestResults({ results, compact = false }: { results: TestResult[]; comp
           <tr><th scope="col">턴</th><th scope="col">말</th><th scope="col">표정</th><th scope="col">결과</th></tr>
         </thead>
         <tbody>
-          {earlier.map(item => {
-            const [speech, face, risk] = item.cells;
-            return (
-              <tr key={item.id} title={item.detail}>
-                <th scope="row">{item.rowLabel}</th>
-                <td className={cx('moodText', speech?.tone)}>{speech?.value}</td>
-                <td className={cx('moodText', face?.tone)}>{face?.value}</td>
-                <td>
-                  <strong className={cx('moodText', item.tone)}>{item.mood}</strong>
-                  {risk?.value === '있음' && <span className={cx('moodText', 'danger')}> · 위험</span>}
-                </td>
-              </tr>
-            );
-          })}
+          {earlier.map(item => <EarlierRow key={item.id} item={item} />)}
         </tbody>
       </table>
     </div>
@@ -854,7 +869,7 @@ function TestResults({ results, compact = false }: { results: TestResult[]; comp
           <summary>
             <span className={cx('compactLabel')}>
               <span className={cx('testBadge', 'small')}>테스트</span>
-              {latest?.kind === 'end' ? '대화 마침 판정' : '방금 대답 판정'}
+              {latest?.kind === 'end' ? `${latest.title} 판정` : '방금 대답 판정'}
             </span>
             <span className={cx('latestLine')} aria-live="polite">
               {!latest ? '대답하면 판정 결과가 여기에 나와요.' : latest.kind === 'end' ? <EndSummaryLine result={latest} /> : (

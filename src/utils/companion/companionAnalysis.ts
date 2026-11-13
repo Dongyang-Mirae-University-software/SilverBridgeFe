@@ -27,22 +27,32 @@ const FACE_LABEL: Record<string, string> = {
   CONTEMPT: '못마땅함',
 };
 
+// AI 값은 BE가 Map 그대로 넘겨 타입이 보장되지 않는다 - 문자열이 아니면 없는 값으로 본다(.trim() 예외로 화면이 깨지지 않게)
+function text(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
 // 표정 이름 - labelKo 우선, 없으면 매핑, 모르는 값·얼굴 없음은 "-"
 export function faceLabel(face: IWardCompanionTurnAnalysis['face']) {
   if (!face) return '-';
-  const ko = face.labelKo?.trim();
+  const ko = text(face.labelKo);
   if (ko) return ko;
-  return (face.label && FACE_LABEL[face.label.trim().toUpperCase()]) || '-';
+  const label = text(face.label);
+  return (label && FACE_LABEL[label.toUpperCase()]) || '-';
 }
 
 const ALERT_LABEL: Record<string, string> = { URGENT: '긴급', INFO: '안내' };
 
-function moodText(value: string | null | undefined) {
+function moodText(raw: unknown) {
+  const value = text(raw);
   if (!value) return '판단 불가';
   return MOOD_LABEL[value.toUpperCase()] ?? value;
 }
 
-function sourceText(value: string | null | undefined) {
+function sourceText(raw: unknown) {
+  const value = text(raw);
   if (!value) return '없음';
   return SOURCE_LABEL[value.toUpperCase()] ?? value;
 }
@@ -97,6 +107,11 @@ export function formatTurnAnalysis(turnNo: number, analysis: IWardCompanionTurnA
   return parts.join(' · ');
 }
 
+function alertText(raw: unknown) {
+  const value = text(raw);
+  return value ? (ALERT_LABEL[value.toUpperCase()] ?? value) : '없음';
+}
+
 export function formatResultAnalysis(analysis: IWardCompanionResultAnalysis) {
   const answered = count(analysis.answeredCount);
   const noResponse = count(analysis.noResponseCount);
@@ -108,7 +123,7 @@ export function formatResultAnalysis(analysis: IWardCompanionResultAnalysis) {
     `대화 기분: ${moodText(analysis.mood)}`,
     `턴 수: ${analysis.turnCount}${breakdown ? `(${breakdown})` : ''}`,
     `위험: ${analysis.riskFlag ? '있음' : '없음'}`,
-    `알림 단계: ${analysis.alertLevel ? (ALERT_LABEL[analysis.alertLevel] ?? analysis.alertLevel) : '없음'}`,
+    `알림 단계: ${alertText(analysis.alertLevel)}`,
   ].join(' · ');
 }
 
@@ -122,7 +137,7 @@ export type ResultTone = MoodTone | 'danger' | 'safe';
 export interface AnalysisSummary {
   kind: 'turn' | 'end';
   title: string; // "3번째" · "대화 마침"
-  rowLabel: string; // 지난 대답 표 첫 칸 "3번" · "마침"
+  rowLabel?: string; // 지난 대답 표 첫 칸 "3번"(턴만 - 마침은 표에 넣지 않는다)
   mood: string; // 기분 글자(한 번만 보인다)
   tone: MoodTone;
   // 턴: 말·표정·위험 / 마침: "6턴"·"위험 없음"·"알림 안내"(한 줄로 이어 붙인다)
@@ -136,8 +151,9 @@ const TONE_BY_LABEL: Record<string, MoodTone> = {
   JOY: 'joy', CALM: 'calm', WORRY: 'worry', DEPRESSED: 'depressed',
 };
 
-function toneOf(label: string | null | undefined): MoodTone {
-  return (label && TONE_BY_LABEL[label.toUpperCase()]) || (label && TONE_BY_LABEL[label]) || 'unknown';
+function toneOf(raw: unknown): MoodTone {
+  const label = text(raw);
+  return (label && (TONE_BY_LABEL[label.toUpperCase()] || TONE_BY_LABEL[label])) || 'unknown';
 }
 
 function shortFace(face: IWardCompanionTurnAnalysis['face']) {
@@ -176,16 +192,15 @@ export function summarizeTurnAnalysis(turnNo: number, analysis: IWardCompanionTu
 
 export function summarizeResultAnalysis(analysis: IWardCompanionResultAnalysis): AnalysisSummary {
   const mood = moodText(analysis.mood);
-  const alert = analysis.alertLevel ? (ALERT_LABEL[analysis.alertLevel] ?? analysis.alertLevel) : '없음';
+  const alert = alertText(analysis.alertLevel);
   const cells: AnalysisSummary['cells'] = [
     { label: '턴 수', value: `${analysis.turnCount}턴` },
     { label: '위험', value: `위험 ${analysis.riskFlag ? '있음' : '없음'}`, tone: analysis.riskFlag ? 'danger' : undefined },
-    { label: '알림', value: `알림 ${alert}`, tone: analysis.alertLevel === 'URGENT' ? 'danger' : undefined },
+    { label: '알림', value: `알림 ${alert}`, tone: alert === '긴급' ? 'danger' : undefined },
   ];
   return {
     kind: 'end',
     title: '대화 마침',
-    rowLabel: '마침',
     mood,
     tone: toneOf(analysis.mood),
     cells,
