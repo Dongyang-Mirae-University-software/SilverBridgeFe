@@ -145,6 +145,8 @@ export function WardCompanionContent() {
   const [consentSaving, setConsentSaving] = useState(false);
   const [consentError, setConsentError] = useState<string | null>(null);
   const withConsent = async (start: () => void) => {
+    // 시작 버튼을 누른 그 순간(await 전)에 소리 낼 권한을 얻어 둔다 - 동의 확인·대화 열기를 기다린 뒤에는 늦다(점검 L-1)
+    companionVoice.prime();
     let state = consent.data;
     if (!state) {
       try {
@@ -163,6 +165,8 @@ export function WardCompanionContent() {
   const handleConsentChoice = async (agree: boolean) => {
     const start = consentAsk;
     if (!start || consentSaving) return;
+    // "보여 줄게요"는 동의 저장을 기다린 뒤 시작하므로 누른 이 순간에 권한을 얻는다(점검 L-1)
+    companionVoice.prime();
     if (agree) {
       setConsentSaving(true);
       setConsentError(null);
@@ -336,8 +340,6 @@ export function WardCompanionContent() {
 
   const handleOpen = async () => {
     if (pending) return;
-    // 누른 이 순간에 소리 낼 권한을 얻어 둔다(질문 목소리는 몇 초 뒤에 온다)
-    companionVoice.prime();
     setPending('open');
     setNotice(null);
     try {
@@ -356,7 +358,6 @@ export function WardCompanionContent() {
   // [테스트 계정만] 고른 시간대의 고정 질문으로 시작한다. 테스트 푸시로 들어왔으면 주소의 시간대를 지운다
   const handleOpenTest = async (slot: string) => {
     if (pending) return;
-    companionVoice.prime();
     setPending('open');
     setTestNotice(null);
     setNotice(null);
