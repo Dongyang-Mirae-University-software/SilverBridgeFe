@@ -230,19 +230,22 @@
   display: grid;
   justify-items: center;
   gap: 14px;
-  border: 2px solid var(--sb-safe);
+  border: 1px solid var(--sb-line-soft);
   border-radius: 24px;
-  background: var(--sb-safe-soft);
-  padding: 32px 24px;
+  background: var(--sb-bg-soft);
+  padding: 28px 24px;
+  scroll-margin-top: 96px; /* 마칠 때 카드 위쪽에 맞춰 내린다 - 위 머리글에 가리지 않게 */
   text-align: center;
 }
-.endCard h2 { margin: 0; color: var(--sb-safe); font-size: calc(32px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); word-break: keep-all; }
+.endCard h2 { margin: 0; color: var(--sb-ink); font-size: calc(28px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); line-height: 1.35; word-break: keep-all; }
 
 /* 휴대폰 - 글자는 피보호자 화면 휴대폰 기준(20px)보다 줄이지 않는다 */
 @media (max-width: 640px) {
   .hero { padding: 26px 18px; }
   .hero h2 { font-size: calc(28px * var(--ward-font-scale, 1)); }
   .hero p, .endCard p { font-size: calc(21px * var(--ward-font-scale, 1)); }
+  .endCard { padding: 24px 18px; }
+  .endCard h2 { font-size: calc(24px * var(--ward-font-scale, 1)); }
   .startButton, .micButton { width: 100%; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 20px; }
   .talkSlot { font-size: calc(24px * var(--ward-font-scale, 1)); }
   .bubble { padding: 14px 16px; }
@@ -406,11 +409,15 @@
 .resultCell dd { margin: 0; font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); word-break: keep-all; }
 .resultDetail summary { display: inline-flex; min-width: 44px; min-height: 44px; padding: 0 4px; align-items: center; color: var(--sb-ink-mute); cursor: pointer; font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
 .resultDetail p { margin: 0; color: var(--sb-ink-soft); font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(600 + var(--ward-weight-boost, 0)); line-height: 1.5; word-break: keep-all; }
-.earlierTitle { color: var(--sb-ink-mute); font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
-.earlierResults { display: grid; min-height: 0; align-content: start; gap: 6px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
-.earlierResults li { display: grid; min-height: 40px; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; border-radius: 10px; background: var(--sb-bg); padding: 0 10px; font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
-.earlierNo { color: var(--sb-ink-mute); }
-.earlierLine { overflow: hidden; color: var(--sb-ink-soft); text-overflow: ellipsis; white-space: nowrap; }
+.endSummary { margin: 0; color: var(--sb-ink-soft); font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); line-height: 1.5; word-break: keep-all; }
+.endSummary strong { font-weight: calc(900 + var(--ward-weight-boost, 0)); }
+/* 지난 대답 표 - 턴 | 말 | 표정 | 결과. 칸이 많아지면 표만 안에서 내린다 */
+.earlierWrap { min-height: 0; flex: 1 1 auto; overflow-y: auto; }
+.earlierResults { width: 100%; border-collapse: collapse; font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
+.earlierResults thead th { position: sticky; top: 0; background: #fff; color: var(--sb-ink-mute); font-size: calc(13px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); padding: 4px 6px; text-align: left; }
+.earlierResults tbody th, .earlierResults td { border-top: 1px solid var(--sb-line-soft); padding: 8px 6px; text-align: left; white-space: nowrap; }
+.earlierResults tbody th { color: var(--sb-ink-mute); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
+.earlierResults td strong { font-weight: calc(900 + var(--ward-weight-boost, 0)); }
 /* 기분·결과 글자 색 - 보호자 기분 칩과 같은 색 */
 .moodText.joy { color: #a0732b; }
 .moodText.calm { color: var(--sb-brand); }
@@ -426,7 +433,7 @@
 .compactLabel .testBadge { margin: 0; }
 .latestLine { min-width: 0; color: var(--sb-ink-soft); font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
 .compactBody { display: grid; gap: 8px; padding: 0 14px 14px; }
-.compactBody .earlierResults { max-height: 240px; }
+.compactBody .earlierWrap { max-height: 240px; }
 
 /* 대화 내용 공유 동의 카드 - 카메라 묻기와 같은 모양 */
 .consentCard { display: grid; justify-items: center; gap: 14px; border: 2px solid var(--sb-brand); border-radius: 24px; background: var(--sb-brand-50); padding: 28px 24px; text-align: center; }
