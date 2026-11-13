@@ -582,7 +582,7 @@ describe('테스트 계정 (Chrome)', () => {
 
     await expect.element(page.getByRole('heading', { name: END_TITLE })).toBeVisible();
     const summary = document.querySelector('[class*="endSummary"]') as HTMLElement;
-    expect(summary.textContent).toBe('대화 마침 · 6턴 · 위험 없음 · 알림 안내 · 평온');
+    expect(summary.textContent).toBe('대화 마침 · 6턴 · 위험 없음 · 알림 없음 · 평온');
     // 칸 3개(턴 수·위험·알림)·"대화 마침" 카드 제목은 없다
     expect(side.getByText('턴 수', { exact: true }).elements()).toHaveLength(0);
     expect(side.element().querySelectorAll('[class*="resultCells"]')).toHaveLength(0);
@@ -762,8 +762,8 @@ describe('새 화면 배치 (Chrome)', () => {
     expect(Math.round(h2.getBoundingClientRect().height / parseFloat(getComputedStyle(h2).lineHeight))).toBe(2);
     expect(parseFloat(getComputedStyle(h2).fontSize)).toBeGreaterThanOrEqual(20);
     const card = h2.closest('section') as HTMLElement;
-    await expect.poll(() => card.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
-    expect(card.getBoundingClientRect().top).toBeLessThan(height);
+    // 부드러운 스크롤이 끝날 때까지 기다린다 - 카드 위가 화면 안(0 이상, 화면 높이 미만)
+    await expect.poll(() => { const top = card.getBoundingClientRect().top; return top >= 0 && top < height; }, { timeout: 5000 }).toBe(true);
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
   });
 
@@ -793,6 +793,27 @@ describe('새 화면 배치 (Chrome)', () => {
       expect(rowCells(turnRows(wrap.querySelector('table') as HTMLTableElement)[0])).toEqual(['1번', '판단 안 함', '판단 못 함', '판단 안 함 · 위험']);
       expect(wrap.scrollWidth).toBeLessThanOrEqual(wrap.clientWidth);
       expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
+    } finally {
+      document.documentElement.style.removeProperty('--ward-font-scale');
+    }
+  });
+
+  // 2026-11-13 실서버: 1280×800·글자 1.471배에서 카메라 안내 칸(240px)에 밀려 표 영역이 31px(머리줄만)로 눌렸다
+  it.each(['1', '1.471'])('태블릿(1280×800, 글자 %s배): 지난 대답 표는 머리줄과 첫 줄이 함께 보이는 높이를 지킨다', async scale => {
+    await page.viewport(1280, 800);
+    document.documentElement.style.setProperty('--ward-font-scale', scale);
+    try {
+      await startTestTalk();
+      for (const text of ['하나', '둘']) await answer(text);
+      const side = page.getByRole('complementary', { name: '카메라와 판정 결과' });
+      await expect.element(side.getByText('방금 대답 · 2번째')).toBeVisible();
+      const wrap = side.element().querySelector('[class*="earlierWrap"]') as HTMLElement;
+      const table = wrap.querySelector('table') as HTMLTableElement;
+      const needed = table.tHead!.getBoundingClientRect().height + turnRows(table)[0].getBoundingClientRect().height;
+      expect(wrap.clientHeight).toBeGreaterThanOrEqual(Math.floor(needed));
+      // 오른쪽 칸 밖으로 넘치지 않는다 - 모자라면 판정 칸 안에서 스크롤
+      const aside = side.element().getBoundingClientRect();
+      expect(side.element().querySelector('[class*="testResults"]')!.getBoundingClientRect().bottom).toBeLessThanOrEqual(aside.bottom + 1);
     } finally {
       document.documentElement.style.removeProperty('--ward-font-scale');
     }

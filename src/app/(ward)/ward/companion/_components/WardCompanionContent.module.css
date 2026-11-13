@@ -412,7 +412,10 @@
 .endSummary { margin: 0; color: var(--sb-ink-soft); font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); line-height: 1.5; word-break: keep-all; }
 .endSummary strong { font-weight: calc(900 + var(--ward-weight-boost, 0)); }
 /* 지난 대답 표 - 턴 | 말 | 표정 | 결과. 칸이 많아지면 표만 안에서 내린다 */
-.earlierWrap { min-height: 0; flex: 1 1 auto; overflow-y: auto; }
+/* 태블릿 오른쪽 칸은 높이가 정해져 있고 카메라 안내 칸(240px)이 먼저 자리를 잡는다 - 표가 0까지 눌리지 않게
+   머리줄 + 한 줄 높이를 하한으로 두고, 모자라면 판정 칸 전체를 스크롤한다(글자 1.471배·800px 높이에서 표가 31px로 눌렸다) */
+.earlierWrap { min-height: calc(76px * var(--ward-font-scale, 1)); flex: 1 1 auto; overflow-y: auto; }
+.testResults:not(.compact) { overflow-y: auto; }
 .earlierResults { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
 .earlierResults thead th { position: sticky; top: 0; background: #fff; color: var(--sb-ink-mute); font-size: calc(13px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); padding: 4px 6px; text-align: left; }
 /* 칸은 줄바꿈을 허용한다(낱말 단위) - nowrap 이면 글자 크게(1.471배)에서 표가 칸보다 넓어져 태블릿은 페이지 전체가 가로로 밀렸다 */

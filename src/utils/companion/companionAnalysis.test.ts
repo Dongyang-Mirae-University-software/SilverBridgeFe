@@ -55,7 +55,7 @@ describe('테스트 판정 결과 문장', () => {
 
   it('대화 판정 - 기분 null은 판단 불가', () => {
     expect(formatResultAnalysis({ mood: null, turnCount: 3, riskFlag: false, alertLevel: 'INFO' }))
-      .toBe('대화 마침 · 대화 기분: 판단 불가 · 턴 수: 3 · 위험: 없음 · 알림 단계: 안내');
+      .toBe('대화 마침 · 대화 기분: 판단 불가 · 턴 수: 3 · 위험: 없음 · 알림 단계: 없음(INFO)');
   });
 });
 
@@ -89,7 +89,8 @@ describe('summarizeTurnAnalysis·summarizeResultAnalysis (판정 칸)', () => {
     expect(s).toMatchObject({ kind: 'end', title: '대화 마침', mood: '걱정', tone: 'worry', line: '대화 마침 · 8턴 · 위험 있음 · 알림 긴급' });
     expect(s.cells.map(c => c.tone)).toEqual([undefined, 'danger', 'danger']);
     const calm = summarizeResultAnalysis({ mood: 'CALM', turnCount: 6, riskFlag: false, alertLevel: 'INFO' });
-    expect(calm.line).toBe('대화 마침 · 6턴 · 위험 없음 · 알림 안내');
+    expect(calm.line).toBe('대화 마침 · 6턴 · 위험 없음 · 알림 없음'); // INFO = 알림 없이 기록만(점검 L-4)
+    expect(summarizeResultAnalysis({ mood: 'CALM', turnCount: 3, riskFlag: false, alertLevel: 'NOTICE' }).line).toBe('대화 마침 · 3턴 · 위험 없음 · 알림 주의');
     expect(summarizeResultAnalysis({ mood: 'CALM', turnCount: 2, riskFlag: false, alertLevel: null }).line).toBe('대화 마침 · 2턴 · 위험 없음 · 알림 없음');
   });
 });

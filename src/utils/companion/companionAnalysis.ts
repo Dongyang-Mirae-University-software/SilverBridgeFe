@@ -43,7 +43,9 @@ export function faceLabel(face: IWardCompanionTurnAnalysis['face']) {
   return (label && FACE_LABEL[label.toUpperCase()]) || '-';
 }
 
-const ALERT_LABEL: Record<string, string> = { URGENT: '긴급', INFO: '안내' };
+// 알림 단계 - BE는 AI 판정을 URGENT 아니면 INFO로 저장한다(CompanionSession). INFO는 "알림 없이 기록만"이라 "없음"으로 읽는다
+// (2026-11-13 점검 L-4: "안내"로 보여 알림이 나간 것처럼 읽혔다). NOTICE(주의)는 BE가 따로 계산해 지금은 오지 않지만 대비해 둔다
+const ALERT_LABEL: Record<string, string> = { URGENT: '긴급', NOTICE: '주의', INFO: '없음' };
 
 function moodText(raw: unknown) {
   const value = text(raw);
@@ -112,6 +114,13 @@ function alertText(raw: unknown) {
   return value ? (ALERT_LABEL[value.toUpperCase()] ?? value) : '없음';
 }
 
+// 자세히 - 판정 근거 확인용으로 원래 코드를 괄호에 남긴다("없음(INFO)")
+function alertDetail(raw: unknown) {
+  const value = text(raw);
+  const label = alertText(raw);
+  return value && label !== value ? `${label}(${value})` : label;
+}
+
 export function formatResultAnalysis(analysis: IWardCompanionResultAnalysis) {
   const answered = count(analysis.answeredCount);
   const noResponse = count(analysis.noResponseCount);
@@ -123,13 +132,13 @@ export function formatResultAnalysis(analysis: IWardCompanionResultAnalysis) {
     `대화 기분: ${moodText(analysis.mood)}`,
     `턴 수: ${analysis.turnCount}${breakdown ? `(${breakdown})` : ''}`,
     `위험: ${analysis.riskFlag ? '있음' : '없음'}`,
-    `알림 단계: ${alertText(analysis.alertLevel)}`,
+    `알림 단계: ${alertDetail(analysis.alertLevel)}`,
   ].join(' · ');
 }
 
 // ---- 화면 칸용 요약 ----
 // 턴: 방금 대답 카드(기분 글자 + 말·표정·위험 3칸)와 지난 대답 표(턴 | 말 | 표정 | 결과)
-// 마침: 한 줄("대화 마침 · 6턴 · 위험 없음 · 알림 안내 · 평온") - 칸으로 나누면 같은 내용이 반복된다
+// 마침: 한 줄("대화 마침 · 6턴 · 위험 없음 · 알림 없음 · 평온") - 칸으로 나누면 같은 내용이 반복된다
 
 export type MoodTone = 'joy' | 'calm' | 'worry' | 'depressed' | 'unknown';
 export type ResultTone = MoodTone | 'danger' | 'safe';
@@ -140,9 +149,9 @@ export interface AnalysisSummary {
   rowLabel?: string; // 지난 대답 표 첫 칸 "3번"(턴만 - 마침은 표에 넣지 않는다)
   mood: string; // 기분 글자(한 번만 보인다)
   tone: MoodTone;
-  // 턴: 말·표정·위험 / 마침: "6턴"·"위험 없음"·"알림 안내"(한 줄로 이어 붙인다)
+  // 턴: 말·표정·위험 / 마침: "6턴"·"위험 없음"·"알림 없음"(한 줄로 이어 붙인다)
   cells: { label: string; value: string; tone?: ResultTone }[];
-  line: string; // 기분을 뺀 한 줄 "말 걱정 · 표정 무표정" · "대화 마침 · 6턴 · 위험 없음 · 알림 안내"
+  line: string; // 기분을 뺀 한 줄 "말 걱정 · 표정 무표정" · "대화 마침 · 6턴 · 위험 없음 · 알림 없음"
   detail: string; // 자세히 - 기존 한 줄 문구(확신·근거·신호 포함)
 }
 
