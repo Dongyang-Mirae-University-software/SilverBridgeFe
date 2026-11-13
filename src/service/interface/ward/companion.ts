@@ -44,7 +44,8 @@ export interface IWardCompanionTurnAnalysis {
   turnSource: string | null; // TEXT·FACE·NO_RESPONSE 등
   face?: {
     usable?: boolean;
-    label?: string | null;
+    label?: string | null; // HSEmotion 8종 원문(Neutral·Sadness …)
+    labelKo?: string | null; // AI가 한국어 표정 이름을 주면 그대로 쓴다(없으면 FE 매핑)
     confidence?: number | null;
     frameCount?: number | null;
     totalFrames?: number | null;

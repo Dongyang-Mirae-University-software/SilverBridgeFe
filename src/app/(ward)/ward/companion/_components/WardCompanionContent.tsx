@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 import Link from 'next/link';
@@ -197,11 +197,14 @@ export function WardCompanionContent() {
   useEffect(() => stopSpeaking, []);
 
   // 새 말이 붙으면 대답 버튼까지 보이게 아래로 내린다 - 대화가 길어지면 버튼이 화면 밖으로 밀린다
+  // 대화를 마치면 마침 카드 위쪽에 맞춘다 - 맨 아래(판정 칸 밑)에 맞추면 폰에서 카드 윗부분이 화면 밖으로 밀린다
   const bottomRef = useRef<HTMLDivElement>(null);
+  const endCardRef = useRef<HTMLElement>(null);
   const lineCount = talk?.lines.length ?? 0;
   const ended = talk?.ended ?? false;
   useEffect(() => {
-    if (lineCount > 1 || ended) bottomRef.current?.scrollIntoView?.({ block: 'end', behavior: 'smooth' });
+    if (ended) endCardRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    else if (lineCount > 1) bottomRef.current?.scrollIntoView?.({ block: 'end', behavior: 'smooth' });
   }, [lineCount, ended]);
 
   const nextLine = (who: Line['who'], text: string, heard?: boolean): Line => ({ id: ++lineId.current, who, text, heard });
@@ -511,8 +514,9 @@ export function WardCompanionContent() {
           </ol>
 
           {talk.ended ? (
-            <section className={cx('endCard')} aria-labelledby="companion-end-title">
-              <h2 id="companion-end-title">오늘도 이야기 나눠 주셔서 고마워요</h2>
+            <section ref={endCardRef} className={cx('endCard')} aria-labelledby="companion-end-title">
+              <MoodFace mood="happy" size={wide ? 96 : 72} />
+              <h2 id="companion-end-title">오늘도 이야기 나눠 주셔서<br />고마워요</h2>
               <p>시간이 되면 또 알려 드릴게요.</p>
               <button className={cx('primaryButton')} type="button" onClick={closeTalk}>{testMode ? '처음 화면으로' : '홈으로'}</button>
             </section>
@@ -768,16 +772,40 @@ function CameraPanel({ stream }: { stream: MediaStream | null }) {
   );
 }
 
-// [테스트] 턴마다·마치기 뒤 판정 결과 - 화면 메모리에만. 방금 결과는 칸으로(기분 글자 + 말·표정·위험), 지난 결과는 한 줄씩(최근 것부터).
+// [테스트] 턴마다·마치기 뒤 판정 결과 - 화면 메모리에만. 방금 턴은 칸으로(기분 글자 + 말·표정·위험),
+// 마침은 한 줄로("대화 마침 · 6턴 · 위험 없음 · 알림 안내 · 평온"), 지난 대답은 표(턴 | 말 | 표정 | 결과, 최근 것부터) - 기분은 한 번만.
 // 기존 한 줄 문구(확신·근거·신호)는 '자세히'에 남긴다 - 테스트하는 사람이 판정 근거를 확인할 수 있게.
 // 폰(compact)은 방금 결과 한 줄을 접기 줄로 보이고 눌러서 편다
+function EndSummaryLine({ result }: { result: TestResult }) {
+  return (
+    <>
+      대화 마침
+      {result.cells.map(cell => (
+        <Fragment key={cell.label}> · <span className={cx('moodText', cell.tone)}>{cell.value}</span></Fragment>
+      ))}
+      {' · '}<strong className={cx('moodText', result.tone)}>{result.mood}</strong>
+    </>
+  );
+}
+
 function TestResults({ results, compact = false }: { results: TestResult[]; compact?: boolean }) {
   const latest = results.at(-1);
-  const earlier = results.slice(0, -1).reverse();
-  const latestCard = latest && (
+  const earlier = results.slice(0, -1).filter(item => item.kind === 'turn').reverse();
+  const detail = latest && (
+    <details className={cx('resultDetail')}>
+      <summary>자세히</summary>
+      <p>{latest.detail}</p>
+    </details>
+  );
+  const latestCard = latest && (latest.kind === 'end' ? (
+    <div className={cx('latestCard')}>
+      <p className={cx('endSummary')}><EndSummaryLine result={latest} /></p>
+      {detail}
+    </div>
+  ) : (
     <div className={cx('latestCard')}>
       <div className={cx('latestHead')}>
-        <span className={cx('latestLabel')}>{latest.rowLabel === '마침' ? latest.title : `방금 대답 · ${latest.title}`}</span>
+        <span className={cx('latestLabel')}>방금 대답 · {latest.title}</span>
         <strong className={cx('moodText', latest.tone)}>{latest.mood}</strong>
       </div>
       <dl className={cx('resultCells')}>
@@ -788,25 +816,33 @@ function TestResults({ results, compact = false }: { results: TestResult[]; comp
           </div>
         ))}
       </dl>
-      <details className={cx('resultDetail')}>
-        <summary>자세히</summary>
-        <p>{latest.detail}</p>
-      </details>
+      {detail}
     </div>
-  );
-  const earlierList = earlier.length > 0 && (
-    <>
-      <span className={cx('earlierTitle')}>지난 대답</span>
-      <ol className={cx('earlierResults')} aria-label="지난 대답 판정">
-        {earlier.map(item => (
-          <li key={item.id} title={item.detail}>
-            <span className={cx('earlierNo')}>{item.rowLabel}</span>
-            <span className={cx('earlierLine')}>{item.line}</span>
-            <strong className={cx('moodText', item.tone)}>{item.mood}</strong>
-          </li>
-        ))}
-      </ol>
-    </>
+  ));
+  const earlierTable = earlier.length > 0 && (
+    <div className={cx('earlierWrap')}>
+      <table className={cx('earlierResults')} aria-label="지난 대답 판정">
+        <thead>
+          <tr><th scope="col">턴</th><th scope="col">말</th><th scope="col">표정</th><th scope="col">결과</th></tr>
+        </thead>
+        <tbody>
+          {earlier.map(item => {
+            const [speech, face, risk] = item.cells;
+            return (
+              <tr key={item.id} title={item.detail}>
+                <th scope="row">{item.rowLabel}</th>
+                <td className={cx('moodText', speech?.tone)}>{speech?.value}</td>
+                <td className={cx('moodText', face?.tone)}>{face?.value}</td>
+                <td>
+                  <strong className={cx('moodText', item.tone)}>{item.mood}</strong>
+                  {risk?.value === '있음' && <span className={cx('moodText', 'danger')}> · 위험</span>}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 
   if (compact) {
@@ -818,19 +854,19 @@ function TestResults({ results, compact = false }: { results: TestResult[]; comp
           <summary>
             <span className={cx('compactLabel')}>
               <span className={cx('testBadge', 'small')}>테스트</span>
-              방금 대답 판정
+              {latest?.kind === 'end' ? '대화 마침 판정' : '방금 대답 판정'}
             </span>
             <span className={cx('latestLine')} aria-live="polite">
-              {latest ? (
+              {!latest ? '대답하면 판정 결과가 여기에 나와요.' : latest.kind === 'end' ? <EndSummaryLine result={latest} /> : (
                 <>
                   {latest.line} · <strong className={cx('moodText', latest.tone)}>{latest.mood}</strong>
                 </>
-              ) : '대답하면 판정 결과가 여기에 나와요.'}
+              )}
             </span>
           </summary>
           <div className={cx('compactBody')}>
-            {latestCard}
-            {earlierList}
+            {latest?.kind === 'end' ? detail : latestCard}
+            {earlierTable}
           </div>
         </details>
       </section>
@@ -844,7 +880,7 @@ function TestResults({ results, compact = false }: { results: TestResult[]; comp
         <span className={cx('testBadge', 'small')}>테스트</span>
       </div>
       {latestCard ?? <p className={cx('resultsEmpty')}>대답하면 판정 결과가 여기에 나와요.</p>}
-      {earlierList}
+      {earlierTable}
     </section>
   );
 }

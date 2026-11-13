@@ -143,10 +143,12 @@ const CONSENT_NEW: IWardCompanionTranscriptConsent = {
   retentionDays: 30,
   notice: ['수집 목적: 가족이 안부 대화를 함께 보기 위해', '보유 기간: 30일'],
 };
+// 마침 제목은 "주셔서" 뒤에서 일부러 줄을 나눈다(<br>)
+const END_TITLE = /오늘도 이야기 나눠 주셔서\s*고마워요/;
 const TURN_ANALYSIS = {
   turnLabel: '걱정',
   turnSource: 'TEXT_FACE',
-  face: { usable: true, label: '평온', confidence: 0.8, frameCount: 3, totalFrames: 3, facesFound: 3 },
+  face: { usable: true, label: 'Neutral', confidence: 0.8, frameCount: 3, totalFrames: 3, facesFound: 3 },
   riskFlag: false,
   signals: null,
 };
@@ -304,7 +306,7 @@ describe('대화 (Chrome)', () => {
     await page.getByRole('textbox', { name: '대답 적기' }).fill('응');
     await page.getByRole('button', { name: '보내기' }).click();
 
-    await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: END_TITLE })).toBeVisible();
     expect(api.finish).not.toHaveBeenCalled();
     expect(page.getByRole('button', { name: '대화 그만하기' }).elements()).toHaveLength(0);
   });
@@ -314,7 +316,7 @@ describe('대화 (Chrome)', () => {
     await openTalk();
     await page.getByRole('button', { name: '대화 그만하기' }).click();
 
-    await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: END_TITLE })).toBeVisible();
     expect(api.finish).toHaveBeenCalledWith(42);
     expect(page.getByText('다음 안부는', { exact: false }).elements()).toHaveLength(0);
     await page.getByRole('button', { name: '홈으로' }).click();
@@ -325,7 +327,7 @@ describe('대화 (Chrome)', () => {
     api.finish.mockResolvedValue({ sessionId: 42, slot: '12:00', endReason: 'USER_STOP', mood: null, turnCount: 0 });
     await openTalk();
     await page.getByRole('button', { name: '대화 그만하기' }).click();
-    await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: END_TITLE })).toBeVisible();
     // 마친 화면을 보는 동안에는 시간대가 닫혀도 머문다
     api.today.mockResolvedValue(today(null, ['DONE', 'DONE', 'UPCOMING', 'UPCOMING', 'UPCOMING']));
     expect(nav.replace).not.toHaveBeenCalledWith('/ward');
@@ -487,7 +489,7 @@ describe('표정 사진 (Chrome)', () => {
     await expect.element(page.getByText('카메라 켜짐')).toBeVisible();
     await page.getByRole('button', { name: '대화 그만하기' }).click();
 
-    await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: END_TITLE })).toBeVisible();
     await vi.waitFor(() => cameraTracks.forEach(track => expect(track.readyState).toBe('ended')));
     expect(api.replyAudio).not.toHaveBeenCalled();
   });
@@ -544,13 +546,70 @@ describe('테스트 계정 (Chrome)', () => {
     await page.getByRole('textbox', { name: '대답 적기' }).fill('좀 걱정돼');
     await page.getByRole('button', { name: '보내기' }).click();
     await expect.element(page.getByText(
-      '1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 표정: 평온(사진 3장 중 얼굴 3, 확신 80%) · 위험: 없음',
+      '1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 표정: 무표정(사진 3장 중 얼굴 3, 확신 80%) · 위험: 없음',
     )).toBeInTheDocument();
 
     await page.getByRole('button', { name: '대화 그만하기' }).click();
     await expect.element(page.getByText(
       '대화 마침 · 대화 기분: 걱정 · 턴 수: 1(대답 1·무응답 0) · 위험: 없음 · 알림 단계: 없음',
     )).toBeInTheDocument();
+  });
+
+  it('마친 뒤 판정은 한 줄("대화 마침 · N턴 · 위험 · 알림 · 기분") - 칸·제목을 되풀이하지 않는다', async () => {
+    await page.viewport(1280, 800);
+    api.today.mockResolvedValue(TEST_TODAY);
+    api.replyText.mockResolvedValue({ turnNo: 1, reply: '그러셨군요.', ended: false, endReason: null, transcript: null,
+      analysis: { ...TURN_ANALYSIS, turnLabel: 'CALM', face: { ...TURN_ANALYSIS.face, label: 'Sadness' } } });
+    api.finish.mockResolvedValue({
+      sessionId: 42, slot: '15:00', endReason: 'USER_STOP', mood: 'CALM', turnCount: 6,
+      analysis: { mood: 'CALM', turnCount: 6, answeredCount: 6, noResponseCount: 0, riskFlag: false, alertLevel: 'INFO', test: true },
+    });
+    await renderCompanion();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
+    await page.getByRole('button', { name: '글로 대답하기' }).click();
+    await page.getByRole('textbox', { name: '대답 적기' }).fill('그냥 그래');
+    await page.getByRole('button', { name: '보내기' }).click();
+    const side = page.getByRole('complementary', { name: '카메라와 판정 결과' });
+    await expect.element(side.getByText('방금 대답 · 1번째')).toBeVisible();
+    await page.getByRole('button', { name: '대화 그만하기' }).click();
+
+    await expect.element(page.getByRole('heading', { name: END_TITLE })).toBeVisible();
+    const summary = document.querySelector('[class*="endSummary"]') as HTMLElement;
+    expect(summary.textContent).toBe('대화 마침 · 6턴 · 위험 없음 · 알림 안내 · 평온');
+    // 칸 3개(턴 수·위험·알림)·"대화 마침" 카드 제목은 없다
+    expect(side.getByText('턴 수', { exact: true }).elements()).toHaveLength(0);
+    expect(side.element().querySelectorAll('[class*="resultCells"]')).toHaveLength(0);
+    // 접힌 '자세히'(판정 근거 원문)를 빼고 보이는 글에서 "대화 마침"은 한 번
+    const visible = side.element().cloneNode(true) as HTMLElement;
+    visible.querySelectorAll('details[class*="resultDetail"] p').forEach(node => node.remove());
+    expect(visible.textContent?.match(/대화 마침/g)).toHaveLength(1);
+    // 지난 대답 표에는 턴만, 표정은 한국어
+    const rows = [...(side.getByRole('table', { name: '지난 대답 판정' }).element() as HTMLTableElement).tBodies[0].rows];
+    expect([...rows[0].cells].map(cell => cell.textContent)).toEqual(['1번', '없음', '슬픔', '평온']);
+    expect(side.element().textContent).not.toMatch(/Sadness|Neutral/);
+  });
+
+  it('표정은 labelKo가 오면 그대로, 모르는 값은 "-"', async () => {
+    api.today.mockResolvedValue(TEST_TODAY);
+    api.replyText
+      .mockResolvedValueOnce({ turnNo: 1, reply: '네.', ended: false, endReason: null, transcript: null,
+        analysis: { ...TURN_ANALYSIS, face: { ...TURN_ANALYSIS.face, label: 'Neutral', labelKo: '담담함' } } })
+      .mockResolvedValueOnce({ turnNo: 2, reply: '네.', ended: false, endReason: null, transcript: null,
+        analysis: { ...TURN_ANALYSIS, face: { ...TURN_ANALYSIS.face, label: 'Confused' } } });
+    await page.viewport(1280, 800);
+    await renderCompanion();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
+    await page.getByRole('button', { name: '글로 대답하기' }).click();
+    for (const text of ['하나', '둘']) {
+      await page.getByRole('textbox', { name: '대답 적기' }).fill(text);
+      await page.getByRole('button', { name: '보내기' }).click();
+    }
+    const side = page.getByRole('complementary', { name: '카메라와 판정 결과' });
+    await expect.element(side.getByText('방금 대답 · 2번째')).toBeVisible();
+    const cells = [...side.element().querySelectorAll('[class*="resultCell"] dd')].map(dd => dd.textContent);
+    expect(cells[1]).toBe('-');
+    const row = (side.getByRole('table', { name: '지난 대답 판정' }).element() as HTMLTableElement).tBodies[0].rows[0];
+    expect(row.cells[2].textContent).toBe('담담함');
   });
 
   async function sendTestTurn(textMood: unknown) {
@@ -567,7 +626,7 @@ describe('테스트 계정 (Chrome)', () => {
   it('턴 결과에 말로 본 기분(확신)을 표정 앞에 보여 준다', async () => {
     await sendTestTurn({ label: 'WORRY', turnLabel: '슬픔', confidence: 0.82, usable: true, reason: null });
     await expect.element(page.getByText(
-      '1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 말로 본 기분: 슬픔(확신 82%) · 표정: 평온(사진 3장 중 얼굴 3, 확신 80%) · 위험: 없음',
+      '1번째 대답 · 턴 기분: 걱정 · 근거: 말+표정 · 말로 본 기분: 슬픔(확신 82%) · 표정: 무표정(사진 3장 중 얼굴 3, 확신 80%) · 위험: 없음',
     )).toBeInTheDocument();
   });
 
@@ -682,6 +741,25 @@ describe('새 화면 배치 (Chrome)', () => {
     expect(second.getBoundingClientRect().top).toBeGreaterThan(first.getBoundingClientRect().top);
   });
 
+  it.each([[375, 812], [768, 1024], [1280, 800]])('마침 카드(%i×%i): 제목은 "주셔서" 뒤에서만 두 줄, 카드 위가 화면 안, 가로 넘침 없음', async (width, height) => {
+    await page.viewport(width, height);
+    await startTestTalk();
+    for (let i = 1; i <= 6; i += 1) await answer(`대답 ${i}`);
+    await expect.element(page.getByText('6번째 대답 · 턴 기분', { exact: false }).first()).toBeInTheDocument();
+    await page.getByRole('button', { name: '대화 그만하기' }).click();
+
+    const title = page.getByRole('heading', { name: END_TITLE });
+    await expect.element(title).toBeVisible();
+    const h2 = title.element() as HTMLElement;
+    expect(h2.querySelectorAll('br')).toHaveLength(1);
+    expect(Math.round(h2.getBoundingClientRect().height / parseFloat(getComputedStyle(h2).lineHeight))).toBe(2);
+    expect(parseFloat(getComputedStyle(h2).fontSize)).toBeGreaterThanOrEqual(20);
+    const card = h2.closest('section') as HTMLElement;
+    await expect.poll(() => card.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+    expect(card.getBoundingClientRect().top).toBeLessThan(height);
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
+  });
+
   it('폰(390×844): 머리에 진행 점, 아래 줄에 글로 대답하기 | 대화 그만하기, 판정은 접힌 한 줄', async () => {
     await page.viewport(390, 844);
     await startTestTalk();
@@ -692,7 +770,7 @@ describe('새 화면 배치 (Chrome)', () => {
     expect(page.getByRole('complementary').elements()).toHaveLength(0);
     expect(document.querySelectorAll('[class*="progressDots"] i')).toHaveLength(8);
     await expect.element(page.getByText('방금 대답 판정')).toBeVisible();
-    await expect.element(page.getByText('말 없음 · 표정 평온', { exact: false })).toBeVisible();
+    await expect.element(page.getByText('말 없음 · 표정 무표정', { exact: false })).toBeVisible();
     const details = document.querySelector('details') as HTMLDetailsElement;
     expect(details.open).toBe(false);
   });
@@ -711,13 +789,15 @@ describe('새 화면 배치 (Chrome)', () => {
     expect(page.getByRole('region', { name: '대답하기' }).getByRole('button', { name: '대화 그만하기' }).elements()).toHaveLength(0);
     await expect.element(side.getByText('방금 대답 · 8번째')).toBeVisible();
     await expect.element(side.getByText('8번째 대답 · 턴 기분', { exact: false })).toBeInTheDocument();
-    const earlier = side.getByRole('list', { name: '지난 대답 판정' }).getByRole('listitem').elements();
-    expect(earlier).toHaveLength(7);
-    expect(earlier[0].textContent).toMatch(/^7번/);
-    expect(earlier[6].textContent).toMatch(/^1번/);
-    // 지난 대답은 'N번 · 말·표정 · 기분' 한 줄(말·표정 글은 넘치면 줄임)
-    expect(earlier[0].textContent).toContain('말 없음 · 표정 평온');
-    expect(getComputedStyle(earlier[0].querySelector('[class*="earlierLine"]') as Element).whiteSpace).toBe('nowrap');
+    const table = side.getByRole('table', { name: '지난 대답 판정' }).element() as HTMLTableElement;
+    // 지난 대답은 표(턴 | 말 | 표정 | 결과) - 기분은 결과 칸에 한 번만
+    expect([...table.tHead!.rows[0].cells].map(cell => cell.textContent)).toEqual(['턴', '말', '표정', '결과']);
+    const rows = [...table.tBodies[0].rows];
+    expect(rows).toHaveLength(7);
+    expect(rows[0].cells[0].textContent).toBe('7번');
+    expect(rows[6].cells[0].textContent).toBe('1번');
+    expect([...rows[0].cells].map(cell => cell.textContent)).toEqual(['7번', '없음', '무표정', '걱정']);
+    expect(rows[0].textContent?.match(/걱정/g)).toHaveLength(1);
   });
 
   it('대화 그만하기는 위치만 옮겼고 마치기(USER_STOP)를 부른다', async () => {
@@ -725,7 +805,7 @@ describe('새 화면 배치 (Chrome)', () => {
     api.finish.mockResolvedValue({ sessionId: 42, slot: '15:00', endReason: 'USER_STOP', mood: null, turnCount: 0 });
     await startTestTalk();
     await page.getByRole('complementary').getByRole('button', { name: '대화 그만하기' }).click();
-    await expect.element(page.getByRole('heading', { name: '오늘도 이야기 나눠 주셔서 고마워요' })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: END_TITLE })).toBeVisible();
     expect(api.finish).toHaveBeenCalledWith(42);
   });
 });

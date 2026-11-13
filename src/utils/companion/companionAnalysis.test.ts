@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatResultAnalysis, formatTurnAnalysis, summarizeResultAnalysis, summarizeTurnAnalysis } from './companionAnalysis';
+import { faceLabel, formatResultAnalysis, formatTurnAnalysis, summarizeResultAnalysis, summarizeTurnAnalysis } from './companionAnalysis';
 
 describe('테스트 판정 결과 문장', () => {
   it('턴 판정을 한 줄로 옮긴다', () => {
     expect(formatTurnAnalysis(2, {
       turnLabel: '기쁨',
       turnSource: 'FACE',
-      face: { usable: true, label: '기쁨', confidence: 0.91, frameCount: 4, totalFrames: 5, facesFound: 4 },
+      face: { usable: true, label: 'Happiness', confidence: 0.91, frameCount: 4, totalFrames: 5, facesFound: 4 },
       riskFlag: true,
       signals: { sleep: '나쁨', riskFlag: true, pain: null, lonely: false },
     })).toBe('2번째 대답 · 턴 기분: 기쁨 · 근거: 표정 · 표정: 기쁨(사진 5장 중 얼굴 4, 확신 91%) · 위험: 있음 · 신호: sleep=나쁨, riskFlag');
@@ -63,13 +63,13 @@ describe('summarizeTurnAnalysis·summarizeResultAnalysis (판정 칸)', () => {
   it('턴 판정을 기분 글자·말·표정·위험 칸으로 나누고, 자세히에는 기존 한 줄 문구를 둔다', () => {
     const s = summarizeTurnAnalysis(2, {
       turnLabel: '우울', turnSource: 'TEXT_FACE', riskFlag: false, signals: null,
-      face: { usable: true, label: '평온', confidence: 0.8, totalFrames: 3, facesFound: 3 },
+      face: { usable: true, label: 'Neutral', confidence: 0.8, totalFrames: 3, facesFound: 3 },
       textMood: { label: 'DEPRESSED', turnLabel: '우울', confidence: 0.9, usable: true, reason: null },
     });
-    expect(s).toMatchObject({ title: '2번째', rowLabel: '2번', mood: '우울', tone: 'depressed', line: '말 우울 · 표정 평온' });
+    expect(s).toMatchObject({ title: '2번째', rowLabel: '2번', mood: '우울', tone: 'depressed', line: '말 우울 · 표정 무표정' });
     expect(s.cells).toEqual([
       { label: '말', value: '우울', tone: 'depressed' },
-      { label: '표정', value: '평온', tone: 'calm' },
+      { label: '표정', value: '무표정', tone: 'unknown' },
       { label: '위험', value: '없음', tone: 'safe' },
     ]);
     expect(s.detail).toContain('말로 본 기분: 우울(확신 90%)');
@@ -83,9 +83,37 @@ describe('summarizeTurnAnalysis·summarizeResultAnalysis (판정 칸)', () => {
     expect(s.cells[2].tone).toBe('danger');
   });
 
-  it('대화 마침은 턴 수·위험·알림 칸', () => {
+  it('대화 마침은 한 줄 - 턴 수·위험·알림을 이어 붙이고 기분은 따로 한 번', () => {
     const s = summarizeResultAnalysis({ mood: 'WORRY', turnCount: 8, riskFlag: true, alertLevel: 'URGENT' });
-    expect(s).toMatchObject({ title: '대화 마침', rowLabel: '마침', mood: '걱정', tone: 'worry', line: '턴 8 · 위험 있음' });
-    expect(s.cells.map(c => `${c.label}:${c.value}`)).toEqual(['턴 수:8', '위험:있음', '알림:긴급']);
+    expect(s).toMatchObject({ kind: 'end', title: '대화 마침', mood: '걱정', tone: 'worry', line: '대화 마침 · 8턴 · 위험 있음 · 알림 긴급' });
+    expect(s.cells.map(c => c.tone)).toEqual([undefined, 'danger', 'danger']);
+    const calm = summarizeResultAnalysis({ mood: 'CALM', turnCount: 6, riskFlag: false, alertLevel: 'INFO' });
+    expect(calm.line).toBe('대화 마침 · 6턴 · 위험 없음 · 알림 안내');
+    expect(summarizeResultAnalysis({ mood: 'CALM', turnCount: 2, riskFlag: false, alertLevel: null }).line).toBe('대화 마침 · 2턴 · 위험 없음 · 알림 없음');
+  });
+});
+
+describe('faceLabel (표정 한국어)', () => {
+  it('labelKo가 있으면 그대로 쓴다', () => {
+    expect(faceLabel({ usable: true, label: 'Neutral', labelKo: '담담함' })).toBe('담담함');
+  });
+
+  it('labelKo가 없으면 HSEmotion 8종을 한국어로 바꾼다(대소문자 무시)', () => {
+    const names = ['Neutral', 'Happiness', 'Sadness', 'Anger', 'Fear', 'Surprise', 'Disgust', 'Contempt'];
+    expect(names.map(label => faceLabel({ label }))).toEqual(['무표정', '기쁨', '슬픔', '화남', '두려움', '놀람', '싫어함', '못마땅함']);
+    expect(faceLabel({ label: 'sadness', labelKo: ' ' })).toBe('슬픔');
+  });
+
+  it('모르는 값·얼굴 없음은 "-"', () => {
+    expect(faceLabel({ label: 'Confused' })).toBe('-');
+    expect(faceLabel({ label: null })).toBe('-');
+    expect(faceLabel(null)).toBe('-');
+  });
+
+  it('턴 칸·자세히 문구도 한국어 표정을 쓴다', () => {
+    const s = summarizeTurnAnalysis(6, { turnLabel: 'CALM', turnSource: 'TEXT_FACE', riskFlag: false, face: { usable: true, label: 'Sadness', totalFrames: 3, facesFound: 3 } });
+    expect(s.line).toBe('말 없음 · 표정 슬픔');
+    expect(s.detail).toContain('표정: 슬픔(사진 3장 중 얼굴 3)');
+    expect(s.detail).not.toMatch(/Sadness/);
   });
 });
