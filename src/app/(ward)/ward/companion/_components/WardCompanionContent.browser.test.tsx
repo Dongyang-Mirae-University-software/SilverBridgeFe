@@ -22,6 +22,7 @@ const api = vi.hoisted(() => ({
   speak: vi.fn(),
   consent: vi.fn(),
   setConsent: vi.fn(),
+  audio: vi.fn(),
 }));
 const nav = vi.hoisted(() => ({ search: '', replace: vi.fn() }));
 
@@ -35,6 +36,7 @@ vi.mock('@/service/api/ward/companion', () => ({
   sendWardCompanionTestPrompt: api.prompt,
   getWardCompanionTranscriptConsent: api.consent,
   updateWardCompanionTranscriptConsent: api.setConsent,
+  fetchWardCompanionAudio: api.audio,
 }));
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(nav.search),
@@ -167,6 +169,7 @@ beforeEach(() => {
   api.openTest.mockResolvedValue({ ...SESSION, slot: '15:00', question: '오후는 어떻게 보내고 계세요?' });
   api.prompt.mockResolvedValue(undefined);
   api.consent.mockResolvedValue(CONSENT_ASKED);
+  api.audio.mockRejectedValue(new Error('audio 없음'));
   window.localStorage.removeItem('sb-companion-consent-asked');
   nav.search = '';
   nav.replace.mockReset();
@@ -1088,5 +1091,198 @@ describe('폰 배치 회귀 (Chrome, 점검 H-1·M-1·L-1)', () => {
     const r = page.getByText('자세히').element().getBoundingClientRect();
     expect(r.width).toBeGreaterThanOrEqual(44);
     expect(r.height).toBeGreaterThanOrEqual(44);
+  });
+});
+
+describe('말벗 목소리 (Chrome)', () => {
+  const VOICE = new Blob([new Uint8Array(64)], { type: 'audio/mpeg' });
+  // 재생은 가짜로 - 실제 소리를 내지 않고 어떤 src로 몇 번 틀었는지만 본다(무음 data: 는 대화 시작 때 권한을 얻는 재생)
+  let played: string[] = [];
+  let playImpl: (src: string) => Promise<void> = async () => undefined;
+  const blobPlays = () => played.filter(src => src.startsWith('blob:'));
+  const speakCount = (text: string) => api.speak.mock.calls.filter(([said]) => said === text).length;
+  let pauseSpy: ReturnType<typeof vi.spyOn>;
+  let revokeSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    played = [];
+    playImpl = async () => undefined;
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function (this: HTMLMediaElement) {
+      played.push(this.src);
+      return playImpl(this.src);
+    });
+    pauseSpy = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+    revokeSpy = vi.spyOn(URL, 'revokeObjectURL');
+    api.open.mockResolvedValue({ ...SESSION, audio: { index: 0 } });
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('질문 목소리가 오면 받아서 틀고 기기 음성으로 읽지 않는다', async () => {
+    api.audio.mockResolvedValue(VOICE);
+    await openTalk();
+
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(1));
+    expect(api.audio).toHaveBeenCalledWith(42, 0, expect.any(AbortSignal));
+    expect(played[0]).toMatch(/^data:audio\/wav/);
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(0);
+  });
+
+  it.each([
+    ['404', () => api.audio.mockRejectedValue(Object.assign(new Error('x'), { status: 404 }))],
+    ['503', () => api.audio.mockRejectedValue(Object.assign(new Error('x'), { status: 503 }))],
+    ['네트워크 오류', () => api.audio.mockRejectedValue(new TypeError('Failed to fetch'))],
+  ])('목소리를 못 받으면(%s) 기기 음성으로 한 번만 읽는다', async (_name, arrange) => {
+    arrange();
+    await openTalk();
+
+    await vi.waitFor(() => expect(speakCount('점심은 무엇을 드셨어요?')).toBe(1));
+    await new Promise(resolve => setTimeout(resolve, 200));
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(1);
+    expect(blobPlays()).toHaveLength(0);
+  });
+
+  it('audio가 없으면 받지 않고 기기 음성으로 읽는다', async () => {
+    api.open.mockResolvedValue(SESSION);
+    await openTalk();
+
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(1);
+    expect(api.audio).not.toHaveBeenCalled();
+  });
+
+  it('재생이 실패하면(NotAllowedError 말고) 기기 음성으로 읽는다', async () => {
+    api.audio.mockResolvedValue(VOICE);
+    playImpl = async src => {
+      if (src.startsWith('blob:')) throw new DOMException('bad', 'NotSupportedError');
+    };
+    await openTalk();
+
+    await vi.waitFor(() => expect(speakCount('점심은 무엇을 드셨어요?')).toBe(1));
+  });
+
+  it('8초 안에 못 받으면 대신 읽고, 늦게 온 목소리는 버린다', { timeout: 20_000 }, async () => {
+    let arrive: (blob: Blob) => void = () => undefined;
+    let signal: AbortSignal | undefined;
+    api.audio.mockImplementation((_id: number, _index: number, given: AbortSignal) => {
+      signal = given;
+      return new Promise<Blob>(resolve => {
+        arrive = resolve;
+      });
+    });
+    await openTalk();
+    await new Promise(resolve => setTimeout(resolve, 7_000));
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(0);
+
+    await vi.waitFor(() => expect(speakCount('점심은 무엇을 드셨어요?')).toBe(1), { timeout: 3_000 });
+    expect(signal?.aborted).toBe(true);
+    // abort를 무시하고 늦게 도착한 경우
+    arrive(VOICE);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    expect(blobPlays()).toHaveLength(0);
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(1);
+  });
+
+  it('녹음이 시작되면 받던 목소리를 버리고 대신 읽지도 않는다', async () => {
+    getUserMedia.mockImplementation(async () => fakeMicStream());
+    let arrive: (blob: Blob) => void = () => undefined;
+    let signal: AbortSignal | undefined;
+    api.audio.mockImplementation((_id: number, _index: number, given: AbortSignal) => {
+      signal = given;
+      return new Promise<Blob>(resolve => {
+        arrive = resolve;
+      });
+    });
+    await openTalk();
+
+    await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
+    await userEvent.click(page.getByRole('button', { name: '사진 없이 할게요' }));
+    await expect.element(page.getByRole('button', { name: /다 했어요/ })).toBeInTheDocument();
+    expect(signal?.aborted).toBe(true);
+    arrive(VOICE);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    expect(blobPlays()).toHaveLength(0);
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(0);
+  });
+
+  it('틀고 있는 목소리는 녹음이 시작되면 멈추고 해제한다', async () => {
+    getUserMedia.mockImplementation(async () => fakeMicStream());
+    api.audio.mockResolvedValue(VOICE);
+    await openTalk();
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(1));
+    const url = blobPlays()[0];
+    pauseSpy.mockClear();
+
+    await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
+    await userEvent.click(page.getByRole('button', { name: '사진 없이 할게요' }));
+    await expect.element(page.getByRole('button', { name: /다 했어요/ })).toBeInTheDocument();
+    expect(pauseSpy).toHaveBeenCalled();
+    expect(revokeSpy).toHaveBeenCalledWith(url);
+  });
+
+  it('자동 재생이 막히면(NotAllowedError) "들려 주세요"를 보이고 누르면 튼다', async () => {
+    api.audio.mockResolvedValue(VOICE);
+    playImpl = async () => {
+      throw new DOMException('blocked', 'NotAllowedError');
+    };
+    await openTalk();
+    await expect.element(page.getByRole('button', { name: '들려 주세요' })).toBeVisible();
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(0);
+
+    playImpl = async () => undefined;
+    await page.getByRole('button', { name: '들려 주세요' }).click();
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(2));
+    await expect.element(page.getByRole('button', { name: '다시 듣기' })).toBeVisible();
+    expect(api.audio).toHaveBeenCalledTimes(1);
+  });
+
+  it('다시 듣기는 받아 둔 목소리를 다시 틀고 다시 받지 않는다', async () => {
+    api.audio.mockResolvedValue(VOICE);
+    await openTalk();
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(1));
+
+    await page.getByRole('button', { name: '다시 듣기' }).click();
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(2));
+    expect(api.audio).toHaveBeenCalledTimes(1);
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(0);
+  });
+
+  it('목소리를 못 받은 문장의 다시 듣기는 기기 음성으로 읽는다', async () => {
+    await openTalk();
+    await vi.waitFor(() => expect(speakCount('점심은 무엇을 드셨어요?')).toBe(1));
+
+    await page.getByRole('button', { name: '다시 듣기' }).click();
+    expect(speakCount('점심은 무엇을 드셨어요?')).toBe(2);
+    expect(api.audio).toHaveBeenCalledTimes(1);
+  });
+
+  it('다음 문장이 오면 앞 목소리를 멈추고 해제한 뒤 새 목소리를 튼다', async () => {
+    api.audio.mockResolvedValue(VOICE);
+    api.replyText.mockResolvedValue({ turnNo: 1, reply: '국수 맛있으셨겠어요.', ended: false, endReason: null, transcript: null, audio: { index: 1 } });
+    await openTalk();
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(1));
+    const first = blobPlays()[0];
+
+    await page.getByRole('button', { name: '글로 대답하기' }).click();
+    await page.getByRole('textbox', { name: '대답 적기' }).fill('국수 먹었어');
+    await page.getByRole('button', { name: '보내기' }).click();
+
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(2));
+    expect(revokeSpy).toHaveBeenCalledWith(first);
+    expect(api.audio).toHaveBeenLastCalledWith(42, 1, expect.any(AbortSignal));
+    expect(speakCount('국수 맛있으셨겠어요.')).toBe(0);
+  });
+
+  it('화면을 떠나면 멈추고 해제한다', async () => {
+    api.audio.mockResolvedValue(VOICE);
+    const screen = await renderCompanion();
+    await page.getByRole('button', { name: '이야기 시작하기' }).click();
+    await vi.waitFor(() => expect(blobPlays()).toHaveLength(1));
+    const url = blobPlays()[0];
+    pauseSpy.mockClear();
+
+    screen.unmount();
+    expect(pauseSpy).toHaveBeenCalled();
+    expect(revokeSpy).toHaveBeenCalledWith(url);
   });
 });

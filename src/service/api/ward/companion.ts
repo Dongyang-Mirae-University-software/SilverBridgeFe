@@ -2,6 +2,7 @@
 // Swagger 그룹: "피보호자 - 안부 말벗" (/api/ward/companion/**) - 사용자는 토큰으로만 정해진다
 
 import { apiClient } from '@/lib/api/apiClient';
+import { getAccessToken } from '@/lib/auth/tokenStore';
 import { getResponseData } from '@/utils/api/responseData';
 import { CommonResponse } from '../../interface/common';
 import {
@@ -77,6 +78,26 @@ export async function finishWardCompanionSession(sessionId: number) {
     { timeout: COMPANION_TIMEOUT_MS },
   );
   return getResponseData<IWardCompanionFinish>(response);
+}
+
+// 말벗 목소리 한 개(audio.index). 받지 못하면 status를 담아 던진다 - 화면은 이유와 상관없이 기기 음성으로 대신 읽는다
+// apiClient를 쓰지 않는다: 401이면 세션을 지우는데 소리 하나 때문에 로그아웃되면 안 되고, 에러 본문(JSON)을 blob으로 받게 된다
+// cache: 'no-store' - 소리를 브라우저 캐시에 남기지 않는다
+export class CompanionAudioError extends Error {
+  constructor(readonly status: number) {
+    super(`말벗 목소리를 받지 못했다(${status})`);
+  }
+}
+
+export async function fetchWardCompanionAudio(sessionId: number, index: number, signal?: AbortSignal): Promise<Blob> {
+  const token = getAccessToken();
+  const response = await fetch(`/api${WARD_BASE}/sessions/${sessionId}/audio/${index}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    cache: 'no-store',
+    signal,
+  });
+  if (!response.ok) throw new CompanionAudioError(response.status);
+  return response.blob();
 }
 
 // 대화 내용 가족 공유 동의 상태
