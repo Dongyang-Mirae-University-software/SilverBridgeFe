@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Icon } from '@/components/Icon';
 import { MoodFace } from '@/components/MoodFace';
 import { useVoiceInput } from '@/components/chatbot/useVoiceInput';
-import { canSpeak, speak, stopSpeaking } from '@/lib/audio/speech';
+import { canSpeak } from '@/lib/audio/speech';
 import { useFaceFrames } from '@/lib/camera/useFaceFrames';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import {
@@ -40,6 +40,7 @@ import { markConsentAsked, readConsentAsked } from '@/utils/companion/consentAsk
 import { splitSentences } from '@/utils/companion/splitSentences';
 import { formatSlotTime } from '@/utils/format/slotTime';
 import styles from './WardCompanionContent.module.css';
+import { useCompanionVoice } from './useCompanionVoice';
 
 const cx = classNames.bind(styles);
 
@@ -88,7 +89,13 @@ function fitUploadBudget(audio: Blob, frames: Blob[]) {
 // [테스트] 판정 결과 한 건 - 칸 요약 + 자세히 문구. 화면 메모리에만
 type TestResult = AnalysisSummary & { id: number };
 
-type Line = { id: number; who: 'companion' | 'me'; text: string; heard?: boolean };
+// audio: 말벗 목소리(있으면 받아서 틀고, 없거나 못 받으면 기기 음성으로 읽는다)
+type Line = { id: number; who: 'companion' | 'me'; text: string; heard?: boolean; audio?: { sessionId: number; index: number } | null };
+
+// 응답의 audio.index가 정수일 때만 목소리를 받는다 - 없거나 이상하면 기기 음성으로 읽는다
+function voiceAudio(sessionId: number, audio: { index: number } | null | undefined): Line['audio'] {
+  return audio && Number.isInteger(audio.index) ? { sessionId, index: audio.index } : null;
+}
 
 // 대답·말벗 응답·테스트 판정 결과는 이 화면 메모리에만 둔다 - 서버도 저장하지 않으니 localStorage·로그에 남기지 않는다
 type Talk = {
@@ -129,6 +136,7 @@ export function WardCompanionContent() {
   }, []);
 
   const wide = useMediaQuery(WIDE_QUERY);
+  const companionVoice = useCompanionVoice();
 
   // 대화 내용 공유 동의 - 첫 대화 시작 전에 한 번 묻는다. 상태를 아직 못 받았으면 받아 본 뒤 판단하고(L-2),
   // 끝내 못 받으면 묻지 않고 대화를 막지 않는다
@@ -194,8 +202,6 @@ export function WardCompanionContent() {
     if (outsideTalkTime) router.replace('/ward');
   }, [outsideTalkTime, router]);
 
-  useEffect(() => stopSpeaking, []);
-
   // 새 말이 붙으면 대답 버튼까지 보이게 아래로 내린다 - 대화가 길어지면 버튼이 화면 밖으로 밀린다
   // 대화를 마치면 마침 카드 위쪽에 맞춘다 - 맨 아래(판정 칸 밑)에 맞추면 폰에서 카드 윗부분이 화면 밖으로 밀린다
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -208,19 +214,20 @@ export function WardCompanionContent() {
   }, [lineCount, ended]);
 
   const nextLine = (who: Line['who'], text: string, heard?: boolean): Line => ({ id: ++lineId.current, who, text, heard });
+
   const nextResult = (summary: AnalysisSummary): TestResult => ({ ...summary, id: ++lineId.current });
 
   const refreshToday = useCallback(() => void queryClient.invalidateQueries({ queryKey: wardCompanionTodayQueryKey }), [queryClient]);
 
   // 이어갈 수 없는 대화는 닫고 오늘 현황을 다시 받는다
   const leaveTalk = useCallback((message: string) => {
-    stopSpeaking();
+    companionVoice.reset();
     camera.cancel();
     setTalk(null);
     setDraft('');
     setNotice(message);
     refreshToday();
-  }, [refreshToday, camera]);
+  }, [refreshToday, camera, companionVoice]);
 
   const handleError = useCallback((error: unknown) => {
     const { message, action } = getCompanionError(error);
@@ -242,14 +249,17 @@ export function WardCompanionContent() {
   const applyReply = useCallback((result: IWardCompanionReply | null, answer: string, heard: boolean) => {
     if (!result) return;
     setCameraNotice(null);
+    const sessionId = talkRef.current?.sessionId;
+    const mine = nextLine('me', answer, heard);
+    const reply = result.reply && sessionId != null ? { ...nextLine('companion', result.reply), audio: voiceAudio(sessionId, result.audio) } : null;
     setTalk(current => {
       if (!current) return current;
-      const lines = [...current.lines, nextLine('me', answer, heard)];
-      if (result.reply) lines.push(nextLine('companion', result.reply));
+      const lines = [...current.lines, mine];
+      if (reply) lines.push(reply);
       const results = result.analysis ? [...current.results, nextResult(summarizeTurnAnalysis(result.turnNo, result.analysis))] : current.results;
       return { ...current, turns: result.turnNo, lines, ended: result.ended, results };
     });
-    if (result.reply) speak(result.reply);
+    if (reply) companionVoice.play(reply);
     if (result.ended) {
       refreshToday();
       // 서버가 대화를 닫았으면 마치기는 부르지 않아도 되지만, 테스트 계정은 저장된 결과를 다시 받아 대화 판정을 보여 준다
@@ -258,7 +268,7 @@ export function WardCompanionContent() {
         void finishWardCompanionSession(current.sessionId).then(addFinishResult).catch(() => undefined);
       }
     }
-  }, [refreshToday, addFinishResult]);
+  }, [refreshToday, addFinishResult, companionVoice]);
 
   const voiceOptions = useMemo(() => ({
     send: async (audio: Blob, signal: AbortSignal) => {
@@ -291,6 +301,8 @@ export function WardCompanionContent() {
   useEffect(() => {
     const prev = prevVoiceState.current;
     prevVoiceState.current = voice.state;
+    // 말벗 목소리가 대답 녹음에 섞이지 않게 녹음이 시작되면 바로 멈춘다(받던 소리도 버린다)
+    if (voice.state === 'recording' && prev !== 'recording') companionVoice.stop();
     if (voice.state === 'idle') {
       camera.cancel();
       return;
@@ -301,9 +313,10 @@ export function WardCompanionContent() {
       chooseCamera('off');
       setCameraNotice(CAMERA_UNAVAILABLE_TEXT);
     });
-  }, [voice.state, camera, chooseCamera]);
+  }, [voice.state, camera, chooseCamera, companionVoice]);
 
   const startTalk = (session: IWardCompanionSession, test: boolean) => {
+    const question = { ...nextLine('companion', session.question), audio: voiceAudio(session.sessionId, session.audio) };
     setMode('voice');
     setDraft('');
     setTalk({
@@ -313,16 +326,18 @@ export function WardCompanionContent() {
       resumed: session.resumed,
       // 이어 하는 대화는 서버가 준 턴 수부터 센다("8번 중 N번째"·진행 점이 처음부터 다시 세지 않게)
       turns: session.turnCount ?? 0,
-      lines: [nextLine('companion', session.question)],
+      lines: [question],
       ended: false,
       test,
       results: [],
     });
-    speak(session.question);
+    companionVoice.play(question);
   };
 
   const handleOpen = async () => {
     if (pending) return;
+    // 누른 이 순간에 소리 낼 권한을 얻어 둔다(질문 목소리는 몇 초 뒤에 온다)
+    companionVoice.prime();
     setPending('open');
     setNotice(null);
     try {
@@ -341,6 +356,7 @@ export function WardCompanionContent() {
   // [테스트 계정만] 고른 시간대의 고정 질문으로 시작한다. 테스트 푸시로 들어왔으면 주소의 시간대를 지운다
   const handleOpenTest = async (slot: string) => {
     if (pending) return;
+    companionVoice.prime();
     setPending('open');
     setTestNotice(null);
     setNotice(null);
@@ -377,7 +393,7 @@ export function WardCompanionContent() {
       setNotice('대답을 적어 주세요.');
       return;
     }
-    stopSpeaking();
+    companionVoice.stop();
     setPending('reply');
     setNotice(null);
     try {
@@ -396,11 +412,11 @@ export function WardCompanionContent() {
     if (pending) return;
     // 처음 대답할 때 사진을 함께 보낼지 먼저 묻는다
     if (voice.state === 'idle' && cameraChoiceRef.current === 'ask') {
-      stopSpeaking();
+      companionVoice.stop();
       setAskCamera(true);
       return;
     }
-    stopSpeaking();
+    companionVoice.stop();
     setNotice(null);
     voice.clearNotice();
     voice.toggle();
@@ -418,7 +434,7 @@ export function WardCompanionContent() {
     voice.cancel();
     camera.cancel();
     setAskCamera(false);
-    stopSpeaking();
+    companionVoice.stop();
     setPending('finish');
     setNotice(null);
     try {
@@ -434,7 +450,7 @@ export function WardCompanionContent() {
   };
 
   const closeTalk = () => {
-    stopSpeaking();
+    companionVoice.reset();
     camera.cancel();
     setAskCamera(false);
     setTalk(null);
@@ -487,11 +503,18 @@ export function WardCompanionContent() {
                     <div className={cx('bubble')}>
                       <span className={cx('srOnly')}>말벗</span>
                       <Sentences text={line.text} />
-                      {canSpeak() && (
-                        <button className={cx('listenButton')} type="button" onClick={() => speak(line.text)}>
+                      {companionVoice.blockedLineId === line.id ? (
+                        <button className={cx('listenButton', 'blocked')} type="button" onClick={() => companionVoice.replay(line)}>
                           <SpeakerIcon />
-                          다시 듣기
+                          들려 주세요
                         </button>
+                      ) : (
+                        (canSpeak() || companionVoice.hasAudio(line.id)) && (
+                          <button className={cx('listenButton')} type="button" onClick={() => companionVoice.replay(line)}>
+                            <SpeakerIcon />
+                            다시 듣기
+                          </button>
+                        )
                       )}
                     </div>
                   </>

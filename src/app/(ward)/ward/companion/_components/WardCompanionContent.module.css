@@ -180,6 +180,8 @@
   font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 0 16px;
 }
+/* 브라우저가 자동 재생을 막았을 때 - 눌러야 들린다는 걸 눈에 띄게 */
+.listenButton.blocked { background: var(--sb-brand); color: #fff; min-height: 60px; }
 .speakerIcon { width: 24px; height: 24px; }
 
 .dots { display: inline-flex; gap: 6px; margin-left: 10px; vertical-align: middle; }

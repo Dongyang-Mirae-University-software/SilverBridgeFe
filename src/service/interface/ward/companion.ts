@@ -20,6 +20,12 @@ export interface IWardCompanionToday {
   testMode?: boolean; // 최종 QA 테스트 계정이면 true - 시간대를 골라 시작·테스트 안내 푸시를 쓸 수 있다
 }
 
+// 말벗 목소리(서버가 만든 소리) - 있으면 GET /api/ward/companion/sessions/{sessionId}/audio/{index}로 받아 재생한다.
+// 없거나 받지 못하면 기기 음성으로 대신 읽는다. 받은 소리는 화면 메모리에만 둔다(저장·캐시 금지)
+export interface IWardCompanionAudio {
+  index: number;
+}
+
 export interface IWardCompanionSession {
   sessionId: number;
   slot: string;
@@ -27,6 +33,7 @@ export interface IWardCompanionSession {
   maxTurns: number | null; // null이면 표시하지 않는다
   resumed: boolean; // 열려 있던 대화를 이어 가면 true
   turnCount?: number; // 이미 마친 대답 수 - 새 대화 0, 이어 가면 지금까지 기록된 턴 수(옛 서버는 없음)
+  audio?: IWardCompanionAudio | null; // 첫 질문 목소리(없으면 기기 음성으로 읽는다)
 }
 
 export interface IWardCompanionReply {
@@ -35,6 +42,7 @@ export interface IWardCompanionReply {
   ended: boolean; // true면 서버가 결과를 이미 저장했다 - 마치기를 따로 부르지 않는다
   endReason: CompanionEndReason | null;
   transcript: string | null; // 음성 대답을 받아 적은 글(음성 턴만)
+  audio?: IWardCompanionAudio | null; // 말벗 응답 목소리(없으면 기기 음성으로 읽는다)
   analysis?: IWardCompanionTurnAnalysis; // 테스트 계정에만 실린다(일반 계정은 필드 없음)
 }
 
