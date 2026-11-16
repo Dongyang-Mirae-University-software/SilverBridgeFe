@@ -9,6 +9,9 @@ import { deleteNotificationFcmToken, registerNotificationFcmToken } from '@/serv
 const FCM_TOKEN_KEY = 'careai_fcm_token';
 const FCM_REGISTERED_TOKEN_KEY = 'careai_fcm_registered_token';
 const FCM_REGISTERED_USER_KEY = 'careai_fcm_registered_user';
+// 마지막 등록 시각. 서버는 60일간 다시 등록하지 않은 토큰을 지우므로 하루가 지나면 같은 토큰도 다시 등록한다(QA NOTI-N05)
+const FCM_REGISTERED_AT_KEY = 'careai_fcm_registered_at';
+export const FCM_REREGISTER_INTERVAL_MS = 24 * 60 * 60 * 1000;
 // 이 브라우저가 마지막으로 등록한 토큰. sessionStorage는 탭을 닫으면 지워져 토큰이 바뀐 걸 알 수 없다
 const FCM_LAST_TOKEN_KEY = 'careai_fcm_last_token';
 const DEFAULT_FIREBASE_API_KEY = 'AIzaSyB82QGIFGkeSsda2qg3Yg3feYKSAxvqI1Y';
@@ -101,8 +104,10 @@ export async function registerFcmTokenForCurrentDevice() {
   const registeredToken = storage?.getItem(FCM_REGISTERED_TOKEN_KEY);
   const currentUserId = getAccessTokenSubject();
   const registeredUserId = storage?.getItem(FCM_REGISTERED_USER_KEY);
+  const registeredAt = Number(storage?.getItem(FCM_REGISTERED_AT_KEY) ?? 0);
+  const registeredRecently = Date.now() - registeredAt < FCM_REREGISTER_INTERVAL_MS;
 
-  if (storedToken && registeredToken === storedToken && registeredUserId === currentUserId) return storedToken;
+  if (storedToken && registeredToken === storedToken && registeredUserId === currentUserId && registeredRecently) return storedToken;
   if (registrationPromise) return registrationPromise;
 
   registrationPromise = (async () => {
@@ -110,6 +115,7 @@ export async function registerFcmTokenForCurrentDevice() {
       await registerNotificationFcmToken({ token: storedToken, platform: 'WEB' });
       storage?.setItem(FCM_REGISTERED_TOKEN_KEY, storedToken);
       if (currentUserId) storage?.setItem(FCM_REGISTERED_USER_KEY, currentUserId);
+      storage?.setItem(FCM_REGISTERED_AT_KEY, String(Date.now()));
       return storedToken;
     }
 
@@ -123,6 +129,7 @@ export async function registerFcmTokenForCurrentDevice() {
     storage?.setItem(FCM_TOKEN_KEY, token);
     storage?.setItem(FCM_REGISTERED_TOKEN_KEY, token);
     if (currentUserId) storage?.setItem(FCM_REGISTERED_USER_KEY, currentUserId);
+    storage?.setItem(FCM_REGISTERED_AT_KEY, String(Date.now()));
     await releasePreviousFcmToken(token);
 
     return token;
@@ -149,6 +156,7 @@ export async function unregisterFcmTokenForCurrentDevice(endedSessionAccessToken
     getSessionStorage()?.removeItem(FCM_TOKEN_KEY);
     getSessionStorage()?.removeItem(FCM_REGISTERED_TOKEN_KEY);
     getSessionStorage()?.removeItem(FCM_REGISTERED_USER_KEY);
+    getSessionStorage()?.removeItem(FCM_REGISTERED_AT_KEY);
   }
 }
 

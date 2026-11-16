@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: mocks.replace }) }));
-vi.mock('@/lib/fcm', () => ({ registerFcmTokenForCurrentDevice: () => Promise.resolve() }));
+vi.mock('@/lib/fcm', () => ({ FCM_REREGISTER_INTERVAL_MS: 86_400_000, registerFcmTokenForCurrentDevice: () => Promise.resolve() }));
 vi.mock('@/lib/auth/sessionRestore', async importOriginal => ({
   ...(await importOriginal<typeof import('@/lib/auth/sessionRestore')>()),
   restoreSession: mocks.restoreSession,

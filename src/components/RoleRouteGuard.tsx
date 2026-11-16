@@ -9,7 +9,7 @@ import { getRoleHomePath } from '@/utils/auth/routes';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { AuthRole, clearAuthTokens, getAccessToken, hasSession, setAuthRole } from '@/lib/auth/tokenStore';
 import { restoreSession, shouldEndSessionAfterProfileError } from '@/lib/auth/sessionRestore';
-import { registerFcmTokenForCurrentDevice } from '@/lib/fcm';
+import { FCM_REREGISTER_INTERVAL_MS, registerFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { reportNonApiError } from '@/lib/api/reportError';
 import SessionCheckingNotice from '@/components/auth/SessionCheckingNotice';
 import SessionRetryNotice from '@/components/auth/SessionRetryNotice';
@@ -94,9 +94,24 @@ export default function RoleRouteGuard({ allowedRole, children, roleMismatchMess
   useEffect(() => {
     if (!isAllowed) return;
 
-    void registerFcmTokenForCurrentDevice().catch(error => {
-      reportNonApiError('FCM 토큰 등록 실패:', error);
-    });
+    const register = () => {
+      void registerFcmTokenForCurrentDevice().catch(error => {
+        reportNonApiError('FCM 토큰 등록 실패:', error);
+      });
+    };
+    register();
+    // 오래 켜 둔 화면도 하루에 한 번은 다시 등록한다 - 하루가 안 지났으면 등록 함수가 바로 끝난다(QA NOTI-N05)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') register();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', register);
+    const timer = window.setInterval(register, FCM_REREGISTER_INTERVAL_MS);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', register);
+      window.clearInterval(timer);
+    };
   }, [isAllowed]);
 
   if (needsRestore && restoreUnavailable) {

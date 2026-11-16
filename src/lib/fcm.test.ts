@@ -85,6 +85,26 @@ describe('FCM 토큰 교체', () => {
   });
 });
 
+describe('하루마다 다시 등록 (QA NOTI-N05)', () => {
+  it('같은 탭·같은 토큰이어도 하루가 지나면 등록 API를 다시 부른다', async () => {
+    getTokenMock.mockResolvedValue('token-a');
+    const start = Date.UTC(2026, 10, 14, 0, 0);
+    const now = vi.spyOn(Date, 'now').mockReturnValue(start);
+    await register();
+    expect(registerToken).toHaveBeenCalledTimes(1);
+
+    now.mockReturnValue(start + 60 * 60 * 1000);
+    await register();
+    expect(registerToken).toHaveBeenCalledTimes(1);
+
+    now.mockReturnValue(start + 25 * 60 * 60 * 1000);
+    await register();
+    expect(registerToken).toHaveBeenCalledTimes(2);
+    expect(registerToken).toHaveBeenLastCalledWith({ token: 'token-a', platform: 'WEB' });
+    now.mockRestore();
+  });
+});
+
 describe('로그아웃 토큰 해제', () => {
   it('서버에서 지우면 기억한 토큰도 잊는다', async () => {
     local.setItem('careai_fcm_last_token', 'token-1');
