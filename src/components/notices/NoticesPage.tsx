@@ -137,9 +137,11 @@ function NoticeDetailModal({ announcement, onClose }: { announcement: IAnnouncem
       >
         <header className={cx('modalHead')}>
           <div>
-            <time className={cx('date')} dateTime={announcement.createdAt}>
-              {formatDate(announcement.createdAt)}
-            </time>
+            <p className={cx('date')}>
+              <time dateTime={announcement.createdAt}>{formatDate(announcement.createdAt)}</time>
+              {/* 상세를 연 뒤의 조회수(이번 열람 포함) - 상세 응답이 오기 전에는 숨긴다(QA ADM-N09) */}
+              {detail.data && <span> · 조회 {detail.data.viewCount.toLocaleString('ko-KR')}</span>}
+            </p>
             <h2 className={cx('modalTitle')} id={titleId}>
               {announcement.title}
             </h2>

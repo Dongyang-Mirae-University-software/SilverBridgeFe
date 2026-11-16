@@ -108,6 +108,14 @@ describe('NoticesPage 전체 본문·더 보기', () => {
     await vi.waitFor(() => expect(page.getByRole('dialog').query()).toBeNull());
   });
 
+  it('상세 창에 조회수를 보인다 (QA ADM-N09)', async () => {
+    api.getAnnouncementDetail.mockResolvedValue({ ...notice(1), title: '서비스 점검 안내', viewCount: 1234 });
+    await renderPage();
+
+    await page.getByRole('button', { name: /서비스 점검 안내/ }).click();
+    await expect.element(page.getByRole('dialog', { name: '서비스 점검 안내' }).getByText('· 조회 1,234')).toBeVisible();
+  });
+
   it('20건을 받으면 더 보기로 다음 페이지를 이어 붙이고, 20건보다 적게 오면 버튼을 숨긴다', async () => {
     api.getAnnouncements.mockImplementation(async ({ page: pageIndex }: { page: number }) =>
       pageIndex === 0 ? Array.from({ length: 20 }, (_, i) => notice(100 - i)) : [notice(80), notice(79)],
