@@ -72,6 +72,41 @@ describe('동시 401', () => {
   });
 });
 
+describe('탈퇴·비밀번호 변경·사진 삭제의 만료 토큰 (QA AUTH-A30)', () => {
+  function serve(newAccess: string, passwordWrong = false) {
+    handler = config => {
+      if (config.url?.includes('/auth/refresh')) {
+        refreshCalls.push(bodyOf(config));
+        return respond(config, 200, refreshSucceeds(newAccess));
+      }
+      const authorization = AxiosHeaders.from(config.headers).get('Authorization');
+      if (authorization !== `Bearer ${newAccess}`) return respond(config, 401, { code: 'EXPIRED_TOKEN', message: '만료' });
+      if (passwordWrong) return respond(config, 401, { code: 'INVALID_PASSWORD', message: '비밀번호가 틀렸습니다.' });
+      return respond(config, 200, { ok: true });
+    };
+  }
+
+  it('만료 토큰(EXPIRED_TOKEN)이면 세 요청 모두 갱신한 뒤 다시 보낸다', async () => {
+    const newAccess = validAccessToken();
+    store.setAuthTokens({ accessToken: expiredAccessToken(), remember: true });
+    serve(newAccess);
+
+    await expect(api.apiClient.delete('/user/me/image')).resolves.toEqual({ ok: true });
+    await expect(api.apiClient.put('/user/me/password', { currentPassword: 'a' })).resolves.toEqual({ ok: true });
+    await expect(api.apiClient.delete('/user/me', { data: { password: 'a' } })).resolves.toEqual({ ok: true });
+  });
+
+  it('비밀번호가 틀린 401(INVALID_PASSWORD)은 갱신하지 않고 오류를 그대로 보이며 세션을 남긴다', async () => {
+    const newAccess = validAccessToken();
+    store.setAuthTokens({ accessToken: newAccess, remember: true });
+    serve(newAccess, true);
+
+    await expect(api.apiClient.put('/user/me/password', { currentPassword: 'x' })).rejects.toMatchObject({ message: '비밀번호가 틀렸습니다.' });
+    expect(refreshCalls).toEqual([]);
+    expect(jar.get(ACCESS)?.value).toBe(newAccess);
+  });
+});
+
 describe('refresh 토큰을 화면이 다루지 않는다', () => {
   it('갱신 요청에 본문·Authorization 을 싣지 않고, 응답 본문의 refresh 토큰을 어디에도 저장하지 않는다', async () => {
     store.setAuthTokens({ accessToken: expiredAccessToken(), remember: true });

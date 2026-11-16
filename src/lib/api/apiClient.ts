@@ -92,10 +92,11 @@ function isPublicAuthRequest(url?: string) {
   return isPublicAuthPath(url);
 }
 
+// 탈퇴(DELETE /user/me)만 - 사진 삭제(DELETE /user/me/image)까지 걸려 갱신 없이 실패했다(QA AUTH-A30)
 function isUserDeleteRequest(config?: RetryableRequestConfig) {
   if (!config?.url) return false;
 
-  return config.method?.toLowerCase() === 'delete' && config.url.includes('/user/me');
+  return config.method?.toLowerCase() === 'delete' && /\/user\/me$/.test(config.url.split('?')[0]);
 }
 
 function isUserPasswordChangeRequest(config?: RetryableRequestConfig) {
@@ -104,14 +105,16 @@ function isUserPasswordChangeRequest(config?: RetryableRequestConfig) {
   return config.method?.toLowerCase() === 'put' && config.url.includes('/user/me/password');
 }
 
-function shouldRefreshOnUnauthorized(config?: RetryableRequestConfig): config is RetryableRequestConfig {
+// 탈퇴·비밀번호 변경은 비밀번호가 틀려도 401(INVALID_PASSWORD)이라, 토큰 만료·무효 코드일 때만 갱신 후 다시 보낸다(QA AUTH-A30)
+const TOKEN_PROBLEM_CODES = new Set(['EXPIRED_TOKEN', 'INVALID_TOKEN']);
+
+function shouldRefreshOnUnauthorized(config?: RetryableRequestConfig, errorCode?: string): config is RetryableRequestConfig {
   if (!config) return false;
   if (config._retry) return false;
   if (isRefreshRequest(config.url)) return false;
   if (isSigninRequest(config.url)) return false;
   if (isPublicAuthRequest(config.url)) return false;
-  if (isUserDeleteRequest(config)) return false;
-  if (isUserPasswordChangeRequest(config)) return false;
+  if (isUserDeleteRequest(config) || isUserPasswordChangeRequest(config)) return TOKEN_PROBLEM_CODES.has(errorCode ?? '');
 
   return true;
 }
@@ -248,7 +251,9 @@ apiClient.interceptors.response.use(
     const isDeleteAccountEndpoint = isUserDeleteRequest(originalRequest);
     const isPasswordChangeEndpoint = isUserPasswordChangeRequest(originalRequest);
 
-    if (isUnauthorized && shouldRefreshOnUnauthorized(originalRequest)) {
+    const errorCode = (error.response?.data as ServerErrorBody | undefined)?.code;
+
+    if (isUnauthorized && shouldRefreshOnUnauthorized(originalRequest, errorCode)) {
       originalRequest._retry = true;
 
       try {
