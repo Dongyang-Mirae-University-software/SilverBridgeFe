@@ -99,7 +99,8 @@ export interface IFindEmailReq {
 export interface IFindEmailResponse {
   maskedEmail: string | null;
   hasKakaoAccount: boolean;
-  createdAt?: string | null;
+  // 일반 계정 가입일(yyyy-MM-dd). 예전에 createdAt으로 잘못 읽어 가입일이 안 보였다(QA AUTH-N18)
+  joinedAt?: string | null;
 }
 
 // ── 비밀번호 찾기 ─────────────────────────────────────────────────────────────

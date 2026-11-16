@@ -18,7 +18,7 @@ export default function FindEmailResultDisplay({ result }: Props) {
     <div className={cx('resultBox')}>
       <div className={cx('resultLabel')}>회원님의 아이디</div>
       <div className={cx('resultEmail')}>{email}</div>
-      {result.createdAt && <div className={cx('resultDate')}>가입일 {result.createdAt}</div>}
+      {result.joinedAt && <div className={cx('resultDate')}>가입일 {result.joinedAt}</div>}
     </div>
   );
 }
