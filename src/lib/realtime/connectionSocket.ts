@@ -3,7 +3,7 @@ import { Client, IMessage } from '@stomp/stompjs';
 import { isSessionRejected, refreshAccessToken } from '@/lib/api/apiClient';
 import { isAccessTokenExpired } from '@/lib/auth/tokenExpiry';
 import { AuthRole, getAccessToken } from '@/lib/auth/tokenStore';
-import { removePendingConnectionRequest, savePendingConnectionRequest } from './pendingConnectionRequests';
+import { CONNECTION_REQUEST_CANCELLED_EVENT, removePendingConnectionRequest, savePendingConnectionRequest } from './pendingConnectionRequests';
 
 type ConnectionRealtimeType =
   | 'CONNECTION_REQUEST'
@@ -257,6 +257,9 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
         if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST') savePendingConnectionRequest(payload);
         if (role === 'WARD' && payload.type === 'CONNECTION_REQUEST_CANCELLED' && payload.connectionId) {
           removePendingConnectionRequest(Number(payload.connectionId));
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent(CONNECTION_REQUEST_CANCELLED_EVENT, { detail: { connectionId: payload.connectionId } }));
+          }
         }
         onMessage(payload);
       });

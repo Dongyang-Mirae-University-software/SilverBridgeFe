@@ -38,6 +38,7 @@ vi.mock('@/lib/api/apiClient', () => ({
     [401, 403, 404].includes(error?.response?.status ?? 0),
 }));
 vi.mock('./pendingConnectionRequests', () => ({
+  CONNECTION_REQUEST_CANCELLED_EVENT: 'careai:connection-request-cancelled',
   savePendingConnectionRequest: mocks.savePending,
   removePendingConnectionRequest: mocks.removePending,
 }));

@@ -69,6 +69,23 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+describe('연결 요청 취소', () => {
+  it('보호자가 요청을 취소하면 그 요청 팝업을 닫고 다른 요청 팝업은 남긴다 (QA CONN-N05)', async () => {
+    mocks.pathname = '/ward';
+    const screen = await renderListener();
+    await receive({ data: { type: 'CONNECTION_REQUEST', connectionId: '31', title: '연결 요청', body: '박보호님의 요청' } });
+    await receive({ data: { type: 'CONNECTION_REQUEST', connectionId: '32', title: '연결 요청', body: '김보호님의 요청' } });
+    await expect.element(screen.getByText('박보호님의 요청')).toBeVisible();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('careai:connection-request-cancelled', { detail: { connectionId: '31' } }));
+    });
+
+    expect(screen.getByText('박보호님의 요청').query()).toBeNull();
+    await expect.element(screen.getByText('김보호님의 요청')).toBeVisible();
+  });
+});
+
 describe('세션이 끝나면', () => {
   it('로그아웃(세션 정리)하면 앞 사람의 SOS 팝업을 닫고, 같은 알림이 다시 와도 다시 띄운다 (QA CONN-A21·NOTI-A51)', async () => {
     const screen = await renderListener();

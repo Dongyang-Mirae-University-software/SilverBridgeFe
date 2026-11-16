@@ -1,6 +1,8 @@
 
 const PENDING_CONNECTION_REQUESTS_KEY = 'careai_pending_connection_requests';
 export const PENDING_CONNECTION_REQUESTS_EVENT = 'careai:pending-connection-requests';
+// 보호자가 수락 전에 요청을 취소함 - 떠 있는 그 요청 팝업을 닫게 알린다(detail: { connectionId })
+export const CONNECTION_REQUEST_CANCELLED_EVENT = 'careai:connection-request-cancelled';
 
 interface PendingConnectionRequest {
   connectionId: number;

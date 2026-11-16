@@ -19,7 +19,7 @@ import { notificationInboxQueryKey } from '@/service/query/user/notificationInbo
 import { CommonResponse } from '@/service/interface/common';
 import { IConnectionItem } from '@/service/interface/connection';
 import { acceptWardConnection, refuseWardConnectionRequest } from '@/service/api/ward/connection';
-import { removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
+import { CONNECTION_REQUEST_CANCELLED_EVENT, removePendingConnectionRequest, savePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import { getAnomalyAlertText } from '@/utils/anomaly/alertText';
 import {
   formatReceivedAt,
@@ -329,6 +329,26 @@ export default function PushNotificationListener() {
 
   const dismissToast = useCallback((id: number) => {
     setToasts(prev => prev.filter(item => item.id !== id));
+  }, []);
+
+  // 보호자가 연결 요청을 취소하면 그 요청 팝업도 닫는다 - 남겨 두면 [수락]이 409로 실패했다(QA CONN-N05).
+  // 서비스 워커가 띄운 같은 요청 알림도 함께 지운다
+  useEffect(() => {
+    const closeCancelled = (event: Event) => {
+      const connectionId = Number((event as CustomEvent<{ connectionId?: number | string }>).detail?.connectionId);
+      if (!Number.isFinite(connectionId)) return;
+      setToasts(prev => prev.filter(item => !(item.data?.type === 'CONNECTION_REQUEST' && getConnectionId(item.data) === connectionId)));
+      void navigator.serviceWorker?.getRegistration?.()
+        .then(registration => registration?.getNotifications())
+        .then(notifications =>
+          notifications?.forEach(notification => {
+            if (Number((notification.data as { connectionId?: string } | null)?.connectionId) === connectionId) notification.close();
+          }),
+        )
+        .catch(() => {});
+    };
+    window.addEventListener(CONNECTION_REQUEST_CANCELLED_EVENT, closeCancelled);
+    return () => window.removeEventListener(CONNECTION_REQUEST_CANCELLED_EVENT, closeCancelled);
   }, []);
 
   // 세션이 끝나면 앞 사람의 팝업·처리 중 표시·중복 방지 기록을 모두 비운다 - 이 리스너는 최상위 레이아웃에 붙어 살아 있다
