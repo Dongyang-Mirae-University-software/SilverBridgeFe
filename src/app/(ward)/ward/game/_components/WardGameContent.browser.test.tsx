@@ -31,27 +31,35 @@ describe('WardGameContent (Chrome)', () => {
     vi.restoreAllMocks();
   });
 
-  it('v13 카드에 게임 이름과 설명만 보이고, 처음 게임을 선택한다', async () => {
+  it('처음엔 고르기 화면만 보이고 게임 창은 없다', async () => {
     const screen = await renderContent();
 
     await expect.element(screen.getByRole('heading', { name: '게임을 골라 보세요' })).toBeVisible();
-    await expect.element(screen.getByRole('button', { name: /짝 맞추기 카드 짝을 맞춰보세요/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(screen.getByRole('button', { name: /짝 맞추기 카드 짝을 맞춰보세요/ })).toBeVisible();
     await expect.element(screen.getByRole('button', { name: /미로 찾기 길을 따라 도착해 보세요/ })).toBeVisible();
+    expect(screen.getByTitle('치매 예방 게임').query()).toBeNull();
     expect(screen.getByText(/최고 단계|플레이 횟수/).query()).toBeNull();
   });
 
-  it('게임 카드를 누르면 해당 slug로 기존 AI iframe을 다시 연다', async () => {
+  it('카드를 누르면 그 게임만 열고, 다른 게임 하기는 한 번 더 물은 뒤 고르기 화면으로 간다', async () => {
     const screen = await renderContent();
     const expectedUserId = toGameUserId('ward-game-test');
 
     await screen.getByRole('button', { name: /미로 찾기 길을 따라 도착해 보세요/ }).click();
-    await expect.element(screen.getByRole('button', { name: /미로 찾기 길을 따라 도착해 보세요/ })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
     await expect.element(screen.getByTitle('치매 예방 게임')).toHaveAttribute(
       'src',
       `/api/v1/games/embed?userId=${expectedUserId}&gameSlug=maze`,
     );
+    expect(screen.getByRole('heading', { name: '게임을 골라 보세요' }).query()).toBeNull();
+
+    // 한 번 누르면 묻기만 하고, 계속하기를 누르면 게임이 그대로다
+    await screen.getByRole('button', { name: /다른 게임 하기/ }).click();
+    await screen.getByRole('button', { name: '계속하기' }).click();
+    await expect.element(screen.getByTitle('치매 예방 게임')).toBeVisible();
+
+    await screen.getByRole('button', { name: /다른 게임 하기/ }).click();
+    await screen.getByRole('button', { name: '네, 다른 게임 고르기' }).click();
+    await expect.element(screen.getByRole('heading', { name: '게임을 골라 보세요' })).toBeVisible();
+    expect(screen.getByTitle('치매 예방 게임').query()).toBeNull();
   });
 });

@@ -53,6 +53,8 @@ export function WardLayout({ children }: { children: ReactNode }) {
   const companionTestMode = companionToday?.testMode === true;
   const navItems = useMemo(() => wardNavItems(companionTestMode), [companionTestMode]);
   const isChatbotPage = pathname === '/ward/chatbot';
+  // 게임은 태블릿에서 한 화면 고정(바깥 스크롤 없음)으로 본다
+  const isGamePage = pathname === '/ward/game';
   const chatViewportHeight = useVisualViewportHeight(isChatbotPage);
   // 글자 크기·진한 글자 설정은 본문 CSS의 변수로 반영한다(헤더 로고·버튼은 그대로)
   const stageStyle = {
@@ -70,6 +72,7 @@ export function WardLayout({ children }: { children: ReactNode }) {
       <div
         className={cx('stage', {
           chatStage: isChatbotPage,
+          fixedStage: isGamePage,
           wardHighContrast: wardSettings.highContrast,
         })}
         style={stageStyle}
@@ -78,7 +81,7 @@ export function WardLayout({ children }: { children: ReactNode }) {
         <SidebarLayout navItems={navItems} profile={profile} role={role} rootPath={rootPath} />
         {/* 카메라 송출은 피보호자 웹 어느 화면에서든 이어지도록 레이아웃에 둔다 */}
         <WardCameraStreamProvider>
-          <main className={cx('main', { chatMain: isChatbotPage })}>{children}</main>
+          <main className={cx('main', { chatMain: isChatbotPage, fixedMain: isGamePage })}>{children}</main>
         </WardCameraStreamProvider>
       </div>
     </DashboardProvider>
