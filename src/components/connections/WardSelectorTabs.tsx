@@ -45,8 +45,8 @@ export function WardSelectorTabs({
             className={cx('wardTab', { wardTabActive: isActive })}
             onClick={() => onSelect(ward.wardId)}
           >
-            <UserAvatar imageUrl={ward.profileImage} size="w-30" userName={ward.wardName} />
-            <span>{ward.wardName ?? '피보호자'}</span>
+            <UserAvatar imageUrl={ward.profileImage} size="w-30" userName={wardDisplayName(ward.wardName)} />
+            <span>{wardDisplayName(ward.wardName)}</span>
             {ward.relation && <em>{ward.relation}</em>}
             {!!ward.badgeCount && <i className={cx('wardTabBadge')}>{ward.badgeCount}</i>}
           </button>
@@ -54,4 +54,9 @@ export function WardSelectorTabs({
       })}
     </div>
   );
+}
+
+// 빈 글자('')·공백 이름도 이름 없이 관계만 보이지 않게 대체 이름을 쓴다(QA CONN-A25)
+export function wardDisplayName(name: string | null | undefined) {
+  return name?.trim() || '이름 없음';
 }

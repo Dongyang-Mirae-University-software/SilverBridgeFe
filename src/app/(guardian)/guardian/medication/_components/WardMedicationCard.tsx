@@ -30,6 +30,7 @@ import { MedicationAddModal } from './MedicationAddModal';
 import { MedicationFormModal, MedicationFormValue } from './MedicationFormModal';
 import { MissedAlertTimeSelect } from './MissedAlertTimeSelect';
 import styles from './WardMedicationCard.module.css';
+import { wardDisplayName } from '@/components/connections/WardSelectorTabs';
 
 const cx = classNames.bind(styles);
 
@@ -101,7 +102,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
   const { data: notificationTypeSetting } = useQuery(guardianNotificationTypeSettingQueryOptions);
   const isMedicationNotificationDisabled = notificationTypeSetting?.medication.enabled === false;
 
-  const wardName = summary.wardName ?? '피보호자';
+  const wardName = wardDisplayName(summary.wardName);
   const medications = sortMedicationsByDoseTime(summary.medications);
   const hasMedications = medications.length > 0;
   const nowHHmm = new Intl.DateTimeFormat('en-GB', {
