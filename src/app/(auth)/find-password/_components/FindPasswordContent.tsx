@@ -138,6 +138,8 @@ export default function FindPasswordContent({ onClose }: Props) {
         <FindPasswordResetStep
           errorMessage={flow.errorMessage}
           isPending={flow.isResetting}
+          isVerificationExpired={flow.isVerificationExpired}
+          onRestart={flow.restart}
           onSubmit={handleResetSubmit}
         />
       )}

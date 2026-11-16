@@ -60,6 +60,8 @@ export default function useFindPasswordFlow() {
   const [phone, setPhone] = useState('');
   const [verifiedCode, setVerifiedCode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  // 새 비밀번호 단계에서 인증이 만료됐는지(EXPIRED_SMS_CODE 등) - '인증 다시 받기'를 보인다(QA AUTH-A35)
+  const [isVerificationExpired, setIsVerificationExpired] = useState(false);
   const [verificationConfig, setVerificationConfig] = useState({
     expiresInSeconds: DEFAULT_VERIFICATION_EXPIRES_SECONDS,
     codeLength: DEFAULT_VERIFICATION_CODE_LENGTH,
@@ -114,8 +116,24 @@ export default function useFindPasswordFlow() {
   const resetPasswordMutation = useMutation({
     mutationFn: passwordReset,
     onSuccess: () => setErrorMessage(''),
-    onError: (error: Error) => setErrorMessage(error.message || '비밀번호 변경에 실패했습니다.'),
+    onError: (error: Error) => {
+      const code = (error as { response?: { data?: { code?: string } } }).response?.data?.code ?? '';
+      setIsVerificationExpired(/^EXPIRED_.*CODE$/.test(code));
+      setErrorMessage(error.message || '비밀번호 변경에 실패했습니다.');
+    },
   });
+
+  // 인증 방법 선택부터 다시 - 입력값과 인증 상태를 비운다
+  const restart = () => {
+    setStep(1);
+    setMethod(null);
+    setEmail('');
+    setName('');
+    setPhone('');
+    setVerifiedCode('');
+    setErrorMessage('');
+    setIsVerificationExpired(false);
+  };
 
   return {
     step,
@@ -125,6 +143,8 @@ export default function useFindPasswordFlow() {
     phone,
     verifiedCode,
     errorMessage,
+    isVerificationExpired,
+    restart,
     verificationConfig,
     isSending: sendEmailMutation.isPending || sendSmsMutation.isPending,
     isVerifying: verifyEmailMutation.isPending || verifySmsMutation.isPending,

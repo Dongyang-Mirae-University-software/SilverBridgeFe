@@ -12,10 +12,13 @@ const cx = classNames.bind(styles);
 interface Props {
   errorMessage: string;
   isPending: boolean;
+  // 인증이 만료돼 변경이 거절됐으면 '비밀번호 변경' 대신 '인증 다시 받기'를 보인다(QA AUTH-A35)
+  isVerificationExpired?: boolean;
+  onRestart?: () => void;
   onSubmit: (newPassword: string) => void;
 }
 
-export default function FindPasswordResetStep({ errorMessage, isPending, onSubmit }: Props) {
+export default function FindPasswordResetStep({ errorMessage, isPending, isVerificationExpired = false, onRestart, onSubmit }: Props) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -63,9 +66,15 @@ export default function FindPasswordResetStep({ errorMessage, isPending, onSubmi
         />
       </div>
       {errorMessage && <p className={cx('errorMessage')} role="alert">{errorMessage}</p>}
-      <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
-        {isPending ? '변경 중...' : '비밀번호 변경'}
-      </button>
+      {isVerificationExpired && onRestart ? (
+        <button className={cx('submitButton')} type="button" onClick={onRestart}>
+          인증 다시 받기
+        </button>
+      ) : (
+        <button className={cx('submitButton')} disabled={!isValid || isPending} type="submit">
+          {isPending ? '변경 중...' : '비밀번호 변경'}
+        </button>
+      )}
     </form>
   );
 }
