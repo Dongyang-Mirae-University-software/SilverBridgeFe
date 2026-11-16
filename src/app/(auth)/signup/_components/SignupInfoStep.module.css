@@ -56,6 +56,13 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.birthDateHint {
+  color: var(--sb-ink-mute-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .birthDateError {
   color: #c94f35;
   font-size: 0.75rem;

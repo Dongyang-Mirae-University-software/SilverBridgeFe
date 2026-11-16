@@ -81,8 +81,11 @@ export default function SignupProfileStep({
             생년월일 <span className={cx('requiredMark')}>*</span>
           </span>
           <BirthDateSelects className={cx('birthDateSelects')} value={birthDateValue} onChange={onBirthDateChange} />
-          {errors.birthDate?.message && allValues.birthDate && allValues.birthDate.trim() !== '' && (
+          {errors.birthDate?.message && allValues.birthDate && allValues.birthDate.trim() !== '' ? (
             <span className={cx('birthDateError')}>{errors.birthDate.message}</span>
+          ) : (
+            // 가입 나이 규칙을 미리 알린다(QA AUTH-N04, 문구는 기획 확정 전)
+            <span className={cx('birthDateHint')}>만 14세 이상만 가입할 수 있어요</span>
           )}
         </div>
       </div>
