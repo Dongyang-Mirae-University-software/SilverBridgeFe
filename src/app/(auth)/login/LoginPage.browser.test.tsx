@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   refreshAccessToken: vi.fn(),
   endLeftoverSession: vi.fn(),
   logout: vi.fn(),
+  ensureLoggedOutPage: vi.fn(),
 }));
 
 // next/headers는 CJS라 Vite가 default로 읽게 바꿔 놓는다 - 목도 default에 같은 함수를 둔다
@@ -45,6 +46,8 @@ vi.mock('@/service/api/auth/auth', async importOriginal => ({
   ...(await importOriginal<typeof import('@/service/api/auth/auth')>()),
   logout: mocks.logout,
 }));
+// 실제로 두면 1.5초 뒤 테스트 페이지를 /login으로 새로 연다 - 불렸는지만 본다(동작은 logoutNavigation.test.ts)
+vi.mock('@/lib/auth/logoutNavigation', () => ({ ensureLoggedOutPage: mocks.ensureLoggedOutPage }));
 vi.mock('@/lib/fcm', () => ({
   registerFcmTokenForCurrentDevice: () => Promise.resolve(),
   unregisterFcmTokenForCurrentDevice: () => Promise.resolve(),
@@ -219,6 +222,8 @@ describe('로그아웃 (Chrome)', () => {
     expect(document.cookie).not.toContain('careai_access_token=');
     // 지우기 전에 꺼내 둔 토큰으로 서버 로그아웃을 뒤에서 보낸다
     await vi.waitFor(() => expect(mocks.logout).toHaveBeenCalledWith(access));
+    // 예전 화면에서 위 이동이 실패할 때를 대비해 새로 열기 확인을 건다
+    expect(mocks.ensureLoggedOutPage).toHaveBeenCalledTimes(1);
   });
 });
 

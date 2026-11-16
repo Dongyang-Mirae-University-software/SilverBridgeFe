@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { logout } from '@/service/api/auth/auth';
+import { ensureLoggedOutPage } from '@/lib/auth/logoutNavigation';
 import { clearAuthTokens, getAccessToken } from '@/lib/auth/tokenStore';
 import { unregisterFcmTokenForCurrentDevice } from '@/lib/fcm';
 import { reportNonApiError } from '@/lib/api/reportError';
@@ -27,7 +28,9 @@ export function useLogoutMutation() {
       clearAuthTokens();
       queryClient.clear();
       router.replace('/login');
-      if (accessToken) void endServerSession(accessToken);
+      const session = accessToken ? endServerSession(accessToken) : Promise.resolve();
+      // 재배포 전 화면에서는 위 이동이 조용히 실패한다 - 잠시 뒤에도 /login이 아니면 페이지를 새로 연다
+      void ensureLoggedOutPage(session);
     },
   });
 }
