@@ -188,3 +188,17 @@ describe('실시간 연결 주소 (2026-11-10 전체 점검 S-8)', () => {
     expect(resolveSocketBaseUrl(undefined, true)).toContain('/ws');
   });
 });
+
+describe('피보호자 관리자 강제 연결 신호 (QA ADM-N42)', () => {
+  it('connection-accepted 를 구독하고, 본문 type(CONNECTION_FORCED)을 그대로 넘긴다', () => {
+    const onMessage = vi.fn();
+    connectConnectionSocket({ onMessage, role: 'WARD', userId: 'w1' });
+    const client = mocks.clients.at(-1)! as unknown as { onConnect: () => void; subscribe: ReturnType<typeof vi.fn> };
+    client.onConnect();
+
+    const call = client.subscribe.mock.calls.find(([destination]) => destination === '/topic/w1/connection-accepted');
+    expect(call).toBeDefined();
+    call![1]({ body: JSON.stringify({ type: 'CONNECTION_FORCED', connectionId: 5 }) });
+    expect(onMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'CONNECTION_FORCED', connectionId: '5' }));
+  });
+});

@@ -8,6 +8,8 @@ import { removePendingConnectionRequest, savePendingConnectionRequest } from './
 type ConnectionRealtimeType =
   | 'CONNECTION_REQUEST'
   | 'CONNECTION_ACCEPTED'
+  // 관리자가 강제로 연결함 - connection-accepted 로 오고 본문 type 만 다르다
+  | 'CONNECTION_FORCED'
   | 'CONNECTION_CANCELLED'
   | 'CONNECTION_REFUSED'
   // 보호자가 수락 전 요청을 취소함 - 알림(토스트·푸시) 없이 피보호자의 받은 요청 목록만 갱신한다
@@ -66,6 +68,8 @@ const MAX_FAILURES_WITH_SAME_TOKEN = 2;
 
 const WARD_CONNECTION_TOPICS: Array<{ destination: string; type: ConnectionRealtimeType }> = [
   { destination: 'connection-request', type: 'CONNECTION_REQUEST' },
+  // 관리자 강제 연결도 여기로 온다 - 듣지 않으면 새로고침 전까지 가족 목록에 보호자가 안 보였다(QA ADM-N42)
+  { destination: 'connection-accepted', type: 'CONNECTION_ACCEPTED' },
   { destination: 'connection-cancelled', type: 'CONNECTION_CANCELLED' },
   { destination: 'connection-request-cancelled', type: 'CONNECTION_REQUEST_CANCELLED' },
   { destination: 'medication-taken', type: 'MEDICATION_TAKEN' },

@@ -16,6 +16,7 @@ import type { ConnectionRealtimePayload } from '@/lib/realtime/connectionSocket'
 import { removePendingConnectionRequest } from '@/lib/realtime/pendingConnectionRequests';
 import useModalStore from '@/store/modalStore';
 import { getConnectionActionErrorMessage } from '@/utils/connection/connectionView';
+import { wardActiveConnectionsQueryKey } from './sos';
 
 export const wardConnectionsQueryKey = ['ward-connections'] as const;
 export const wardGuardianActiveConnectionsQueryKey = [...wardConnectionsQueryKey, 'active'] as const;
@@ -54,6 +55,15 @@ export function applyWardConnectionRequestCancelled(queryClient: QueryClient, pa
   if (payload.type !== 'CONNECTION_REQUEST_CANCELLED') return false;
   void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
   return true;
+}
+
+// 연결이 맺어지면(다른 기기에서 수락·관리자 강제 연결) 가족 목록과 SOS 알림 대상을 새로 받는다.
+// 강제 연결만 안내를 띄우고(false), 내가 수락한 것은 조용히 넘긴다(true)
+export function applyWardConnectionAccepted(queryClient: QueryClient, payload: ConnectionRealtimePayload) {
+  if (payload.type !== 'CONNECTION_ACCEPTED' && payload.type !== 'CONNECTION_FORCED') return false;
+  void queryClient.invalidateQueries({ queryKey: wardConnectionsQueryKey });
+  void queryClient.invalidateQueries({ queryKey: wardActiveConnectionsQueryKey });
+  return payload.type === 'CONNECTION_ACCEPTED';
 }
 
 interface WardConnectionMutationOptions {

@@ -8,6 +8,11 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload, role
         body: payload.body ?? '보호자가 연결을 요청했습니다.',
         title: payload.title ?? '연결 요청',
       };
+    case 'CONNECTION_FORCED':
+      return {
+        body: payload.body ?? '관리자가 보호자와 연결했어요. 내 가족에서 확인해 주세요.',
+        title: payload.title ?? '보호자 연결',
+      };
     case 'CONNECTION_ACCEPTED':
       return {
         body: payload.body ?? '피보호자가 연결 요청을 수락했습니다.',

@@ -23,7 +23,7 @@ import { useVisualViewportHeight } from '@/hooks/useVisualViewportHeight';
 import { connectConnectionSocket } from '@/lib/realtime/connectionSocket';
 import { myProfileQueryOptions } from '@/service/query/user';
 import { wardCompanionTodayQueryOptions } from '@/service/query/ward/companion';
-import { applyWardConnectionRequestCancelled } from '@/service/query/ward/connection';
+import { applyWardConnectionAccepted, applyWardConnectionRequestCancelled } from '@/service/query/ward/connection';
 import { applyMedicationTakenToWardCache } from '@/service/query/ward/medication';
 import { hasUserSavedWardSosSetting, wardSosSettingQueryOptions } from '@/service/query/ward/sosSetting';
 import { WardCameraStreamProvider } from '../camera/_components/WardCameraStreamProvider';
@@ -141,6 +141,7 @@ function useWardConnectionSocket(realtimeUserId: string | undefined) {
         }
         // 보호자의 요청 취소는 알림을 보내지 않는 정책이라 토스트 없이 받은 요청 목록만 새로 받는다
         if (applyWardConnectionRequestCancelled(queryClient, payload)) return;
+        if (applyWardConnectionAccepted(queryClient, payload)) return;
 
         window.dispatchEvent(
           new CustomEvent('careai:push', {
