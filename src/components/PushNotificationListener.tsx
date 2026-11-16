@@ -7,7 +7,7 @@ import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { listenForegroundMessages } from '@/lib/fcm';
-import { getAuthRole } from '@/lib/auth/tokenStore';
+import { SESSION_CLEARED_EVENT, getAuthRole } from '@/lib/auth/tokenStore';
 import { guardianConnectionRequestsQueryKey, guardianConnectionsQueryKey } from '@/service/query/guardian';
 import { guardianSosHistoryQueryKey } from '@/service/query/guardian/sosHistory';
 import { guardianMedicationQueryKey } from '@/service/query/guardian/medication';
@@ -329,6 +329,17 @@ export default function PushNotificationListener() {
 
   const dismissToast = useCallback((id: number) => {
     setToasts(prev => prev.filter(item => item.id !== id));
+  }, []);
+
+  // 세션이 끝나면 앞 사람의 팝업·처리 중 표시·중복 방지 기록을 모두 비운다 - 이 리스너는 최상위 레이아웃에 붙어 살아 있다
+  useEffect(() => {
+    const clearAll = () => {
+      setToasts([]);
+      setProcessingToastIds([]);
+      handledNotificationKeysRef.current.clear();
+    };
+    window.addEventListener(SESSION_CLEARED_EVENT, clearAll);
+    return () => window.removeEventListener(SESSION_CLEARED_EVENT, clearAll);
   }, []);
 
   // "방금·N분 전"을 갱신한다 - 토스트가 떠 있을 때만

@@ -169,6 +169,8 @@ export function getAccessTokenSubject() {
   return typeof sub === 'string' ? sub : null;
 }
 
+export const SESSION_CLEARED_EVENT = 'careai:session-cleared';
+
 export function clearAuthTokens() {
   accessToken = null;
   authRole = null;
@@ -186,4 +188,6 @@ export function clearAuthTokens() {
   // 다음에 이 탭으로 로그인하는 사람에게 앞 사람이 고른 피보호자가 남지 않게 한다
   clearSelectedWardId();
   clearConversations();
+  // 화면에 떠 있는 앞 사람의 알림 팝업(피보호자 이름 포함)도 닫게 알린다 - 로그아웃·자동 로그아웃 모두(QA CONN-A21·NOTI-A51)
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') window.dispatchEvent(new Event(SESSION_CLEARED_EVENT));
 }

@@ -8,6 +8,7 @@ import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { render } from 'vitest-browser-react';
 
+import { clearAuthTokens } from '@/lib/auth/tokenStore';
 import PushNotificationListener from './PushNotificationListener';
 
 type ForegroundHandler = (payload: { data?: Record<string, string>; notification?: { title?: string; body?: string } }) => void;
@@ -66,6 +67,22 @@ beforeEach(async () => {
 
 afterEach(() => {
   document.body.innerHTML = '';
+});
+
+describe('세션이 끝나면', () => {
+  it('로그아웃(세션 정리)하면 앞 사람의 SOS 팝업을 닫고, 같은 알림이 다시 와도 다시 띄운다 (QA CONN-A21·NOTI-A51)', async () => {
+    const screen = await renderListener();
+    const sos = { data: { type: 'WARD_SOS', sosEventId: '9', title: '긴급 SOS', body: '김영자님 도움 요청' } };
+    await receive(sos);
+    await expect.element(screen.getByText('김영자님 도움 요청')).toBeVisible();
+
+    await act(async () => clearAuthTokens());
+    expect(screen.getByText('김영자님 도움 요청').query()).toBeNull();
+
+    // 중복 방지 기록도 비워서, 다음 사람이 같은 알림을 받으면 보인다
+    await act(async () => mocks.handler!(sos));
+    await expect.element(screen.getByText('김영자님 도움 요청')).toBeVisible();
+  });
 });
 
 describe('문구·구성', () => {
