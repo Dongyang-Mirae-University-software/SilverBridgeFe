@@ -11,14 +11,12 @@ import {
   useWardGuardianPendingConnectionsQuery,
 } from '@/service/query/ward';
 import styles from './WardGuardianPendingSection.module.css';
+import { formatMonthDay } from '@/utils/connection/connectionView';
 
 const cx = classNames.bind(styles);
 
 function formatRequestedDate(value: string) {
-  const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!matched) return '최근';
-
-  return `${Number(matched[2])}월 ${Number(matched[3])}일`;
+  return formatMonthDay(value) ?? '최근';
 }
 
 // 보호자가 보낸 연결 요청. 수락 전이라 연락처는 보여 주지 않는다(BE도 가린 번호만 준다)

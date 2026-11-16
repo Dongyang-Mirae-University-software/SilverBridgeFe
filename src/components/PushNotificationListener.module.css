@@ -297,3 +297,15 @@
     animation: none;
   }
 }
+
+/* 3개를 넘친 연결 요청 수 - 팝업 아래 한 줄로 알리고 내 가족 화면으로 보낸다(QA CONN-A12) */
+.moreRequests {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.moreRequests .body {
+  margin: 0;
+}

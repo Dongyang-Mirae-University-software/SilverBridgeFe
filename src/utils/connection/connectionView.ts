@@ -108,14 +108,27 @@ function parseDateOnly(value: string | null | undefined) {
   return { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
 }
 
-// "2026년 1월 12일" - 서버 시각 문자열의 날짜 부분(KST)을 그대로 쓴다
+const KST_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+// 시각이 붙은 값은 한국 날짜로 바꿔 읽는다 - 앞 10자리를 그대로 쓰면 UTC로 온 새벽 요청이 하루 전 날짜로 보였다(QA CONN-A12).
+// 시간대 표기가 없는 시각은 서버 기준(UTC)으로 보고, 날짜만 있는 값(생년월일 등)은 그대로 쓴다
+export function parseKstDate(value: string | null | undefined) {
+  if (!value) return null;
+  if (!/T\d{2}:\d{2}/.test(value)) return parseDateOnly(value);
+  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/.test(value);
+  const time = new Date(hasZone ? value : `${value}Z`);
+  if (Number.isNaN(time.getTime())) return parseDateOnly(value);
+  return parseDateOnly(KST_DATE.format(time));
+}
+
+// "2026년 1월 12일" - 한국 날짜
 export function formatKoreanDate(value: string | null | undefined) {
-  const date = parseDateOnly(value);
+  const date = parseKstDate(value);
   return date ? `${date.year}년 ${date.month}월 ${date.day}일` : null;
 }
 
 export function formatMonthDay(value: string | null | undefined) {
-  const date = parseDateOnly(value);
+  const date = parseKstDate(value);
   return date ? `${date.month}월 ${date.day}일` : null;
 }
 

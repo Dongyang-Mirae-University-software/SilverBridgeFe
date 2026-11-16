@@ -43,6 +43,9 @@ const SWIPE_DISMISS_PX = 48;
 const MAX_PROGRESS_CELLS = 12;
 type ConnectionTargetRole = 'WARD' | 'GUARDIAN';
 
+const MAX_VISIBLE_TOASTS = 3;
+const MAX_KEPT_TOASTS = 20;
+
 interface PushToast {
   id: number;
   title: string;
@@ -326,6 +329,7 @@ export default function PushNotificationListener() {
   const [swipe, setSwipe] = useState<{ id: number; dy: number } | null>(null);
   const currentRole = getCurrentRole(pathname);
   const hasToasts = toasts.length > 0;
+  const hiddenRequestCount = toasts.slice(MAX_VISIBLE_TOASTS).filter(item => item.data?.type === 'CONNECTION_REQUEST').length;
 
   const dismissToast = useCallback((id: number) => {
     setToasts(prev => prev.filter(item => item.id !== id));
@@ -406,7 +410,12 @@ export default function PushNotificationListener() {
         });
       }
 
-      setToasts(prev => [toast, ...prev].slice(0, 3));
+      // 화면에는 3개만 보이지만, 넘친 연결 요청은 버리지 않고 남겨 'N건 더 있어요'로 알린다(QA CONN-A12)
+      setToasts(prev => {
+        const next = [toast, ...prev];
+        const overflowRequests = next.slice(MAX_VISIBLE_TOASTS).filter(item => item.data?.type === 'CONNECTION_REQUEST');
+        return [...next.slice(0, MAX_VISIBLE_TOASTS), ...overflowRequests].slice(0, MAX_KEPT_TOASTS);
+      });
       if (isConnectionRequest(toast.data, currentRole) || isSosPush(toast.data) || isAnomalyPush(toast.data)) return;
       window.setTimeout(() => {
         dismissToast(toast.id);
@@ -568,7 +577,7 @@ export default function PushNotificationListener() {
   // 일반 알림은 이 영역(polite)이 읽고, 긴급(SOS·이상감지)만 자기 role=alert로 바로 읽힌다
   return (
     <div className={cx('toastArea')} aria-live="polite" aria-label="새 알림">
-      {toasts.map(toast => {
+      {toasts.slice(0, MAX_VISIBLE_TOASTS).map(toast => {
         const kind = getPushKind(toast.data);
         const urgent = isUrgentPush(toast.data);
         const connectionRequest = isConnectionRequest(toast.data, currentRole);
@@ -686,8 +695,23 @@ export default function PushNotificationListener() {
               )
             )}
           </section>
-        );
+                );
       })}
+      {hiddenRequestCount > 0 && (
+        <section className={cx('toast', 'moreRequests')}>
+          <p className={cx('body')}>연결 요청 {hiddenRequestCount}건이 더 있어요</p>
+          <button
+            className={cx('secondaryButton')}
+            type="button"
+            onClick={() => {
+              setToasts(prev => prev.slice(0, MAX_VISIBLE_TOASTS));
+              router.push('/ward/guardians');
+            }}
+          >
+            모두 보기
+          </button>
+        </section>
+      )}
     </div>
   );
 }

@@ -86,6 +86,24 @@ describe('연결 요청 취소', () => {
   });
 });
 
+describe('넘친 연결 요청', () => {
+  it('팝업은 3개만 보이고, 넘친 연결 요청은 "N건 더 있어요"로 알려 내 가족 화면으로 보낸다 (QA CONN-A12)', async () => {
+    mocks.pathname = '/ward';
+    const screen = await renderListener();
+    for (const id of ['41', '42', '43', '44', '45']) {
+      await receive({ data: { type: 'CONNECTION_REQUEST', connectionId: id, title: '연결 요청', body: `요청 ${id}` } });
+    }
+
+    await expect.element(screen.getByText('요청 45')).toBeVisible();
+    expect(screen.getByText('요청 42').query()).toBeNull();
+    await expect.element(screen.getByText('연결 요청 2건이 더 있어요')).toBeVisible();
+
+    await screen.getByRole('button', { name: '모두 보기' }).click();
+    expect(mocks.push).toHaveBeenCalledWith('/ward/guardians');
+    expect(screen.getByText('연결 요청 2건이 더 있어요').query()).toBeNull();
+  });
+});
+
 describe('세션이 끝나면', () => {
   it('로그아웃(세션 정리)하면 앞 사람의 SOS 팝업을 닫고, 같은 알림이 다시 와도 다시 띄운다 (QA CONN-A21·NOTI-A51)', async () => {
     const screen = await renderListener();

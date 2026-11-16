@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   formatKoreanDate,
+  formatMonthDay,
   formatRelationToWard,
   formatRequestedAs,
   formatRetryAfter,
@@ -64,6 +65,12 @@ describe('표시 규칙', () => {
 
   it('날짜와 만 나이', () => {
     expect(formatKoreanDate('2026-01-12T09:00:00+09:00')).toBe('2026년 1월 12일');
+    // 한국 새벽 0시 30분에 보낸 요청이 UTC로 오면 하루 전으로 보이지 않는다(QA CONN-A12)
+    expect(formatMonthDay('2026-09-29T15:30:00Z')).toBe('9월 30일');
+    expect(formatMonthDay('2026-09-29T15:30:00')).toBe('9월 30일');
+    expect(formatMonthDay('2026-09-30T00:30:00+09:00')).toBe('9월 30일');
+    // 날짜만 있는 값은 그대로
+    expect(formatKoreanDate('1946-03-02')).toBe('1946년 3월 2일');
     expect(formatKoreanDate(null)).toBeNull();
     const today = new Date(2026, 9, 24);
     expect([getAgeFromBirthDate('1948-03-15', today), getAgeFromBirthDate('1948-12-01', today), getAgeFromBirthDate(null, today)]).toEqual([
