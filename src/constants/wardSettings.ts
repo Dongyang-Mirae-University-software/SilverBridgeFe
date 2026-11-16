@@ -37,3 +37,46 @@ export function getWardTextVars({ fontSize, highContrast }: Pick<WardSettings, '
     '--ward-weight-boost': String(highContrast ? WARD_HIGH_CONTRAST_WEIGHT_BOOST : 0),
   };
 }
+
+type SettingsStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+
+// 저장된 설정을 읽는다. 깨진 JSON·읽기 차단이면 기본 설정을 쓰고 깨진 값은 지운다 -
+// 예전에는 예외가 그대로 올라가 피보호자 화면 전체가 뜨지 않았다(QA CONN-A27)
+export function readStoredWardSettings(storage: SettingsStorage | null): WardSettings {
+  try {
+    const raw = storage?.getItem(WARD_SETTINGS_STORAGE_KEY);
+    if (!raw) return DEFAULT_WARD_SETTINGS;
+    const parsed = JSON.parse(raw) as Partial<WardSettings> | null;
+    if (!parsed || typeof parsed !== 'object') throw new Error('잘못된 설정');
+    return {
+      ...DEFAULT_WARD_SETTINGS,
+      ...parsed,
+      fontSize: clampFontSize(parsed.fontSize),
+      sosAction: getValidSosAction(parsed.sosAction),
+    };
+  } catch {
+    try {
+      storage?.removeItem(WARD_SETTINGS_STORAGE_KEY);
+    } catch {
+      // 지우기도 막혀 있으면 그냥 기본값으로 연다
+    }
+    return DEFAULT_WARD_SETTINGS;
+  }
+}
+
+export function writeStoredWardSettings(storage: SettingsStorage | null, settings: WardSettings) {
+  try {
+    storage?.setItem(WARD_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // 저장이 막혀도(사생활 보호 모드·용량 초과) 화면은 계속 쓴다
+  }
+}
+
+export function getWardSettingsStorage(): SettingsStorage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}

@@ -11,10 +11,11 @@ import { WardSettings } from '@/components/layout/dashboard/types';
 import { wardNavItems } from '@/constants/dashboard';
 import {
   DEFAULT_WARD_SETTINGS,
-  WARD_SETTINGS_STORAGE_KEY,
-  clampFontSize,
   getValidSosAction,
+  getWardSettingsStorage,
   getWardTextVars,
+  readStoredWardSettings,
+  writeStoredWardSettings,
 } from '@/constants/wardSettings';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { getRealtimeNotification } from '@/utils/dashboard/realtime';
@@ -99,24 +100,12 @@ function useWardSettings(
   settings: WardSettings,
 ) {
   useEffect(() => {
-    try {
-      const rawSettings = window.localStorage.getItem(WARD_SETTINGS_STORAGE_KEY);
-      if (rawSettings) {
-        const parsed = JSON.parse(rawSettings) as Partial<WardSettings>;
-        setSettings({
-          ...DEFAULT_WARD_SETTINGS,
-          ...parsed,
-          fontSize: clampFontSize(parsed.fontSize),
-          sosAction: getValidSosAction(parsed.sosAction),
-        });
-      }
-    } finally {
-      setIsLoaded(true);
-    }
+    setSettings(readStoredWardSettings(getWardSettingsStorage()));
+    setIsLoaded(true);
   }, [setIsLoaded, setSettings]);
 
   useEffect(() => {
-    if (isLoaded) window.localStorage.setItem(WARD_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    if (isLoaded) writeStoredWardSettings(getWardSettingsStorage(), settings);
   }, [isLoaded, settings]);
 }
 
