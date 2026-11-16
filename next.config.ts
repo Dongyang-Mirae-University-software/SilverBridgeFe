@@ -16,6 +16,8 @@ const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  // 응답에 X-Powered-By: Next.js 를 붙이지 않는다(QA CHAT-N47)
+  poweredByHeader: false,
   // 개발 서버를 외부에서 볼 때도 Next.js 개발 상태 플로팅 UI는 노출하지 않는다.
   devIndicators: false,
   allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(','),
