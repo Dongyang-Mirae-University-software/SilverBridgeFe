@@ -25,6 +25,7 @@ import {
   sortMedicationsByDoseTime,
 } from '@/utils/format/medication';
 import styles from './WardMedicationContent.module.css';
+import { getServerMessage } from '@/utils/api/serverMessage';
 
 const cx = classNames.bind(styles);
 
@@ -131,6 +132,7 @@ export function WardMedicationContent() {
     select: mutation => ({
       status: mutation.state.status,
       taken: (mutation.state.variables as { taken?: boolean } | undefined)?.taken,
+      serverMessage: getServerMessage(mutation.state.error),
     }),
   });
   const lastIntake = intakeStates.at(-1);
@@ -175,7 +177,8 @@ export function WardMedicationContent() {
 
           {lastIntakeFailed && (
             <p className={cx('intakeError')} role="alert">
-              {lastIntake?.taken === false ? '되돌리지 못했어요' : '체크하지 못했어요'}. 목록을 다시 불러왔으니 한 번 더 눌러 주세요
+              {/* 서버가 이유를 주면(예: 복약 정보를 찾을 수 없습니다.) 그 문구를 먼저 보인다(QA CONN-A38) */}
+              {lastIntake?.serverMessage ?? (lastIntake?.taken === false ? '되돌리지 못했어요.' : '체크하지 못했어요.')} 목록을 다시 불러왔으니 한 번 더 눌러 주세요
             </p>
           )}
 

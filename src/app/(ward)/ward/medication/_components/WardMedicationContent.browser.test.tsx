@@ -196,6 +196,24 @@ describe('WardMedicationContent (Chrome)', () => {
     await vi.waitFor(() => expect(api.getTodayMedication).toHaveBeenCalledTimes(2));
   });
 
+  it('서버가 이유를 주면 고정 문구 대신 그 이유를 보인다 (QA CONN-A38)', async () => {
+    const morning = medication('혈압약', '08:00:00', 'MORNING');
+    api.getTodayMedication.mockResolvedValue(today([morning]));
+    api.setMedicationIntakeBatch.mockRejectedValueOnce(
+      new AxiosError('복약 정보를 찾을 수 없습니다.', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status: 404,
+        statusText: '',
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+        data: { code: 'MEDICATION_NOT_FOUND', message: '복약 정보를 찾을 수 없습니다.' },
+      }),
+    );
+    const screen = await renderContent();
+
+    await screen.getByRole('button', { name: '아침 약 먹었어요' }).click();
+    await expect.element(screen.getByRole('alert')).toMatchTextContent('복약 정보를 찾을 수 없습니다. 목록을 다시 불러왔으니 한 번 더 눌러 주세요');
+  });
+
   it('요청 중 빠르게 두 번 눌러도 한 번만 전송한다', async () => {
     const morning = medication('혈압약', '08:00:00', 'MORNING');
     api.getTodayMedication.mockResolvedValue(today([morning]));

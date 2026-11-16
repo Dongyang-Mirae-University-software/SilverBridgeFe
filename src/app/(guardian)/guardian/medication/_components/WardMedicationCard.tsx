@@ -31,6 +31,7 @@ import { MedicationFormModal, MedicationFormValue } from './MedicationFormModal'
 import { MissedAlertTimeSelect } from './MissedAlertTimeSelect';
 import styles from './WardMedicationCard.module.css';
 import { wardDisplayName } from '@/components/connections/WardSelectorTabs';
+import { getServerMessage } from '@/utils/api/serverMessage';
 
 const cx = classNames.bind(styles);
 
@@ -210,7 +211,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
         deletedIdRef.current = medication.medicationId;
         setConfirmingId(null);
       },
-      onError: () => setDeleteError(DELETE_FAILED_MESSAGE),
+      onError: error => setDeleteError(getServerMessage(error) ?? DELETE_FAILED_MESSAGE),
     });
   };
 
@@ -220,7 +221,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     setDeleteError(null);
     deleteBatchMutation.mutate(
       { wardId: summary.wardId, medicationIds: targets.map(medication => medication.medicationId) },
-      { onError: () => setDeleteError(DELETE_FAILED_MESSAGE) },
+      { onError: error => setDeleteError(getServerMessage(error) ?? DELETE_FAILED_MESSAGE) },
     );
   };
 
@@ -389,7 +390,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
               alertSettingMutation.mutate(
                 { wardId: summary.wardId, body: { missedAlertTime: `${hhmm}:00`, missedAlertEnabled: true } },
                 // 실패하면 버튼이 옛 시각으로 조용히 돌아가 저장된 줄 알았다 - 알린다(점검 M-1)
-                { onError: () => setAlertError(ALERT_SAVE_FAILED_MESSAGE) },
+                { onError: error => setAlertError(getServerMessage(error) ?? ALERT_SAVE_FAILED_MESSAGE) },
               );
             }}
           />
