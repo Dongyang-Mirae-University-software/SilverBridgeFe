@@ -12,6 +12,7 @@ import { clearKakaoSignupHandoff } from '@/lib/auth/kakaoSignupHandoff';
 import { completeSigninSession } from '@/lib/auth/completeSignin';
 import { getRoleHomePath } from '@/utils/auth/routes';
 import { getPhoneDigits } from '@/utils/format/phone';
+import { getBirthDateError } from '@/utils/format/birthDate';
 
 export type SignupFormValues = {
   name: string;
@@ -75,6 +76,9 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
       postcode: '',
     },
   });
+
+  // 생년월일은 select 세 칸으로 고르고 setValue 로 넣는다 - 검사 규칙을 여기서 건다(QA AUTH-A05)
+  register('birthDate', { validate: value => getBirthDateError(value) ?? true });
 
   // 모든 필드의 현재 값을 watch
   const allValues = watch();
