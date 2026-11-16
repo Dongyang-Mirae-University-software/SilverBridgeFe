@@ -42,11 +42,11 @@ function useLiveClock() {
   return now;
 }
 
-// 카메라 상태는 '켜짐/꺼짐' 두 말로만 보인다(2026-10-28 v13 시안).
-// AI 상태를 아직 못 받았다면 상태를 지어내지 않고 표시 자체를 생략한다.
+// 카메라 상태는 '켜짐/꺼짐'으로 보인다(2026-10-28 v13 시안). AI가 상태를 모르면(null) 정상처럼 보이지 않게
+// '확인 불가'를 보인다 - v13 시안은 표시를 생략했지만 문서 기준에 맞춘다(QA CAM-N18)
 function getCameraStatusMeta(status: GuardianCameraLiveStatus) {
   if (status === 'running') return { label: '켜짐', tone: 'running' } as const;
-  if (status === null) return null;
+  if (status === null) return { label: '확인 불가', tone: 'unknown' } as const;
   return { label: '꺼짐', tone: 'offline' } as const;
 }
 
@@ -186,10 +186,9 @@ export function LiveCameraModal({
                     className={cx('switchChip', { active: isSelected })}
                     onClick={() => monitor.selectSession(session.sessionId)}
                   >
-                    {/* v12의 null 상태(checking)는 v13에서 제거했다. 상태를 못 받으면 점도 표시하지 않는다. */}
-                    {status && <span className={cx('switchStatusDot', status.tone)} />}
+                    <span className={cx('switchStatusDot', status.tone)} />
                     {session.label}
-                    {status?.tone === 'offline' && <span className={cx('switchStatus')}>{status.label}</span>}
+                    {status.tone !== 'running' && <span className={cx('switchStatus')}>{status.label}</span>}
                   </button>
                 );
               })}
