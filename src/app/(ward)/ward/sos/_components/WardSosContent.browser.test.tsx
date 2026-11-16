@@ -106,6 +106,43 @@ describe('WardSosContent (Chrome)', () => {
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeInTheDocument();
   });
 
+  it('NOTIFY_GUARDIAN_FIRST - 실패 창에서 [119 화면 열기]·[다시 보내기]를 고를 수 있다 (QA CONN-A19)', async () => {
+    mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
+    mocks.triggerSosAsync.mockRejectedValueOnce({ message: '서버 오류' });
+    const screen = await renderPage();
+
+    await confirmSos(screen);
+    await expect.element(screen.getByText('SOS 전송 실패')).toBeVisible();
+
+    await screen.getByRole('button', { name: '다시 보내기' }).click();
+    await expect.element(screen.getByText('보호자에게 알렸어요')).toBeVisible();
+    expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(2);
+  });
+
+  it('NOTIFY_GUARDIAN_FIRST - 실패 창의 [119 화면 열기]로 키패드를 연다', async () => {
+    mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
+    mocks.triggerSosAsync.mockRejectedValue({ message: '서버 오류' });
+    const screen = await renderPage();
+
+    await confirmSos(screen);
+    await screen.getByRole('button', { name: '119 화면 열기' }).click();
+
+    await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
+  });
+
+  it('인터넷이 끊겼으면 보내는 중에 갇히지 않고 바로 실패 창을 띄운다 (QA CONN-A19)', async () => {
+    mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const screen = await renderPage();
+
+    await confirmSos(screen);
+
+    await expect.element(screen.getByText('인터넷이 끊겼어요. 119 화면을 열어 직접 전화해 주세요.')).toBeVisible();
+    expect(mocks.triggerSosAsync).not.toHaveBeenCalled();
+    await expect.element(screen.getByRole('button', { name: /도움이 필요하면 누르세요/ })).toBeEnabled();
+    onLine.mockRestore();
+  });
+
   it('NOTIFY_GUARDIAN_FIRST - 알림 완료 뒤 [119 화면 열기]를 눌러야 키패드가 열린다', async () => {
     mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
     const screen = await renderPage();

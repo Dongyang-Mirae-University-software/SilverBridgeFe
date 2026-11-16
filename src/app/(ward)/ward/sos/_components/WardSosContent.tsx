@@ -32,8 +32,13 @@ export default function WardSosContent() {
     openModal(<Emergency119Dialpad onClose={onCloseModal} />);
   }
 
-  function openErrorModal(error: unknown) {
-    const message = (error as { message?: string })?.message || 'SOS 전송에 실패했습니다.';
+  // 실패 창에서 바로 119 화면을 열거나 다시 보낼 수 있게 한다(QA CONN-A19).
+  // 키패드가 이미 열려 있으면(CALL_119_AND_NOTIFY) 실패 창만 닫아 아래 키패드를 보인다
+  function openErrorModal(error: unknown, { retry, dialOpen = false }: { retry: () => void; dialOpen?: boolean }) {
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    const message = offline
+      ? '인터넷이 끊겼어요. 119 화면을 열어 직접 전화해 주세요.'
+      : (error as { message?: string })?.message || 'SOS 전송에 실패했습니다.';
 
     openModal(
       <CommonModal
@@ -41,7 +46,20 @@ export default function WardSosContent() {
         tone="guardian"
         title="SOS 전송 실패"
         message={message}
-        primaryButton={{ text: '확인', onClick: onCloseModal }}
+        primaryButton={{
+          text: '119 화면 열기',
+          onClick: () => {
+            onCloseModal();
+            if (!dialOpen) openDialModal();
+          },
+        }}
+        secondaryButton={{
+          text: '다시 보내기',
+          onClick: () => {
+            onCloseModal();
+            retry();
+          },
+        }}
         onClose={onCloseModal}
       />,
     );
@@ -91,13 +109,21 @@ export default function WardSosContent() {
       return;
     }
 
-    if (wardSettings.sosAction === 'CALL_119_AND_NOTIFY') openDialModal();
+    const dialOpen = wardSettings.sosAction === 'CALL_119_AND_NOTIFY';
+    if (dialOpen) openDialModal();
+
+    // 인터넷이 끊겼으면 기다리지 않고 바로 실패 창을 띄운다
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setIsSending(false);
+      openErrorModal(null, { retry: sendConfirmedSos, dialOpen });
+      return;
+    }
 
     triggerSosAsync(undefined)
       .then(data => {
         if (wardSettings.sosAction === 'NOTIFY_GUARDIAN_FIRST') openSuccessModal(data);
       })
-      .catch(openErrorModal)
+      .catch(error => openErrorModal(error, { retry: sendConfirmedSos, dialOpen }))
       .finally(() => setIsSending(false));
   }
 
@@ -131,7 +157,7 @@ export default function WardSosContent() {
   function handleGuardianCall(connection: IConnectionItem) {
     triggerSos(
       { triggerType: 'GUARDIAN_CALL', calledGuardianId: connection.partnerUserId },
-      { onError: openErrorModal },
+      { onError: error => openErrorModal(error, { retry: () => handleGuardianCall(connection) }) },
     );
   }
 

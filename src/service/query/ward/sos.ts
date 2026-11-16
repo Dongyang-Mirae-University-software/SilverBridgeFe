@@ -29,6 +29,8 @@ export function useWardSosMutation() {
   return useMutation({
     mutationKey: wardSosMutationKey,
     mutationFn: triggerWardSos,
+    // 오프라인이면 기본값(online)은 요청을 '잠시 멈춤'으로 두어 버튼이 '보내는 중'에 갇힌다 - 바로 보내고 실패로 끝낸다(QA CONN-A19)
+    networkMode: 'always',
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: wardActiveConnectionsQueryKey });
     },
