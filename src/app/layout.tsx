@@ -45,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning className={`${pretendard.variable} ${gmarketSans.variable} ${fredoka.variable}`}>
+    <html lang="ko" suppressHydrationWarning className={`${pretendard.variable} ${gmarketSans.variable} ${fredoka.variable}`}>
       <body>
         <ReactQueryProvider>
           {children}
