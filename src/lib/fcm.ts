@@ -4,7 +4,7 @@ import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import { getMessaging, getToken, isSupported, MessagePayload, Messaging, onMessage } from 'firebase/messaging';
 import { reportNonApiError } from '@/lib/api/reportError';
 import { getAccessTokenSubject } from '@/lib/auth/tokenStore';
-import { deleteNotificationFcmToken, registerNotificationFcmToken } from '@/service/api/user/notification';
+import { deleteNotificationFcmToken, registerNotificationFcmToken, releaseNotificationFcmToken } from '@/service/api/user/notification';
 
 const FCM_TOKEN_KEY = 'careai_fcm_token';
 const FCM_REGISTERED_TOKEN_KEY = 'careai_fcm_registered_token';
@@ -157,6 +157,23 @@ export async function unregisterFcmTokenForCurrentDevice(endedSessionAccessToken
     getSessionStorage()?.removeItem(FCM_REGISTERED_TOKEN_KEY);
     getSessionStorage()?.removeItem(FCM_REGISTERED_USER_KEY);
     getSessionStorage()?.removeItem(FCM_REGISTERED_AT_KEY);
+  }
+}
+
+// 세션이 만료돼 자동 로그아웃될 때 - 이 기기가 앞 사람의 알림을 계속 받지 않게 토큰을 해제한다.
+// 로그인 화면 이동을 막지 않게 기다리지 않고 부르며, 실패는 삼킨다(QA NOTI-N08)
+export async function releaseFcmTokenForCurrentDevice(lastAccessToken: string) {
+  const token = getSessionStorage()?.getItem(FCM_TOKEN_KEY);
+  getSessionStorage()?.removeItem(FCM_TOKEN_KEY);
+  getSessionStorage()?.removeItem(FCM_REGISTERED_TOKEN_KEY);
+  getSessionStorage()?.removeItem(FCM_REGISTERED_USER_KEY);
+  getSessionStorage()?.removeItem(FCM_REGISTERED_AT_KEY);
+  if (!token) return;
+
+  try {
+    await releaseNotificationFcmToken({ accessToken: lastAccessToken, token });
+  } catch (error) {
+    reportNonApiError('FCM 토큰 해제 실패:', error);
   }
 }
 

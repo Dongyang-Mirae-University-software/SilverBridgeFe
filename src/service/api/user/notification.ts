@@ -28,6 +28,11 @@ export async function registerNotificationFcmToken(body: IFcmTokenReq) {
   return apiClient.post<CommonResponse<null>>(`${NOTIFICATIONS_BASE}/fcm-token`, body);
 }
 
+// 세션이 만료돼 자동 로그아웃될 때 이 기기의 토큰을 해제한다 - 인증 헤더 없이 마지막 access 토큰을 본문에 싣는다(QA NOTI-N08)
+export async function releaseNotificationFcmToken(body: { accessToken: string; token: string }) {
+  return apiClient.post<CommonResponse<null>>(`${NOTIFICATIONS_BASE}/fcm-token/release`, body);
+}
+
 // FCM 토큰 삭제 (로그아웃 시). 세션을 지운 뒤 부르면 지우기 전에 꺼내 둔 access 토큰을 넘긴다
 export async function deleteNotificationFcmToken(token: string, endedSessionAccessToken?: string) {
   if (endedSessionAccessToken) {

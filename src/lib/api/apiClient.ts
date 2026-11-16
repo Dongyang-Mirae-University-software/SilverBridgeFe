@@ -66,8 +66,13 @@ function clearReactQueryCache() {
 }
 
 function clearSession() {
+  const lastAccessToken = getAccessToken();
   clearAuthTokens();
   clearReactQueryCache();
+  // 자동 로그아웃에도 이 기기의 푸시 토큰을 해제한다. fcm 은 이 모듈을 다시 가져오므로 순환을 피해 나중에 불러온다(QA NOTI-N08)
+  if (lastAccessToken && typeof window !== 'undefined') {
+    void import('@/lib/fcm').then(({ releaseFcmTokenForCurrentDevice }) => releaseFcmTokenForCurrentDevice(lastAccessToken)).catch(() => {});
+  }
 }
 
 function setBearerToken(config: InternalAxiosRequestConfig, token: string) {

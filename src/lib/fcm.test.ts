@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { deleteToken, getTokenMock, registerToken } = vi.hoisted(() => ({
+const { deleteToken, getTokenMock, registerToken, releaseToken } = vi.hoisted(() => ({
   deleteToken: vi.fn(),
   getTokenMock: vi.fn(),
   registerToken: vi.fn(),
+  releaseToken: vi.fn(),
 }));
 
 vi.mock('firebase/app', () => ({ getApps: () => [{}], initializeApp: vi.fn() }));
@@ -18,6 +19,7 @@ vi.mock('@/lib/auth/tokenStore', () => ({ getAccessTokenSubject: () => 'user-1' 
 vi.mock('@/service/api/user/notification', () => ({
   deleteNotificationFcmToken: deleteToken,
   registerNotificationFcmToken: registerToken,
+  releaseNotificationFcmToken: releaseToken,
 }));
 
 function memoryStorage() {
@@ -35,6 +37,7 @@ beforeEach(() => {
   vi.resetModules();
   deleteToken.mockReset().mockResolvedValue(undefined);
   registerToken.mockReset().mockResolvedValue(undefined);
+  releaseToken.mockReset().mockResolvedValue(undefined);
   getTokenMock.mockReset();
   local = memoryStorage();
   // 탭을 새로 연 상황 - sessionStorage는 비어 있고 localStorage만 남아 있다
@@ -102,6 +105,30 @@ describe('하루마다 다시 등록 (QA NOTI-N05)', () => {
     expect(registerToken).toHaveBeenCalledTimes(2);
     expect(registerToken).toHaveBeenLastCalledWith({ token: 'token-a', platform: 'WEB' });
     now.mockRestore();
+  });
+});
+
+describe('자동 로그아웃 토큰 해제 (QA NOTI-N08)', () => {
+  it('마지막 access 토큰과 이 기기 토큰으로 해제를 부르고, 등록 표시를 지운다', async () => {
+    getTokenMock.mockResolvedValue('token-a');
+    await register();
+    const { releaseFcmTokenForCurrentDevice } = await import('./fcm');
+
+    await releaseFcmTokenForCurrentDevice('last-access');
+
+    expect(releaseToken).toHaveBeenCalledWith({ accessToken: 'last-access', token: 'token-a' });
+    // 다음 로그인 때는 다시 등록한다
+    await register();
+    expect(registerToken).toHaveBeenCalledTimes(2);
+  });
+
+  it('해제가 실패해도 예외를 던지지 않는다', async () => {
+    getTokenMock.mockResolvedValue('token-a');
+    await register();
+    releaseToken.mockRejectedValue(new Error('429'));
+    const { releaseFcmTokenForCurrentDevice } = await import('./fcm');
+
+    await expect(releaseFcmTokenForCurrentDevice('last-access')).resolves.toBeUndefined();
   });
 });
 
