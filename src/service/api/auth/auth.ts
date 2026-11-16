@@ -71,8 +71,13 @@ export async function findEmail(body: IFindEmailReq) {
 }
 
 // ── 비밀번호 찾기 · 이메일 ───────────────────────────────────────────────────
+// 메일 발송은 10초(기본 대기)를 넘길 수 있다 - 서버는 보냈는데 화면만 실패로 끊지 않게 넉넉히 기다린다(QA AUTH-A36)
+const EMAIL_SEND_TIMEOUT_MS = 30_000;
+
 export async function findPasswordEmailSend(body: IFindPasswordEmailSendReq) {
-  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/email/send`, body);
+  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/email/send`, body, {
+    timeout: EMAIL_SEND_TIMEOUT_MS,
+  });
 }
 
 export async function findPasswordEmailVerify(body: IFindPasswordEmailVerifyReq) {
@@ -80,7 +85,9 @@ export async function findPasswordEmailVerify(body: IFindPasswordEmailVerifyReq)
 }
 
 export async function findPasswordEmailResend(body: IFindPasswordEmailSendReq) {
-  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/email/resend`, body);
+  return apiClient.post<CommonResponse<IFindPasswordSendResponse>>(`${BASE}/find-password/email/resend`, body, {
+    timeout: EMAIL_SEND_TIMEOUT_MS,
+  });
 }
 
 // ── 비밀번호 찾기 · SMS ──────────────────────────────────────────────────────
