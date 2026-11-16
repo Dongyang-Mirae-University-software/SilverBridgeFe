@@ -19,6 +19,7 @@ import {
   setAuthTokens,
 } from '@/lib/auth/tokenStore';
 import { isAccessTokenExpired } from '@/lib/auth/tokenExpiry';
+import { isPublicAuthPath } from '@/utils/api/publicAuthPaths';
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -88,14 +89,7 @@ function isRefreshRequest(url?: string) {
 }
 
 function isPublicAuthRequest(url?: string) {
-  if (!url) return false;
-
-  return (
-    url.includes('/auth/find-password') ||
-    url.includes('/auth/find-email') ||
-    url.includes('/auth/password/reset') ||
-    url.includes('/auth/signup')
-  );
+  return isPublicAuthPath(url);
 }
 
 function isUserDeleteRequest(config?: RetryableRequestConfig) {

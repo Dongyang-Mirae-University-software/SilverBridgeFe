@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { isPublicAuthPath } from '@/utils/api/publicAuthPaths';
 
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
@@ -39,6 +40,7 @@ function getBackendApiUrl(path: string[], search: string) {
 function shouldAttachCookieAccessToken(path: string[]) {
   const normalizedPath = `/${path.join('/')}`;
 
+  if (isPublicAuthPath(normalizedPath)) return false;
   return normalizedPath !== '/auth/signin' && normalizedPath !== '/auth/signin/kakao' && normalizedPath !== '/auth/refresh';
 }
 
