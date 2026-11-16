@@ -70,7 +70,8 @@ export default function SignupPhoneVerificationStep({
               placeholder="01012345678"
               required
               inputMode="numeric"
-              maxLength={11}
+              // 하이픈 넣은 13자 번호를 붙여넣어도 브라우저가 11자로 먼저 자르지 않게 넉넉히 둔다 - 숫자만 남겨 11자리로 자른다(QA AUTH-A57)
+              maxLength={13}
               {...phoneField}
               value={allValues.phone}
               onChange={event => onPhoneChange(event.target.value)}

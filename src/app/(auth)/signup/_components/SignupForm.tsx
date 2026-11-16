@@ -131,6 +131,8 @@ export default function SignupForm({ step, onNext, onPrev, kakaoData, returnTo }
     // 형식이 틀린 값은 칸 아래 형식 오류로 충분하다 - 중복 확인 API는 부르지 않는다
     const email = getValues('email').trim();
     if (!EMAIL_PATTRERN.test(email)) return;
+    // 이미 확인한 같은 이메일이면 칸을 나갈 때마다 다시 부르지 않는다(QA AUTH-A57)
+    if (isEmailCheck && checkedEmail === email) return;
     emailCheckMutate({ email });
   };
 
@@ -140,6 +142,8 @@ export default function SignupForm({ step, onNext, onPrev, kakaoData, returnTo }
   const handlePhoneChange = (value: string) => {
     const nextPhone = getPhoneDigits(value);
     setValue('phone', nextPhone, { shouldDirty: true, shouldValidate: true });
+    // 번호를 바꾸면 이전 발송 오류 문구를 지운다(QA AUTH-A57)
+    setSmsSendErrorMsg('');
 
     if (verifiedPhone && verifiedPhone !== nextPhone) {
       setIsSmsCheck(false);
