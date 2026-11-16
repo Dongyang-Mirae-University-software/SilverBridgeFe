@@ -140,8 +140,10 @@ export function useVoiceInput<T = string>(onText: (result: T) => void, options?:
       return;
     }
 
+    let createdContext: AudioContext | null = null;
     try {
       const context = new AudioCtx();
+      createdContext = context;
       // iOS Safari는 권한 창을 거치면 suspended로 시작할 수 있다
       if (context.state === 'suspended') await context.resume().catch(() => undefined);
       const source = context.createMediaStreamSource(stream);
@@ -181,9 +183,11 @@ export function useVoiceInput<T = string>(onText: (result: T) => void, options?:
       setElapsedSec(0);
       setState('recording');
     } catch {
+      // 노드 연결 등이 드물게 실패하면 만든 AudioContext 도 닫는다(2026-11-16 점검 L-2)
       stream.getTracks().forEach(track => track.stop());
+      void createdContext?.close().catch(() => undefined);
       busyRef.current = false;
-      setNotice(STT_MESSAGES.generic);
+      if (mountedRef.current) setNotice(STT_MESSAGES.generic);
     }
   }, [finish]);
 
