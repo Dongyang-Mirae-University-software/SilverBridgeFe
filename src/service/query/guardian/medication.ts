@@ -32,7 +32,7 @@ export const guardianMedicationQueryOptions = queryOptions({
 // WS medication-taken 이벤트로 카드 목록을 그 자리에서 갱신(재조회 없이). 카운트는 medications에서 다시 계산
 export function applyMedicationTakenToGuardianCache(
   queryClient: QueryClient,
-  payload: { wardId?: string; medicationId?: string; taken?: string; takenAt?: string },
+  payload: { wardId?: string; medicationId?: string; taken?: string; takenAt?: string; doseDate?: string },
 ) {
   const medicationId = Number(payload.medicationId);
   if (!payload.wardId || !Number.isFinite(medicationId)) return;
@@ -41,6 +41,8 @@ export function applyMedicationTakenToGuardianCache(
     if (!current) return current;
     return current.map(summary => {
       if (summary.wardId !== payload.wardId) return summary;
+      // 자정 무렵 늦게 온 어제 신호가 오늘 카드를 '드셨어요'로 바꾸지 않게 한다(피보호자 쪽과 같은 규칙, QA CONN-A37)
+      if (payload.doseDate && payload.doseDate !== summary.doseDate) return summary;
       const medications = summary.medications.map(medication =>
         medication.medicationId === medicationId
           ? { ...medication, taken: payload.taken === 'true', takenAt: payload.takenAt ?? null }
