@@ -21,6 +21,7 @@ interface SignupPhoneVerificationStepProps {
   isSmsCheck: boolean;
   isSmsSendPending: boolean;
   isSmsVerifyPending: boolean;
+  isSignupPending?: boolean;
   smsTimerKey: number;
   onCodeChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onPhoneChange: (value: string) => void;
@@ -42,6 +43,7 @@ export default function SignupPhoneVerificationStep({
   isSmsCheck,
   isSmsSendPending,
   isSmsVerifyPending,
+  isSignupPending = false,
   smsTimerKey,
   onCodeChange,
   onPhoneChange,
@@ -111,8 +113,8 @@ export default function SignupPhoneVerificationStep({
         <button className={cx('prevButton')} type="button" onClick={onPrevStep}>
           이전
         </button>
-        <button className={cx('button')} disabled={!isEmailCheck || !isSmsCheck} type="submit">
-          가입 완료
+        <button className={cx('button')} disabled={!isEmailCheck || !isSmsCheck || isSignupPending} type="submit">
+          {isSignupPending ? '가입하는 중…' : '가입 완료'}
         </button>
       </div>
     </>

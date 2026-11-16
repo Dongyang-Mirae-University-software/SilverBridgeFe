@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GenderType, IKakaoSignupReq, ISignupReq, RoleType } from '@/service/interface/auth/auth';
@@ -136,18 +136,26 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
   // 이메일 가입은 토큰을 받지 않아 로그인 화면으로 보낸다 - 말없이 넘기지 않고 완료 안내를 먼저 띄운다
   const [isSignupCompleted, setIsSignupCompleted] = useState(false);
 
-  const { mutate } = useMutation({
+  const { mutate, isPending: isEmailSignupPending } = useMutation({
     mutationKey: ['signup'],
     mutationFn: signup,
   });
-  const { mutate: mutateKakao } = useMutation({
+  const { mutate: mutateKakao, isPending: isKakaoSignupPending } = useMutation({
     mutationKey: ['kakao-signup'],
     mutationFn: signupKakao,
   });
+  // 가입 완료를 빠르게 두 번 눌러도 요청은 한 번만 - isPending은 다음 그리기 전까지 바뀌지 않아 ref로도 막는다(QA AUTH-A10)
+  const submittingRef = useRef(false);
+  const isSignupPending = isEmailSignupPending || isKakaoSignupPending;
 
   const router = useRouter();
 
   function onSubmit(formData: SignupFormValues) {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    const release = () => {
+      submittingRef.current = false;
+    };
     const phone = getPhoneDigits(formData.phone);
     const birthDate = normalizeBirthDateForApi(formData.birthDate);
     const gender = formData.gender as GenderType;
@@ -189,6 +197,7 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
         onError: error => {
           setSignupError((error as Error).message || '카카오 회원가입에 실패했습니다. 다시 시도해 주세요.');
         },
+        onSettled: release,
       });
       return;
     }
@@ -215,6 +224,7 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
       onError: error => {
         setSignupError((error as Error).message || '회원가입에 실패했습니다. 다시 시도해 주세요.');
       },
+      onSettled: release,
     });
   }
 
@@ -232,6 +242,7 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
     phoneRules,
     allValues,
     signupError,
+    isSignupPending,
     isKakaoSignup,
     clearSignupError: () => setSignupError(null),
     isSignupCompleted,

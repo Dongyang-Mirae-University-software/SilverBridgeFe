@@ -36,6 +36,7 @@ export default function SignupForm({ step, onNext, onPrev, kakaoData, returnTo }
   const {
     register,
     onSubmit,
+    isSignupPending,
     formState: { errors },
     getValues,
     setValue,
@@ -272,6 +273,7 @@ export default function SignupForm({ step, onNext, onPrev, kakaoData, returnTo }
             isSmsCheck={isSmsVerified}
             isSmsSendPending={isSmsSendPending}
             isSmsVerifyPending={isSmsVerifyPending}
+            isSignupPending={isSignupPending}
             smsTimerKey={smsTimerKey}
             onCodeChange={handleCode}
             onPhoneChange={handlePhoneChange}

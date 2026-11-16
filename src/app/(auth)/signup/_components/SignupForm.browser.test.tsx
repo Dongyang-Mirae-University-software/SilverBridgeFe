@@ -115,4 +115,22 @@ describe('이메일 회원가입 완료 (Chrome)', () => {
     await expect.element(page.getByText('가입 완료')).toBeInTheDocument();
     expect(nav.push).not.toHaveBeenCalled();
   });
+
+  it('가입 요청을 빠르게 두 번 보내도 요청은 한 번만 나간다 (QA AUTH-A10)', async () => {
+    let finish: () => void = () => {};
+    api.signup.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+    const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    await render(
+      <QueryClientProvider client={client}>
+        <SignupSubmitHarness />
+      </QueryClientProvider>,
+    );
+
+    const button = page.getByRole('button', { name: '가입 요청' });
+    await userEvent.dblClick(button);
+    await vi.waitFor(() => expect(api.signup).toHaveBeenCalledTimes(1));
+    finish();
+    await expect.element(page.getByText('가입 완료')).toBeInTheDocument();
+    expect(api.signup).toHaveBeenCalledTimes(1);
+  });
 });
