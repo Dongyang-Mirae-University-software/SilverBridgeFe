@@ -48,6 +48,22 @@ afterEach(() => {
 });
 
 describe('카카오 로그인 콜백', () => {
+  it('동의 화면에서 취소하고 돌아오면(error=access_denied) 취소 안내를 보이고 state 쿠키를 지운다 (QA AUTH-A13)', async () => {
+    await renderCallback({ error: 'access_denied', state: `${NONCE}:/guardian` });
+
+    await expect.element(page.getByText('카카오 로그인을 취소했습니다.')).toBeVisible();
+    expect(mocks.signinKakao).not.toHaveBeenCalled();
+    expect(mocks.push).not.toHaveBeenCalled();
+    expect(document.cookie).not.toContain('careai_oauth_state=');
+  });
+
+  it('카카오가 다른 오류로 돌려보내면 실패 안내를 보인다', async () => {
+    await renderCallback({ error: 'server_error' });
+
+    await expect.element(page.getByText('카카오 로그인에 실패했습니다. 다시 시도해주세요.')).toBeVisible();
+    expect(mocks.signinKakao).not.toHaveBeenCalled();
+  });
+
   it('state 난수가 쿠키와 같으면 로그인하고 돌아갈 경로로 보낸다. 쿠키는 한 번 쓰고 지운다', async () => {
     mocks.signinKakao.mockResolvedValue({ data: { accessToken: 'a1', refreshToken: 'r1', role: 'GUARDIAN' } });
 

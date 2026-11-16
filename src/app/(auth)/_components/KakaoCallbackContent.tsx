@@ -31,8 +31,11 @@ function KakaoCallbackInner() {
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
   const state = searchParams.get('state');
+  // 동의 화면에서 취소하면 code 없이 error=access_denied 로 돌아온다(QA AUTH-A13)
+  const kakaoError = searchParams.get('error');
   const returnTo = parseKakaoState(state)?.returnTo ?? null;
   const [errorMessage, setErrorMessage] = useState('');
+  const errorTitle = kakaoError === 'access_denied' ? '카카오 로그인 취소' : '카카오 로그인 실패';
   // 인가 코드는 한 번만 쓸 수 있고 state 쿠키도 확인하면서 지운다 - 다시 그려져도 한 번만 처리한다
   const handledRef = useRef(false);
 
@@ -81,6 +84,12 @@ function KakaoCallbackInner() {
     if (handledRef.current) return;
     handledRef.current = true;
 
+    if (kakaoError) {
+      takeStateCookie();
+      setErrorMessage(kakaoError === 'access_denied' ? '카카오 로그인을 취소했습니다.' : '카카오 로그인에 실패했습니다. 다시 시도해주세요.');
+      return;
+    }
+
     if (!code) {
       router.push('/login');
       return;
@@ -94,7 +103,7 @@ function KakaoCallbackInner() {
     }
 
     mutate({ code, redirectUri: getKakaoRedirectUri() });
-  }, [code, mutate, router, state]);
+  }, [code, kakaoError, mutate, router, state]);
 
   const handleErrorClose = () => {
     setErrorMessage('');
@@ -105,7 +114,7 @@ function KakaoCallbackInner() {
     <>
       <LoadingScreen label="카카오 로그인 처리 중..." />
       {errorMessage && (
-        <CommonModal type="error" title="카카오 로그인 실패" message={errorMessage} onClose={handleErrorClose} />
+        <CommonModal type="error" title={errorTitle} message={errorMessage} onClose={handleErrorClose} />
       )}
     </>
   );
