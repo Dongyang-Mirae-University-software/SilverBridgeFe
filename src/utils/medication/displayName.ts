@@ -18,3 +18,18 @@ export function wardMedicationDisplayName(name: string): string {
   const stripped = trimmed.replace(TRAILING_DOSE, '').trim();
   return stripped || trimmed;
 }
+
+/**
+ * 한 칸(같은 시간대)에 함께 보일 약 이름들. 줄인 이름이 서로 겹치면(용량만 다른 같은 약 - "아스피린 100mg"·"아스피린 500mg")
+ * 그 약들은 원래 이름을 쓴다 - 어느 약을 먹었는지 헷갈리지 않게(2026-11-16 점검 L-1). 원래 이름까지 같으면 그대로 둔다.
+ */
+export function wardMedicationDisplayNames(names: readonly string[]): string[] {
+  const short = names.map(wardMedicationDisplayName);
+  const originalsByShort = new Map<string, Set<string>>();
+  short.forEach((value, index) => {
+    const originals = originalsByShort.get(value) ?? new Set<string>();
+    originals.add(names[index].trim());
+    originalsByShort.set(value, originals);
+  });
+  return short.map((value, index) => ((originalsByShort.get(value)?.size ?? 0) > 1 ? names[index].trim() : value));
+}
