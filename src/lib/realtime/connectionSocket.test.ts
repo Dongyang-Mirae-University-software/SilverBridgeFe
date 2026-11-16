@@ -203,3 +203,27 @@ describe('피보호자 관리자 강제 연결 신호 (QA ADM-N42)', () => {
     expect(onMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'CONNECTION_FORCED', connectionId: '5' }));
   });
 });
+
+describe('실시간 연결 상태 (QA AUTH-A54)', () => {
+  it('붙으면 connected, 붙었던 연결이 끊기면 reconnecting, 화면을 정리하면 idle', async () => {
+    const { getRealtimeStatus } = await import('./connectionSocket');
+    const dispose = connectConnectionSocket({ onMessage: () => {}, role: 'GUARDIAN', userId: 'g1' });
+    const client = mocks.clients.at(-1)! as unknown as {
+      onConnect: () => void;
+      onWebSocketClose: (event: { code: number; wasClean: boolean; reason: string }) => void;
+      connected: boolean;
+    };
+
+    client.onConnect();
+    expect(getRealtimeStatus()).toBe('connected');
+
+    client.onWebSocketClose({ code: 1006, wasClean: false, reason: '' });
+    expect(getRealtimeStatus()).toBe('reconnecting');
+
+    client.onConnect();
+    expect(getRealtimeStatus()).toBe('connected');
+
+    dispose();
+    expect(getRealtimeStatus()).toBe('idle');
+  });
+});

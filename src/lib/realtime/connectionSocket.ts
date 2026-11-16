@@ -50,6 +50,28 @@ export interface ConnectionRealtimePayload {
   analyzedAt?: string;
 }
 
+// 실시간 연결 상태 - 한 번 붙었다가 끊기면 'reconnecting'. 화면이 끊김 안내를 띄운다(QA AUTH-A54)
+export type RealtimeStatus = 'idle' | 'connected' | 'reconnecting';
+let realtimeStatus: RealtimeStatus = 'idle';
+const realtimeStatusListeners = new Set<() => void>();
+
+function setRealtimeStatus(next: RealtimeStatus) {
+  if (realtimeStatus === next) return;
+  realtimeStatus = next;
+  realtimeStatusListeners.forEach(listener => listener());
+}
+
+export function getRealtimeStatus() {
+  return realtimeStatus;
+}
+
+export function subscribeRealtimeStatus(listener: () => void) {
+  realtimeStatusListeners.add(listener);
+  return () => {
+    realtimeStatusListeners.delete(listener);
+  };
+}
+
 interface ConnectConnectionSocketOptions {
   onMessage: (payload: ConnectionRealtimePayload) => void;
   role: AuthRole;
@@ -242,6 +264,7 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
 
   client.onConnect = () => {
     failuresWithSameToken = 0;
+    setRealtimeStatus('connected');
     if (IS_DEV) console.info('[WS] CONNECTED - 구독 시작:', maskSocketUrl(currentBrokerURL));
 
     const topics = role === 'WARD' ? WARD_CONNECTION_TOPICS : role === 'GUARDIAN' ? GUARDIAN_CONNECTION_TOPICS : [];
@@ -276,6 +299,8 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
 
   client.onWebSocketClose = event => {
     console.warn('[WS] 연결 종료 — code:', event.code, '| wasClean:', event.wasClean, '| reason:', event.reason || '(없음)');
+    // 화면을 정리하며 끊은 것이 아니고 한 번이라도 붙었던 연결이면 '다시 연결하는 중'으로 알린다
+    if (!disposed && realtimeStatus === 'connected') setRealtimeStatus('reconnecting');
 
     if (event.code === 1008 && event.reason === AUTH_INVALIDATED_REASON) {
       mustRefreshToken = true;
@@ -303,6 +328,7 @@ export function connectConnectionSocket({ onMessage, role, userId }: ConnectConn
 
   return () => {
     disposed = true;
+    setRealtimeStatus('idle');
     if (restartTimer) clearTimeout(restartTimer);
     restartTimer = null;
     if (typeof window !== 'undefined') {

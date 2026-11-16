@@ -28,6 +28,7 @@ import { applyMedicationTakenToWardCache } from '@/service/query/ward/medication
 import { hasUserSavedWardSosSetting, wardSosSettingQueryOptions } from '@/service/query/ward/sosSetting';
 import { WardCameraStreamProvider } from '../camera/_components/WardCameraStreamProvider';
 import styles from './WardLayout.module.css';
+import { RealtimeStatusBanner } from '@/components/realtime/RealtimeStatusBanner';
 
 const cx = classNames.bind(styles);
 
@@ -73,6 +74,7 @@ export function WardLayout({ children }: { children: ReactNode }) {
         })}
         style={stageStyle}
       >
+        <RealtimeStatusBanner />
         <SidebarLayout navItems={navItems} profile={profile} role={role} rootPath={rootPath} />
         {/* 카메라 송출은 피보호자 웹 어느 화면에서든 이어지도록 레이아웃에 둔다 */}
         <WardCameraStreamProvider>

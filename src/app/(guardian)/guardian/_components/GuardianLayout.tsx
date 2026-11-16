@@ -17,6 +17,7 @@ import { applyMedicationTakenToGuardianCache, guardianMedicationQueryKey } from 
 import { guardianAnomalyHistoryQueryKey } from '@/service/query/guardian/anomaly';
 import { guardianDashboardQueryKey } from '@/service/query/guardian/dashboard';
 import styles from './GuardianLayout.module.css';
+import { RealtimeStatusBanner } from '@/components/realtime/RealtimeStatusBanner';
 
 const cx = classNames.bind(styles);
 const role = 'GUARDIAN' as const;
@@ -39,6 +40,7 @@ export function GuardianLayout({ children }: { children: ReactNode }) {
       className={cx('stage', { chatStage: isChatbotPage, medicationStage: pathname === '/guardian/medication' })}
       style={chatViewportStyle}
     >
+      <RealtimeStatusBanner />
       <SidebarLayout navItems={GUARDIAN_NAV} profile={profile} role={role} rootPath={rootPath} />
       <main className={cx('main', { chatMain: isChatbotPage })}>{children}</main>
     </div>

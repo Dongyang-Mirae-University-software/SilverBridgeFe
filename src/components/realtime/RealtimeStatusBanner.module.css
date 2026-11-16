@@ -1,0 +1,18 @@
+.banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  z-index: 150;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+  transform: translateX(-50%);
+  border: 1px solid var(--sb-warn);
+  border-radius: 999px;
+  background: var(--sb-warn-soft);
+  box-shadow: var(--sb-shadow-sm);
+  color: var(--sb-ink);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 16px;
+  text-align: center;
+}
