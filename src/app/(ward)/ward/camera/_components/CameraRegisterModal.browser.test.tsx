@@ -21,6 +21,7 @@ const streamApi = vi.hoisted(() => ({
   createStreamSession: vi.fn(),
   uploadFrame: vi.fn(),
   stopStreamSession: vi.fn(),
+  stopStreamSessionOnLeave: vi.fn(),
 }));
 
 vi.mock('@/service/api/ward/camera', async importOriginal => ({
@@ -220,6 +221,26 @@ describe('카메라 등록 4단계 (Chrome)', () => {
     expect(api.registerWardCamera.mock.calls[0]?.[0]).toMatchObject({ label: '거실' });
     expect(streamApi.createStreamSession).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('alert').query()).toBeNull();
+  });
+
+  it('송출 중에 탭을 닫거나(pagehide) 화면을 떠나면 송출 세션 중지를 보낸다 (QA CAM-A21)', async () => {
+    getUserMedia.mockResolvedValue(fakeStream());
+    api.registerWardCamera.mockResolvedValue(camera);
+    const onClose = vi.fn();
+    const screen = await render(<CameraRegisterModal isOpen onClose={onClose} />, { wrapper });
+
+    await goToPreview(screen, '전면 카메라');
+    await screen.getByRole('button', { name: '등록하고 촬영 시작' }).click();
+    await vi.waitFor(() => expect(streamApi.createStreamSession).toHaveBeenCalledTimes(1));
+
+    await vi.waitFor(() => {
+      window.dispatchEvent(new Event('pagehide'));
+      expect(streamApi.stopStreamSessionOnLeave).toHaveBeenCalledWith(camera.sessionId);
+    });
+
+    streamApi.stopStreamSessionOnLeave.mockClear();
+    await screen.unmount();
+    expect(streamApi.stopStreamSessionOnLeave).toHaveBeenCalledWith(camera.sessionId);
   });
 
   // 점검 M-1: 화면 선택 창이 떠 있는 동안 창을 닫으면, 나중에 고른 화면이 숨은 창에서 켜진 채 남지 않는다

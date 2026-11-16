@@ -4,7 +4,7 @@ import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'reac
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { createStreamSession, stopStreamSession, uploadFrame } from '@/service/api/streamSession';
+import { createStreamSession, stopStreamSession, stopStreamSessionOnLeave, uploadFrame } from '@/service/api/streamSession';
 import { getWardCameras } from '@/service/api/ward/camera';
 import { Icon } from '@/components/Icon';
 import { getHttpStatus, getRetryAfterMs } from '@/lib/api/streamClient';
@@ -233,6 +233,19 @@ export function CameraRegisterModal({
   useEffect(() => {
     if (isOpen && status === 'off' && initialRoom) setRoom(initialRoom);
   }, [initialRoom, isOpen, status]);
+
+  // 송출을 끄지 않고 탭을 닫거나 다른 사이트·화면으로 떠나면 송출 세션을 끝낸다 - 안 보내면 AI 세션이
+  // 'disconnected'로 계속 남았다(QA CAM-A21)
+  useEffect(() => {
+    const stopOnLeave = () => {
+      if (liveSessionIdRef.current) stopStreamSessionOnLeave(liveSessionIdRef.current);
+    };
+    window.addEventListener('pagehide', stopOnLeave);
+    return () => {
+      window.removeEventListener('pagehide', stopOnLeave);
+      stopOnLeave();
+    };
+  }, []);
 
   useEffect(() => {
     return () => {

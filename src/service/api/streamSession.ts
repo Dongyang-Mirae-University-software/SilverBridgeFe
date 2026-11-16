@@ -21,3 +21,17 @@ export async function uploadFrame(sessionId: string, jpeg: Blob, timeoutMs?: num
 export async function stopStreamSession(sessionId: string): Promise<void> {
   await streamClient.post(`/v1/stream-sessions/${sessionId}/stop`);
 }
+
+// 탭을 닫거나 다른 화면으로 떠날 때 - 페이지가 내려가는 중에도 나가도록 keepalive 로 보낸다.
+// 프록시는 로그인 쿠키로 확인하므로 같은 출처 요청이면 따로 헤더가 필요 없다. 실패는 삼킨다(QA CAM-A21)
+export function stopStreamSessionOnLeave(sessionId: string) {
+  try {
+    void fetch(`/api/streams/v1/stream-sessions/${encodeURIComponent(sessionId)}/stop`, {
+      method: 'POST',
+      keepalive: true,
+      credentials: 'same-origin',
+    }).catch(() => {});
+  } catch {
+    // fetch 자체가 없는 환경(서버 렌더 등)은 넘긴다
+  }
+}
