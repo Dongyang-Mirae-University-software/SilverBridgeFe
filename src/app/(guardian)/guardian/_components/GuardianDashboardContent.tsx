@@ -47,23 +47,30 @@ export function GuardianDashboardContent() {
   });
   const pendingByWard = new Map((dashboardAll?.wards ?? []).map(ward => [ward.wardId, ward.pendingCount]));
 
-  const { data: dashboard } = useQuery({
+  const { data: dashboard, isPending: isDashboardPending, isError: isDashboardError } = useQuery({
     ...guardianDashboardQueryOptions({ wardId: selectedWard?.partnerUserId }),
     enabled: connectionsResponse !== undefined,
   });
 
-  const isAnomalyUnavailable = dashboard?.unavailable.includes('anomalyDetection') ?? false;
+  const isAnomalyUnavailable = dashboard?.unavailable?.includes('anomalyDetection') ?? false;
   const anomaly = dashboard?.anomalyDetection;
-  const pendingTotal = dashboard?.pendingActions.total;
+  const pendingTotal = dashboard?.pendingActions?.total;
+  // 불러오는 중(확인 중)과 조회 실패(확인 불가)를 나눈다 - 실패를 '확인 중'으로 두면 이상 없음처럼 보인다(QA CHAT-N09)
+  const isDashboardUnknown =
+    isDashboardError ||
+    (!isDashboardPending && (pendingTotal == null || dashboard?.anomalyDetection == null || (dashboard?.unavailable?.length ?? 0) > 0));
   // 확인 필요 건수가 있으면 그 칸에 테두리를 둔다(v13.0 시안). 이상감지는 두 값 중 하나라도 있으면 켠다
-  const anomalyCount = anomaly?.needsReviewCount || dashboard?.pendingActions.anomaly || 0;
+  const anomalyCount = anomaly?.needsReviewCount || dashboard?.pendingActions?.anomaly || 0;
   const needsReview = !isAnomalyUnavailable && anomalyCount > 0;
-  const isSosUnavailable = dashboard?.unavailable.includes('sos') ?? false;
-  const sosCount = isSosUnavailable ? 0 : (dashboard?.sos.thisMonthCount ?? 0);
-  const isMedicationUnavailable = dashboard?.unavailable.includes('medication') ?? false;
-  const medicationCount = isMedicationUnavailable ? 0 : (dashboard?.medication.uncheckedCount ?? 0);
+  const isSosUnavailable = dashboard?.unavailable?.includes('sos') ?? false;
+  const sosCount = isSosUnavailable ? 0 : (dashboard?.sos?.thisMonthCount ?? 0);
+  const isMedicationUnavailable = dashboard?.unavailable?.includes('medication') ?? false;
+  const medicationCount = isMedicationUnavailable ? 0 : (dashboard?.medication?.uncheckedCount ?? 0);
   // 이번 달 SOS가 있으면 SOS 내역, 아직 확인 안 한 복약이 있으면 약 관리 칩을 시안의 강조 칩으로 그린다
   const chipAlert = (href: string): ChipAlert | undefined => {
+    // 조회 실패한 칸은 0건으로 보이지 않게 '확인 불가'를 붙인다
+    if (href === '/guardian/sos' && isSosUnavailable) return { label: '확인 불가', unknown: true };
+    if (href === '/guardian/medication' && isMedicationUnavailable) return { label: '확인 불가', unknown: true };
     if (href === '/guardian/sos' && sosCount > 0) return { label: `이번 달 SOS ${sosCount}건` };
     if (href === '/guardian/medication' && medicationCount > 0) return { label: `확인 안 한 복약 ${medicationCount}건` };
     return undefined;
@@ -128,8 +135,14 @@ export function GuardianDashboardContent() {
           onSelect={setSelectedWardId}
         />
         <span className={cx('attentionBadge', { attention: !!pendingTotal })}>
-          <Icon name={pendingTotal ? 'bell' : 'check'} size={18} />
-          {pendingTotal == null ? '확인 중' : pendingTotal > 0 ? `확인이 필요한 일 ${pendingTotal}건` : '지금 확인할 일이 없어요'}
+          <Icon name={isDashboardUnknown ? 'warning' : pendingTotal ? 'bell' : 'check'} size={18} />
+          {isDashboardUnknown
+            ? '확인 불가'
+            : pendingTotal == null
+              ? '확인 중'
+              : pendingTotal > 0
+                ? `확인이 필요한 일 ${pendingTotal}건`
+                : '지금 확인할 일이 없어요'}
         </span>
       </div>
       <section className={cx('featureGrid')} aria-label="주요 기능">
@@ -165,13 +178,14 @@ export function GuardianDashboardContent() {
   );
 }
 
-type ChipAlert = { label: string };
+type ChipAlert = { label: string; unknown?: boolean };
 
 function QuickLink({ href, icon, label, alert }: (typeof QUICK_LINKS)[number] & { alert?: ChipAlert }) {
   return (
-    <Link href={href} className={cx('quickLink', { warn: alert })} aria-label={alert ? `${label}, ${alert.label}` : undefined}>
+    <Link href={href} className={cx('quickLink', { warn: alert && !alert.unknown })} aria-label={alert ? `${label}, ${alert.label}` : undefined}>
       <Icon name={icon} size={18} decorative />
       {label}
+      {alert?.unknown && <small className={cx('quickUnknown')} aria-hidden="true">{alert.label}</small>}
     </Link>
   );
 }

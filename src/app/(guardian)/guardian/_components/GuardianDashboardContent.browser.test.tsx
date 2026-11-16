@@ -10,7 +10,7 @@ import { clearSelectedWardId } from '@/store/selectedWardStore';
 import '@/app/globals.css';
 import { GuardianDashboardContent } from './GuardianDashboardContent';
 
-const data = vi.hoisted(() => ({ dashboard: null as unknown, connections: null as (() => Promise<unknown>) | null }));
+const data = vi.hoisted(() => ({ dashboard: null as unknown, dashboardFails: false, connections: null as (() => Promise<unknown>) | null }));
 
 vi.mock('next/link', () => ({
   __esModule: true,
@@ -39,7 +39,13 @@ vi.mock('@/service/query/guardian', () => ({
     }),
   }),
   guardianDashboardQueryOptions: ({ wardId }: { wardId?: string } = {}) =>
-    queryOptions({ queryKey: ['test-dashboard', wardId ?? 'all'], queryFn: async () => data.dashboard }),
+    queryOptions({
+      queryKey: ['test-dashboard', wardId ?? 'all'],
+      queryFn: async () => {
+        if (data.dashboardFails) throw new Error('대시보드 조회 실패');
+        return data.dashboard;
+      },
+    }),
 }));
 
 function dashboard(
@@ -75,6 +81,7 @@ const borderOf = (element: Element) => {
 beforeEach(() => {
   clearSelectedWardId();
   data.connections = null;
+  data.dashboardFails = false;
 });
 afterEach(() => {
   document.body.innerHTML = '';
@@ -158,6 +165,46 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
     await expect.element(page.getByRole('link', { name: 'AI 이상감지' })).toBeVisible();
     await expect.element(page.getByRole('link', { name: '약 관리' })).toBeVisible();
     await expect.element(page.getByRole('link', { name: 'SOS 내역' })).toBeVisible();
+  });
+});
+
+describe('보호자 대시보드 조회 실패 표시 (QA CHAT-N09, Chrome)', () => {
+  it('정상 응답이면 확인할 일이 없다고 보인다', async () => {
+    data.dashboard = dashboard({});
+    await renderDashboard();
+
+    await expect.element(page.getByText('지금 확인할 일이 없어요')).toBeVisible();
+  });
+
+  it('대시보드 요청이 실패하면 \'확인 중\'에 머물지 않고 \'확인 불가\'를 보인다', async () => {
+    data.dashboardFails = true;
+    await renderDashboard();
+
+    await expect.element(page.getByText('확인 불가', { exact: true })).toBeVisible();
+    expect(page.getByText('확인 중').query()).toBeNull();
+  });
+
+  it('확인할 일 칸이 비어 오면(null) \'확인 불가\'를 보인다', async () => {
+    data.dashboard = { ...dashboard({}), pendingActions: null } as unknown as GuardianDashboardResponse;
+    await renderDashboard();
+
+    await expect.element(page.getByText('확인 불가', { exact: true })).toBeVisible();
+  });
+
+  it('이상감지 칸이 비어 오면(null) \'확인 불가\'를 보인다', async () => {
+    data.dashboard = { ...dashboard({}), anomalyDetection: null } as unknown as GuardianDashboardResponse;
+    await renderDashboard();
+
+    await expect.element(page.getByText('확인 불가', { exact: true })).toBeVisible();
+  });
+
+  it('SOS·복약 칸 조회가 실패하면 0건이 아니라 그 칸에 \'확인 불가\'를 붙인다', async () => {
+    data.dashboard = dashboard({}, ['sos', 'medication']);
+    await renderDashboard();
+
+    await expect.element(page.getByRole('link', { name: 'SOS 내역, 확인 불가' })).toBeVisible();
+    await expect.element(page.getByRole('link', { name: '약 관리, 확인 불가' })).toBeVisible();
+    expect(page.getByText('지금 확인할 일이 없어요').query()).toBeNull();
   });
 });
 

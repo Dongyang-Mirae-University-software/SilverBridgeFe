@@ -49,3 +49,10 @@
 
 @media (max-width: 760px) { .quickLinks { grid-template-columns: repeat(3, minmax(0, 1fr)); } .quickDivider { display: none; } .quickLink { font-size: 14px; } }
 @media (max-width: 620px) { .dashboardToolbar { align-items: stretch; } .attentionBadge { justify-content: center; } .featureGrid { grid-template-columns: minmax(0, 1fr); } .featureCard { min-height: 200px; } .emptyHero { align-items: flex-start; flex-direction: column; } .emptyHeroButton { align-self: stretch; text-align: center; } }
+
+/* 조회 실패한 칸 - 0건처럼 보이지 않게 작게 '확인 불가'를 붙인다(QA CHAT-N09) */
+.quickUnknown {
+  color: var(--sb-ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
