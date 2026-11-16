@@ -100,7 +100,11 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
 
   const emailRules = (message: string) => rules(value => (!EMAIL_PATTRERN.test(value) ? message : true), message);
 
-  const passwordRules = (message: string) => rules(value => (!PASSWORD_PATTRERN.test(value) ? message : true), message);
+  // 비밀번호를 고치면 확인란도 다시 검사한다 - 확인란만 맞춰 둔 뒤 비밀번호를 바꿔도 다음 버튼이 열렸다(QA AUTH-A03)
+  const passwordRules = (message: string) => ({
+    ...rules(value => (!PASSWORD_PATTRERN.test(value) ? message : true), message),
+    deps: ['passwordCheck' as const],
+  });
 
   const passwordCheckRules = (message: string) =>
     rules(value => {

@@ -40,7 +40,7 @@ export default function FindPasswordResetStep({ errorMessage, isPending, onSubmi
         <TextInput
           error={newPassword.length > 0 && !isPasswordValid}
           errorText={
-            newPassword.length > 0 && !isPasswordValid ? '8자 이상, 숫자와 특수문자를 포함해야 합니다.' : undefined
+            newPassword.length > 0 && !isPasswordValid ? '8~64자, 영문·숫자·특수문자를 모두 포함해야 합니다.' : undefined
           }
           label="새 비밀번호"
           name="newPassword"
