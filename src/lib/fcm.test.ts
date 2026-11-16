@@ -88,6 +88,27 @@ describe('FCM 토큰 교체', () => {
   });
 });
 
+describe('권한을 먼저 묻지 않는다 (QA NOTI-N20)', () => {
+  it('자동 등록은 아직 허용하지 않은 기기에서 권한 팝업을 띄우지 않고 끝낸다', async () => {
+    const requestPermission = vi.fn(async () => 'granted');
+    vi.stubGlobal('Notification', { permission: 'default', requestPermission });
+
+    await expect(register()).resolves.toBeNull();
+    expect(requestPermission).not.toHaveBeenCalled();
+    expect(registerToken).not.toHaveBeenCalled();
+  });
+
+  it('사용자가 버튼을 눌렀을 때(requestPermission)만 묻고 등록한다', async () => {
+    const requestPermission = vi.fn(async () => 'granted');
+    vi.stubGlobal('Notification', { permission: 'default', requestPermission });
+    getTokenMock.mockResolvedValue('token-a');
+    const { registerFcmTokenForCurrentDevice } = await import('./fcm');
+
+    await registerFcmTokenForCurrentDevice({ requestPermission: true });
+    expect(requestPermission).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('하루마다 다시 등록 (QA NOTI-N05)', () => {
   it('같은 탭·같은 토큰이어도 하루가 지나면 등록 API를 다시 부른다', async () => {
     getTokenMock.mockResolvedValue('token-a');

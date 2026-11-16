@@ -11,6 +11,7 @@ import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { guardianConnectionsQueryOptions, guardianDashboardQueryOptions } from '@/service/query/guardian';
 import { setSelectedWardId, useSelectedWard } from '@/store/selectedWardStore';
 import styles from './GuardianDashboardContent.module.css';
+import { GuardianPushPermissionNotice } from '@/components/push/WardPushPermissionNotice';
 
 const cx = classNames.bind(styles);
 const EMPTY_VALUE = '-';
@@ -122,6 +123,7 @@ export function GuardianDashboardContent() {
   return (
     <div className={cx('dashboardStack')}>
       {pageHeading}
+      <GuardianPushPermissionNotice />
       <div className={cx('dashboardToolbar')}>
         <WardSelectorTabs
           wards={activeConnections.map(connection => ({

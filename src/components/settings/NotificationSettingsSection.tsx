@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -13,6 +14,7 @@ import { getUserProfileData } from '@/utils/auth/userProfile';
 import { showToast } from '@/store/toastStore';
 import { SettingsLoadError } from './SettingsLoadError';
 import styles from './NotificationSettingsSection.module.css';
+import { requestPushPermission, usePushPermission } from '@/components/push/WardPushPermissionNotice';
 
 const cx = classNames.bind(styles);
 
@@ -112,6 +114,45 @@ export function NotificationSettingsSection() {
           })}
         </div>
       )}
+      <DevicePushPermissionRow />
     </section>
+  );
+}
+
+const PERMISSION_LABEL: Record<string, string> = {
+  granted: '허용됨',
+  denied: '차단됨',
+  default: '아직 안 정함',
+  unsupported: '이 브라우저는 알림을 쓸 수 없어요',
+};
+
+// 이 기기의 알림 권한 상태 - 차단돼 있으면 앱 알림을 켜 둬도 오지 않는다. 아직 안 정했으면 여기서 허용한다(QA NOTI-N20·N21)
+function DevicePushPermissionRow() {
+  const permission = usePushPermission();
+  const [isRequesting, setIsRequesting] = useState(false);
+
+  const handleAllow = async () => {
+    setIsRequesting(true);
+    await requestPushPermission();
+    setIsRequesting(false);
+  };
+
+  return (
+    <div className={cx('row')}>
+      <div className={cx('meta')}>
+        <div className={cx('titleRow')}>
+          <span className={cx('label')}>이 기기 알림 권한</span>
+        </div>
+        <span className={cx('desc')}>
+          {PERMISSION_LABEL[permission]}
+          {permission === 'denied' && ' · 주소창 왼쪽 자물쇠를 눌러 ‘알림’을 허용으로 바꿔 주세요'}
+        </span>
+      </div>
+      {permission === 'default' && (
+        <button className={cx('allowButton')} type="button" disabled={isRequesting} onClick={() => void handleAllow()}>
+          알림 허용하기
+        </button>
+      )}
+    </div>
   );
 }

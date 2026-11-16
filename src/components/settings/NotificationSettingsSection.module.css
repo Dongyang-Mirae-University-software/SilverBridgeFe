@@ -127,3 +127,22 @@
   cursor: not-allowed;
   opacity: 0.55;
 }
+
+/* 이 기기 알림 권한 줄의 허용 버튼 */
+.allowButton {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 10px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 14px;
+}
+
+.allowButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}

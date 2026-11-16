@@ -96,8 +96,11 @@ async function getCurrentFcmToken() {
   });
 }
 
-export async function registerFcmTokenForCurrentDevice() {
+// requestPermission: 사용자가 '알림 켜기'를 눌렀을 때만 true. 로그인·화면 진입 같은 자동 호출은 이미 허용된 기기에서만 등록하고
+// 권한 팝업을 띄우지 않는다 - 누르기 전에 묻지 않는다(QA NOTI-N20)
+export async function registerFcmTokenForCurrentDevice({ requestPermission = false }: { requestPermission?: boolean } = {}) {
   if (typeof window === 'undefined' || !('Notification' in window)) return null;
+  if (!requestPermission && Notification.permission !== 'granted') return null;
 
   const storage = getSessionStorage();
   const storedToken = storage?.getItem(FCM_TOKEN_KEY);

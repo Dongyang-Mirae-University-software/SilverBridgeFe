@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
-import { WardPushPermissionNotice } from './WardPushPermissionNotice';
+import { GuardianPushPermissionNotice, WardPushPermissionNotice } from './WardPushPermissionNotice';
 
 const fcm = vi.hoisted(() => ({ register: vi.fn() }));
 vi.mock('@/lib/fcm', () => ({ registerFcmTokenForCurrentDevice: fcm.register }));
@@ -32,7 +32,7 @@ describe('피보호자 알림 허용 안내 (Chrome)', () => {
     await expect.element(page.getByText('약 먹을 시간 알림이 꺼져 있어요')).toBeVisible();
     await page.getByRole('button', { name: '알림 켜기' }).click();
 
-    expect(fcm.register).toHaveBeenCalledTimes(1);
+    expect(fcm.register).toHaveBeenCalledWith({ requestPermission: true });
     await expect.element(page.getByText('약 먹을 시간 알림이 꺼져 있어요')).not.toBeInTheDocument();
   });
 
@@ -56,5 +56,28 @@ describe('피보호자 알림 허용 안내 (Chrome)', () => {
     document.body.innerHTML = '';
     await render(<WardPushPermissionNotice />);
     expect(document.body.textContent).not.toContain('알림이 꺼져 있어요');
+  });
+});
+
+describe('보호자 알림 허용 안내 (QA NOTI-N21, Chrome)', () => {
+  it('허용 전이면 긴급 알림을 못 받는다고 알리고 "알림 허용하기"로 권한을 묻는다', async () => {
+    fcm.register.mockImplementation(async () => {
+      notification.permission = 'granted';
+      return 'token';
+    });
+    await render(<GuardianPushPermissionNotice />);
+
+    await expect.element(page.getByText('알림을 허용하지 않으면 화재·낙상·SOS 같은 긴급 알림을 받을 수 없어요.')).toBeVisible();
+    await page.getByRole('button', { name: '알림 허용하기' }).click();
+
+    expect(fcm.register).toHaveBeenCalledWith({ requestPermission: true });
+    await expect.element(page.getByText('이 기기의 알림이 꺼져 있어요')).not.toBeInTheDocument();
+  });
+
+  it('허용했으면 아무것도 보이지 않는다', async () => {
+    notification.permission = 'granted';
+    await render(<GuardianPushPermissionNotice />);
+
+    expect(page.getByText('이 기기의 알림이 꺼져 있어요').query()).toBeNull();
   });
 });
