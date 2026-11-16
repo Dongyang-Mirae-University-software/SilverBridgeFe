@@ -29,8 +29,11 @@
 .wardTabActive {
   border: 2px solid var(--sb-brand);
   background: var(--sb-brand-50);
-  color: var(--sb-brand);
+  /* 연한 바탕 위 글자는 진한 색으로 - 4.5:1 이상(QA CHAT-N45) */
+  color: var(--sb-brand-text);
 }
+
+.wardTab.wardTabActive em { opacity: 1; }
 
 .wardTab:disabled { cursor: default; }
 

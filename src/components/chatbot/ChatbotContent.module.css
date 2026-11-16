@@ -212,7 +212,8 @@
   border: 1.5px solid var(--sb-brand-soft);
   border-radius: 999px;
   background: #fff;
-  color: var(--sb-brand);
+  /* 흰 바탕 위 브랜드 글자는 진한 색으로 - 4.5:1 이상(QA CHAT-N45) */
+  color: var(--sb-brand-text);
   cursor: pointer;
   flex-shrink: 0;
   font: inherit;
@@ -228,14 +229,14 @@
 
 /* 디자인에서 예약 칩만 진한 색 + 달력 아이콘으로 강조한다. */
 .quickPromptPrimary {
-  border-color: var(--sb-brand);
-  background: var(--sb-brand);
+  border-color: var(--sb-brand-text);
+  background: var(--sb-brand-text);
   color: #fff;
   font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 .quickPromptPrimary:hover:not(:disabled) {
-  background: var(--sb-brand);
+  background: var(--sb-brand-text);
 }
 
 .quickPromptButton:disabled {

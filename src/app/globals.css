@@ -15,6 +15,11 @@
   --sb-ink: #14110c;
   --sb-ink-soft: #4b4538;
   --sb-ink-mute: #8c8576;
+  /* 연한 바탕 위 글자용 진한 색 - 4.5:1 이상(QA CHAT-N45). 테두리·점 같은 장식은 원래 색을 그대로 쓴다 */
+  --sb-brand-text: #934f3a;
+  --sb-ink-mute-text: #6e675a;
+  --sb-warn-text: #8a4f22;
+  --sb-joy-text: #80590f;
   --sb-bg: #fbf6f0;
   --sb-bg-soft: #f8f2eb;
   --sb-line: #e2cdb9;
@@ -31,6 +36,7 @@
   --sb-ink: #050505;
   --sb-ink-soft: #14110c;
   --sb-ink-mute: #3d3529;
+  --sb-ink-mute-text: #3d3529;
   --sb-line: #b9a98c;
   --sb-line-soft: #cabd9e;
 }

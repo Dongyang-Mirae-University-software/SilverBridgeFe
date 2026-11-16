@@ -31,7 +31,8 @@
 .header p {
   max-width: 720px;
   margin: 4px 0 0;
-  color: var(--sb-ink-mute);
+  /* 화면 바탕 위 설명 글자 - 4.5:1 이상(QA CHAT-N45) */
+  color: var(--sb-ink-mute-text);
   font-size: calc(15px * var(--ward-font-scale, 1));
   font-weight: calc(400 + var(--ward-weight-boost, 0));
   line-height: 1.55;
