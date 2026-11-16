@@ -24,6 +24,8 @@ export function useProfileImageChangeMutation(options?: ProfileImageMutationOpti
     onError: error => {
       reportNonApiError('프로필 이미지 변경 실패:', error);
       options?.onError?.(getErrorMessage(error, '프로필 이미지를 변경하지 못했습니다.'));
+      // 응답만 못 받고 서버엔 저장됐을 수 있다 - 실패해도 서버 값으로 화면을 맞춘다
+      void queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
     },
   });
 }

@@ -29,6 +29,8 @@ export async function changeMyProfileImage(file: File) {
   formData.append('file', file);
 
   return apiClient.patch<CommonResponse<IUserProfile>>(`${BASE}/me/image`, formData, {
+    // 사진 업로드는 10초(기본 대기)를 넘길 수 있다 - 서버엔 저장됐는데 화면만 실패로 끊지 않게 한다(QA AUTH-A43)
+    timeout: 30_000,
     headers: {
       'Content-Type': 'multipart/form-data',
     },
