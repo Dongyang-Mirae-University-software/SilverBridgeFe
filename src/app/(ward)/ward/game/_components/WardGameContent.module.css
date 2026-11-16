@@ -73,6 +73,14 @@
   line-height: 1;
 }
 
+.gameArt {
+  flex: 0 0 auto;
+  width: 132px;
+  aspect-ratio: 3 / 2;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
 .gameCopy {
   display: flex;
   min-width: 0;
@@ -126,6 +134,7 @@
   .picker { grid-template-columns: 1fr; gap: 12px; }
   .gameButton { min-height: 116px; padding: 20px; gap: 16px; }
   .gameIcon { font-size: calc(52px * var(--ward-font-scale, 1)); }
+  .gameArt { width: 108px; border-radius: 12px; }
   .gameCopy strong { font-size: calc(24px * var(--ward-font-scale, 1)); }
   .gameCopy span { font-size: calc(16px * var(--ward-font-scale, 1)); }
   .frame { min-height: 460px; }

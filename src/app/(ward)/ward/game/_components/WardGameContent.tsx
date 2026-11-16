@@ -13,24 +13,27 @@ import styles from './WardGameContent.module.css';
 const cx = classNames.bind(styles);
 
 const GAMES = [
-  { slug: 'memory_match', label: '짝 맞추기', description: '카드 짝을 맞춰보세요', icon: '🃏', tone: 'brand' },
-  { slug: 'maze', label: '미로 찾기', description: '길을 따라 도착해 보세요', icon: '🧩', tone: 'sun' },
-  { slug: 'arithmetic', label: '사칙연산', description: '숫자를 재미있게 풀어보세요', icon: '➕', tone: 'accent' },
-  { slug: 'initials_quiz', label: '초성 퀴즈', description: '초성을 보고 낱말을 맞혀보세요', icon: '✏️', tone: 'safe' },
+  { slug: 'memory_match', label: '짝 맞추기', description: '카드 짝을 맞춰보세요', icon: '🃏', art: 'pick-memory', tone: 'brand' },
+  { slug: 'maze', label: '미로 찾기', description: '길을 따라 도착해 보세요', icon: '🧩', art: 'pick-maze', tone: 'sun' },
+  { slug: 'arithmetic', label: '사칙연산', description: '숫자를 재미있게 풀어보세요', icon: '➕', art: 'pick-arithmetic', tone: 'accent' },
+  { slug: 'initials_quiz', label: '초성 퀴즈', description: '초성을 보고 낱말을 맞혀보세요', icon: '✏️', art: 'pick-initials', tone: 'safe' },
 ] as const;
 
 type GameSlug = (typeof GAMES)[number]['slug'];
 
+const AI_ROOT = (process.env.NEXT_PUBLIC_AI_API_DOMAIN ?? '').replace(/\/$/, '');
+
 function getEmbedUrl(userId: number, gameSlug: GameSlug) {
-  const domain = process.env.NEXT_PUBLIC_AI_API_DOMAIN ?? '';
   const params = new URLSearchParams({ userId: String(userId), gameSlug });
-  return `${domain.replace(/\/$/, '')}/api/v1/games/embed?${params}`;
+  return `${AI_ROOT}/api/v1/games/embed?${params}`;
 }
 
 export function WardGameContent() {
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
   const profileId = getUserProfileData(profileResponse)?.id;
   const [gameSlug, setGameSlug] = useState<GameSlug>('memory_match');
+  // 그림은 AI 서버가 준다. 하나라도 못 받으면 예전 이모지로 돌아간다
+  const [artFailed, setArtFailed] = useState(false);
 
   const gameCards = (
     <section className={cx('gameSelection')} aria-labelledby="game-selection-title">
@@ -44,7 +47,12 @@ export function WardGameContent() {
             className={cx('gameButton', game.tone, { active: game.slug === gameSlug })}
             onClick={() => setGameSlug(game.slug)}
           >
-            <span className={cx('gameIcon')} aria-hidden="true">{game.icon}</span>
+            {artFailed ? (
+              <span className={cx('gameIcon')} aria-hidden="true">{game.icon}</span>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element -- 다른 출처(AI 서버) 정적 그림
+              <img className={cx('gameArt')} src={`${AI_ROOT}/api/v1/games/assets/${game.art}.png`} alt="" onError={() => setArtFailed(true)} />
+            )}
             <span className={cx('gameCopy')}>
               <strong>{game.label}</strong>
               <span>{game.description}</span>
