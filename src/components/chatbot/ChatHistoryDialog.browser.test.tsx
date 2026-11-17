@@ -29,7 +29,7 @@ function logs(): ChatLogItem[] {
   }));
 }
 
-const WIDTHS = [375, 390, 768];
+const WIDTHS = [320, 375, 390, 768, 800];
 const SCALES = ['1', '1.3', '1.65'];
 
 afterEach(async () => {
@@ -85,5 +85,40 @@ describe('ChatHistoryDialog 피보호자 목록 카드', () => {
         }
       });
     }
+  }
+
+  // #275 점검 M-1·L-2·L-3: 긴 날짜 + 앱 최대 배율(28/17) + 진한 글자. 날짜 칸이 단어 중간("12월 31 / 일")에서 끊기지 않는다
+  for (const width of [320, 375, 761, 900]) {
+    it(`${width}px × 최대 배율·진한 글자: 긴 날짜도 단어 단위로 두 줄 이하, 잘림 없음`, async () => {
+      await page.viewport(width, 812);
+      const long: ChatLogItem[] = [
+        { id: '1', sessionId: 'a', message: TITLES[4], reply: '답', createdAt: '2026-12-31T03:00:00Z' },
+        { id: '2', sessionId: 'b', message: TITLES[3], reply: '답', createdAt: '2026-11-10T01:00:00Z' },
+      ];
+      const screen = await render(
+        <div style={{ ['--ward-font-scale' as string]: '1.647', ['--ward-weight-boost' as string]: '200' } as React.CSSProperties}>
+          <ChatHistoryDialog variant="ward" logs={long} loading={false} error={null} onClose={() => {}} />
+        </div>,
+      );
+      await expect.element(screen.getByText('무릎')).toBeInTheDocument();
+
+      const card = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(button =>
+        button.textContent?.includes('12월 31일'),
+      )!;
+      const time = card.querySelector('time')!;
+      const lineHeight = parseFloat(getComputedStyle(time).lineHeight);
+      expect(Math.round(time.getBoundingClientRect().height / lineHeight)).toBeLessThanOrEqual(2);
+      expect(card.scrollHeight).toBeLessThanOrEqual(card.clientHeight);
+      expect(card.scrollWidth).toBeLessThanOrEqual(card.clientWidth);
+
+      // "12월 31일"이 한 줄 안에 있다(줄마다 사각형이 하나씩 나오므로 top 이 모두 같아야 한다)
+      const text = time.firstChild as Text;
+      const range = document.createRange();
+      const start = text.data.indexOf('12월 31일');
+      range.setStart(text, start);
+      range.setEnd(text, start + '12월 31일'.length);
+      const tops = new Set([...range.getClientRects()].map(rect => Math.round(rect.top)));
+      expect(tops.size).toBe(1);
+    });
   }
 });
