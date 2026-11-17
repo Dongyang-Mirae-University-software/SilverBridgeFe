@@ -20,3 +20,13 @@ export function emergencyWarnings(message: Pick<ChatMessage, 'emergencyWarning'>
 export function isUrgentAnswer(message: Pick<ChatMessage, 'emergencyWarning' | 'riskLevel' | 'layout'>): boolean {
   return emergencyWarnings(message).length > 0 || message.riskLevel === 'high' || isUrgentLayout(message.layout);
 }
+
+/**
+ * 자해·위기 답인가(의료 응급이 아닌 쪽). 응급 판정이면서 경고 문장이 없는 경우다 -
+ * 자해 고정 응답은 riskLevel high 만, 위기 뒤 이어지는 턴은 layout.urgent 만 오고 경고는 없다.
+ * AI 가 위기 구분 메타를 FE 에 보내지 않아 칸 구조로 따져 보는 대용이다(문구·이모지 비교 금지).
+ * 잘못 가려져도 109 안내 한 줄이 켜지고 꺼질 뿐이다.
+ */
+export function isCrisisAnswer(message: Pick<ChatMessage, 'emergencyWarning' | 'riskLevel' | 'layout'>): boolean {
+  return isUrgentAnswer(message) && emergencyWarnings(message).length === 0;
+}

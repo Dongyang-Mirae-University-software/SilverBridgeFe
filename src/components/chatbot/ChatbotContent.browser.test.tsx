@@ -3,12 +3,13 @@
 // 보호자 챗봇의 "상담할 피보호자" 선택 칸은 없앴다(2026-11-11) - 본인 상담으로 시작하고 예약 때 AI가 대상을 묻는다.
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode } from 'react';
+import { Fragment, ReactNode, useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import ChatbotContent from './ChatbotContent';
+import useModalStore from '@/store/modalStore';
 import { clearSelectedWardId, setSelectedWardId } from '@/store/selectedWardStore';
 
 // 마이크 버튼 이름 - 보호자 "말로 입력하기", 피보호자는 보이는 글자와 같다(처음 "말로 물어보기"·답 뒤 "말로 답하기"·응급 뒤 "말로 더 묻기", 2026-11-12)
@@ -23,6 +24,7 @@ const api = vi.hoisted(() => ({
   wardsFailed: vi.fn(),
   refetchWards: vi.fn(),
   push: vi.fn(),
+  triggerSos: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: api.push }) }));
@@ -32,6 +34,7 @@ vi.mock('@/service/api/chat', () => ({
   getChatLogs: api.getChatLogs,
   getChatErrorMessage: () => '잠시 후 다시 시도해 주세요.',
 }));
+vi.mock('@/service/api/ward/sos', () => ({ triggerWardSos: api.triggerSos }));
 // 기록 경고 문구는 실제 함수를 쓴다(따로 흉내 내면 실제 함수가 바뀔 때 테스트만 옛 동작을 본다 - 점검 L-4).
 vi.mock('@/service/query/user/profile', () => ({
   myProfileQueryOptions: { queryKey: ['test-profile'], queryFn: () => ({ name: '박순자', profileImage: null }) },
@@ -65,9 +68,29 @@ const WARD_2 = { ...WARD, partnerUserId: 'ward-2', partnerName: '이철수' };
 
 const REPLY = { reply: '정형외과 진료를 권해요.', engine: 'ai', type: 'message' };
 
+// ModalHost 는 next/navigation 에 묶여 있어 테스트에서는 모달 저장소만 그린다(119 키패드가 여기에 뜬다)
+function TestModalHost() {
+  const modals = useModalStore(state => state.modals);
+  const resetModal = useModalStore(state => state.resetModal);
+  // 저장소는 모듈 전역이라 호스트가 붙을 때 이전 테스트의 모달을 비운다
+  useEffect(() => resetModal(), [resetModal]);
+  return (
+    <>
+      {modals.map(modal => (
+        <Fragment key={modal.id}>{modal.Component}</Fragment>
+      ))}
+    </>
+  );
+}
+
 function renderChat(node: ReactNode) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      {node}
+      <TestModalHost />
+    </QueryClientProvider>,
+  );
 }
 
 // 피보호자 화면은 마이크로만 입력한다(2026-11-11). 마이크를 못 쓰면 [글자로 쓰기]로 입력창을 연다
@@ -87,6 +110,8 @@ beforeEach(() => {
   api.sendChatMessage.mockReset();
   api.getChatLogs.mockReset();
   api.push.mockReset();
+  api.triggerSos.mockReset();
+  api.triggerSos.mockResolvedValue({ sosEventId: 1, triggeredAt: '2026-11-17T00:00:00Z' });
   api.wards.mockReturnValue([WARD]);
   api.wardsLoading.mockReturnValue(false);
   api.wardsFailed.mockReturnValue(false);
@@ -869,7 +894,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     expect(quickButtons()).toEqual(['머리가 아파요', '무릎이 아파요', '어지러워요']);
   });
 
-  it('피보호자: 응급 답이면 빠른 질문 대신 큰 119 버튼(tel:119), 다음 답이 응급이 아니면 돌아온다', async () => {
+  it('피보호자: 응급 답이면 빠른 질문 대신 큰 119 버튼(링크 아님), 다음 답이 응급이 아니면 돌아온다', async () => {
     api.role.mockReturnValue('WARD');
     api.sendChatMessage
       .mockResolvedValueOnce({ ...REPLY, reply: '지금 119에 전화하세요.', emergencyWarning: ['가슴 통증이 계속되면 위험해요'] })
@@ -878,12 +903,17 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
       .mockResolvedValueOnce({ ...REPLY, reply: '푹 쉬세요.' });
     await renderChat(<ChatbotContent variant="ward" />);
 
-    const call = () => page.getByRole('link', { name: '119에 전화하기' });
+    const call = () => page.getByRole('button', { name: '119 화면 열기' });
     expect(call().query()).toBeNull();
 
     await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
     await expect.element(call()).toBeVisible();
-    expect(call().element().getAttribute('href')).toBe('tel:119');
+    // 전화 링크가 아니라 버튼이다 - 실제 전화는 걸지 않는다
+    expect(call().element().tagName).toBe('BUTTON');
+    expect(call().element().getAttribute('href')).toBeNull();
+    expect(document.querySelectorAll('a[href^="tel:"]').length).toBe(0);
+    await expect.element(page.getByText('긴급 · 119 도움 요청')).toBeVisible();
+    await expect.element(page.getByText('통화 버튼을 누르면 보호자에게 알림이 가요')).toBeVisible();
     expect(page.getByRole('region', { name: '추천 질문' }).query()).toBeNull();
 
     // 위험도 high 만 온 답·layout.urgent 만 온 답도 같게
@@ -902,15 +932,77 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     await expect.element(page.getByRole('region', { name: '추천 질문' })).toBeVisible();
   });
 
-  it('보호자: 응급 답이어도 오른쪽 패널은 추천 질문 그대로(119 버튼 없음)', async () => {
+  describe('119 키패드 - 통화 버튼이 보호자에게 알린다', () => {
+    const DIALOG = { name: '119 신고 키패드(시연 화면)' };
+    const CALL = { name: /보호자에게 알림/ };
+    const CRISIS_LINE = '마음이 힘들면 자살예방 상담전화 109(24시간)에 이야기해 보세요.';
+
+    async function openDialpad(answer: Record<string, unknown>) {
+      api.role.mockReturnValue('WARD');
+      api.sendChatMessage.mockResolvedValueOnce({ ...REPLY, ...answer });
+      await renderChat(<ChatbotContent variant="ward" />);
+      await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+      await userEvent.click(page.getByRole('button', { name: '119 화면 열기' }));
+      await expect.element(page.getByRole('dialog', DIALOG)).toBeVisible();
+    }
+
+    it('통화 버튼을 누르면 CHATBOT_119 SOS 를 한 번 보내고 성공 안내를 보인다', async () => {
+      await openDialpad({ emergencyWarning: ['가슴 통증이 계속되면 위험해요'] });
+
+      await userEvent.click(page.getByRole('button', CALL));
+      await expect
+        .element(page.getByText('보호자에게 알렸어요. 시연 화면이라 119에는 실제로 걸리지 않아요'))
+        .toBeVisible();
+      expect(api.triggerSos).toHaveBeenCalledTimes(1);
+      // react-query 가 mutationFn 에 부가 인자를 더 넘길 수 있어 첫 인자만 본다
+      expect(api.triggerSos.mock.calls[0][0]).toEqual({ triggerType: 'CHATBOT_119' });
+      // 의료 응급이라 109 안내는 없다
+      expect(page.getByText(CRISIS_LINE).query()).toBeNull();
+    });
+
+    it('자해·위기 답(경고 없음, riskLevel high)이면 109 안내 한 줄이 키패드에 보인다', async () => {
+      await openDialpad({ riskLevel: 'high' });
+      await expect.element(page.getByText(CRISIS_LINE)).toBeVisible();
+    });
+
+    it('실패하면 다시 누르라고 안내하고, 다시 누르면 한 번 더 보내 성공한다(모두 2건)', async () => {
+      api.triggerSos.mockRejectedValueOnce(new Error('x'));
+      await openDialpad({ emergencyWarning: ['위험해요'] });
+
+      await userEvent.click(page.getByRole('button', CALL));
+      await expect.element(page.getByText('보호자에게 알리지 못했어요. 통화 버튼을 다시 눌러 주세요.')).toBeVisible();
+
+      await userEvent.click(page.getByRole('button', CALL));
+      await expect.element(page.getByText(/보호자에게 알렸어요/)).toBeVisible();
+      expect(api.triggerSos).toHaveBeenCalledTimes(2);
+    });
+
+    it('보내는 중에 연타해도 요청은 한 건이다', async () => {
+      let resolve: (value: unknown) => void = () => {};
+      api.triggerSos.mockImplementationOnce(() => new Promise(r => (resolve = r)));
+      await openDialpad({ emergencyWarning: ['위험해요'] });
+
+      const call = page.getByRole('button', CALL);
+      await userEvent.dblClick(call);
+      await expect.element(page.getByText('보호자에게 알리는 중이에요…')).toBeVisible();
+      expect(api.triggerSos).toHaveBeenCalledTimes(1);
+
+      resolve({ sosEventId: 1, triggeredAt: '2026-11-17T00:00:00Z' });
+      await expect.element(page.getByText(/보호자에게 알렸어요/)).toBeVisible();
+      expect(api.triggerSos).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('보호자: 응급 답이어도 119 버튼이 없고 SOS 요청·전화 링크도 없다', async () => {
     api.role.mockReturnValue('GUARDIAN');
-    api.sendChatMessage.mockResolvedValueOnce({ ...REPLY, reply: '119에 연락하세요.', emergencyWarning: ['의식이 없으면 위험해요'] });
+    api.sendChatMessage.mockResolvedValueOnce({ ...REPLY, reply: '위험한 말이 들려 걱정돼요.', riskLevel: 'high' });
     await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
-    await expect.element(page.getByText('119에 연락하세요.')).toBeVisible();
-    expect(page.getByRole('link', { name: '119에 전화하기' }).query()).toBeNull();
-    await expect.element(page.getByRole('region', { name: '추천 질문' })).toBeVisible();
+    await expect.element(page.getByText('위험한 말이 들려 걱정돼요.')).toBeVisible();
+    expect(page.getByRole('button', { name: '119 화면 열기' }).query()).toBeNull();
+    expect(api.triggerSos).not.toHaveBeenCalled();
+    expect(document.querySelectorAll('a[href^="tel:"]').length).toBe(0);
   });
 
   it('피보호자 휴대폰: 버튼이 3개·1개 남으면 마지막 버튼을 두 칸 폭으로 놓는다(넓은 화면은 그대로)', async () => {
@@ -1063,9 +1155,9 @@ describe('화면 개편 - 디자인 프로토타입 (2026-11-12)', () => {
     await renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
-    const panel = page.getByRole('region', { name: '119 전화' });
-    await expect.element(panel.getByText('지금 바로 119에 전화하세요', { exact: true })).toBeVisible();
-    const call = page.getByRole('link', { name: '119에 전화하기' });
+    const panel = page.getByRole('region', { name: '119 도움 요청' });
+    await expect.element(panel.getByText('긴급 · 119 도움 요청', { exact: true })).toBeVisible();
+    const call = page.getByRole('button', { name: '119 화면 열기' });
     const mic = page.getByRole('button', { name: '말로 더 묻기' });
     await expect.element(mic).toBeVisible();
     expect(call.element().getBoundingClientRect().height).toBeGreaterThanOrEqual(96);

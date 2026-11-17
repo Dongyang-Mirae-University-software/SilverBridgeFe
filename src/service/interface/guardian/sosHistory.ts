@@ -7,7 +7,7 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
-export type SosTriggerType = 'SOS_BUTTON' | 'GUARDIAN_CALL';
+export type SosTriggerType = 'SOS_BUTTON' | 'GUARDIAN_CALL' | 'CHATBOT_119';
 
 export interface IGuardianSosHistoryItem {
   sosEventId: number;
@@ -28,6 +28,7 @@ export interface ISosHistoryCounts {
   all: number;
   sosButton: number;
   guardianCall: number;
+  chatbot119: number;
 }
 
 export interface IGuardianSosHistoryPage extends PageResponse<IGuardianSosHistoryItem> {

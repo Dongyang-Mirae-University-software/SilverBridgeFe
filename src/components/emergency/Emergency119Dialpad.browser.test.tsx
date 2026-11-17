@@ -7,7 +7,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page, userEvent } from 'vitest/browser';
 
-import { DEMO_CALL_NOTICE, Emergency119Dialpad } from './Emergency119Dialpad';
+import {
+  CALL_FAILED_NOTICE,
+  CALL_OFFLINE_NOTICE,
+  CALL_SENDING_NOTICE,
+  CALL_SUCCESS_NOTICE,
+  DEMO_CALL_NOTICE,
+  Emergency119Dialpad,
+} from './Emergency119Dialpad';
 
 describe('Emergency119Dialpad (Chrome)', () => {
   afterEach(async () => {
@@ -126,5 +133,65 @@ describe('Emergency119Dialpad (Chrome)', () => {
     call.element().scrollIntoView({ block: 'nearest' });
     expect(call.element().getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+  });
+
+  describe('onCall(보호자 알림)', () => {
+    const CALL = { name: /보호자에게 알림/ };
+
+    it('보내는 동안 통화 버튼이 잠기고 안내가 뜨며, 성공하면 다시 눌러도 더 보내지 않는다', async () => {
+      let resolve: (value?: unknown) => void = () => {};
+      const onCall = vi.fn(() => new Promise(r => (resolve = r)));
+      const screen = await render(<Emergency119Dialpad onClose={() => {}} onCall={onCall} />);
+      const call = screen.getByRole('button', CALL);
+
+      await call.click();
+      await expect.element(screen.getByText(CALL_SENDING_NOTICE)).toBeVisible();
+      await expect.element(call).toBeDisabled();
+      await expect.element(call).toHaveAttribute('aria-busy', 'true');
+      expect(onCall).toHaveBeenCalledTimes(1);
+
+      resolve();
+      await expect.element(screen.getByText(CALL_SUCCESS_NOTICE)).toBeVisible();
+      await expect.element(call).toBeEnabled();
+      await call.click();
+      expect(onCall).toHaveBeenCalledTimes(1);
+      await expect.element(screen.getByText(CALL_SUCCESS_NOTICE)).toBeVisible();
+    });
+
+    it('실패하면 다시 누르라는 안내를 보이고, 다시 누르면 재시도해 성공한다', async () => {
+      const onCall = vi.fn().mockRejectedValueOnce(new Error('x')).mockResolvedValueOnce({});
+      const screen = await render(<Emergency119Dialpad onClose={() => {}} onCall={onCall} />);
+      const call = screen.getByRole('button', CALL);
+
+      await call.click();
+      await expect.element(screen.getByText(CALL_FAILED_NOTICE)).toBeVisible();
+      await expect.element(call).toBeEnabled();
+
+      await call.click();
+      await expect.element(screen.getByText(CALL_SUCCESS_NOTICE)).toBeVisible();
+      expect(onCall).toHaveBeenCalledTimes(2);
+    });
+
+    it('오프라인이면 연결 안내 문구로 실패를 알린다', async () => {
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      const onCall = vi.fn().mockRejectedValue(new Error('x'));
+      const screen = await render(<Emergency119Dialpad onClose={() => {}} onCall={onCall} />);
+
+      await screen.getByRole('button', CALL).click();
+      await expect.element(screen.getByText(CALL_OFFLINE_NOTICE)).toBeVisible();
+    });
+
+    it('footer 를 안내 아래에 그린다', async () => {
+      const screen = await render(
+        <Emergency119Dialpad onClose={() => {}} onCall={async () => {}} footer={<p>상담전화 109</p>} />,
+      );
+      await expect.element(screen.getByText('상담전화 109')).toBeVisible();
+    });
+
+    it('onCall 이 없으면 기존 시연 안내 그대로다', async () => {
+      const screen = await render(<Emergency119Dialpad onClose={() => {}} />);
+      await screen.getByRole('button', { name: /실제로 걸리지 않음/ }).click();
+      await expect.element(screen.getByText(DEMO_CALL_NOTICE)).toBeVisible();
+    });
   });
 });
