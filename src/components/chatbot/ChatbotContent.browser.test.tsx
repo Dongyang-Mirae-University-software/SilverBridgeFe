@@ -25,6 +25,7 @@ const api = vi.hoisted(() => ({
   refetchWards: vi.fn(),
   push: vi.fn(),
   triggerSos: vi.fn(),
+  guardians: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: api.push }) }));
@@ -48,6 +49,11 @@ vi.mock('@/hooks/useActiveConnections', () => ({
     isError: enabled ? Boolean(api.wardsFailed()) : false,
     refetch: api.refetchWards,
   }),
+  // 피보호자 챗봇의 보호자 유무(119 키패드 문구, FE #277 점검 M-1)
+  useWardActiveGuardians: (enabled: boolean) => {
+    const guardians = enabled ? (api.guardians() as unknown[]) : [];
+    return { activeGuardians: guardians, hasActiveGuardians: guardians.length > 0, isLoading: false, isError: false };
+  },
 }));
 vi.mock('@/components/Icon', () => ({ Icon: () => <span data-testid="icon" /> }));
 vi.mock('@/components/UserAvatar', () => ({ UserAvatar: () => <span data-testid="avatar" /> }));
@@ -116,6 +122,7 @@ beforeEach(() => {
   api.wardsLoading.mockReturnValue(false);
   api.wardsFailed.mockReturnValue(false);
   api.refetchWards.mockReset();
+  api.guardians.mockReturnValue([{ id: 1, partnerUserId: 'grd-1', status: 'ACTIVE' }]);
   sessionStorage.clear();
   clearSelectedWardId();
 });
@@ -960,9 +967,60 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
       expect(page.getByText(CRISIS_LINE).query()).toBeNull();
     });
 
-    it('자해·위기 답(경고 없음, riskLevel high)이면 109 안내 한 줄이 키패드에 보인다', async () => {
-      await openDialpad({ riskLevel: 'high' });
+    it('자해 고정 답(경고 박스 + high + layout.crisis - AI 실제 모양)이면 109 안내 한 줄이 키패드에 보인다(점검 H-1)', async () => {
+      await openDialpad({
+        riskLevel: 'high',
+        emergencyWarning: ['지금 위험하다고 느끼시면 바로 119에 전화하세요. 자살예방 상담전화 109는 24시간 받습니다.'],
+        layout: { headline: '지금 많이 힘드시군요.', body: [], urgent: true, crisis: true },
+      });
       await expect.element(page.getByText(CRISIS_LINE)).toBeVisible();
+    });
+
+    it('layout.crisis 가 없는 응급 답은 경고가 없어도 109 안내가 없다(옛 판정 "경고 없음 = 위기" 제거)', async () => {
+      await openDialpad({ riskLevel: 'high' });
+      expect(page.getByText(CRISIS_LINE).query()).toBeNull();
+    });
+
+    it('연결된 보호자가 없으면 "알림은 가지 않아요"로 안내하고, 통화 버튼 뒤에도 알렸다고 하지 않는다(점검 M-1)', async () => {
+      api.guardians.mockReturnValue([]);
+      api.role.mockReturnValue('WARD');
+      api.sendChatMessage.mockResolvedValueOnce({ ...REPLY, emergencyWarning: ['위험해요'] });
+      await renderChat(<ChatbotContent variant="ward" />);
+      await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+      await expect.element(page.getByText('연결된 보호자가 없어 알림은 가지 않아요')).toBeVisible();
+
+      await userEvent.click(page.getByRole('button', { name: '119 화면 열기' }));
+      await userEvent.click(page.getByRole('button', CALL));
+      await expect
+        .element(page.getByText('연결된 보호자가 없어 알림은 가지 않았어요. 시연 화면이라 119에도 걸리지 않아요'))
+        .toBeVisible();
+      expect(page.getByText(/보호자에게 알렸어요/).query()).toBeNull();
+      // SOS(이력)는 그대로 보낸다
+      expect(api.triggerSos).toHaveBeenCalledTimes(1);
+    });
+
+    it('보내는 중에 키패드를 닫고 실패하면 오류 창으로 알리고, 그 창에서 키패드를 다시 연다(점검 L-1)', async () => {
+      let reject: (reason: unknown) => void = () => {};
+      api.triggerSos.mockImplementationOnce(() => new Promise((_, r) => (reject = r)));
+      await openDialpad({ emergencyWarning: ['위험해요'] });
+
+      await userEvent.click(page.getByRole('button', CALL));
+      await userEvent.click(page.getByRole('button', { name: '119 화면 닫기' }));
+      expect(page.getByRole('dialog', DIALOG).query()).toBeNull();
+
+      reject(new Error('x'));
+      await expect.element(page.getByText('SOS 전송 실패')).toBeVisible();
+      await userEvent.click(page.getByRole('button', { name: '119 화면 열기' }).last());
+      await expect.element(page.getByRole('dialog', DIALOG)).toBeVisible();
+      expect(api.triggerSos).toHaveBeenCalledTimes(1);
+    });
+
+    it('키패드가 열린 채 실패하면 오류 창 없이 키패드 안에서만 안내한다', async () => {
+      api.triggerSos.mockRejectedValueOnce(new Error('x'));
+      await openDialpad({ emergencyWarning: ['위험해요'] });
+      await userEvent.click(page.getByRole('button', CALL));
+      await expect.element(page.getByText('보호자에게 알리지 못했어요. 통화 버튼을 다시 눌러 주세요.')).toBeVisible();
+      expect(page.getByText('SOS 전송 실패').query()).toBeNull();
     });
 
     it('실패하면 다시 누르라고 안내하고, 다시 누르면 한 번 더 보내 성공한다(모두 2건)', async () => {

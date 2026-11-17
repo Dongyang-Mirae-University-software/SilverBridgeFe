@@ -34,6 +34,8 @@ vi.mock('@/utils/auth/userProfile', () => ({ getUserProfileData: (response: unkn
 vi.mock('@/lib/auth/tokenStore', () => ({ getAuthRole: api.role, getAccessTokenSubject: () => 'user-1' }));
 vi.mock('@/hooks/useActiveConnections', () => ({
   useGuardianActiveWards: () => ({ activeWards: [], isLoading: false }),
+  // 피보호자 챗봇이 보호자 유무를 본다(FE #277 점검 M-1) - 보호자 1명 있는 기본 상태
+  useWardActiveGuardians: () => ({ activeGuardians: [{}], hasActiveGuardians: true, isLoading: false, isError: false }),
 }));
 vi.mock('@/components/Icon', () => ({ Icon: () => <span data-testid="icon" /> }));
 vi.mock('@/components/UserAvatar', () => ({ UserAvatar: () => <span data-testid="avatar" /> }));

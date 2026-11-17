@@ -68,6 +68,8 @@ export interface ChatLayout {
   visitHospitalIf?: string[];
   /** 응급·위기(119·109) 답 표시(AI 2026-11-09). true 면 핵심 줄을 "긴급" 경고 상자에 넣는다 - 불리언 true 만 본다. */
   urgent?: boolean;
+  /** 자해·위기(109) 답 표시(AI #317, 2026-11-17). true 면 피보호자 119 키패드 아래 109 안내를 붙인다 - 불리언 true 만 본다. */
+  crisis?: boolean;
 }
 
 // 환자 정보(이름·전화·생년월일·주소 등)는 보내지 않는다 - 백엔드가 로그인 사용자·검증한 피보호자의 DB 값으로 채운다
