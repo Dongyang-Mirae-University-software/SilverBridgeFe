@@ -277,9 +277,11 @@
   outline-offset: 2px;
 }
 
+/* 글자 배율만큼 칸을 넓히고 단어 단위로만 꺾는다 - 고정 120px 이면 큰 글자에서 3~4줄, "12월 31 / 일"처럼 끊겼다(2026-11-17 #275 점검 M-1·L-2) */
 .wardItemDate {
-  width: 120px;
+  width: calc(120px * var(--ward-font-scale, 1));
   flex-shrink: 0;
+  word-break: keep-all;
   color: var(--sb-ink-soft);
   font-size: calc(20px * var(--ward-font-scale, 1));
   font-weight: calc(700 + var(--ward-weight-boost, 0));
