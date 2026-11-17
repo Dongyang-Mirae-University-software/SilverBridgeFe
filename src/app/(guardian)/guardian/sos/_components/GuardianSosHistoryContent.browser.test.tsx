@@ -7,15 +7,37 @@ import { render } from 'vitest-browser-react';
 import { clearSelectedWardId } from '@/store/selectedWardStore';
 import GuardianSosHistoryContent from './GuardianSosHistoryContent';
 
-const data = vi.hoisted(() => ({ connections: (async () => ({ data: [] })) as () => Promise<unknown> }));
+const data = vi.hoisted(() => ({
+  connections: (async () => ({ data: [] })) as () => Promise<unknown>,
+  historyParams: [] as unknown[],
+}));
 
 vi.mock('@/service/query/guardian', () => ({
   guardianConnectionsQueryOptions: queryOptions({ queryKey: ['test-connections'], queryFn: () => data.connections() }),
-  guardianSosHistoryQueryOptions: () =>
-    queryOptions({
-      queryKey: ['test-sos'],
-      queryFn: async () => ({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0, last: true }),
-    }),
+  guardianSosHistoryQueryOptions: (params: unknown) => {
+    data.historyParams.push(params);
+    return queryOptions({
+      queryKey: ['test-sos', params],
+      queryFn: async () => ({
+        content: [
+          {
+            sosEventId: 1,
+            wardId: 'ward-1',
+            wardName: '김영희',
+            triggeredAt: '2026-11-17T01:00:00Z',
+            location: null,
+            triggerType: 'CHATBOT_119',
+          },
+        ],
+        page: 0,
+        size: 10,
+        totalElements: 1,
+        totalPages: 1,
+        last: true,
+        counts: { all: 4, sosButton: 2, guardianCall: 1, chatbot119: 1 },
+      }),
+    });
+  },
 }));
 
 function renderSos() {
@@ -27,7 +49,10 @@ function renderSos() {
   );
 }
 
-beforeEach(() => clearSelectedWardId());
+beforeEach(() => {
+  clearSelectedWardId();
+  data.historyParams = [];
+});
 afterEach(() => {
   document.body.innerHTML = '';
 });
@@ -54,5 +79,24 @@ describe('SOS 이력 피보호자 불러오기 상태 (Chrome)', () => {
     fail = false;
     await page.getByRole('button', { name: '다시 불러오기' }).click();
     await expect.element(page.getByText('연결된 피보호자가 없습니다.')).toBeVisible();
+  });
+});
+
+describe('SOS 이력 챗봇 119 필터 (Chrome)', () => {
+  it('챗봇 119 필터에 건수가 보이고, 누르면 triggerType CHATBOT_119 로 조회하며 항목에 라벨이 붙는다', async () => {
+    data.connections = async () => ({
+      data: [{ id: 1, partnerUserId: 'ward-1', partnerName: '김영희', partnerProfileImage: null, status: 'ACTIVE', connectedAt: null }],
+    });
+    await renderSos();
+
+    const filter = page.getByRole('button', { name: /챗봇 119/ });
+    await expect.element(filter.first()).toBeVisible();
+    await expect.element(filter.first()).toMatchTextContent('챗봇 119 1');
+
+    await filter.first().click();
+    await vi.waitFor(() =>
+      expect(data.historyParams.some(params => (params as { triggerType?: string }).triggerType === 'CHATBOT_119')).toBe(true),
+    );
+    await expect.element(page.getByText('챗봇 119', { exact: true }).last()).toBeVisible();
   });
 });

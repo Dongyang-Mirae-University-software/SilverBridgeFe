@@ -11,7 +11,7 @@ import { useWardSosMutation } from '@/service/query/ward';
 import { useWardActiveGuardians } from '@/hooks/useActiveConnections';
 import type { WardSosResponse } from '@/service/interface/ward/sos';
 import type { IConnectionItem } from '@/service/interface/connection';
-import { Emergency119Dialpad } from './Emergency119Dialpad';
+import { Emergency119Dialpad } from '@/components/emergency/Emergency119Dialpad';
 import { WardGuardianCallSection } from './WardGuardianCallSection';
 import styles from './WardSosContent.module.css';
 

@@ -754,7 +754,7 @@
   padding: 10px 4px 0;
 }
 
-/* 응급·위기 답 뒤: 빠른 질문 대신 큰 119 전화 버튼(tel:119). 색만으로 구분하지 않게 글자로도 알린다. */
+/* 응급·위기 답 뒤: 빠른 질문 대신 큰 119 버튼(앱 안 키패드 열기). 색만으로 구분하지 않게 글자로도 알린다. */
 .wardEmergencyPanel {
   justify-content: center;
   gap: 24px;
@@ -789,6 +789,11 @@
   line-height: 1.2;
   text-decoration: none;
   padding: 0 20px;
+  /* 링크에서 버튼으로 바꿨다 - 기본 버튼 모양을 지워 같은 크기·모양을 유지한다 */
+  width: 100%;
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .wardEmergencyCall:focus-visible {
@@ -798,6 +803,16 @@
 
 .wardEmergencyIcon {
   flex-shrink: 0;
+}
+
+/* 키패드 안, 자해·위기 답일 때만 붙는 109 안내 */
+.wardCrisisLine {
+  margin: 0;
+  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  line-height: 1.5;
+  text-align: center;
+  word-break: keep-all;
 }
 
 .wardEmergencyHint {

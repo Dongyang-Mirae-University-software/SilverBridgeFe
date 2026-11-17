@@ -4,10 +4,12 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
+import { Emergency119Dialpad } from '@/components/emergency/Emergency119Dialpad';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { useSoftKeyboardOpen } from '@/hooks/useSoftKeyboardOpen';
 import { getAccessTokenSubject, getAuthRole } from '@/lib/auth/tokenStore';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
+import { useWardSosMutation } from '@/service/query/ward';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
 import { type ChatLogItem, type ChatMessage } from '@/service/interface/chat';
@@ -18,6 +20,7 @@ import {
   removeConversation,
   saveConversation,
 } from '@/store/chatConversationStore';
+import useModalStore from '@/store/modalStore';
 import { setSelectedWardId } from '@/store/selectedWardStore';
 
 import ChatBubble from './ChatBubble';
@@ -25,7 +28,7 @@ import ChatHistoryDialog from './ChatHistoryDialog';
 import ChatPeach from './ChatPeach';
 import ChatUiPrompt from './ChatUiPrompt';
 import { CalendarIcon, HistoryIcon, NewChatIcon, PhoneIcon, QuickPromptIcon, SendIcon } from './chatIcons';
-import { isUrgentAnswer } from './chatUrgency';
+import { isCrisisAnswer, isUrgentAnswer } from './chatUrgency';
 import { RESERVATION_STEPS, reservationStepIndex } from './reservationStep';
 import VoiceInputButton from './VoiceInputButton';
 import { useVoiceInput } from './useVoiceInput';
@@ -308,9 +311,28 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   // 피보호자는 받아쓴 글을 바로 보낸다 - 녹음·변환 중에 칩·선택지를 누르면 두 질문이 나가거나(칩 → 받아쓴 글)
   // 답을 기다리는 사이 받아쓴 글이 버려진다. 그동안은 칩·예약 선택지를 잠근다(2026-11-11 기능 점검 F-1)
   const wardVoiceBusy = isWardChat && voice.state !== 'idle';
-  // 피보호자: 마지막 답(실패 안내 제외)이 응급·위기면 빠른 질문 대신 큰 119 버튼을 둔다. 다음 답이 응급이 아니면 돌아온다.
+  // 피보호자: 마지막 답(실패 안내 제외)이 응급·위기면 빠른 질문 대신 큰 119 버튼(앱 안 키패드)을 둔다. 실제 전화는 걸지 않는다(2026-08-26 정책). 다음 답이 응급이 아니면 돌아온다.
   // 판정은 말풍선 긴급 상자와 같다(chatUrgency - 문구·이모지는 보지 않는다). 예약 진행 패널이 먼저다.
   const wardUrgent = isWardChat && !reserving && !!stepSource && isUrgentAnswer(stepSource);
+  const { openModal, onCloseModal } = useModalStore(state => ({
+    openModal: state.openModal,
+    onCloseModal: state.onCloseModal,
+  }));
+  const { mutateAsync: triggerSosAsync } = useWardSosMutation();
+  // 키패드 통화 버튼 = 보호자 알림(SOS 와 같은 경로, 발생 경로만 CHATBOT_119). 자해·위기 답이면 109 안내 한 줄을 붙인다
+  function openEmergencyDialpad() {
+    openModal(
+      <Emergency119Dialpad
+        onClose={onCloseModal}
+        onCall={() => triggerSosAsync({ triggerType: 'CHATBOT_119' })}
+        footer={
+          stepSource && isCrisisAnswer(stepSource) ? (
+            <p className={styles.wardCrisisLine}>마음이 힘들면 자살예방 상담전화 109(24시간)에 이야기해 보세요.</p>
+          ) : undefined
+        }
+      />,
+    );
+  }
   const suggested = latestSuggestions(messages);
   const quickTitle = suggested.answer ? '눌러서 답해 보세요' : '눌러서 물어보세요';
   // 보호자 글·칩 입력에 이어 실을 피보호자(대리 예약 중일 때만 - reservationFlow.textWardId)
@@ -743,13 +765,13 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             {reserving ? (
               reservationPanel('ward')
             ) : wardUrgent ? (
-              <section className={`${styles.wardQuickPanel} ${styles.wardEmergencyPanel}`} aria-label="119 전화">
-                <p className={styles.wardEmergencyTitle}>지금 바로 119에 전화하세요</p>
-                <a className={styles.wardEmergencyCall} href="tel:119">
+              <section className={`${styles.wardQuickPanel} ${styles.wardEmergencyPanel}`} aria-label="119 도움 요청">
+                <p className={styles.wardEmergencyTitle}>긴급 · 119 도움 요청</p>
+                <button type="button" className={styles.wardEmergencyCall} onClick={openEmergencyDialpad}>
                   <PhoneIcon size={40} className={styles.wardEmergencyIcon} />
-                  119에 전화하기
-                </a>
-                <p className={styles.wardEmergencyHint}>전화가 어려우면 가까운 사람에게 도움을 청하세요.</p>
+                  119 화면 열기
+                </button>
+                <p className={styles.wardEmergencyHint}>통화 버튼을 누르면 보호자에게 알림이 가요</p>
               </section>
             ) : (
               <section className={styles.wardQuickPanel} aria-label="추천 질문">
