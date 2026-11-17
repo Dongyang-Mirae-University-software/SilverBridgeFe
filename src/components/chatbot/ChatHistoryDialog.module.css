@@ -253,12 +253,14 @@
   padding: 0 22px;
 }
 
+/* 목록(flex column, 스크롤)이 넘칠 때 카드가 min-height 까지 줄어들어 두 줄 제목이 잘리던 것 - 줄어들지 않고 내용만큼 늘어난다(2026-11-17) */
 .wardItem {
   display: flex;
   align-items: center;
   gap: 18px;
   width: 100%;
   min-height: 104px;
+  flex-shrink: 0;
   border: 1.5px solid var(--sb-line-soft);
   border-radius: 22px;
   background: #fff;
@@ -295,6 +297,8 @@
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  /* 한 줄 제목도 두 줄 칸을 차지해 카드 높이·오른쪽 열 위치가 카드마다 같다(line-height 1.35 × 2) */
+  min-height: 2.7em;
 }
 
 .wardItemTag {
@@ -346,17 +350,29 @@
     padding: 0 14px;
   }
 
-  /* 휴대폰: 날짜 줄 위, 질문·꼬리표·보기 아래로 감싼다 */
+  /* 휴대폰: 1행 날짜 … 꼬리표, 2행 제목(두 줄) … 보기. 꼬리표를 날짜 줄로 올려 제목 폭을 넓히고 보기는 제목 첫 줄에 맞춘다(2026-11-17) */
   .wardItem {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-areas:
+      'date tag'
+      'title more';
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
     gap: 6px 12px;
     min-height: 96px;
     padding: 12px 16px;
   }
 
   .wardItemDate {
-    width: 100%;
+    grid-area: date;
+    width: auto;
+    align-self: center;
     font-size: calc(17px * var(--ward-font-scale, 1));
+  }
+
+  .wardItemTag {
+    grid-area: tag;
+    align-self: center;
   }
 
   .wardItemDate br {
@@ -364,10 +380,14 @@
   }
 
   .wardItemTitle {
+    grid-area: title;
     font-size: calc(22px * var(--ward-font-scale, 1));
   }
 
+  /* 줄 높이를 제목 한 줄(22px × 1.35)과 같게 두어 제목 첫 줄 가운데에 선다 */
   .wardItemMore {
+    grid-area: more;
     font-size: calc(19px * var(--ward-font-scale, 1));
+    line-height: calc(22px * var(--ward-font-scale, 1) * 1.35);
   }
 }

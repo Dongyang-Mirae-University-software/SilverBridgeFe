@@ -131,4 +131,17 @@ describe('isReservationSession - 상담 기록 예약 꼬리표', () => {
     // 진료과 답의 [가까운 ○○ 찾기]는 의도가 예약일 때만 예약 단계(reservationFlow 와 같은 기준)
     expect(isReservationSession([{ ...base, intent: 'medical_advice', ui: { kind: 'select', field: 'department' } }])).toBe(false);
   });
+
+  // 2026-11-17 사용자 폰 실측: 약·술 질문 대화에 붙은 "예약"은 같은 대화에서 예약을 진행한 기록(날짜·시간 선택 → 확정 → make_appointment)이었다
+  it('상담 질문으로 시작해 같은 대화에서 예약까지 진행하면 예약', () => {
+    expect(
+      isReservationSession([
+        { ...base, intent: 'medical_advice' },
+        { ...base, message: '예약할게요', intent: 'hospital_reservation', ui: { kind: 'date', field: 'date' } },
+        { ...base, message: '[선택] date: 2026-11-18', intent: 'hospital_reservation', ui: { kind: 'select', field: 'time' } },
+        { ...base, message: '[선택] time: 10:00', intent: 'hospital_reservation', ui: { kind: 'select', field: 'reservation_confirm' } },
+        { ...base, message: '[선택] reservation_confirm: yes', intent: 'hospital_reservation', tool: 'make_appointment' },
+      ]),
+    ).toBe(true);
+  });
 });
