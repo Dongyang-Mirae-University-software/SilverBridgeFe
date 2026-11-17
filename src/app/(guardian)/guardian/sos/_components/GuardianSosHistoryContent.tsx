@@ -155,7 +155,8 @@ export default function GuardianSosHistoryContent() {
             <ul className={cx('list')}>
               {items.map((item: IGuardianSosHistoryItem) => (
                 <li key={item.sosEventId} className={cx('item')}>
-                  <span className={cx('eventMarker', TRIGGER_TYPE_META[item.triggerType].tone)} aria-hidden="true">
+                  {/* BE가 앱보다 먼저 새 발생 경로를 내려도 목록이 깨지지 않게 모르는 값은 SOS 색으로 보인다(BE 영향 점검 H-1) */}
+                  <span className={cx('eventMarker', TRIGGER_TYPE_META[item.triggerType]?.tone ?? 'sos')} aria-hidden="true">
                     {item.triggerType === 'SOS_BUTTON' ? 'SOS' : <Icon name="phone" size={25} />}
                   </span>
                   <div className={cx('eventTime')}>
