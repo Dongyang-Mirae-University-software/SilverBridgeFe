@@ -50,9 +50,11 @@ interface Emergency119DialpadProps {
   onCall?: () => Promise<unknown>;
   /** 안내 문구 아래에 둘 내용(자살예방 상담전화 안내 등) */
   footer?: ReactNode;
+  /** 알림 성공 문구를 바꿀 때(연결된 보호자가 없을 때 등). 없으면 CALL_SUCCESS_NOTICE */
+  successNotice?: string;
 }
 
-export function Emergency119Dialpad({ onClose, onCall, footer }: Emergency119DialpadProps) {
+export function Emergency119Dialpad({ onClose, onCall, footer, successNotice = CALL_SUCCESS_NOTICE }: Emergency119DialpadProps) {
   const [digits, setDigits] = useState('119');
   const [callNoticeShown, setCallNoticeShown] = useState(false);
   const [callState, setCallState] = useState<CallState>('idle');
@@ -129,7 +131,7 @@ export function Emergency119Dialpad({ onClose, onCall, footer }: Emergency119Dia
     : callState === 'sending'
       ? CALL_SENDING_NOTICE
       : callState === 'success'
-        ? CALL_SUCCESS_NOTICE
+        ? successNotice
         : callState === 'failed'
           ? typeof navigator !== 'undefined' && navigator.onLine === false
             ? CALL_OFFLINE_NOTICE

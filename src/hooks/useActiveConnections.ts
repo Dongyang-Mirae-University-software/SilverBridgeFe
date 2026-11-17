@@ -15,8 +15,8 @@ export function useGuardianActiveWards(enabled = true) {
   return { activeWards, hasActiveWards: activeWards.length > 0, isLoading, isError, refetch };
 }
 
-export function useWardActiveGuardians() {
-  const { data: connectionsResponse, isLoading, isError } = useQuery(wardConnectionsQueryOptions);
+export function useWardActiveGuardians(enabled = true) {
+  const { data: connectionsResponse, isLoading, isError } = useQuery({ ...wardConnectionsQueryOptions, enabled });
   const activeGuardians = (connectionsResponse?.data ?? []).filter(connection => connection.status === 'ACTIVE');
 
   return { activeGuardians, hasActiveGuardians: activeGuardians.length > 0, isLoading, isError };

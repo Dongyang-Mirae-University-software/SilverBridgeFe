@@ -13,7 +13,7 @@ export function emergencyWarnings(message: Pick<ChatMessage, 'emergencyWarning'>
 }
 
 /**
- * 응급·위기 답인가. 경고가 있거나, 위험도 high(자해 고정 응답은 경고 없이 high 만 온다),
+ * 응급·위기 답인가. 경고가 있거나, 위험도 high(자해 고정 응답은 경고와 high 가 함께 온다 - AI 2026-10-24 부터),
  * 또는 AI layout.urgent === true(위기 뒤 해제 턴은 경고·high 가 없다 - 2026-11-09 점검 M-1).
  * 문구·이모지(🚨)는 보지 않고 칸이 있는지만 본다. 말풍선 긴급 상자와 피보호자 119 패널이 같은 판정을 쓴다.
  */
@@ -22,11 +22,17 @@ export function isUrgentAnswer(message: Pick<ChatMessage, 'emergencyWarning' | '
 }
 
 /**
- * 자해·위기 답인가(의료 응급이 아닌 쪽). 응급 판정이면서 경고 문장이 없는 경우다 -
- * 자해 고정 응답은 riskLevel high 만, 위기 뒤 이어지는 턴은 layout.urgent 만 오고 경고는 없다.
- * AI 가 위기 구분 메타를 FE 에 보내지 않아 칸 구조로 따져 보는 대용이다(문구·이모지 비교 금지).
- * 잘못 가려져도 109 안내 한 줄이 켜지고 꺼질 뿐이다.
+ * 자해·위기 답인가(의료 응급이 아닌 쪽) - AI layout.crisis === true 만 본다(AI #317, 2026-11-17).
+ * 자해 고정 응답에도 경고 문장이 있어 경고 유무로는 의료 응급과 가를 수 없었다(FE #277 점검 H-1).
+ * 문구·이모지는 보지 않는다. 칸이 없는 옛 답·옛 기록은 위기로 보지 않는다(109 안내 한 줄만 빠진다).
  */
 export function isCrisisAnswer(message: Pick<ChatMessage, 'emergencyWarning' | 'riskLevel' | 'layout'>): boolean {
-  return isUrgentAnswer(message) && emergencyWarnings(message).length === 0;
+  const layout = message.layout;
+  return (
+    isUrgentAnswer(message) &&
+    !!layout &&
+    typeof layout === 'object' &&
+    !Array.isArray(layout) &&
+    layout.crisis === true
+  );
 }

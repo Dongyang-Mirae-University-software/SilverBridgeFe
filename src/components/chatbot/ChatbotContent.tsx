@@ -5,7 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 import { Emergency119Dialpad } from '@/components/emergency/Emergency119Dialpad';
-import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
+import { CommonModal } from '@/components/CommonModal';
+import { useGuardianActiveWards, useWardActiveGuardians } from '@/hooks/useActiveConnections';
 import { useSoftKeyboardOpen } from '@/hooks/useSoftKeyboardOpen';
 import { getAccessTokenSubject, getAuthRole } from '@/lib/auth/tokenStore';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
@@ -46,6 +47,9 @@ function makeSessionId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
   return makeId();
 }
+
+// 연결된 보호자가 없을 때 키패드 통화 버튼의 결과 문구 - SOS 이력은 남지만 알림은 가지 않는다(FE #277 점검 M-1)
+const NO_GUARDIAN_SUCCESS_NOTICE = '연결된 보호자가 없어 알림은 가지 않았어요. 시연 화면이라 119에도 걸리지 않아요';
 
 function buildWelcomeMessage(name?: string, isGuardian = false): ChatMessage {
   // 보호자 챗봇은 보호자 본인 상담으로 시작한다 - 예약을 시작하면 AI가 누구의 예약인지 묻는다(2026-11-11 사용자 결정).
@@ -319,12 +323,47 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     onCloseModal: state.onCloseModal,
   }));
   const { mutateAsync: triggerSosAsync } = useWardSosMutation();
+  // 연결된 보호자가 없으면 BE 는 이력만 남긴다 - "보호자에게 알렸어요"가 거짓이 되지 않게 문구를 바꾼다(FE #277 점검 M-1).
+  // 목록을 받는 중·실패면 지금 문구 그대로(SOS 화면과 같은 기준)
+  const { hasActiveGuardians, isLoading: guardiansLoading, isError: guardiansFailed } = useWardActiveGuardians(isWardChat);
+  const noGuardian = isWardChat && !guardiansLoading && !guardiansFailed && !hasActiveGuardians;
+  // 보내는 중에 키패드를 닫으면 결과 안내가 사라진다 - 닫힌 뒤 실패하면 오류 창으로 알린다(점검 L-1)
+  const dialpadOpenRef = useRef(false);
+  function openSosFailedModal() {
+    openModal(
+      <CommonModal
+        type="error"
+        tone="guardian"
+        title="SOS 전송 실패"
+        message="보호자에게 알리지 못했어요. 119 화면을 다시 열어 통화 버튼을 눌러 주세요."
+        primaryButton={{
+          text: '119 화면 열기',
+          onClick: () => {
+            onCloseModal();
+            openEmergencyDialpad();
+          },
+        }}
+        secondaryButton={{ text: '닫기', onClick: onCloseModal }}
+        onClose={onCloseModal}
+      />,
+    );
+  }
   // 키패드 통화 버튼 = 보호자 알림(SOS 와 같은 경로, 발생 경로만 CHATBOT_119). 자해·위기 답이면 109 안내 한 줄을 붙인다
   function openEmergencyDialpad() {
+    dialpadOpenRef.current = true;
     openModal(
       <Emergency119Dialpad
-        onClose={onCloseModal}
-        onCall={() => triggerSosAsync({ triggerType: 'CHATBOT_119' })}
+        onClose={() => {
+          dialpadOpenRef.current = false;
+          onCloseModal();
+        }}
+        onCall={() =>
+          triggerSosAsync({ triggerType: 'CHATBOT_119' }).catch(error => {
+            if (!dialpadOpenRef.current) openSosFailedModal();
+            throw error;
+          })
+        }
+        successNotice={noGuardian ? NO_GUARDIAN_SUCCESS_NOTICE : undefined}
         footer={
           stepSource && isCrisisAnswer(stepSource) ? (
             <p className={styles.wardCrisisLine}>마음이 힘들면 자살예방 상담전화 109(24시간)에 이야기해 보세요.</p>
@@ -771,7 +810,9 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                   <PhoneIcon size={40} className={styles.wardEmergencyIcon} />
                   119 화면 열기
                 </button>
-                <p className={styles.wardEmergencyHint}>통화 버튼을 누르면 보호자에게 알림이 가요</p>
+                <p className={styles.wardEmergencyHint}>
+                  {noGuardian ? '연결된 보호자가 없어 알림은 가지 않아요' : '통화 버튼을 누르면 보호자에게 알림이 가요'}
+                </p>
               </section>
             ) : (
               <section className={styles.wardQuickPanel} aria-label="추천 질문">
