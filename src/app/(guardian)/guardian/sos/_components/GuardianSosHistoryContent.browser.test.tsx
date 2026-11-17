@@ -10,6 +10,7 @@ import GuardianSosHistoryContent from './GuardianSosHistoryContent';
 const data = vi.hoisted(() => ({
   connections: (async () => ({ data: [] })) as () => Promise<unknown>,
   historyParams: [] as unknown[],
+  triggerType: 'CHATBOT_119' as string,
 }));
 
 vi.mock('@/service/query/guardian', () => ({
@@ -26,7 +27,7 @@ vi.mock('@/service/query/guardian', () => ({
             wardName: '김영희',
             triggeredAt: '2026-11-17T01:00:00Z',
             location: null,
-            triggerType: 'CHATBOT_119',
+            triggerType: data.triggerType,
           },
         ],
         page: 0,
@@ -52,6 +53,7 @@ function renderSos() {
 beforeEach(() => {
   clearSelectedWardId();
   data.historyParams = [];
+  data.triggerType = 'CHATBOT_119';
 });
 afterEach(() => {
   document.body.innerHTML = '';
@@ -98,5 +100,16 @@ describe('SOS 이력 챗봇 119 필터 (Chrome)', () => {
       expect(data.historyParams.some(params => (params as { triggerType?: string }).triggerType === 'CHATBOT_119')).toBe(true),
     );
     await expect.element(page.getByText('챗봇 119', { exact: true }).last()).toBeVisible();
+  });
+
+  it('모르는 발생 경로 값이 와도 목록이 깨지지 않는다(BE 영향 점검 H-1)', async () => {
+    data.triggerType = 'FUTURE_TRIGGER';
+    data.connections = async () => ({
+      data: [{ id: 1, partnerUserId: 'ward-1', partnerName: '김영희', partnerProfileImage: null, status: 'ACTIVE', connectedAt: null }],
+    });
+    await renderSos();
+
+    await expect.element(page.getByRole('button', { name: /챗봇 119/ }).first()).toBeVisible();
+    await vi.waitFor(() => expect(document.querySelectorAll('[class*="eventMarker"]').length).toBeGreaterThan(0));
   });
 });
