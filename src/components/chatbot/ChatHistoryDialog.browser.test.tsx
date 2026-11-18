@@ -122,3 +122,18 @@ describe('ChatHistoryDialog 피보호자 목록 카드', () => {
     });
   }
 });
+
+describe('ChatHistoryDialog 보관 기간 안내', () => {
+  for (const variant of ['ward', 'guardian'] as const) {
+    it(`${variant}: 목록에만 90일 보관 안내가 보이고 상담을 열면 사라진다`, async () => {
+      const screen = await render(
+        <ChatHistoryDialog variant={variant} logs={logs()} loading={false} error={null} onClose={() => {}} />,
+      );
+      await expect.element(screen.getByText('상담 기록은 최근 90일만 보관돼요.')).toBeInTheDocument();
+      await screen.getByText('어지러워요').click();
+      await expect.element(screen.getByText('‹ 목록으로')).toBeInTheDocument();
+      expect(document.body.textContent).not.toContain('최근 90일만 보관');
+    });
+  }
+});
+

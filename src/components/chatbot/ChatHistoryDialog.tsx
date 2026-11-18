@@ -7,6 +7,9 @@ import { CloseIcon } from './chatIcons';
 import { groupChatSessions, isReservationSession, logToMessages, parseLogTime, type ChatHistorySession } from './chatHistorySessions';
 import styles from './ChatHistoryDialog.module.css';
 
+/** AI 서버가 이 일수가 지난 상담 기록을 지운다(AI #318 `CHAT_LOG_RETENTION_DAYS`, 2026-11-17 사용자 결정 90일) - 서버 값이 바뀌면 함께 고친다. */
+export const CHAT_HISTORY_RETENTION_DAYS = 90;
+
 interface Props {
   logs: ChatLogItem[];
   loading: boolean;
@@ -164,6 +167,7 @@ export default function ChatHistoryDialog({
             <div className={styles.headerText}>
               <h2 id="chat-history-title">내 상담 기록</h2>
               <p>상담을 누르면 주고받은 대화를 모두 볼 수 있어요.</p>
+              <p>상담 기록은 최근 {CHAT_HISTORY_RETENTION_DAYS}일만 보관돼요.</p>
             </div>
           )}
           {variant === 'ward' ? (
