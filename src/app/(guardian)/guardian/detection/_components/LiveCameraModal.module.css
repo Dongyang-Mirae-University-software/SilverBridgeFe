@@ -223,7 +223,7 @@
 .footer {
   display: flex;
   justify-content: flex-end;
-  padding: 18px 21px 21px;
+  padding: 24px 21px 21px;
 }
 
 .closeFooterButton {
@@ -287,7 +287,7 @@
   }
 
   .footer {
-    padding: 14px 16px 16px;
+    padding: 20px 16px 16px;
   }
 
   .closeFooterButton {
