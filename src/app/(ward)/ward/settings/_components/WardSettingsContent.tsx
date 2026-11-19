@@ -66,7 +66,7 @@ export function WardSettingsContent() {
 
       {activeTab === 'account' && (
         <section className={styles.accountCard}>
-          <PasswordChangeSection isAccountReady={isAccountReady} isKakaoUser={isKakaoUser} variant="ward" />
+          <PasswordChangeSection accountEmail={profile?.email} isAccountReady={isAccountReady} isKakaoUser={isKakaoUser} variant="ward" />
           <AccountDeleteSection isAccountReady={isAccountReady} isKakaoUser={isKakaoUser} variant="ward" />
         </section>
       )}

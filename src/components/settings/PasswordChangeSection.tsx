@@ -36,8 +36,11 @@ export function PasswordChangeSection({
   isKakaoUser,
   isAccountReady = true,
   variant = 'default',
+  accountEmail,
 }: {
   isKakaoUser: boolean;
+  // 비밀번호 관리자가 어느 계정의 비밀번호인지 알도록 숨은 아이디 칸에 넣는 로그인 이메일
+  accountEmail?: string;
   // 프로필을 받아 카카오 계정 여부를 확인했는지 - 확인 전에는 버튼을 막는다
   isAccountReady?: boolean;
   variant?: 'default' | 'ward';
@@ -129,6 +132,7 @@ export function PasswordChangeSection({
 
       {!isKakaoUser && isEditing && (
         <form className={cx('editPanel', { ward: variant === 'ward' })} onSubmit={handleSubmit}>
+          {accountEmail && <input className={cx('srOnly')} type="text" autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" value={accountEmail} />}
           <PasswordField autoComplete="current-password" label="현재 비밀번호" value={form.currentPassword} onChange={v => setForm(f => ({ ...f, currentPassword: v }))} />
           <PasswordField autoComplete="new-password" label="새 비밀번호 (8자 이상)" value={form.newPassword} onChange={v => setForm(f => ({ ...f, newPassword: v }))} />
           <PasswordField autoComplete="new-password" label={copy.confirmPlaceholder} value={form.newPasswordConfirm} onChange={v => setForm(f => ({ ...f, newPasswordConfirm: v }))} />

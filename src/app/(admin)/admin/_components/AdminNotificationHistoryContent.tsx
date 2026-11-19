@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
@@ -15,6 +15,7 @@ import {
 import { adminNotificationListQueryOptions, adminNotificationSummaryQueryOptions } from '@/service/query/admin';
 import styles from './AdminNotificationHistoryContent.module.css';
 import { formatKstDateTime } from '@/utils/format/kstDate';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 20;
@@ -75,10 +76,11 @@ export function AdminNotificationHistoryContent() {
   const [selectedLog, setSelectedLog] = useState<AdminNotificationLogItem | null>(null);
   const category = getCategoryFromTab(tab);
   const result = getResultFromTab(tab);
-  const normalizedKeyword = keyword.trim() || undefined;
+  const debouncedKeyword = useDebouncedValue(keyword, 300);
+  const normalizedKeyword = debouncedKeyword.trim() || undefined;
 
-  const list = useQuery(adminNotificationListQueryOptions({ category, result, period, keyword: normalizedKeyword, page, size: PAGE_SIZE }));
-  const summary = useQuery(adminNotificationSummaryQueryOptions({ category, period, keyword: normalizedKeyword }));
+  const list = useQuery({ ...adminNotificationListQueryOptions({ category, result, period, keyword: normalizedKeyword, page, size: PAGE_SIZE }), placeholderData: keepPreviousData });
+  const summary = useQuery({ ...adminNotificationSummaryQueryOptions({ category, period, keyword: normalizedKeyword }), placeholderData: keepPreviousData });
   const data = list.data;
   const summaryData = summary.data;
 

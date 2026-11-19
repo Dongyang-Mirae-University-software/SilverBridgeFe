@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
@@ -22,6 +22,7 @@ import {
 import { getModalErrorMessage } from '@/utils/dashboard/profile';
 import { formatPhoneText } from '@/utils/format/phone';
 import styles from './AdminMembersContent.module.css';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 20;
@@ -37,6 +38,7 @@ type ConnectionFilter = 'ALL' | keyof typeof CONNECTION_LABEL;
 export function AdminMembersContent() {
   const queryClient = useQueryClient();
   const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebouncedValue(keyword, 300);
   const [role, setRole] = useState<RoleTab>('ALL');
   const [status, setStatus] = useState<StatusFilter>('ALL');
   const [connection, setConnection] = useState<ConnectionFilter>('ALL');
@@ -44,14 +46,14 @@ export function AdminMembersContent() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const params = useMemo(() => ({
-    keyword: keyword.trim() || undefined,
+    keyword: debouncedKeyword.trim() || undefined,
     role: role === 'ALL' ? undefined : role,
     status,
     connection,
     page,
     size: PAGE_SIZE,
-  }), [connection, keyword, page, role, status]);
-  const members = useQuery(adminUserListQueryOptions(params));
+  }), [connection, debouncedKeyword, page, role, status]);
+  const members = useQuery({ ...adminUserListQueryOptions(params), placeholderData: keepPreviousData });
   const counts = useQuery(adminUserCountsQueryOptions);
   const detail = useQuery(adminUserDetailQueryOptions(selectedUserId));
 
@@ -161,6 +163,7 @@ function MemberDetailForm({ detail, isSaving, isDeleting, onClose, onUpdate, onD
   const [feedback, setFeedback] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [candidateKeyword, setCandidateKeyword] = useState('');
+  const debouncedCandidateKeyword = useDebouncedValue(candidateKeyword, 300);
   const [candidate, setCandidate] = useState<AdminUserListItem | null>(null);
   const [confirmConnection, setConfirmConnection] = useState(false);
   const [connectionError, setConnectionError] = useState('');
@@ -174,7 +177,7 @@ function MemberDetailForm({ detail, isSaving, isDeleting, onClose, onUpdate, onD
     onUpdate(detail.userId, { name: name.trim(), role, status, statusReason: status === 'RESTRICTED' ? statusReason.trim() || null : null });
   };
   const counterpartRole = detail.role === 'GUARDIAN' ? 'WARD' : 'GUARDIAN';
-  const candidates = useQuery({ ...adminUserListQueryOptions({ keyword: candidateKeyword.trim() || undefined, role: counterpartRole, status: 'ACTIVE', connection: 'ALL', page: 0, size: 20 }), enabled: addOpen });
+  const candidates = useQuery({ ...adminUserListQueryOptions({ keyword: debouncedCandidateKeyword.trim() || undefined, role: counterpartRole, status: 'ACTIVE', connection: 'ALL', page: 0, size: 20 }), enabled: addOpen });
   const refreshConnections = async () => { await queryClient.invalidateQueries({ queryKey: adminUserQueryKey }); await queryClient.invalidateQueries({ queryKey: [...adminUserQueryKey, 'detail', detail.userId] }); };
   const connect = useMutation({ mutationFn: () => createAdminConnection(detail.role === 'GUARDIAN' ? { guardianId: detail.userId, wardId: candidate!.userId } : { guardianId: candidate!.userId, wardId: detail.userId }), onSuccess: async () => { setConfirmConnection(false); setAddOpen(false); setCandidate(null); await refreshConnections(); }, onError: () => setConnectionError('연결을 완료하지 못했습니다. 이미 연결되어 있는지 확인해 주세요.') });
   const disconnect = useMutation({ mutationFn: deleteAdminConnection, onSuccess: refreshConnections, onError: () => setConnectionError('연결을 해제하지 못했습니다. 목록을 새로고침해 주세요.') });

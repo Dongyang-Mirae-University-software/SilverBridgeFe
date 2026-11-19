@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { isAxiosError } from 'axios';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
@@ -11,6 +11,7 @@ import { AdminCameraItem, AdminCameraStatusFilter } from '@/service/interface/ad
 import { adminCameraListQueryOptions, adminCameraSummaryQueryOptions } from '@/service/query/admin';
 import styles from './AdminDevicesContent.module.css';
 import { formatKstDate } from '@/utils/format/kstDate';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 10;
@@ -32,9 +33,10 @@ function isLiveStatusUnknown(error: unknown) {
 export function AdminDevicesContent() {
   const [status, setStatus] = useState<AdminCameraStatusFilter>('ALL');
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 300);
   const [page, setPage] = useState(0);
   const summary = useQuery(adminCameraSummaryQueryOptions);
-  const list = useQuery(adminCameraListQueryOptions({ status, q: query.trim() || undefined, page, size: PAGE_SIZE }));
+  const list = useQuery({ ...adminCameraListQueryOptions({ status, q: debouncedQuery.trim() || undefined, page, size: PAGE_SIZE }), placeholderData: keepPreviousData });
   const data = list.data;
   const liveStatusUnknown = isLiveStatusUnknown(list.error);
 

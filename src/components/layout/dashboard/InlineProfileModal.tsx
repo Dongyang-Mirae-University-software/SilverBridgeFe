@@ -53,8 +53,6 @@ export function InlineProfileModal({
   userEmail,
 }: RoleProfileModalProps & { variant: 'ward' | 'guardian'; hero?: ReactNode }) {
   const isWard = variant === 'ward';
-  // 관리자 화면만: 비밀번호 관리자가 이 칸을 계정 정보로 알아보게 해서, 다른 페이지 검색창에 저장된 아이디를 채우지 않게 한다
-  const passwordAutoComplete = (value: 'current-password' | 'new-password') => (role === 'ADMIN' ? value : undefined);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [more, setMore] = useState(!isWard);
@@ -381,12 +379,11 @@ export function InlineProfileModal({
               )}
               {edit === 'pw' && (
                 <div className={cx('panel')}>
-                  {role === 'ADMIN' && (
-                    <input className={cx('srOnly')} type="text" autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" value={userEmail} />
-                  )}
+                  {/* 비밀번호 관리자가 이 칸을 계정 정보로 알아보게 해서, 뒤 페이지 검색창에 저장된 아이디를 채우지 않게 한다 */}
+                  <input className={cx('srOnly')} type="text" autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" value={userEmail} />
                   <input
                     aria-label="현재 비밀번호"
-                    autoComplete={passwordAutoComplete('current-password')}
+                    autoComplete="current-password"
                     className={cx('input')}
                     type="password"
                     placeholder="현재 비밀번호"
@@ -395,7 +392,7 @@ export function InlineProfileModal({
                   />
                   <input
                     aria-label="새 비밀번호"
-                    autoComplete={passwordAutoComplete('new-password')}
+                    autoComplete="new-password"
                     className={cx('input')}
                     type="password"
                     placeholder="새 비밀번호 (8자 이상)"
@@ -404,7 +401,7 @@ export function InlineProfileModal({
                   />
                   <input
                     aria-label="새 비밀번호 확인"
-                    autoComplete={passwordAutoComplete('new-password')}
+                    autoComplete="new-password"
                     className={cx('input')}
                     type="password"
                     placeholder="새 비밀번호 확인"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
@@ -11,6 +11,7 @@ import { AdminAnnouncementItem, AdminAnnouncementWriteRequest } from '@/service/
 import { adminAnnouncementDetailQueryOptions, adminAnnouncementListQueryOptions, adminAnnouncementQueryKey, adminAnnouncementSummaryQueryOptions } from '@/service/query/admin';
 import styles from './AdminAnnouncementContent.module.css';
 import { formatKstDate } from '@/utils/format/kstDate';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 10;
@@ -21,13 +22,14 @@ type EditorState = { item?: AdminAnnouncementItem; draft: boolean } | null;
 export function AdminAnnouncementContent() {
   const [tab, setTab] = useState<Tab>('ALL');
   const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebouncedValue(keyword, 300);
   const [page, setPage] = useState(0);
   const [editor, setEditor] = useState<EditorState>(null);
   const [viewing, setViewing] = useState<{ id: number; draft: boolean } | null>(null);
   const client = useQueryClient();
   const draft = tab === 'DRAFT';
   // 서버에는 전체 공지 목록이 없으므로 전체 탭은 문서 권장 방식대로 게시 공지를 기본으로 보여 준다.
-  const list = useQuery(adminAnnouncementListQueryOptions({ page, size: PAGE_SIZE, keyword: keyword.trim() || undefined }, draft));
+  const list = useQuery({ ...adminAnnouncementListQueryOptions({ page, size: PAGE_SIZE, keyword: debouncedKeyword.trim() || undefined }, draft), placeholderData: keepPreviousData });
   const summary = useQuery(adminAnnouncementSummaryQueryOptions);
   const invalidate = () => client.invalidateQueries({ queryKey: adminAnnouncementQueryKey });
   const remove = useMutation({ mutationFn: ({ id, isDraft }: { id: number; isDraft: boolean }) => isDraft ? announcementApi.deleteAdminAnnouncementDraft(id) : announcementApi.deleteAdminAnnouncement(id), onSuccess: invalidate });
