@@ -34,6 +34,7 @@ export default function SignupContent({ searchParams }: SignupContentProps) {
     const handoff = readKakaoSignupHandoff();
     // 없으면(새 탭으로 열었거나 30분이 지남) 카카오 로그인부터 다시 한다
     // 이미 읽었으면 그대로 둔다(같은 값을 새 객체로 다시 넣으면 다시 그려진다)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 카카오 가입 인계값은 sessionStorage 에만 있어 마운트 뒤에 반영한다(서버 렌더와 첫 화면을 맞춤)
     if (handoff) setKakaoData(current => current ?? handoff);
     else router.replace(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login');
   }, [isKakao, returnTo, router]);

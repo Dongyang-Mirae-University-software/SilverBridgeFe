@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -181,10 +181,7 @@ export function CameraRegisterModal({
   const pausedUntilRef = useRef(0);
   // 카메라가 새 프레임을 주는지 보는 값들(멈춘 장면을 보내지 않고, 폰을 다시 켜면 카메라를 다시 켠다)
   const facingRef = useRef<CameraFacing>(facing);
-  facingRef.current = facing;
-  // 지금 4단계 미리보기를 보여 주는 중인지 - 화면 선택·권한 창이 늦게 끝났을 때 그 결과를 쓸지 판단한다
   const wantsPreviewRef = useRef(false);
-  wantsPreviewRef.current = isOpen && isWizard && wizardStep === 4;
   const staleSinceRef = useRef<number | null>(null);
   const recoveringRef = useRef(false);
   const lastRecoverAtRef = useRef(0);
@@ -198,9 +195,7 @@ export function CameraRegisterModal({
   const [isMediaTried, setIsMediaTried] = useState(false);
   const failSinceRef = useRef<number | null>(null);
   const onUnstableChangeRef = useRef(onUnstableChange);
-  onUnstableChangeRef.current = onUnstableChange;
   const onSurveillanceLostChangeRef = useRef(onSurveillanceLostChange);
-  onSurveillanceLostChangeRef.current = onSurveillanceLostChange;
   // 세션 자동 복구: 송출 중인 카메라 정보, 진행 중 플래그(동시 404 중복 호출 방지), 다음 시도 허용 시각, 연속 시도 횟수
   const streamCameraRef = useRef<WardCamera | null>(null);
   const recreatingRef = useRef(false);
@@ -220,9 +215,17 @@ export function CameraRegisterModal({
   const nextRecreateAtRef = useRef(0);
   const recreateAttemptRef = useRef(0);
   const onStartingChangeRef = useRef(onStartingChange);
-  onStartingChangeRef.current = onStartingChange;
   const onStreamingChangeRef = useRef(onStreamingChange);
-  onStreamingChangeRef.current = onStreamingChange;
+  // 최신 값 ref 는 커밋 직후(일반 effect·콜백보다 먼저) 맞춘다 - 렌더 중 ref 대입은 React 규칙 위반(react-hooks/refs)
+  useLayoutEffect(() => {
+    facingRef.current = facing;
+    // 지금 4단계 미리보기를 보여 주는 중인지 - 화면 선택·권한 창이 늦게 끝났을 때 그 결과를 쓸지 판단한다
+    wantsPreviewRef.current = isOpen && isWizard && wizardStep === 4;
+    onUnstableChangeRef.current = onUnstableChange;
+    onSurveillanceLostChangeRef.current = onSurveillanceLostChange;
+    onStartingChangeRef.current = onStartingChange;
+    onStreamingChangeRef.current = onStreamingChange;
+  });
 
   const { data: rooms = [], refetch: refetchRooms } = useQuery(wardCameraRoomsQueryOptions);
   const registerMutation = useRegisterWardCameraMutation();
@@ -231,6 +234,7 @@ export function CameraRegisterModal({
   // 모달은 송출을 유지하기 위해 항상 마운트돼 있다. 따라서 카메라 목록이 나중에
   // 도착한 경우에도, 다시 열 때 기존 카메라의 방을 등록 대상으로 채워야 한다.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 모달은 송출 유지를 위해 항상 마운트돼 있어, 열릴 때·카메라 목록이 늦게 올 때 방 값을 맞춘다
     if (isOpen && status === 'off' && initialRoom) setRoom(initialRoom);
   }, [initialRoom, isOpen, status]);
 
@@ -260,6 +264,7 @@ export function CameraRegisterModal({
   useEffect(() => {
     clearLegacyRotation();
     // 페이지의 '카메라 켜기'가 모달을 열지 않고 시작해도 마지막에 쓴 방식으로 켜지게 한다
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 저장된 촬영 방식은 브라우저 저장소에만 있어 마운트 뒤에 반영한다(서버 렌더와 첫 화면을 맞춤)
     setFacing(getStoredFacing());
   }, []);
 
@@ -270,6 +275,7 @@ export function CameraRegisterModal({
   // 새 등록 창을 열 때마다 1단계부터 시작한다(방·촬영 방식은 다시 고른다)
   useEffect(() => {
     if (!isOpen || isExisting || status !== 'off') return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 창을 열 때만 마법사를 1단계로 되돌린다(열림 이벤트에 맞춘 1회 초기화)
     setWizardStep(1);
     setFacingChosen(false);
     setRoom('');
@@ -283,12 +289,14 @@ export function CameraRegisterModal({
   useEffect(() => {
     if (!isOpen || !isWizard || wizardStep !== 4) {
       autoPreviewTriedRef.current = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 4단계를 벗어나면 미리보기 시도 표시를 지운다(단계 이동에 맞춘 초기화)
       setIsMediaTried(false);
       return;
     }
     // 이전 단계로 갔다 온 사이 지난번 켜기가 아직 끝나지 않았으면, 끝난 뒤(결과를 쓰거나 버린 뒤) 다시 본다
     if (status !== 'off' || autoPreviewTriedRef.current || isMediaStarting) return;
     autoPreviewTriedRef.current = true;
+    // eslint-disable-next-line react-hooks/immutability -- effect 는 렌더가 끝난 뒤 실행되므로 이때 handleStartMedia 는 이미 선언돼 있다
     void handleStartMedia();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isWizard, wizardStep, status, isMediaStarting]);
@@ -354,6 +362,7 @@ export function CameraRegisterModal({
     const facingNow = facingRef.current;
     if (facingNow === 'screen') return;
     recoveringRef.current = true;
+    // eslint-disable-next-line react-hooks/purity -- 카메라 복구 처리 함수 안이라 렌더 중에 불리지 않는다
     lastRecoverAtRef.current = Date.now();
     try {
       const video = videoRef.current;
@@ -385,6 +394,7 @@ export function CameraRegisterModal({
   };
 
   const handleStaleSource = () => {
+    // eslint-disable-next-line react-hooks/purity -- 멈춘 화면 감지 타이머 처리 함수 안이라 렌더 중에 불리지 않는다
     const now = Date.now();
     staleSinceRef.current ??= now;
     const isScreen = facingRef.current === 'screen';
@@ -618,6 +628,7 @@ export function CameraRegisterModal({
     captureStatsRef.current.queued += 1;
     if (frameQueueRef.current.length > 0) captureStatsRef.current.overwritten += 1;
     frameQueueRef.current = [blob];
+    // eslint-disable-next-line react-hooks/purity -- 프레임 처리 콜백 안이라 렌더 중에 불리지 않는다
     if (Date.now() < pausedUntilRef.current) return;
     void drainQueue();
   };
@@ -630,6 +641,7 @@ export function CameraRegisterModal({
       if (!blob || !sessionId) return;
 
       inFlightRef.current += 1;
+      // eslint-disable-next-line react-hooks/purity -- 업로드 처리 함수 안이라 렌더 중에 불리지 않는다
       const uploadStartedAt = Date.now();
       inFlightStartsRef.current.push(uploadStartedAt);
       const stats = captureStatsRef.current;

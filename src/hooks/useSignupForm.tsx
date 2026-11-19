@@ -81,6 +81,7 @@ export default function useSignupForm({ kakaoData, returnTo }: UseSignupFormOpti
   register('birthDate', { validate: value => getBirthDateError(value) ?? true });
 
   // 모든 필드의 현재 값을 watch
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() - 입력마다 다시 그리는 것이 의도라 메모이즈하지 않아도 된다
   const allValues = watch();
 
   const isEmpty = (value: string) => !value || value.trim() === '';

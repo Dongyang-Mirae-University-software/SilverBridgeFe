@@ -86,6 +86,7 @@ function KakaoCallbackInner() {
 
     if (kakaoError) {
       takeStateCookie();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 카카오 콜백 주소의 결과는 브라우저에서만 읽을 수 있어, 처리 effect 안에서 한 번 화면에 반영한다
       setErrorMessage(kakaoError === 'access_denied' ? '카카오 로그인을 취소했습니다.' : '카카오 로그인에 실패했습니다. 다시 시도해주세요.');
       return;
     }

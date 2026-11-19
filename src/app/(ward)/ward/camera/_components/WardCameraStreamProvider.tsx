@@ -47,8 +47,6 @@ export function WardCameraStreamProvider({ children }: { children: ReactNode }) 
   const [isSurveillanceLost, setIsSurveillanceLost] = useState(false);
   const [isTurningOn, setIsTurningOn] = useState(false);
   const [isModalStarting, setIsModalStarting] = useState(false);
-  // 이 탭이 송출을 시작했고 서버가 아직 'running'을 알려 주지 않은 동안(최대 AWAIT_RUNNING_MS)
-  const [isAwaitingRunning, setIsAwaitingRunning] = useState(false);
   // 이 탭이 실제로 송출 중인지 - 주 버튼(화면 보기 / 켜기)은 서버 상태가 아니라 이 값으로 정한다
   const [isStreamingHere, setIsStreamingHere] = useState(false);
   const modalRef = useRef<CameraRegisterModalHandle>(null);
@@ -59,6 +57,8 @@ export function WardCameraStreamProvider({ children }: { children: ReactNode }) 
   });
   const myDeviceId = getStoredDeviceId();
   const myCamera = myDeviceId ? cameras.find(camera => camera.deviceId === myDeviceId) : undefined;
+  // 이 탭이 송출을 시작했고 서버가 아직 'running'을 알려 주지 않은 동안(최대 AWAIT_RUNNING_MS)
+  const [isAwaitingRunning, setIsAwaitingRunning] = useAwaitingRunning(myCamera?.status);
   const primaryAction = getCameraPrimaryAction(myCamera, isStreamingHere);
   const isConnecting = isThisDeviceConnecting({
     isTurningOn,
@@ -74,15 +74,6 @@ export function WardCameraStreamProvider({ children }: { children: ReactNode }) 
     setIsAwaitingRunning(streaming);
   };
 
-  useEffect(() => {
-    if (!isAwaitingRunning) return;
-    const timer = setTimeout(() => setIsAwaitingRunning(false), AWAIT_RUNNING_MS);
-    return () => clearTimeout(timer);
-  }, [isAwaitingRunning]);
-
-  useEffect(() => {
-    if (myCamera?.status === 'running') setIsAwaitingRunning(false);
-  }, [myCamera?.status]);
 
   // 이 기기 카드의 주 버튼(카메라 화면 보기 / 카메라 켜기)
   const onPrimary = async () => {
@@ -136,4 +127,26 @@ export function WardCameraStreamProvider({ children }: { children: ReactNode }) 
       />
     </WardCameraStreamContext.Provider>
   );
+}
+
+/**
+ * 송출을 시작한 뒤 서버가 'running'을 알려 줄 때까지 기다리는 표시. AWAIT_RUNNING_MS 가 지나거나
+ * 상태가 'running'으로 *바뀌는* 순간 끝난다 - 이미 running 이던 카메라를 다시 켤 때는 바로 지우지 않는다.
+ * 상태 전환은 effect 대신 렌더 중 이전 값과 비교해 본다(React 권장 방식, effect 안 setState 경고 해소).
+ */
+export function useAwaitingRunning(status: WardLiveCamera['status'] | undefined) {
+  const [isAwaitingRunning, setIsAwaitingRunning] = useState(false);
+  const [seenStatus, setSeenStatus] = useState(status);
+  if (seenStatus !== status) {
+    setSeenStatus(status);
+    if (status === 'running') setIsAwaitingRunning(false);
+  }
+
+  useEffect(() => {
+    if (!isAwaitingRunning) return;
+    const timer = setTimeout(() => setIsAwaitingRunning(false), AWAIT_RUNNING_MS);
+    return () => clearTimeout(timer);
+  }, [isAwaitingRunning]);
+
+  return [isAwaitingRunning, setIsAwaitingRunning] as const;
 }

@@ -35,6 +35,7 @@ export default function FindPasswordContent({ onClose }: Props) {
     flow.setStep(2);
   };
   const handleKakaoLogin = () => {
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Next 페이지가 아니라 /api 서버 경로(카카오 인가 리다이렉트)라 라우터 이동이 아닌 전체 이동이어야 한다
     window.location.href = '/api/oauth/kakao/authorize';
   };
 

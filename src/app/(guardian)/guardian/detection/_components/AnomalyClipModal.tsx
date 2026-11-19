@@ -35,8 +35,12 @@ export function AnomalyClipModal({ incident, onClose }: { incident: AnomalyIncid
   const [loadingClipId, setLoadingClipId] = useState<number | null>(null);
   const [clipErrors, setClipErrors] = useState<Record<number, string>>({});
   const playbackRef = useRef<Playback | null>(null);
-  playbackRef.current = playback;
   const didAutoSelectRef = useRef(false);
+
+  // 닫을 때 마지막 재생 주소를 해제하려고 최신 값을 둔다(렌더 중 ref 대입 대신 커밋 뒤에)
+  useEffect(() => {
+    playbackRef.current = playback;
+  }, [playback]);
 
   useEffect(() => {
     return () => {
