@@ -47,7 +47,7 @@ export default function GuardianSettingsContent() {
 
       {activeTab === 'account' && (
         <div className={cx('card')}>
-          <PasswordChangeSection isAccountReady={isAccountReady} isKakaoUser={isKakaoUser} />
+          <PasswordChangeSection accountEmail={profile?.email} isAccountReady={isAccountReady} isKakaoUser={isKakaoUser} />
           <AccountDeleteSection isAccountReady={isAccountReady} isKakaoUser={isKakaoUser} />
         </div>
       )}
