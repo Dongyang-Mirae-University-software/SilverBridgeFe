@@ -886,7 +886,7 @@
   width: 100%;
   min-height: 52px;
   margin-top: 18px;
-  padding: 0 4px;
+  padding: 0;
   border: 0;
   border-top: 1px solid var(--sb-line-soft);
   background: none;
