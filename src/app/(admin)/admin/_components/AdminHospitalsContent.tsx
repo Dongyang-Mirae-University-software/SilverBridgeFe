@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 import { isAxiosError } from 'axios';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
@@ -21,6 +21,7 @@ import { adminHospitalListQueryOptions, adminHospitalQueryKey, adminHospitalSumm
 import styles from './AdminHospitalsContent.module.css';
 import { formatKstDate } from '@/utils/format/kstDate';
 import { REGION_OPTIONS, joinRegion, splitRegion } from '@/utils/admin/hospitalRegion';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 10;
@@ -89,11 +90,11 @@ function writeMessage(error: unknown) {
 }
 
 export function AdminHospitalsContent() {
-  const [query, setQuery] = useState(''); const [region, setRegion] = useState(''); const [department, setDepartment] = useState(''); const [page, setPage] = useState(0);
+  const [query, setQuery] = useState(''); const debouncedQuery = useDebouncedValue(query, 300); const [region, setRegion] = useState(''); const [department, setDepartment] = useState(''); const [page, setPage] = useState(0);
   const [editor, setEditor] = useState<AdminHospitalItem | 'new' | null>(null); const [statusTarget, setStatusTarget] = useState<AdminHospitalItem | null>(null); const [deleteTarget, setDeleteTarget] = useState<AdminHospitalItem | null>(null);
   const client = useQueryClient();
-  const params = { q: query.trim() || undefined, region: region.trim() || undefined, department: department.trim() || undefined, page, size: PAGE_SIZE };
-  const list = useQuery(adminHospitalListQueryOptions(params)); const summary = useQuery(adminHospitalSummaryQueryOptions);
+  const params = { q: debouncedQuery.trim() || undefined, region: region.trim() || undefined, department: department.trim() || undefined, page, size: PAGE_SIZE };
+  const list = useQuery({ ...adminHospitalListQueryOptions(params), placeholderData: keepPreviousData }); const summary = useQuery(adminHospitalSummaryQueryOptions);
   const unavailable = errorCode(list.error) === 'HOSPITAL_SERVICE_UNAVAILABLE' || errorCode(summary.error) === 'HOSPITAL_SERVICE_UNAVAILABLE';
   const invalidate = async () => { await client.invalidateQueries({ queryKey: adminHospitalQueryKey }); };
   const remove = useMutation({ mutationFn: hospitalApi.deleteAdminHospital, onSuccess: async () => { setDeleteTarget(null); await invalidate(); } });

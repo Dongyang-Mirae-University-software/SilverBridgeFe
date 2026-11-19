@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
@@ -10,6 +10,7 @@ import { AdminInquiryCategory, AdminInquiryDetail, AdminInquiryListItem, AdminIn
 import { adminInquiryDetailQueryOptions, adminInquiryListQueryOptions, useAnswerAdminInquiryMutation } from '@/service/query/admin';
 import styles from './AdminInquiryContent.module.css';
 import { formatKstDate, formatKstDateTime } from '@/utils/format/kstDate';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 20;
@@ -24,10 +25,11 @@ export function AdminInquiryContent() {
   const [tab, setTab] = useState<InquiryTab>('ALL');
   const [category, setCategory] = useState<AdminInquiryCategory | 'ALL'>('ALL');
   const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebouncedValue(keyword, 300);
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const params = { category: category === 'ALL' ? undefined : category, status: tab === 'ALL' ? undefined : tab, keyword: keyword.trim() || undefined, page, size: PAGE_SIZE };
-  const list = useQuery(adminInquiryListQueryOptions(params));
+  const params = { category: category === 'ALL' ? undefined : category, status: tab === 'ALL' ? undefined : tab, keyword: debouncedKeyword.trim() || undefined, page, size: PAGE_SIZE };
+  const list = useQuery({ ...adminInquiryListQueryOptions(params), placeholderData: keepPreviousData });
   const data = list.data;
   const updateTab = (value: InquiryTab) => { setTab(value); setPage(0); };
   const updateCategory = (value: AdminInquiryCategory | 'ALL') => { setCategory(value); setPage(0); };
