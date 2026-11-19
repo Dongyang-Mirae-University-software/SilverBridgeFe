@@ -108,7 +108,9 @@ export default function WardSosContent() {
       setIsSending(false);
     };
 
-    if (!isLoadingGuardians && !hasActiveGuardians) {
+    // 목록 조회가 실패했으면 보호자가 없는지 알 수 없다 - 있다고 보고 아래 흐름(실패 시 실패 창)을 탄다.
+    // "보호자 없음"으로 보내면 전송 실패가 안내 없이 묻힌다(2026-11-19 점검 H-1, 목록 조회는 retry: false)
+    if (!isLoadingGuardians && !isGuardiansError && !hasActiveGuardians) {
       openDialModal();
       triggerSosAsync(undefined)
         .catch(() => {})
