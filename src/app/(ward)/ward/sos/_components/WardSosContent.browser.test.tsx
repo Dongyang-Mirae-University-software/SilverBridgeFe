@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   hasActiveGuardians: true,
   guardiansError: false,
   triggerSosAsync: vi.fn(),
-  triggerSos: vi.fn(),
+  activeGuardians: [] as { partnerUserId: string; partnerName: string }[],
 }));
 
 vi.mock('@/components/layout/dashboard/DashboardContext', () => ({
@@ -23,17 +23,33 @@ vi.mock('@/components/layout/dashboard/DashboardContext', () => ({
 }));
 vi.mock('@/hooks/useActiveConnections', () => ({
   useWardActiveGuardians: () => ({
-    activeGuardians: [],
+    activeGuardians: mocks.activeGuardians,
     hasActiveGuardians: mocks.hasActiveGuardians,
     isLoading: false,
     isError: mocks.guardiansError,
   }),
 }));
 vi.mock('@/service/query/ward', () => ({
-  useWardSosMutation: () => ({ mutate: mocks.triggerSos, mutateAsync: mocks.triggerSosAsync }),
+  useWardSosMutation: () => ({ mutateAsync: mocks.triggerSosAsync }),
 }));
-// 보호자 전화(실제 전화 링크)는 이번 작업 범위 밖이라 그리지 않는다
-vi.mock('./WardGuardianCallSection', () => ({ WardGuardianCallSection: () => null }));
+// 보호자 카드(실제 전화 링크·모양)는 WardGuardianCallSection 테스트가 본다. 여기서는 누름 → onGuardianCall 만 흉내 낸다
+vi.mock('./WardGuardianCallSection', () => ({
+  WardGuardianCallSection: ({
+    activeGuardians,
+    onGuardianCall,
+  }: {
+    activeGuardians: { partnerUserId: string; partnerName: string }[];
+    onGuardianCall: (connection: { partnerUserId: string; partnerName: string }) => void;
+  }) => (
+    <>
+      {activeGuardians.map(guardian => (
+        <button key={guardian.partnerUserId} type="button" onClick={() => onGuardianCall(guardian)}>
+          {guardian.partnerName}에게 전화하기
+        </button>
+      ))}
+    </>
+  ),
+}));
 
 // ModalHost 는 next/navigation 에 묶여 있어 테스트에서는 모달 저장소만 그린다.
 // 저장소는 모듈 전역이라 테스트마다 호스트가 붙을 때 이전 테스트의 모달을 비운다
@@ -77,7 +93,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.hasActiveGuardians = true;
     mocks.guardiansError = false;
     mocks.triggerSosAsync.mockReset().mockResolvedValue({ sosEventId: 7, triggeredAt: '2026-10-23T06:00:00Z' });
-    mocks.triggerSos.mockReset();
+    mocks.activeGuardians = [];
   });
   afterEach(() => {
     document.body.innerHTML = '';
@@ -295,6 +311,76 @@ describe('WardSosContent (Chrome)', () => {
     await screen.getByRole('button', { name: '119 화면 열기' }).click();
     expect(document.querySelectorAll('[role="dialog"][aria-label^="119 신고 키패드"]')).toHaveLength(1);
     onLine.mockRestore();
+  });
+
+  describe('보호자 전화 기록(GUARDIAN_CALL) - 전송 중 중복 탭만 건너뛴다 (점검 L-2)', () => {
+    const MOM = { partnerUserId: 'g1', partnerName: '엄마' };
+    const SON = { partnerUserId: 'g2', partnerName: '아들' };
+    const tapTwice = (screen: Awaited<ReturnType<typeof render>>, name: string) => {
+      const card = screen.getByRole('button', { name: `${name}에게 전화하기` }).element() as HTMLButtonElement;
+      card.click();
+      card.click();
+    };
+    const guardianCalls = () =>
+      mocks.triggerSosAsync.mock.calls.filter(([body]) => body?.triggerType === 'GUARDIAN_CALL');
+
+    beforeEach(() => {
+      mocks.activeGuardians = [MOM, SON];
+    });
+
+    it('같은 보호자를 연타하면 기록은 한 번만 보낸다', async () => {
+      mocks.triggerSosAsync.mockReturnValue(new Promise(() => {}));
+      const screen = await renderPage();
+
+      tapTwice(screen, '엄마');
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      expect(guardianCalls()).toEqual([[{ triggerType: 'GUARDIAN_CALL', calledGuardianId: 'g1' }]]);
+    });
+
+    it('기록이 끝난 뒤 다시 누르면 새 기록으로 보낸다(보호자 이력의 누른 횟수)', async () => {
+      const screen = await renderPage();
+
+      await screen.getByRole('button', { name: '엄마에게 전화하기' }).click();
+      await vi.waitFor(() => expect(guardianCalls()).toHaveLength(1));
+      await new Promise(resolve => setTimeout(resolve, 0));
+      await screen.getByRole('button', { name: '엄마에게 전화하기' }).click();
+
+      await vi.waitFor(() => expect(guardianCalls()).toHaveLength(2));
+    });
+
+    it('한 보호자 기록이 전송 중이어도 다른 보호자는 따로 보내고, 앞 건이 끝나면 앞 보호자도 다시 보낼 수 있다', async () => {
+      let finishMom: (value: unknown) => void = () => {};
+      mocks.triggerSosAsync
+        .mockReturnValueOnce(new Promise(resolve => (finishMom = resolve)))
+        .mockReturnValueOnce(new Promise(() => {}))
+        .mockResolvedValue({});
+      const screen = await renderPage();
+
+      await screen.getByRole('button', { name: '엄마에게 전화하기' }).click();
+      await screen.getByRole('button', { name: '아들에게 전화하기' }).click();
+      expect(guardianCalls().map(([body]) => body.calledGuardianId)).toEqual(['g1', 'g2']);
+
+      finishMom({});
+      await new Promise(resolve => setTimeout(resolve, 0));
+      await screen.getByRole('button', { name: '엄마에게 전화하기' }).click();
+      await vi.waitFor(() => expect(guardianCalls().map(([body]) => body.calledGuardianId)).toEqual(['g1', 'g2', 'g1']));
+    });
+
+    it('기록이 실패하면 실패 창을 한 번만 띄운다(연타해도 겹치지 않는다)', async () => {
+      let failMom: (reason: unknown) => void = () => {};
+      // 두 번째 누름이 보내졌다면 같은 실패를 받아 창이 두 개가 된다
+      const failing = new Promise((_, reject) => (failMom = reject));
+      failing.catch(() => {});
+      mocks.triggerSosAsync.mockReturnValue(failing);
+      const screen = await renderPage();
+
+      tapTwice(screen, '엄마');
+      failMom({ message: '서버 오류' });
+
+      await expect.element(screen.getByText('SOS 전송 실패')).toBeVisible();
+      expect(screen.getByText('SOS 전송 실패').all()).toHaveLength(1);
+    });
   });
 
   it('보이지 않는 h1 "긴급 전화"를 둔다(시안에는 제목이 없다)', async () => {
