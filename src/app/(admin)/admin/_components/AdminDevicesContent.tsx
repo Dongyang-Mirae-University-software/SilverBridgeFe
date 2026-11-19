@@ -10,6 +10,7 @@ import { Pagination } from '@/components/Pagination';
 import { AdminCameraItem, AdminCameraStatusFilter } from '@/service/interface/admin/camera';
 import { adminCameraListQueryOptions, adminCameraSummaryQueryOptions } from '@/service/query/admin';
 import styles from './AdminDevicesContent.module.css';
+import { formatKstDate } from '@/utils/format/kstDate';
 
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 10;
@@ -22,13 +23,6 @@ const TABS: Array<{ value: AdminCameraStatusFilter; label: string }> = [
 
 function formatCount(value: number | null | undefined, suffix = '대') {
   return value === null || value === undefined ? '-' : `${value.toLocaleString('ko-KR')}${suffix}`;
-}
-
-function formatDate(value: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'Asia/Seoul' }).format(date);
 }
 
 function isLiveStatusUnknown(error: unknown) {
@@ -66,7 +60,7 @@ export function AdminDevicesContent() {
         <nav className={cx('tabs')} aria-label="카메라 상태 필터">
           {TABS.map(tab => <button key={tab.value} type="button" className={cx('tab', { active: status === tab.value })} disabled={tab.value !== 'ALL' && summary.data?.aiConnected === false} onClick={() => changeStatus(tab.value)}>{tab.label}</button>)}
         </nav>
-        <label className={cx('search')}><Icon name="search" size={16} decorative /><span className={cx('srOnly')}>이름, 회원 ID, 주소 또는 방 검색</span><input value={query} onChange={event => { setQuery(event.target.value); setPage(0); }} placeholder="이름·회원 ID·방 검색" />{query && <button type="button" aria-label="검색어 지우기" onClick={() => { setQuery(''); setPage(0); }}><Icon name="close" size={14} decorative /></button>}</label>
+        <label className={cx('search')}><Icon name="search" size={16} decorative /><span className={cx('srOnly')}>이름, 회원 ID, 주소 또는 방 검색</span><input autoComplete="off" value={query} onChange={event => { setQuery(event.target.value); setPage(0); }} placeholder="이름·회원 ID·방 검색" />{query && <button type="button" aria-label="검색어 지우기" onClick={() => { setQuery(''); setPage(0); }}><Icon name="close" size={14} decorative /></button>}</label>
       </div>
 
       {liveStatusUnknown ? <StatusNotice onAll={() => changeStatus('ALL')} onRetry={() => void list.refetch()} /> : <>
@@ -88,7 +82,7 @@ function SummaryCard({ icon, label, value, detail, tone, interactive = false, di
 }
 
 function CameraRow({ camera }: { camera: AdminCameraItem }) {
-  return <tr><td><div className={cx('ward')}><b>{camera.wardName ?? '알 수 없음'}</b><code>{camera.wardId}</code></div></td><td className={cx('room')}>{camera.room}</td><td className={cx('address')} title={camera.wardAddress ?? undefined}>{camera.wardAddress ?? '-'}</td><td>{formatDate(camera.registeredAt)}</td><td>{camera.isActive ? <span className={cx('activeBadge')}>사용 중</span> : <span className={cx('hiddenBadge')}>숨김</span>}</td><td><LiveStatusBadge value={camera.liveStatus} /></td></tr>;
+  return <tr><td><div className={cx('ward')}><b>{camera.wardName ?? '알 수 없음'}</b><code>{camera.wardId}</code></div></td><td className={cx('room')}>{camera.room}</td><td className={cx('address')} title={camera.wardAddress ?? undefined}>{camera.wardAddress ?? '-'}</td><td>{formatKstDate(camera.registeredAt)}</td><td>{camera.isActive ? <span className={cx('activeBadge')}>사용 중</span> : <span className={cx('hiddenBadge')}>숨김</span>}</td><td><LiveStatusBadge value={camera.liveStatus} /></td></tr>;
 }
 
 function LiveStatusBadge({ value }: { value: AdminCameraItem['liveStatus'] }) {

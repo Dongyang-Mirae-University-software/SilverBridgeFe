@@ -19,9 +19,12 @@ import {
 } from '@/service/interface/admin/hospital';
 import { adminHospitalListQueryOptions, adminHospitalQueryKey, adminHospitalSummaryQueryOptions } from '@/service/query/admin';
 import styles from './AdminHospitalsContent.module.css';
+import { formatKstDate } from '@/utils/format/kstDate';
 
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 10;
+// 지역 필터 값 - BE가 region을 부분 일치로 거르므로 "서울" "경기" 같은 짧은 이름을 보낸다
+const REGION_OPTIONS = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'] as const;
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const COMMON_DEPARTMENTS = ['내과', '가정의학과', '정형외과', '재활의학과', '신경과', '신경외과', '안과', '이비인후과', '치과', '피부과', '한방내과', '침구과', '비뇨의학과'];
 
@@ -30,22 +33,6 @@ type FormState = {
   openTime: string; closeTime: string; bookingAvailable: boolean; departments: string[];
   breakStart: string; breakEnd: string; closedWeekdays: number[]; weekdayHours: AdminHospitalWeekdayHours[];
 };
-
-function formatDate(value: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '-' : new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Seoul' }).format(date);
-}
-
-function formatYearMonth(value: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  const parts = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'numeric', timeZone: 'Asia/Seoul' }).formatToParts(date);
-  const year = parts.find(part => part.type === 'year')?.value;
-  const month = parts.find(part => part.type === 'month')?.value;
-  return year && month ? `${year}년 ${Number(month)}월` : '-';
-}
 
 function errorCode(error: unknown) { return isAxiosError<{ code?: string }>(error) ? error.response?.data?.code : undefined; }
 function requiresListRefresh(error: unknown) { const code = errorCode(error); return code === 'HOSPITAL_RESULT_UNKNOWN' || code === 'HOSPITAL_SERVICE_TIMEOUT'; }
@@ -119,12 +106,12 @@ export function AdminHospitalsContent() {
     <header className={cx('heading')}><h1>제휴 병원</h1><button type="button" onClick={() => setEditor('new')} disabled={unavailable}><Icon name="plus" size={15} decorative />병원 추가</button></header>
     <section className={cx('summaryGrid')} aria-label="제휴 병원 요약">
       <SummaryCard icon="hospital" label="제휴 병원" value={summary.data ? `${summary.data.total.toLocaleString('ko-KR')}곳` : '-'} />
-      <SummaryCard icon="calendar" label="최근 제휴" value={formatDate(summary.data?.latestRegisteredAt ?? null)} detail={summary.data ? `앱 예약 가능 ${summary.data.bookingAvailable.toLocaleString('ko-KR')}곳` : undefined} tone="sun" />
+      <SummaryCard icon="calendar" label="최근 제휴" value={formatKstDate(summary.data?.latestRegisteredAt ?? null)} detail={summary.data ? `앱 예약 가능 ${summary.data.bookingAvailable.toLocaleString('ko-KR')}곳` : undefined} tone="sun" />
     </section>
     {unavailable ? <Unavailable onRetry={() => { void list.refetch(); void summary.refetch(); }} /> : <section className={cx('card')}>
       <div className={cx('filterBar')}>
-        <label className={cx('search')}><Icon name="search" size={16} decorative /><span className={cx('srOnly')}>병원 검색</span><input value={query} maxLength={100} placeholder="병원명·지역·주소 검색" onChange={event => updateFilter(() => setQuery(event.target.value))} />{query && <button type="button" aria-label="검색어 지우기" onClick={() => updateFilter(() => setQuery(''))}><Icon name="close" size={14} decorative /></button>}</label>
-        <label className={cx('filterSelect')}><span>지역</span><input value={region} maxLength={30} placeholder="전체" onChange={event => updateFilter(() => setRegion(event.target.value))} /></label>
+        <label className={cx('search')}><Icon name="search" size={16} decorative /><span className={cx('srOnly')}>병원 검색</span><input autoComplete="off" value={query} maxLength={100} placeholder="병원명·지역·주소 검색" onChange={event => updateFilter(() => setQuery(event.target.value))} />{query && <button type="button" aria-label="검색어 지우기" onClick={() => updateFilter(() => setQuery(''))}><Icon name="close" size={14} decorative /></button>}</label>
+        <label className={cx('filterSelect')}><span>지역</span><select value={region} onChange={event => updateFilter(() => setRegion(event.target.value))}><option value="">전체</option>{REGION_OPTIONS.map(item => <option key={item} value={item}>{item}</option>)}</select></label>
         <label className={cx('filterSelect')}><span>진료과</span><select value={department} onChange={event => updateFilter(() => setDepartment(event.target.value))}><option value="">전체</option>{departmentOptions.map(item => <option key={item} value={item}>{item}</option>)}</select></label>
       </div>
       <div className={cx('tableScroll')}><table className={cx('table')}><thead><tr><th>병원명</th><th>진료과</th><th>주소</th><th>전화번호</th><th>제휴 시작</th><th className={cx('actionHeading')}><span className={cx('srOnly')}>관리</span></th></tr></thead><tbody>
@@ -142,7 +129,7 @@ export function AdminHospitalsContent() {
 }
 
 function SummaryCard({ icon, label, value, detail, tone = 'brand' }: { icon: 'hospital' | 'calendar'; label: string; value: string; detail?: string; tone?: 'brand' | 'sun' }) { return <div className={cx('summaryCard')}><span><i className={cx('summaryIcon', tone)}><Icon name={icon} size={16} decorative /></i>{label}</span><strong>{value}</strong>{detail && <small>{detail}</small>}</div>; }
-function HospitalRow({ item, onEdit, onDelete }: { item: AdminHospitalItem; onEdit: () => void; onDelete: () => void }) { return <tr><td><div className={cx('hospitalName')}><b>{item.name ?? '-'}</b><small>{item.region ?? '-'}</small></div></td><td className={cx('departmentCell')}><div className={cx('departments')}>{item.departments.length ? item.departments.map(department => <span key={department.id}>{department.name ?? '-'}</span>) : '-'}</div></td><td className={cx('address')} title={item.address ?? undefined}>{item.address ?? '-'}</td><td className={cx('phone')}>{item.phone ?? '-'}</td><td className={cx('registeredAt')}>{formatYearMonth(item.registeredAt)}</td><td><div className={cx('actions')}><button type="button" onClick={onEdit}>수정</button><button type="button" className={cx('delete')} onClick={onDelete}>삭제</button></div></td></tr>; }
+function HospitalRow({ item, onEdit, onDelete }: { item: AdminHospitalItem; onEdit: () => void; onDelete: () => void }) { return <tr><td><div className={cx('hospitalName')}><b>{item.name ?? '-'}</b><small>{item.region ?? '-'}</small></div></td><td className={cx('departmentCell')}><div className={cx('departments')}>{item.departments.length ? item.departments.map(department => <span key={department.id}>{department.name ?? '-'}</span>) : '-'}</div></td><td className={cx('address')} title={item.address ?? undefined}>{item.address ?? '-'}</td><td className={cx('phone')}>{item.phone ?? '-'}</td><td className={cx('registeredAt')}>{formatKstDate(item.registeredAt)}</td><td><div className={cx('actions')}><button type="button" onClick={onEdit}>수정</button><button type="button" className={cx('delete')} onClick={onDelete}>삭제</button></div></td></tr>; }
 function StateRow({ children }: { children: ReactNode }) { return <tr><td className={cx('state')} colSpan={6}>{children}</td></tr>; }
 function Unavailable({ onRetry }: { onRetry: () => void }) { return <section className={cx('unavailable')}><Icon name="hospital" size={30} decorative /><strong>제휴 병원 관리를 지금 사용할 수 없습니다.</strong><p>예약 서비스 연결 상태를 확인한 뒤 다시 시도해 주세요.</p><button type="button" onClick={onRetry}><Icon name="refresh" size={15} decorative />새로고침</button></section>; }
 
