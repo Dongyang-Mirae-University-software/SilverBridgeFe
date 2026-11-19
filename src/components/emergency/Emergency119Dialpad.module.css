@@ -1,23 +1,29 @@
-/* 119 키패드 - 휴대폰 전화 앱 키패드 모양, 색은 디자인 SOS 화면(#1a2530)을 따른다.
-   키 크기는 화면 너비·높이 중 작은 쪽에 맞추고, 글자는 큰 글씨 설정(루트 최대 28px)에서도 키패드가
-   한 화면에 들어오도록 상한을 둔다(기본 17px보다는 크게 유지) */
+/* 119 키패드 - 아이폰 전화 앱 키패드 모양(2026-11-19 사용자 결정, 사용자 제공 스크린샷 기준).
+   비율은 스크린샷(폭 663px)에서 쟀다: 키 지름 = 화면 폭의 19.3%, 가로 간격 ≈ 지름 x0.32, 세로 간격 ≈ 지름 x0.24.
+   키 크기는 화면 너비·높이 중 작은 쪽에 맞추고(최대 78px, 태블릿은 가운데 420px 안), 터치 영역은 48px 아래로 줄이지 않는다.
+   글자는 큰 글씨 설정(루트 최대 28px)에서도 키 안에 들어가도록 키 지름에 비례시킨다 */
 .overlay {
-  --dial-bg: #1a2530;
-  --dial-key: rgba(255, 255, 255, 0.14);
-  --dial-key-active: rgba(255, 255, 255, 0.32);
-  /* 흰 아이콘 대비 3.79:1 (그래픽 기준 3:1) */
-  --dial-call: #25964a;
-  --dial-call-active: #1e7d3d;
-  /* 터치 영역 최소 48px - 가로 화면처럼 낮은 화면은 줄이지 않고 세로 스크롤로 받는다 */
-  --dial-key-size: max(48px, min(80px, 22vw, 9.6dvh));
+  --dial-bg: #000;
+  --dial-key: #242424;
+  --dial-key-ring: rgba(255, 255, 255, 0.07);
+  --dial-key-active: #4d4d4d;
+  --dial-text: #fff;
+  --dial-subtle: rgba(255, 255, 255, 0.6);
+  --dial-delete: #3a3a3c;
+  /* 스크린샷의 iOS 26 초록 - 흰 수화기 대비 약 4.4:1(그래픽 기준 3:1 충족) */
+  --dial-call: #1c8a35;
+  --dial-call-ring: rgba(120, 230, 150, 0.45);
+  --dial-call-active: #156b29;
+  --dial-focus: #fff;
+  --dial-key-size: max(48px, min(78px, 19.3vw, 9.4dvh));
 
   position: fixed;
   inset: 0;
   z-index: 340;
   overflow-y: auto;
   background: var(--dial-bg);
-  color: #fff;
-  font-family: -apple-system, system-ui, 'Pretendard', sans-serif;
+  color: var(--dial-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, 'Pretendard', sans-serif;
   outline: none;
 }
 
@@ -29,111 +35,121 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: min(16px, 2dvh);
-  padding: max(16px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  padding: max(8px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
 }
 
 .header {
   width: 100%;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.notice {
-  margin: 0;
-  flex: 1;
-  min-width: 0;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: min(0.8125rem, calc(15px * var(--ward-font-scale, 1)));
-  font-weight: calc(600 + var(--ward-weight-boost, 0));
-  line-height: 1.5;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
+  justify-content: flex-start;
 }
 
 .close {
-  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   min-height: 48px;
-  padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0 8px;
+  border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: transparent;
+  color: var(--dial-subtle);
   cursor: pointer;
   font: inherit;
   font-size: min(1rem, calc(18px * var(--ward-font-scale, 1)));
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
+}
+
+.top {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: min(24px, 2dvh);
+}
+
+/* 시연 안내와 통화 결과가 번갈아 놓이는 한 줄 - 자리를 미리 잡아 숫자가 위아래로 움직이지 않게 한다 */
+.noticeSlot {
+  width: 100%;
+  min-height: 3em;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-size: min(0.875rem, calc(16px * var(--ward-font-scale, 1)));
+  line-height: 1.5;
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.notice {
+  margin: 0;
+  color: var(--dial-subtle);
+  font-weight: calc(500 + var(--ward-weight-boost, 0));
+}
+
+.notice.hidden {
+  display: none;
+}
+
+.callNotice {
+  margin: 0;
+  color: var(--dial-text);
   font-weight: calc(700 + var(--ward-weight-boost, 0));
 }
 
-.displayRow {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 56px 1fr 56px;
-  align-items: center;
-  margin-top: auto;
-}
-
-.displaySpacer {
-  width: 56px;
+.callNotice:not(.visible) {
+  display: none;
 }
 
 .display {
-  min-width: 0;
+  width: 100%;
+  min-height: 1.25em;
+  margin-top: 8px;
   overflow: hidden;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: min(3rem, 13vw, 6dvh);
-  font-weight: calc(500 + var(--ward-weight-boost, 0));
-  letter-spacing: 0.04em;
+  font-size: calc(var(--dial-key-size) * 0.5);
+  font-weight: calc(300 + var(--ward-weight-boost, 0));
+  line-height: 1.25;
+  letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
 }
 
-.backspace {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.78);
-  cursor: pointer;
-}
-
-.backspace.hidden {
-  visibility: hidden;
-}
-
+/* 키 4줄 + 통화 줄 - 통화 줄도 같은 3칸에 둔다([빈칸 · 통화 · 지우기]) */
 .pad {
   display: grid;
   grid-template-columns: repeat(3, var(--dial-key-size));
-  gap: min(14px, 1.8dvh) min(26px, 6vw);
+  gap: calc(var(--dial-key-size) * 0.24) calc(var(--dial-key-size) * 0.32);
   justify-content: center;
+  justify-items: center;
+  align-items: center;
+  margin: auto 0;
+  padding: min(24px, 3dvh) 0;
+}
+
+.key,
+.callButton {
+  width: var(--dial-key-size);
+  height: var(--dial-key-size);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
 }
 
 .key {
-  width: var(--dial-key-size);
-  height: var(--dial-key-size);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
   background: var(--dial-key);
-  color: #fff;
-  cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--dial-key-ring);
+  color: var(--dial-text);
   font: inherit;
-  transition: background 0.12s ease;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .key:active {
@@ -141,65 +157,72 @@
 }
 
 .keyDigit {
-  font-size: calc(var(--dial-key-size) * 0.42);
+  font-size: calc(var(--dial-key-size) * 0.44);
   font-weight: calc(400 + var(--ward-weight-boost, 0));
-  line-height: 1;
+  line-height: 1.05;
 }
 
 .keyDigit.symbol {
-  font-size: calc(var(--dial-key-size) * 0.38);
+  font-size: calc(var(--dial-key-size) * 0.4);
 }
 
 .keyLetters {
-  font-size: calc(var(--dial-key-size) * 0.13);
+  font-size: calc(var(--dial-key-size) * 0.125);
   font-weight: calc(700 + var(--ward-weight-boost, 0));
-  letter-spacing: 0.14em;
+  letter-spacing: 0.22em;
+  /* 자간이 오른쪽에만 붙어 가운데에서 밀리지 않게 */
+  margin-right: -0.22em;
   line-height: 1;
 }
 
-.callRow {
-  display: flex;
-  justify-content: center;
-  margin-top: min(6px, 1dvh);
+.keyLetters.plus {
+  font-size: calc(var(--dial-key-size) * 0.2);
+  letter-spacing: 0;
+  margin-right: 0;
+}
+
+.padSpacer {
+  width: var(--dial-key-size);
 }
 
 .callButton {
   display: grid;
   place-items: center;
-  width: var(--dial-key-size);
-  height: var(--dial-key-size);
-  border: 0;
-  border-radius: 50%;
   background: var(--dial-call);
+  box-shadow: inset 0 0 0 1.5px var(--dial-call-ring);
   color: #fff;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .callButton:active {
   background: var(--dial-call-active);
 }
 
+.backspace {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--dial-delete);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.backspace:active {
+  color: var(--dial-key-active);
+}
+
+.backspace.hidden {
+  visibility: hidden;
+}
+
 .key:focus-visible,
 .callButton:focus-visible,
 .backspace:focus-visible,
 .close:focus-visible {
-  outline: 3px solid #fff;
+  outline: 3px solid var(--dial-focus);
   outline-offset: 3px;
-}
-
-.callNotice {
-  min-height: 1.5em;
-  margin: 0 0 auto;
-  font-size: min(1.0625rem, calc(20px * var(--ward-font-scale, 1)));
-  font-weight: calc(700 + var(--ward-weight-boost, 0));
-  line-height: 1.5;
-  text-align: center;
-  word-break: keep-all;
-}
-
-.callNotice.visible {
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
-  padding: 10px 16px;
 }

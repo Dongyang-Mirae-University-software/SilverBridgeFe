@@ -1,6 +1,7 @@
 // 피보호자 SOS 화면 흐름 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`)
 // 119 키패드 모양만 바뀌었고(2026-10-23) sosAction 에 따른 열기 흐름·보호자 알림 전송은 그대로임을 고정한다
 // 점검 반영(2026-10-23): 보호자가 없어도 SOS 이력을 남긴다. 키패드에는 보호자 알림 문구를 띄우지 않는다(사용자 결정)
+// 2026-11-19(사용자 결정): 확인 창 없이 누르면 바로 보낸다 - 연타해도 한 번만 보내는지 함께 고정한다
 
 import { Fragment, useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -57,11 +58,17 @@ function renderPage() {
   );
 }
 
-async function confirmSos(screen: Awaited<ReturnType<typeof render>>) {
+// 누르면 확인 창 없이 바로 보낸다(2026-11-19)
+async function pressSos(screen: Awaited<ReturnType<typeof render>>) {
   await screen.getByRole('button', { name: /도움이 필요하면 누르세요/ }).click();
-  await expect.element(screen.getByText('긴급 SOS를 보낼까요?')).toBeVisible();
-  expect(mocks.triggerSosAsync).not.toHaveBeenCalled();
-  await screen.getByRole('button', { name: '보내기' }).click();
+  expect(screen.getByText('긴급 SOS를 보낼까요?').query()).toBeNull();
+}
+
+// 같은 작업 안에서 두 번 누른다 - 렌더(버튼 비활성) 전에 두 번째 클릭이 들어오는 연타
+function doubleTapSos(screen: Awaited<ReturnType<typeof render>>) {
+  const hero = screen.getByRole('button', { name: /도움이 필요하면 누르세요/ }).element() as HTMLButtonElement;
+  hero.click();
+  hero.click();
 }
 
 describe('WardSosContent (Chrome)', () => {
@@ -74,13 +81,13 @@ describe('WardSosContent (Chrome)', () => {
     document.body.innerHTML = '';
   });
 
-  it('CALL_119_AND_NOTIFY - 확인 후 119 키패드가 응답 전에 열리고, 응답 뒤에도 보호자 알림 문구 없이 키패드만 보인다', async () => {
+  it('CALL_119_AND_NOTIFY - 누르면 확인 창 없이 119 키패드가 응답 전에 열리고, 응답 뒤에도 보호자 알림 문구 없이 키패드만 보인다', async () => {
     mocks.sosAction = 'CALL_119_AND_NOTIFY';
     let resolveSos: (value: unknown) => void = () => {};
     mocks.triggerSosAsync.mockReturnValue(new Promise(resolve => (resolveSos = resolve)));
     const screen = await renderPage();
 
-    await confirmSos(screen);
+    await pressSos(screen);
 
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
     await expect.element(screen.getByLabelText('입력된 번호')).toMatchTextContent('119');
@@ -100,7 +107,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.triggerSosAsync.mockRejectedValue({ message: '서버 오류' });
     const screen = await renderPage();
 
-    await confirmSos(screen);
+    await pressSos(screen);
 
     await expect.element(screen.getByText('SOS 전송 실패')).toBeVisible();
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeInTheDocument();
@@ -111,7 +118,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.triggerSosAsync.mockRejectedValueOnce({ message: '서버 오류' });
     const screen = await renderPage();
 
-    await confirmSos(screen);
+    await pressSos(screen);
     await expect.element(screen.getByText('SOS 전송 실패')).toBeVisible();
 
     await screen.getByRole('button', { name: '다시 보내기' }).click();
@@ -124,7 +131,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.triggerSosAsync.mockRejectedValue({ message: '서버 오류' });
     const screen = await renderPage();
 
-    await confirmSos(screen);
+    await pressSos(screen);
     await screen.getByRole('button', { name: '119 화면 열기' }).click();
 
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
@@ -135,7 +142,7 @@ describe('WardSosContent (Chrome)', () => {
     const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     const screen = await renderPage();
 
-    await confirmSos(screen);
+    await pressSos(screen);
 
     await expect.element(screen.getByText('인터넷이 끊겼어요. 119 화면을 열어 직접 전화해 주세요.')).toBeVisible();
     expect(mocks.triggerSosAsync).not.toHaveBeenCalled();
@@ -147,7 +154,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
     const screen = await renderPage();
 
-    await confirmSos(screen);
+    await pressSos(screen);
 
     await expect.element(screen.getByText('보호자에게 알렸어요')).toBeVisible();
     expect(screen.getByRole('dialog', { name: /119 신고 키패드/ }).query()).toBeNull();
@@ -163,7 +170,7 @@ describe('WardSosContent (Chrome)', () => {
     mocks.hasActiveGuardians = false;
     const screen = await renderPage();
 
-    await confirmSos(screen);
+    await pressSos(screen);
 
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
     expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1);
@@ -176,11 +183,61 @@ describe('WardSosContent (Chrome)', () => {
     mocks.triggerSosAsync.mockRejectedValue({ message: '서버 오류' });
     const screen = await renderPage();
 
-    await confirmSos(screen);
+    await pressSos(screen);
 
     await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeVisible();
     await vi.waitFor(() => expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1));
     expect(screen.getByText('SOS 전송 실패').query()).toBeNull();
+  });
+
+  it('누르는 즉시 버튼이 잠기고 "보내는 중이에요…"가 보인다', async () => {
+    mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
+    mocks.triggerSosAsync.mockReturnValue(new Promise(() => {}));
+    const screen = await renderPage();
+
+    await pressSos(screen);
+
+    const hero = screen.getByRole('button', { name: /보내는 중이에요/ });
+    await expect.element(hero).toBeDisabled();
+    expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['CALL_119_AND_NOTIFY', 'NOTIFY_GUARDIAN_FIRST'] as const)('%s - 연타해도 SOS는 한 번만 보낸다', async action => {
+    mocks.sosAction = action;
+    mocks.triggerSosAsync.mockReturnValue(new Promise(() => {}));
+    const screen = await renderPage();
+
+    doubleTapSos(screen);
+
+    await vi.waitFor(() => expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1));
+    await new Promise(resolve => setTimeout(resolve, 50));
+    expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1);
+    if (action === 'CALL_119_AND_NOTIFY') {
+      await vi.waitFor(() => expect(document.querySelectorAll('[role="dialog"][aria-modal="true"]')).toHaveLength(1));
+    }
+  });
+
+  it('연결된 보호자가 없을 때 연타해도 한 번만 보내고 키패드도 하나만 연다', async () => {
+    mocks.hasActiveGuardians = false;
+    mocks.triggerSosAsync.mockReturnValue(new Promise(() => {}));
+    const screen = await renderPage();
+
+    doubleTapSos(screen);
+
+    await vi.waitFor(() => expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(document.querySelectorAll('[role="dialog"][aria-modal="true"]')).toHaveLength(1));
+  });
+
+  it('전송이 끝나면 잠금이 풀려 다시 보낼 수 있다', async () => {
+    mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
+    const screen = await renderPage();
+
+    await pressSos(screen);
+    await expect.element(screen.getByText('보호자에게 알렸어요')).toBeVisible();
+    await screen.getByRole('button', { name: '닫기' }).click();
+    await pressSos(screen);
+
+    await vi.waitFor(() => expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(2));
   });
 
   it('보이지 않는 h1 "긴급 전화"를 둔다(시안에는 제목이 없다)', async () => {
