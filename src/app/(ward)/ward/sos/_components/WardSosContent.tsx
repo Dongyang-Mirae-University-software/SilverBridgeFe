@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { CommonModal } from '@/components/CommonModal';
@@ -27,6 +27,7 @@ export default function WardSosContent() {
     useWardActiveGuardians();
   const { mutate: triggerSos, mutateAsync: triggerSosAsync } = useWardSosMutation();
   const [isSending, setIsSending] = useState(false);
+  const sendingLockRef = useRef(false);
 
   function openDialModal() {
     openModal(<Emergency119Dialpad onClose={onCloseModal} />);
@@ -93,19 +94,25 @@ export default function WardSosContent() {
     );
   }
 
-  // v13: 큰 SOS 버튼을 눌러도 바로 전송하지 않는다. 확인 창의 [보내기] 뒤에만 기존 전송 흐름을 실행한다.
+  // 2026-11-19(사용자 결정): 확인 창("긴급 SOS를 보낼까요?", v13)을 없앴다 - 긴급 상황에 창이 끼지 않게 누르면 바로 보낸다.
   // 2026-10-23: 연결된 보호자가 없어도 SOS를 보내 이력을 남긴다(BE는 알림 대상 0명이면 이력만 저장).
   // 119 화면은 기다리지 않고 바로 열고, 알릴 사람이 없으니 실패해도 오류 창은 띄우지 않는다
   // 2026-10-23(사용자 결정): 119 키패드에는 보호자 알림 진행·결과 문구를 띄우지 않는다 - 키패드만 열고, 실패는 오류 창으로 알린다
-  function sendConfirmedSos() {
-    if (isSending) return;
+  function sendSos() {
+    // isSending 은 렌더 뒤에야 바뀌어 같은 프레임의 연타를 못 막는다 - ref 로 먼저 잠근다(확인 창이 막아 주던 자리)
+    if (sendingLockRef.current) return;
+    sendingLockRef.current = true;
     setIsSending(true);
+    const unlock = () => {
+      sendingLockRef.current = false;
+      setIsSending(false);
+    };
 
     if (!isLoadingGuardians && !hasActiveGuardians) {
       openDialModal();
       triggerSosAsync(undefined)
         .catch(() => {})
-        .finally(() => setIsSending(false));
+        .finally(unlock);
       return;
     }
 
@@ -114,8 +121,8 @@ export default function WardSosContent() {
 
     // 인터넷이 끊겼으면 기다리지 않고 바로 실패 창을 띄운다
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-      setIsSending(false);
-      openErrorModal(null, { retry: sendConfirmedSos, dialOpen });
+      unlock();
+      openErrorModal(null, { retry: sendSos, dialOpen });
       return;
     }
 
@@ -123,36 +130,9 @@ export default function WardSosContent() {
       .then(data => {
         if (wardSettings.sosAction === 'NOTIFY_GUARDIAN_FIRST') openSuccessModal(data);
       })
-      .catch(error => openErrorModal(error, { retry: sendConfirmedSos, dialOpen }))
-      .finally(() => setIsSending(false));
+      .catch(error => openErrorModal(error, { retry: sendSos, dialOpen }))
+      .finally(unlock);
   }
-
-  function openConfirmModal() {
-    openModal(
-      <CommonModal
-        type="warning"
-        tone="guardian"
-        actionSize="emergency"
-        title="긴급 SOS를 보낼까요?"
-        message="보호자에게 도움 요청을 보냅니다."
-        primaryButton={{
-          text: '보내기',
-          onClick: () => {
-            onCloseModal();
-            sendConfirmedSos();
-          },
-        }}
-        secondaryButton={{ text: '취소', onClick: onCloseModal }}
-        onClose={onCloseModal}
-      />,
-    );
-  }
-
-  /* v12 흐름 보관: 버튼을 누르면 확인 없이 곧바로 전송했다.
-  function handleHeroPress() {
-    sendConfirmedSos();
-  }
-  */
 
   function handleGuardianCall(connection: IConnectionItem) {
     triggerSos(
@@ -165,9 +145,9 @@ export default function WardSosContent() {
     <div className={cx('page')}>
       {/* 화면 제목은 시안에 없어 보이지 않게 두고, 화면 읽기 프로그램·자동 점검이 찾을 수 있게 h1만 둔다 */}
       <h1 className={cx('srOnly')}>긴급 전화</h1>
-      {/* v13 HTML 문구: 확인 창은 유지하되 버튼은 "SOS / 도움이 필요하면 누르세요"로 표시한다.
+      {/* v13 HTML 문구: 버튼은 "SOS / 도움이 필요하면 누르세요"로 표시한다(누르면 바로 보낸다 - 2026-11-19).
           이전 문구: "긴급 SOS / 누르면 도움을 요청해요" */}
-      <button className={cx('hero')} type="button" disabled={isSending} onClick={openConfirmModal}>
+      <button className={cx('hero')} type="button" disabled={isSending} onClick={sendSos}>
         <span className={cx('heroTitle')}>SOS</span>
         <span className={cx('heroSub')}>{isSending ? '보내는 중이에요…' : '도움이 필요하면 누르세요'}</span>
       </button>
