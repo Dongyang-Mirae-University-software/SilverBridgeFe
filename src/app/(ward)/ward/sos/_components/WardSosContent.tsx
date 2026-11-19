@@ -25,9 +25,10 @@ export default function WardSosContent() {
   }));
   const { activeGuardians, hasActiveGuardians, isLoading: isLoadingGuardians, isError: isGuardiansError } =
     useWardActiveGuardians();
-  const { mutate: triggerSos, mutateAsync: triggerSosAsync } = useWardSosMutation();
+  const { mutateAsync: triggerSosAsync } = useWardSosMutation();
   const [isSending, setIsSending] = useState(false);
   const sendingLockRef = useRef(false);
+  const guardianCallsInFlightRef = useRef(new Set<string>());
 
   function openDialModal() {
     openModal(<Emergency119Dialpad onClose={onCloseModal} />);
@@ -136,11 +137,19 @@ export default function WardSosContent() {
       .finally(unlock);
   }
 
+  // 보호자 카드는 실제 전화(tel:) 링크라 전화 걸기는 막지 않는다 - 다시 누르는 것도 정상 사용이다.
+  // 기록(GUARDIAN_CALL)만 그 보호자 건이 전송 중이면 건너뛴다(의도치 않은 중복 탭, 2026-11-19 점검 L-2).
+  // 끝난 뒤 다시 누르면 새 기록이다 - 보호자 이력은 연타를 묶어 pressCount 로 보여 주므로 시간 간격으로 막지 않는다(policy-sos)
   function handleGuardianCall(connection: IConnectionItem) {
-    triggerSos(
-      { triggerType: 'GUARDIAN_CALL', calledGuardianId: connection.partnerUserId },
-      { onError: error => openErrorModal(error, { retry: () => handleGuardianCall(connection) }) },
-    );
+    const key = connection.partnerUserId;
+    if (guardianCallsInFlightRef.current.has(key)) return;
+    guardianCallsInFlightRef.current.add(key);
+    // mutate() 의 콜백은 마지막 호출에서만 불려 다른 보호자를 이어 누르면 앞 건의 잠금이 안 풀린다 - 호출마다 끝나는 프로미스로
+    triggerSosAsync({ triggerType: 'GUARDIAN_CALL', calledGuardianId: connection.partnerUserId })
+      .catch(error => openErrorModal(error, { retry: () => handleGuardianCall(connection) }))
+      .finally(() => {
+        guardianCallsInFlightRef.current.delete(key);
+      });
   }
 
   return (
