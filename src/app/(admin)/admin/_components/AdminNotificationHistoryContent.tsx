@@ -14,6 +14,7 @@ import {
 } from '@/service/interface/admin/notification';
 import { adminNotificationListQueryOptions, adminNotificationSummaryQueryOptions } from '@/service/query/admin';
 import styles from './AdminNotificationHistoryContent.module.css';
+import { formatKstDateTime } from '@/utils/format/kstDate';
 
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 20;
@@ -55,15 +56,6 @@ function getCategoryFromTab(tab: CategoryTab): AdminNotificationCategory | undef
 
 function getResultFromTab(tab: CategoryTab): AdminNotificationResult | undefined {
   return tab === 'FAILED' ? 'FAILED' : undefined;
-}
-
-function formatSentAt(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  return new Intl.DateTimeFormat('ko-KR', {
-    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
-    timeZone: 'Asia/Seoul',
-  }).format(date).replace(/\. /g, '/').replace('.', '');
 }
 
 function channelLabel(channel: string) {
@@ -129,7 +121,7 @@ export function AdminNotificationHistoryContent() {
           <label className={cx('search')}>
             <Icon name="search" size={16} decorative />
             <span className={cx('srOnly')}>피보호자 또는 수신자 이름 검색</span>
-            <input value={keyword} onChange={event => updateKeyword(event.target.value)} placeholder="피보호자·수신자 이름 검색" />
+            <input autoComplete="off" value={keyword} onChange={event => updateKeyword(event.target.value)} placeholder="피보호자·수신자 이름 검색" />
           </label>
           <select aria-label="조회 기간" className={cx('periodSelect')} value={period} onChange={event => updatePeriod(event.target.value as AdminNotificationPeriod)}>
             {(Object.keys(PERIOD_LABEL) as AdminNotificationPeriod[]).map(value => <option key={value} value={value}>{PERIOD_LABEL[value]}</option>)}
@@ -170,7 +162,7 @@ function StateRow({ children }: { children: React.ReactNode }) {
 
 function NotificationRow({ log, onSelect }: { log: AdminNotificationLogItem; onSelect: (log: AdminNotificationLogItem) => void }) {
   return <tr className={cx('selectableRow')} tabIndex={0} onClick={() => onSelect(log)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(log); } }}>
-    <td>{formatSentAt(log.sentAt)}</td>
+    <td>{formatKstDateTime(log.sentAt)}</td>
     <td><span className={cx('categoryBadge', log.category)}>{CATEGORY_LABEL[log.category]}</span></td>
     <td className={cx('wardName')}>{log.wardName ?? '-'}</td>
     <td className={cx('message')}>{log.body}</td>
@@ -186,7 +178,7 @@ function NotificationDetailModal({ log, onClose }: { log: AdminNotificationLogIt
     <section className={cx('modal')} role="dialog" aria-modal="true" aria-labelledby="notification-detail-title" onMouseDown={event => event.stopPropagation()}>
       <header className={cx('modalHead')}><div><p>{RESULT_LABEL[log.result]}</p><h2 id="notification-detail-title">알림 전송 상세</h2></div><button type="button" aria-label="닫기" onClick={onClose}><Icon name="close" size={20} decorative /></button></header>
       <div className={cx('modalBody')}>
-        <dl className={cx('detailInfo')}><div><dt>발송 시각</dt><dd>{formatSentAt(log.sentAt)}</dd></div><div><dt>알림 종류</dt><dd>{log.typeLabel || CATEGORY_LABEL[log.category]}</dd></div><div><dt>피보호자</dt><dd>{log.wardName ?? '-'}</dd></div><div><dt>수신자</dt><dd>{recipientLabel(log)} · {log.recipientIsWard ? '본인' : '보호자'}</dd></div></dl>
+        <dl className={cx('detailInfo')}><div><dt>발송 시각</dt><dd>{formatKstDateTime(log.sentAt)}</dd></div><div><dt>알림 종류</dt><dd>{log.typeLabel || CATEGORY_LABEL[log.category]}</dd></div><div><dt>피보호자</dt><dd>{log.wardName ?? '-'}</dd></div><div><dt>수신자</dt><dd>{recipientLabel(log)} · {log.recipientIsWard ? '본인' : '보호자'}</dd></div></dl>
         <section className={cx('messageBox')}><strong>{log.title}</strong><p>{log.body}</p></section>
         {log.result === 'NOT_SENT' && <section className={cx('notSentBox')}><strong>{log.notSentReasonLabel ?? '발송하지 않았습니다.'}</strong><p>실패가 아닙니다. 계정 상태 또는 수신자의 알림 설정에 따라 보내지 않은 알림입니다.</p></section>}
         <section className={cx('channelSection')}><h3>채널별 전송 결과</h3>{channelResults.length > 0 ? <ul>{channelResults.map((item, index) => <li key={`${item.channel}-${index}`} className={cx({ failed: item.status === 'FAILED' })}><strong>{channelLabel(item.channel)}</strong><span>{item.status === 'FAILED' ? item.reasonLabel ?? '전송 실패' : '전송 완료'}</span></li>)}</ul> : <p>시도한 채널이 없습니다.</p>}</section>

@@ -16,19 +16,19 @@
 .selectWrap select { height: 36px; border: 1px solid var(--sb-line); border-radius: 9px; background: #fff; color: var(--sb-ink-soft); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; padding: 0 8px; }
 .tableScroll { display: block; min-width: 0; max-width: 100%; contain: inline-size; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
 .table { width: 100%; min-width: 1080px; border-collapse: collapse; table-layout: fixed; white-space: nowrap; }
-.idColumn { width: 80px; }.providerColumn { width: 76px; }.emailColumn { width: 160px; }.nameColumn { width: 70px; }.roleColumn { width: 76px; }.connectionColumn { width: 140px; }.connectionStateColumn { width: 92px; }.phoneColumn { width: 118px; }.statusColumn { width: 84px; }.actionColumn { width: 70px; }
+.idColumn { width: 72px; }.providerColumn { width: 64px; }.emailColumn { width: 200px; }.nameColumn { width: 84px; }.roleColumn { width: 68px; }.connectionColumn { width: 150px; }.connectionStateColumn { width: 84px; }.phoneColumn { width: 112px; }.statusColumn { width: 76px; }.actionColumn { width: 62px; }
 .table th { overflow: hidden; border-bottom: 1px solid var(--sb-line-soft); background: var(--sb-bg-soft); color: var(--sb-ink-mute); font-size: 11px; font-weight: 800; text-align: left; padding: 11px 14px; text-overflow: ellipsis; }
 .table td { overflow: hidden; height: 52px; box-sizing: border-box; border-bottom: 1px solid var(--sb-line-soft); color: var(--sb-ink-soft); font-size: 12px; font-weight: 600; padding: 12px 14px; text-overflow: ellipsis; }
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover { background: var(--sb-bg-soft); }
 .table .restricted { background: var(--sb-warn-soft); }
 .table .restricted:hover { background: var(--sb-warn-soft); }
-.userId, .phone { color: var(--sb-ink-mute) !important; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px !important; }
+.userId, .phone { color: var(--sb-ink-mute) !important; font-variant-numeric: tabular-nums; font-size: 11px !important; }
 .name { color: var(--sb-ink) !important; font-weight: 800 !important; }
 .badge { display: inline-flex; align-items: center; border-radius: 999px; font-size: 10.5px; font-weight: 800; line-height: 1; padding: 5px 8px; }
 .brand { background: var(--sb-brand-50); color: var(--sb-brand); }.safe { background: var(--sb-safe-soft); color: var(--sb-safe); }.sun { background: var(--sb-sun-soft); color: var(--sb-sun); }.warn { background: var(--sb-warn-soft); color: var(--sb-warn); }.mute { background: var(--sb-bg-soft); color: var(--sb-ink-mute); }
 .moreConnection { color: var(--sb-brand); }
-.connectionButton { border: 0; background: none; color: var(--sb-brand); cursor: pointer; font: inherit; font-size: inherit; font-weight: 700; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+.connectionButton { display: block; max-width: 100%; overflow: hidden; border: 0; background: none; color: var(--sb-brand); cursor: pointer; font: inherit; font-size: inherit; font-weight: 700; padding: 0; text-align: left; text-decoration: underline; text-overflow: ellipsis; text-underline-offset: 2px; white-space: nowrap; }
 .connectionButton:hover { color: var(--sb-ink); }
 .editButton { border: 0; border-radius: 8px; background: var(--sb-brand); color: #fff; cursor: pointer; font: inherit; font-size: 11px; font-weight: 800; padding: 7px 11px; }
 .editButton:hover, .saveButton:hover { filter: brightness(.96); }

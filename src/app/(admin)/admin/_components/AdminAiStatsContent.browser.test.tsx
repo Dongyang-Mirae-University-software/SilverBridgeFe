@@ -7,11 +7,11 @@ import { render } from 'vitest-browser-react';
 import type { AdminChatStats, AdminCompanionStats } from '@/service/interface/admin/aiStats';
 import { AdminAiStatsContent } from './AdminAiStatsContent';
 
-const data = vi.hoisted(() => ({ companion: vi.fn<() => Promise<unknown>>(), chat: (() => new Promise(() => {})) as () => Promise<unknown> }));
+const data = vi.hoisted(() => ({ companion: vi.fn<() => Promise<unknown>>(), chat: (() => new Promise(() => {})) as () => Promise<unknown>, anomalySummary: null as null | ((params: unknown) => Promise<unknown>), anomalyList: null as null | ((params: unknown) => Promise<unknown>) }));
 
 vi.mock('@/service/query/admin', () => ({
-  adminAnomalySummaryQueryOptions: (params: unknown) => queryOptions({ queryKey: ['test-summary', params], queryFn: () => new Promise(() => {}) }),
-  adminAnomalyListQueryOptions: (params: unknown) => queryOptions({ queryKey: ['test-list', params], queryFn: () => new Promise(() => {}) }),
+  adminAnomalySummaryQueryOptions: (params: unknown) => queryOptions({ queryKey: ['test-summary', params], queryFn: () => data.anomalySummary ? data.anomalySummary(params) : new Promise(() => {}) }),
+  adminAnomalyListQueryOptions: (params: unknown) => queryOptions({ queryKey: ['test-list', params], queryFn: () => data.anomalyList ? data.anomalyList(params) : new Promise(() => {}) }),
   adminChatStatsQueryOptions: (params: unknown) => queryOptions({ queryKey: ['test-chat', params], queryFn: () => data.chat() }),
   adminCompanionStatsQueryOptions: queryOptions({ queryKey: ['test-companion'], queryFn: () => data.companion() }),
 }));
@@ -203,7 +203,7 @@ describe('AI 의료 챗봇 탭 라우터 상태 (Chrome)', () => {
     await openChatTab(CHAT);
     data.chat = () => { calls += 1; return new Promise(() => {}); };
 
-    await expect.element(page.getByText(/상담 목적을 나누는 모델 · 기준 11\/09.14:30/)).toBeVisible();
+    await expect.element(page.getByText(/상담 목적을 나누는 모델 · 기준 2026-11-09 14:30/)).toBeVisible();
     expect(calls).toBe(0);
 
     await page.getByRole('button', { name: '새로 보기' }).click();
@@ -218,7 +218,7 @@ describe('AI 의료 챗봇 탭 라우터 상태 (Chrome)', () => {
 
     await page.getByRole('button', { name: '새로 보기' }).click();
     await expect.element(page.getByRole('alert')).toBeVisible();
-    await expect.element(page.getByText(/기준 11\/09.14:35/)).toBeVisible();
+    await expect.element(page.getByText(/기준 2026-11-09 14:35/)).toBeVisible();
     expect(routerRows()[0]).toBe('지금 상태크레딧 소진');
   });
 
@@ -226,5 +226,28 @@ describe('AI 의료 챗봇 탭 라우터 상태 (Chrome)', () => {
     await openChatTab({ ...CHAT, routerStatus: { state, recentFailures: state === 'failing' ? 1 : 0, windowSec: 600 } });
 
     expect(document.querySelector('[role="alert"]')).toBeNull();
+  });
+});
+
+describe('AI 이상감지 검색 (Chrome)', () => {
+  const SUMMARY = { period: 'TODAY', total: 0, byType: [], review: { pending: 0, real: 0, falseAlarm: 0, conflicted: 0 }, responseRate: null, aiConfidence: { average: null, basis: 0 } };
+  const LIST = { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0, last: true };
+  afterEach(() => { data.anomalySummary = null; data.anomalyList = null; });
+
+  it('한 글자씩 쳐도 검색창이 그대로 남아 포커스를 잃지 않고, 요청은 입력이 멈춘 뒤 한 번만 나간다', async () => {
+    const listCalls: unknown[] = [];
+    data.anomalySummary = () => Promise.resolve(SUMMARY);
+    data.anomalyList = params => { listCalls.push(params); return Promise.resolve(LIST); };
+    await render(<QueryClientProvider client={new QueryClient()}><AdminAiStatsContent /></QueryClientProvider>);
+    const search = page.getByPlaceholder('이름·방 검색');
+    await expect.element(search).toBeVisible();
+    const input = search.element() as HTMLInputElement;
+    expect(input.getAttribute('autocomplete')).toBe('off');
+    input.focus();
+    for (const text of ['김', '김영', '김영희']) await search.fill(text);
+    expect(document.activeElement).toBe(input);
+    await expect.poll(() => listCalls.some(params => (params as { keyword?: string }).keyword === '김영희')).toBe(true);
+    expect(listCalls.filter(params => (params as { keyword?: string }).keyword !== undefined)).toHaveLength(1);
+    expect(page.getByPlaceholder('이름·방 검색').element()).toBe(input);
   });
 });
