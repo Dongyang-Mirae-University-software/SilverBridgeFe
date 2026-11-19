@@ -90,26 +90,38 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     expect(api.getGuardianAnomalyHistorySummary).not.toHaveBeenCalled();
   });
 
-  it('칩 건수는 불러온 목록이 아니라 요약 값이고, 유형을 고르면 type 쿼리로 다시 받는다 - 둘 다 지금 등록된 카메라 기준', async () => {
+  it('탭 건수는 불러온 목록이 아니라 요약 값이고, 유형을 고르면 type 쿼리로 다시 받는다 - 둘 다 지금 등록된 카메라 기준', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
     const screen = await renderHistory();
 
-    await expect.element(screen.getByRole('button', { name: '전체 37' })).toBeInTheDocument();
-    await expect.element(screen.getByRole('button', { name: '화재 20' })).toBeInTheDocument();
-    await expect.element(screen.getByRole('button', { name: '흉기 8' })).toBeInTheDocument();
-    await expect.element(screen.getByRole('button', { name: '낙상 9' })).toBeInTheDocument();
+    await expect.element(screen.getByRole('tab', { name: '전체 37' })).toBeInTheDocument();
+    await expect.element(screen.getByRole('tab', { name: '화재 20' })).toBeInTheDocument();
+    await expect.element(screen.getByRole('tab', { name: '흉기 8' })).toBeInTheDocument();
+    await expect.element(screen.getByRole('tab', { name: '낙상 9' })).toBeInTheDocument();
     await expect.element(screen.getByRole('status')).toMatchTextContent('확인 필요 5');
     expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
       expect.objectContaining({ wardId: 'W1', page: 0, size: 4, type: undefined, camera: 'EXISTING' }),
     );
     expect(api.getGuardianAnomalyHistorySummary).toHaveBeenCalledWith('W1');
 
-    await screen.getByRole('button', { name: '낙상 9' }).click();
+    await screen.getByRole('tab', { name: '낙상 9' }).click();
     await vi.waitFor(() =>
       expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
         expect.objectContaining({ type: 'FALL', camera: 'EXISTING', page: 0 }),
       ),
     );
+    await expect.element(screen.getByRole('tab', { name: '낙상 9' })).toHaveAttribute('aria-selected', 'true');
+    await expect.element(screen.getByRole('tab', { name: '전체 37' })).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('"확인 필요"는 누를 수 있는 버튼이 아니라 글자 표시다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
+    const screen = await renderHistory();
+
+    await expect.element(screen.getByRole('status')).toMatchTextContent('확인 필요 5');
+    expect(screen.getByRole('button', { name: /확인 필요/ }).query()).toBeNull();
+    expect(screen.getByRole('tab', { name: /확인 필요/ }).query()).toBeNull();
+    expect(screen.getByRole('status').element().closest('button')).toBeNull();
   });
 
   it('요약을 못 받으면 건수를 0으로 채우지 않고 비워 둔다', async () => {
@@ -118,7 +130,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     const screen = await renderHistory();
 
     await expect.element(screen.getByText('감지 기록이 없어요')).toBeInTheDocument();
-    await expect.element(screen.getByRole('button', { name: '전체', exact: true })).toBeInTheDocument();
+    await expect.element(screen.getByRole('tab', { name: '전체', exact: true })).toBeInTheDocument();
     expect(screen.getByRole('status').query()).toBeNull();
   });
 
@@ -185,46 +197,72 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     expect(screen.getByRole('button', { name: /삭제된 카메라 기록/ }).query()).toBeNull();
   });
 
-  it('삭제된 카메라 칩은 요약 건수로 보이고, 누르면 camera=DELETED, 유형 칩으로 옮기면 다시 camera=EXISTING', async () => {
+  it('삭제된 카메라 기록 스위치는 요약 건수로 보이고, 켜면 camera=DELETED·탭 선택 해제, 탭을 누르면 스위치가 꺼지고 camera=EXISTING', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1, { cameraLabel: null })]));
     api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 2 });
     const screen = await renderHistory();
 
-    await screen.getByRole('button', { name: '삭제된 카메라 2' }).click();
+    const deletedSwitch = screen.getByRole('switch', { name: '삭제된 카메라 기록 2' });
+    await expect.element(deletedSwitch).not.toBeChecked();
+    await deletedSwitch.click();
     await vi.waitFor(() =>
       expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
         expect.objectContaining({ camera: 'DELETED', type: undefined, page: 0 }),
       ),
     );
-    await expect.element(screen.getByRole('button', { name: '삭제된 카메라 2' })).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(deletedSwitch).toBeChecked();
+    for (const name of ['전체 37', '화재 20', '흉기 8', '낙상 9']) {
+      await expect.element(screen.getByRole('tab', { name })).toHaveAttribute('aria-selected', 'false');
+    }
 
-    await screen.getByRole('button', { name: '화재 20' }).click();
+    await screen.getByRole('tab', { name: '화재 20' }).click();
     await vi.waitFor(() =>
       expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
         expect.objectContaining({ camera: 'EXISTING', type: 'FIRE', page: 0 }),
       ),
     );
+    await expect.element(deletedSwitch).not.toBeChecked();
+    await expect.element(screen.getByRole('tab', { name: '화재 20' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('삭제된 카메라 기록이 0건이면 칩을 보이지 않는다', async () => {
+  it('삭제된 카메라 기록 스위치를 끄면 전체 탭으로 돌아간다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1, { cameraLabel: null })]));
+    api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 2 });
+    const screen = await renderHistory();
+
+    await screen.getByRole('tab', { name: '흉기 8' }).click();
+    const deletedSwitch = screen.getByRole('switch', { name: '삭제된 카메라 기록 2' });
+    await deletedSwitch.click();
+    await expect.element(deletedSwitch).toBeChecked();
+    await deletedSwitch.click();
+    // "전체"(camera=EXISTING, type 없음)는 처음에 받아 둔 캐시로 바로 보여 다시 부르지 않을 수 있어 화면 상태로 확인한다
+    await expect.element(deletedSwitch).not.toBeChecked();
+    expect(api.getGuardianAnomalyHistory).toHaveBeenCalledWith(
+      expect.objectContaining({ camera: 'EXISTING', type: undefined, page: 0 }),
+    );
+    await expect.element(screen.getByRole('tab', { name: '전체 37' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('삭제된 카메라 기록이 0건이면 스위치를 보이지 않는다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
     api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 0 });
     const screen = await renderHistory();
 
-    await expect.element(screen.getByRole('button', { name: '전체 37' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /삭제된 카메라/ }).query()).toBeNull();
+    await expect.element(screen.getByRole('tab', { name: '전체 37' })).toBeInTheDocument();
+    expect(screen.getByRole('switch').query()).toBeNull();
+    expect(screen.getByText(/삭제된 카메라 기록/).query()).toBeNull();
   });
 
-  it('"전체"가 비었는데 삭제된 카메라 기록이 있으면 없다고 하지 않고 "삭제된 카메라"로 안내한다', async () => {
+  it('"전체"가 비었는데 삭제된 카메라 기록이 있으면 없다고 하지 않고 "삭제된 카메라 기록" 스위치로 안내한다', async () => {
     api.getGuardianAnomalyHistory.mockResolvedValue(page([]));
     api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, total: 0, deletedCameraCount: 4 });
     const screen = await renderHistory();
 
     await expect
-      .element(screen.getByText('지금 카메라의 감지 기록이 없어요. 삭제된 카메라의 기록은 "삭제된 카메라"에서 볼 수 있어요'))
+      .element(screen.getByText('지금 카메라의 감지 기록이 없어요. 삭제된 카메라의 기록은 "삭제된 카메라 기록"을 켜면 볼 수 있어요'))
       .toBeInTheDocument();
     expect(screen.getByText('감지 기록이 없어요', { exact: true }).query()).toBeNull();
-    await expect.element(screen.getByRole('button', { name: '삭제된 카메라 4' })).toBeInTheDocument();
+    await expect.element(screen.getByRole('switch', { name: '삭제된 카메라 기록 4' })).toBeInTheDocument();
   });
 
   it('피보호자를 바꾸면 필터(삭제된 카메라 포함)와 페이지가 처음으로 돌아간다', async () => {
@@ -243,7 +281,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     }
     const screen = await render(<Harness />, { wrapper });
 
-    await screen.getByRole('button', { name: '삭제된 카메라 2' }).click();
+    await screen.getByRole('switch', { name: '삭제된 카메라 기록 2' }).click();
     await screen.getByRole('button', { name: '2', exact: true }).click();
     await vi.waitFor(() =>
       expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(
@@ -257,7 +295,8 @@ describe('AnomalyHistoryContent (Chrome)', () => {
         expect.objectContaining({ wardId: 'W2', camera: 'EXISTING', type: undefined, page: 0 }),
       ),
     );
-    await expect.element(screen.getByRole('button', { name: '전체 37' })).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(screen.getByRole('tab', { name: '전체 37' })).toHaveAttribute('aria-selected', 'true');
+    await expect.element(screen.getByRole('switch', { name: '삭제된 카메라 기록 2' })).not.toBeChecked();
   });
 
   it('375px에서 가로로 넘치지 않는다', async () => {
@@ -287,6 +326,20 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     for (const button of box.querySelectorAll('button')) {
       expect(button.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
     }
+    // 분류 탭 4칸은 한 줄(같은 높이)이고 터치 영역 44px 이상, 글자가 칸을 넘지 않는다
+    const typeTabs = [...box.querySelectorAll('[role="tablist"][aria-label="감지 유형"] [role="tab"]')];
+    expect(typeTabs).toHaveLength(4);
+    expect(new Set(typeTabs.map(tab => Math.round(tab.getBoundingClientRect().top))).size).toBe(1);
+    for (const tab of typeTabs) {
+      expect(tab.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+      expect(tab.scrollWidth).toBeLessThanOrEqual(tab.clientWidth);
+    }
+    // 확인 필요와 스위치는 같은 줄, 화면 안, 스위치 줄은 터치 44px 이상
+    const switchLabel = box.querySelector('input[role="switch"]')!.closest('label')!;
+    const status = box.querySelector('[role="status"]')!;
+    expect(switchLabel.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
+    expect(switchLabel.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expect(Math.round(switchLabel.getBoundingClientRect().top)).toBe(Math.round(status.getBoundingClientRect().top));
   });
 });
 
