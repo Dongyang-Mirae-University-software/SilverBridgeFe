@@ -46,7 +46,7 @@ export function WardLayout({ children }: { children: ReactNode }) {
   useWardSettings(isWardSettingsLoaded, setIsWardSettingsLoaded, setWardSettings, wardSettings);
   useWardSosSettingSync(setWardSettings);
   useWardConnectionSocket(realtimeUserId);
-  useWardRootFontSize(wardSettings.fontSize);
+  useWardRootTextSettings(wardSettings);
   // 안부 말벗 메뉴는 테스트 계정만(시간대를 골라 시험한다). 일반 피보호자는 대화 시간에 홈 카드·알림으로 들어간다.
   // 말벗이 꺼진 서버(오늘 상태 오류)에서는 메뉴가 없다. 홈·말벗 화면과 같은 캐시를 쓴다.
   const { data: companionToday } = useQuery(wardCompanionTodayQueryOptions);
@@ -88,14 +88,20 @@ export function WardLayout({ children }: { children: ReactNode }) {
   );
 }
 
-function useWardRootFontSize(fontSize: number) {
+// 루트 글자 크기와 함께 글자 배율·진한 글자 변수도 루트에 둔다 - 119 키패드·공용 모달은 화면 영역(stage) 밖
+// 루트 ModalHost 에 그려져 stage 의 변수를 받지 못했다(2026-11-19 점검 M-1). 헤더·사이드바 CSS는 이 변수를 쓰지 않는다
+export function useWardRootTextSettings(wardSettings: Pick<WardSettings, 'fontSize' | 'highContrast'>) {
+  const { fontSize, highContrast } = wardSettings;
   useEffect(() => {
     const root = document.documentElement;
+    const vars = getWardTextVars({ fontSize, highContrast });
     root.style.fontSize = `${fontSize}px`;
+    for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value);
     return () => {
       root.style.fontSize = '';
+      for (const name of Object.keys(vars)) root.style.removeProperty(name);
     };
-  }, [fontSize]);
+  }, [fontSize, highContrast]);
 }
 
 function useWardSettings(
