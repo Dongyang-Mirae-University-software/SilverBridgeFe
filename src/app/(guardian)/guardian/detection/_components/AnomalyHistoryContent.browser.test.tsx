@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import type { AnomalyHistorySummary, AnomalyIncident } from '@/service/interface/guardian/anomaly';
@@ -225,22 +226,58 @@ describe('AnomalyHistoryContent (Chrome)', () => {
     await expect.element(screen.getByRole('tab', { name: '화재 20' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('삭제된 카메라 기록 스위치를 끄면 전체 탭으로 돌아간다', async () => {
-    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1, { cameraLabel: null })]));
+  it('삭제된 카메라 기록 스위치를 끄면 전체 탭으로 돌아가 지금 카메라(camera=EXISTING, 유형 없음) 목록을 보인다', async () => {
+    // camera 값마다 다른 목록 - 끈 뒤 화면의 목록이 어느 조회 결과인지로 확인한다(캐시를 써도 다시 받아도 같은 결과)
+    api.getGuardianAnomalyHistory.mockImplementation(async (params: { camera?: string; type?: string }) =>
+      params.camera === 'DELETED'
+        ? page([incident(2, { cameraLabel: null })])
+        : params.type
+          ? page([incident(3, { cameraLabel: '작은방', detectedType: 'WEAPON', detectedTypeLabel: '흉기' })])
+          : page([incident(1, { cameraLabel: '거실' })]),
+    );
     api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 2 });
     const screen = await renderHistory();
 
     await screen.getByRole('tab', { name: '흉기 8' }).click();
+    await expect.element(screen.getByText('작은방')).toBeInTheDocument();
     const deletedSwitch = screen.getByRole('switch', { name: '삭제된 카메라 기록 2' });
     await deletedSwitch.click();
     await expect.element(deletedSwitch).toBeChecked();
+    await expect.element(screen.getByText('삭제된 카메라', { exact: true })).toBeInTheDocument();
+
     await deletedSwitch.click();
-    // "전체"(camera=EXISTING, type 없음)는 처음에 받아 둔 캐시로 바로 보여 다시 부르지 않을 수 있어 화면 상태로 확인한다
     await expect.element(deletedSwitch).not.toBeChecked();
+    await expect.element(screen.getByRole('tab', { name: '전체 37' })).toHaveAttribute('aria-selected', 'true');
+    await expect.element(screen.getByText('거실')).toBeInTheDocument();
+    expect(screen.getByText('작은방').query()).toBeNull();
+    expect(screen.getByText('삭제된 카메라', { exact: true }).query()).toBeNull();
     expect(api.getGuardianAnomalyHistory).toHaveBeenCalledWith(
       expect.objectContaining({ camera: 'EXISTING', type: undefined, page: 0 }),
     );
-    await expect.element(screen.getByRole('tab', { name: '전체 37' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('분류 탭은 화살표 키로 옮겨 고르고, 스위치가 켜져 있으면 화살표로 탭을 골라도 스위치가 꺼진다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1)]));
+    api.getGuardianAnomalyHistorySummary.mockResolvedValue({ ...SUMMARY, deletedCameraCount: 2 });
+    const screen = await renderHistory();
+
+    await expect.element(screen.getByRole('switch', { name: '삭제된 카메라 기록 2' })).toBeInTheDocument();
+    (screen.getByRole('tab', { name: '전체 37' }).element() as HTMLElement).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await vi.waitFor(() =>
+      expect(api.getGuardianAnomalyHistory).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'FIRE', camera: 'EXISTING' })),
+    );
+    await expect.element(screen.getByRole('tab', { name: '화재 20' })).toHaveAttribute('aria-selected', 'true');
+
+    const deletedSwitch = screen.getByRole('switch', { name: '삭제된 카메라 기록 2' });
+    await deletedSwitch.click();
+    await expect.element(deletedSwitch).toBeChecked();
+    // 선택이 없으면 첫 탭이 Tab 순서를 받는다
+    await expect.element(screen.getByRole('tab', { name: '전체 37' })).toHaveAttribute('tabindex', '0');
+    (screen.getByRole('tab', { name: '전체 37' }).element() as HTMLElement).focus();
+    await userEvent.keyboard('{End}');
+    await expect.element(deletedSwitch).not.toBeChecked();
+    await expect.element(screen.getByRole('tab', { name: '낙상 9' })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('삭제된 카메라 기록이 0건이면 스위치를 보이지 않는다', async () => {
