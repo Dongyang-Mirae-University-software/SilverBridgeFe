@@ -12,7 +12,6 @@ import {
   IFindPasswordSmsSendReq,
   IFindPasswordSmsVerifyReq,
   IFindPasswordSendResponse,
-  IAuthTokenResponse,
   ISmsVerifyResponse,
   IKakaoSigninReq,
   IKakaoSigninRes,

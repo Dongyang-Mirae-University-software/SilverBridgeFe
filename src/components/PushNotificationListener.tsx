@@ -369,6 +369,7 @@ export default function PushNotificationListener() {
   // "방금·N분 전"을 갱신한다 - 토스트가 떠 있을 때만
   useEffect(() => {
     if (!hasToasts) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 토스트가 뜨는 순간 "방금·N분 전" 기준 시각을 맞춘 뒤 주기 갱신을 시작한다
     setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), RECEIVED_AT_TICK_MS);
     return () => window.clearInterval(timer);
