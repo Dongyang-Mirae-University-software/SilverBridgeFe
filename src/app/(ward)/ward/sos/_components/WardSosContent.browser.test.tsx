@@ -13,6 +13,7 @@ import WardSosContent from './WardSosContent';
 const mocks = vi.hoisted(() => ({
   sosAction: 'CALL_119_AND_NOTIFY' as 'CALL_119_AND_NOTIFY' | 'NOTIFY_GUARDIAN_FIRST',
   hasActiveGuardians: true,
+  guardiansError: false,
   triggerSosAsync: vi.fn(),
   triggerSos: vi.fn(),
 }));
@@ -25,7 +26,7 @@ vi.mock('@/hooks/useActiveConnections', () => ({
     activeGuardians: [],
     hasActiveGuardians: mocks.hasActiveGuardians,
     isLoading: false,
-    isError: false,
+    isError: mocks.guardiansError,
   }),
 }));
 vi.mock('@/service/query/ward', () => ({
@@ -74,6 +75,7 @@ function doubleTapSos(screen: Awaited<ReturnType<typeof render>>) {
 describe('WardSosContent (Chrome)', () => {
   beforeEach(() => {
     mocks.hasActiveGuardians = true;
+    mocks.guardiansError = false;
     mocks.triggerSosAsync.mockReset().mockResolvedValue({ sosEventId: 7, triggeredAt: '2026-10-23T06:00:00Z' });
     mocks.triggerSos.mockReset();
   });
@@ -238,6 +240,61 @@ describe('WardSosContent (Chrome)', () => {
     await pressSos(screen);
 
     await vi.waitFor(() => expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(2));
+  });
+
+  describe('보호자 목록 조회가 실패했을 때 (점검 H-1) - 보호자가 있다고 보고 실패를 알린다', () => {
+    beforeEach(() => {
+      mocks.hasActiveGuardians = false;
+      mocks.guardiansError = true;
+    });
+
+    it('NOTIFY_GUARDIAN_FIRST - 전송이 실패하면 실패 창을 띄운다(조용히 묻히지 않는다)', async () => {
+      mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
+      mocks.triggerSosAsync.mockRejectedValue({ message: '서버 오류' });
+      const screen = await renderPage();
+
+      await pressSos(screen);
+
+      await expect.element(screen.getByText('SOS 전송 실패')).toBeVisible();
+      expect(screen.getByRole('dialog', { name: /119 신고 키패드/ }).query()).toBeNull();
+    });
+
+    it('NOTIFY_GUARDIAN_FIRST - 전송이 되면 "보호자에게 알렸어요"를 띄운다', async () => {
+      mocks.sosAction = 'NOTIFY_GUARDIAN_FIRST';
+      const screen = await renderPage();
+
+      await pressSos(screen);
+
+      await expect.element(screen.getByText('보호자에게 알렸어요')).toBeVisible();
+      expect(mocks.triggerSosAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it('CALL_119_AND_NOTIFY - 키패드를 바로 열고, 전송이 실패하면 키패드 위에 실패 창을 띄운다', async () => {
+      mocks.sosAction = 'CALL_119_AND_NOTIFY';
+      mocks.triggerSosAsync.mockRejectedValue({ message: '서버 오류' });
+      const screen = await renderPage();
+
+      await pressSos(screen);
+
+      await expect.element(screen.getByText('SOS 전송 실패')).toBeVisible();
+      await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeInTheDocument();
+    });
+  });
+
+  it('CALL_119_AND_NOTIFY - 인터넷이 끊겼으면 키패드를 열고 그 위에 실패 창을 띄우며 전송하지 않는다', async () => {
+    mocks.sosAction = 'CALL_119_AND_NOTIFY';
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const screen = await renderPage();
+
+    await pressSos(screen);
+
+    await expect.element(screen.getByText('인터넷이 끊겼어요. 119 화면을 열어 직접 전화해 주세요.')).toBeVisible();
+    await expect.element(screen.getByRole('dialog', { name: /119 신고 키패드/ })).toBeInTheDocument();
+    expect(mocks.triggerSosAsync).not.toHaveBeenCalled();
+    // 키패드가 이미 열려 있으니 [119 화면 열기]는 실패 창만 닫는다(키패드를 하나 더 열지 않는다)
+    await screen.getByRole('button', { name: '119 화면 열기' }).click();
+    expect(document.querySelectorAll('[role="dialog"][aria-label^="119 신고 키패드"]')).toHaveLength(1);
+    onLine.mockRestore();
   });
 
   it('보이지 않는 h1 "긴급 전화"를 둔다(시안에는 제목이 없다)', async () => {
