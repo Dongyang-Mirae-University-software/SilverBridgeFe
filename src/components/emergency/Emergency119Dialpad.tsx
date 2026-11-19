@@ -3,7 +3,6 @@
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
-import { Icon } from '@/components/Icon';
 import styles from './Emergency119Dialpad.module.css';
 
 const cx = classNames.bind(styles);
@@ -154,42 +153,36 @@ export function Emergency119Dialpad({ onClose, onCall, footer, successNotice = C
       aria-describedby={noticeId}
       tabIndex={-1}
     >
+      {/* 2026-11-19(사용자 결정): 아이폰 전화 앱 키패드 모양. 상태 표시줄·아래 탭·연락처 추가 아이콘은 넣지 않고,
+          닫기(나갈 방법)와 시연 안내(실제로 걸린다고 믿지 않게)는 남긴다 */}
       <div className={cx('screen')}>
         <div className={cx('header')}>
-          <p id={noticeId} className={cx('notice')}>
-            학생 프로젝트 화면 · 실제로 신고 전화가 발신되지 않습니다
-          </p>
           <button className={cx('close')} type="button" onClick={onClose} aria-label="119 화면 닫기">
-            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
               <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
             </svg>
             <span>닫기</span>
           </button>
         </div>
 
-        <div className={cx('displayRow')}>
-          <span className={cx('displaySpacer')} aria-hidden="true" />
+        <div className={cx('top')}>
+          {/* 숫자 위 한 줄 - 평소에는 시연 안내, 통화 버튼을 누른 뒤에는 그 결과(같은 자리) */}
+          <div className={cx('noticeSlot')}>
+            <p id={noticeId} className={cx('notice', { hidden: noticeVisible })}>
+              학생 프로젝트 화면 · 실제로 신고 전화가 발신되지 않습니다
+            </p>
+            <p
+              ref={callNoticeRef}
+              className={cx('callNotice', { visible: noticeVisible })}
+              role="status"
+              aria-live="polite"
+            >
+              {callNoticeText}
+            </p>
+          </div>
           <output className={cx('display')} aria-label="입력된 번호">
             {digits || ' '}
           </output>
-          <button
-            className={cx('backspace', { hidden: !digits })}
-            type="button"
-            onClick={() => setDigits(prev => prev.slice(0, -1))}
-            aria-label="한 글자 지우기"
-            disabled={!digits}
-          >
-            <svg viewBox="0 0 32 24" width="32" height="24" aria-hidden="true" focusable="false">
-              <path
-                d="M10 2h18a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H10L2 12z"
-                fill="currentColor"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-              />
-              <path d="M14 8l8 8M22 8l-8 8" stroke="#1a2530" strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
-          </button>
         </div>
 
         <div className={cx('pad')}>
@@ -202,12 +195,11 @@ export function Emergency119Dialpad({ onClose, onCall, footer, successNotice = C
               onClick={() => setDigits(prev => (prev + key).slice(0, MAX_DIGITS))}
             >
               <span className={cx('keyDigit', { symbol: key === '*' || key === '#' })}>{key}</span>
-              {letters && <span className={cx('keyLetters')}>{letters}</span>}
+              {letters && <span className={cx('keyLetters', { plus: letters === '+' })}>{letters}</span>}
             </button>
           ))}
-        </div>
 
-        <div className={cx('callRow')}>
+          <span className={cx('padSpacer')} aria-hidden="true" />
           <button
             className={cx('callButton')}
             type="button"
@@ -216,18 +208,27 @@ export function Emergency119Dialpad({ onClose, onCall, footer, successNotice = C
             aria-busy={callState === 'sending' || undefined}
             aria-label={onCall ? '통화(보호자에게 알림 - 실제로 119에 걸리지 않음)' : '통화(시연 화면 - 실제로 걸리지 않음)'}
           >
-            <Icon name="phone" size={34} decorative />
+            <svg viewBox="0 0 24 24" width="46%" height="46%" aria-hidden="true" focusable="false">
+              <path
+                fill="currentColor"
+                d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02z"
+              />
+            </svg>
+          </button>
+          <button
+            className={cx('backspace', { hidden: !digits })}
+            type="button"
+            onClick={() => setDigits(prev => prev.slice(0, -1))}
+            aria-label="한 글자 지우기"
+            disabled={!digits}
+          >
+            <svg viewBox="0 0 34 24" width="34" height="24" aria-hidden="true" focusable="false">
+              <path d="M11 1.5h19a2.5 2.5 0 0 1 2.5 2.5v16a2.5 2.5 0 0 1-2.5 2.5H11L1.5 12z" fill="currentColor" />
+              <path d="M15.5 7.5l9 9M24.5 7.5l-9 9" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
+            </svg>
           </button>
         </div>
 
-        <p
-          ref={callNoticeRef}
-          className={cx('callNotice', { visible: noticeVisible })}
-          role="status"
-          aria-live="polite"
-        >
-          {callNoticeText}
-        </p>
         {footer}
       </div>
     </div>

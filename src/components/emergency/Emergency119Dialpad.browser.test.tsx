@@ -1,6 +1,7 @@
 // 119 키패드 컴포넌트 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`)
 // 학생 프로젝트라 통화 버튼은 아무 데도 걸지 않고 안내만 띄운다(2026-10-23, 휴대폰 키패드 모양으로 교체)
 // 점검 반영(2026-10-23): 포커스 가둠/복귀·가로 화면 키 최소 48px. 보호자 알림 문구는 키패드에 띄우지 않는다(사용자 결정)
+// 2026-11-19: 아이폰 전화 앱 키패드 모양 - 통화 줄 [빈칸·통화·지우기], 안내 문구는 숫자 위 한 줄
 
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -43,6 +44,68 @@ describe('Emergency119Dialpad (Chrome)', () => {
     await screen.getByRole('button', { name: '한 글자 지우기' }).click();
     await screen.getByRole('button', { name: '한 글자 지우기' }).click();
     await expect.element(display).toMatchTextContent('119');
+  });
+
+  it('아이폰 키패드처럼 키 12개(영문 포함)와 통화 버튼, 통화 오른쪽 지우기를 둔다 - 지우기는 번호가 있을 때만', async () => {
+    await page.viewport(390, 844);
+    const screen = await render(<Emergency119Dialpad onClose={() => {}} />);
+    const dialog = screen.getByRole('dialog').element();
+
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '별표', '0', '샵'];
+    for (const name of keys) {
+      await expect.element(screen.getByRole('button', { name, exact: true })).toBeVisible();
+    }
+    for (const letters of ['ABC', 'DEF', 'GHI', 'JKL', 'MNO', 'PQRS', 'TUV', 'WXYZ', '+']) {
+      await expect.element(screen.getByText(letters, { exact: true })).toBeVisible();
+    }
+    // 연락처 추가 같은 동작 없는 장식은 두지 않는다: 키 12 + 통화 + 지우기 + 닫기
+    expect(dialog.querySelectorAll('button')).toHaveLength(15);
+
+    const rectOf = (name: string | RegExp) => screen.getByRole('button', { name }).element().getBoundingClientRect();
+    const call = rectOf(/실제로 걸리지 않음/);
+    const zero = rectOf('0');
+    const pound = rectOf('샵');
+    const backspace = rectOf('한 글자 지우기');
+    // 통화는 0 아래 가운데, 지우기는 # 아래(통화 오른쪽)
+    expect(Math.abs(call.left + call.width / 2 - (zero.left + zero.width / 2))).toBeLessThan(2);
+    expect(call.top).toBeGreaterThan(zero.bottom);
+    expect(Math.abs(backspace.left + backspace.width / 2 - (pound.left + pound.width / 2))).toBeLessThan(2);
+    expect(Math.abs(backspace.top + backspace.height / 2 - (call.top + call.height / 2))).toBeLessThan(2);
+    // 키는 원형이고 390px 폭에서 스크린샷 비율(폭의 19.3%) 그대로 약 75px
+    expect(zero.width).toBe(zero.height);
+    expect(zero.width).toBeGreaterThanOrEqual(72);
+    expect(zero.width).toBeLessThanOrEqual(78);
+
+    for (let i = 0; i < 3; i += 1) await screen.getByRole('button', { name: '한 글자 지우기' }).click();
+    await expect.element(screen.getByLabelText('입력된 번호')).toMatchTextContent(/^\s*$/);
+    // 번호가 없으면 숨겨져 버튼 목록에서도 빠진다(자리는 남아 통화 버튼이 움직이지 않는다)
+    const hiddenBackspace = dialog.querySelector<HTMLButtonElement>('button[aria-label="한 글자 지우기"]')!;
+    expect(getComputedStyle(hiddenBackspace).visibility).toBe('hidden');
+    expect(hiddenBackspace.disabled).toBe(true);
+    expect(screen.getByRole('button', { name: /실제로 걸리지 않음/ }).element().getBoundingClientRect().left).toBe(call.left);
+  });
+
+  it('태블릿 폭에서는 키패드를 가운데에 두고 키를 키우지 않는다', async () => {
+    await page.viewport(1024, 1366);
+    const screen = await render(<Emergency119Dialpad onClose={() => {}} />);
+    const five = screen.getByRole('button', { name: '5' }).element().getBoundingClientRect();
+    expect(five.width).toBeLessThanOrEqual(78);
+    expect(Math.abs(five.left + five.width / 2 - window.innerWidth / 2)).toBeLessThan(2);
+  });
+
+  it('시연 안내와 통화 결과는 숫자 위 같은 자리에 보인다', async () => {
+    const screen = await render(<Emergency119Dialpad onClose={() => {}} onCall={() => new Promise(() => {})} />);
+    const display = screen.getByLabelText('입력된 번호').element().getBoundingClientRect();
+    const notice = screen.getByText('학생 프로젝트 화면 · 실제로 신고 전화가 발신되지 않습니다');
+    await expect.element(notice).toBeVisible();
+    expect(notice.element().getBoundingClientRect().bottom).toBeLessThanOrEqual(display.top);
+
+    await screen.getByRole('button', { name: /보호자에게 알림/ }).click();
+    const status = screen.getByText(CALL_SENDING_NOTICE);
+    await expect.element(status).toBeVisible();
+    await expect.element(notice).not.toBeVisible();
+    expect(status.element().getBoundingClientRect().bottom).toBeLessThanOrEqual(display.top);
+    expect(screen.getByLabelText('입력된 번호').element().getBoundingClientRect().top).toBe(display.top);
   });
 
   it('통화 버튼은 안내만 띄우고 이동·새 창·링크가 없다', async () => {
