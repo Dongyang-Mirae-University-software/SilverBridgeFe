@@ -171,6 +171,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     slotGroups.find(group => group.status !== 'done')?.key ??
     slotGroups[0]?.key;
   const selectedGroup = slotGroups.find(group => group.key === selectedSlot) ?? slotGroups.find(group => group.key === defaultSlot);
+  const selectedCardStatus = selectedGroup ? getCardStatus(selectedGroup.status, selectedGroup.key === nextSlotKey) : null;
 
   useEffect(() => {
     const timer = setInterval(() => setNowTick(tick => tick + 1), NOW_TICK_MS);
@@ -278,9 +279,11 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                   {selectedGroup.label} 약
                   <span className={cx('slotTime')}>{formatMedicationAlertTime(selectedGroup.doseTime)}</span>
                 </h2>
-                <span className={cx('slotStatus', selectedGroup.status, { next: selectedGroup.key === nextSlotKey })}>
-                  {getCardStatus(selectedGroup.status, selectedGroup.key === nextSlotKey)}
-                </span>
+                {selectedCardStatus && (
+                  <span className={cx('slotStatus', selectedGroup.status, { next: selectedGroup.key === nextSlotKey })}>
+                    {selectedCardStatus}
+                  </span>
+                )}
               </div>
 
               <ul ref={listRef} className={cx('medicationGrid')} aria-label={`${selectedGroup.label} 약 목록`}>
@@ -422,9 +425,11 @@ function getTileStatus(status: DoseStatus, isNext: boolean) {
   return isNext ? '다음' : '예정';
 }
 
+// 체크되지 않은 시간대는 맨 위 요약 문장("아침 약이 아직 체크되지 않았어요")과 시간대 칸이 이미 알린다 -
+// 제목 옆 배지까지 같은 말을 하면 한 화면에 세 번 겹쳐 보여 miss일 때는 배지를 그리지 않는다(2026-11-20)
 function getCardStatus(status: DoseStatus, isNext: boolean) {
   if (status === 'done') return '드셨어요';
-  if (status === 'miss') return '체크되지 않았어요';
+  if (status === 'miss') return null;
   if (status === 'beforeRegistered') return '오늘은 등록 전이었어요';
   return isNext ? '다음 약' : '예정';
 }

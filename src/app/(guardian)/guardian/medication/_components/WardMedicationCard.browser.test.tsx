@@ -154,6 +154,26 @@ describe('WardMedicationCard (Chrome)', () => {
     expect(document.body.textContent).not.toContain('안 드셨어요');
   });
 
+  it('체크되지 않은 시간대는 요약 문장과 시간대 칸에만 알리고 제목 옆 배지로 다시 말하지 않는다 (2026-11-20)', async () => {
+    const screen = await renderCard([
+      medication(1, { name: '혈압약', timeSlot: 'MORNING', doseTime: '06:00:00' }),
+      medication(2, { name: '비타민', timeSlot: 'DINNER', doseTime: '18:00:00' }),
+    ]);
+
+    await expect.element(screen.getByText('아침 약이 아직 체크되지 않았어요')).toBeVisible();
+    const tiles = screen.getByRole('group', { name: '시간대 고르기' });
+    await expect.element(tiles.getByRole('button', { name: /아침/ })).toMatchTextContent('체크되지 않았어요');
+    // 처음 고른 시간대가 체크되지 않은 아침이어도 제목 옆 배지는 없다 - 요약 1곳 + 칸 1곳
+    await expect.element(screen.getByRole('heading', { name: /아침 약/ })).toBeVisible();
+    expect(document.body.textContent?.match(/체크되지 않았어요/g)).toHaveLength(2);
+    expect(document.querySelector('[class*="slotStatus"]')).toBeNull();
+
+    // 다른 상태 배지는 그대로 보인다
+    await tiles.getByRole('button', { name: /저녁/ }).click();
+    await expect.element(screen.getByRole('heading', { name: /저녁 약/ })).toBeVisible();
+    expect(document.querySelector('[class*="slotStatus"]')?.textContent).toBe('예정');
+  });
+
   it('약 이름은 BE 짧은 이름(displayName)으로 보이고, 수정 창 입력값은 원래 이름이다', async () => {
     const original = '다이아벡스정500밀리그램(메트포르민염산염)';
     const screen = await renderCard([medication(1, { name: original, displayName: '다이아벡스정' })]);
