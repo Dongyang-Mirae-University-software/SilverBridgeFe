@@ -18,7 +18,7 @@ function getShareContent(userId: string) {
   const link = new URL('/guardian/wards/register', window.location.origin);
   link.searchParams.set('targetId', userId);
   const url = link.toString();
-  const text = `[실버브릿지] 저를 가족으로 등록해 주세요.\n내 ID: ${userId}\n아래 링크에서 로그인한 뒤 '가족 등록'에 ID를 넣어 주세요.\n${url}`;
+  const text = `[CareAI] 저를 가족으로 등록해 주세요.\n내 ID: ${userId}\n아래 링크에서 로그인한 뒤 '가족 등록'에 ID를 넣어 주세요.\n${url}`;
 
   return { text, url };
 }
@@ -58,7 +58,7 @@ export function WardIdSharePanel({ userId }: Props) {
     } catch {
       try {
         if (navigator.share) {
-          await navigator.share({ title: '실버브릿지 가족 등록', text, url });
+          await navigator.share({ title: 'CareAI 가족 등록', text, url });
         } else {
           await copyText(text);
           setNotice('카카오톡을 열지 못해 가족 등록 안내를 복사했어요.');
