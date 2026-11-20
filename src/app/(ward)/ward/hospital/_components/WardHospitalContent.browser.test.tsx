@@ -94,8 +94,10 @@ describe('WardHospitalContent (Chrome)', () => {
     Object.values(api).forEach(fn => fn.mockReset());
     api.getHospitals.mockResolvedValue([HOSPITAL]);
   });
-  afterEach(() => {
+  // 폭을 바꾼 테스트가 중간에 실패해도 뒤 테스트가 좁은 화면에서 돌지 않게 늘 되돌린다(#304 점검 L-3)
+  afterEach(async () => {
     document.body.innerHTML = '';
+    await page.viewport(375, 812);
   });
 
   it('다가오는 진료만 보여 주고 지난 진료·시연 안내는 없으며, 버튼은 하나도 없다', async () => {
@@ -162,7 +164,6 @@ describe('WardHospitalContent (Chrome)', () => {
     const screen = await renderContent();
     await expect.element(screen.getByText('123일 뒤')).toBeVisible();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(320);
-    await page.viewport(375, 812);
   });
 
   it('다가오는 예약이 많으면 그다음 카드는 1장만 보이고 더 보기로 펼친다', async () => {
@@ -254,7 +255,6 @@ describe('WardHospitalContent (Chrome)', () => {
     expect(window.innerWidth).toBe(width);
     const content = screen.container.firstElementChild as HTMLElement;
     expect(content.getBoundingClientRect().height).toBeLessThanOrEqual(height - 86 - padding);
-    await page.viewport(375, 812);
   });
 
   it('375px에서는 넘치더라도 큰 카드는 한 화면 안에 다 보인다', async () => {
@@ -277,6 +277,5 @@ describe('WardHospitalContent (Chrome)', () => {
     const later = screen.getByRole('region', { name: '그 밖의 예약' });
     await expect.element(later.getByText('7일 뒤')).toBeVisible();
     expectNoSplit(later.element());
-    await page.viewport(375, 812);
   });
 });
