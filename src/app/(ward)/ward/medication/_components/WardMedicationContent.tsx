@@ -14,7 +14,7 @@ import {
   wardTodayMedicationQueryKey,
   wardTodayMedicationQueryOptions,
 } from '@/service/query/ward/medication';
-import { wardMedicationDisplayNames } from '@/utils/medication/displayName';
+import { medicationDisplayName } from '@/utils/medication/displayName';
 import { useKstNow } from '@/utils/reservation/useKstNow';
 import {
   formatDoseAmount,
@@ -98,8 +98,6 @@ export function WardMedicationContent() {
   const focusedGroup = medicationGroups.find(group => group.key === focusedGroupKey);
   // 디자인 시안: 늘 한 시간대를 크게 보여 준다 - 고른 시간대, 없으면 아직 안 끝난 첫 시간대, 다 끝났으면 첫 시간대
   const selectedGroup = focusedGroup ?? firstIncompleteGroup ?? medicationGroups[0] ?? null;
-  // 같은 칸에서 줄인 이름이 겹치면 원래 이름(용량 포함)으로 - 2026-11-16 점검 L-1
-  const selectedDisplayNames = wardMedicationDisplayNames(selectedGroup?.medications.map(medication => medication.name) ?? []);
   const selectedGroupMedicationIds = selectedGroup?.actionableMedications.map(medication => medication.medicationId) ?? [];
 
   // 복용 시각이 지났는데 체크하지 않은 시간대 - 오늘 목록일 때만 센다(자정 직후 다시 불러오기 전에는 표시하지 않는다)
@@ -221,12 +219,12 @@ export function WardMedicationContent() {
               </div>
               <div className={cx('body')}>
                 <ul className={cx('medGrid', getMedGridSize(selectedGroup.medications.length))}>
-                  {selectedGroup.medications.map((medication, index) => {
-                    const displayName = selectedDisplayNames[index];
+                  {selectedGroup.medications.map(medication => {
+                    const displayName = medicationDisplayName(medication);
                     const beforeRegistered = !medication.taken && isRegisteredAfterDose(medication, doseDate);
                     return (
                       <li key={medication.medicationId} className={cx('medCell', { muted: beforeRegistered })}>
-                        {/* 긴 이름은 끝의 용량 표기를 뺀다(줄바꿈 방지, 겹치면 원래 이름) - 원래 이름은 title 로 남긴다 */}
+                        {/* BE 짧은 이름(displayName, 없으면 원래 이름) - 원래 이름(용량·성분 포함)은 title 로 남긴다 */}
                         <span className={cx('medName')} title={medication.name}>
                           {displayName}
                         </span>

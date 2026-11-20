@@ -33,6 +33,7 @@ export interface GuardianDashboardMedicationMostUrgent {
   wardName: string | null;
   medicationId: number;
   name: string;
+  displayName?: string | null; // 화면용 짧은 이름(BE #503) - medicationDisplayName()으로 읽는다
   timeSlot: MedicationTimeSlot;
   doseTime: string;
 }

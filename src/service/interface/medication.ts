@@ -5,7 +5,9 @@ export type MedicationTimeSlot = 'MORNING' | 'LUNCH' | 'DINNER' | 'BEDTIME';
 
 export interface MedicationItem {
   medicationId: number;
-  name: string;
+  name: string; // 저장된 원본(허가 품목명이면 용량·성분 괄호 포함) - 약 수정 창 입력값
+  // 화면에 보일 짧은 이름(끝쪽 용량·성분 괄호를 뗌, BE #503). 옛 BE 응답에는 없다 - medicationDisplayName()으로 읽는다
+  displayName?: string | null;
   timeSlot: MedicationTimeSlot;
   doseTime: string; // "08:00:00"
   doseAmount: number;

@@ -10,6 +10,7 @@ import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
 import type { DoseStatus } from '@/utils/format/medication';
 import { SLOT_ORDER } from '@/utils/medication/medicationDraft';
+import { medicationDisplayName } from '@/utils/medication/displayName';
 import {
   formatDoseAmount,
   formatMedicationAlertTime,
@@ -300,7 +301,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                     >
                       <span className={cx('medicationInfo')}>
                         <span className={cx('medicationTitle')}>
-                          <span className={cx('medicationName')}>{medication.name}</span>
+                          <span className={cx('medicationName')} title={medication.name}>{medicationDisplayName(medication)}</span>
                           <span className={cx('medicationAmount')}>{formatDoseAmount(medication.doseAmount)}</span>
                         </span>
                         {isConfirming ? (
@@ -321,14 +322,14 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                             className={cx('dangerButton')}
                             disabled={deleteMutation.isPending}
                             onClick={() => handleDelete(medication)}
-                            aria-label={`${medication.name} 삭제하기`}
+                            aria-label={`${medicationDisplayName(medication)} 삭제하기`}
                           >
                             삭제
                           </button>
                         </span>
                       ) : (
                         <span className={cx('medicationActions')}>
-                          <button type="button" className={cx('editButton')} onClick={() => openEditMedication(medication)} aria-label={`${medication.name} 수정`}>
+                          <button type="button" className={cx('editButton')} onClick={() => openEditMedication(medication)} aria-label={`${medicationDisplayName(medication)} 수정`}>
                             수정
                           </button>
                           <button
@@ -339,7 +340,7 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
                               setDeleteError(null);
                               setConfirmingId(medication.medicationId);
                             }}
-                            aria-label={`${medication.name} 삭제`}
+                            aria-label={`${medicationDisplayName(medication)} 삭제`}
                           >
                             <Icon name="trash" size={17} decorative />
                           </button>

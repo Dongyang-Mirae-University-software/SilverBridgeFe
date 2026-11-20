@@ -151,6 +151,23 @@ describe('WardMedicationCard (Chrome)', () => {
     expect(document.body.textContent).not.toContain('안 드셨어요');
   });
 
+  it('약 이름은 BE 짧은 이름(displayName)으로 보이고, 수정 창 입력값은 원래 이름이다', async () => {
+    const original = '다이아벡스정500밀리그램(메트포르민염산염)';
+    const screen = await renderCard([medication(1, { name: original, displayName: '다이아벡스정' })]);
+
+    const name = screen.getByText('다이아벡스정', { exact: true });
+    await expect.element(name).toBeVisible();
+    expect(name.element().getAttribute('title')).toBe(original);
+    expect(screen.getByText(original).query()).toBeNull();
+
+    // 수정 창에 짧은 이름을 넣고 저장하면 원본이 사라진다 - 입력값은 원래 이름
+    await screen.getByRole('button', { name: '다이아벡스정 수정' }).click();
+    const dialog = screen.getByRole('dialog', { name: '약 수정' });
+    await expect.element(dialog.getByRole('textbox', { name: '약 이름' })).toHaveValue(original);
+    await dialog.getByRole('button', { name: '닫기' }).click();
+    await expect.element(dialog).not.toBeInTheDocument();
+  });
+
   it('수정 버튼은 늘 보이고, 삭제는 그 줄 안에서 확인한 뒤 지운다', async () => {
     api.deleteGuardianMedication.mockResolvedValue({});
     api.getGuardianMedications.mockResolvedValue([]);
