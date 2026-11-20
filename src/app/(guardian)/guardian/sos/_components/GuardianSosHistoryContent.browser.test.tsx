@@ -35,7 +35,7 @@ vi.mock('@/service/query/guardian', () => ({
         totalElements: 1,
         totalPages: 1,
         last: true,
-        counts: { all: 4, sosButton: 2, guardianCall: 1, chatbot119: 1 },
+        counts: { all: 6, sosButton: 2, guardianCall: 1, chatbot119: 1, chatbot109: 2 },
       }),
     });
   },
@@ -111,5 +111,43 @@ describe('SOS 이력 챗봇 119 필터 (Chrome)', () => {
 
     await expect.element(page.getByRole('button', { name: /챗봇 119/ }).first()).toBeVisible();
     await vi.waitFor(() => expect(document.querySelectorAll('[class*="eventMarker"]').length).toBeGreaterThan(0));
+    // 모르는 값에는 경로 배지를 붙이지 않는다(라벨이 없으므로)
+    expect(document.querySelectorAll('[class*="pressBadge"]')).toHaveLength(0);
+  });
+});
+
+describe('SOS 이력 챗봇 109 필터 (Chrome, 2026-11-20 BE 영향 점검 L-2)', () => {
+  const connected = async () => ({
+    data: [{ id: 1, partnerUserId: 'ward-1', partnerName: '김영희', partnerProfileImage: null, status: 'ACTIVE', connectedAt: null }],
+  });
+
+  it('챗봇 109 필터에 건수가 보이고, 누르면 triggerType CHATBOT_109 로 조회하며 항목에 라벨 배지가 붙는다', async () => {
+    data.triggerType = 'CHATBOT_109';
+    data.connections = connected;
+    await renderSos();
+
+    const filter = page.getByRole('button', { name: /챗봇 109/ });
+    await expect.element(filter.first()).toBeVisible();
+    await expect.element(filter.first()).toMatchTextContent('챗봇 109 2');
+
+    await filter.first().click();
+    await vi.waitFor(() =>
+      expect(data.historyParams.some(params => (params as { triggerType?: string }).triggerType === 'CHATBOT_109')).toBe(true),
+    );
+    await vi.waitFor(() => {
+      const badges = Array.from(document.querySelectorAll('[class*="pressBadge"]')).map(el => el.textContent);
+      expect(badges).toEqual(['챗봇 109']);
+    });
+  });
+
+  it('SOS 버튼·보호자 연락 항목에는 경로 배지가 없다', async () => {
+    for (const triggerType of ['SOS_BUTTON', 'GUARDIAN_CALL']) {
+      data.triggerType = triggerType;
+      data.connections = connected;
+      const screen = await renderSos();
+      await vi.waitFor(() => expect(document.querySelectorAll('[class*="eventMarker"]').length).toBeGreaterThan(0));
+      expect(document.querySelectorAll('[class*="pressBadge"]'), triggerType).toHaveLength(0);
+      await screen.unmount();
+    }
   });
 });

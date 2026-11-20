@@ -17,12 +17,13 @@ import styles from './GuardianSosHistoryContent.module.css';
 const cx = classNames.bind(styles);
 const PAGE_SIZE = 5;
 
-const TRIGGER_TYPE_META: Record<SosTriggerType, { filterLabel: string; tone: 'guardian' | 'sos' }> = {
-  SOS_BUTTON: { filterLabel: 'SOS 버튼', tone: 'sos' },
-  GUARDIAN_CALL: { filterLabel: '보호자 연락', tone: 'guardian' },
-  CHATBOT_119: { filterLabel: '챗봇 119', tone: 'sos' },
+// badge: 항목에 경로 라벨 배지를 붙이는 경로(챗봇 경로). 새 경로를 더할 때 여기서 함께 정한다 - 조건을 등호로 나열하지 않는다
+const TRIGGER_TYPE_META: Record<SosTriggerType, { filterLabel: string; tone: 'guardian' | 'sos'; badge: boolean }> = {
+  SOS_BUTTON: { filterLabel: 'SOS 버튼', tone: 'sos', badge: false },
+  GUARDIAN_CALL: { filterLabel: '보호자 연락', tone: 'guardian', badge: false },
+  CHATBOT_119: { filterLabel: '챗봇 119', tone: 'sos', badge: true },
   // 챗봇 위기 답의 109(자살예방 상담전화) 버튼 - 2026-11-20 사용자 결정으로 119와 나눠 보인다(BE #507)
-  CHATBOT_109: { filterLabel: '챗봇 109', tone: 'sos' },
+  CHATBOT_109: { filterLabel: '챗봇 109', tone: 'sos', badge: true },
 };
 
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
@@ -168,7 +169,8 @@ export default function GuardianSosHistoryContent() {
                   </div>
                   {/* v13 시안: 설명 문구 없이 SOS는 연달아 누른 횟수, 보호자 연락은 받은 보호자만 뱃지로 */}
                   {item.pressCount !== undefined && item.pressCount >= 2 && <strong className={cx('pressBadge')}>{item.pressCount}번 연달아 누름</strong>}
-                  {(item.triggerType === 'CHATBOT_119' || item.triggerType === 'CHATBOT_109') && (
+                  {/* 모르는 경로 값(메타 없음)에는 배지를 붙이지 않는다 */}
+                  {TRIGGER_TYPE_META[item.triggerType]?.badge && (
                     <strong className={cx('pressBadge')}>{TRIGGER_TYPE_META[item.triggerType].filterLabel}</strong>
                   )}
                   {item.calledGuardianName && (
