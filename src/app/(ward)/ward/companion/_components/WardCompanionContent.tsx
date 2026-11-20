@@ -195,8 +195,15 @@ export function WardCompanionContent() {
   // 고른 칸이 없으면 위 안내 띠와 같은 시간대(지금 열린 시간대)를 고른 것으로 본다 - 띠는 '오후 3시'인데
   // 칸·말풍선은 첫 칸 '오전 9시'로 보이던 것(2026-11-20). 열린 시간대가 없으면 첫 칸
   const openTestSlot = openCompanionSlot(today.data);
-  const testSlot = pickedTestSlot ?? (openTestSlot && TEST_SLOTS.includes(openTestSlot) ? openTestSlot : TEST_SLOTS[0]);
+  // 보던 중 시간대 창이 닫혀도(1분 갱신) 마지막으로 열렸던 시간대를 그대로 고른 것으로 둔다 - 손대지 않았는데 칸이 첫 칸으로 바뀌던 것(#307 점검 L-1)
+  const [lastOpenTestSlot, setLastOpenTestSlot] = useState<string | null>(null);
+  if (openTestSlot && openTestSlot !== lastOpenTestSlot) setLastOpenTestSlot(openTestSlot);
+  const autoTestSlot = openTestSlot ?? lastOpenTestSlot;
+  const testSlot = pickedTestSlot ?? (autoTestSlot && TEST_SLOTS.includes(autoTestSlot) ? autoTestSlot : TEST_SLOTS[0]);
   const testEntrySlot = testMode && pushedTestSlot && TEST_SLOTS.includes(pushedTestSlot) ? pushedTestSlot : null;
+  // 테스트 안내 푸시로 들어온 칸이 오늘 안내 띠와 같은 시간대면 띠는 숨긴다 - 같은 시간대 시작 버튼이 둘 보이던 것(#307 점검 M-1).
+  // 띠에 남길 안내(대화가 끊긴 이유)가 있으면 그대로 보인다
+  const hideTodayBanner = testEntrySlot != null && testEntrySlot === openTestSlot && !notice;
   // 피보호자는 말벗 시간표를 알 필요가 없다 - 대화 시간 밖에 들어오면 안내 없이 홈으로(2026-11-11 사용자 결정).
   // 이미 마친 시간대도 시간 밖으로 본다(openCompanionSlot - 2026-11-11 기능 점검 F-1).
   // 대화 중(마친 화면 포함)·여는 중(F-3)·테스트 계정·불러오는 중·오류·남길 안내(대화가 끊긴 이유)가 있을 때는 머문다.
@@ -612,7 +619,7 @@ export function WardCompanionContent() {
               </button>
             </section>
           )}
-          <TodayPanel today={today.data} isLoading={today.isLoading} isError={today.isError} notice={notice} opening={pending === 'open'} onOpen={() => void withConsent(() => void handleOpen())} onRetry={() => void today.refetch()} />
+          {!hideTodayBanner && <TodayPanel today={today.data} isLoading={today.isLoading} isError={today.isError} notice={notice} opening={pending === 'open'} onOpen={() => void withConsent(() => void handleOpen())} onRetry={() => void today.refetch()} />}
           {testMode && (
             <section className={cx('testStart', { wide })} aria-label="안부 말벗 테스트">
               <div className={cx('testHero')}>

@@ -70,8 +70,7 @@ function apiError(status: number, code: string) {
   });
 }
 
-async function renderCompanion() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+async function renderCompanion(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   return render(
     <QueryClientProvider client={client}>
       <WardCompanionContent />
@@ -1355,6 +1354,36 @@ describe('테스트 시작 화면 - 오늘 안내 띠와 함께 (Chrome)', () =>
     expect(page.getByRole('heading', { name: /안부 인사 시간이에요/ }).elements()).toHaveLength(0);
   });
 
+  it('보던 중 시간대 창이 닫혀도(현황 다시 받기) 고른 것으로 둔 오후 3시를 유지한다(#307 점검 L-1)', async () => {
+    api.today.mockResolvedValue(OPEN_3PM);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    await renderCompanion(client);
+    await expect.element(page.getByRole('button', { name: '오후 3시', exact: true })).toHaveAttribute('aria-pressed', 'true');
+
+    api.today.mockResolvedValue(CLOSED);
+    await client.invalidateQueries();
+    await expect.poll(() => page.getByRole('heading', { name: /안부 인사 시간이에요/ }).elements().length).toBe(0);
+    await expect.element(page.getByRole('button', { name: '오후 3시', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(page.getByText('오후 3시 안부 인사를 나눠 볼까요?', { exact: true })).toBeVisible();
+  });
+
+  it('테스트 푸시가 띠와 같은 시간대면 띠를 숨겨 시작 버튼이 하나만 보인다(#307 점검 M-1)', async () => {
+    api.today.mockResolvedValue(OPEN_3PM);
+    nav.search = '?testSlot=15:00';
+    await renderCompanion();
+    await expect.element(page.getByRole('button', { name: '오후 3시 대화 시작' })).toBeVisible();
+    expect(page.getByRole('heading', { name: '오후 3시 안부 인사 시간이에요' }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: '이야기 시작하기' }).elements()).toHaveLength(0);
+  });
+
+  it('테스트 푸시가 띠와 다른 시간대면 띠도 그대로 보인다', async () => {
+    api.today.mockResolvedValue(OPEN_3PM);
+    nav.search = '?testSlot=18:00';
+    await renderCompanion();
+    await expect.element(page.getByRole('button', { name: '오후 6시 대화 시작' })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: '오후 3시 안부 인사 시간이에요' })).toBeVisible();
+  });
+
   // 화면 위아래 몫(머리줄 + 본문 여백) - 넓은 화면 156px(.page 채움 기준과 같음)·세로 태블릿 132px(gosky 실측)
   it.each([
     [1180, 820, 156, true], [1024, 768, 156, true], [820, 1180, 132, true], [768, 1024, 132, true],
@@ -1379,6 +1408,28 @@ describe('테스트 시작 화면 - 오늘 안내 띠와 함께 (Chrome)', () =>
         const start = hero.querySelector('button') as HTMLElement;
         expect(start.getBoundingClientRect().left).toBeGreaterThan(heading.getBoundingClientRect().right);
       }
+    } finally {
+      boxSizing.remove();
+    }
+  });
+
+  // 띠와 같은 시간대 테스트 푸시로 들어오면 띠 대신 한 줄로 줄인 푸시 칸 + 두 카드(#307 점검 M-1).
+  // 다른 시간대 푸시는 띠까지 셋이 떠 태블릿에서 49~101px 남는다 - 드문 겹침이라 화면 스크롤에 맡긴다(시니어 글자·버튼을 더 줄이지 않음)
+  it.each([
+    [1180, 820, 156], [1024, 768, 156], [820, 1180, 132], [768, 1024, 132],
+  ])('%i×%i: 띠와 같은 시간대 테스트 푸시로 들어와도 화면 높이 안에 들어간다', async (width, height, chrome) => {
+    await page.viewport(width, height);
+    const boxSizing = document.createElement('style');
+    boxSizing.textContent = '*, *::before, *::after { box-sizing: border-box; }';
+    document.head.appendChild(boxSizing);
+    try {
+      api.today.mockResolvedValue(OPEN_3PM);
+      nav.search = '?testSlot=15:00';
+      await renderCompanion();
+      await expect.element(page.getByRole('button', { name: '안부 알림 받아 보기' })).toBeVisible();
+      const cards = document.querySelector('section[aria-label="안부 말벗 테스트"]') as HTMLElement;
+      const pageEl = cards.parentElement as HTMLElement;
+      expect(pageEl.getBoundingClientRect().height).toBeLessThanOrEqual(height - chrome + 1);
     } finally {
       boxSizing.remove();
     }
