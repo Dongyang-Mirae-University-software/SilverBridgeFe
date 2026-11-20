@@ -58,6 +58,30 @@ const HOSPITAL: IHospital = {
   closeTime: '18:00',
 };
 
+// 글자 하나가 놓인 줄의 위치(top) - "·"와 진료과, "오전"과 "9시"가 같은 줄인지 비교한다(#301 점검 M-1·L-1)
+function charTop(node: Node, offset: number) {
+  const range = document.createRange();
+  range.setStart(node, offset);
+  range.setEnd(node, offset + 1);
+  return range.getBoundingClientRect().top;
+}
+
+function textNodes(el: Element) {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  while (walker.nextNode()) if ((walker.currentNode as Text).data) nodes.push(walker.currentNode as Text);
+  return nodes;
+}
+
+function expectNoSplit(card: Element) {
+  const dept = Array.from(card.querySelectorAll('span')).find(span => span.textContent?.startsWith('·')) as Element;
+  const deptNodes = textNodes(dept);
+  expect(Math.abs(charTop(deptNodes[0], 0) - charTop(deptNodes[deptNodes.length - 1], 0))).toBeLessThan(2);
+  const time = Array.from(card.querySelectorAll('span')).find(span => /^오[전후]/.test(span.textContent ?? '')) as Element;
+  const [timeNode] = textNodes(time);
+  expect(Math.abs(charTop(timeNode, 0) - charTop(timeNode, 3))).toBeLessThan(2);
+}
+
 function renderContent(queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -241,5 +265,18 @@ describe('WardHospitalContent (Chrome)', () => {
     const next = screen.getByRole('region', { name: '다음 진료' });
     await expect.element(next).toBeVisible();
     expect((next.element() as HTMLElement).getBoundingClientRect().height).toBeLessThanOrEqual(812 - 86 - 46);
+  });
+
+  it('360px 그다음 카드에서 진료과 앞 가운뎃점·"오전 9시"가 줄 끝에서 갈라지지 않는다', async () => {
+    await page.viewport(360, 812);
+    api.getMyReservations.mockResolvedValue([
+      reservation(1, addDays(TODAY, 3), '10:00'),
+      { ...reservation(2, addDays(TODAY, 7), '09:00', 'BOOKED', '강남종합병원'), department: '소아청소년과' },
+    ]);
+    const screen = await renderContent();
+    const later = screen.getByRole('region', { name: '그 밖의 예약' });
+    await expect.element(later.getByText('7일 뒤')).toBeVisible();
+    expectNoSplit(later.element());
+    await page.viewport(375, 812);
   });
 });

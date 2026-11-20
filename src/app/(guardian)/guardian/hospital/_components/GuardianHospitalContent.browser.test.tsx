@@ -112,6 +112,30 @@ function step(screen: Awaited<ReturnType<typeof renderContent>>, label: string) 
   return screen.getByRole('list', { name: '예약 단계' }).getByRole('listitem').filter({ hasText: label });
 }
 
+// 글자 하나가 놓인 줄의 위치(top) - "·"와 진료과, "오전"과 "9시"가 같은 줄인지 비교한다(#301 점검 M-1·L-1)
+function charTop(node: Node, offset: number) {
+  const range = document.createRange();
+  range.setStart(node, offset);
+  range.setEnd(node, offset + 1);
+  return range.getBoundingClientRect().top;
+}
+
+function textNodes(el: Element) {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  while (walker.nextNode()) if ((walker.currentNode as Text).data) nodes.push(walker.currentNode as Text);
+  return nodes;
+}
+
+function expectNoSplit(card: Element) {
+  const dept = Array.from(card.querySelectorAll('span')).find(span => span.textContent?.startsWith('·')) as Element;
+  const deptNodes = textNodes(dept);
+  expect(Math.abs(charTop(deptNodes[0], 0) - charTop(deptNodes[deptNodes.length - 1], 0))).toBeLessThan(2);
+  const time = Array.from(card.querySelectorAll('span')).find(span => /^오[전후]/.test(span.textContent ?? '')) as Element;
+  const [timeNode] = textNodes(time);
+  expect(Math.abs(charTop(timeNode, 0) - charTop(timeNode, 3))).toBeLessThan(2);
+}
+
 function renderContent() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   // 실제 화면처럼 flex 항목(PageLayout: flex 1 1 auto, min-width 없음) 안에 둔다 - 안쪽 글자 폭이 밖으로 새는지 보려고
@@ -361,6 +385,17 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     await expect.element(step(screen, '2. 날짜·시간')).toHaveAttribute('aria-current', 'step');
     await expect.element(screen.getByText('강남내과', { exact: false })).toBeVisible();
+  });
+
+  it('L-2 예약을 취소해 그 카드가 사라지면 포커스가 [새 진료 예약하기]로 간다(#301 점검)', async () => {
+    api.getMyReservations.mockResolvedValueOnce([reservation(7, TOMORROW, '10:00')]).mockResolvedValue([]);
+    const screen = await renderContent();
+
+    await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
+    await screen.getByRole('dialog').getByRole('button', { name: '예약 취소' }).click();
+
+    await expect.element(screen.getByText('잡혀 있는 예약이 없어요')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: '새 진료 예약하기' })).toHaveFocus();
   });
 
   it('그 밖의 예약 카드에서도 예약을 취소한다', async () => {
@@ -902,6 +937,19 @@ describe('GuardianHospitalContent (Chrome)', () => {
     for (const el of document.querySelectorAll('[data-testid="page-layout"] *')) {
       expect(el.getBoundingClientRect().right).toBeLessThanOrEqual(360.5);
     }
+    await page.viewport(375, 812);
+  });
+
+  it('360px 그다음 카드에서 진료과 앞 가운뎃점·"오전 9시"가 줄 끝에서 갈라지지 않는다', async () => {
+    await page.viewport(360, 800);
+    api.getMyReservations.mockResolvedValue([
+      reservation(1, addDays(TODAY, 3), '10:00'),
+      { ...reservation(2, addDays(TODAY, 7), '09:00', 'BOOKED', '강남종합병원'), department: '소아청소년과' },
+    ]);
+    const screen = await renderContent();
+    const later = screen.getByRole('group', { name: '그 밖의 예약' });
+    await expect.element(later.getByText('7일 뒤')).toBeVisible();
+    expectNoSplit(later.element());
     await page.viewport(375, 812);
   });
 });

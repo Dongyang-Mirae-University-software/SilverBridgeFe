@@ -12,6 +12,7 @@ import {
   formatDateShort,
   formatSlot,
   formatTime,
+  formatTimeDisplay,
   hospitalRows,
   hoursForDay,
   isClosedDay,
@@ -88,6 +89,9 @@ describe('reservationView', () => {
   it('시각 표기', () => {
     expect(formatTime('10:00')).toBe('오전 10시');
     expect(formatTime('15:30')).toBe('오후 3시 30분');
+    // 화면용은 오전·오후와 시 사이만 줄 바꿈 없는 공백(분 앞은 그대로)
+    expect(formatTimeDisplay('09:00')).toBe('오전\u00a09시');
+    expect(formatTimeDisplay('15:30')).toBe('오후\u00a03시 30분');
     expect(formatTime('12:00')).toBe('오후 12시');
     expect(formatSlot('09:00')).toBe('9:00');
     expect(formatSlot('14:30')).toBe('2:30');

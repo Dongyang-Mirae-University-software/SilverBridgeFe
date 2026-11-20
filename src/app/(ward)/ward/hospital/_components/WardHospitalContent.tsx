@@ -10,7 +10,8 @@ import {
   daysBetween,
   findHospitalByName,
   formatDateLong,
-  formatTime,
+  formatTimeDisplay,
+  NBSP,
   reservationErrorMessage,
   splitReservations,
 } from '@/utils/reservation/reservationView';
@@ -84,10 +85,14 @@ export function WardHospitalContent() {
               <div className={cx('laterBody')}>
                 <div className={cx('laterDate')}>
                   {formatDateLong(item.reservationDate)}{' '}
-                  <span className={cx('laterTime')}>{formatTime(item.reservationTime)}</span>
+                  <span className={cx('laterTime')}>{formatTimeDisplay(item.reservationTime)}</span>
                 </div>
                 <div className={cx('laterName')}>
-                  {item.hospitalName} <span className={cx('rowDept')}>· {item.department}</span>
+                  {item.hospitalName}{' '}
+                  <span className={cx('rowDept')}>
+                    ·{NBSP}
+                    {item.department}
+                  </span>
                 </div>
               </div>
             </div>
