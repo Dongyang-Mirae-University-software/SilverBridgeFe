@@ -127,7 +127,8 @@ function shouldRefreshOnUnauthorized(config?: RetryableRequestConfig, errorCode?
 // 서버가 이 세션을 받아 주지 않는 경우(refresh 토큰 없음·만료·폐기). 이때만 세션을 지우고 로그인 화면으로 보낸다
 export class SessionRejectedError extends Error {}
 
-const SESSION_REJECTED_STATUSES = new Set([401, 403, 404]);
+// 400 = 쿠키에도 본문에도 refresh 토큰이 없음(BE AuthController.refresh) - 다시 시도해도 되살릴 세션이 없다
+const SESSION_REJECTED_STATUSES = new Set([400, 401, 403, 404]);
 const REFRESH_LOCK_NAME = 'careai-token-refresh';
 
 // 갱신 실패 중 세션을 지워야 하는 것만 true. 429·5xx·시간 초과·네트워크 오류는 일시 장애라
@@ -214,7 +215,7 @@ export async function endLeftoverSession() {
       if (leftoverAccessToken) await sendWithEndedSession(leftoverAccessToken, { method: 'post', url: '/auth/logout' });
       clearLeftoverSessionTrace();
     } catch (error) {
-      // 401·403·404 = 남은 세션이 없다(서버가 쿠키도 지운다)
+      // 400(refresh 쿠키 없음)·401·403·404 = 남은 세션이 없다(서버가 쿠키도 지운다)
       if (isSessionRejected(error)) clearLeftoverSessionTrace();
     }
   });

@@ -57,6 +57,13 @@ describe('restoreSession', () => {
     await expect(restoreSession()).resolves.toEqual({ status: 'rejected' });
   });
 
+  it('갱신 400(refresh 쿠키 없음) → rejected(로그인 화면) - 다시 시도 안내를 띄우지 않는다', async () => {
+    refreshAccessToken.mockRejectedValue({ response: { status: 400 } });
+    const { restoreSession } = await import('./sessionRestore');
+
+    await expect(restoreSession()).resolves.toEqual({ status: 'rejected' });
+  });
+
   it('갱신 5xx → unavailable(세션 유지 + 다시 시도 안내)', async () => {
     refreshAccessToken.mockRejectedValue({ response: { status: 503 } });
     const { restoreSession } = await import('./sessionRestore');

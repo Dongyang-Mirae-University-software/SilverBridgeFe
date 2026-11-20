@@ -150,7 +150,7 @@ describe('refresh 토큰을 화면이 다루지 않는다', () => {
 });
 
 describe('갱신 실패 분류', () => {
-  it.each([401, 403, 404])('갱신 %i → 세션을 지운다', async status => {
+  it.each([400, 401, 403, 404])('갱신 %i → 세션을 지운다 (400 = refresh 쿠키 없음)', async status => {
     store.setAuthTokens({ accessToken: expiredAccessToken(), remember: true });
     handler = config => respond(config, status, {});
 
