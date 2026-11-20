@@ -246,70 +246,6 @@
   color: var(--sb-brand);
 }
 
-.dept {
-  color: var(--sb-ink-mute);
-  font-weight: 700;
-}
-
-/* 다음 진료 - 왼쪽 남은 날 판 + 오른쪽 내용 */
-.nextCard {
-  display: grid;
-  grid-template-columns: minmax(150px, 0.38fr) minmax(0, 1fr);
-  overflow: hidden;
-  border: 1.5px solid var(--sb-brand-soft);
-}
-
-.nextDday {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  padding: 22px 24px;
-  background: var(--sb-brand-50);
-}
-
-.nextLabel {
-  color: var(--sb-ink-soft);
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.ddayBig {
-  color: var(--sb-brand);
-  font-size: 40px;
-  font-weight: 900;
-  line-height: 1.1;
-}
-
-.nextBody {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 14px 20px;
-  min-width: 0;
-  padding: 22px 26px;
-}
-
-.nextText {
-  flex: 1;
-  min-width: 0;
-}
-
-.nextWhen {
-  color: var(--sb-ink);
-  font-size: 23px;
-  font-weight: 900;
-  word-break: keep-all;
-}
-
-.nextWhere {
-  margin-top: 6px;
-  color: var(--sb-ink);
-  font-size: 18px;
-  font-weight: 800;
-  word-break: keep-all;
-}
-
 .cancelButton {
   min-height: 46px;
   padding: 0 18px;
@@ -318,6 +254,77 @@
 
 .nextCancel {
   min-width: 112px;
+}
+
+.laterCancel {
+  flex-shrink: 0;
+}
+
+/* 그 밖의 예약 - 피보호자 화면의 "그다음" 카드(WardHospitalContent.module.css laterCard)와 같은 크기 */
+.laterList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.laterCard {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+  padding: 20px 28px;
+}
+
+.laterWhen {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  min-width: 120px;
+  padding-right: 22px;
+  border-right: 2px solid var(--sb-line-soft);
+  text-align: center;
+}
+
+.laterLabel {
+  color: var(--sb-ink-mute);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.laterDday {
+  color: var(--sb-ink);
+  font-size: 28px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.laterBody {
+  flex: 1;
+  min-width: 180px;
+}
+
+.laterDate {
+  color: var(--sb-ink);
+  font-size: 26px;
+  font-weight: 900;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.laterName {
+  margin-top: 4px;
+  color: var(--sb-ink-soft);
+  font-size: 22px;
+  font-weight: 800;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.laterDept {
+  color: var(--sb-ink-mute);
+  font-weight: 600;
 }
 
 .emptyCard {
@@ -338,53 +345,6 @@
 .listCard {
   padding: 0;
   overflow: hidden;
-}
-
-/* 그 밖의 예약 */
-.moreRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  padding: 16px 24px;
-}
-
-.moreRow + .moreRow {
-  border-top: 1px solid var(--sb-line-soft);
-}
-
-.ddayChip {
-  flex-shrink: 0;
-  min-width: 72px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: var(--sb-bg-soft);
-  color: var(--sb-ink);
-  font-size: 15px;
-  font-weight: 900;
-  text-align: center;
-}
-
-.moreText {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 160px;
-}
-
-.moreWhen {
-  color: var(--sb-ink);
-  font-size: 17px;
-  font-weight: 800;
-  word-break: keep-all;
-}
-
-.moreWhere {
-  color: var(--sb-ink-soft);
-  font-size: 15px;
-  font-weight: 700;
-  word-break: keep-all;
 }
 
 /* 지난 진료 - 카드 격자, 다시 예약할 수 있는 카드만 누를 수 있다 */
@@ -1097,29 +1057,10 @@
   min-width: 0;
 }
 
-/* 디자인의 600px 기준 - 다음 진료 카드를 위아래로 쌓고 버튼을 한 줄로 */
+/* 디자인의 600px 기준 - 예약 취소 버튼을 한 줄로 */
 @media (max-width: 600px) {
-  .nextCard {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .nextDday {
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: space-between;
-    padding: 16px 20px;
-  }
-
-  .ddayBig {
-    font-size: 30px;
-  }
-
-  .nextBody {
-    padding: 20px;
-  }
-
   .nextCancel,
-  .moreRow .cancelButton {
+  .laterCancel {
     width: 100%;
   }
 
@@ -1142,10 +1083,27 @@
     padding: 20px 18px;
   }
 
-  .moreRow,
   .hospitalRow {
     padding-left: 18px;
     padding-right: 18px;
+  }
+
+  .laterCard {
+    gap: 14px 16px;
+    padding: 18px 20px;
+  }
+
+  .laterWhen {
+    min-width: 84px;
+    padding-right: 16px;
+  }
+
+  .laterDate {
+    font-size: 22px;
+  }
+
+  .laterName {
+    font-size: 20px;
   }
 
   .pad22 {

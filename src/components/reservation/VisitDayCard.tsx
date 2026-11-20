@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
@@ -27,10 +28,12 @@ interface Props {
   compact?: boolean;
   /** 화면 읽기용 이름 - 다음 진료 / 예약 완료 */
   ariaLabel?: string;
+  /** 카드 아래쪽 조작(보호자 화면의 [예약 취소]) - 없으면 자리도 두지 않는다 */
+  action?: ReactNode;
 }
 
-/** 병원 가는 날 카드 - 피보호자 병원 화면의 다음 진료와 챗봇 예약 완료가 같은 모양을 쓴다. */
-export function VisitDayCard({ hospitalName, department, date, time, today, address, compact, ariaLabel }: Props) {
+/** 병원 가는 날 카드 - 피보호자 병원 화면·보호자 예약 현황의 다음 진료와 챗봇 예약 완료가 같은 모양을 쓴다. */
+export function VisitDayCard({ hospitalName, department, date, time, today, address, compact, ariaLabel, action }: Props) {
   const validDate = ISO_DATE.test(date);
   const days = validDate ? daysBetween(today, date) : -1;
   return (
@@ -61,6 +64,7 @@ export function VisitDayCard({ hospitalName, department, date, time, today, addr
             {address && <div className={cx('address')}>{address}</div>}
           </div>
         </div>
+        {action && <div className={cx('action')}>{action}</div>}
       </div>
     </section>
   );
