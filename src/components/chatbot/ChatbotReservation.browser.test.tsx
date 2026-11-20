@@ -4,11 +4,12 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import ChatbotContent from './ChatbotContent';
+import { expectQuestionAtTop, settledMessageList } from './chatScrollTestUtils';
 import { clearSelectedWardId } from '@/store/selectedWardStore';
 
 // 마이크 버튼 이름 - 보호자 "말로 입력하기", 피보호자는 보이는 글자와 같다(처음 "말로 물어보기"·답 뒤 "말로 답하기"·응급 뒤 "말로 더 묻기", 2026-11-12)
@@ -575,5 +576,77 @@ describe('예약 화면 점검 반영(2026-11-04)', () => {
     await userEvent.click(page.getByRole('button', { name: '혈압약을 같이 먹어도 되나요?' }));
     await expect.element(page.getByText('예약 목록이에요.')).toBeVisible();
     expect(page.getByRole('button', { name: '상세', exact: true }).elements()).toHaveLength(1);
+  });
+});
+
+// FE #299 점검 L-1·L-3: 실제 도구 카드(병원 목록)와 예약 선택지가 붙은 긴 답에서도 질문부터 보인다.
+// 이 파일은 ChatToolCard·ChatUiPrompt 를 목으로 바꾸지 않아 실제 카드 높이로 판단한다.
+describe('새 답 스크롤 - 실제 카드·예약 선택 (#299 점검 L-1·L-3)', () => {
+  const HOSPITALS = Array.from({ length: 8 }, (_, i) => ({
+    id: `h-${i + 1}`,
+    name: `튼튼정형외과 ${i + 1}호점`,
+    department: '정형외과',
+    address: `서울특별시 강남구 테헤란로 ${100 + i}길 ${i + 1}, 2층`,
+  }));
+  const HOSPITAL_LIST = {
+    reply: '가까운 정형외과를 찾았어요. 원하는 곳의 [예약하기]를 눌러 주세요.',
+    engine: 'ai',
+    type: 'tool_result',
+    intent: 'hospital_reservation',
+    tool: 'search_hospital',
+    toolData: HOSPITALS,
+  };
+
+  afterEach(async () => {
+    await page.viewport(1280, 800);
+  });
+
+  // 실제 화면처럼 높이가 정해진 상자 안에 그려 대화 영역이 스크롤되게 한다
+  function renderSized(variant: 'ward' | 'guardian') {
+    return renderChat(
+      <div style={{ height: '100vh' }}>
+        <ChatbotContent variant={variant} />
+      </div>,
+    );
+  }
+
+  function lastQuestion(): HTMLElement {
+    const bubbles = document.querySelectorAll<HTMLElement>('[data-message-id]');
+    return bubbles[bubbles.length - 1];
+  }
+
+  it('보호자 아이폰(393x852) - 병원 목록 카드가 붙은 긴 답이 와도 방금 한 질문이 맨 위에 보인다 (L-3)', async () => {
+    api.role.mockReturnValue('GUARDIAN');
+    await page.viewport(393, 852);
+    const intro = Array.from({ length: 10 }, (_, i) => `${i + 1}번째 설명입니다. 무릎 통증은 쉬면서 지켜보세요.`).join(' ');
+    api.sendChatMessage.mockResolvedValueOnce({ ...GENERAL, reply: intro }).mockResolvedValueOnce(HOSPITAL_LIST);
+    await renderSized('guardian');
+
+    await typeAndSend('무릎이 계속 아파요');
+    await expect.element(page.getByText('1번째 설명입니다', { exact: false })).toBeVisible();
+    await typeAndSend('근처 정형외과 찾아줘');
+    await vi.waitFor(() => expect(page.getByRole('button', { name: '예약하기' }).elements()).toHaveLength(8));
+
+    expect(lastQuestion().textContent).toContain('근처 정형외과 찾아줘');
+    expectQuestionAtTop(await settledMessageList(), lastQuestion());
+  });
+
+  it('피보호자 태블릿(1180x820) - 예약 선택지(서울)를 고른 뒤 병원 목록 답이 와도 고른 답 말풍선이 맨 위에 보인다 (L-1·L-3)', async () => {
+    api.role.mockReturnValue('WARD');
+    await page.viewport(1180, 820);
+    api.sendChatMessage
+      .mockResolvedValueOnce({ ...DEPARTMENT_ADVICE, reply: Array.from({ length: 8 }, () => '무릎은 정형외과에서 봐요.').join(' ') })
+      .mockResolvedValueOnce(ASK_SIDO)
+      .mockResolvedValueOnce(HOSPITAL_LIST);
+    await renderSized('ward');
+    await userEvent.click(page.getByRole('button', { name: '무릎이 아파요' }));
+    await userEvent.click(page.getByRole('button', { name: '가까운 정형외과 찾기' }));
+    await expect.element(page.getByText('어느 지역에서 찾을까요?')).toBeVisible();
+
+    await userEvent.click(page.getByRole('button', { name: '서울' }));
+    await vi.waitFor(() => expect(page.getByRole('button', { name: '예약하기' }).elements()).toHaveLength(8));
+
+    expect(lastQuestion().textContent).toContain('서울');
+    expectQuestionAtTop(await settledMessageList(), lastQuestion());
   });
 });
