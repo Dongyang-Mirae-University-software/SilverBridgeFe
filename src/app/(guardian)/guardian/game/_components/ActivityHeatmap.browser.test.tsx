@@ -16,5 +16,9 @@ describe('ActivityHeatmap', () => {
 
     await expect.poll(() => el.scrollWidth - el.clientWidth).toBeGreaterThan(0);
     await expect.poll(() => el.scrollWidth - el.clientWidth - el.scrollLeft).toBeLessThanOrEqual(1);
+
+    // 오른쪽 끝으로 밀려도 요일 열(월·수·금)은 스크롤 영역 왼쪽에 남는다
+    const weekdays = page.getByTestId('activity-heatmap-weekdays').element() as HTMLElement;
+    expect(Math.abs(weekdays.getBoundingClientRect().left - el.getBoundingClientRect().left)).toBeLessThanOrEqual(1);
   });
 });
