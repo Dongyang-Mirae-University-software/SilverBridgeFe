@@ -9,6 +9,7 @@ import { render } from 'vitest-browser-react';
 import type { AnomalyHistorySummary, AnomalyIncident } from '@/service/interface/guardian/anomaly';
 import { AnomalyClipModal, CLIP_UNAVAILABLE_MESSAGE } from './AnomalyClipModal';
 import { AnomalyHistoryContent } from './AnomalyHistoryContent';
+import { clearClipFileCache } from './clipFileCache';
 
 const api = vi.hoisted(() => ({
   getGuardianAnomalyHistory: vi.fn(),
@@ -76,6 +77,7 @@ describe('AnomalyHistoryContent (Chrome)', () => {
   afterEach(() => {
     document.body.innerHTML = '';
     Object.values(api).forEach(fn => fn.mockReset());
+    clearClipFileCache();
   });
 
   it('피보호자 목록을 받기 전에는 전체 피보호자 기록·건수를 부르지 않고 불러오는 중으로 둔다', async () => {
@@ -392,6 +394,7 @@ describe('장면별 기록 (Chrome)', () => {
   afterEach(() => {
     document.body.innerHTML = '';
     Object.values(api).forEach(fn => fn.mockReset());
+    clearClipFileCache();
   });
 
   it('영상이 여러 개인 상황은 장면마다 한 줄로 나누고, 판정은 같은 상황끼리 함께 보인다', async () => {
@@ -424,8 +427,8 @@ describe('장면별 기록 (Chrome)', () => {
 
     // 두 번째 줄(처음 장면 = older)
     await screen.getByRole('button', { name: '영상 보기' }).nth(1).click();
-    await vi.waitFor(() => expect(api.fetchGuardianAnomalyClipFile).toHaveBeenCalledWith(61));
-    expect(api.fetchGuardianAnomalyClipFile).not.toHaveBeenCalledWith(62);
+    await vi.waitFor(() => expect(api.fetchGuardianAnomalyClipFile).toHaveBeenCalledWith(61, expect.any(Function)));
+    expect(api.fetchGuardianAnomalyClipFile).not.toHaveBeenCalledWith(62, expect.anything());
     expect(screen.getByRole('group', { name: '영상 선택' }).query()).toBeNull();
   });
 });
@@ -434,9 +437,55 @@ describe('AnomalyClipModal (Chrome)', () => {
   afterEach(() => {
     document.body.innerHTML = '';
     Object.values(api).forEach(fn => fn.mockReset());
+    clearClipFileCache();
   });
 
   const clip = { clipId: 55, incidentId: 1, detectedAt: '2026-10-13T22:01:03', durationMs: 5000, width: 640, height: 360, sizeBytes: 1000, createdAt: '2026-10-13T22:01:10' };
+
+  it('받는 동안 받은 비율을 보이고, 칩에도 같은 비율을 보인다', async () => {
+    const other = { ...clip, clipId: 56, detectedAt: '2026-10-13T22:05:03' };
+    api.getGuardianAnomalyClips.mockResolvedValue([{ ...clip, sizeBytes: 1000 }, other]);
+    api.fetchGuardianAnomalyClipFile.mockImplementation((_id: number, onProgress?: (received: number) => void) => {
+      onProgress?.(450);
+      return new Promise(() => {});
+    });
+    const screen = await render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 2 })} onClose={() => undefined} />, { wrapper });
+
+    await expect.element(screen.getByText('영상을 불러오는 중이에요. 45%')).toBeInTheDocument();
+    await expect.element(screen.getByText(/불러오는 중 45%/)).toBeInTheDocument();
+  });
+
+  it('한 번 받은 영상은 닫았다 다시 열어도 다시 받지 않는다', async () => {
+    api.getGuardianAnomalyClips.mockResolvedValue([clip]);
+    api.fetchGuardianAnomalyClipFile.mockResolvedValue(new Blob(['x'], { type: 'video/webm' }));
+    const first = await render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, { wrapper });
+    await vi.waitFor(() => expect(document.querySelector('video')).not.toBeNull());
+    await first.unmount();
+
+    await render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, { wrapper });
+    await vi.waitFor(() => expect(document.querySelector('video')).not.toBeNull());
+    expect(api.fetchGuardianAnomalyClipFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('받는 사이 다른 영상을 고르면 늦게 끝난 앞 영상으로 바뀌지 않는다', async () => {
+    const other = { ...clip, clipId: 56, detectedAt: '2026-10-13T22:05:03' };
+    let finishFirst: (blob: Blob) => void = () => undefined;
+    api.getGuardianAnomalyClips.mockResolvedValue([clip, other]);
+    api.fetchGuardianAnomalyClipFile.mockImplementation((id: number) =>
+      id === 55 ? new Promise<Blob>(resolve => (finishFirst = resolve)) : Promise.resolve(new Blob(['y'], { type: 'video/webm' })),
+    );
+    const screen = await render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 2 })} onClose={() => undefined} />, { wrapper });
+    await vi.waitFor(() => expect(api.fetchGuardianAnomalyClipFile).toHaveBeenCalledWith(55, expect.any(Function)));
+
+    await screen.getByRole('button', { name: /영상 2/ }).click();
+    await vi.waitFor(() => expect(document.querySelector('video')).not.toBeNull());
+    const shown = document.querySelector('video')!.getAttribute('src');
+    finishFirst(new Blob(['x'], { type: 'video/webm' }));
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    expect(document.querySelector('video')!.getAttribute('src')).toBe(shown);
+    expect(screen.getByRole('button', { name: /영상 2/ }).element().getAttribute('aria-pressed')).toBe('true');
+  });
 
   it('404면 "볼 수 없는 영상" 안내를 보인다', async () => {
     api.getGuardianAnomalyClips.mockResolvedValue([clip]);

@@ -92,7 +92,8 @@ export async function fetchGuardianAnomalyClipHead(clipId: number, bytes: number
   return new Blob(chunks as BlobPart[], { type: 'video/webm' });
 }
 
-export async function fetchGuardianAnomalyClipFile(clipId: number): Promise<Blob> {
+// onProgress 는 지금까지 받은 바이트 수를 알린다(프록시가 Content-Length 를 넘기지 않아 전체 크기는 클립 목록의 sizeBytes 로 센다)
+export async function fetchGuardianAnomalyClipFile(clipId: number, onProgress?: (receivedBytes: number) => void): Promise<Blob> {
   const token = getAccessToken();
   const response = await fetch(`/api${GUARDIAN_ANOMALY_BASE}/clips/${clipId}/file`, {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -105,5 +106,17 @@ export async function fetchGuardianAnomalyClipFile(clipId: number): Promise<Blob
     throw error;
   }
 
-  return response.blob();
+  if (!onProgress || !response.body) return response.blob();
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    onProgress(received);
+  }
+  return new Blob(chunks as BlobPart[], { type: response.headers.get('content-type') ?? 'video/webm' });
 }
