@@ -4,8 +4,8 @@ import type { MetadataRoute } from 'next';
 // (아이폰 홈 화면은 manifest 대신 같은 폴더의 apple-icon.png 를 쓴다)
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: '실버브릿지',
-    short_name: '실버브릿지',
+    name: 'CareAI',
+    short_name: 'CareAI',
     start_url: '/',
     display: 'standalone',
     background_color: '#fbf6f0',
