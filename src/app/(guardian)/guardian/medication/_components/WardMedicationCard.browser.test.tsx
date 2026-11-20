@@ -2,7 +2,7 @@
 // Claude Design(2026-10-30): 위에 시간대 칸, 아래에 고른 시간대의 약. 삭제는 그 줄 안에서 확인한다.
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Fragment, ReactNode } from 'react';
+import { Fragment, ReactNode, useEffect } from 'react';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
@@ -79,8 +79,11 @@ function summary(medications: MedicationItem[]): WardMedicationSummary {
   };
 }
 
+// 모달은 전역 스토어라 테스트가 중간에 실패하면 열린 창이 다음 테스트로 남는다 - 렌더할 때 비운다(2026-11-20 FE #294 점검 L-2)
 function ModalOutlet() {
   const modals = useModalStore(state => state.modals);
+  const resetModal = useModalStore(state => state.resetModal);
+  useEffect(() => resetModal(), [resetModal]);
   return modals.map(modal => <Fragment key={modal.id}>{modal.Component}</Fragment>);
 }
 
@@ -166,6 +169,22 @@ describe('WardMedicationCard (Chrome)', () => {
     await expect.element(dialog.getByRole('textbox', { name: '약 이름' })).toHaveValue(original);
     await dialog.getByRole('button', { name: '닫기' }).click();
     await expect.element(dialog).not.toBeInTheDocument();
+  });
+
+  it('긴 약 이름은 줄을 바꿔 그 줄 안에 담고 가로로 넘치지 않는다 (FE #294 점검 L-3)', async () => {
+    const longName = '신일이부프로펜에이스연질캡슐아세트아미노펜복합제';
+    const screen = await renderCard([medication(1, { name: `${longName}400mg`, displayName: longName })]);
+
+    const name = screen.getByText(longName, { exact: true });
+    await expect.element(name).toBeVisible();
+    const nameElement = name.element() as HTMLElement;
+    const row = nameElement.closest('li') as HTMLElement;
+    const style = getComputedStyle(nameElement);
+    const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2;
+    expect(nameElement.getBoundingClientRect().height).toBeGreaterThan(lineHeight * 1.5);
+    expect(nameElement.getBoundingClientRect().right).toBeLessThanOrEqual(row.getBoundingClientRect().right + 0.5);
+    await expect.element(screen.getByRole('button', { name: `${longName} 수정` })).toBeVisible();
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
   it('수정 버튼은 늘 보이고, 삭제는 그 줄 안에서 확인한 뒤 지운다', async () => {
