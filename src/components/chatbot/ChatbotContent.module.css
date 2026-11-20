@@ -754,55 +754,103 @@
   padding: 10px 4px 0;
 }
 
-/* 응급·위기 답 뒤: 빠른 질문 대신 큰 119 버튼(앱 안 키패드 열기). 색만으로 구분하지 않게 글자로도 알린다. */
+/* 응급·위기 답 뒤: 빠른 질문 대신 비상벨 같은 동그란 119 버튼(앱 안 키패드 열기, 2026-11-20 시안 C).
+   위기 답이면 같은 모양의 109(자살예방 상담전화) 버튼이 옆에 선다. 색만으로 구분하지 않게 숫자·글자로도 알린다. */
 .wardEmergencyPanel {
-  justify-content: center;
-  gap: 24px;
-  border: 2px solid var(--sb-danger);
-  border-radius: 28px;
-  background: var(--sb-danger-soft);
-  padding: 32px 28px;
-}
-
-.wardEmergencyTitle {
-  margin: 0;
-  color: #7d1f1a;
-  font-size: calc(34px * var(--ward-font-scale, 1));
-  font-weight: calc(900 + var(--ward-weight-boost, 0));
-  line-height: 1.3;
-  text-align: center;
-  word-break: keep-all;
-}
-
-.wardEmergencyCall {
-  display: flex;
+  --round-size: calc(220px * var(--ward-font-scale, 1));
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  min-height: 128px;
-  border-radius: 28px;
-  background: var(--sb-danger);
-  box-shadow: 0 6px 0 #861f1a;
-  color: #fff;
-  font-size: calc(34px * var(--ward-font-scale, 1));
-  font-weight: calc(900 + var(--ward-weight-boost, 0));
-  line-height: 1.2;
-  text-decoration: none;
-  padding: 0 20px;
-  /* 링크에서 버튼으로 바꿨다 - 기본 버튼 모양을 지워 같은 크기·모양을 유지한다 */
+  gap: 18px;
+  padding: 12px 8px;
+}
+
+.wardRoundCalls {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  /* 버튼 폭(%)의 기준 - 폭을 정하지 않으면 내용 크기로 줄어 동그라미가 찌그러진다 */
   width: 100%;
+  box-sizing: border-box;
+  /* 그림자 고리가 잘리지 않게 */
+  padding: 12px;
+}
+
+.wardRoundCall {
+  /* 동그라미가 패널보다 크면 패널 폭에 맞춰 줄인다(작은 화면·큰 글씨) */
+  width: min(var(--round-size), 100%);
+  flex: 0 0 auto;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   border: 0;
+  border-radius: 50%;
+  background: var(--sb-danger);
+  box-shadow:
+    0 6px 0 #861f1a,
+    0 0 0 12px var(--sb-danger-soft);
+  color: #fff;
   font-family: inherit;
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+  line-height: 1.1;
   cursor: pointer;
+  padding: 8px;
+  /* 글자를 동그라미 크기에 맞춘다 - 동그라미가 줄어도 숫자가 밖으로 넘치지 않게 */
+  container-type: inline-size;
 }
 
-.wardEmergencyCall:focus-visible {
+/* 109·119 두 개면 한 줄에 나란히 - 좁은 화면에서도 줄바꿈해 세로로 길어지지 않게 반씩 나눈다 */
+.wardRoundCalls:has(.wardRoundCall109) .wardRoundCall {
+  width: min(var(--round-size), calc(50% - 20px));
+}
+
+/* 109 = 자살예방 상담전화. 119와 같은 모양, 색만 청록(흰 글자 대비 약 5.9:1) */
+.wardRoundCall109 {
+  background: #1f6f6b;
+  box-shadow:
+    0 6px 0 #134845,
+    0 0 0 12px #dcefed;
+}
+
+.wardRoundCall:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 2px 0 #861f1a,
+    0 0 0 12px var(--sb-danger-soft);
+}
+
+.wardRoundCall109:active {
+  box-shadow:
+    0 2px 0 #134845,
+    0 0 0 12px #dcefed;
+}
+
+.wardRoundCall:focus-visible {
   outline: 4px solid var(--sb-ink);
-  outline-offset: 3px;
+  outline-offset: 16px;
 }
 
-.wardEmergencyIcon {
+.wardRoundIcon {
   flex-shrink: 0;
+}
+
+.wardRoundIcon {
+  width: 18cqi;
+  height: 18cqi;
+}
+
+.wardRoundNumber {
+  font-size: 31cqi;
+  letter-spacing: 0.02em;
+}
+
+.wardRoundLabel {
+  font-size: 13cqi;
+  word-break: keep-all;
 }
 
 /* 키패드 안, 자해·위기 답일 때만 붙는 109 안내 */
@@ -1025,18 +1073,13 @@
   }
 
   .wardEmergencyPanel {
-    gap: 14px;
-    padding: 16px;
+    --round-size: calc(168px * var(--ward-font-scale, 1));
+    gap: 10px;
+    padding: 8px;
   }
 
-  .wardEmergencyTitle {
-    font-size: calc(26px * var(--ward-font-scale, 1));
-  }
-
-  .wardEmergencyCall {
-    min-height: 96px;
-    border-radius: 24px;
-    font-size: calc(32px * var(--ward-font-scale, 1));
+  .wardRoundCalls {
+    gap: 24px;
   }
 
   .wardEmergencyHint {

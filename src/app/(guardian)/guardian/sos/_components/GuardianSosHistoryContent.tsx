@@ -21,6 +21,8 @@ const TRIGGER_TYPE_META: Record<SosTriggerType, { filterLabel: string; tone: 'gu
   SOS_BUTTON: { filterLabel: 'SOS 버튼', tone: 'sos' },
   GUARDIAN_CALL: { filterLabel: '보호자 연락', tone: 'guardian' },
   CHATBOT_119: { filterLabel: '챗봇 119', tone: 'sos' },
+  // 챗봇 위기 답의 109(자살예방 상담전화) 버튼 - 2026-11-20 사용자 결정으로 119와 나눠 보인다(BE #507)
+  CHATBOT_109: { filterLabel: '챗봇 109', tone: 'sos' },
 };
 
 type TriggerTypeFilter = 'ALL' | SosTriggerType;
@@ -116,6 +118,7 @@ export default function GuardianSosHistoryContent() {
             ['SOS_BUTTON', TRIGGER_TYPE_META.SOS_BUTTON.filterLabel, counts?.sosButton ?? 0],
             ['GUARDIAN_CALL', TRIGGER_TYPE_META.GUARDIAN_CALL.filterLabel, counts?.guardianCall ?? 0],
             ['CHATBOT_119', TRIGGER_TYPE_META.CHATBOT_119.filterLabel, counts?.chatbot119 ?? 0],
+            ['CHATBOT_109', TRIGGER_TYPE_META.CHATBOT_109.filterLabel, counts?.chatbot109 ?? 0],
           ] as const).map(([type, label, count]) => (
             <button
               key={type}
@@ -165,7 +168,9 @@ export default function GuardianSosHistoryContent() {
                   </div>
                   {/* v13 시안: 설명 문구 없이 SOS는 연달아 누른 횟수, 보호자 연락은 받은 보호자만 뱃지로 */}
                   {item.pressCount !== undefined && item.pressCount >= 2 && <strong className={cx('pressBadge')}>{item.pressCount}번 연달아 누름</strong>}
-                  {item.triggerType === 'CHATBOT_119' && <strong className={cx('pressBadge')}>{TRIGGER_TYPE_META.CHATBOT_119.filterLabel}</strong>}
+                  {(item.triggerType === 'CHATBOT_119' || item.triggerType === 'CHATBOT_109') && (
+                    <strong className={cx('pressBadge')}>{TRIGGER_TYPE_META[item.triggerType].filterLabel}</strong>
+                  )}
                   {item.calledGuardianName && (
                     <span className={cx('guardianChip')}>
                       <i aria-hidden="true">{item.calledGuardianName.slice(0, 1)}</i>

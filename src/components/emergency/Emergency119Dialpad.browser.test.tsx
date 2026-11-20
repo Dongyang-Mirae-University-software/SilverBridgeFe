@@ -13,6 +13,7 @@ import {
   CALL_OFFLINE_NOTICE,
   CALL_SENDING_NOTICE,
   CALL_SUCCESS_NOTICE,
+  CALL_SUCCESS_NOTICE_109,
   DEMO_CALL_NOTICE,
   Emergency119Dialpad,
 } from './Emergency119Dialpad';
@@ -22,6 +23,23 @@ describe('Emergency119Dialpad (Chrome)', () => {
     document.body.innerHTML = '';
     vi.restoreAllMocks();
     await page.viewport(375, 812);
+  });
+
+  it('number="109"면 109가 입력돼 있고 이름·안내·성공 문구가 109로 바뀐다 - 전화 링크는 없다 (2026-11-20)', async () => {
+    const onCall = vi.fn().mockResolvedValue(undefined);
+    const screen = await render(<Emergency119Dialpad onClose={() => {}} onCall={onCall} number="109" />);
+
+    await expect.element(screen.getByRole('dialog', { name: '109 자살예방 상담전화 키패드(시연 화면)' })).toBeVisible();
+    await expect.element(screen.getByLabelText('입력된 번호')).toMatchTextContent('109');
+    await expect
+      .element(screen.getByRole('dialog'))
+      .toHaveAccessibleDescription('학생 프로젝트 화면 · 실제로 상담 전화가 발신되지 않습니다');
+    await expect.element(screen.getByRole('button', { name: '109 화면 닫기' })).toBeVisible();
+
+    await screen.getByRole('button', { name: '통화(보호자에게 알림 - 실제로 109에 걸리지 않음)' }).click();
+    await expect.element(screen.getByText(CALL_SUCCESS_NOTICE_109)).toBeVisible();
+    expect(onCall).toHaveBeenCalledTimes(1);
+    expect(document.querySelectorAll('a[href^="tel:"]').length).toBe(0);
   });
 
   it('열리면 119가 입력돼 있고, 키 입력·지우기가 된다', async () => {
