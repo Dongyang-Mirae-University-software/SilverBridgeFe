@@ -224,3 +224,22 @@
   .guardianChip { gap: 6px; font-size: 14px; padding: 3px 11px 3px 3px; }
   .guardianChip i { width: 26px; height: 26px; font-size: 12px; }
 }
+
+/* 휴대폰 폭에서는 날짜·시각 옆에 배지가 다 들어가지 않아 오른쪽이 카드 밖으로 잘렸다 - 배지를 시각 아래 줄로 내린다 */
+@media (max-width: 560px) {
+  .item {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  /* 표식(48px)과 간격(12px)을 뺀 나머지를 모두 차지해, 뒤따르는 배지가 다음 줄로 넘어간다 */
+  .eventTime {
+    flex: 1 1 calc(100% - 60px);
+  }
+
+  /* 다음 줄로 넘어간 첫 배지를 날짜 글자가 시작하는 자리에 맞춘다 */
+  .eventTime + .pressBadge,
+  .eventTime + .guardianChip {
+    margin-left: 60px;
+  }
+}

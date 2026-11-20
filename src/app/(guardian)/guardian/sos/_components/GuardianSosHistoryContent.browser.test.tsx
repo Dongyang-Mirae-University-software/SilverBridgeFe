@@ -11,6 +11,7 @@ const data = vi.hoisted(() => ({
   connections: (async () => ({ data: [] })) as () => Promise<unknown>,
   historyParams: [] as unknown[],
   triggerType: 'CHATBOT_119' as string,
+  extra: {} as Record<string, unknown>,
 }));
 
 vi.mock('@/service/query/guardian', () => ({
@@ -28,6 +29,7 @@ vi.mock('@/service/query/guardian', () => ({
             triggeredAt: '2026-11-17T01:00:00Z',
             location: null,
             triggerType: data.triggerType,
+            ...data.extra,
           },
         ],
         page: 0,
@@ -54,6 +56,7 @@ beforeEach(() => {
   clearSelectedWardId();
   data.historyParams = [];
   data.triggerType = 'CHATBOT_119';
+  data.extra = {};
 });
 afterEach(() => {
   document.body.innerHTML = '';
@@ -149,5 +152,31 @@ describe('SOS 이력 챗봇 109 필터 (Chrome, 2026-11-20 BE 영향 점검 L-2)
       expect(document.querySelectorAll('[class*="pressBadge"]'), triggerType).toHaveLength(0);
       await screen.unmount();
     }
+  });
+});
+
+describe('SOS 이력 휴대폰 폭 배치 (Chrome, 2026-11-21)', () => {
+  it('393px 폭에서 연달아 누름 배지와 보호자 뱃지가 시각 아래 줄에 놓이고 항목 밖으로 나가지 않는다', async () => {
+    await page.viewport(393, 852);
+    data.triggerType = 'GUARDIAN_CALL';
+    data.extra = { pressCount: 2, calledGuardianName: '테스트보호자2' };
+    data.connections = async () => ({
+      data: [{ id: 1, partnerUserId: 'ward-1', partnerName: '김영희', partnerProfileImage: null, status: 'ACTIVE', connectedAt: null }],
+    });
+    await renderSos();
+
+    await vi.waitFor(() => expect(document.querySelectorAll('[class*="guardianChip"]')).toHaveLength(1));
+    const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+    const item = document.querySelector('[class*="eventMarker"]')!.parentElement!.getBoundingClientRect();
+    const time = box('[class*="eventTime"]');
+    const badge = box('[class*="pressBadge"]');
+    const chip = box('[class*="guardianChip"]');
+
+    // 한 줄에 다 놓으면 393px 에서 오른쪽 뱃지가 카드 밖으로 잘렸다(2026-11-20 시연 영상 녹화 중 확인)
+    expect(badge.top).toBeGreaterThanOrEqual(time.bottom);
+    expect(chip.top).toBeGreaterThanOrEqual(time.bottom);
+    expect(chip.right).toBeLessThanOrEqual(item.right);
+    // 배지는 날짜 글자가 시작하는 자리에서 시작한다
+    expect(Math.abs(badge.left - time.left)).toBeLessThanOrEqual(1);
   });
 });
