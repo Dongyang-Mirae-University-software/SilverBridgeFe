@@ -398,23 +398,27 @@
 .mediaPrivacy { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 2px 0 0; color: var(--sb-ink-mute-text); font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); text-align: center; }
 
 /* [태블릿 가로] 두 카드를 화면 아래까지 채운다 - 위쪽에만 몰려 아래 30%가 비던 것(2026-11-20).
-   156px = 머리줄 + 본문 위·아래 여백(1180x820·1024x768 실측). min-height라 글자를 키워 내용이 길어지면 그대로 스크롤된다 */
-.testStart.wide { min-height: calc(100dvh - 156px); }
+   156px = 머리줄 + 본문 위·아래 여백(1180x820·1024x768 실측). 채우는 것은 .page이고 테스트 칸은 남는 높이만 가져간다 -
+   테스트 진입 칸·오늘 안내 카드가 위에 함께 뜨면 화면 높이를 또 차지해 '바로 이야기하기'가 화면 밖으로 밀리던 것(#300 점검 M-1).
+   :has를 모르는 브라우저는 채우지 않을 뿐 배치는 그대로다 */
+.page:has(> .testStart.wide) { display: flex; min-height: calc(100dvh - 156px); flex-direction: column; }
+.testStart.wide { flex: 1 0 auto; }
+/* 글자는 max(키운 값, 원래 값 x 글자 배율) - 기본 글자에서만 키우고, 큰 글자 설정에서는 원래 크기 그대로(배율이 겹쳐 줄이 넘치던 것, 점검 L-1) */
 .testStart.wide .testHero { gap: 32px; padding: 40px 44px; }
-.testStart.wide .heroTitle { font-size: calc(44px * var(--ward-font-scale, 1)); }
+.testStart.wide .heroTitle { font-size: max(44px, calc(40px * var(--ward-font-scale, 1))); }
 .testStart.wide .greetingBubble { padding: 28px 32px; }
-.testStart.wide .greetingBubble p { font-size: calc(36px * var(--ward-font-scale, 1)); }
+.testStart.wide .greetingBubble p { font-size: max(36px, calc(32px * var(--ward-font-scale, 1))); }
 /* 글자를 키워 문장이 두 줄로 넘어갈 때 마지막 어절만 홀로 떨어지지 않게 */
 .testStart.wide .greetingBubble .sentence { text-wrap: balance; }
 .testStart.wide .testPick { justify-content: center; gap: 18px; padding: 30px; }
 .testStart.wide .pickSpacer { flex: 0 0 6px; }
-.testStart.wide .pickTitle { font-size: calc(26px * var(--ward-font-scale, 1)); }
-.testStart.wide .testPick .testSlot { min-height: 96px; font-size: calc(25px * var(--ward-font-scale, 1)); }
-.testStart.wide .slotPeriod { font-size: calc(17px * var(--ward-font-scale, 1)); }
-.testStart.wide .testPick .startButton { min-height: 120px; font-size: calc(36px * var(--ward-font-scale, 1)); }
-.testStart.wide .testPick .startButton .micIcon { width: 42px; height: 42px; }
-.testStart.wide .promptButton { min-height: 88px; font-size: calc(28px * var(--ward-font-scale, 1)); }
-.testStart.wide .mediaPrivacy { font-size: calc(19px * var(--ward-font-scale, 1)); }
+.testStart.wide .pickTitle { font-size: max(26px, calc(23px * var(--ward-font-scale, 1))); }
+.testStart.wide .testPick .testSlot { min-height: 96px; font-size: max(25px, calc(22px * var(--ward-font-scale, 1))); }
+.testStart.wide .slotPeriod { font-size: max(17px, calc(15px * var(--ward-font-scale, 1))); }
+.testStart.wide .testPick .startButton { min-height: 120px; font-size: max(36px, calc(32px * var(--ward-font-scale, 1))); }
+.testStart.wide .testPick .startButton .micIcon { width: 42px; height: 42px; flex-shrink: 0; }
+.testStart.wide .promptButton { min-height: 88px; font-size: max(28px, calc(26px * var(--ward-font-scale, 1))); }
+.testStart.wide .mediaPrivacy { font-size: max(19px, calc(17px * var(--ward-font-scale, 1))); }
 
 /* 판정 결과(프로토타입) - 방금 대답 카드(기분 글자 + 말·표정·위험 칸) + 지난 대답 줄, 칸 안에서만 스크롤 */
 .testResults { display: flex; min-width: 0; min-height: 0; flex-direction: column; gap: 10px; border: 1px solid var(--sb-line-soft); border-radius: 24px; background: #fff; padding: 16px; }
