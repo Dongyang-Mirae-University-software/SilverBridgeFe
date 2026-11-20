@@ -57,15 +57,17 @@ export function HospitalListStep(props: Props) {
     setCancelTarget(item);
   };
 
-  // 창을 닫으면 누른 버튼으로 포커스를 돌린다 - 취소돼 그 줄이 사라졌으면 [새 진료 예약하기]로
-  const closeDialog = () => {
+  // 창을 닫으면 누른 버튼으로 포커스를 돌린다 - 취소돼 그 줄이 사라졌으면 [새 진료 예약하기]로.
+  // 누른 버튼은 취소에 성공했을 때만 기억해 둔다(아래 effect용) - 실패·그대로 두기 뒤에는 잊는다(#304 점검 L-2)
+  const closeDialog = (canceled = false) => {
     setCancelTarget(null);
     const opener = openerRef.current;
+    if (!canceled) openerRef.current = null;
     requestAnimationFrame(() => (opener?.isConnected ? opener : newButtonRef.current)?.focus());
   };
 
   // 취소된 카드는 목록을 다시 받은 뒤에야 사라진다 - 창을 닫을 때 그 카드의 버튼으로 돌려 둔 포커스가
-  // 버튼과 함께 사라졌으면 [새 진료 예약하기]로 옮긴다(#301 점검 L-2)
+  // 버튼과 함께 사라졌으면 [새 진료 예약하기]로 옮긴다(#301 점검 L-2). 취소에 성공한 경우에만 동작한다
   useEffect(() => {
     const opener = openerRef.current;
     if (cancelTarget || !opener || opener.isConnected) return;
@@ -230,10 +232,10 @@ export function HospitalListStep(props: Props) {
           item={cancelTarget}
           wardName={props.wardName}
           isCanceling={props.isCanceling}
-          onKeep={closeDialog}
+          onKeep={() => closeDialog()}
           onConfirm={async () => {
-            await props.onCancel(cancelTarget.reservationId);
-            closeDialog();
+            const canceled = await props.onCancel(cancelTarget.reservationId);
+            closeDialog(canceled);
           }}
         />
       )}
