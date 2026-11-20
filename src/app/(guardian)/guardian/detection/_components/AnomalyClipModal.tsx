@@ -25,7 +25,16 @@ interface Playback {
 
 // 클립 파일은 인증 헤더가 필요해 fetch로 받아 blob URL로 재생한다(URL에 토큰을 넣지 않는다).
 // 영상은 메모리에만 두고, 다른 클립으로 바꾸거나 닫으면 blob URL을 해제한다. 다운로드는 두지 않는다.
-export function AnomalyClipModal({ incident, onClose }: { incident: AnomalyIncident; onClose: () => void }) {
+// clipId를 주면 그 장면 하나만 연다(이력 목록의 장면 줄) - 영상 고르기 칩을 숨기고 날짜도 그 장면 시각으로 보인다
+export function AnomalyClipModal({
+  incident,
+  clipId: sceneClipId,
+  onClose,
+}: {
+  incident: AnomalyIncident;
+  clipId?: number;
+  onClose: () => void;
+}) {
   const incidentId = incident.incidentId;
   const { data: clipsData, isLoading, isError } = useQuery(guardianAnomalyClipsQueryOptions(incidentId));
   const clips = clipsData ?? NO_CLIPS;
@@ -79,13 +88,17 @@ export function AnomalyClipModal({ incident, onClose }: { incident: AnomalyIncid
     }
   };
 
-  // 목록을 받으면 최신 클립(첫 항목)을 바로 재생한다
+  // 장면을 골라 열었으면 그 영상을 바로, 아니면 목록을 받은 뒤 최신 클립(첫 항목)을 재생한다
   useEffect(() => {
-    if (didAutoSelectRef.current || clips.length === 0) return;
+    if (didAutoSelectRef.current) return;
+    const target = sceneClipId ?? clips[0]?.clipId;
+    if (target === undefined) return;
     didAutoSelectRef.current = true;
-    handleSelect(clips[0].clipId);
+    handleSelect(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clips]);
+  }, [clips, sceneClipId]);
+
+  const sceneClip = sceneClipId === undefined ? undefined : clips.find(clip => clip.clipId === sceneClipId);
 
   const selectedError = selectedClipId !== null ? clipErrors[selectedClipId] : undefined;
   // 목록을 다시 받았는데 재생 중이던 클립이 빠졌으면(이 화면에서 '괜찮아요'를 골라 숨겨짐) 받아 둔 영상도 내린다.
@@ -125,9 +138,9 @@ export function AnomalyClipModal({ incident, onClose }: { incident: AnomalyIncid
         </div>
 
         <div className={cx('info')}>
-          <span className={cx('date')}>{formatIncidentDate(incident.startedAt)}</span>
+          <span className={cx('date')}>{formatIncidentDate(sceneClip?.detectedAt ?? incident.startedAt)}</span>
 
-          {clips.length > 1 && (
+          {sceneClipId === undefined && clips.length > 1 && (
             <div className={cx('clipChips')} role="group" aria-label="영상 선택">
               {clips.map((clip, index) => {
                 const duration = formatClipDuration(clip.durationMs);

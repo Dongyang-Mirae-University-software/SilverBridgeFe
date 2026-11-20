@@ -11,6 +11,7 @@
     ANOMALY_REVIEW_SUMMARY: 'anomaly',
     ANOMALY_REVIEW_CONFLICTED: 'anomaly',
     CAMERA_LINK_LOST: 'anomaly',
+    CAMERA_STOPPED: 'anomaly', // 앱 안 안내 전용(피보호자 촬영이 멈춤) - 서버가 보내지 않는다
     MEDICATION_REMINDER: 'medication',
     MEDICATION_MISSED: 'medication',
     MEDICATION_STOPPED: 'medication',
@@ -34,6 +35,7 @@
     ANOMALY_REVIEW_SUMMARY: () => ['이상감지 확인이 필요해요', '확인하지 않은 이상감지가 있습니다.'],
     ANOMALY_REVIEW_CONFLICTED: () => ['판정 확인 요청', '다른 보호자와 판정이 다릅니다. 다시 확인해 주세요.'],
     CAMERA_LINK_LOST: () => ['카메라 연결 확인 필요', '카메라 영상이 확인되지 않습니다.'],
+    CAMERA_STOPPED: () => ['카메라가 꺼졌어요', '카메라가 멈춰서 촬영을 껐어요. "카메라 켜기"를 눌러 다시 시작해 주세요.'],
     MEDICATION_REMINDER: () => ['복약 알림', '복용 시각이 되었습니다.'],
     MEDICATION_MISSED: () => ['복약 확인 요청', '체크되지 않은 복약이 있습니다.'],
     MEDICATION_STOPPED: () => ['복약 일정 중지', '복약 일정이 중지되었습니다. 다시 등록해 주세요.'],
@@ -205,6 +207,8 @@
       case 'ANOMALY_REVIEW_CONFLICTED':
       case 'CAMERA_LINK_LOST':
         return '/guardian/detection';
+      case 'CAMERA_STOPPED':
+        return '/ward/camera';
       case 'MEDICATION_REMINDER':
         return '/ward/medication';
       case 'MEDICATION_MISSED':

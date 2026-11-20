@@ -197,6 +197,24 @@ describe('문구·구성', () => {
     await screen.getByRole('button', { name: '문의 답변 알림 닫기' }).click();
     await expect.element(screen.getByText('답변이 왔어요')).not.toBeInTheDocument();
   });
+
+  it('피보호자 촬영이 멈춘 앱 안 안내도 푸시와 같은 카드로 보이고, 누르면 카메라 화면으로 간다', async () => {
+    mocks.pathname = '/ward/camera';
+    const screen = await renderListener();
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent('careai:push', {
+          detail: { data: { type: 'CAMERA_STOPPED', title: '카메라가 꺼졌어요', body: '첫 문장\n둘째 문장' } },
+        }),
+      );
+    });
+
+    await expect.element(screen.getByText('카메라가 꺼졌어요')).toBeVisible();
+    await expect.element(screen.getByText('이상감지', { exact: true })).toBeVisible();
+    expect(screen.getByText(/첫 문장/).element().textContent).toBe('첫 문장\n둘째 문장');
+    await screen.getByText('카메라가 꺼졌어요').click();
+    expect(mocks.push).toHaveBeenCalledWith('/ward/camera');
+  });
 });
 
 describe('SOS 예비 문구 - 서버 푸시·OS 알림과 같은 "○○님이"', () => {

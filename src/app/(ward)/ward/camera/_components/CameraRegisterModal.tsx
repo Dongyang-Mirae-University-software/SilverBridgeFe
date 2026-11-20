@@ -17,7 +17,6 @@ import {
   isUploadUnstable,
 } from './streamRecovery';
 import { getStoredDeviceId, setStoredDeviceId } from '@/lib/device/deviceId';
-import { showToast } from '@/store/toastStore';
 import {
   useRegisterWardCameraMutation,
   wardCameraRoomsQueryOptions,
@@ -62,7 +61,18 @@ const MEDIA_PERMISSION_MESSAGE = '카메라를 켜지 못했어요. 브라우저
 const RESTART_FAILED_MESSAGE = '카메라를 켜지 못했어요. 잠시 후 다시 시도해 주세요.';
 // 미리보기 중 화면 공유를 '공유 중지'로 끊었거나 카메라가 꺼졌을 때(송출 전이라 송출 루프가 알아채지 못한다)
 const PREVIEW_ENDED_MESSAGE = '미리보기가 끊겼어요. 다시 켜 주세요.';
-const CAMERA_STOPPED_MESSAGE = '카메라가 멈춰서 촬영을 껐어요. "카메라 켜기"를 눌러 다시 시작해 주세요.';
+const CAMERA_STOPPED_TITLE = '카메라가 꺼졌어요';
+const CAMERA_STOPPED_MESSAGE = '카메라가 멈춰서 촬영을 껐어요.\n"카메라 켜기"를 눌러 다시 시작해 주세요.';
+
+// 촬영이 멈춘 안내는 푸시 알림과 같은 카드(PushNotificationListener의 앱 안 알림)로 띄운다.
+// 멈춘 것은 이 기기만 알기 때문에 서버 푸시를 거치지 않는다(보호자에게는 서버가 연결 끊김 알림을 따로 보낸다)
+function showCameraStoppedNotice() {
+  window.dispatchEvent(
+    new CustomEvent('careai:push', {
+      detail: { data: { type: 'CAMERA_STOPPED', title: CAMERA_STOPPED_TITLE, body: CAMERA_STOPPED_MESSAGE } },
+    }),
+  );
+}
 
 function getCameraConstraints(facing: Exclude<CameraFacing, 'screen'>): MediaStreamConstraints {
   return {
@@ -386,7 +396,7 @@ export function CameraRegisterModal({
     } catch {
       if (liveSessionIdRef.current) {
         await handleStopMedia();
-        showToast(CAMERA_STOPPED_MESSAGE, { variant: 'error' });
+        showCameraStoppedNotice();
       }
     } finally {
       recoveringRef.current = false;
@@ -400,7 +410,7 @@ export function CameraRegisterModal({
     const isScreen = facingRef.current === 'screen';
     // 화면 공유를 브라우저에서 '공유 중지'로 끊었으면 다시 켤 수 없으니 송출을 끈다
     if (isScreen && mediaStreamRef.current?.getVideoTracks()[0]?.readyState !== 'live') {
-      void handleStopMedia().then(() => showToast(CAMERA_STOPPED_MESSAGE, { variant: 'error' }));
+      void handleStopMedia().then(showCameraStoppedNotice);
       return;
     }
     if (
