@@ -17,7 +17,6 @@ import {
   isUploadUnstable,
 } from './streamRecovery';
 import { getStoredDeviceId, setStoredDeviceId } from '@/lib/device/deviceId';
-import { showToast } from '@/store/toastStore';
 import {
   useRegisterWardCameraMutation,
   wardCameraRoomsQueryOptions,
