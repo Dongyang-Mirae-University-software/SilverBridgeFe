@@ -190,12 +190,16 @@ export function WardCompanionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pushedTestSlot = searchParams?.get('testSlot') ?? null;
-  const [testSlot, setTestSlot] = useState(TEST_SLOTS[0]);
+  const [pickedTestSlot, setTestSlot] = useState<string | null>(null);
   const [testNotice, setTestNotice] = useState<string | null>(null);
 
   // 대화하는 동안에는 현황을 다시 받을 일이 없다. 대화 밖에서는 시간대가 바뀌면 시작 버튼이 열리도록 1분마다 받는다
   const today = useQuery({ ...wardCompanionTodayQueryOptions, refetchInterval: talk ? false : 60_000 });
   const testMode = today.data?.testMode === true;
+  // 고른 칸이 없으면 위 안내 띠와 같은 시간대(지금 열린 시간대)를 고른 것으로 본다 - 띠는 '오후 3시'인데
+  // 칸·말풍선은 첫 칸 '오전 9시'로 보이던 것(2026-11-20). 열린 시간대가 없으면 첫 칸
+  const openTestSlot = openCompanionSlot(today.data);
+  const testSlot = pickedTestSlot ?? (openTestSlot && TEST_SLOTS.includes(openTestSlot) ? openTestSlot : TEST_SLOTS[0]);
   const testEntrySlot = testMode && pushedTestSlot && TEST_SLOTS.includes(pushedTestSlot) ? pushedTestSlot : null;
   // 피보호자는 말벗 시간표를 알 필요가 없다 - 대화 시간 밖에 들어오면 안내 없이 홈으로(2026-11-11 사용자 결정).
   // 이미 마친 시간대도 시간 밖으로 본다(openCompanionSlot - 2026-11-11 기능 점검 F-1).

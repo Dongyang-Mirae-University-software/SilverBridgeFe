@@ -734,7 +734,8 @@ describe('새 화면 배치 (Chrome)', () => {
     await renderCompanion();
 
     await expect.element(page.getByText('안녕하세요.', { exact: true })).toBeVisible();
-    await expect.element(page.getByText('오전 9시 안부 인사를 나눠 볼까요?', { exact: true })).toBeVisible();
+    // TEST_TODAY는 낮 12시가 열려 있다 - 고른 칸이 없으면 위 안내 띠와 같은 시간대
+    await expect.element(page.getByText('낮 12시 안부 인사를 나눠 볼까요?', { exact: true })).toBeVisible();
     expect(page.getByText('시간대를 고르고 바로 시작하거나', { exact: false }).elements()).toHaveLength(0);
     expect(page.getByRole('group', { name: '안부 시간대' }).getByRole('button').elements()).toHaveLength(5);
     await page.getByRole('button', { name: '오후 6시' }).click();
@@ -1342,5 +1343,63 @@ describe('말벗 목소리 (Chrome)', () => {
     screen.unmount();
     expect(pauseSpy).toHaveBeenCalled();
     expect(revokeSpy).toHaveBeenCalledWith(url);
+  });
+});
+
+// 2026-11-20: 안부 인사 시간대에 오늘 안내 띠가 뜨면 테스트 카드와 함께 태블릿 화면을 넘쳐 아래가 잘리고,
+// 띠는 '오후 3시'인데 시간대 칸·말풍선은 첫 칸 '오전 9시'로 보이던 것
+describe('테스트 시작 화면 - 오늘 안내 띠와 함께 (Chrome)', () => {
+  const OPEN_3PM = { ...today('15:00', ['DONE', 'MISSED', 'AVAILABLE', 'UPCOMING', 'UPCOMING']), testMode: true };
+  const CLOSED = { ...today(null, ['DONE', 'MISSED', 'DONE', 'UPCOMING', 'UPCOMING']), testMode: true };
+
+  it('고른 칸이 없으면 띠와 같은 시간대(오후 3시)를 고르고 말풍선도 같게, 고르면 그 칸을 따른다', async () => {
+    api.today.mockResolvedValue(OPEN_3PM);
+    await renderCompanion();
+
+    await expect.element(page.getByRole('heading', { name: '오후 3시 안부 인사 시간이에요' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '오후 3시', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(page.getByText('오후 3시 안부 인사를 나눠 볼까요?', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: '오후 6시', exact: true }).click();
+    await expect.element(page.getByText('오후 6시 안부 인사를 나눠 볼까요?', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: '바로 이야기하기' }).click();
+    await vi.waitFor(() => expect(api.openTest).toHaveBeenCalledWith('18:00'));
+  });
+
+  it('열린 시간대가 없으면(띠 없음) 첫 칸(오전 9시)을 고른다', async () => {
+    api.today.mockResolvedValue(CLOSED);
+    await renderCompanion();
+
+    await expect.element(page.getByRole('button', { name: '오전 9시', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    expect(page.getByRole('heading', { name: /안부 인사 시간이에요/ }).elements()).toHaveLength(0);
+  });
+
+  // 화면 위아래 몫(머리줄 + 본문 여백) - 넓은 화면 156px(.page 채움 기준과 같음)·세로 태블릿 132px(gosky 실측)
+  it.each([
+    [1180, 820, 156, true], [1024, 768, 156, true], [820, 1180, 132, true], [768, 1024, 132, true],
+    [1180, 820, 156, false], [1024, 768, 156, false], [820, 1180, 132, false], [768, 1024, 132, false],
+  ])('%i×%i: 띠 + 두 카드가 화면 높이 안에 들어간다(띠 있음 %s)', async (width, height, chrome, banner) => {
+    await page.viewport(width, height);
+    const boxSizing = document.createElement('style');
+    boxSizing.textContent = '*, *::before, *::after { box-sizing: border-box; }';
+    document.head.appendChild(boxSizing);
+    try {
+      api.today.mockResolvedValue(banner ? OPEN_3PM : CLOSED);
+      await renderCompanion();
+      await expect.element(page.getByRole('button', { name: '안부 알림 받아 보기' })).toBeVisible();
+      const cards = document.querySelector('section[aria-label="안부 말벗 테스트"]') as HTMLElement;
+      const pageEl = cards.parentElement as HTMLElement;
+      expect(pageEl.getBoundingClientRect().height).toBeLessThanOrEqual(height - chrome + 1);
+      const hero = document.querySelector('[aria-labelledby="companion-hero-title"]');
+      expect(Boolean(hero)).toBe(banner);
+      if (hero) {
+        // 띠는 한 줄 - 시작 버튼이 제목 오른쪽에 놓인다
+        const heading = hero.querySelector('h2') as HTMLElement;
+        const start = hero.querySelector('button') as HTMLElement;
+        expect(start.getBoundingClientRect().left).toBeGreaterThan(heading.getBoundingClientRect().right);
+      }
+    } finally {
+      boxSizing.remove();
+    }
   });
 });
