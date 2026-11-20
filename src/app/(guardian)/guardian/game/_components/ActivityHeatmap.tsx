@@ -66,7 +66,7 @@ export function ActivityHeatmap({ activity }: { activity: IGameActivityDay[] }) 
               <span key={w}>{label}</span>
             ))}
           </div>
-          <div className={cx('weekdays')}>
+          <div className={cx('weekdays')} data-testid="activity-heatmap-weekdays">
             {WEEKDAY_LABELS.map((label, d) => (
               <span key={d}>{label}</span>
             ))}

@@ -49,7 +49,13 @@
   white-space: nowrap;
 }
 
+/* 처음에 최근 주(오른쪽 끝)로 스크롤해 두므로 요일 열은 왼쪽에 붙여 둔다 - 카드 배경(#fff)으로 덮고, 칸 사이 간격(4px)도 그림자로 가린다 */
 .weekdays {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #fff;
+  box-shadow: 4px 0 0 #fff;
   grid-column: 1;
   grid-row: 2;
   display: grid;
