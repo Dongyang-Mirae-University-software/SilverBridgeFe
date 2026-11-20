@@ -358,13 +358,14 @@ describe('대화 (Chrome)', () => {
   });
 
   it('말로 대답하면 WAV를 올리고 받아 적은 글을 "이렇게 들었어요"로 보여 준다', async () => {
-    getUserMedia.mockImplementation(async () => fakeMicStream());
+    mediaDevices({ camera: 'deny' });
     api.replyAudio.mockResolvedValue({ turnNo: 1, reply: '좋으셨겠어요.', ended: false, endReason: null, transcript: '점심은 국수 먹었어' });
     await openTalk();
 
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
-    await userEvent.click(page.getByRole('button', { name: '사진 없이 할게요' }));
     await expect.element(page.getByRole('button', { name: /다 했어요/ })).toBeInTheDocument();
+    // 녹음 중 버튼 글자는 초만 보인다(기호·"다 했어요"는 화면 읽기 이름에만)
+    await vi.waitFor(() => expect(page.getByRole('button', { name: /다 했어요/ }).element().textContent).toMatch(/^\d+초$/));
     await new Promise(resolve => setTimeout(resolve, 500));
     await userEvent.click(page.getByRole('button', { name: /다 했어요/ }));
 
@@ -377,12 +378,11 @@ describe('대화 (Chrome)', () => {
   });
 
   it('음성을 못 알아들으면(503 COMPANION_STT_UNAVAILABLE) 글로 대답하는 칸으로 바꾼다', async () => {
-    getUserMedia.mockImplementation(async () => fakeMicStream());
+    mediaDevices({ camera: 'deny' });
     api.replyAudio.mockRejectedValue(apiError(503, 'COMPANION_STT_UNAVAILABLE'));
     await openTalk();
 
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
-    await userEvent.click(page.getByRole('button', { name: '사진 없이 할게요' }));
     await expect.element(page.getByRole('button', { name: /다 했어요/ })).toBeInTheDocument();
     await new Promise(resolve => setTimeout(resolve, 500));
     await userEvent.click(page.getByRole('button', { name: /다 했어요/ }));
@@ -393,17 +393,15 @@ describe('대화 (Chrome)', () => {
 });
 
 describe('표정 사진 (Chrome)', () => {
-  it('처음 대답할 때 안내를 보이고, 허용하면 녹음 동안 찍은 JPEG 여러 장을 audio와 함께 보내고 카메라를 끈다', async () => {
+  it('묻지 않고 녹음과 함께 카메라를 켜고, 녹음 동안 찍은 JPEG 여러 장을 audio와 함께 보내고 카메라를 끈다', async () => {
     mediaDevices({ camera: 'allow' });
     api.replyAudio.mockResolvedValue({ turnNo: 1, reply: '좋으셨겠어요.', ended: false, endReason: null, transcript: '좋아' });
     await openTalk();
 
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
-    await expect.element(page.getByText('표정은 기분을 살피는 데만 쓰고 저장하지 않아요.', { exact: false })).toBeVisible();
-    expect(getUserMedia).not.toHaveBeenCalled();
-    await userEvent.click(page.getByRole('button', { name: '좋아요' }));
-
     await expect.element(page.getByText('카메라 켜짐')).toBeVisible();
+    // 사진 동의 카드는 없다(2026-11-20 결정)
+    expect(page.getByRole('button', { name: '사진 없이 할게요' }).elements()).toHaveLength(0);
     await new Promise(resolve => setTimeout(resolve, 2600));
     await userEvent.click(page.getByRole('button', { name: /다 했어요/ }));
     await expect.element(page.getByText('좋으셨겠어요.')).toBeVisible();
@@ -439,15 +437,16 @@ describe('표정 사진 (Chrome)', () => {
     expect(Math.min(bitmap.width, bitmap.height)).toBe(640);
   });
 
-  it('카메라를 거부하면 한 번 안내하고 목소리만 보낸다, 다음 대답에서는 다시 묻지 않는다', async () => {
+  it('카메라를 거부하면 안내 없이 목소리만 보낸다, 다음 대답에서는 카메라를 다시 묻지 않는다', async () => {
     mediaDevices({ camera: 'deny' });
     api.replyAudio.mockResolvedValue({ turnNo: 1, reply: '좋으셨겠어요.', ended: false, endReason: null, transcript: '좋아' });
     await openTalk();
 
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
-    await userEvent.click(page.getByRole('button', { name: '좋아요' }));
-    await expect.element(page.getByText('카메라를 쓸 수 없어 목소리만 보낼게요.')).toBeVisible();
+    await expect.element(page.getByRole('button', { name: /다 했어요/ })).toBeInTheDocument();
+    await vi.waitFor(() => expect(cameraCalls()).toBe(1));
     await new Promise(resolve => setTimeout(resolve, 500));
+    expect(page.getByText('카메라를 쓸 수 없어', { exact: false }).elements()).toHaveLength(0);
     await userEvent.click(page.getByRole('button', { name: /다 했어요/ }));
     await expect.element(page.getByText('좋으셨겠어요.')).toBeVisible();
 
@@ -457,20 +456,6 @@ describe('표정 사진 (Chrome)', () => {
     await recordOnce();
     await vi.waitFor(() => expect(api.replyAudio).toHaveBeenCalledTimes(2));
     expect(cameraCalls()).toBe(1);
-    expect(page.getByText('카메라를 쓸 수 없어 목소리만 보낼게요.').elements()).toHaveLength(0);
-  });
-
-  it('사진 없이 하면 카메라를 묻지 않는다', async () => {
-    mediaDevices({ camera: 'allow' });
-    api.replyAudio.mockResolvedValue({ turnNo: 1, reply: '네.', ended: false, endReason: null, transcript: '응' });
-    await openTalk();
-    await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
-    await userEvent.click(page.getByRole('button', { name: '사진 없이 할게요' }));
-    await new Promise(resolve => setTimeout(resolve, 500));
-    await userEvent.click(page.getByRole('button', { name: /다 했어요/ }));
-    await expect.element(page.getByText('네.', { exact: true })).toBeVisible();
-    expect(cameraCalls()).toBe(0);
-    expect((api.replyAudio.mock.calls[0] as unknown[])[3]).toEqual([]);
   });
 
   it('사진 때문에 거절되면(COMPANION_FRAME_INVALID) 사진을 끄고 목소리만 다시 보내게 한다', async () => {
@@ -478,7 +463,6 @@ describe('표정 사진 (Chrome)', () => {
     api.replyAudio.mockRejectedValueOnce(apiError(400, 'COMPANION_FRAME_INVALID'));
     await openTalk();
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
-    await userEvent.click(page.getByRole('button', { name: '좋아요' }));
     await expect.element(page.getByText('카메라 켜짐')).toBeVisible();
     await new Promise(resolve => setTimeout(resolve, 500));
     await userEvent.click(page.getByRole('button', { name: /다 했어요/ }));
@@ -495,7 +479,6 @@ describe('표정 사진 (Chrome)', () => {
     api.finish.mockResolvedValue({ sessionId: 42, slot: '12:00', endReason: 'USER_STOP', mood: null, turnCount: 0 });
     await openTalk();
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
-    await userEvent.click(page.getByRole('button', { name: '좋아요' }));
     await expect.element(page.getByText('카메라 켜짐')).toBeVisible();
     await page.getByRole('button', { name: '대화 그만하기' }).click();
 
@@ -1185,7 +1168,7 @@ describe('말벗 목소리 (Chrome)', () => {
   });
 
   it('녹음이 시작되면 받던 목소리를 버리고 대신 읽지도 않는다', async () => {
-    getUserMedia.mockImplementation(async () => fakeMicStream());
+    mediaDevices({ camera: 'deny' });
     let arrive: (blob: Blob) => void = () => undefined;
     let signal: AbortSignal | undefined;
     api.audio.mockImplementation((_id: number, _index: number, given: AbortSignal) => {
@@ -1197,7 +1180,6 @@ describe('말벗 목소리 (Chrome)', () => {
     await openTalk();
 
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
-    await userEvent.click(page.getByRole('button', { name: '사진 없이 할게요' }));
     await expect.element(page.getByRole('button', { name: /다 했어요/ })).toBeInTheDocument();
     expect(signal?.aborted).toBe(true);
     arrive(VOICE);
@@ -1207,7 +1189,7 @@ describe('말벗 목소리 (Chrome)', () => {
   });
 
   it('틀고 있는 목소리는 녹음이 시작되면 멈추고 해제한다', async () => {
-    getUserMedia.mockImplementation(async () => fakeMicStream());
+    mediaDevices({ camera: 'deny' });
     api.audio.mockResolvedValue(VOICE);
     await openTalk();
     await vi.waitFor(() => expect(blobPlays()).toHaveLength(1));
@@ -1215,7 +1197,6 @@ describe('말벗 목소리 (Chrome)', () => {
     pauseSpy.mockClear();
 
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
-    await userEvent.click(page.getByRole('button', { name: '사진 없이 할게요' }));
     await expect.element(page.getByRole('button', { name: /다 했어요/ })).toBeInTheDocument();
     expect(pauseSpy).toHaveBeenCalled();
     expect(revokeSpy).toHaveBeenCalledWith(url);
