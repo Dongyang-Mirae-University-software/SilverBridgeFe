@@ -52,8 +52,6 @@ const TEST_SLOTS = ['09:00', '12:00', '15:00', '18:00', '21:00'];
 // 사진 합계를 audio와 더해 서버 상한(10MB) 아래로 둔다 - multipart 머리 몫을 남긴다
 const UPLOAD_BUDGET_BYTES = 9.5 * 1024 * 1024;
 
-export const CAMERA_CONSENT_TEXT = '대답하실 때 얼굴 사진도 함께 보낼게요. 표정은 기분을 살피는 데만 쓰고 저장하지 않아요.';
-export const CAMERA_UNAVAILABLE_TEXT = '카메라를 쓸 수 없어 목소리만 보낼게요.';
 export const PRIVACY_TEXT = '대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.';
 // 테스트 시작 칸 아래 안내(프로토타입) - 동의와 무관하게 사실인 문장
 export const MEDIA_PRIVACY_TEXT = '목소리와 얼굴 사진은 저장하지 않아요';
@@ -66,8 +64,8 @@ export function privacySharedText(retentionDays: number) {
 const WIDE_QUERY = '(min-width: 1024px)';
 
 
-// 처음 대답할 때 한 번 묻는다. 선택은 이 화면 메모리에만 둔다(다시 들어오면 다시 묻는다, 권한 창은 브라우저가 기억)
-type CameraChoice = 'ask' | 'on' | 'off';
+// 말벗은 얼굴 사진을 묻지 않고 항상 함께 보낸다(2026-11-20 결정). 카메라를 못 쓰면 이 화면에서는 목소리만 보낸다
+type CameraChoice = 'on' | 'off';
 
 // "오후 3시" → ["오후", "3시"] (시간대 버튼 두 줄 표기)
 function splitSlotLabel(label: string): [string, string] {
@@ -127,9 +125,7 @@ export function WardCompanionContent() {
 
   const camera = useFaceFrames();
   // 화면에 그리는 값이 아니라 녹음 시작·전송 때만 읽는다
-  const cameraChoiceRef = useRef<CameraChoice>('ask');
-  const [askCamera, setAskCamera] = useState(false);
-  const [cameraNotice, setCameraNotice] = useState<string | null>(null);
+  const cameraChoiceRef = useRef<CameraChoice>('on');
   const sentFramesRef = useRef(0);
   const chooseCamera = useCallback((choice: CameraChoice) => {
     cameraChoiceRef.current = choice;
@@ -256,7 +252,6 @@ export function WardCompanionContent() {
 
   const applyReply = useCallback((result: IWardCompanionReply | null, answer: string, heard: boolean) => {
     if (!result) return;
-    setCameraNotice(null);
     const sessionId = talkRef.current?.sessionId;
     const mine = nextLine('me', answer, heard);
     const reply = result.reply && sessionId != null ? { ...nextLine('companion', result.reply), audio: voiceAudio(sessionId, result.audio) } : null;
@@ -303,7 +298,7 @@ export function WardCompanionContent() {
     voiceOptions,
   );
 
-  // 녹음이 시작되면 카메라를 켜고(사진을 쓰기로 했을 때만), 녹음이 버려지면 바로 끈다
+  // 녹음이 시작되면 카메라를 켜고(카메라를 못 쓴다고 확인된 뒤에는 켜지 않는다), 녹음이 버려지면 바로 끈다
   // 보낼 때는 send가 먼저 take()로 끈다. 권한 창은 마이크 다음에 뜬다(둘을 따로 물어 카메라를 거부해도 마이크는 그대로)
   const prevVoiceState = useRef(voice.state);
   useEffect(() => {
@@ -316,10 +311,9 @@ export function WardCompanionContent() {
       return;
     }
     if (voice.state !== 'recording' || prev === 'recording' || cameraChoiceRef.current !== 'on') return;
+    // 권한 거부·카메라 없음은 안내 없이 목소리만으로 이어 간다(어르신 화면에 기술 안내를 띄우지 않는다)
     void camera.open().then(result => {
-      if (result !== 'denied' && result !== 'unsupported') return;
-      chooseCamera('off');
-      setCameraNotice(CAMERA_UNAVAILABLE_TEXT);
+      if (result === 'denied' || result === 'unsupported') chooseCamera('off');
     });
   }, [voice.state, camera, chooseCamera, companionVoice]);
 
@@ -415,30 +409,16 @@ export function WardCompanionContent() {
 
   const handleVoice = () => {
     if (pending) return;
-    // 처음 대답할 때 사진을 함께 보낼지 먼저 묻는다
-    if (voice.state === 'idle' && cameraChoiceRef.current === 'ask') {
-      companionVoice.stop();
-      setAskCamera(true);
-      return;
-    }
     companionVoice.stop();
     setNotice(null);
     voice.clearNotice();
     voice.toggle();
   };
 
-  // 안내 카드에서 고른 뒤 바로 녹음을 시작한다(누른 그 동작으로 마이크 권한을 묻는다)
-  const handleCameraChoice = (useCamera: boolean) => {
-    chooseCamera(useCamera ? 'on' : 'off');
-    setAskCamera(false);
-    handleVoice();
-  };
-
   const handleFinish = async () => {
     if (!talk || pending) return;
     voice.cancel();
     camera.cancel();
-    setAskCamera(false);
     companionVoice.stop();
     setPending('finish');
     setNotice(null);
@@ -457,7 +437,6 @@ export function WardCompanionContent() {
   const closeTalk = () => {
     companionVoice.reset();
     camera.cancel();
-    setAskCamera(false);
     setTalk(null);
     setNotice(null);
     refreshToday();
@@ -551,23 +530,18 @@ export function WardCompanionContent() {
           ) : (
             <section className={cx('answer')} aria-label="대답하기">
               {message && <p className={cx('notice', { recordingNotice: recording })} role={recording ? undefined : 'alert'}>{message}</p>}
-              {cameraNotice && <p className={cx('notice')} role="alert">{cameraNotice}</p>}
-              {mode === 'voice' && askCamera ? (
-                <div className={cx('cameraAsk')} role="group" aria-labelledby="companion-camera-ask">
-                  <p id="companion-camera-ask">{CAMERA_CONSENT_TEXT}</p>
-                  <button className={cx('primaryButton')} type="button" onClick={() => handleCameraChoice(true)}>좋아요</button>
-                  <button className={cx('switchButton')} type="button" onClick={() => handleCameraChoice(false)}>사진 없이 할게요</button>
-                </div>
-              ) : mode === 'voice' ? (
+              {mode === 'voice' ? (
                 <button
                   className={cx('micButton', { recording })}
                   type="button"
                   disabled={busy && !recording}
                   aria-pressed={recording}
+                  // 녹음 중 화면에는 초만 보인다(기호·문구는 어르신이 알기 어렵다) - 화면 읽기 프로그램에는 누르는 뜻을 함께 알린다
+                  aria-label={recording ? `다 했어요, ${voice.elapsedSec}초` : undefined}
                   onClick={handleVoice}
                 >
-                  {recording ? <span className={cx('recDot')} aria-hidden="true" /> : <MicIcon />}
-                  {recording ? `다 했어요 · ${voice.elapsedSec}초` : thinking ? '듣고 있어요…' : '말로 대답하기'}
+                  {!recording && <MicIcon />}
+                  {recording ? `${voice.elapsedSec}초` : thinking ? '듣고 있어요…' : '말로 대답하기'}
                 </button>
               ) : (
                 <form className={cx('textForm')} onSubmit={event => { event.preventDefault(); void handleSendText(); }}>
@@ -591,7 +565,7 @@ export function WardCompanionContent() {
                   className={cx('switchButton')}
                   type="button"
                   disabled={busy || recording}
-                  onClick={() => { setNotice(null); voice.clearNotice(); setAskCamera(false); setMode(mode === 'voice' ? 'text' : 'voice'); }}
+                  onClick={() => { setNotice(null); voice.clearNotice(); setMode(mode === 'voice' ? 'text' : 'voice'); }}
                 >
                   {mode === 'voice' ? '글로 대답하기' : '말로 대답하기'}
                 </button>

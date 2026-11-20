@@ -192,12 +192,11 @@
 @media (prefers-reduced-motion: reduce) { .dots i { animation: none; } }
 
 .answer { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 24px; padding-top: 8px; }
-.answer > .notice, .answer > .cameraAsk, .answer > .textForm { flex-basis: 100%; }
+.answer > .notice, .answer > .textForm { flex-basis: 100%; }
 .answerBar { display: flex; align-items: center; justify-content: center; gap: 12px; }
 .micButton { width: min(100%, 520px); min-height: 100px; border-radius: 999px; font-size: calc(32px * var(--ward-font-scale, 1)); }
 .micButton.recording { background: var(--sb-danger); }
 .micIcon { width: 40px; height: 40px; }
-.recDot { width: 22px; height: 22px; border-radius: 50%; background: #fff; animation: blink 1.2s infinite ease-in-out; }
 .switchButton {
   min-height: 60px;
   border: 0;
@@ -253,7 +252,7 @@
   .bubble { padding: 14px 16px; }
   /* 세로로 쌓을 때는 줄바꿈을 끄고 100% 기준을 푼다 - 세로에서 flex-basis 100%는 높이가 되고, 줄바꿈이 켜지면 다음 항목이 오른쪽 새 열(화면 밖)로 간다(점검 H-1) */
   .answer { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px; }
-  .answer > .notice, .answer > .cameraAsk, .answer > .textForm { flex-basis: auto; }
+  .answer > .notice, .answer > .textForm { flex-basis: auto; }
   .answerBar { display: grid; justify-content: stretch; gap: 8px; }
   .answerBar .switchButton { min-height: 52px; }
   .answerBar .stopButton { border-radius: 999px; padding: 0 12px; }
@@ -263,24 +262,7 @@
   .primaryButton { width: 100%; }
 }
 
-/* 표정 사진 안내·미리보기 */
-.cameraAsk {
-  box-sizing: border-box;
-  display: grid;
-  gap: 12px;
-  padding: 18px;
-  border: 2px solid var(--sb-brand);
-  border-radius: var(--sb-radius);
-  background: var(--sb-brand-50);
-}
-.cameraAsk p {
-  margin: 0;
-  color: var(--sb-ink);
-  font-size: calc(22px * var(--ward-font-scale, 1));
-  font-weight: calc(800 + var(--ward-weight-boost, 0));
-  line-height: 1.5;
-  word-break: keep-all;
-}
+/* 표정 사진 미리보기 */
 .cameraPreview { display: flex; align-items: center; gap: 10px; margin: 0; }
 .cameraPreview video {
   border: 3px solid var(--sb-brand);
