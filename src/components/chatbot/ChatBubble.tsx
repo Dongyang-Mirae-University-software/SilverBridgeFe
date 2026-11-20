@@ -44,7 +44,11 @@ export default function ChatBubble({
   if (isUser) {
     return (
       // 내 말풍선은 프로필 없이 오른쪽에 둔다(보호자도 디자인 프로토타입대로 - 2026-11-12)
-      <div className={`${styles.rowUser} ${isWardChat ? styles.wardBubble : styles.guardianBubble}`}>
+      // data-message-id: 긴 답이 오면 대화창을 이 질문 말풍선부터 보이게 스크롤한다(ChatbotContent, 2026-11-20)
+      <div
+        className={`${styles.rowUser} ${isWardChat ? styles.wardBubble : styles.guardianBubble}`}
+        data-message-id={message.id}
+      >
         <div className={styles.messageColumnUser}>
           <div className={styles.bubbleUser}>
             <p>{message.content}</p>
