@@ -1,4 +1,4 @@
-/* 병원 가는 날 카드 - /ward/hospital 다음 진료와 챗봇 예약 완료가 함께 쓴다. */
+/* 병원 가는 날 카드 - /ward/hospital·/guardian/hospital 다음 진료와 챗봇 예약 완료가 함께 쓴다. */
 .root {
   background: #fff;
   border-radius: var(--sb-radius);
@@ -112,6 +112,11 @@
   line-height: 1.45;
   word-break: keep-all;
   overflow-wrap: anywhere;
+}
+
+.action {
+  display: flex;
+  justify-content: flex-end;
 }
 
 @media (max-width: 768px) {

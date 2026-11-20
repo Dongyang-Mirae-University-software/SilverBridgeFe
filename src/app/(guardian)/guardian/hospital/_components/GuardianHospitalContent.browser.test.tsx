@@ -11,7 +11,7 @@ import { render } from 'vitest-browser-react';
 import useSelectedWardId, { clearSelectedWardId, setSelectedWardId } from '@/store/selectedWardStore';
 import type { IConnectionItem } from '@/service/interface/connection';
 import type { IHospital, IReservationItem } from '@/service/interface/reservation';
-import { addDays, formatDateShort, kstToday } from '@/utils/reservation/reservationView';
+import { addDays, formatDateLong, formatDateShort, kstToday } from '@/utils/reservation/reservationView';
 import { GuardianHospitalContent } from './GuardianHospitalContent';
 
 const api = vi.hoisted(() => ({
@@ -319,9 +319,14 @@ describe('GuardianHospitalContent (Chrome)', () => {
     api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
     const screen = await renderContent();
 
-    const next = screen.getByRole('group', { name: '다음 진료' });
+    // 피보호자 병원 화면과 같은 "병원 가는 날" 카드 - 큰 남은 날·긴 날짜·시각·병원 주소
+    const next = screen.getByRole('region', { name: '다음 진료' });
+    await expect.element(next.getByText('병원 가는 날')).toBeVisible();
     await expect.element(next.getByText('내일')).toBeVisible();
-    await expect.element(next).toMatchTextContent(`${formatDateShort(TOMORROW)} 오전 10시`);
+    await expect.element(next).toMatchTextContent(formatDateLong(TOMORROW));
+    await expect.element(next).toMatchTextContent('오전 10시');
+    await expect.element(next).toMatchTextContent('서울 강남구 강남내과로');
+    await expect.element(next.getByRole('button', { name: /강남내과 예약 취소$/ })).toBeVisible();
     await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
     const dialog = screen.getByRole('dialog', { name: '이 예약을 취소할까요?' });
     // 취소해도 피보호자에게 알림은 가지 않는다 - 사실대로 "화면에서도 보인다"고만 안내한다
@@ -344,8 +349,11 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     await expect.element(screen.getByRole('heading', { name: '예약 현황 2건' })).toBeVisible();
     const more = screen.getByRole('group', { name: '그 밖의 예약' });
-    await expect.element(more).toMatchTextContent(formatDateShort(addDays(TODAY, 3)));
+    await expect.element(more).toMatchTextContent(formatDateLong(addDays(TODAY, 3)));
+    await expect.element(more).toMatchTextContent('그다음');
     await expect.element(more).toMatchTextContent('3일 뒤');
+    // 큰 카드는 다음 진료 1건뿐이다
+    expect(screen.getByRole('region', { name: '다음 진료' }).elements()).toHaveLength(1);
     const past = screen.getByRole('region', { name: '지난 진료' });
     // 병원 목록에 없는 병원은 다시 예약 버튼이 없다
     expect(past.getByRole('button', { name: /다시 예약$/ }).elements()).toHaveLength(1);
@@ -353,6 +361,19 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     await expect.element(step(screen, '2. 날짜·시간')).toHaveAttribute('aria-current', 'step');
     await expect.element(screen.getByText('강남내과', { exact: false })).toBeVisible();
+  });
+
+  it('그 밖의 예약 카드에서도 예약을 취소한다', async () => {
+    const later = addDays(TODAY, 3);
+    api.getMyReservations.mockResolvedValue([reservation(1, TOMORROW, '09:00'), reservation(2, later, '10:00')]);
+    const screen = await renderContent();
+
+    const more = screen.getByRole('group', { name: '그 밖의 예약' });
+    await more.getByRole('button', { name: `${formatDateShort(later)} 오전 10시 강남내과 예약 취소` }).click();
+    await screen.getByRole('dialog').getByRole('button', { name: '예약 취소' }).click();
+
+    await expect.element(screen.getByText('예약을 취소했어요.')).toBeVisible();
+    expect(api.cancelReservation).toHaveBeenCalledWith('ward01', 2);
   });
 
   it('병원 목록은 5곳씩 나눠 보여 준다', async () => {
@@ -859,6 +880,25 @@ describe('GuardianHospitalContent (Chrome)', () => {
     expect(layout.getBoundingClientRect().width).toBeLessThanOrEqual(200);
     layout.style.width = '';
     layout.style.flex = '1 1 auto';
+    for (const el of document.querySelectorAll('[data-testid="page-layout"] *')) {
+      expect(el.getBoundingClientRect().right).toBeLessThanOrEqual(360.5);
+    }
+    await page.viewport(375, 812);
+  });
+
+  it('휴대폰 폭(360px)에서 큰 다음 진료 카드·그다음 카드도 화면 밖으로 넘치지 않는다', async () => {
+    await page.viewport(360, 800);
+    api.getHospitals.mockResolvedValue([
+      { ...hospital(1, '강남내과', ['내과']), address: '서울특별시 강남구 테헤란로 100길 23 하늘메디컬빌딩 5층 501호' },
+    ]);
+    api.getMyReservations.mockResolvedValue([
+      reservation(1, addDays(TODAY, 12), '15:30'),
+      reservation(2, addDays(TODAY, 25), '11:30'),
+    ]);
+    const screen = await renderContent();
+    await expect.element(screen.getByRole('region', { name: '다음 진료' }).getByText('12일 뒤')).toBeVisible();
+    await expect.element(screen.getByRole('group', { name: '그 밖의 예약' })).toMatchTextContent('25일 뒤');
+
     for (const el of document.querySelectorAll('[data-testid="page-layout"] *')) {
       expect(el.getBoundingClientRect().right).toBeLessThanOrEqual(360.5);
     }

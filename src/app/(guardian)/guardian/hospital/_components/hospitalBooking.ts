@@ -36,13 +36,6 @@ export function pickOf(hospital: IHospital, department?: string): Pick {
   return { hospital, department: department ?? (hospital.departments.length === 1 ? hospital.departments[0] : '') };
 }
 
-// 다음 진료까지 남은 날 - "오늘" / "내일" / "3일 뒤"
-export function ddayLabel(days: number) {
-  if (days <= 0) return '오늘';
-  if (days === 1) return '내일';
-  return `${days}일 뒤`;
-}
-
 // 입력하는 대로 "010-1234-5678" 꼴로 줄표를 넣는다
 export function formatPhoneInput(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 11);

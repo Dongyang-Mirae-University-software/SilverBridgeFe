@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 
 import { ReservationPager } from '@/components/reservation/ReservationPager';
+import { ddayLabel, VisitDayCard } from '@/components/reservation/VisitDayCard';
 import { IHospital, IReservationItem } from '@/service/interface/reservation';
 import {
   daysBetween,
   findHospitalByName,
+  formatDateLong,
   formatDateShort,
   formatTime,
   isHospitalOpenNow,
@@ -14,7 +16,7 @@ import {
   splitReservations,
 } from '@/utils/reservation/reservationView';
 import styles from './GuardianHospitalContent.module.css';
-import { ddayLabel, Pick } from './hospitalBooking';
+import { Pick } from './hospitalBooking';
 import { ChevronIcon, PlusIcon } from './hospitalIcons';
 
 const cx = classNames.bind(styles);
@@ -103,17 +105,6 @@ export function HospitalListStep(props: Props) {
       : null;
   };
 
-  const cancelButton = (item: IReservationItem, className?: string) => (
-    <button
-      type="button"
-      className={cx('btn', 'ghost', 'cancelButton', className)}
-      aria-label={`${formatDateShort(item.reservationDate)} ${formatTime(item.reservationTime)} ${item.hospitalName} 예약 취소`}
-      onClick={event => askCancel(item, event.currentTarget)}
-    >
-      예약 취소
-    </button>
-  );
-
   return (
     <>
       {newButton}
@@ -128,25 +119,17 @@ export function HospitalListStep(props: Props) {
           예약 현황 <span className={cx('sectionCount')}>{upcoming.length}건</span>
         </h2>
 
+        {/* 다음 진료는 피보호자 병원 화면과 같은 카드 - 보호자 화면에서만 [예약 취소]를 붙인다 */}
         {next ? (
-          <div className={cx('card', 'nextCard')} role="group" aria-label="다음 진료">
-            <div className={cx('nextDday')}>
-              <span className={cx('nextLabel')}>다음 진료</span>
-              <span className={cx('ddayBig')}>{ddayLabel(daysBetween(today, next.reservationDate))}</span>
-            </div>
-            <div className={cx('nextBody')}>
-              <div className={cx('nextText')}>
-                <div className={cx('nextWhen')}>
-                  {formatDateShort(next.reservationDate)}{' '}
-                  <span className={cx('brandText')}>{formatTime(next.reservationTime)}</span>
-                </div>
-                <div className={cx('nextWhere')}>
-                  {next.hospitalName} <span className={cx('dept')}>· {next.department}</span>
-                </div>
-              </div>
-              {cancelButton(next, 'nextCancel')}
-            </div>
-          </div>
+          <VisitDayCard
+            hospitalName={next.hospitalName}
+            department={next.department}
+            date={next.reservationDate}
+            time={next.reservationTime}
+            today={today}
+            address={findHospitalByName(hospitals, next.hospitalName)?.address}
+            action={<CancelButton item={next} className="nextCancel" onAsk={askCancel} />}
+          />
         ) : (
           <div className={cx('card', 'emptyCard')}>
             <p className={cx('emptyText')}>잡혀 있는 예약이 없어요</p>
@@ -154,19 +137,24 @@ export function HospitalListStep(props: Props) {
         )}
 
         {others.length > 0 && (
-          <div className={cx('card', 'listCard')} role="group" aria-label="그 밖의 예약">
+          // 그 밖의 예약 - 피보호자 화면의 "그다음" 카드와 같은 모양
+          <div className={cx('laterList')} role="group" aria-label="그 밖의 예약">
             {others.map(item => (
-              <div key={item.reservationId} className={cx('moreRow')}>
-                <span className={cx('ddayChip')}>{ddayLabel(daysBetween(today, item.reservationDate))}</span>
-                <span className={cx('moreText')}>
-                  <span className={cx('moreWhen')}>
-                    {formatDateShort(item.reservationDate)} {formatTime(item.reservationTime)}
-                  </span>
-                  <span className={cx('moreWhere')}>
-                    {item.hospitalName} · {item.department}
-                  </span>
-                </span>
-                {cancelButton(item)}
+              <div key={item.reservationId} className={cx('card', 'laterCard')}>
+                <div className={cx('laterWhen')}>
+                  <span className={cx('laterLabel')}>그다음</span>
+                  <span className={cx('laterDday')}>{ddayLabel(daysBetween(today, item.reservationDate))}</span>
+                </div>
+                <div className={cx('laterBody')}>
+                  <div className={cx('laterDate')}>
+                    {formatDateLong(item.reservationDate)}{' '}
+                    <span className={cx('brandText')}>{formatTime(item.reservationTime)}</span>
+                  </div>
+                  <div className={cx('laterName')}>
+                    {item.hospitalName} <span className={cx('laterDept')}>· {item.department}</span>
+                  </div>
+                </div>
+                <CancelButton item={item} className="laterCancel" onAsk={askCancel} />
               </div>
             ))}
           </div>
@@ -235,6 +223,25 @@ export function HospitalListStep(props: Props) {
         />
       )}
     </>
+  );
+}
+
+interface CancelButtonProps {
+  item: IReservationItem;
+  className: string;
+  onAsk: (item: IReservationItem, opener: HTMLElement) => void;
+}
+
+function CancelButton({ item, className, onAsk }: CancelButtonProps) {
+  return (
+    <button
+      type="button"
+      className={cx('btn', 'ghost', 'cancelButton', className)}
+      aria-label={`${formatDateShort(item.reservationDate)} ${formatTime(item.reservationTime)} ${item.hospitalName} 예약 취소`}
+      onClick={event => onAsk(item, event.currentTarget)}
+    >
+      예약 취소
+    </button>
   );
 }
 
