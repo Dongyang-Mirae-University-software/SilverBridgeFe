@@ -10,7 +10,9 @@ import {
   formatDateLong,
   formatDateShort,
   formatTime,
+  formatTimeDisplay,
   isHospitalOpenNow,
+  NBSP,
   pastStatusLabel,
   reservationErrorMessage,
   splitReservations,
@@ -61,6 +63,15 @@ export function HospitalListStep(props: Props) {
     const opener = openerRef.current;
     requestAnimationFrame(() => (opener?.isConnected ? opener : newButtonRef.current)?.focus());
   };
+
+  // 취소된 카드는 목록을 다시 받은 뒤에야 사라진다 - 창을 닫을 때 그 카드의 버튼으로 돌려 둔 포커스가
+  // 버튼과 함께 사라졌으면 [새 진료 예약하기]로 옮긴다(#301 점검 L-2)
+  useEffect(() => {
+    const opener = openerRef.current;
+    if (cancelTarget || !opener || opener.isConnected) return;
+    if (!document.activeElement || document.activeElement === document.body) newButtonRef.current?.focus();
+    openerRef.current = null;
+  }, [reservations, cancelTarget]);
 
   const newButton = (
     <button ref={newButtonRef} type="button" className={cx('ctaButton')} onClick={props.onNew}>
@@ -148,10 +159,14 @@ export function HospitalListStep(props: Props) {
                 <div className={cx('laterBody')}>
                   <div className={cx('laterDate')}>
                     {formatDateLong(item.reservationDate)}{' '}
-                    <span className={cx('brandText')}>{formatTime(item.reservationTime)}</span>
+                    <span className={cx('brandText')}>{formatTimeDisplay(item.reservationTime)}</span>
                   </div>
                   <div className={cx('laterName')}>
-                    {item.hospitalName} <span className={cx('laterDept')}>· {item.department}</span>
+                    {item.hospitalName}{' '}
+                    <span className={cx('laterDept')}>
+                      ·{NBSP}
+                      {item.department}
+                    </span>
                   </div>
                 </div>
                 <CancelButton item={item} className="laterCancel" onAsk={askCancel} />

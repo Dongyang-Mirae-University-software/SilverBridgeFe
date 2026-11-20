@@ -61,6 +61,14 @@ export function formatTime(time: string) {
   return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}시${min ? ` ${min}분` : ''}`;
 }
 
+// 줄 바꿈 없는 공백 - 좁은 칸에서 "오전" / "9시", "·" / "내과"처럼 한 덩어리가 갈라지지 않게 붙인다
+export const NBSP = '\u00a0';
+
+// 화면 표시용 "오전 9시" - 오전·오후와 시를 한 줄에 둔다(분 앞에서는 줄이 바뀔 수 있다)
+export function formatTimeDisplay(time: string) {
+  return formatTime(time).replace(' ', NBSP);
+}
+
 // 시간 버튼 글씨 "9:00", "2:30"
 export function formatSlot(time: string) {
   const [h, min] = time.split(':');

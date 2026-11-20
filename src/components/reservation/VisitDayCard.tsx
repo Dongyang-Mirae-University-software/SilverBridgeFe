@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
-import { daysBetween, formatDateLong, formatTime } from '@/utils/reservation/reservationView';
+import { daysBetween, formatDateLong, formatTimeDisplay, NBSP } from '@/utils/reservation/reservationView';
 
 import styles from './VisitDayCard.module.css';
 
@@ -49,7 +49,7 @@ export function VisitDayCard({ hospitalName, department, date, time, today, addr
           </span>
           <div className={cx('infoText')}>
             <div className={cx('bigDate')}>{validDate ? formatDateLong(date) : date}</div>
-            <div className={cx('bigDate', 'bigTime')}>{HH_MM.test(time) ? formatTime(time) : time}</div>
+            <div className={cx('bigDate', 'bigTime')}>{HH_MM.test(time) ? formatTimeDisplay(time) : time}</div>
           </div>
         </div>
         <div className={cx('divider')} />
@@ -59,7 +59,13 @@ export function VisitDayCard({ hospitalName, department, date, time, today, addr
           </span>
           <div className={cx('infoText')}>
             <div className={cx('hospital')}>
-              {hospitalName} {department && <span className={cx('dept')}>· {department}</span>}
+              {hospitalName} {/* 진료과가 다음 줄로 갈 때 가운뎃점만 윗줄에 남지 않게 붙인다 */}
+              {department && (
+                <span className={cx('dept')}>
+                  ·{NBSP}
+                  {department}
+                </span>
+              )}
             </div>
             {address && <div className={cx('address')}>{address}</div>}
           </div>
