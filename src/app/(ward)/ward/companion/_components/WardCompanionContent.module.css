@@ -412,13 +412,16 @@
   .page:has(> .testStart) > .hero.open p { grid-column: 1; font-size: calc(20px * var(--ward-font-scale, 1)); }
   .page:has(> .testStart) > .hero.open .startButton { grid-column: 2; grid-row: 1 / span 2; width: auto; min-height: 76px; margin-top: 0; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 26px; }
   .page:has(> .testStart) > .hero.open .notice { grid-column: 1 / -1; }
+  /* 테스트 안내 푸시로 들어온 칸도 같은 한 줄 - 이 칸까지 함께 뜨면 110~186px 더 넘치던 것(#307 점검 M-1) */
+  .page:has(> .testStart) > .testEntry { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px 24px; padding: 14px 20px; }
+  .page:has(> .testStart) > .testEntry .startButton { width: auto; min-height: 72px; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 26px; }
 
-  .page:has(> .hero.open) .testStart { gap: 16px; }
-  .page:has(> .hero.open) .testStart .testHero { gap: 16px; padding: 22px 28px; }
-  .page:has(> .hero.open) .testStart .testPick { gap: 10px; padding: 22px; }
-  .page:has(> .hero.open) .testStart .testPick .testSlot { min-height: 80px; }
-  .page:has(> .hero.open) .testStart .testPick .startButton { min-height: 92px; }
-  .page:has(> .hero.open) .testStart .promptButton { min-height: 72px; }
+  .page:has(> .hero.open, > .testEntry) .testStart { gap: 16px; }
+  .page:has(> .hero.open, > .testEntry) .testStart .testHero { gap: 16px; padding: 22px 28px; }
+  .page:has(> .hero.open, > .testEntry) .testStart .testPick { gap: 10px; padding: 22px; }
+  .page:has(> .hero.open, > .testEntry) .testStart .testPick .testSlot { min-height: 80px; }
+  .page:has(> .hero.open, > .testEntry) .testStart .testPick .startButton { min-height: 92px; }
+  .page:has(> .hero.open, > .testEntry) .testStart .promptButton { min-height: 72px; }
 }
 @media (min-width: 641px) and (max-width: 1023px) {
   /* 세로 태블릿(768px)은 글 칸이 좁아 제목이 두 줄로 접히면 띠가 다시 커진다 */
