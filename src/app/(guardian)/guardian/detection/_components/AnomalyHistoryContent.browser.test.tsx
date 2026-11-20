@@ -380,6 +380,56 @@ describe('AnomalyHistoryContent (Chrome)', () => {
   });
 });
 
+describe('장면별 기록 (Chrome)', () => {
+  const older = { clipId: 61, incidentId: 1, detectedAt: '2026-10-13T22:01:03', durationMs: 5000, width: 640, height: 360, sizeBytes: 1000, createdAt: '2026-10-13T22:01:10' };
+  const newer = { ...older, clipId: 62, detectedAt: '2026-10-13T22:07:03', createdAt: '2026-10-13T22:07:10' };
+
+  beforeEach(() => {
+    api.getGuardianAnomalyHistorySummary.mockResolvedValue(SUMMARY);
+    api.fetchGuardianAnomalyClipHead.mockRejectedValue(new Error('no head'));
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+    Object.values(api).forEach(fn => fn.mockReset());
+  });
+
+  it('영상이 여러 개인 상황은 장면마다 한 줄로 나누고, 판정은 같은 상황끼리 함께 보인다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1, { clip: newer, clipCount: 2 })]));
+    api.getGuardianAnomalyClips.mockResolvedValue([newer, older]);
+    const screen = await renderHistory();
+
+    await expect.element(screen.getByText('같은 상황의 장면 2/2')).toBeVisible();
+    await expect.element(screen.getByText('같은 상황의 장면 1/2')).toBeVisible();
+    expect(screen.getByText('영상 2개').query()).toBeNull();
+    expect(screen.getByRole('button', { name: '영상 보기' }).elements()).toHaveLength(2);
+    expect(api.getGuardianAnomalyClips).toHaveBeenCalledWith(1);
+  });
+
+  it('영상이 하나뿐인 상황은 영상 목록을 따로 부르지 않는다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1, { clip: older, clipCount: 1 })]));
+    const screen = await renderHistory();
+
+    await expect.element(screen.getByRole('button', { name: '영상 보기' })).toBeVisible();
+    expect(screen.getByText(/같은 상황의 장면/).query()).toBeNull();
+    expect(api.getGuardianAnomalyClips).not.toHaveBeenCalled();
+  });
+
+  it('장면 줄을 누르면 그 장면 영상만 열고 영상 고르기 칩은 없다', async () => {
+    api.getGuardianAnomalyHistory.mockResolvedValue(page([incident(1, { clip: newer, clipCount: 2 })]));
+    api.getGuardianAnomalyClips.mockResolvedValue([newer, older]);
+    api.fetchGuardianAnomalyClipFile.mockResolvedValue(new Blob(['x'], { type: 'video/webm' }));
+    const screen = await renderHistory();
+    await expect.element(screen.getByText('같은 상황의 장면 1/2')).toBeVisible();
+
+    // 두 번째 줄(처음 장면 = older)
+    await screen.getByRole('button', { name: '영상 보기' }).nth(1).click();
+    await vi.waitFor(() => expect(api.fetchGuardianAnomalyClipFile).toHaveBeenCalledWith(61));
+    expect(api.fetchGuardianAnomalyClipFile).not.toHaveBeenCalledWith(62);
+    expect(screen.getByRole('group', { name: '영상 선택' }).query()).toBeNull();
+  });
+});
+
 describe('AnomalyClipModal (Chrome)', () => {
   afterEach(() => {
     document.body.innerHTML = '';

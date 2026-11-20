@@ -10,6 +10,7 @@ const KIND_BY_TYPE: Record<string, PushKind> = {
   ANOMALY_REVIEW_SUMMARY: 'anomaly',
   ANOMALY_REVIEW_CONFLICTED: 'anomaly',
   CAMERA_LINK_LOST: 'anomaly',
+  CAMERA_STOPPED: 'anomaly', // 앱 안 안내 전용(피보호자 촬영이 멈춤) - 서버가 보내지 않는다
   MEDICATION_REMINDER: 'medication',
   MEDICATION_MISSED: 'medication',
   MEDICATION_STOPPED: 'medication',
@@ -94,6 +95,8 @@ export function getPushRoute(data: PushData, role?: 'WARD' | 'GUARDIAN' | null) 
     case 'ANOMALY_REVIEW_CONFLICTED':
     case 'CAMERA_LINK_LOST':
       return '/guardian/detection';
+    case 'CAMERA_STOPPED':
+      return '/ward/camera';
     case 'INQUIRY_ANSWERED':
       return '/guardian/inquiries';
     case 'COMPANION_RISK':
