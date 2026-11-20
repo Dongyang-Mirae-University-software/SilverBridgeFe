@@ -1384,6 +1384,48 @@ describe('테스트 시작 화면 - 오늘 안내 띠와 함께 (Chrome)', () =>
     await expect.element(page.getByRole('heading', { name: '오후 3시 안부 인사 시간이에요' })).toBeVisible();
   });
 
+  it('같은 시간대 푸시여도 하던 대화(IN_PROGRESS)가 있으면 "이어서 이야기하기" 띠를 남긴다(#313 점검 M-1)', async () => {
+    api.today.mockResolvedValue({ ...today('15:00', ['DONE', 'MISSED', 'IN_PROGRESS', 'UPCOMING', 'UPCOMING']), testMode: true });
+    nav.search = '?testSlot=15:00';
+    await renderCompanion();
+    await expect.element(page.getByRole('button', { name: '오후 3시 대화 시작' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '이어서 이야기하기' })).toBeVisible();
+  });
+
+  it('같은 시간대 푸시 화면에서 현황 다시 받기가 실패하면 띠 자리의 오류 안내를 보인다(#313 점검 L-2)', async () => {
+    api.today.mockResolvedValue(OPEN_3PM);
+    nav.search = '?testSlot=15:00';
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    await renderCompanion(client);
+    await expect.element(page.getByRole('button', { name: '오후 3시 대화 시작' })).toBeVisible();
+    expect(page.getByRole('heading', { name: '오후 3시 안부 인사 시간이에요' }).elements()).toHaveLength(0);
+
+    api.today.mockRejectedValue(new Error('network'));
+    await client.invalidateQueries();
+    await expect.element(page.getByText('오늘 안부 대화를 불러오지 못했어요.')).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '오후 3시 대화 시작' })).toBeVisible();
+  });
+
+  it('좁은 태블릿(700px)·글자 아주 크게(1.47배)에서는 띠·푸시 칸 버튼이 제목 아래 줄로 내려간다(#313 점검 L-1)', async () => {
+    await page.viewport(700, 1000);
+    document.documentElement.style.setProperty('--ward-font-scale', '1.47');
+    try {
+      api.today.mockResolvedValue(OPEN_3PM);
+      nav.search = '?testSlot=18:00';
+      await renderCompanion();
+      await expect.element(page.getByRole('button', { name: '오후 6시 대화 시작' })).toBeVisible();
+      for (const id of ['companion-hero-title', 'companion-test-entry-title']) {
+        const box = document.querySelector(`[aria-labelledby="${id}"]`) as HTMLElement;
+        const heading = (box.querySelector('h2') as HTMLElement).getBoundingClientRect();
+        const start = (box.querySelector('button') as HTMLElement).getBoundingClientRect();
+        expect(start.top).toBeGreaterThanOrEqual(heading.bottom);
+        expect(start.right).toBeLessThanOrEqual(box.getBoundingClientRect().right + 1);
+      }
+    } finally {
+      document.documentElement.style.removeProperty('--ward-font-scale');
+    }
+  });
+
   // 화면 위아래 몫(머리줄 + 본문 여백) - 넓은 화면 156px(.page 채움 기준과 같음)·세로 태블릿 132px(gosky 실측)
   it.each([
     [1180, 820, 156, true], [1024, 768, 156, true], [820, 1180, 132, true], [768, 1024, 132, true],

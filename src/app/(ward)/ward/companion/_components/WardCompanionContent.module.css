@@ -14,6 +14,7 @@
   padding: 36px 28px;
   text-align: center;
 }
+.heroText { display: grid; gap: 12px; }
 .hero.open { border-color: color-mix(in srgb, var(--sb-brand) 20%, transparent); background: var(--sb-brand-50); }
 .hero h2 {
   margin: 0;
@@ -407,14 +408,17 @@
    띠는 한 줄(글은 왼쪽·버튼은 오른쪽)로 줄이고, 카드는 키운 크기를 원래 크기 쪽으로 되돌린다. 테스트 카드가 없는 일반 화면의 띠는 그대로다.
    큰 글자 설정처럼 그래도 모자라면 화면(stage) 스크롤에 맡긴다 */
 @media (min-width: 641px) {
-  .page:has(> .testStart) > .hero.open { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 24px; padding: 18px 24px; text-align: left; }
-  .page:has(> .testStart) > .hero.open h2 { grid-column: 1; font-size: calc(28px * var(--ward-font-scale, 1)); }
-  .page:has(> .testStart) > .hero.open p { grid-column: 1; font-size: calc(20px * var(--ward-font-scale, 1)); }
-  .page:has(> .testStart) > .hero.open .startButton { grid-column: 2; grid-row: 1 / span 2; width: auto; min-height: 76px; margin-top: 0; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 26px; }
-  .page:has(> .testStart) > .hero.open .notice { grid-column: 1 / -1; }
+  /* 글 덩어리가 글자 배율 x 320px보다 좁아지면 버튼을 아래 줄로 내린다 - 좁은 태블릿·큰 글자에서 제목이 2~3줄로 접혀 칸이 오히려 높아지던 것(#313 점검 L-1) */
+  .page:has(> .testStart) > .hero.open { flex-flow: row wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 18px 24px; text-align: left; }
+  .page:has(> .testStart) > .hero.open .heroText { flex: 1 1 calc(320px * var(--ward-font-scale, 1)); gap: 4px; }
+  .page:has(> .testStart) > .hero.open h2 { font-size: calc(28px * var(--ward-font-scale, 1)); }
+  .page:has(> .testStart) > .hero.open p { font-size: calc(20px * var(--ward-font-scale, 1)); }
+  .page:has(> .testStart) > .hero.open .startButton { flex: 0 0 auto; width: auto; min-height: 76px; margin-top: 0; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 26px; }
+  .page:has(> .testStart) > .hero.open .notice { flex-basis: 100%; }
   /* 테스트 안내 푸시로 들어온 칸도 같은 한 줄 - 이 칸까지 함께 뜨면 110~186px 더 넘치던 것(#307 점검 M-1) */
-  .page:has(> .testStart) > .testEntry { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px 24px; padding: 14px 20px; }
-  .page:has(> .testStart) > .testEntry .startButton { width: auto; min-height: 72px; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 26px; }
+  .page:has(> .testStart) > .testEntry { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px 20px; }
+  .page:has(> .testStart) > .testEntry h2 { flex: 1 1 calc(320px * var(--ward-font-scale, 1)); }
+  .page:has(> .testStart) > .testEntry .startButton { flex: 0 0 auto; width: auto; min-height: 72px; font-size: calc(26px * var(--ward-font-scale, 1)); padding: 0 26px; }
 
   .page:has(> .hero.open, > .testEntry) .testStart { gap: 16px; }
   .page:has(> .hero.open, > .testEntry) .testStart .testHero { gap: 16px; padding: 22px 28px; }

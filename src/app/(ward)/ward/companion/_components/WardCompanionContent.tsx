@@ -202,8 +202,12 @@ export function WardCompanionContent() {
   const testSlot = pickedTestSlot ?? (autoTestSlot && TEST_SLOTS.includes(autoTestSlot) ? autoTestSlot : TEST_SLOTS[0]);
   const testEntrySlot = testMode && pushedTestSlot && TEST_SLOTS.includes(pushedTestSlot) ? pushedTestSlot : null;
   // 테스트 안내 푸시로 들어온 칸이 오늘 안내 띠와 같은 시간대면 띠는 숨긴다 - 같은 시간대 시작 버튼이 둘 보이던 것(#307 점검 M-1).
-  // 띠에 남길 안내(대화가 끊긴 이유)가 있으면 그대로 보인다
-  const hideTodayBanner = testEntrySlot != null && testEntrySlot === openTestSlot && !notice;
+  // 띠에 남길 안내(대화가 끊긴 이유)가 있으면 그대로 보인다.
+  // 아직 시작 전(AVAILABLE)일 때만 숨긴다 - 하던 대화(IN_PROGRESS)가 일반 대화면 푸시 칸 버튼(테스트 대화만 이어 감)으로는
+  // 이어 갈 수 없어 '이어서 이야기하기'를 남긴다. 현황 다시 받기가 실패했으면 띠 자리의 오류 안내를 남긴다(#313 점검 M-1·L-2)
+  const openTestSlotStatus = today.data?.slots.find(slot => slot.slot === openTestSlot)?.status;
+  const hideTodayBanner =
+    testEntrySlot != null && testEntrySlot === openTestSlot && openTestSlotStatus === 'AVAILABLE' && !notice && !today.isError;
   // 피보호자는 말벗 시간표를 알 필요가 없다 - 대화 시간 밖에 들어오면 안내 없이 홈으로(2026-11-11 사용자 결정).
   // 이미 마친 시간대도 시간 밖으로 본다(openCompanionSlot - 2026-11-11 기능 점검 F-1).
   // 대화 중(마친 화면 포함)·여는 중(F-3)·테스트 계정·불러오는 중·오류·남길 안내(대화가 끊긴 이유)가 있을 때는 머문다.
@@ -712,10 +716,13 @@ function TodayPanel({ today, isLoading, isError, notice, opening, onOpen, onRetr
 
   return (
     <section className={cx('hero', 'open')} aria-labelledby="companion-hero-title">
-      <h2 id="companion-hero-title">
-        {inProgress ? '이야기하던 안부 대화가 있어요' : `${formatSlotTime(openSlot)} 안부 인사 시간이에요`}
-      </h2>
-      <p>{inProgress ? '이어서 이야기해 주세요.' : '말벗에게 오늘 이야기를 들려주세요.'}</p>
+      {/* 제목·부제를 한 덩어리로 - 테스트 화면에서 띠를 한 줄로 줄일 때 버튼만 옆·아래로 옮긴다(#313 점검 L-1) */}
+      <div className={cx('heroText')}>
+        <h2 id="companion-hero-title">
+          {inProgress ? '이야기하던 안부 대화가 있어요' : `${formatSlotTime(openSlot)} 안부 인사 시간이에요`}
+        </h2>
+        <p>{inProgress ? '이어서 이야기해 주세요.' : '말벗에게 오늘 이야기를 들려주세요.'}</p>
+      </div>
       <button className={cx('startButton')} type="button" disabled={opening} onClick={onOpen}>
         <Icon name="messageCircle" size={34} decorative />
         {opening ? '여는 중…' : inProgress ? '이어서 이야기하기' : '이야기 시작하기'}
