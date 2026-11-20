@@ -243,11 +243,22 @@ describe('AI 이상감지 검색 (Chrome)', () => {
     await expect.element(search).toBeVisible();
     const input = search.element() as HTMLInputElement;
     expect(input.getAttribute('autocomplete')).toBe('off');
-    input.focus();
-    for (const text of ['김', '김영', '김영희']) await search.fill(text);
-    expect(document.activeElement).toBe(input);
-    await expect.poll(() => listCalls.some(params => (params as { keyword?: string }).keyword === '김영희')).toBe(true);
-    expect(listCalls.filter(params => (params as { keyword?: string }).keyword !== undefined)).toHaveLength(1);
+    const keywordCalls = () => listCalls.filter(params => (params as { keyword?: string }).keyword !== undefined);
+    // 실제 시계로 재면 입력 사이가 느려진 순간(전체 실행) 300ms를 넘겨 중간 글자로도 요청이 나간다 -
+    // 검색 지연 타이머만 가짜로 돌려 "입력이 멈춘 뒤 300ms에 한 번"을 시계와 상관없이 본다
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      input.focus();
+      for (const text of ['김', '김영', '김영희']) await search.fill(text);
+      expect(document.activeElement).toBe(input);
+      await vi.advanceTimersByTimeAsync(299);
+      expect(keywordCalls()).toHaveLength(0);
+      await vi.advanceTimersByTimeAsync(1);
+    } finally {
+      vi.useRealTimers();
+    }
+    await expect.poll(() => keywordCalls().some(params => (params as { keyword?: string }).keyword === '김영희')).toBe(true);
+    expect(keywordCalls()).toHaveLength(1);
     expect(page.getByPlaceholder('이름·방 검색').element()).toBe(input);
   });
 });

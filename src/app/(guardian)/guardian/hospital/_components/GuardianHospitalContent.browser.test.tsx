@@ -169,8 +169,10 @@ describe('GuardianHospitalContent (Chrome)', () => {
     api.createReservation.mockResolvedValue({ data: { success: true } });
     api.cancelReservation.mockResolvedValue({ data: { success: true } });
   });
-  afterEach(() => {
+  // 폭을 바꾼 테스트가 중간에 실패해도 뒤 테스트가 좁은 화면에서 돌지 않게 늘 되돌린다(#304 점검 L-3)
+  afterEach(async () => {
     document.body.innerHTML = '';
+    await page.viewport(375, 812);
   });
 
   it('새 진료 예약 - 병원 고르기 → 날짜·시간 → 확인 → 완료, 증상 없이 피보호자 번호로 예약한다', async () => {
@@ -721,6 +723,8 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     await expect.element(screen.getByText('취소할 수 없는 예약 상태입니다.')).toBeVisible();
     expect(screen.getByRole('dialog').elements()).toHaveLength(0);
+    // 예약이 그대로 남았으니 포커스는 누른 [예약 취소]로 돌아간다(#304 점검 L-1)
+    await expect.element(screen.getByRole('button', { name: /강남내과 예약 취소$/ })).toHaveFocus();
   });
 
   it('빈 시간 조회가 실패(502)하면 다시 불러오기로 다시 묻는다', async () => {
@@ -918,7 +922,6 @@ describe('GuardianHospitalContent (Chrome)', () => {
     for (const el of document.querySelectorAll('[data-testid="page-layout"] *')) {
       expect(el.getBoundingClientRect().right).toBeLessThanOrEqual(360.5);
     }
-    await page.viewport(375, 812);
   });
 
   it('휴대폰 폭(360px)에서 큰 다음 진료 카드·그다음 카드도 화면 밖으로 넘치지 않는다', async () => {
@@ -937,7 +940,6 @@ describe('GuardianHospitalContent (Chrome)', () => {
     for (const el of document.querySelectorAll('[data-testid="page-layout"] *')) {
       expect(el.getBoundingClientRect().right).toBeLessThanOrEqual(360.5);
     }
-    await page.viewport(375, 812);
   });
 
   it('360px 그다음 카드에서 진료과 앞 가운뎃점·"오전 9시"가 줄 끝에서 갈라지지 않는다', async () => {
@@ -950,6 +952,5 @@ describe('GuardianHospitalContent (Chrome)', () => {
     const later = screen.getByRole('group', { name: '그 밖의 예약' });
     await expect.element(later.getByText('7일 뒤')).toBeVisible();
     expectNoSplit(later.element());
-    await page.viewport(375, 812);
   });
 });
