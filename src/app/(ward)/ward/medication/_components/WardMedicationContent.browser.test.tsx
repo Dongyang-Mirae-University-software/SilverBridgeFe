@@ -81,16 +81,40 @@ describe('WardMedicationContent (Chrome)', () => {
     document.body.innerHTML = '';
   });
 
-  it('긴 약 이름은 끝의 용량 표기를 빼고 보여 주고, 짧은 이름은 그대로 둔다(원래 이름은 title)', async () => {
-    const long = medication('신일이부프로펜정 400mg', '08:00:00', 'MORNING');
-    const short = medication('게보린300mg', '08:00:00', 'MORNING');
-    api.getTodayMedication.mockResolvedValue(today([long, short]));
+  it('BE 짧은 이름(displayName)을 보여 주고, 없으면 원래 이름 - 원래 이름은 title 에 남긴다', async () => {
+    const permitted = medication('다이아벡스정500밀리그램(메트포르민염산염)', '08:00:00', 'MORNING', false, { displayName: '다이아벡스정' });
+    // 용량만 다른 같은 약도 짧은 이름 그대로(BE 사용자 결정) - FE 가 원래 이름으로 되돌리지 않는다
+    const sameShort = medication('다이아벡스정850밀리그램(메트포르민염산염)', '08:00:00', 'MORNING', false, { displayName: '다이아벡스정' });
+    const legacy = medication('게보린300mg', '08:00:00', 'MORNING');
+    api.getTodayMedication.mockResolvedValue(today([permitted, sameShort, legacy]));
     const screen = await renderContent();
 
-    await expect.element(screen.getByText('신일이부프로펜정', { exact: true })).toBeVisible();
-    expect(screen.getByText('신일이부프로펜정 400mg').query()).toBeNull();
-    expect(screen.getByText('신일이부프로펜정', { exact: true }).element().getAttribute('title')).toBe('신일이부프로펜정 400mg');
+    await expect.element(screen.getByText('다이아벡스정', { exact: true }).first()).toBeVisible();
+    const shortNames = screen.getByText('다이아벡스정', { exact: true }).all();
+    expect(shortNames).toHaveLength(2);
+    expect(shortNames.map(name => name.element().getAttribute('title'))).toEqual([
+      '다이아벡스정500밀리그램(메트포르민염산염)',
+      '다이아벡스정850밀리그램(메트포르민염산염)',
+    ]);
+    expect(screen.getByText('다이아벡스정500밀리그램(메트포르민염산염)').query()).toBeNull();
     await expect.element(screen.getByText('게보린300mg', { exact: true })).toBeVisible();
+  });
+
+  it('짧은 이름도 칸보다 길면 줄을 바꿔 칸 안에 담고 가로로 넘치지 않는다', async () => {
+    const longName = '신일이부프로펜에이스연질캡슐아세트아미노펜복합제';
+    const long = medication(`${longName}400mg`, '08:00:00', 'MORNING', false, { displayName: longName });
+    const other = medication('혈압약', '08:00:00', 'MORNING');
+    api.getTodayMedication.mockResolvedValue(today([long, other]));
+    const screen = await renderContent();
+
+    const name = screen.getByText(longName, { exact: true });
+    await expect.element(name).toBeVisible();
+    const nameElement = name.element() as HTMLElement;
+    const cell = nameElement.closest('li') as HTMLElement;
+    const lineHeight = parseFloat(getComputedStyle(nameElement).lineHeight) || parseFloat(getComputedStyle(nameElement).fontSize) * 1.2;
+    expect(nameElement.getBoundingClientRect().height).toBeGreaterThan(lineHeight * 1.5);
+    expect(nameElement.getBoundingClientRect().right).toBeLessThanOrEqual(cell.getBoundingClientRect().right + 0.5);
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
   it('현재 시간대 약을 크게 보여 주고, 해당 시간대의 약을 함께 체크한 뒤 그 시간대에 머문다', async () => {

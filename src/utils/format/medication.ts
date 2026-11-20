@@ -1,4 +1,5 @@
 import { MedicationItem, MedicationTimeSlot } from '@/service/interface/medication';
+import { medicationDisplayName } from '@/utils/medication/displayName';
 
 const TIME_SLOT_LABEL: Record<MedicationTimeSlot, string> = {
   MORNING: '아침',
@@ -164,7 +165,7 @@ export function getTimeGroupStatusLabel(group: MedicationTimeGroup) {
 
 // "코싹열정, 신일이부프로펜정 외 4개"
 export function summarizeMedicationNames(medications: MedicationItem[], shown = 2) {
-  const names = medications.map(medication => medication.name);
+  const names = medications.map(medicationDisplayName);
   const rest = names.length - shown;
   return rest > 0 ? `${names.slice(0, shown).join(', ')} 외 ${rest}개` : names.join(', ');
 }

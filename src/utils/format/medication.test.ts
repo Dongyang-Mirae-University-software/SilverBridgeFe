@@ -134,11 +134,12 @@ describe('시간대 묶음 - 약 6개 × 하루 3번은 "18번"이 아니라 "3�
     expect(getTimeGroupStatusLabel(onlyLate)).toBe('오늘은 등록 전이었어요');
   });
 
-  it('이름 요약: 두 개까지 보이고 나머지는 "외 N개"', () => {
+  it('이름 요약: 두 개까지 보이고 나머지는 "외 N개", 이름은 displayName(없으면 name)', () => {
     expect(summarizeMedicationNames([item({ name: '가' }), item({ name: '나' }), item({ name: '다' }), item({ name: '라' })])).toBe(
       '가, 나 외 2개',
     );
     expect(summarizeMedicationNames([item({ name: '가' })])).toBe('가');
+    expect(summarizeMedicationNames([item({ name: '아모디핀정5mg', displayName: '아모디핀정' }), item({ name: '나' })])).toBe('아모디핀정, 나');
   });
 });
 
