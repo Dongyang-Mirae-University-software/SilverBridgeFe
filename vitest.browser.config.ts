@@ -19,6 +19,7 @@ export default defineConfig({
       'classnames/bind',
       '@tanstack/react-query',
       'axios',
+      '@stomp/stompjs',
       'dayjs',
       'dayjs/locale/ko',
       'next/link',

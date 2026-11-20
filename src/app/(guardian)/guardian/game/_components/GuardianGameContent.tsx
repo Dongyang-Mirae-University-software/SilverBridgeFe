@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import { RefreshButton } from '@/components/RefreshButton';
 import { useGuardianActiveWards } from '@/hooks/useActiveConnections';
 import { IConnectionItem } from '@/service/interface/connection';
-import { IGameActivityDay, IWardGameSummary } from '@/service/interface/game';
+import { IGameActivityDay, IGameProgress, IWardGameSummary } from '@/service/interface/game';
 import {
   wardGameActivityQueryOptions,
   wardGameSummaryQueryKey,
@@ -32,9 +32,18 @@ interface WardGameCardProps {
   activity: IGameActivityDay[];
   isLoading: boolean;
   error: unknown;
+  activityError: unknown;
 }
 
-function WardGameCard({ ward, summary, activity, isLoading, error }: WardGameCardProps) {
+// 진행 막대·문제 수 - BE가 null을 실을 수 있어 기본값을 둔다(FE #293 점검 L-1)
+function gameProgressView(totalStages: number | null, progress: IGameProgress | null) {
+  const total = totalStages ?? 0;
+  const done = !progress ? 0 : progress.cleared ? total : Math.max(0, (progress.currentStageNo ?? 1) - 1);
+  const percent = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
+  return { total, done, percent };
+}
+
+function WardGameCard({ ward, summary, activity, isLoading, error, activityError }: WardGameCardProps) {
   return (
     <li className={cx('card')}>
       <header className={cx('cardHeader')}>
@@ -55,17 +64,22 @@ function WardGameCard({ ward, summary, activity, isLoading, error }: WardGameCar
         </p>
       )}
 
-      {summary && <ActivityHeatmap activity={activity} />}
+      {/* 활동만 실패하면 빈 히트맵(0일·0문제)이 "활동 없음"처럼 보인다 - 안내로 바꾼다(FE #293 점검 L-2) */}
+      {summary && !activityError && <ActivityHeatmap activity={activity} />}
+      {summary && Boolean(activityError) && (
+        <p className={cx('emptyText')} role="alert">
+          최근 활동 기록을 불러오지 못했습니다. 잠시 후 새로고침해 주세요.
+        </p>
+      )}
 
       {summary && (
         <ul className={cx('games')}>
           {summary.games.map(({ game, progress }) => {
-            const done = progress ? (progress.cleared ? game.totalStages : progress.currentStageNo - 1) : 0;
-            const percent = game.totalStages ? Math.round((done / game.totalStages) * 100) : 0;
+            const { total, done, percent } = gameProgressView(game.totalStages, progress);
             return (
-              <li key={game.slug} className={cx('game')} style={{ '--game-color': game.themeColor } as React.CSSProperties}>
+              <li key={game.slug} className={cx('game')} style={game.themeColor ? ({ '--game-color': game.themeColor } as React.CSSProperties) : undefined}>
                 <div className={cx('gameHead')}>
-                  <strong>{game.title}</strong>
+                  <strong>{game.title ?? '게임'}</strong>
                   {progress?.cleared ? (
                     <span className={cx('badge', 'done')}>완료</span>
                   ) : progress ? (
@@ -79,7 +93,7 @@ function WardGameCard({ ward, summary, activity, isLoading, error }: WardGameCar
                 </div>
                 <div className={cx('stats')}>
                   <span>
-                    {done} / {game.totalStages} 문제
+                    {done} / {total} 문제
                   </span>
                   <span>{progress?.score ?? 0}점</span>
                   <span>시도 {progress?.attempts ?? 0}회</span>
@@ -102,7 +116,7 @@ export function GuardianGameContent() {
   const activityResults = useQueries({
     queries: activeWards.map(ward => wardGameActivityQueryOptions(ward.partnerUserId)),
   });
-  const isRefreshing = results.some(result => result.isFetching);
+  const isRefreshing = [...results, ...activityResults].some(result => result.isFetching);
 
   return (
     <section className={cx('page')}>
@@ -133,6 +147,7 @@ export function GuardianGameContent() {
             activity={activityResults[index]?.data ?? []}
             isLoading={results[index]?.isLoading ?? false}
             error={results[index]?.error ?? null}
+            activityError={activityResults[index]?.error ?? null}
           />
         ))}
       </ul>

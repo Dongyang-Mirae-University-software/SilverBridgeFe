@@ -116,4 +116,38 @@ describe('GuardianGameContent', () => {
 
     await expect.element(page.getByRole('alert')).toHaveTextContent('게임 기록을 불러오지 못했습니다.');
   });
+
+  it('요약은 되고 활동만 실패하면 빈 히트맵 대신 안내를 보인다', async () => {
+    data.summary.mockResolvedValue(SUMMARY);
+    data.activity.mockRejectedValue(apiError(503, 'GAME_UNAVAILABLE'));
+    await renderContent();
+
+    await expect.element(page.getByText('미로 찾기')).toBeVisible();
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('최근 활동 기록을 불러오지 못했습니다. 잠시 후 새로고침해 주세요.');
+    expect(document.body.textContent).not.toContain('0일 · 0문제');
+  });
+
+  it('BE가 null을 실은 필드는 기본값으로 보인다(NaN 없음)', async () => {
+    data.summary.mockResolvedValue({
+      ...SUMMARY,
+      games: [
+        {
+          game: { slug: 'maze', title: null, description: null, totalStages: null, themeColor: null },
+          progress: null,
+        },
+        {
+          game: { ...SUMMARY.games[0].game, slug: 'quiz', title: '초성퀴즈' },
+          progress: { ...SUMMARY.games[0].progress!, currentStageNo: null, score: null, attempts: null, cleared: null },
+        },
+      ],
+    } satisfies IWardGameSummary);
+    await renderContent();
+
+    await expect.element(page.getByText('0 / 0 문제')).toBeVisible();
+    await expect.element(page.getByText('0 / 10 문제')).toBeVisible();
+    await expect.element(page.getByText('게임', { exact: true })).toBeVisible();
+    expect(document.body.textContent).not.toContain('NaN');
+  });
 });
