@@ -4,10 +4,10 @@ import { getWardGameActivity, getWardGameSummary } from '@/service/api/guardian/
 
 export const wardGameSummaryQueryKey = ['guardian-ward-game'] as const;
 
-export function wardGameSummaryQueryOptions(gameUserId: number) {
+export function wardGameSummaryQueryOptions(wardId: string) {
   return queryOptions({
-    queryKey: [...wardGameSummaryQueryKey, gameUserId] as const,
-    queryFn: () => getWardGameSummary(gameUserId),
+    queryKey: [...wardGameSummaryQueryKey, wardId] as const,
+    queryFn: () => getWardGameSummary(wardId),
     refetchOnMount: 'always',
     refetchOnWindowFocus: 'always',
     staleTime: 10 * 1000,
@@ -15,10 +15,10 @@ export function wardGameSummaryQueryOptions(gameUserId: number) {
   });
 }
 
-export function wardGameActivityQueryOptions(gameUserId: number) {
+export function wardGameActivityQueryOptions(wardId: string) {
   return queryOptions({
-    queryKey: [...wardGameSummaryQueryKey, 'activity', gameUserId] as const,
-    queryFn: () => getWardGameActivity(gameUserId),
+    queryKey: [...wardGameSummaryQueryKey, 'activity', wardId] as const,
+    queryFn: () => getWardGameActivity(wardId),
     staleTime: 60 * 1000,
     retry: false,
   });

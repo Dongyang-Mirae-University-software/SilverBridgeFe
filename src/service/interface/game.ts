@@ -1,4 +1,4 @@
-// AI 서버 치매 예방 게임(/api/v1/games/**) 응답 타입. FE는 /api/streams 프록시로 호출한다.
+// 치매 예방 게임 응답 타입. 보호자는 BE 중계(/api/guardian/game/*)로 받는다 - 게임 번호(userId)·게임 내부 state는 BE가 빼고 wardId를 싣는다.
 export interface IGameCatalog {
   slug: string;
   title: string;
@@ -8,7 +8,6 @@ export interface IGameCatalog {
 }
 
 export interface IGameProgress {
-  userId: number;
   gameSlug: string;
   currentStageNo: number;
   score: number;
@@ -21,7 +20,7 @@ export interface IGameProgress {
 }
 
 export interface IWardGameSummary {
-  userId: number;
+  wardId: string;
   totalScore: number;
   totalAttempts: number;
   lastPlayedAt: string | null;
@@ -36,7 +35,7 @@ export interface IGameActivityDay {
 }
 
 export interface IWardGameActivity {
-  userId: number;
+  wardId: string;
   days: number;
   activity: IGameActivityDay[];
 }
