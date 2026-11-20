@@ -1,7 +1,7 @@
 // 보호자 병원 예약하기 컴포넌트 테스트 - 실제 Chrome에서 돈다(`npm run test:browser`)
 // 디자인(Claude 디자인 2026-10-30): 목록 → 1. 병원 고르기 → 2. 진료과·날짜·시간 → 3. 확인 → 완료
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
@@ -398,6 +398,31 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
     await expect.element(screen.getByText('잡혀 있는 예약이 없어요')).toBeVisible();
     await expect.element(screen.getByRole('button', { name: '새 진료 예약하기' })).toHaveFocus();
+  });
+
+  it('L-2 취소에 실패한 뒤 나중에 목록이 바뀌어 카드가 사라져도 포커스를 [새 진료 예약하기]로 끌어가지 않는다(#304 점검)', async () => {
+    api.getMyReservations.mockResolvedValueOnce([reservation(7, TOMORROW, '10:00')]).mockResolvedValue([]);
+    api.cancelReservation.mockRejectedValue(axiosError(400, '취소할 수 없는 예약 상태입니다.'));
+    const screen = await renderContent();
+    await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
+    await screen.getByRole('dialog').getByRole('button', { name: '예약 취소' }).click();
+    await expect.element(screen.getByText('취소할 수 없는 예약 상태입니다.')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: /강남내과 예약 취소$/ })).toHaveFocus();
+
+    // 사용자가 빈 곳을 눌러 포커스가 비고, 한참 뒤 창으로 돌아오면 목록을 다시 받는다(다른 곳에서 취소돼 카드가 사라짐)
+    (document.activeElement as HTMLElement).blur();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(Date.now() + 11_000);
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+      await expect.element(screen.getByText('잡혀 있는 예약이 없어요')).toBeVisible();
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      expect(document.activeElement).toBe(document.body);
+    } finally {
+      vi.useRealTimers();
+      focusManager.setFocused(undefined);
+    }
   });
 
   it('그 밖의 예약 카드에서도 예약을 취소한다', async () => {
