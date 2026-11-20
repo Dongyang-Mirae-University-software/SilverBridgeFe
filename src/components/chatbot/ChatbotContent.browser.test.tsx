@@ -921,7 +921,12 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     expect(call().element().getAttribute('href')).toBeNull();
     expect(document.querySelectorAll('a[href^="tel:"]').length).toBe(0);
     await expect.element(page.getByRole('region', { name: '119 도움 요청' })).toBeVisible();
-    await expect.element(page.getByText('통화 버튼을 누르면 보호자에게 알림이 가요')).toBeVisible();
+    // 안내는 뜻 단위로 줄을 고정한다 - "통화 버튼을 누르면" / "보호자에게 알림이 가요" (2026-11-20)
+    await expect.element(page.getByText('통화 버튼을 누르면', { exact: true })).toBeVisible();
+    await expect.element(page.getByText('보호자에게 알림이 가요', { exact: true })).toBeVisible();
+    expect(
+      page.getByText('보호자에게 알림이 가요', { exact: true }).element().getBoundingClientRect().top,
+    ).toBeGreaterThan(page.getByText('통화 버튼을 누르면', { exact: true }).element().getBoundingClientRect().top);
     // 위기 답이 아니면 109 버튼은 없다
     expect(page.getByRole('button', { name: '109 상담 전화' }).query()).toBeNull();
     expect(page.getByRole('region', { name: '추천 질문' }).query()).toBeNull();
@@ -990,7 +995,8 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
       api.sendChatMessage.mockResolvedValueOnce({ ...REPLY, emergencyWarning: ['위험해요'] });
       await renderChat(<ChatbotContent variant="ward" />);
       await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
-      await expect.element(page.getByText('연결된 보호자가 없어 알림은 가지 않아요')).toBeVisible();
+      await expect.element(page.getByText('연결된 보호자가 없어', { exact: true })).toBeVisible();
+      await expect.element(page.getByText('알림은 가지 않아요', { exact: true })).toBeVisible();
 
       await userEvent.click(page.getByRole('button', { name: '119 전화' }));
       await userEvent.click(page.getByRole('button', CALL));
@@ -1076,7 +1082,12 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
       await expect.element(call109).toBeVisible();
       await expect.element(call119).toBeVisible();
       await expect.element(page.getByRole('region', { name: '109·119 도움 요청' })).toBeVisible();
-      await expect.element(page.getByText('마음이 힘들면 109, 다쳤거나 위험하면 119')).toBeVisible();
+      // 세 줄 고정 - 줄마다 한 뜻(2026-11-20)
+      const lines = ['마음이 힘들면 109', '다쳤거나 위험하면 119', '누르면 보호자에게 알림이 가요'];
+      for (const line of lines) await expect.element(page.getByText(line, { exact: true })).toBeVisible();
+      const tops = lines.map(line => page.getByText(line, { exact: true }).element().getBoundingClientRect().top);
+      expect(tops[1]).toBeGreaterThan(tops[0]);
+      expect(tops[2]).toBeGreaterThan(tops[1]);
       expect(call109.element().tagName).toBe('BUTTON');
       expect(document.querySelectorAll('a[href^="tel:"]').length).toBe(0);
     });
