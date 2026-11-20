@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import classNames from 'classnames/bind';
 import dayjs from 'dayjs';
 
@@ -21,6 +22,12 @@ function toLevel(attempts: number) {
 }
 
 export function ActivityHeatmap({ activity }: { activity: IGameActivityDay[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // 휴대폰 폭에서는 26주가 다 안 들어가 가로로 밀린다 - 처음에 가장 최근 주(오른쪽 끝)가 보이게 둔다(2026-11-20 FE #293 점검 R-1)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, []);
   const byDate = new Map(activity.map(day => [day.date, day]));
   const today = dayjs().startOf('day');
   // 오늘이 속한 주의 일요일부터 거꾸로 WEEKS주. 열 = 주, 행 = 요일(일~토).
@@ -52,7 +59,7 @@ export function ActivityHeatmap({ activity }: { activity: IGameActivityDay[] }) 
           {activeDays}일 · {totalAttempts}문제
         </span>
       </figcaption>
-      <div className={cx('scroll')}>
+      <div ref={scrollRef} className={cx('scroll')} data-testid="activity-heatmap-scroll">
         <div className={cx('grid')} style={{ '--weeks': WEEKS } as React.CSSProperties}>
           <div className={cx('months')}>
             {monthLabels.map((label, w) => (
