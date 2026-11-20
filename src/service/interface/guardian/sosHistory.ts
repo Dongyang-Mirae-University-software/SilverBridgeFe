@@ -7,7 +7,7 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
-export type SosTriggerType = 'SOS_BUTTON' | 'GUARDIAN_CALL' | 'CHATBOT_119';
+export type SosTriggerType = 'SOS_BUTTON' | 'GUARDIAN_CALL' | 'CHATBOT_119' | 'CHATBOT_109';
 
 export interface IGuardianSosHistoryItem {
   sosEventId: number;
@@ -29,6 +29,8 @@ export interface ISosHistoryCounts {
   sosButton: number;
   guardianCall: number;
   chatbot119: number;
+  /** 챗봇 109(자살예방 상담전화) 버튼 - BE #507(2026-11-20) 이전 서버는 내리지 않는다 */
+  chatbot109?: number;
 }
 
 export interface IGuardianSosHistoryPage extends PageResponse<IGuardianSosHistoryItem> {

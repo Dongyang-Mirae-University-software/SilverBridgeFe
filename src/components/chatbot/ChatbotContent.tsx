@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
-import { Emergency119Dialpad } from '@/components/emergency/Emergency119Dialpad';
+import { Emergency119Dialpad, type EmergencyDialNumber } from '@/components/emergency/Emergency119Dialpad';
 import { CommonModal } from '@/components/CommonModal';
 import { useGuardianActiveWards, useWardActiveGuardians } from '@/hooks/useActiveConnections';
 import { useSoftKeyboardOpen } from '@/hooks/useSoftKeyboardOpen';
@@ -49,7 +49,9 @@ function makeSessionId() {
 }
 
 // 연결된 보호자가 없을 때 키패드 통화 버튼의 결과 문구 - SOS 이력은 남지만 알림은 가지 않는다(FE #277 점검 M-1)
-const NO_GUARDIAN_SUCCESS_NOTICE = '연결된 보호자가 없어 알림은 가지 않았어요. 시연 화면이라 119에도 걸리지 않아요';
+function noGuardianSuccessNotice(number: EmergencyDialNumber) {
+  return `연결된 보호자가 없어 알림은 가지 않았어요. 시연 화면이라 ${number}에도 걸리지 않아요`;
+}
 
 function buildWelcomeMessage(name?: string, isGuardian = false): ChatMessage {
   // 보호자 챗봇은 보호자 본인 상담으로 시작한다 - 예약을 시작하면 AI가 누구의 예약인지 묻는다(2026-11-11 사용자 결정).
@@ -341,6 +343,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   // 피보호자: 마지막 답(실패 안내 제외)이 응급·위기면 빠른 질문 대신 큰 119 버튼(앱 안 키패드)을 둔다. 실제 전화는 걸지 않는다(2026-08-26 정책). 다음 답이 응급이 아니면 돌아온다.
   // 판정은 말풍선 긴급 상자와 같다(chatUrgency - 문구·이모지는 보지 않는다). 예약 진행 패널이 먼저다.
   const wardUrgent = isWardChat && !reserving && !!stepSource && isUrgentAnswer(stepSource);
+  // 위기(자해·자살) 답이면 109 버튼을 119와 함께 둔다 - AI layout.crisis 만 본다(문구 비교 금지, 2026-11-20)
+  const wardCrisis = wardUrgent && !!stepSource && isCrisisAnswer(stepSource);
   const { openModal, onCloseModal } = useModalStore(state => ({
     openModal: state.openModal,
     onCloseModal: state.onCloseModal,
@@ -352,18 +356,18 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const noGuardian = isWardChat && !guardiansLoading && !guardiansFailed && !hasActiveGuardians;
   // 보내는 중에 키패드를 닫으면 결과 안내가 사라진다 - 닫힌 뒤 실패하면 오류 창으로 알린다(점검 L-1)
   const dialpadOpenRef = useRef(false);
-  function openSosFailedModal() {
+  function openSosFailedModal(number: EmergencyDialNumber) {
     openModal(
       <CommonModal
         type="error"
         tone="guardian"
         title="SOS 전송 실패"
-        message="보호자에게 알리지 못했어요. 119 화면을 다시 열어 통화 버튼을 눌러 주세요."
+        message={`보호자에게 알리지 못했어요. ${number} 화면을 다시 열어 통화 버튼을 눌러 주세요.`}
         primaryButton={{
-          text: '119 화면 열기',
+          text: `${number} 화면 열기`,
           onClick: () => {
             onCloseModal();
-            openEmergencyDialpad();
+            openEmergencyDialpad(number);
           },
         }}
         secondaryButton={{ text: '닫기', onClick: onCloseModal }}
@@ -371,24 +375,26 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       />,
     );
   }
-  // 키패드 통화 버튼 = 보호자 알림(SOS 와 같은 경로, 발생 경로만 CHATBOT_119). 자해·위기 답이면 109 안내 한 줄을 붙인다
-  function openEmergencyDialpad() {
+  // 키패드 통화 버튼 = 보호자 알림(SOS 와 같은 경로, 발생 경로만 CHATBOT_119 / 109 는 CHATBOT_109 - 2026-11-20 사용자 결정).
+  // 119·109 모두 앱 안 키패드만 열고 실제로 걸지 않는다. 위기 답의 119 키패드에는 109 안내 한 줄을 그대로 붙인다
+  function openEmergencyDialpad(number: EmergencyDialNumber = '119') {
     dialpadOpenRef.current = true;
     openModal(
       <Emergency119Dialpad
+        number={number}
         onClose={() => {
           dialpadOpenRef.current = false;
           onCloseModal();
         }}
         onCall={() =>
-          triggerSosAsync({ triggerType: 'CHATBOT_119' }).catch(error => {
-            if (!dialpadOpenRef.current) openSosFailedModal();
+          triggerSosAsync({ triggerType: number === '109' ? 'CHATBOT_109' : 'CHATBOT_119' }).catch(error => {
+            if (!dialpadOpenRef.current) openSosFailedModal(number);
             throw error;
           })
         }
-        successNotice={noGuardian ? NO_GUARDIAN_SUCCESS_NOTICE : undefined}
+        successNotice={noGuardian ? noGuardianSuccessNotice(number) : undefined}
         footer={
-          stepSource && isCrisisAnswer(stepSource) ? (
+          number === '119' && stepSource && isCrisisAnswer(stepSource) ? (
             <p className={styles.wardCrisisLine}>마음이 힘들면 자살예방 상담전화 109(24시간)에 이야기해 보세요.</p>
           ) : undefined
         }
@@ -827,12 +833,37 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             {reserving ? (
               reservationPanel('ward')
             ) : wardUrgent ? (
-              <section className={`${styles.wardQuickPanel} ${styles.wardEmergencyPanel}`} aria-label="119 도움 요청">
-                <p className={styles.wardEmergencyTitle}>긴급 · 119 도움 요청</p>
-                <button type="button" className={styles.wardEmergencyCall} onClick={openEmergencyDialpad}>
-                  <PhoneIcon size={40} className={styles.wardEmergencyIcon} />
-                  119 화면 열기
-                </button>
+              // 2026-11-20 사용자 시안 C: 카드·제목 없이 비상벨 같은 동그란 버튼. 위기 답(layout.crisis)이면 같은 모양의
+              // 109(자살예방 상담전화, 청록) 버튼을 119 옆에 둔다(시안 F). 버튼은 앱 안 키패드만 연다 - 알림은 키패드 통화 버튼에서
+              <section
+                className={`${styles.wardQuickPanel} ${styles.wardEmergencyPanel}`}
+                aria-label={wardCrisis ? '109·119 도움 요청' : '119 도움 요청'}
+              >
+                <div className={styles.wardRoundCalls}>
+                  {wardCrisis && (
+                    <button
+                      type="button"
+                      className={`${styles.wardRoundCall} ${styles.wardRoundCall109}`}
+                      aria-label="109 상담 전화"
+                      onClick={() => openEmergencyDialpad('109')}
+                    >
+                      <PhoneIcon size={32} className={styles.wardRoundIcon} />
+                      <span className={styles.wardRoundNumber}>109</span>
+                      <span className={styles.wardRoundLabel}>상담 전화</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={styles.wardRoundCall}
+                    aria-label="119 전화"
+                    onClick={() => openEmergencyDialpad('119')}
+                  >
+                    <PhoneIcon size={32} className={styles.wardRoundIcon} />
+                    <span className={styles.wardRoundNumber}>119</span>
+                    <span className={styles.wardRoundLabel}>전화</span>
+                  </button>
+                </div>
+                {wardCrisis && <p className={styles.wardEmergencyHint}>마음이 힘들면 109, 다쳤거나 위험하면 119</p>}
                 <p className={styles.wardEmergencyHint}>
                   {noGuardian ? '연결된 보호자가 없어 알림은 가지 않아요' : '통화 버튼을 누르면 보호자에게 알림이 가요'}
                 </p>

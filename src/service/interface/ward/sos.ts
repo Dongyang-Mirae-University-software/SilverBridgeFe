@@ -1,4 +1,4 @@
-export type WardSosTriggerType = 'SOS_BUTTON' | 'GUARDIAN_CALL' | 'CHATBOT_119';
+export type WardSosTriggerType = 'SOS_BUTTON' | 'GUARDIAN_CALL' | 'CHATBOT_119' | 'CHATBOT_109';
 
 export interface WardSosRequest {
   location?: string;

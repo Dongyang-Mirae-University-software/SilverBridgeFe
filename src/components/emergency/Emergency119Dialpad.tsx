@@ -30,6 +30,26 @@ export const DEMO_CALL_NOTICE = '시연 화면이라 실제로 전화가 걸리�
 // onCall(보호자 알림)을 받을 때의 상태 안내 - 챗봇 119 버튼이 쓴다
 export const CALL_SENDING_NOTICE = '보호자에게 알리는 중이에요…';
 export const CALL_SUCCESS_NOTICE = '보호자에게 알렸어요. 시연 화면이라 119에는 실제로 걸리지 않아요';
+// 챗봇 위기 답의 109(자살예방 상담전화) 키패드 - 119와 같이 실제로 걸지 않는다(2026-11-20)
+export const CALL_SUCCESS_NOTICE_109 = '보호자에게 알렸어요. 시연 화면이라 109에는 실제로 걸리지 않아요';
+
+/** 키패드가 처음 띄울 번호. 119 = 긴급 신고, 109 = 자살예방 상담전화(챗봇 위기 답) */
+export type EmergencyDialNumber = '119' | '109';
+
+const DIAL_TEXT: Record<EmergencyDialNumber, { dialog: string; close: string; notice: string; callWithNotify: string }> = {
+  '119': {
+    dialog: '119 신고 키패드(시연 화면)',
+    close: '119 화면 닫기',
+    notice: '학생 프로젝트 화면 · 실제로 신고 전화가 발신되지 않습니다',
+    callWithNotify: '통화(보호자에게 알림 - 실제로 119에 걸리지 않음)',
+  },
+  '109': {
+    dialog: '109 자살예방 상담전화 키패드(시연 화면)',
+    close: '109 화면 닫기',
+    notice: '학생 프로젝트 화면 · 실제로 상담 전화가 발신되지 않습니다',
+    callWithNotify: '통화(보호자에게 알림 - 실제로 109에 걸리지 않음)',
+  },
+};
 export const CALL_FAILED_NOTICE = '보호자에게 알리지 못했어요. 통화 버튼을 다시 눌러 주세요.';
 export const CALL_OFFLINE_NOTICE = '인터넷이 끊겨 보호자에게 알리지 못했어요. 연결되면 통화 버튼을 다시 눌러 주세요.';
 
@@ -49,12 +69,16 @@ interface Emergency119DialpadProps {
   onCall?: () => Promise<unknown>;
   /** 안내 문구 아래에 둘 내용(자살예방 상담전화 안내 등) */
   footer?: ReactNode;
-  /** 알림 성공 문구를 바꿀 때(연결된 보호자가 없을 때 등). 없으면 CALL_SUCCESS_NOTICE */
+  /** 알림 성공 문구를 바꿀 때(연결된 보호자가 없을 때 등). 없으면 번호에 맞는 기본 문구 */
   successNotice?: string;
+  /** 처음 띄울 번호(기본 119). 109여도 전화 링크·OS 다이얼러는 쓰지 않는다 */
+  number?: EmergencyDialNumber;
 }
 
-export function Emergency119Dialpad({ onClose, onCall, footer, successNotice = CALL_SUCCESS_NOTICE }: Emergency119DialpadProps) {
-  const [digits, setDigits] = useState('119');
+export function Emergency119Dialpad({ onClose, onCall, footer, successNotice, number = '119' }: Emergency119DialpadProps) {
+  const text = DIAL_TEXT[number];
+  const resolvedSuccessNotice = successNotice ?? (number === '109' ? CALL_SUCCESS_NOTICE_109 : CALL_SUCCESS_NOTICE);
+  const [digits, setDigits] = useState<string>(number);
   const [callNoticeShown, setCallNoticeShown] = useState(false);
   const [callState, setCallState] = useState<CallState>('idle');
   // 상태값은 렌더 뒤에야 바뀌어 연타를 못 막는다 - ref 로 먼저 잠근다
@@ -130,7 +154,7 @@ export function Emergency119Dialpad({ onClose, onCall, footer, successNotice = C
     : callState === 'sending'
       ? CALL_SENDING_NOTICE
       : callState === 'success'
-        ? successNotice
+        ? resolvedSuccessNotice
         : callState === 'failed'
           ? typeof navigator !== 'undefined' && navigator.onLine === false
             ? CALL_OFFLINE_NOTICE
@@ -149,7 +173,7 @@ export function Emergency119Dialpad({ onClose, onCall, footer, successNotice = C
       className={cx('overlay')}
       role="dialog"
       aria-modal="true"
-      aria-label="119 신고 키패드(시연 화면)"
+      aria-label={text.dialog}
       aria-describedby={noticeId}
       tabIndex={-1}
     >
@@ -157,7 +181,7 @@ export function Emergency119Dialpad({ onClose, onCall, footer, successNotice = C
           닫기(나갈 방법)와 시연 안내(실제로 걸린다고 믿지 않게)는 남긴다 */}
       <div className={cx('screen')}>
         <div className={cx('header')}>
-          <button className={cx('close')} type="button" onClick={onClose} aria-label="119 화면 닫기">
+          <button className={cx('close')} type="button" onClick={onClose} aria-label={text.close}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
               <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
             </svg>
@@ -169,7 +193,7 @@ export function Emergency119Dialpad({ onClose, onCall, footer, successNotice = C
           {/* 숫자 위 한 줄 - 평소에는 시연 안내, 통화 버튼을 누른 뒤에는 그 결과(같은 자리) */}
           <div className={cx('noticeSlot')}>
             <p id={noticeId} className={cx('notice', { hidden: noticeVisible })}>
-              학생 프로젝트 화면 · 실제로 신고 전화가 발신되지 않습니다
+              {text.notice}
             </p>
             <p
               ref={callNoticeRef}
@@ -206,7 +230,7 @@ export function Emergency119Dialpad({ onClose, onCall, footer, successNotice = C
             onClick={() => void handleCall()}
             disabled={callState === 'sending'}
             aria-busy={callState === 'sending' || undefined}
-            aria-label={onCall ? '통화(보호자에게 알림 - 실제로 119에 걸리지 않음)' : '통화(시연 화면 - 실제로 걸리지 않음)'}
+            aria-label={onCall ? text.callWithNotify : '통화(시연 화면 - 실제로 걸리지 않음)'}
           >
             <svg viewBox="0 0 24 24" width="46%" height="46%" aria-hidden="true" focusable="false">
               <path

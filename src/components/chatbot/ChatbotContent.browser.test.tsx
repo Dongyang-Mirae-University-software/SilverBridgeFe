@@ -911,7 +911,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
       .mockResolvedValueOnce({ ...REPLY, reply: '푹 쉬세요.' });
     await renderChat(<ChatbotContent variant="ward" />);
 
-    const call = () => page.getByRole('button', { name: '119 화면 열기' });
+    const call = () => page.getByRole('button', { name: '119 전화' });
     expect(call().query()).toBeNull();
 
     await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
@@ -920,8 +920,10 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     expect(call().element().tagName).toBe('BUTTON');
     expect(call().element().getAttribute('href')).toBeNull();
     expect(document.querySelectorAll('a[href^="tel:"]').length).toBe(0);
-    await expect.element(page.getByText('긴급 · 119 도움 요청')).toBeVisible();
+    await expect.element(page.getByRole('region', { name: '119 도움 요청' })).toBeVisible();
     await expect.element(page.getByText('통화 버튼을 누르면 보호자에게 알림이 가요')).toBeVisible();
+    // 위기 답이 아니면 109 버튼은 없다
+    expect(page.getByRole('button', { name: '109 상담 전화' }).query()).toBeNull();
     expect(page.getByRole('region', { name: '추천 질문' }).query()).toBeNull();
 
     // 위험도 high 만 온 답·layout.urgent 만 온 답도 같게
@@ -950,7 +952,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
       api.sendChatMessage.mockResolvedValueOnce({ ...REPLY, ...answer });
       await renderChat(<ChatbotContent variant="ward" />);
       await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
-      await userEvent.click(page.getByRole('button', { name: '119 화면 열기' }));
+      await userEvent.click(page.getByRole('button', { name: '119 전화' }));
       await expect.element(page.getByRole('dialog', DIALOG)).toBeVisible();
     }
 
@@ -990,7 +992,7 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
       await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
       await expect.element(page.getByText('연결된 보호자가 없어 알림은 가지 않아요')).toBeVisible();
 
-      await userEvent.click(page.getByRole('button', { name: '119 화면 열기' }));
+      await userEvent.click(page.getByRole('button', { name: '119 전화' }));
       await userEvent.click(page.getByRole('button', CALL));
       await expect
         .element(page.getByText('연결된 보호자가 없어 알림은 가지 않았어요. 시연 화면이라 119에도 걸리지 않아요'))
@@ -1052,6 +1054,88 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     });
   });
 
+  describe('109 키패드 - 위기 답이면 109 버튼이 119 와 함께 나온다 (2026-11-20)', () => {
+    const CRISIS_ANSWER = {
+      riskLevel: 'high',
+      emergencyWarning: ['지금 위험하다고 느끼시면 바로 119에 전화하세요. 자살예방 상담전화 109는 24시간 받습니다.'],
+      layout: { headline: '지금 많이 힘드시군요.', body: [], urgent: true, crisis: true },
+    };
+    const DIALOG_109 = { name: '109 자살예방 상담전화 키패드(시연 화면)' };
+
+    async function sendCrisis() {
+      api.role.mockReturnValue('WARD');
+      api.sendChatMessage.mockResolvedValueOnce({ ...REPLY, ...CRISIS_ANSWER });
+      await renderChat(<ChatbotContent variant="ward" />);
+      await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
+    }
+
+    it('위기 답이면 109·119 버튼이 둘 다 보이고, 둘 다 링크가 아닌 버튼이다', async () => {
+      await sendCrisis();
+      const call109 = page.getByRole('button', { name: '109 상담 전화' });
+      const call119 = page.getByRole('button', { name: '119 전화' });
+      await expect.element(call109).toBeVisible();
+      await expect.element(call119).toBeVisible();
+      await expect.element(page.getByRole('region', { name: '109·119 도움 요청' })).toBeVisible();
+      await expect.element(page.getByText('마음이 힘들면 109, 다쳤거나 위험하면 119')).toBeVisible();
+      expect(call109.element().tagName).toBe('BUTTON');
+      expect(document.querySelectorAll('a[href^="tel:"]').length).toBe(0);
+    });
+
+    it('109 버튼은 109 가 입력된 키패드를 열고, 통화 버튼은 CHATBOT_109 SOS 를 한 번 보낸다(실제로 걸지 않음)', async () => {
+      await sendCrisis();
+      await userEvent.click(page.getByRole('button', { name: '109 상담 전화' }));
+      const dialog = page.getByRole('dialog', DIALOG_109);
+      await expect.element(dialog).toBeVisible();
+      expect(document.querySelector('output[aria-label="입력된 번호"]')?.textContent).toBe('109');
+      // 109 키패드에는 119 키패드의 109 안내 한 줄을 붙이지 않는다
+      expect(page.getByText('마음이 힘들면 자살예방 상담전화 109(24시간)에 이야기해 보세요.').query()).toBeNull();
+
+      await userEvent.click(page.getByRole('button', { name: '통화(보호자에게 알림 - 실제로 109에 걸리지 않음)' }));
+      await expect.element(page.getByText('보호자에게 알렸어요. 시연 화면이라 109에는 실제로 걸리지 않아요')).toBeVisible();
+      expect(api.triggerSos).toHaveBeenCalledTimes(1);
+      expect(api.triggerSos.mock.calls[0][0]).toEqual({ triggerType: 'CHATBOT_109' });
+      expect(document.querySelectorAll('a[href^="tel:"]').length).toBe(0);
+    });
+
+    it('위기 답에서 119 를 누르면 그대로 CHATBOT_119 이고 109 안내 한 줄이 붙는다', async () => {
+      await sendCrisis();
+      await userEvent.click(page.getByRole('button', { name: '119 전화' }));
+      await expect.element(page.getByRole('dialog', { name: '119 신고 키패드(시연 화면)' })).toBeVisible();
+      await expect.element(page.getByText('마음이 힘들면 자살예방 상담전화 109(24시간)에 이야기해 보세요.')).toBeVisible();
+      await userEvent.click(page.getByRole('button', { name: /보호자에게 알림/ }));
+      await vi.waitFor(() => expect(api.triggerSos).toHaveBeenCalledTimes(1));
+      expect(api.triggerSos.mock.calls[0][0]).toEqual({ triggerType: 'CHATBOT_119' });
+    });
+
+    it('109 보내는 중에 키패드를 닫고 실패하면 오류 창의 [109 화면 열기]로 109 키패드를 다시 연다', async () => {
+      let reject: (reason: unknown) => void = () => {};
+      api.triggerSos.mockImplementationOnce(() => new Promise((_, r) => (reject = r)));
+      await sendCrisis();
+      await userEvent.click(page.getByRole('button', { name: '109 상담 전화' }));
+      await userEvent.click(page.getByRole('button', { name: /보호자에게 알림/ }));
+      await userEvent.click(page.getByRole('button', { name: '109 화면 닫기' }));
+
+      reject(new Error('x'));
+      await expect.element(page.getByText('SOS 전송 실패')).toBeVisible();
+      await userEvent.click(page.getByRole('button', { name: '109 화면 열기' }));
+      await expect.element(page.getByRole('dialog', DIALOG_109)).toBeVisible();
+    });
+
+    it('휴대폰: 109·119 가 한 줄에 나란히, 둘 다 64px 이상이고 가로 넘침이 없다', async () => {
+      await page.viewport(390, 844);
+      await sendCrisis();
+      const call109 = page.getByRole('button', { name: '109 상담 전화' });
+      const call119 = page.getByRole('button', { name: '119 전화' });
+      await expect.element(call119).toBeVisible();
+      const a = call109.element().getBoundingClientRect();
+      const b = call119.element().getBoundingClientRect();
+      expect(a.height).toBeGreaterThanOrEqual(64);
+      expect(b.height).toBeGreaterThanOrEqual(64);
+      expect(Math.abs(a.top - b.top)).toBeLessThan(2);
+      expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
+    });
+  });
+
   it('보호자: 응급 답이어도 119 버튼이 없고 SOS 요청·전화 링크도 없다', async () => {
     api.role.mockReturnValue('GUARDIAN');
     api.sendChatMessage.mockResolvedValueOnce({ ...REPLY, reply: '위험한 말이 들려 걱정돼요.', riskLevel: 'high' });
@@ -1059,7 +1143,8 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await expect.element(page.getByText('위험한 말이 들려 걱정돼요.')).toBeVisible();
-    expect(page.getByRole('button', { name: '119 화면 열기' }).query()).toBeNull();
+    expect(page.getByRole('button', { name: '119 전화' }).query()).toBeNull();
+    expect(page.getByRole('button', { name: '109 상담 전화' }).query()).toBeNull();
     expect(api.triggerSos).not.toHaveBeenCalled();
     expect(document.querySelectorAll('a[href^="tel:"]').length).toBe(0);
   });
@@ -1215,8 +1300,8 @@ describe('화면 개편 - 디자인 프로토타입 (2026-11-12)', () => {
 
     await userEvent.click(page.getByRole('button', { name: '머리가 아파요' }));
     const panel = page.getByRole('region', { name: '119 도움 요청' });
-    await expect.element(panel.getByText('긴급 · 119 도움 요청', { exact: true })).toBeVisible();
-    const call = page.getByRole('button', { name: '119 화면 열기' });
+    await expect.element(panel).toBeVisible();
+    const call = page.getByRole('button', { name: '119 전화' });
     const mic = page.getByRole('button', { name: '말로 더 묻기' });
     await expect.element(mic).toBeVisible();
     expect(call.element().getBoundingClientRect().height).toBeGreaterThanOrEqual(96);
