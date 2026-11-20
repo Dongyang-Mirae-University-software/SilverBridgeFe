@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { fetchGuardianAnomalyClipHead } from '@/service/api/guardian/anomaly';
+import { getCachedClipFile, waitForClipDownloadsIdle } from './clipFileCache';
 import { createTaskQueue } from './taskQueue';
 
 // 이력 카드 썸네일 = 클립의 첫 화면. 클립 파일은 인증 헤더가 필요해 <video src>에 못 쓰므로, 앞부분(Range)만 받아
@@ -64,7 +65,9 @@ export function loadClipThumbnail(clipId: number): Promise<string | null> {
 
   const task = enqueue(async () => {
     try {
-      const head = await fetchGuardianAnomalyClipHead(clipId, HEAD_BYTES);
+      // 영상을 받는 중이면 끝날 때까지 미룬다(회선이 느려 썸네일이 영상 다운로드를 늦춘다). 이미 받은 영상이 있으면 그것으로 그린다
+      await waitForClipDownloadsIdle();
+      const head = getCachedClipFile(clipId) ?? (await fetchGuardianAnomalyClipHead(clipId, HEAD_BYTES));
       return await extractFirstFrame(head);
     } catch {
       return null;

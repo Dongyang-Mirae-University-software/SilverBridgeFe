@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
-import { fetchGuardianAnomalyClipFile } from '@/service/api/guardian/anomaly';
 import { guardianAnomalyClipsQueryOptions } from '@/service/query/guardian/anomaly';
 import { AnomalyClip, AnomalyClipFileError, AnomalyIncident } from '@/service/interface/guardian/anomaly';
 import { AnomalyVerdictPanel } from './AnomalyVerdictPanel';
 import { formatClipDuration, formatIncidentDate, formatIncidentTime } from './anomalyFormat';
+import { forgetClipFile, loadClipFile, stopClipProgress } from './clipFileCache';
 import styles from './AnomalyClipModal.module.css';
 
 const cx = classNames.bind(styles);
@@ -43,8 +43,12 @@ export function AnomalyClipModal({
   const [selectedClipId, setSelectedClipId] = useState<number | null>(null);
   const [loadingClipId, setLoadingClipId] = useState<number | null>(null);
   const [clipErrors, setClipErrors] = useState<Record<number, string>>({});
+  // 받은 바이트 수 - 퍼센트는 클립 목록의 sizeBytes 로 센다
+  const [progress, setProgress] = useState<{ clipId: number; received: number } | null>(null);
   const playbackRef = useRef<Playback | null>(null);
   const didAutoSelectRef = useRef(false);
+  const latestRequestRef = useRef<number | null>(null);
+  const progressListenerRef = useRef<{ clipId: number; listener: (received: number) => void } | null>(null);
 
   // 닫을 때 마지막 재생 주소를 해제하려고 최신 값을 둔다(렌더 중 ref 대입 대신 커밋 뒤에)
   useEffect(() => {
@@ -54,6 +58,10 @@ export function AnomalyClipModal({
   useEffect(() => {
     return () => {
       if (playbackRef.current) URL.revokeObjectURL(playbackRef.current.url);
+      // 닫아도 받던 영상은 끝까지 받아 메모리에 둔다(다시 열면 바로 나온다) - 진행률 알림만 끊는다
+      const progressListener = progressListenerRef.current;
+      if (progressListener) stopClipProgress(progressListener.clipId, progressListener.listener);
+      latestRequestRef.current = null;
     };
   }, []);
 
@@ -67,14 +75,21 @@ export function AnomalyClipModal({
       return next;
     });
     setLoadingClipId(clipId);
+    latestRequestRef.current = clipId;
+    setProgress({ clipId, received: 0 });
 
+    const onProgress = (received: number) => setProgress({ clipId, received });
+    progressListenerRef.current = { clipId, listener: onProgress };
     try {
-      const blob = await fetchGuardianAnomalyClipFile(clipId);
+      const blob = await loadClipFile(clipId, onProgress);
+      // 받는 사이 다른 영상을 골랐으면 늦게 끝난 이 영상으로 바꾸지 않는다(받은 영상은 메모리에 남아 다시 고르면 바로 나온다)
+      if (latestRequestRef.current !== clipId) return;
       setPlayback(current => {
         if (current) URL.revokeObjectURL(current.url);
         return { clipId, url: URL.createObjectURL(blob) };
       });
     } catch (error) {
+      if (latestRequestRef.current !== clipId) return;
       const { status, message } = error as AnomalyClipFileError;
       // 403(연결되지 않은 피보호자)은 서버 문구를 그대로, 404는 볼 수 없는 영상 안내
       const text = status === 404 ? CLIP_UNAVAILABLE_MESSAGE : message ?? '영상을 불러오지 못했어요. 다시 시도해 주세요.';
@@ -84,7 +99,11 @@ export function AnomalyClipModal({
         return null;
       });
     } finally {
-      setLoadingClipId(null);
+      stopClipProgress(clipId, onProgress);
+      if (latestRequestRef.current === clipId) {
+        setLoadingClipId(null);
+        setProgress(null);
+      }
     }
   };
 
@@ -104,13 +123,32 @@ export function AnomalyClipModal({
   // 목록을 다시 받았는데 재생 중이던 클립이 빠졌으면(이 화면에서 '괜찮아요'를 골라 숨겨짐) 받아 둔 영상도 내린다.
   // blob은 닫거나 다른 클립을 고를 때 해제된다
   const isPlaybackHidden = Boolean(playback && clipsData && !clipsData.some(clip => clip.clipId === playback.clipId));
+  const hiddenClipId = isPlaybackHidden ? playback?.clipId : undefined;
+  useEffect(() => {
+    if (hiddenClipId !== undefined) forgetClipFile(hiddenClipId);
+  }, [hiddenClipId]);
+
+  const progressPercent = (clipId: number) => {
+    if (progress?.clipId !== clipId) return null;
+    const total = clips.find(clip => clip.clipId === clipId)?.sizeBytes;
+    if (!total || total <= 0) return null;
+    return Math.min(99, Math.floor((progress.received / total) * 100));
+  };
+  const loadingLabel = (clipId: number) => {
+    const percent = progressPercent(clipId);
+    return percent === null ? '불러오는 중' : `불러오는 중 ${percent}%`;
+  };
+  const loadingMessage =
+    loadingClipId !== null && progressPercent(loadingClipId) !== null
+      ? `영상을 불러오는 중이에요. ${progressPercent(loadingClipId)}%`
+      : '영상을 불러오는 중이에요.';
   const videoMessage = isError
     ? '영상 목록을 불러오지 못했어요.'
     : isPlaybackHidden
       ? CLIP_UNAVAILABLE_MESSAGE
       : !isLoading && clips.length === 0
       ? '볼 수 있는 영상이 없어요.'
-      : selectedError ?? '영상을 불러오는 중이에요.';
+      : selectedError ?? loadingMessage;
 
   return (
     <div className={cx('overlay')} role="presentation" onClick={onClose}>
@@ -155,7 +193,7 @@ export function AnomalyClipModal({
                   >
                     영상 {index + 1}
                     <span className={cx('clipChipMeta')}>
-                      {loadingClipId === clip.clipId ? '불러오는 중' : formatIncidentTime(clip.detectedAt)}
+                      {loadingClipId === clip.clipId ? loadingLabel(clip.clipId) : formatIncidentTime(clip.detectedAt)}
                       {duration ? ` · ${duration}` : ''}
                     </span>
                   </button>
