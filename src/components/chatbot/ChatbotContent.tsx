@@ -863,10 +863,25 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
                     <span className={styles.wardRoundLabel}>전화</span>
                   </button>
                 </div>
-                {wardCrisis && <p className={styles.wardEmergencyHint}>마음이 힘들면 109, 다쳤거나 위험하면 119</p>}
-                <p className={styles.wardEmergencyHint}>
-                  {noGuardian ? '연결된 보호자가 없어 알림은 가지 않아요' : '통화 버튼을 누르면 보호자에게 알림이 가요'}
-                </p>
+                {/* 안내는 뜻 단위로 줄을 고정한다 - 화면 폭에 따라 아무 데서나 줄이 바뀌면 읽기 힘들다(2026-11-20 사용자) */}
+                <div className={styles.wardEmergencyHint}>
+                  {wardCrisis && (
+                    <>
+                      <span className={`${styles.wardHintLine} ${styles.wardHint109}`}>마음이 힘들면 109</span>
+                      <span className={`${styles.wardHintLine} ${styles.wardHint119}`}>다쳤거나 위험하면 119</span>
+                    </>
+                  )}
+                  {(noGuardian
+                    ? ['연결된 보호자가 없어', '알림은 가지 않아요']
+                    : wardCrisis
+                      ? ['누르면 보호자에게 알림이 가요']
+                      : ['통화 버튼을 누르면', '보호자에게 알림이 가요']
+                  ).map(line => (
+                    <span key={line} className={styles.wardHintLine}>
+                      {line}
+                    </span>
+                  ))}
+                </div>
               </section>
             ) : (
               <section className={styles.wardQuickPanel} aria-label="추천 질문">
