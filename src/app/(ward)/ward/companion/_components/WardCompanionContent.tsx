@@ -640,7 +640,7 @@ export function WardCompanionContent() {
               <div className={cx('testHero')}>
                 <span className={cx('testBadge', 'heroBadge')}>테스트</span>
                 <div className={cx('heroHead')}>
-                  <MoodFace mood="happy" size={wide ? 132 : 88} />
+                  <MoodFace mood="happy" size={wide ? 160 : 88} />
                   <div>
                     <span className={cx('heroLabel')}>말벗</span>
                     <h2 id="companion-test-title" className={cx('heroTitle')}>안부 말벗</h2>
