@@ -14,8 +14,8 @@ import {
   wardGameSummaryQueryOptions,
 } from '@/service/query/guardian/game';
 import { parseServerTime } from '@/utils/format/serverTime';
-import { toGameUserId } from '@/utils/game/userId';
 import { ActivityHeatmap } from './ActivityHeatmap';
+import { gameErrorMessage } from './gameErrorMessage';
 import styles from './GuardianGameContent.module.css';
 
 const cx = classNames.bind(styles);
@@ -31,9 +31,10 @@ interface WardGameCardProps {
   summary: IWardGameSummary | null;
   activity: IGameActivityDay[];
   isLoading: boolean;
+  error: unknown;
 }
 
-function WardGameCard({ ward, summary, activity, isLoading }: WardGameCardProps) {
+function WardGameCard({ ward, summary, activity, isLoading, error }: WardGameCardProps) {
   return (
     <li className={cx('card')}>
       <header className={cx('cardHeader')}>
@@ -48,7 +49,11 @@ function WardGameCard({ ward, summary, activity, isLoading }: WardGameCardProps)
       </header>
 
       {isLoading && <p className={cx('emptyText')}>게임 기록을 불러오는 중입니다.</p>}
-      {!isLoading && !summary && <p className={cx('emptyText')}>게임 기록을 불러오지 못했습니다.</p>}
+      {!isLoading && !summary && (
+        <p className={cx('emptyText')} role={error ? 'alert' : undefined}>
+          {gameErrorMessage(error)}
+        </p>
+      )}
 
       {summary && <ActivityHeatmap activity={activity} />}
 
@@ -92,10 +97,10 @@ export function GuardianGameContent() {
   const queryClient = useQueryClient();
   const { activeWards, isLoading: isWardsLoading, isError } = useGuardianActiveWards();
   const results = useQueries({
-    queries: activeWards.map(ward => wardGameSummaryQueryOptions(toGameUserId(ward.partnerUserId))),
+    queries: activeWards.map(ward => wardGameSummaryQueryOptions(ward.partnerUserId)),
   });
   const activityResults = useQueries({
-    queries: activeWards.map(ward => wardGameActivityQueryOptions(toGameUserId(ward.partnerUserId))),
+    queries: activeWards.map(ward => wardGameActivityQueryOptions(ward.partnerUserId)),
   });
   const isRefreshing = results.some(result => result.isFetching);
 
@@ -127,6 +132,7 @@ export function GuardianGameContent() {
             summary={results[index]?.data ?? null}
             activity={activityResults[index]?.data ?? []}
             isLoading={results[index]?.isLoading ?? false}
+            error={results[index]?.error ?? null}
           />
         ))}
       </ul>
