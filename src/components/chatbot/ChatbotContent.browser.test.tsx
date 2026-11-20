@@ -1319,3 +1319,115 @@ describe('화면 개편 - 디자인 프로토타입 (2026-11-12)', () => {
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
   });
 });
+
+// 긴 답(응급·자해 안내·긴 상담)이 오면 방금 한 질문이 위로 밀려 안 보이던 문제(2026-11-20).
+// 질문+답이 대화창보다 길면 질문 말풍선 윗부분을 대화창 맨 위에 맞추고, 짧으면 지금처럼 맨 아래로 내린다.
+describe('새 답이 오면 질문부터 보이게 스크롤 (2026-11-20)', () => {
+  const LONG_LINES = Array.from({ length: 40 }, (_, i) => `${i + 1}번째 안내 문장입니다. 천천히 읽어 보세요.`);
+  const LONG_ANSWERS = {
+    응급: {
+      ...REPLY,
+      reply: LONG_LINES.join(' '),
+      riskLevel: 'high',
+      emergencyWarning: ['🚨 지금 바로 119에 전화하세요.', '⚠️ 혼자 움직이지 마세요.'],
+    },
+    자해: {
+      ...REPLY,
+      reply: LONG_LINES.join(' '),
+      riskLevel: 'high',
+      emergencyWarning: ['지금 위험하다고 느끼시면 바로 119에 전화하세요. 자살예방 상담전화 109는 24시간 받습니다.'],
+      layout: { headline: '지금 많이 힘드시군요.', body: LONG_LINES, urgent: true, crisis: true },
+    },
+    '일반 상담': { ...REPLY, reply: LONG_LINES.join(' ') },
+  } as const;
+  const SCREENS = [
+    { name: '태블릿', width: 1180, height: 820 },
+    { name: '아이폰', width: 393, height: 852 },
+  ] as const;
+
+  // 실제 화면처럼 높이가 정해진 상자 안에 그려 대화 영역이 스크롤되게 한다
+  function renderSized(variant: 'ward' | 'guardian') {
+    return renderChat(
+      <div style={{ height: '100vh' }}>
+        <ChatbotContent variant={variant} />
+      </div>,
+    );
+  }
+
+  async function ask(text: string) {
+    await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), text);
+    await userEvent.click(page.getByRole('button', { name: '보내기' }));
+  }
+
+  function messageList(): HTMLElement {
+    const question = document.querySelector('[data-message-id]');
+    return question!.closest('[class*="messageList"]') as HTMLElement;
+  }
+
+  // smooth 스크롤이 움직이는 도중에 판정하면 지나가는 순간을 잡아 통과할 수 있어, 멈출 때까지 기다린 뒤 한 번만 본다
+  async function settledList(): Promise<HTMLElement> {
+    let previous = -1;
+    let stable = 0;
+    await vi.waitFor(
+      () => {
+        const top = messageList().scrollTop;
+        stable = top === previous ? stable + 1 : 0;
+        previous = top;
+        expect(stable).toBeGreaterThanOrEqual(4);
+      },
+      { timeout: 5000, interval: 100 },
+    );
+    return messageList();
+  }
+
+  for (const variant of ['ward', 'guardian'] as const) {
+    for (const screen of SCREENS) {
+      for (const [kind, answer] of Object.entries(LONG_ANSWERS)) {
+        it(`${variant === 'ward' ? '피보호자' : '보호자'} ${screen.name}(${screen.width}x${screen.height}) - 긴 ${kind} 답이 와도 방금 한 질문이 대화창 맨 위에 보인다`, async () => {
+          await page.viewport(screen.width, screen.height);
+          // 앞선 대화가 쌓여 있어야 "맨 아래로 내리면 질문이 위로 밀리는" 상황이 된다
+          api.sendChatMessage
+            .mockResolvedValueOnce({ ...REPLY, reply: LONG_LINES.slice(0, 8).join(' ') })
+            .mockResolvedValueOnce(answer);
+          await renderSized(variant);
+          if (variant === 'ward') await openWardTyping();
+
+          await ask('어제부터 무릎이 아파요');
+          await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(1));
+          await expect.element(page.getByText('1번째 안내 문장입니다', { exact: false }).first()).toBeVisible();
+          await ask('지금 가슴이 너무 답답해요');
+          await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(2));
+
+          const question = page.getByText('지금 가슴이 너무 답답해요').element() as HTMLElement;
+          await expect.element(page.getByText('40번째 안내 문장입니다', { exact: false }).last()).toBeInTheDocument();
+          const list = await settledList();
+          // 전제: 질문+답이 대화창보다 길다(짧으면 이 테스트가 보려는 상황이 아니다)
+          expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+          const listBox = list.getBoundingClientRect();
+          const questionBox = question.getBoundingClientRect();
+          // 질문 말풍선 윗부분이 대화창 안(맨 위 근처)에 있다
+          expect(questionBox.top).toBeGreaterThanOrEqual(listBox.top - 1);
+          expect(questionBox.top).toBeLessThan(listBox.top + 60);
+          // 맨 아래까지 내린 상태가 아니다(답은 이어서 아래로 읽는다)
+          expect(list.scrollTop + list.clientHeight).toBeLessThan(list.scrollHeight - 1);
+        });
+      }
+    }
+  }
+
+  it('짧은 답은 지금처럼 맨 아래로 내린다', async () => {
+    await page.viewport(393, 852);
+    api.sendChatMessage.mockResolvedValue(REPLY);
+    await renderSized('guardian');
+
+    for (const text of ['무릎이 아파요', '언제 가면 좋아요?', '약은 뭘 먹어요?', '찜질해도 돼요?', '얼마나 쉬어야 해요?']) {
+      await ask(text);
+      await expect.element(page.getByText(text)).toBeInTheDocument();
+    }
+    await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(5));
+    await expect.element(page.getByText('정형외과 진료를 권해요.').last()).toBeInTheDocument();
+    const list = await settledList();
+    expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+    expect(list.scrollTop + list.clientHeight).toBeGreaterThanOrEqual(list.scrollHeight - 2);
+  });
+});

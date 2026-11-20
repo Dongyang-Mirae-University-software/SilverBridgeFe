@@ -88,6 +88,8 @@ const GUARDIAN_PROMPTS: GuardianPrompt[] = [
 const WARD_PROMPTS = ['머리가 아파요', '배가 아파요', '무릎이 아파요', '어지러워요'];
 
 const MAX_SUGGESTED = 4;
+/** 긴 답이 오면 질문 말풍선을 대화창 맨 위에 맞출 때 그 위에 남기는 여백(px) - 말풍선이 테두리에 붙어 보이지 않게 */
+const QUESTION_TOP_GAP = 12;
 /** 되묻기 답 칩(AI suggestedKind). 문구가 아니라 칸의 코드 값을 본다. */
 const ANSWER_KIND = 'answer';
 
@@ -274,8 +276,29 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     });
   }, [isGuardian, profile]);
 
+  // 새 AI 답이 붙었을 때 질문+답이 대화창보다 길면(응급·자해 안내·긴 상담) 맨 아래로 내리면 방금 한 질문이 위로 밀려 안 보인다.
+  // 그때는 직전 질문 말풍선 윗부분을 대화창 맨 위에 맞추고, 짧으면 지금처럼 맨 아래로 내린다(2026-11-20).
+  // 마지막 메시지가 바뀔 때만 판단한다 - 같은 답이 다시 그려질 때 읽던 자리를 옮기지 않는다.
+  const lastScrolledIdRef = useRef<string | null>(null);
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+    const list = listRef.current;
+    const last = messages[messages.length - 1];
+    if (!list || !last || lastScrolledIdRef.current === last.id) return;
+    lastScrolledIdRef.current = last.id;
+
+    const previous = messages[messages.length - 2];
+    if (last.role === 'assistant' && previous?.role === 'user') {
+      const question = list.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(previous.id)}"]`);
+      if (question) {
+        const questionTop =
+          question.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop - QUESTION_TOP_GAP;
+        if (list.scrollHeight - questionTop > list.clientHeight) {
+          list.scrollTo({ top: Math.max(0, questionTop), behavior: 'smooth' });
+          return;
+        }
+      }
+    }
+    list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
   const resizeComposer = useCallback(() => {
