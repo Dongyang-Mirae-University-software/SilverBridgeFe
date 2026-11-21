@@ -10,7 +10,7 @@ export function getRoleHomePath(role: AuthRole) {
 }
 
 export function getRoleLabel(role: AuthRole) {
-  if (role === 'WARD') return '피보호자';
+  if (role === 'WARD') return '어르신';
   if (role === 'GUARDIAN') return '보호자';
 
   return '관리자';

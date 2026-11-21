@@ -62,7 +62,7 @@ export default function GuardianSosHistoryContent() {
     return (
       <div className={cx('page')}>
         <p className={cx('emptyState')} role="status">
-          피보호자 정보를 불러오는 중이에요.
+          어르신 정보를 불러오는 중이에요.
         </p>
       </div>
     );
@@ -73,7 +73,7 @@ export default function GuardianSosHistoryContent() {
     return (
       <div className={cx('page')}>
         <div className={cx('emptyState')} role="alert">
-          <strong>피보호자 정보를 불러오지 못했어요.</strong>
+          <strong>어르신 정보를 불러오지 못했어요.</strong>
           <button className={cx('retryButton')} type="button" onClick={() => void refetchWards()}>
             다시 불러오기
           </button>
@@ -86,8 +86,8 @@ export default function GuardianSosHistoryContent() {
     return (
       <div className={cx('page')}>
         <div className={cx('emptyState')}>
-          <strong>연결된 피보호자가 없습니다.</strong>
-          <span>피보호자와 연결되면 SOS 이력을 확인할 수 있습니다.</span>
+          <strong>연결된 어르신이 없습니다.</strong>
+          <span>어르신과 연결되면 SOS 이력을 확인할 수 있습니다.</span>
         </div>
       </div>
     );

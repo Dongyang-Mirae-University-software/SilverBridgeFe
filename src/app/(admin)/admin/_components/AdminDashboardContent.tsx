@@ -61,7 +61,7 @@ function DashboardOverview({ safety, operation, aiStatus, aiStatusLoading, aiSta
         </div>
       </DashboardSection>
       <DashboardSection icon="users" title="회원 관리" tone="brand" href="/admin/members" pill={safety.safetyEvents.wardsWithoutGuardian > 0 ? '살펴보기' : '정상'}>
-        <NumberGrid items={[['피보호자', formatCount(operation.memberComposition.wards, '명')], ['보호자', formatCount(operation.memberComposition.guardians, '명')], ['가족 없는 어르신', formatCount(safety.safetyEvents.wardsWithoutGuardian, '명'), safety.safetyEvents.wardsWithoutGuardian > 0 ? 'care' : undefined]]} /><SimpleRows rows={[['전체 회원', formatCount(operation.totalUsers, '명')], ['오늘 가입', formatCount(operation.newUsersToday, '명')], ['연결 대기', formatCount(operation.pendingConnections, '건')]]} />
+        <NumberGrid items={[['어르신', formatCount(operation.memberComposition.wards, '명')], ['보호자', formatCount(operation.memberComposition.guardians, '명')], ['가족 없는 어르신', formatCount(safety.safetyEvents.wardsWithoutGuardian, '명'), safety.safetyEvents.wardsWithoutGuardian > 0 ? 'care' : undefined]]} /><SimpleRows rows={[['전체 회원', formatCount(operation.totalUsers, '명')], ['오늘 가입', formatCount(operation.newUsersToday, '명')], ['연결 대기', formatCount(operation.pendingConnections, '건')]]} />
       </DashboardSection>
       <DashboardSection icon="bell" title="알림 이력" tone="danger" href="/admin/notifications" pill={safety.safetyEvents.todayFailedNotifications > 0 ? '확인 필요' : '정상'}>
         <NumberGrid items={[['전달 실패', formatCount(safety.safetyEvents.todayFailedNotifications, '건'), safety.safetyEvents.todayFailedNotifications > 0 ? 'care' : undefined]]} /><SimpleRows rows={[['안내', '발송 안 함은 실패에 포함되지 않습니다']]} />

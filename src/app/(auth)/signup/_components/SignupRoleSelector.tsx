@@ -23,7 +23,7 @@ export default function SignupRoleSelector({ role, register }: SignupRoleSelecto
           <input id="WARD" type="radio" value="WARD" {...register('role')} defaultChecked />
           <span className={cx('roleEmoji')} aria-hidden="true">🌷</span>
           <span className={cx('roleCopy')}>
-            <strong>피보호자</strong>
+            <strong>어르신</strong>
             <small>직접 사용</small>
           </span>
           {role === 'WARD' && <span className={cx('checkMark')}>✓</span>}

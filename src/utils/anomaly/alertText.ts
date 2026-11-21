@@ -38,6 +38,6 @@ export function getAnomalyAlertText({ role, detectedType, detectedTypeLabel, war
   }
   return {
     title,
-    body: `${wardName || '피보호자'} 댁 ${place} ${what} 감지되었습니다.${guardianGuidance(detectedType)}`,
+    body: `${wardName || '어르신'} 댁 ${place} ${what} 감지되었습니다.${guardianGuidance(detectedType)}`,
   };
 }

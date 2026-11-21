@@ -78,7 +78,7 @@ function groupSessionsByWard(sessions: GuardianLiveCamera[]): WardGroup[] {
 
     if (existingIndex === undefined) {
       indexByWardId.set(wardId, groups.length);
-      groups.push({ wardId, wardName: session.wardName || '피보호자', cameras: [session] });
+      groups.push({ wardId, wardName: session.wardName || '어르신', cameras: [session] });
     } else {
       groups[existingIndex].cameras.push(session);
     }
@@ -142,8 +142,8 @@ export function LiveCameraModal({
         <div className={cx('frameArea')}>
           {monitor.isEmpty || hasNoCameraForSelectedWard ? (
             <div className={cx('videoUnavailable')}>
-              <strong>연결된 피보호자의 카메라가 없어요</strong>
-              <span>피보호자 기기에서 &apos;이 기기를 카메라로 등록&apos;을 하면 볼 수 있어요</span>
+              <strong>연결된 어르신의 카메라가 없어요</strong>
+              <span>어르신 기기에서 &apos;이 기기를 카메라로 등록&apos;을 하면 볼 수 있어요</span>
             </div>
           ) : monitor.streamErrorMessage ? (
             // 서버 안내를 그대로 보인다(동시 시청 상한 429·영상 연결 만료 등 - 일반 문구로 덮으면 이유를 모른다)

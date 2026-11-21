@@ -20,7 +20,7 @@ describe('AI 기분 체크 페이지 (Chrome)', () => {
     );
 
     await expect.element(page.getByRole('heading', { name: 'AI 기분 체크', level: 1 })).toBeVisible();
-    await expect.element(page.getByText('연결된 피보호자가 없습니다.')).toBeVisible();
+    await expect.element(page.getByText('연결된 어르신이 없습니다.')).toBeVisible();
     expect(page.getByText('AI 기분 체크는 준비 중이에요').elements()).toHaveLength(0);
   });
 });

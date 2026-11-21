@@ -221,7 +221,7 @@ describe('SOS 예비 문구 - 서버 푸시·OS 알림과 같은 "○○님이"'
   it.each([
     ['남궁명진', '남궁명진님이 긴급 도움을 요청했습니다.'],
     ['김영희', '김영희님이 긴급 도움을 요청했습니다.'],
-    [undefined, '피보호자님이 긴급 도움을 요청했습니다.'],
+    [undefined, '어르신이 긴급 도움을 요청했습니다.'],
   ])('본문이 없으면 이름 %s → %s', async (wardName, body) => {
     const screen = await renderListener();
     await receive({ data: { type: 'WARD_SOS', sosEventId: '1', ...(wardName ? { wardName } : {}) } });

@@ -40,8 +40,8 @@ describe('getOcrErrorMessage', () => {
   });
 
   it('403은 서버 문구를 그대로', () => {
-    expect(getOcrErrorMessage(axiosError(403, '연결된 피보호자의 복약 정보만 관리할 수 있습니다.'))).toBe(
-      '연결된 피보호자의 복약 정보만 관리할 수 있습니다.',
+    expect(getOcrErrorMessage(axiosError(403, '연결된 어르신의 복약 정보만 관리할 수 있습니다.'))).toBe(
+      '연결된 어르신의 복약 정보만 관리할 수 있습니다.',
     );
   });
 });

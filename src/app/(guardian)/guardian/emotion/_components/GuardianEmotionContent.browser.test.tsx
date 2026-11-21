@@ -150,7 +150,7 @@ describe('AI 기분 체크 (Chrome)', () => {
     };
     await renderEmotion();
 
-    await expect.element(page.getByRole('alert')).toMatchTextContent('연결된 피보호자의 안부 대화만 볼 수 있습니다.');
+    await expect.element(page.getByRole('alert')).toMatchTextContent('연결된 어르신의 안부 대화만 볼 수 있습니다.');
     expect(page.getByRole('button', { name: '다시 불러오기' }).elements()).toHaveLength(0);
   });
 
@@ -187,7 +187,7 @@ describe('AI 기분 체크 (Chrome)', () => {
     data.connections = async () => ({ data: [] });
     await renderEmotion();
 
-    await expect.element(page.getByText('연결된 피보호자가 없습니다.')).toBeVisible();
+    await expect.element(page.getByText('연결된 어르신이 없습니다.')).toBeVisible();
   });
 });
 
@@ -262,7 +262,7 @@ describe('최근 7일 기분·대화 보기 (Chrome)', () => {
     await page.getByRole('button', { name: '11월 2일 월요일 기분 걱정' }).click();
     await expect.element(page.getByRole('alert')).toMatchTextContent('최근 7일 안의 날짜만 볼 수 있어요.');
     await page.getByRole('button', { name: '11월 3일 화요일 기분 우울' }).click();
-    await expect.element(page.getByRole('alert')).toMatchTextContent('연결된 피보호자의 안부 대화만 볼 수 있습니다.');
+    await expect.element(page.getByRole('alert')).toMatchTextContent('연결된 어르신의 안부 대화만 볼 수 있습니다.');
   });
 
   it('7일 기분을 못 받아도 오늘 화면은 그대로 보이고 다시 불러올 수 있다', async () => {

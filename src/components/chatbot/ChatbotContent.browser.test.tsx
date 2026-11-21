@@ -139,7 +139,7 @@ describe('보호자 AI 의료 챗봇', () => {
     await expect.element(page.getByRole('button', { name: '상담 기록' })).toBeVisible();
     await expect.element(page.getByText(/진료과 안내와 병원 예약을 도와드려요/)).toBeVisible();
     await expect.element(page.getByPlaceholder('증상이나 궁금한 점')).toBeVisible();
-    expect(page.getByRole('region', { name: '상담할 피보호자' }).elements()).toHaveLength(0);
+    expect(page.getByRole('region', { name: '상담할 어르신' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: '이철수' }).elements()).toHaveLength(0);
     expect(document.body.textContent).not.toContain('김영희');
   });
@@ -371,7 +371,7 @@ describe('보호자 AI 의료 챗봇', () => {
     await renderChat(<ChatbotContent />);
 
     await expect.element(page.getByText('눌러서 물어보세요')).toBeVisible();
-    expect(page.getByText(/피보호자 정보를/).elements()).toHaveLength(0);
+    expect(page.getByText(/어르신 정보를/).elements()).toHaveLength(0);
     await expect.element(page.getByPlaceholder('증상이나 궁금한 점')).toBeEnabled();
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
@@ -615,7 +615,7 @@ describe('피보호자 AI 의료 챗봇', () => {
       await expect.element(page.getByRole('button', { name: prompt })).toBeVisible();
     }
     // [상담 기록]은 피보호자도 제목 옆에 있다(2026-11-11) - 보호자용 헤더·피보호자 선택은 없다
-    expect(page.getByRole('region', { name: '상담할 피보호자' }).elements()).toHaveLength(0);
+    expect(page.getByRole('region', { name: '상담할 어르신' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: '병원 예약하고 싶어요' }).elements()).toHaveLength(0);
     // 입력은 큰 마이크 버튼 하나("말로 물어보기") - 키보드 입력칸·보내기·[글자로 쓰기]는 없다
     await expect.element(page.getByRole('button', { name: '말로 물어보기' })).toBeVisible();

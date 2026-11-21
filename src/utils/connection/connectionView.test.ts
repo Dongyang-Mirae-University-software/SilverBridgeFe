@@ -20,7 +20,7 @@ function apiError(code: string, extra: Record<string, unknown> = {}, headers: Re
 describe('연결 요청 오류 문구 - code로 분기한다', () => {
   it('404·400·409는 코드별 안내', () => {
     expect(getConnectionRequestErrorMessage(apiError('USER_NOT_FOUND'))).toContain('가입한 분이 없어요');
-    expect(getConnectionRequestErrorMessage(apiError('INVALID_CONNECTION_ROLE'))).toContain('피보호자');
+    expect(getConnectionRequestErrorMessage(apiError('INVALID_CONNECTION_ROLE'))).toContain('어르신');
     expect(getConnectionRequestErrorMessage(apiError('CONNECTION_TARGET_NOT_ACTIVE'))).toContain('연결할 수 없는 계정');
     expect(getConnectionRequestErrorMessage(apiError('CONNECTION_ALREADY_EXISTS'))).toContain('이미 연결');
   });

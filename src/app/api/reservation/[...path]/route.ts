@@ -200,7 +200,7 @@ async function proxyReservationRequest(request: NextRequest, context: RouteConte
   } catch (error) {
     return lookupFailed(error, 'WARD_LOOKUP_FAILED');
   }
-  if (!profile) return fail(403, '연결된 피보호자가 아니에요.');
+  if (!profile) return fail(403, '연결된 어르신이 아니에요.');
 
   let body: string | undefined;
   if (route.body) {

@@ -98,7 +98,7 @@ describe('GuardianGameContent', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('연결된 피보호자의 게임 기록만 볼 수 있습니다. 연결 상태를 확인해 주세요.');
+      .toHaveTextContent('연결된 어르신의 게임 기록만 볼 수 있습니다. 연결 상태를 확인해 주세요.');
   });
 
   it('503 GAME_UNAVAILABLE이면 잠시 후 다시 시도 안내', async () => {

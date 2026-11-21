@@ -200,8 +200,8 @@ export function GuardianHospitalContent() {
     });
   };
 
-  if (isWardsLoading) return <p className={cx('message')}>피보호자 정보를 불러오는 중이에요.</p>;
-  if (!ward) return <p className={cx('message')}>연결된 피보호자가 없어요. 먼저 피보호자를 연결해 주세요.</p>;
+  if (isWardsLoading) return <p className={cx('message')}>어르신 정보를 불러오는 중이에요.</p>;
+  if (!ward) return <p className={cx('message')}>연결된 어르신이 없어요. 먼저 어르신을 연결해 주세요.</p>;
 
   const stepIndex = STEPS.findIndex(item => item.step === step);
   const inFlow = stepIndex >= 0;

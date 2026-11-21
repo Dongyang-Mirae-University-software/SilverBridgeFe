@@ -8,8 +8,8 @@ describe('getRealtimeNotification - SOS', () => {
   it.each([
     ['남궁명진', '남궁명진님이 긴급 도움을 요청했습니다.', '[긴급] 남궁명진님 SOS'],
     ['김영희', '김영희님이 긴급 도움을 요청했습니다.', '[긴급] 김영희님 SOS'],
-    [undefined, '피보호자님이 긴급 도움을 요청했습니다.', '[긴급] 피보호자님 SOS'],
-    ['', '피보호자님이 긴급 도움을 요청했습니다.', '[긴급] 피보호자님 SOS'],
+    [undefined, '어르신이 긴급 도움을 요청했습니다.', '[긴급] 어르신 SOS'],
+    ['', '어르신이 긴급 도움을 요청했습니다.', '[긴급] 어르신 SOS'],
   ])('이름 %s → %s', (wardName, body, title) => {
     expect(getRealtimeNotification({ type: 'SOS_TRIGGERED', wardName } as never)).toEqual({ body, title });
   });

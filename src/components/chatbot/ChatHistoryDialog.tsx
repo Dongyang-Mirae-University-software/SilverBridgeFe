@@ -43,7 +43,7 @@ function targetLabel(target: Target, wards: { id: string; name: string }[]) {
   const [first, ...others] = wardsOf(target);
   const ward = wards.find(item => item.id === first);
   const more = others.length > 0 ? ` 외 ${others.length}명` : '';
-  return ward ? `${ward.name} 님${more} ${kind}` : `연결이 끝난 피보호자${more} ${kind}`;
+  return ward ? `${ward.name} 님${more} ${kind}` : `연결이 끝난 어르신${more} ${kind}`;
 }
 
 /** 본인 턴이 섞인 대화창은 "내 상담"에도, 그 피보호자에도 보인다. */

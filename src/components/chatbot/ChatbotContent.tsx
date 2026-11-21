@@ -102,7 +102,7 @@ const GUARDIAN_VISIT_LIST_PATH = '/guardian/hospital';
 const RESERVATION_NAV_DELAY_MS = 300;
 /** 대리 예약 중 연결이 끊긴 피보호자로 거절됐을 때(점검 M-1). 다음 입력부터는 본인 상담으로 간다. */
 const WARD_CARRY_ENDED_TEXT =
-  '지금은 이 피보호자와 연결되어 있지 않아 예약을 이어갈 수 없어요. 연결 상태를 확인해 주세요. 다른 궁금한 점은 그대로 물어보셔도 돼요.';
+  '지금은 이 어르신과 연결되어 있지 않아 예약을 이어갈 수 없어요. 연결 상태를 확인해 주세요. 다른 궁금한 점은 그대로 물어보셔도 돼요.';
 
 type Suggestions = {
   items: string[];

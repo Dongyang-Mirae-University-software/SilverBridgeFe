@@ -71,7 +71,7 @@ export function GuardianCompanionSessionContent() {
     const code = errorCode(error);
     const message =
       code === 'COMPANION_NOT_AUTHORIZED'
-        ? '연결된 피보호자의 안부 대화만 볼 수 있습니다.'
+        ? '연결된 어르신의 안부 대화만 볼 수 있습니다.'
         : code === 'COMPANION_SESSION_NOT_FOUND'
           ? '대화를 찾을 수 없어요.'
           : '대화를 불러오지 못했어요.';

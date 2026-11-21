@@ -415,7 +415,7 @@ describe('보호자 챗봇 예약', () => {
     api.sendChatMessage.mockResolvedValueOnce(ASK_PHONE);
     await renderChat(<ChatbotContent />);
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
-    await expect.element(page.getByText(/피보호자 전화번호가 등록되어 있지 않아/)).toBeVisible();
+    await expect.element(page.getByText(/어르신 전화번호가 등록되어 있지 않아/)).toBeVisible();
   });
 
   it('본인 예약 답의 [예약 목록 보기]는 /guardian/hospital 로 가고 전역 피보호자 선택은 건드리지 않는다', async () => {

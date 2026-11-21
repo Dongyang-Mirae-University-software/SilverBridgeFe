@@ -32,7 +32,7 @@ describe('getAnomalyAlertText', () => {
   it('값이 비면 대체한다 - 라벨은 유형에서, 장소는 "등록된 카메라에서", 이름은 "피보호자"', () => {
     expect(getAnomalyAlertText({ role: 'GUARDIAN', detectedType: 'FALL' })).toEqual({
       title: '낙상 감지',
-      body: '피보호자 댁 등록된 카메라에서 낙상이 감지되었습니다. 바로 연락해 안전을 확인해 주세요.',
+      body: '어르신 댁 등록된 카메라에서 낙상이 감지되었습니다. 바로 연락해 안전을 확인해 주세요.',
     });
     expect(getAnomalyAlertText({ role: 'WARD' })).toEqual({
       title: '이상 상황 감지',
