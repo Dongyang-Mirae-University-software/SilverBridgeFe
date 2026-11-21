@@ -246,10 +246,20 @@ describe('AI 이상감지 검색 (Chrome)', () => {
     const keywordCalls = () => listCalls.filter(params => (params as { keyword?: string }).keyword !== undefined);
     // 실제 시계로 재면 입력 사이가 느려진 순간(전체 실행) 300ms를 넘겨 중간 글자로도 요청이 나간다 -
     // 검색 지연 타이머만 가짜로 돌려 "입력이 멈춘 뒤 300ms에 한 번"을 시계와 상관없이 본다
+    // 입력은 search.fill()로 하지 않는다: vitest 브라우저 동작은 가짜 타이머가 켜져 있으면 실행되는 동안
+    // 실제 50ms마다 가짜 시계를 50ms씩 앞당겨, 부하로 fill 한 번이 300ms를 넘으면 중간 글자로 요청이 나갔다(2026-11-22 재현).
+    // 같은 페이지 안에서 입력 이벤트를 보내면 시계가 움직이지 않고, React는 입력 이벤트의 effect(지연 타이머 등록)를 바로 처리한다
+    const typeInSamePage = (text: string) => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, text);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    };
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     try {
       input.focus();
-      for (const text of ['김', '김영', '김영희']) await search.fill(text);
+      for (const text of ['김', '김영', '김영희']) {
+        typeInSamePage(text);
+        expect(input.value).toBe(text);
+      }
       expect(document.activeElement).toBe(input);
       await vi.advanceTimersByTimeAsync(299);
       expect(keywordCalls()).toHaveLength(0);
