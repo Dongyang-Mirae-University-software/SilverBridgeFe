@@ -15,12 +15,12 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload, role
       };
     case 'CONNECTION_ACCEPTED':
       return {
-        body: payload.body ?? '피보호자가 연결 요청을 수락했습니다.',
+        body: payload.body ?? '어르신이 연결 요청을 수락했습니다.',
         title: payload.title ?? '연결 수락',
       };
     case 'CONNECTION_REFUSED':
       return {
-        body: payload.body ?? '피보호자가 연결 요청을 거절했습니다.',
+        body: payload.body ?? '어르신이 연결 요청을 거절했습니다.',
         title: payload.title ?? '연결 거절',
       };
     case 'CONNECTION_CANCELLED':
@@ -30,9 +30,10 @@ export function getRealtimeNotification(payload: ConnectionRealtimePayload, role
       };
     case 'SOS_TRIGGERED':
       return {
-        body: payload.body ?? `${payload.wardName || '피보호자'}님이 긴급 도움을 요청했습니다.`,
+        // 이름이 없으면 "어르신님"이 되지 않게 "어르신"만 쓴다
+        body: payload.body ?? `${payload.wardName ? `${payload.wardName}님이` : '어르신이'} 긴급 도움을 요청했습니다.`,
         // BE 푸시·WS 제목과 같은 형식(BE가 title을 싣지 않을 때만 쓰는 예비 문구)
-        title: payload.title ?? `[긴급] ${payload.wardName || '피보호자'}님 SOS`,
+        title: payload.title ?? `[긴급] ${payload.wardName ? `${payload.wardName}님` : '어르신'} SOS`,
       };
     case 'MEDICATION_STOPPED':
       return {

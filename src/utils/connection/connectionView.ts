@@ -16,7 +16,7 @@ interface ConnectionErrorLike {
 // 서버 오류 코드별 안내. 분기는 문구가 아니라 code로 한다(BE 문구는 바뀔 수 있다)
 const REQUEST_ERROR_MESSAGES: Record<string, string> = {
   USER_NOT_FOUND: '이 회원 ID로 가입한 분이 없어요. 대소문자까지 똑같이 입력했는지 확인해 주세요.',
-  INVALID_CONNECTION_ROLE: '어르신(피보호자) 계정의 회원 ID가 아니에요.',
+  INVALID_CONNECTION_ROLE: '어르신 계정의 회원 ID가 아니에요.',
   CANNOT_CONNECT_SELF: '내 회원 ID로는 요청할 수 없어요.',
   CONNECTION_TARGET_NOT_ACTIVE: '지금은 연결할 수 없는 계정이에요.',
   CONNECTION_ALREADY_EXISTS: '이미 연결됐거나 수락을 기다리는 중이에요.',

@@ -40,7 +40,7 @@ export function GuardianMedicationContent() {
 
       {isLoading && <p className={cx('emptyText')}>복약 현황을 불러오는 중입니다.</p>}
       {isError && <p className={cx('emptyText')}>복약 현황을 불러오지 못했습니다.</p>}
-      {!isLoading && !isError && wards.length === 0 && <p className={cx('emptyText')}>연결된 피보호자가 없습니다.</p>}
+      {!isLoading && !isError && wards.length === 0 && <p className={cx('emptyText')}>연결된 어르신이 없습니다.</p>}
 
       {wards.length > 0 && (
         <>

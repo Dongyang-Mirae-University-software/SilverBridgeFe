@@ -67,8 +67,8 @@ describe('SOS 이력 피보호자 불러오기 상태 (Chrome)', () => {
     data.connections = () => new Promise(() => {});
     await renderSos();
 
-    await expect.element(page.getByRole('status')).toMatchTextContent('피보호자 정보를 불러오는 중이에요.');
-    expect(page.getByText('연결된 피보호자가 없습니다.').elements()).toHaveLength(0);
+    await expect.element(page.getByRole('status')).toMatchTextContent('어르신 정보를 불러오는 중이에요.');
+    expect(page.getByText('연결된 어르신이 없습니다.').elements()).toHaveLength(0);
   });
 
   it('목록 조회가 실패하면 실패 안내와 다시 불러오기를 보이고, 다시 받으면 실제 상태를 보인다', async () => {
@@ -79,11 +79,11 @@ describe('SOS 이력 피보호자 불러오기 상태 (Chrome)', () => {
     };
     await renderSos();
 
-    await expect.element(page.getByRole('alert')).toMatchTextContent('피보호자 정보를 불러오지 못했어요.');
-    expect(page.getByText('연결된 피보호자가 없습니다.').elements()).toHaveLength(0);
+    await expect.element(page.getByRole('alert')).toMatchTextContent('어르신 정보를 불러오지 못했어요.');
+    expect(page.getByText('연결된 어르신이 없습니다.').elements()).toHaveLength(0);
     fail = false;
     await page.getByRole('button', { name: '다시 불러오기' }).click();
-    await expect.element(page.getByText('연결된 피보호자가 없습니다.')).toBeVisible();
+    await expect.element(page.getByText('연결된 어르신이 없습니다.')).toBeVisible();
   });
 });
 

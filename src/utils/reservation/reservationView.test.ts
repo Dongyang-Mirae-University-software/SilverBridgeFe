@@ -172,12 +172,12 @@ describe('reservationView', () => {
 
   it('상태별 오류 문구', () => {
     expect(reservationErrorMessage(axiosError(401))).toContain('다시 로그인');
-    expect(reservationErrorMessage(axiosError(403))).toBe('연결된 피보호자의 예약만 볼 수 있어요.');
+    expect(reservationErrorMessage(axiosError(403))).toBe('연결된 어르신의 예약만 볼 수 있어요.');
     // 403은 BFF가 준 이유를 그대로 - 쓰기 권한 없음과 연결 안 된 피보호자를 구분한다
     const forbidden = (message: string) => axiosError(403, 'Request failed', { code: 'RESERVATION_PROXY', message });
     expect(reservationErrorMessage(forbidden('보호자만 예약하거나 취소할 수 있어요.'))).toBe('보호자만 예약하거나 취소할 수 있어요.');
-    expect(reservationErrorMessage(forbidden('연결된 피보호자가 아니에요.'))).toBe('연결된 피보호자가 아니에요.');
-    expect(reservationErrorMessage(forbidden('  '))).toBe('연결된 피보호자의 예약만 볼 수 있어요.');
+    expect(reservationErrorMessage(forbidden('연결된 어르신이 아니에요.'))).toBe('연결된 어르신이 아니에요.');
+    expect(reservationErrorMessage(forbidden('  '))).toBe('연결된 어르신의 예약만 볼 수 있어요.');
     expect(reservationErrorMessage(axiosError(503))).toContain('병원 예약 서비스를 쓸 수 없어요');
     expect(reservationErrorMessage(axiosError(502))).toContain('연결하지 못했어요');
     expect(reservationErrorMessage(axiosError(409, '이미 예약된 시간입니다.'))).toBe('이미 예약된 시간입니다.');

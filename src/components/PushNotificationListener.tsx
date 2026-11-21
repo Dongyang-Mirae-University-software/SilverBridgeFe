@@ -86,9 +86,10 @@ function getConnectionPushNotification(data?: MessagePayload['data'], role?: Con
       return { body: '연결이 해제되었습니다.', title: '연결 해제' };
     case 'WARD_SOS':
       return {
-        body: `${data?.wardName || '피보호자'}님이 긴급 도움을 요청했습니다.`,
+        // 이름이 없으면 "어르신님"이 되지 않게 "어르신"만 쓴다
+        body: `${data?.wardName ? `${data.wardName}님이` : '어르신이'} 긴급 도움을 요청했습니다.`,
         // BE 푸시 제목과 같은 형식(BE 문구가 없을 때만 쓰는 예비 문구)
-        title: `[긴급] ${data?.wardName || '피보호자'}님 SOS`,
+        title: `[긴급] ${data?.wardName ? `${data.wardName}님` : '어르신'} SOS`,
       };
     case 'MEDICATION_REMINDER':
       return { body: '복용 시각이 되었습니다.', title: '복약 알림' };
@@ -107,7 +108,7 @@ function getConnectionPushNotification(data?: MessagePayload['data'], role?: Con
       });
     case 'ANOMALY_REVIEW_REQUIRED':
       return {
-        body: `${data?.wardName ?? '피보호자'}의 ${data?.detectedTypeLabel ?? '이상감지'} 감지가 실제 상황이었는지 확인해 주세요.`,
+        body: `${data?.wardName ?? '어르신'}의 ${data?.detectedTypeLabel ?? '이상감지'} 감지가 실제 상황이었는지 확인해 주세요.`,
         title: '이상감지 확인이 필요해요',
       };
     case 'ANOMALY_REVIEW_SUMMARY':
@@ -117,13 +118,13 @@ function getConnectionPushNotification(data?: MessagePayload['data'], role?: Con
       };
     case 'ANOMALY_REVIEW_CONFLICTED':
       return {
-        body: `${data?.wardName ?? '피보호자'}의 ${data?.detectedTypeLabel ?? '이상감지'} 감지에 대해 다른 보호자와 판정이 다릅니다. 다시 확인해 주세요.`,
+        body: `${data?.wardName ?? '어르신'}의 ${data?.detectedTypeLabel ?? '이상감지'} 감지에 대해 다른 보호자와 판정이 다릅니다. 다시 확인해 주세요.`,
         title: '판정 확인 요청',
       };
     case 'CAMERA_LINK_LOST':
       // 원인을 단정하지 않는 문구(BE 푸시 본문과 같은 톤) - '꺼졌다'가 아니라 '확인되지 않는다'
       return {
-        body: `${data?.wardName ?? '피보호자'} 댁 ${data?.location ?? ''} 카메라의 영상이 확인되지 않아 감시가 멈춰 있을 수 있습니다. 카메라 기기의 송출 상태를 확인해 주세요.`,
+        body: `${data?.wardName ?? '어르신'} 댁 ${data?.location ?? ''} 카메라의 영상이 확인되지 않아 감시가 멈춰 있을 수 있습니다. 카메라 기기의 송출 상태를 확인해 주세요.`,
         title: '카메라 연결 확인 필요',
       };
     default:

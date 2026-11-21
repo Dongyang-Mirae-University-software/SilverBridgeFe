@@ -122,8 +122,8 @@ export function AdminNotificationHistoryContent() {
           </div>
           <label className={cx('search')}>
             <Icon name="search" size={16} decorative />
-            <span className={cx('srOnly')}>피보호자 또는 수신자 이름 검색</span>
-            <input autoComplete="off" value={keyword} onChange={event => updateKeyword(event.target.value)} placeholder="피보호자·수신자 이름 검색" />
+            <span className={cx('srOnly')}>어르신 또는 수신자 이름 검색</span>
+            <input autoComplete="off" value={keyword} onChange={event => updateKeyword(event.target.value)} placeholder="어르신·수신자 이름 검색" />
           </label>
           <select aria-label="조회 기간" className={cx('periodSelect')} value={period} onChange={event => updatePeriod(event.target.value as AdminNotificationPeriod)}>
             {(Object.keys(PERIOD_LABEL) as AdminNotificationPeriod[]).map(value => <option key={value} value={value}>{PERIOD_LABEL[value]}</option>)}
@@ -132,7 +132,7 @@ export function AdminNotificationHistoryContent() {
 
         <div className={cx('tableScroll')}>
           <table className={cx('table')}>
-            <thead><tr><th>발송 시각</th><th>알림 종류</th><th>피보호자</th><th>알림 내용</th><th>수신자</th><th>채널</th><th>전송 결과</th></tr></thead>
+            <thead><tr><th>발송 시각</th><th>알림 종류</th><th>어르신</th><th>알림 내용</th><th>수신자</th><th>채널</th><th>전송 결과</th></tr></thead>
             <tbody>
               {list.isLoading && <StateRow>알림 이력을 불러오는 중입니다.</StateRow>}
               {list.isError && <StateRow>알림 이력을 불러오지 못했습니다. <button type="button" onClick={() => void list.refetch()}>다시 시도</button></StateRow>}
@@ -180,7 +180,7 @@ function NotificationDetailModal({ log, onClose }: { log: AdminNotificationLogIt
     <section className={cx('modal')} role="dialog" aria-modal="true" aria-labelledby="notification-detail-title" onMouseDown={event => event.stopPropagation()}>
       <header className={cx('modalHead')}><div><p>{RESULT_LABEL[log.result]}</p><h2 id="notification-detail-title">알림 전송 상세</h2></div><button type="button" aria-label="닫기" onClick={onClose}><Icon name="close" size={20} decorative /></button></header>
       <div className={cx('modalBody')}>
-        <dl className={cx('detailInfo')}><div><dt>발송 시각</dt><dd>{formatKstDateTime(log.sentAt)}</dd></div><div><dt>알림 종류</dt><dd>{log.typeLabel || CATEGORY_LABEL[log.category]}</dd></div><div><dt>피보호자</dt><dd>{log.wardName ?? '-'}</dd></div><div><dt>수신자</dt><dd>{recipientLabel(log)} · {log.recipientIsWard ? '본인' : '보호자'}</dd></div></dl>
+        <dl className={cx('detailInfo')}><div><dt>발송 시각</dt><dd>{formatKstDateTime(log.sentAt)}</dd></div><div><dt>알림 종류</dt><dd>{log.typeLabel || CATEGORY_LABEL[log.category]}</dd></div><div><dt>어르신</dt><dd>{log.wardName ?? '-'}</dd></div><div><dt>수신자</dt><dd>{recipientLabel(log)} · {log.recipientIsWard ? '본인' : '보호자'}</dd></div></dl>
         <section className={cx('messageBox')}><strong>{log.title}</strong><p>{log.body}</p></section>
         {log.result === 'NOT_SENT' && <section className={cx('notSentBox')}><strong>{log.notSentReasonLabel ?? '발송하지 않았습니다.'}</strong><p>실패가 아닙니다. 계정 상태 또는 수신자의 알림 설정에 따라 보내지 않은 알림입니다.</p></section>}
         <section className={cx('channelSection')}><h3>채널별 전송 결과</h3>{channelResults.length > 0 ? <ul>{channelResults.map((item, index) => <li key={`${item.channel}-${index}`} className={cx({ failed: item.status === 'FAILED' })}><strong>{channelLabel(item.channel)}</strong><span>{item.status === 'FAILED' ? item.reasonLabel ?? '전송 실패' : '전송 완료'}</span></li>)}</ul> : <p>시도한 채널이 없습니다.</p>}</section>

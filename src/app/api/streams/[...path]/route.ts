@@ -86,7 +86,7 @@ function authFailureResponse(result: Exclude<WardAuthResult, { status: 'ok' }>) 
     if (result.retryAfter) headers.set('retry-after', result.retryAfter);
   } else if (result.status === 'forbidden') {
     status = 403;
-    message = '피보호자 계정만 사용할 수 있습니다.';
+    message = '어르신 계정만 사용할 수 있습니다.';
   } else if (result.status === 'unavailable') {
     status = 503;
     message = '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.';

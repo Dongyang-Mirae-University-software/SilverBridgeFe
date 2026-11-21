@@ -35,7 +35,7 @@ export function WardHomeContent() {
   return (
     <div className={cx('homeGrid', { withCompanion: companionOpen })}>
       {/* 화면 제목은 시안에 없어 보이지 않게 두고, 화면 읽기 프로그램·자동 점검이 찾을 수 있게 h1만 둔다 */}
-      <h1 className={cx('srOnly')}>피보호자 홈</h1>
+      <h1 className={cx('srOnly')}>홈</h1>
       {companionOpen && (
         <Link className={cx('companionCard')} href="/ward/companion">
           <span className={cx('companionIcon')}><Icon name="heart" size={40} decorative /></span>

@@ -140,7 +140,7 @@ export default function ChatUiPrompt({ ui, active, onSelect, variant = 'guardian
         <p className={styles.noticeText}>
           {variant === 'ward'
             ? '등록된 전화번호가 없어 여기서는 예약할 수 없어요. 보호자에게 예약을 부탁해 주세요.'
-            : '피보호자 전화번호가 등록되어 있지 않아 예약할 수 없어요. 피보호자 내 정보에서 전화번호를 등록한 뒤 다시 예약해 주세요.'}
+            : '어르신 전화번호가 등록되어 있지 않아 예약할 수 없어요. 어르신 화면의 내 정보에서 전화번호를 등록한 뒤 다시 예약해 주세요.'}
         </p>
         {active && onRestart && (
           <div className={`${styles.chips} ${styles.single}`}>

@@ -16,7 +16,7 @@ function apiError(status: number, code?: string) {
 describe('gameErrorMessage', () => {
   it('403 GAME_NOT_AUTHORIZED는 연결 상태 확인 안내', () => {
     expect(gameErrorMessage(apiError(403, 'GAME_NOT_AUTHORIZED'))).toBe(
-      '연결된 피보호자의 게임 기록만 볼 수 있습니다. 연결 상태를 확인해 주세요.',
+      '연결된 어르신의 게임 기록만 볼 수 있습니다. 연결 상태를 확인해 주세요.',
     );
   });
 

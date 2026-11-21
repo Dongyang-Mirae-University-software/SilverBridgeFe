@@ -28,7 +28,7 @@ export function WardSelectorTabs({
   wards,
   selectedWardId,
   onSelect,
-  ariaLabel = '피보호자 선택',
+  ariaLabel = '어르신 선택',
   disabled = false,
 }: WardSelectorTabsProps) {
   return (

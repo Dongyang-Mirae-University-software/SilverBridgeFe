@@ -88,7 +88,7 @@ export function GuardianDashboardContent() {
     return (
       <div className={cx('dashboardStack')}>
         {pageHeading}
-        <p className={cx('stateCard')} role="status">피보호자 정보를 불러오는 중이에요.</p>
+        <p className={cx('stateCard')} role="status">어르신 정보를 불러오는 중이에요.</p>
       </div>
     );
   }
@@ -98,7 +98,7 @@ export function GuardianDashboardContent() {
       <div className={cx('dashboardStack')}>
         {pageHeading}
         <div className={cx('stateCard')} role="alert">
-          <p>피보호자 정보를 불러오지 못했어요.</p>
+          <p>어르신 정보를 불러오지 못했어요.</p>
           <button className={cx('emptyHeroButton')} type="button" onClick={() => void refetchConnections()}>
             다시 불러오기
           </button>
@@ -111,10 +111,10 @@ export function GuardianDashboardContent() {
     return (
       <div className={cx('dashboardStack')}>
         {pageHeading}
-        <section className={cx('emptyHero')} aria-label="피보호자 없음">
+        <section className={cx('emptyHero')} aria-label="어르신 없음">
           <div className={cx('emptyHeroIcon')}><Icon name="users" size={28} /></div>
-          <div className={cx('emptyHeroText')}><strong>연결된 피보호자가 없습니다</strong><span>피보호자를 등록하면 상태 확인과 알림 관리가 시작됩니다.</span></div>
-          <Link className={cx('emptyHeroButton')} href="/guardian/wards/register">피보호자 등록하기</Link>
+          <div className={cx('emptyHeroText')}><strong>연결된 어르신이 없습니다</strong><span>어르신을 등록하면 상태 확인과 알림 관리가 시작됩니다.</span></div>
+          <Link className={cx('emptyHeroButton')} href="/guardian/wards/register">어르신 등록하기</Link>
         </section>
       </div>
     );

@@ -74,7 +74,7 @@ export function getOcrErrorMessage(error: unknown) {
   if (!axios.isAxiosError<{ code?: string }>(error)) return OCR_UNAVAILABLE_MESSAGE;
 
   const status = error.response?.status;
-  if (status === 403) return error.message || '연결된 피보호자의 약만 등록할 수 있어요';
+  if (status === 403) return error.message || '연결된 어르신의 약만 등록할 수 있어요';
   if (status === 413) return '사진이 너무 커요. 다시 찍어 주세요';
   if (status === 400) return '사진을 읽을 수 없어요. 다시 찍어 주세요';
   if (status === 429) {

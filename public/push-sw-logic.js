@@ -34,7 +34,7 @@
   const FALLBACK_TEXT = {
     WARD_SOS: data => [
       '긴급 SOS',
-      `${(data && data.wardName) || '피보호자'}님이 긴급 도움을 요청했습니다.`,
+      `${data && data.wardName ? `${data.wardName}님이` : '어르신이'} 긴급 도움을 요청했습니다.`,
     ],
     ANOMALY_DETECTED: data => ['이상감지', `${(data && data.detectedTypeLabel) || '이상 상황'}이 감지되었습니다.`],
     ANOMALY_REVIEW_REQUIRED: () => ['이상감지 확인이 필요해요', '감지가 실제 상황이었는지 확인해 주세요.'],

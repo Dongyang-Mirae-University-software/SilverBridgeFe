@@ -123,7 +123,7 @@ export function GuardianGameContent() {
       <header className={cx('toolbar')}>
         <div>
           <strong className={cx('toolbarTitle')}>게임 관리</strong>
-          <span className={cx('toolbarSub')}>연결된 피보호자 {activeWards.length}명</span>
+          <span className={cx('toolbarSub')}>연결된 어르신 {activeWards.length}명</span>
         </div>
         <RefreshButton
           ariaLabel="새로고침"
@@ -132,10 +132,10 @@ export function GuardianGameContent() {
         />
       </header>
 
-      {isWardsLoading && <p className={cx('emptyText')}>피보호자 목록을 불러오는 중입니다.</p>}
-      {isError && <p className={cx('emptyText')}>피보호자 목록을 불러오지 못했습니다.</p>}
+      {isWardsLoading && <p className={cx('emptyText')}>어르신 목록을 불러오는 중입니다.</p>}
+      {isError && <p className={cx('emptyText')}>어르신 목록을 불러오지 못했습니다.</p>}
       {!isWardsLoading && !isError && activeWards.length === 0 && (
-        <p className={cx('emptyText')}>연결된 피보호자가 없습니다.</p>
+        <p className={cx('emptyText')}>연결된 어르신이 없습니다.</p>
       )}
 
       <ul className={cx('list')}>

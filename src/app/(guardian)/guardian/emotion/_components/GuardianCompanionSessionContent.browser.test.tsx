@@ -135,7 +135,7 @@ describe('대화 보기 (Chrome)', () => {
     data.session.mockRejectedValue(apiError(403, 'COMPANION_NOT_AUTHORIZED'));
     await renderDetail();
 
-    await expect.element(page.getByRole('alert')).toHaveTextContent('연결된 피보호자의 안부 대화만 볼 수 있습니다.');
+    await expect.element(page.getByRole('alert')).toHaveTextContent('연결된 어르신의 안부 대화만 볼 수 있습니다.');
     expect(page.getByRole('button', { name: '다시 불러오기' }).elements()).toHaveLength(0);
     await expect.element(page.getByRole('link', { name: /AI 기분 체크/ })).toHaveAttribute('href', '/guardian/emotion');
   });

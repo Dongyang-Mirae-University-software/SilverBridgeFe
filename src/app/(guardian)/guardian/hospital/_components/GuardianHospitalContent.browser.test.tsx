@@ -458,7 +458,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
 
   it.each([
     [401, '로그인이 끝났어요. 다시 로그인해 주세요.'],
-    [403, '연결된 피보호자의 예약만 볼 수 있어요.'],
+    [403, '연결된 어르신의 예약만 볼 수 있어요.'],
     [503, '지금은 병원 예약 서비스를 쓸 수 없어요. 잠시 뒤 다시 시도해 주세요.'],
     [502, '예약 서비스에 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.'],
   ])('예약을 못 불러오면 상태(%i)별 문구를 보여 준다', async (status, text) => {
@@ -492,7 +492,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
   it('연결된 피보호자가 없으면 안내만 한다', async () => {
     wards.list = [];
     const screen = await renderContent();
-    await expect.element(screen.getByText(/연결된 피보호자가 없어요/)).toBeVisible();
+    await expect.element(screen.getByText(/연결된 어르신이 없어요/)).toBeVisible();
     expect(api.getMyReservations).not.toHaveBeenCalled();
   });
 
@@ -775,14 +775,14 @@ describe('GuardianHospitalContent (Chrome)', () => {
     afterEach(() => spy.mockRestore());
 
     it('예약 내역 조회가 403이면 피보호자 목록을 새로 받는다', async () => {
-      api.getMyReservations.mockRejectedValue(axiosError(403, '연결된 피보호자가 아니에요.'));
+      api.getMyReservations.mockRejectedValue(axiosError(403, '연결된 어르신이 아니에요.'));
       await renderContent();
       await vi.waitFor(() => expect(connectionsRefetched(spy)).toBe(true));
     });
 
     it('예약 취소가 403이면 피보호자 목록을 새로 받는다', async () => {
       api.getMyReservations.mockResolvedValue([reservation(7, TOMORROW, '10:00')]);
-      api.cancelReservation.mockRejectedValue(axiosError(403, '연결된 피보호자가 아니에요.'));
+      api.cancelReservation.mockRejectedValue(axiosError(403, '연결된 어르신이 아니에요.'));
       const screen = await renderContent();
       await screen.getByRole('button', { name: /강남내과 예약 취소$/ }).click();
       await screen.getByRole('dialog').getByRole('button', { name: '예약 취소' }).click();
@@ -790,7 +790,7 @@ describe('GuardianHospitalContent (Chrome)', () => {
     });
 
     it('예약 만들기가 403이면 피보호자 목록을 새로 받는다', async () => {
-      api.createReservation.mockRejectedValue(axiosError(403, '연결된 피보호자가 아니에요.'));
+      api.createReservation.mockRejectedValue(axiosError(403, '연결된 어르신이 아니에요.'));
       const screen = await renderContent();
       await screen.getByRole('button', { name: '새 진료 예약하기' }).click();
       await screen.getByRole('button', { name: /푸른안과/ }).click();

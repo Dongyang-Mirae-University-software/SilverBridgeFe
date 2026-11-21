@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: '가족 등록' };
 
 export default function GuardianWardRegisterPage() {
   return (
-    <PageLayout title="피보호자 등록">
+    <PageLayout title="어르신 등록">
       <div className={styles.stack}>
         <GuardianConnectionRequestForm />
         <GuardianConnectionRequestHistory />

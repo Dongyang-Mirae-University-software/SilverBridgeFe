@@ -498,10 +498,10 @@ describe('AnomalyClipModal (Chrome)', () => {
 
   it('403은 서버 문구를 그대로 보인다(404와 다른 문구)', async () => {
     api.getGuardianAnomalyClips.mockResolvedValue([clip]);
-    api.fetchGuardianAnomalyClipFile.mockRejectedValue({ status: 403, message: '연결된 피보호자의 기록만 볼 수 있습니다.' });
+    api.fetchGuardianAnomalyClipFile.mockRejectedValue({ status: 403, message: '연결된 어르신의 기록만 볼 수 있습니다.' });
     const screen = await render(<AnomalyClipModal incident={incident(1, { clip, clipCount: 1 })} onClose={() => undefined} />, { wrapper });
 
-    await expect.element(screen.getByText('연결된 피보호자의 기록만 볼 수 있습니다.')).toBeInTheDocument();
+    await expect.element(screen.getByText('연결된 어르신의 기록만 볼 수 있습니다.')).toBeInTheDocument();
   });
 
   it('재생 중이던 클립이 다시 받은 목록에서 빠지면(오탐으로 숨겨짐) 영상을 내리고 안내한다', async () => {
