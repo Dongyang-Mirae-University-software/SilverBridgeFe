@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
@@ -165,19 +165,24 @@ export default function GuardianSosHistoryContent() {
                   </span>
                   <div className={cx('eventTime')}>
                     <strong>{formatSosDate(item.triggeredAt)}</strong>
-                    <span>{formatSosTime(item)}</span>
+                    <span>{renderSosTime(item)}</span>
                   </div>
-                  {/* v13 시안: 설명 문구 없이 SOS는 연달아 누른 횟수, 보호자 연락은 받은 보호자만 뱃지로 */}
-                  {item.pressCount !== undefined && item.pressCount >= 2 && <strong className={cx('pressBadge')}>{item.pressCount}번 연달아 누름</strong>}
-                  {/* 모르는 경로 값(메타 없음)에는 배지를 붙이지 않는다 */}
-                  {TRIGGER_TYPE_META[item.triggerType]?.badge && (
-                    <strong className={cx('pressBadge')}>{TRIGGER_TYPE_META[item.triggerType].filterLabel}</strong>
-                  )}
-                  {item.calledGuardianName && (
-                    <span className={cx('guardianChip')}>
-                      <i aria-hidden="true">{item.calledGuardianName.slice(0, 1)}</i>
-                      {item.calledGuardianName.split(' ')[0]}
-                    </span>
+                  {/* 배지는 항목 오른쪽에 둔다(v13 시안). 휴대폰 폭에서는 세로로 쌓고 시각 범위를 두 줄로 나눠 카드 안에 들어가게 한다 */}
+                  {hasBadges(item) && (
+                    <div className={cx('eventBadges')}>
+                      {/* v13 시안: 설명 문구 없이 SOS는 연달아 누른 횟수, 보호자 연락은 받은 보호자만 뱃지로 */}
+                      {item.pressCount !== undefined && item.pressCount >= 2 && <strong className={cx('pressBadge')}>{item.pressCount}번 연달아 누름</strong>}
+                      {/* 모르는 경로 값(메타 없음)에는 배지를 붙이지 않는다 */}
+                      {TRIGGER_TYPE_META[item.triggerType]?.badge && (
+                        <strong className={cx('pressBadge')}>{TRIGGER_TYPE_META[item.triggerType].filterLabel}</strong>
+                      )}
+                      {item.calledGuardianName && (
+                        <span className={cx('guardianChip')}>
+                          <i aria-hidden="true">{item.calledGuardianName.slice(0, 1)}</i>
+                          <span className={cx('chipName')}>{item.calledGuardianName.split(' ')[0]}</span>
+                        </span>
+                      )}
+                    </div>
                   )}
                 </li>
               ))}
@@ -204,6 +209,24 @@ function formatSosDate(value: string) {
   if (Number.isNaN(date.getTime())) return '-';
   const weekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(date);
   return new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric' }).format(date) + ` (${weekday})`;
+}
+
+function hasBadges(item: IGuardianSosHistoryItem) {
+  return Boolean((item.pressCount !== undefined && item.pressCount >= 2) || TRIGGER_TYPE_META[item.triggerType]?.badge || item.calledGuardianName);
+}
+
+// 연달아 누른 범위("오후 3:44~오후 3:45")는 좁은 화면에서 "~" 뒤에서만 줄을 바꾼다(시각 한가운데에서 끊기지 않게)
+function renderSosTime(item: IGuardianSosHistoryItem): ReactNode {
+  const text = formatSosTime(item);
+  const [first, last] = text.split('~');
+  if (last === undefined) return text;
+  return (
+    <>
+      <span className={cx('timePart')}>{first}~</span>
+      <wbr />
+      <span className={cx('timePart')}>{last}</span>
+    </>
+  );
 }
 
 function formatSosTime(item: IGuardianSosHistoryItem) {
