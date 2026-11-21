@@ -156,27 +156,50 @@ describe('SOS 이력 챗봇 109 필터 (Chrome, 2026-11-20 BE 영향 점검 L-2)
 });
 
 describe('SOS 이력 휴대폰 폭 배치 (Chrome, 2026-11-21)', () => {
-  it('393px 폭에서 연달아 누름 배지와 보호자 뱃지가 시각 아래 줄에 놓이고 항목 밖으로 나가지 않는다', async () => {
+  const activeWard = async () => ({
+    data: [{ id: 1, partnerUserId: 'ward-1', partnerName: '김영희', partnerProfileImage: null, status: 'ACTIVE', connectedAt: null }],
+  });
+
+  it('393px 폭에서도 배지는 시각 오른쪽에 세로로 쌓이고 항목 밖으로 나가지 않는다', async () => {
     await page.viewport(393, 852);
     data.triggerType = 'GUARDIAN_CALL';
-    data.extra = { pressCount: 2, calledGuardianName: '테스트보호자2' };
-    data.connections = async () => ({
-      data: [{ id: 1, partnerUserId: 'ward-1', partnerName: '김영희', partnerProfileImage: null, status: 'ACTIVE', connectedAt: null }],
-    });
+    data.extra = {
+      pressCount: 6,
+      firstTriggeredAt: '2026-11-17T06:44:00Z',
+      lastTriggeredAt: '2026-11-17T06:45:00Z',
+      calledGuardianName: '테스트보호자2',
+    };
+    data.connections = activeWard;
     await renderSos();
 
     await vi.waitFor(() => expect(document.querySelectorAll('[class*="guardianChip"]')).toHaveLength(1));
     const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
     const item = document.querySelector('[class*="eventMarker"]')!.parentElement!.getBoundingClientRect();
-    const time = box('[class*="eventTime"]');
+    const date = box('[class*="eventTime"] strong');
+    const timeLine = box('[class*="eventTime"] > span');
     const badge = box('[class*="pressBadge"]');
     const chip = box('[class*="guardianChip"]');
 
-    // 한 줄에 다 놓으면 393px 에서 오른쪽 뱃지가 카드 밖으로 잘렸다(2026-11-20 시연 영상 녹화 중 확인)
-    expect(badge.top).toBeGreaterThanOrEqual(time.bottom);
-    expect(chip.top).toBeGreaterThanOrEqual(time.bottom);
-    expect(chip.right).toBeLessThanOrEqual(item.right);
-    // 배지는 날짜 글자가 시작하는 자리에서 시작한다
-    expect(Math.abs(badge.left - time.left)).toBeLessThanOrEqual(1);
+    // 시각 아래 줄이 아니라 오른쪽(사용자 요청). 한 줄에 다 놓으면 카드 밖으로 잘렸던 것(2026-11-20)도 막는다
+    expect(badge.left).toBeGreaterThanOrEqual(date.right);
+    expect(badge.left).toBeGreaterThanOrEqual(timeLine.right);
+    expect(badge.top).toBeLessThan(timeLine.bottom);
+    expect(chip.top).toBeGreaterThanOrEqual(badge.bottom);
+    expect(Math.max(badge.right, chip.right)).toBeLessThanOrEqual(item.right);
+    expect(document.querySelector('[class*="eventTime"] > span')!.textContent).toMatch(/^오[전후] \d+:\d+~오[전후] \d+:\d+$/);
+  });
+
+  it('보호자 이름이 길면 말줄임으로 줄여 카드 안에 둔다', async () => {
+    await page.viewport(393, 852);
+    data.triggerType = 'GUARDIAN_CALL';
+    data.extra = { calledGuardianName: '아주아주긴이름의테스트보호자입니다' };
+    data.connections = activeWard;
+    await renderSos();
+
+    await vi.waitFor(() => expect(document.querySelectorAll('[class*="guardianChip"]')).toHaveLength(1));
+    const item = document.querySelector('[class*="eventMarker"]')!.parentElement!.getBoundingClientRect();
+    expect(document.querySelector('[class*="guardianChip"]')!.getBoundingClientRect().right).toBeLessThanOrEqual(item.right);
+    const name = document.querySelector('[class*="chipName"]') as HTMLElement;
+    expect(name.scrollWidth).toBeGreaterThan(name.clientWidth);
   });
 });
