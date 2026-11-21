@@ -1,6 +1,6 @@
 // 보호자(GUARDIAN)가 보는 피보호자 오늘 안부 대화(AI 말벗) 타입
 // Swagger 그룹: "보호자 - AI 기분 체크" (/api/guardian/ward/{wardId}/companion/today)
-// 어르신 대답 원문은 저장하지 않아 응답에 없다. null은 "모르는 값"이라 0·정상으로 채우지 않는다
+// 어르신 대답 글은 가족 공유에 동의한 경우에만 서버가 저장하고(30일 뒤 삭제, 철회 시 즉시 삭제) 음성·사진은 저장하지 않는다. null은 "모르는 값"이라 0·정상으로 채우지 않는다
 
 export type CompanionMood = 'JOY' | 'CALM' | 'WORRY' | 'DEPRESSED';
 

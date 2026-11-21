@@ -95,7 +95,8 @@ function voiceAudio(sessionId: number, audio: { index: number } | null | undefin
   return audio && Number.isInteger(audio.index) ? { sessionId, index: audio.index } : null;
 }
 
-// 대답·말벗 응답·테스트 판정 결과는 이 화면 메모리에만 둔다 - 서버도 저장하지 않으니 localStorage·로그에 남기지 않는다
+// 대답·말벗 응답·테스트 판정 결과는 이 화면 메모리에만 둔다 - localStorage·로그에 남기지 않는다.
+// 서버는 동의한 경우에만 대답 글을 보관하고(30일 뒤 삭제, 철회하면 즉시 삭제) 음성·사진은 저장하지 않는다
 type Talk = {
   sessionId: number;
   slot: string;
