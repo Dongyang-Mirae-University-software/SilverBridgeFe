@@ -279,6 +279,25 @@
   margin: 0;
 }
 
+.resultStatus {
+  display: grid;
+  gap: 6px;
+}
+
+.resultTitle {
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.resultHint {
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
 .resultNote {
   color: var(--sb-ink-soft);
   font-size: 15px;
