@@ -1,6 +1,7 @@
 // 피보호자(WARD) 안부 말벗 - 하루 5번(09·12·15·18·21시) 각 시작 시각부터 60분 동안 여는 짧은 안부 대화
 // Swagger 그룹: "피보호자 - 안부 말벗" (/api/ward/companion/**)
-// 대답 글·음성·사진·말벗 응답 문장은 서버가 저장하지 않는다 - 화면도 메모리에만 둔다(localStorage·로그 금지)
+// 대답 글은 가족 공유에 동의한 경우에만 서버가 저장한다(30일 뒤 삭제, 동의를 철회하면 즉시 삭제). 음성·사진은 저장하지 않는다
+// 화면은 대답·말벗 응답을 메모리에만 둔다(localStorage·로그 금지)
 
 import type { CompanionMood, CompanionSlotStatus } from '../guardian/companion';
 
@@ -68,6 +69,8 @@ export interface IWardCompanionTurnAnalysis {
     confidence?: number | null; // 0~1
     usable?: boolean;
     reason?: string | null; // SHORT(최소 글자 수 미만)·UNAVAILABLE(모델 없음·시간 초과)
+    scores?: Record<'JOY' | 'CALM' | 'WORRY' | 'DEPRESSED', number> | null; // 기분별 점수 - AI 응답 그대로(화면 표시 없음)
+    adjusted?: boolean; // 점수를 보정했는지 - AI 응답 그대로
   } | null;
 }
 

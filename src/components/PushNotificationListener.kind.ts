@@ -21,6 +21,12 @@ const KIND_BY_TYPE: Record<string, PushKind> = {
   CONNECTION_CANCELLED: 'connection',
   CONNECTION_DISCONNECTED: 'connection',
   DISCONNECTION: 'connection',
+  // 안부 말벗 - 위험 신호는 SOS처럼 긴급(BE 강제 푸시·웹푸시 high와 같음), 기분 주의·안부 질문 안내는 일반 알림
+  // (주의를 'anomaly'로 두면 "이상감지" 라벨·카메라 그림이 붙어 화재·낙상처럼 읽힌다)
+  COMPANION_RISK: 'sos',
+  COMPANION_RISK_PATTERN: 'sos',
+  COMPANION_NOTICE: 'default',
+  COMPANION_PROMPT: 'default',
 };
 
 export const PUSH_KIND_LABEL: Record<PushKind, string> = {

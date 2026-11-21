@@ -876,12 +876,35 @@ describe('새 화면 배치 (Chrome)', () => {
   });
 });
 
+describe('안내 문구 배치 (Chrome, 점검 M-2)', () => {
+  it.each([[1180, 820], [1024, 768], [768, 1024]])('%i×%i: 동의 전·후 안내 문구가 있는 시작 화면이 가로로 넘치지 않는다', async (width, height) => {
+    await page.viewport(width, height);
+    const boxSizing = document.createElement('style');
+    boxSizing.textContent = '*, *::before, *::after { box-sizing: border-box; }';
+    document.head.appendChild(boxSizing);
+    try {
+      for (const consent of [CONSENT_NEW, { ...CONSENT_NEW, consented: true, consentedAt: '2026-11-12T10:00:00+09:00' }]) {
+        api.consent.mockResolvedValue(consent);
+        const view = await renderCompanion();
+        const text = consent.consented ? '목소리와 얼굴 사진은 AI 서버로 보내고 저장하지 않아요.' : '얼굴 사진을 AI 서버로 보내요.';
+        await expect.element(page.getByText(text, { exact: false })).toBeVisible();
+        const r = page.getByText(text, { exact: false }).element().getBoundingClientRect();
+        expect(r.left).toBeGreaterThanOrEqual(0);
+        expect(r.right).toBeLessThanOrEqual(window.innerWidth + 1);
+        expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth + 1);
+        await view.unmount();
+      }
+    } finally {
+      boxSizing.remove();
+    }
+  });
+});
 describe('대화 내용 공유 동의 (Chrome)', () => {
   it('처음 대화를 시작하면 먼저 묻고, 보여 줄게요를 고르면 동의를 저장한 뒤 시작한다', async () => {
     api.consent.mockResolvedValue(CONSENT_NEW);
     api.setConsent.mockResolvedValue({ ...CONSENT_NEW, consented: true, consentedAt: '2026-11-12T10:00:00+09:00' });
     await renderCompanion();
-    await expect.element(page.getByText('대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.')).toBeVisible();
+    await expect.element(page.getByText('기분을 살피려고 대답과 얼굴 사진을 AI 서버로 보내요. 대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.')).toBeVisible();
 
     await page.getByRole('button', { name: '이야기 시작하기' }).click();
     await expect.element(page.getByRole('heading', { name: '안부 대화 내용을 가족에게 보여 줄까요?' })).toBeVisible();

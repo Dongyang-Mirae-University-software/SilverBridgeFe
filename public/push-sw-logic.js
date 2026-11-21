@@ -22,6 +22,12 @@
     CONNECTION_CANCELLED: 'connection',
     CONNECTION_DISCONNECTED: 'connection',
     DISCONNECTION: 'connection',
+    // 안부 말벗 - 위험 신호는 SOS처럼 긴급(BE 강제 푸시·웹푸시 high와 같음), 기분 주의·안부 질문 안내는 일반 알림
+    // (주의를 'anomaly'로 두면 "이상감지" 라벨·카메라 그림이 붙어 화재·낙상처럼 읽힌다)
+    COMPANION_RISK: 'sos',
+    COMPANION_RISK_PATTERN: 'sos',
+    COMPANION_NOTICE: 'default',
+    COMPANION_PROMPT: 'default',
   };
 
   // BE가 data에 title·body를 싣지 않았을 때만 쓰는 예비 문구

@@ -52,12 +52,12 @@ const TEST_SLOTS = ['09:00', '12:00', '15:00', '18:00', '21:00'];
 // 사진 합계를 audio와 더해 서버 상한(10MB) 아래로 둔다 - multipart 머리 몫을 남긴다
 const UPLOAD_BUDGET_BYTES = 9.5 * 1024 * 1024;
 
-export const PRIVACY_TEXT = '대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.';
+export const PRIVACY_TEXT = '기분을 살피려고 대답과 얼굴 사진을 AI 서버로 보내요. 대답한 말과 목소리, 얼굴 사진은 저장하지 않아요.';
 // 테스트 시작 칸 아래 안내(프로토타입) - 동의와 무관하게 사실인 문장
-export const MEDIA_PRIVACY_TEXT = '목소리와 얼굴 사진은 저장하지 않아요';
+export const MEDIA_PRIVACY_TEXT = '목소리와 얼굴 사진은 AI 서버로 보내고 저장하지 않아요';
 // 보관 일수는 서버 설정값(retentionDays)을 쓴다
 export function privacySharedText(retentionDays: number) {
-  return `대답한 말은 가족이 볼 수 있게 ${retentionDays}일 동안 보관해요. 목소리와 얼굴 사진은 저장하지 않아요.`;
+  return `대답한 말은 가족이 볼 수 있게 ${retentionDays}일 동안 보관해요. 목소리와 얼굴 사진은 AI 서버로 보내고 저장하지 않아요.`;
 }
 
 // 태블릿 이상은 왼쪽 대화 · 오른쪽 카메라·판정 두 칸
@@ -95,7 +95,8 @@ function voiceAudio(sessionId: number, audio: { index: number } | null | undefin
   return audio && Number.isInteger(audio.index) ? { sessionId, index: audio.index } : null;
 }
 
-// 대답·말벗 응답·테스트 판정 결과는 이 화면 메모리에만 둔다 - 서버도 저장하지 않으니 localStorage·로그에 남기지 않는다
+// 대답·말벗 응답·테스트 판정 결과는 이 화면 메모리에만 둔다 - localStorage·로그에 남기지 않는다.
+// 서버는 동의한 경우에만 대답 글을 보관하고(30일 뒤 삭제, 철회하면 즉시 삭제) 음성·사진은 저장하지 않는다
 type Talk = {
   sessionId: number;
   slot: string;
