@@ -22,6 +22,11 @@
     CONNECTION_CANCELLED: 'connection',
     CONNECTION_DISCONNECTED: 'connection',
     DISCONNECTION: 'connection',
+    // 안부 말벗 - 위험 신호는 SOS처럼 긴급, 주의는 이상감지(경고), 안부 질문 안내는 일반 알림
+    COMPANION_RISK: 'sos',
+    COMPANION_RISK_PATTERN: 'sos',
+    COMPANION_NOTICE: 'anomaly',
+    COMPANION_PROMPT: 'default',
   };
 
   // BE가 data에 title·body를 싣지 않았을 때만 쓰는 예비 문구

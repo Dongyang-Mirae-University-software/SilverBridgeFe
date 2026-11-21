@@ -47,6 +47,18 @@ describe('토스트와 브라우저 알림은 같은 종류·그림을 쓴다', 
   });
 });
 
+describe('안부 말벗 알림 종류(L-9)', () => {
+  it.each([
+    ['COMPANION_RISK', 'sos'],
+    ['COMPANION_RISK_PATTERN', 'sos'],
+    ['COMPANION_NOTICE', 'anomaly'],
+    ['COMPANION_PROMPT', 'default'],
+  ])('%s는 %s 종류', (type, kind) => {
+    expect(getPushKind({ type })).toBe(kind);
+    expect(swPush.getKind({ type })).toBe(kind);
+  });
+});
+
 describe('토스트를 눌렀을 때도 브라우저 알림과 같은 화면으로 간다', () => {
   it.each(TYPES)('%s', type => {
     for (const role of ['GUARDIAN', 'WARD'] as const) {

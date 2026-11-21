@@ -21,6 +21,11 @@ const KIND_BY_TYPE: Record<string, PushKind> = {
   CONNECTION_CANCELLED: 'connection',
   CONNECTION_DISCONNECTED: 'connection',
   DISCONNECTION: 'connection',
+  // 안부 말벗 - 위험 신호는 SOS처럼 긴급, 주의는 이상감지(경고), 안부 질문 안내는 일반 알림
+  COMPANION_RISK: 'sos',
+  COMPANION_RISK_PATTERN: 'sos',
+  COMPANION_NOTICE: 'anomaly',
+  COMPANION_PROMPT: 'default',
 };
 
 export const PUSH_KIND_LABEL: Record<PushKind, string> = {
