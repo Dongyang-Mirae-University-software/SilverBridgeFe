@@ -51,7 +51,7 @@ describe('안부 말벗 알림 종류(L-9)', () => {
   it.each([
     ['COMPANION_RISK', 'sos'],
     ['COMPANION_RISK_PATTERN', 'sos'],
-    ['COMPANION_NOTICE', 'anomaly'],
+    ['COMPANION_NOTICE', 'default'],
     ['COMPANION_PROMPT', 'default'],
   ])('%s는 %s 종류', (type, kind) => {
     expect(getPushKind({ type })).toBe(kind);
