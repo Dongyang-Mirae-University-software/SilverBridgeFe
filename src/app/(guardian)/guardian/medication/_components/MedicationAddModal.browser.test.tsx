@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import type { MedicationOcrResponse } from '@/service/interface/medication';
+import { MAX_DRUGS } from '@/utils/medication/medicationDraft';
 import { MedicationAddModal } from './MedicationAddModal';
 
 const api = vi.hoisted(() => ({
@@ -66,6 +67,7 @@ const OCR_NAME_CHECK: MedicationOcrResponse = {
 const NOT_IN_LIST_TEXT = '약 목록에 없는 이름이에요';
 // 결과 문구와 노란 칸 안내는 상자 하나(2026-10-24)
 const CHECK_BOX_TEXT = /노란 칸의 약 이름을 한 번 더 확인해 주세요/;
+const RESULT_HINT_TEXT = '이름·개수가 맞는지 보고 다음을 눌러 주세요';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -160,10 +162,11 @@ describe('MedicationAddModal (Chrome)', () => {
 
     // 노란 칸이 있으면 결과 문구와 확인 안내가 상자 하나
     await expect
-      .element(screen.getByText('✓ 약 2개를 찾았어요.'))
+      .element(screen.getByText('✓ 약 2개 찾음'))
       .toBeVisible();
-    // "찾았어요" 다음 줄에 노란 칸 안내(2026-10-24)
+    // 결과 표시 다음 줄에 노란 칸 안내(2026-10-24), 상자 밖 회색 확인 안내는 없다(2026-11-21)
     await expect.element(screen.getByText('노란 칸의 약 이름을 한 번 더 확인해 주세요')).toBeVisible();
+    expect(screen.getByText(RESULT_HINT_TEXT).query()).toBeNull();
     await expect.element(screen.getByText('1 / 2')).toBeVisible();
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정');
     await expect.element(screen.getByText('반 알')).toBeVisible();
@@ -181,15 +184,58 @@ describe('MedicationAddModal (Chrome)', () => {
     api.recognizeMedicationEnvelope.mockResolvedValue(OCR_MIXED_TIMES);
     const { screen } = await renderModal();
     await choosePhoto();
-    await expect.element(screen.getByText(/약 3개를 찾았어요/)).toBeVisible();
+    await expect.element(screen.getByText(/약 3개 찾음/)).toBeVisible();
     expect(screen.getByText(/노란 칸의 약 이름/).query()).toBeNull();
+  });
+
+  it('결과는 짧은 표시 한 줄, 확인 안내는 상자 밖 작은 글씨 - 화면 읽기는 둘을 한 번에 읽는다', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_MIXED_TIMES);
+    const { screen } = await renderModal();
+    await choosePhoto();
+
+    const title = screen.getByText('✓ 약 3개 찾음', { exact: true });
+    await expect.element(title).toBeVisible();
+    // "찾았어요." 같은 문장으로 되돌리지 않는다(2026-11-21 사용자 요청)
+    expect(screen.getByText(/찾았어요/).query()).toBeNull();
+    const box = (title.element() as HTMLElement).parentElement!;
+    const hint = screen.getByText(RESULT_HINT_TEXT).element() as HTMLElement;
+    expect(box.contains(hint)).toBe(false);
+    expect(box.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // 상태 알림은 하나이고 결과와 안내를 함께 담는다
+    const status = document.querySelectorAll('[role="status"]');
+    expect(status).toHaveLength(1);
+    expect(status[0].contains(box) && status[0].contains(hint)).toBe(true);
+    // 결과는 안내보다 크게, 안내는 시니어 기준(15px) 이상
+    const titleSize = parseFloat(getComputedStyle(title.element()).fontSize);
+    const hintSize = parseFloat(getComputedStyle(hint).fontSize);
+    expect(titleSize).toBeGreaterThan(hintSize);
+    expect(hintSize).toBeGreaterThanOrEqual(15);
+  });
+
+  it(`약이 ${MAX_DRUGS}개를 넘으면 결과 상자에 앞의 것만 가져왔다는 안내를 함께 띄운다`, async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue({
+      readable: true,
+      drugs: Array.from({ length: MAX_DRUGS + 2 }, (_, i) => ({
+        name: `약${i + 1}정`, perDose: 1, timesPerDay: 1, days: 3, slots: ['MORNING'], timing: null, confidence: 'high',
+      })),
+    } satisfies MedicationOcrResponse);
+    const { screen } = await renderModal();
+    await choosePhoto();
+
+    const title = screen.getByText(`✓ 약 ${MAX_DRUGS}개 찾음`, { exact: true });
+    await expect.element(title).toBeVisible();
+    const note = screen.getByText(`한 번에 ${MAX_DRUGS}개까지만 가져왔어요. 나머지는 등록 후 다시 추가해 주세요`);
+    await expect.element(note).toBeVisible();
+    expect((title.element() as HTMLElement).parentElement!.contains(note.element())).toBe(true);
+    await expect.element(screen.getByText(RESULT_HINT_TEXT)).toBeVisible();
+    expect(document.querySelectorAll('[role="status"]')).toHaveLength(1);
   });
 
   it('목록에 없는 이름: 강조·안내·제안 칩, 칩을 누르면 그 행 이름만 바뀌고 강조가 풀린다 (BE #367)', async () => {
     const { screen } = await renderModal();
     api.recognizeMedicationEnvelope.mockResolvedValue(OCR_NAME_CHECK);
     await choosePhoto();
-    await expect.element(screen.getByText(/약 4개를 찾았어요/)).toBeVisible();
+    await expect.element(screen.getByText(/약 4개 찾음/)).toBeVisible();
 
     // confidence high여도 목록에 없으면 노란 칸 + 확인 박스
     await expect.element(screen.getByText(CHECK_BOX_TEXT)).toBeVisible();
@@ -240,12 +286,12 @@ describe('MedicationAddModal (Chrome)', () => {
       .mockResolvedValueOnce({ readable: true, drugs: [{ ...OCR_NAME_CHECK.drugs[2] }] });
     const { screen } = await renderModal();
     await choosePhoto();
-    await expect.element(screen.getByText(/약 4개를 찾았어요/)).toBeVisible();
+    await expect.element(screen.getByText(/약 4개 찾음/)).toBeVisible();
     await expect.element(screen.getByText(CHECK_BOX_TEXT)).toBeVisible();
 
     await screen.getByRole('button', { name: '다시 찍기' }).click();
     await choosePhoto();
-    await expect.element(screen.getByText(/약 1개를 찾았어요/)).toBeVisible();
+    await expect.element(screen.getByText(/약 1개 찾음/)).toBeVisible();
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('아스피린정');
     expect(isHighlighted(screen, 1)).toBe(false);
     expect(screen.getByText(NOT_IN_LIST_TEXT).query()).toBeNull();
@@ -264,7 +310,7 @@ describe('MedicationAddModal (Chrome)', () => {
       ],
     } satisfies MedicationOcrResponse);
     await choosePhoto();
-    await expect.element(screen.getByText(/약 3개를 찾았어요/)).toBeVisible();
+    await expect.element(screen.getByText(/약 3개 찾음/)).toBeVisible();
     expect([1, 2, 3].map(n => isHighlighted(screen, n))).toEqual([false, false, true]);
     expect(screen.getByText(NOT_IN_LIST_TEXT).query()).toBeNull();
     await expect.element(screen.getByText(CHECK_BOX_TEXT)).toBeVisible();
@@ -288,7 +334,7 @@ describe('MedicationAddModal (Chrome)', () => {
     api.recognizeMedicationEnvelope.mockResolvedValue(OCR_TWO_DRUGS);
     const { screen } = await renderModal();
     await choosePhoto();
-    await expect.element(screen.getByText(/약 2개를 찾았어요/)).toBeVisible();
+    await expect.element(screen.getByText(/약 2개 찾음/)).toBeVisible();
 
     const [wardId, image] = api.recognizeMedicationEnvelope.mock.calls[0] as [string, Blob];
     expect(wardId).toBe('W1');
@@ -301,7 +347,7 @@ describe('MedicationAddModal (Chrome)', () => {
     await expect.element(screen.getByRole('tab', { name: '직접 쓰기' })).toBeVisible();
 
     await choosePhoto();
-    await expect.element(screen.getByText(/약 2개를 찾았어요/)).toBeVisible();
+    await expect.element(screen.getByText(/약 2개 찾음/)).toBeVisible();
     expect(screen.getByRole('tab', { name: '직접 쓰기' }).query()).toBeNull();
     // 핸드폰에서도 모달(화면 전체가 아니다 - 2026-10-24 사용자 요청으로 되돌림), 가로 넘침 없음
     const dialog = screen.getByRole('dialog').element() as HTMLElement;
@@ -510,7 +556,7 @@ describe('MedicationAddModal (Chrome)', () => {
 
     await screen.getByRole('button', { name: '다시 찍기' }).click();
     await choosePhoto();
-    await expect.element(screen.getByText('✓ 약 1개를 찾았어요.')).toBeVisible();
+    await expect.element(screen.getByText('✓ 약 1개 찾음')).toBeVisible();
     await screen.getByRole('button', { name: '다음' }).click();
     await expect.element(chip(screen, '아침 오전 8시')).toHaveAttribute('aria-pressed', 'true');
     await expect.element(chip(screen, '점심 낮 12시')).toHaveAttribute('aria-pressed', 'false');
@@ -582,7 +628,7 @@ describe('MedicationAddModal (Chrome)', () => {
     await choosePhoto();
     await expect.element(screen.getByText(/약 봉투를 찾지 못했어요/)).toBeVisible();
     await screen.getByRole('button', { name: '전에 찍은 결과로' }).click();
-    await expect.element(screen.getByText(/✓ 약 2개를 찾았어요/)).toBeVisible();
+    await expect.element(screen.getByText(/✓ 약 2개 찾음/)).toBeVisible();
     await expect.element(screen.getByLabelText('1번째 약 이름')).toHaveValue('타이레놀정500');
   });
 
