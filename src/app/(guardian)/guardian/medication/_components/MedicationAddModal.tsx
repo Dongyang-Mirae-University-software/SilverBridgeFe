@@ -394,21 +394,20 @@ export function MedicationAddModal({ wardId, onClose }: MedicationAddModalProps)
           {/* 결과 문구와 노란 칸 안내를 상자 하나로(핸드폰에서 두 상자가 화면 위쪽을 차지했다, 2026-10-24) */}
           {/* 결과는 문장이 아니라 짧은 표시로, 확인 안내는 상자 밖 작은 글씨로(2026-11-21 사용자 요청 - "왜 문장으로 나오지") */}
           {/* 노란 칸이 있으면 확인 안내는 상자 안에 굵게 남긴다 - 잘못 읽힌 이름을 그대로 등록하지 않게 */}
+          {/* 노란 이름 칸의 설명은 확인 문장만 가리킨다 - 결과 제목·20개 안내까지 칸마다 이어 읽히지 않게(2026-11-21 점검 #3) */}
+          {/* 제목은 판독 때 찾은 개수라 약을 빼거나 더해도 그대로다 - 안내는 "개수"가 아니라 봉투와 같은지를 묻는다(점검 #1) */}
           {step === 1 && tab === 'camera' && camera.phase === 'result' && (
             <div className={cx('resultStatus')} role="status">
-              <div
-                id={hasLowConfidence ? lowConfidenceHintId : undefined}
-                className={cx(hasLowConfidence ? 'checkBox' : 'resultBanner')}
-              >
+              <div className={cx(hasLowConfidence ? 'checkBox' : 'resultBanner')}>
                 <p className={cx('resultTitle')}>✓ 약 {camera.count}개 찾음</p>
-                {hasLowConfidence && <p>노란 칸의 약 이름을 한 번 더 확인해 주세요</p>}
+                {hasLowConfidence && <p id={lowConfidenceHintId}>노란 칸의 약 이름을 한 번 더 확인해 주세요</p>}
                 {camera.truncated && (
                   <p className={cx('resultNote')}>
                     한 번에 {MAX_DRUGS}개까지만 가져왔어요. 나머지는 등록 후 다시 추가해 주세요
                   </p>
                 )}
               </div>
-              {!hasLowConfidence && <p className={cx('resultHint')}>이름·개수가 맞는지 보고 다음을 눌러 주세요</p>}
+              {!hasLowConfidence && <p className={cx('resultHint')}>약 봉투와 같은지 보고 다음을 눌러 주세요</p>}
             </div>
           )}
 

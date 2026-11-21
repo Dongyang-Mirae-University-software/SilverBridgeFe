@@ -67,7 +67,7 @@ const OCR_NAME_CHECK: MedicationOcrResponse = {
 const NOT_IN_LIST_TEXT = '약 목록에 없는 이름이에요';
 // 결과 문구와 노란 칸 안내는 상자 하나(2026-10-24)
 const CHECK_BOX_TEXT = /노란 칸의 약 이름을 한 번 더 확인해 주세요/;
-const RESULT_HINT_TEXT = '이름·개수가 맞는지 보고 다음을 눌러 주세요';
+const RESULT_HINT_TEXT = '약 봉투와 같은지 보고 다음을 눌러 주세요';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -172,7 +172,9 @@ describe('MedicationAddModal (Chrome)', () => {
     await expect.element(screen.getByText('반 알')).toBeVisible();
     // 확신 낮은 약이 있으면 결과 문구 바로 아래 노란 박스(작은 안내 대신)
     expect(document.querySelectorAll('[role="status"]')).toHaveLength(1);
-    await expect.element(screen.getByLabelText('2번째 약 이름')).toHaveAttribute('aria-describedby');
+    // 노란 이름 칸의 설명은 확인 문장만 - 결과 제목은 이어 읽히지 않는다(2026-11-21 점검 #3)
+    const describedIds = (screen.getByLabelText('2번째 약 이름').element().getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean);
+    expect(describedIds.map(id => document.getElementById(id)?.textContent)).toEqual(['노란 칸의 약 이름을 한 번 더 확인해 주세요']);
     await expect.element(screen.getByRole('button', { name: '다시 찍기' })).toBeVisible();
     // 시간 드롭다운·메모 칸은 없다
     expect(document.querySelector('select')).toBeNull();
@@ -210,6 +212,38 @@ describe('MedicationAddModal (Chrome)', () => {
     const hintSize = parseFloat(getComputedStyle(hint).fontSize);
     expect(titleSize).toBeGreaterThan(hintSize);
     expect(hintSize).toBeGreaterThanOrEqual(15);
+  });
+
+  it('약을 빼거나 더해도 제목은 찾은 개수 그대로, 안내는 개수를 묻지 않는다 - 320px에서도 한 줄', async () => {
+    await page.viewport(320, 640);
+    api.recognizeMedicationEnvelope.mockResolvedValue(OCR_MIXED_TIMES);
+    const { screen } = await renderModal();
+    await choosePhoto();
+    await expect.element(screen.getByText('✓ 약 3개 찾음', { exact: true })).toBeVisible();
+
+    await screen.getByRole('button', { name: '1번째 약 빼기', exact: true }).click();
+    await expect.poll(() => document.querySelectorAll('input[aria-label$="번째 약 이름"]').length).toBe(2);
+    // 제목은 판독 결과(3개)를 그대로 보이고, 안내는 "개수"를 묻지 않아 목록 2개와 어긋나 보이지 않는다(점검 #1)
+    await expect.element(screen.getByText('✓ 약 3개 찾음', { exact: true })).toBeVisible();
+    const hint = screen.getByText(RESULT_HINT_TEXT).element() as HTMLElement;
+    expect(hint.textContent).not.toContain('개수');
+    // 320px에서 한 단어만 다음 줄로 넘어가지 않는다(점검 #2)
+    expect(hint.getBoundingClientRect().height).toBeLessThan(parseFloat(getComputedStyle(hint).lineHeight) * 1.5);
+  });
+
+  it('truncated와 노란 칸이 함께면 이름 칸 설명에 20개 안내가 섞이지 않는다', async () => {
+    api.recognizeMedicationEnvelope.mockResolvedValue({
+      readable: true,
+      drugs: Array.from({ length: MAX_DRUGS + 2 }, (_, i) => ({
+        name: `약${i + 1}정`, perDose: 1, timesPerDay: 1, days: 3, slots: ['MORNING'], timing: null, confidence: i === 0 ? 'low' : 'high',
+      })),
+    } satisfies MedicationOcrResponse);
+    const { screen } = await renderModal();
+    await choosePhoto();
+    await expect.element(screen.getByText(`한 번에 ${MAX_DRUGS}개까지만 가져왔어요. 나머지는 등록 후 다시 추가해 주세요`)).toBeVisible();
+    const ids = (screen.getByLabelText('1번째 약 이름', { exact: true }).element().getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean);
+    expect(ids.map(id => document.getElementById(id)?.textContent)).toEqual(['노란 칸의 약 이름을 한 번 더 확인해 주세요']);
+    expect(document.querySelectorAll('[role="status"]')).toHaveLength(1);
   });
 
   it(`약이 ${MAX_DRUGS}개를 넘으면 결과 상자에 앞의 것만 가져왔다는 안내를 함께 띄운다`, async () => {
