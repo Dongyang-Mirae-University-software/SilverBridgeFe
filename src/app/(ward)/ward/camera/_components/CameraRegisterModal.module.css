@@ -33,6 +33,9 @@
 .modal.wideView .previewBox {
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
+  /* 폭을 정해 두지 않으면 높이 상한이 비율을 타고 폭까지 줄여, 낮은 화면에서 상자 오른쪽(닫기 버튼 위)이
+     하얗게 비었다(2026-11-22). 폭은 창 전체로 고정하고 높이만 줄인다 - 남는 가로는 상자 안의 검은 여백이 된다 */
+  width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
   /* 낮은 화면에서 창이 넘치지 않게 영상 높이를 제한한다(머리글·버튼 영역을 뺀 값, 가로가 남으면 검은 여백) */
