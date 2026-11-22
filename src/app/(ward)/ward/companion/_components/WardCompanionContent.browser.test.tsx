@@ -1039,6 +1039,11 @@ describe('이어 하는 대화 턴 수·판정 칸 제목 (Chrome)', () => {
 });
 
 // toBeVisible은 화면 밖 요소도 '보임'으로 본다 - 배치는 좌표로 확인한다(점검 L-3)
+function insideViewportHeight(el: Element) {
+  const r = el.getBoundingClientRect();
+  return r.top >= 0 && r.bottom <= window.innerHeight + 1;
+}
+
 function insideViewport(el: Element) {
   const r = el.getBoundingClientRect();
   return r.left >= 0 && r.right <= window.innerWidth + 1;
@@ -1060,6 +1065,23 @@ describe('폰 배치 회귀 (Chrome, 점검 H-1·M-1·L-1)', () => {
     await page.getByRole('button', { name: '보내기' }).click();
     await expect.element(page.getByText('대답을 적어 주세요.')).toBeVisible();
     check();
+  });
+
+  it('녹음을 누르면 "말씀하세요" 안내가 생겨도 녹음 버튼이 화면 아래로 잘리지 않는다(2026-11-22)', async () => {
+    await page.viewport(1280, 520);
+    mediaDevices({ camera: 'deny' });
+    api.replyText.mockResolvedValue({ turnNo: 1, reply: '경로당에서 즐거운 시간 보내셨군요. 영자랑 이야기는 어떠셨나요?', ended: false, endReason: null, transcript: null });
+    await openTalk();
+    await page.getByRole('button', { name: '글로 대답하기' }).click();
+    await page.getByRole('textbox', { name: '대답 적기' }).fill('경로당에서 영자랑 이야기 많이 했어');
+    await page.getByRole('button', { name: '보내기' }).click();
+    await expect.element(page.getByText(/영자랑 이야기는/)).toBeVisible();
+    await page.getByRole('button', { name: '말로 대답하기' }).click();
+    await page.getByRole('button', { name: '말로 대답하기' }).click();
+
+    await expect.element(page.getByText('말씀하세요. 다 하셨으면 다시 눌러 주세요.')).toBeVisible();
+    expect(document.documentElement.scrollHeight).toBeGreaterThan(window.innerHeight); // 화면보다 길어 스크롤이 필요한 상황인지
+    await vi.waitFor(() => expect(insideViewportHeight(page.getByRole('button', { name: /다 했어요/ }).element())).toBe(true));
   });
 
   it('폰 시작 화면은 글자 아주 크게(1.47배)에서도 가로로 넘치지 않는다(M-1)', async () => {

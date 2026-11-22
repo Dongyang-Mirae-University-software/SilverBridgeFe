@@ -224,10 +224,6 @@ export function WardCompanionContent() {
   const endCardRef = useRef<HTMLElement>(null);
   const lineCount = talk?.lines.length ?? 0;
   const ended = talk?.ended ?? false;
-  useEffect(() => {
-    if (ended) endCardRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
-    else if (lineCount > 1) bottomRef.current?.scrollIntoView?.({ block: 'end', behavior: 'smooth' });
-  }, [lineCount, ended]);
 
   const nextLine = (who: Line['who'], text: string, heard?: boolean): Line => ({ id: ++lineId.current, who, text, heard });
 
@@ -328,6 +324,14 @@ export function WardCompanionContent() {
       if (result === 'denied' || result === 'unsupported') chooseCamera('off');
     });
   }, [voice.state, camera, chooseCamera, companionVoice]);
+
+  // 대답 칸이 커질 때(녹음 안내 "말씀하세요…"·생각 중 줄·오류 안내)도 다시 내린다 - 새 말이 붙을 때만 내리면
+  // 녹음을 누르는 순간 안내 줄만큼 대답 버튼이 화면 아래로 밀려 잘려 보였다(2026-11-22)
+  const answerNotice = voice.state === 'recording' ? 'recording' : (notice ?? voice.notice ?? '');
+  useEffect(() => {
+    if (ended) endCardRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    else if (lineCount > 1 || answerNotice) bottomRef.current?.scrollIntoView?.({ block: 'end', behavior: 'smooth' });
+  }, [lineCount, ended, answerNotice, voice.state, pending]);
 
   const startTalk = (session: IWardCompanionSession, test: boolean) => {
     const question = { ...nextLine('companion', session.question), audio: voiceAudio(session.sessionId, session.audio) };
