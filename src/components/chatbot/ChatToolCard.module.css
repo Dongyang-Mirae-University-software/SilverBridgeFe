@@ -278,3 +278,45 @@
 .ward .address {
   font-size: calc(17px * var(--ward-font-scale, 1)) !important;
 }
+
+/* 병원 목록 줄이기(2026-11-23 A안) - 진료과 하나(칩)와 짧은 주소를 한 줄에, [병원 더 보기] */
+.hospitalMeta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.deptChip {
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand-text) !important;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+
+.moreBtn {
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid var(--sb-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: calc(750 + var(--ward-weight-boost, 0));
+  padding: 8px 12px;
+}
+
+.guardian .moreBtn {
+  min-height: 48px;
+  font-size: calc(16px * var(--ward-font-scale, 1));
+}
+
+.ward .moreBtn {
+  min-height: 64px;
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  font-weight: calc(900 + var(--ward-weight-boost, 0));
+}

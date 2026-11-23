@@ -1,7 +1,10 @@
+import { useState } from 'react';
+
 import { VisitDayCard } from '@/components/reservation/VisitDayCard';
 import type { ChatToolName } from '@/service/interface/chat';
 import { formatDateShort, kstToday } from '@/utils/reservation/reservationView';
 import styles from './ChatToolCard.module.css';
+import { commonDepartment, HOSPITAL_PREVIEW_COUNT, shortAddress, splitDepartments } from './hospitalListView';
 
 interface Props {
   tool: ChatToolName;
@@ -49,36 +52,7 @@ export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideL
 
   if (tool === 'search_hospital') {
     const hospitals = Array.isArray(data) ? (data as HospitalItem[]) : [];
-    return (
-      <div className={`${styles.card} ${sizeClass}`}>
-        <p className={styles.cardTitle}>병원 검색 결과</p>
-        {hospitals.length === 0 ? (
-          <p className={styles.empty}>병원을 찾지 못했습니다.</p>
-        ) : (
-          <ul className={styles.hospitalList}>
-            {hospitals.map((h, i) => (
-              <li key={h.id ?? i} className={styles.hospitalItem}>
-                <div className={styles.hospitalInfo}>
-                  <strong>{h.name}</strong>
-                  {h.department && <span>{h.department}</span>}
-                  {h.address && <span className={styles.address}>{h.address}</span>}
-                </div>
-                {/* 병원 이름이 없으면 고를 값이 없다 - 빈 값으로 보내지 않게 버튼을 두지 않는다(점검 🟡) */}
-                {h.name?.trim() && (
-                  <button
-                    type="button"
-                    className={styles.reserveBtn}
-                    onClick={() => onUiSelect('hospital_confirm', h.name!.trim(), `${h.name!.trim()} 예약하기`)}
-                  >
-                    예약하기
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    );
+    return <HospitalResults hospitals={hospitals} sizeClass={sizeClass} onUiSelect={onUiSelect} />;
   }
 
   if (tool === 'make_appointment') {
@@ -175,4 +149,67 @@ export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideL
   }
 
   return null;
+}
+
+// 병원 검색 결과(2026-11-23 사용자 결정 A안) - 병원마다 진료과 전체와 긴 주소를 나열하던 것을 줄였다.
+// 고른 진료과 하나(모든 병원에 공통인 진료과)와 "구 + 길" 주소만, 처음엔 3곳만 보이고 [병원 더 보기]로 나머지를 편다
+function HospitalResults({ hospitals, sizeClass, onUiSelect }: {
+  hospitals: HospitalItem[];
+  sizeClass: string;
+  onUiSelect: Props['onUiSelect'];
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const common = commonDepartment(hospitals.map(h => h.department));
+  const visible = showAll ? hospitals : hospitals.slice(0, HOSPITAL_PREVIEW_COUNT);
+  const hidden = hospitals.length - visible.length;
+  return (
+    <div className={`${styles.card} ${sizeClass}`}>
+      <p className={styles.cardTitle}>
+        {hospitals.length === 0 ? '병원 검색 결과' : `${common ? `${common} ` : ''}병원 ${hospitals.length}곳`}
+      </p>
+      {hospitals.length === 0 ? (
+        <p className={styles.empty}>병원을 찾지 못했습니다.</p>
+      ) : (
+        <>
+          <ul className={styles.hospitalList}>
+            {visible.map((h, i) => {
+              const name = h.name?.trim();
+              const count = splitDepartments(h.department).length;
+              const tag = common ?? (count > 0 ? `진료과 ${count}개` : null);
+              const place = shortAddress(h.address);
+              return (
+                <li key={h.id ?? i} className={styles.hospitalItem}>
+                  <div className={styles.hospitalInfo}>
+                    <strong>{h.name}</strong>
+                    {(tag || place) && (
+                      <span className={styles.hospitalMeta}>
+                        {tag && <span className={styles.deptChip}>{tag}</span>}
+                        {place && <span className={styles.address}>{place}</span>}
+                      </span>
+                    )}
+                  </div>
+                  {/* 병원 이름이 없으면 고를 값이 없다 - 빈 값으로 보내지 않게 버튼을 두지 않는다(점검 🟡) */}
+                  {name && (
+                    <button
+                      type="button"
+                      className={styles.reserveBtn}
+                      aria-label={`${name} 예약하기`}
+                      onClick={() => onUiSelect('hospital_confirm', name, `${name} 예약하기`)}
+                    >
+                      예약
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {hidden > 0 && (
+            <button type="button" className={styles.moreBtn} onClick={() => setShowAll(true)}>
+              병원 더 보기 ({hidden}곳)
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
