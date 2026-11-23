@@ -335,6 +335,14 @@ export function WardCompanionContent() {
     else if (lineCount > 1 || answerNotice) bottomRef.current?.scrollIntoView?.({ block: 'end', behavior: 'smooth' });
   }, [lineCount, ended, answerNotice, voice.state, pending]);
 
+  // 이 기기에서 목소리를 쓸 수 없어 말하기 버튼이 사라지면 초점을 [홈으로]로 옮긴다 - 누른 버튼이 사라지면 초점이 머리말로
+  // 튀어 화면 읽기 사용자가 길을 잃던 것(2026-11-23 FE #335 점검 V-4)
+  const voiceHomeRef = useRef<HTMLAnchorElement>(null);
+  const voiceUnsupported = Boolean(talk) && !notice && companionVoiceNotice(voice.notice).block === 'unsupported';
+  useEffect(() => {
+    if (voiceUnsupported) voiceHomeRef.current?.focus();
+  }, [voiceUnsupported]);
+
   const startTalk = (session: IWardCompanionSession, test: boolean) => {
     const question = { ...nextLine('companion', session.question), audio: voiceAudio(session.sessionId, session.audio) };
     setTalk({
@@ -425,6 +433,8 @@ export function WardCompanionContent() {
     // 녹음 중에는 안내 줄을 두지 않는다 - 버튼의 "듣고 있어요"로 충분하다(2026-11-23 사용자 요청으로 문구 삭제)
     // 마이크를 쓸 수 없으면 말벗 문구로 바꾸고 [홈으로]를 둔다 - 글 칸이 없어 막다른 화면이 되던 것(FE 디자인 점검 D-1)
     const voiceNotice = companionVoiceNotice(voice.notice);
+    // 말벗 오류(notice)가 있으면 그 안내를 보이고 [홈으로]는 두지 않는다. 지금은 두 안내가 함께 서는 일이 없다 -
+    // 말하기를 누르면 둘 다 지우고, 마이크 오류는 녹음을 시작할 때만 난다(2026-11-23 #335 점검 V-3, 변이 M4가 살아남는 이유)
     const voiceBlock = notice ? null : voiceNotice.block;
     const message = recording ? null : (notice ?? voiceNotice.message);
 
@@ -525,7 +535,7 @@ export function WardCompanionContent() {
             <section className={cx('answer')} aria-label="대답하기">
               {message && <p className={cx('notice')} role="alert">{message}</p>}
               {voiceBlock && (
-                <Link className={cx('primaryButton', 'secondary', 'voiceHome')} href="/ward">홈으로</Link>
+                <Link ref={voiceHomeRef} className={cx('primaryButton', 'secondary', 'voiceHome')} href="/ward">홈으로</Link>
               )}
               {/* 이 기기에서 목소리를 쓸 수 없으면(미지원) 다시 눌러도 소용없어 말하기 버튼을 숨긴다(2026-11-23 사용자 결정) */}
               {voiceBlock !== 'unsupported' && (

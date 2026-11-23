@@ -1302,3 +1302,57 @@ describe('마이크를 쓸 수 없을 때 (Chrome, FE 디자인 점검 D-1·D-3)
     expect(api.replyAudio).not.toHaveBeenCalled();
   });
 });
+describe('마이크 오류 종류·초점·큰 글자 (Chrome, FE #335 점검 V-1·V-4·V-5)', () => {
+  it.each([
+    ['NotFoundError', '마이크를 찾지 못했어요.'],
+    ['NotReadableError', '다른 앱이 마이크를 쓰고 있어요.'],
+  ])('%s면 말벗 짧은 문구와 [홈으로]가 보이고 말하기 버튼은 남는다(권한 안내가 아니다)', async (name, text) => {
+    getUserMedia.mockRejectedValue(new DOMException('x', name));
+    await openTalk();
+    await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent(text);
+    expect(page.getByText('기기 설정에서', { exact: false }).elements()).toHaveLength(0);
+    await expect.element(page.getByRole('link', { name: '홈으로' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '말로 대답하기' })).toBeVisible();
+    expect(page.getByText('글로', { exact: false }).elements()).toHaveLength(0);
+  });
+
+  it('권한 거부 문구는 "기기 설정에서"', async () => {
+    getUserMedia.mockRejectedValue(new DOMException('denied', 'NotAllowedError'));
+    await openTalk();
+    await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
+    await expect.element(page.getByRole('alert')).toMatchTextContent('기기 설정에서 마이크를 켜 주세요.');
+  });
+
+  it('미지원으로 말하기 버튼이 사라지면 초점이 [홈으로]로 간다', async () => {
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {} });
+    await openTalk();
+    await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
+
+    const home = page.getByRole('link', { name: '홈으로' });
+    await expect.element(home).toBeVisible();
+    await vi.waitFor(() => expect(document.activeElement).toBe(home.element()));
+  });
+
+  it('큰 글자(1.47배) 폰(390×844): 권한 안내가 뜨면 [홈으로]·말하기 버튼이 화면 안으로 스크롤된다', async () => {
+    await page.viewport(390, 844);
+    document.documentElement.style.setProperty('--ward-font-scale', '1.47');
+    try {
+      getUserMedia.mockRejectedValue(new DOMException('denied', 'NotAllowedError'));
+      await openTalk();
+      await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
+      await expect.element(page.getByRole('alert')).toBeVisible();
+
+      const mic = page.getByRole('button', { name: '말로 대답하기' }).element() as HTMLElement;
+      const home = page.getByRole('link', { name: '홈으로' }).element() as HTMLElement;
+      await expect.poll(() => mic.getBoundingClientRect().bottom <= window.innerHeight + 1, { timeout: 5000 }).toBe(true);
+      expect(home.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+      // [홈으로]는 링크(a)라 브라우저 기본 content-box - 전역 CSS 없이도 화면 폭을 넘지 않아야 한다
+      expect(home.getBoundingClientRect().right).toBeLessThanOrEqual(391);
+      expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
+    } finally {
+      document.documentElement.style.removeProperty('--ward-font-scale');
+    }
+  });
+});

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { MAX_RECORDING_MS, RecordingLimiter } from '@/lib/audio/recordingLimiter';
 import { buildWavBlob, rms } from '@/lib/audio/wavEncoder';
-import { STT_MESSAGES, getSttErrorMessage } from '@/service/api/chatSttPolicy';
+import { STT_MESSAGES, getSttErrorMessage, micOpenErrorMessage } from '@/service/api/chatSttPolicy';
 import { transcribeChatAudio } from '@/service/api/chatStt';
 
 export type VoiceInputState = 'idle' | 'recording' | 'uploading';
@@ -129,10 +129,11 @@ export function useVoiceInput<T = string>(onText: (result: T) => void, options?:
       stream = await navigator.mediaDevices.getUserMedia({
         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
       });
-    } catch {
-      // 거부(NotAllowedError)·장치 없음(NotFoundError)·사용 중 - 서버는 부르지 않는다
+    } catch (error) {
+      // 서버는 부르지 않는다. 오류 이름으로 안내를 나눈다(2026-11-23 FE #335 점검 V-1):
+      // 장치 없음(NotFoundError·OverconstrainedError) / 다른 앱이 사용 중·장치 오류(NotReadableError·AbortError) / 그 밖(거부 등) = 권한
       busyRef.current = false;
-      if (mountedRef.current) setNotice(STT_MESSAGES.permission);
+      if (mountedRef.current) setNotice(micOpenErrorMessage(error));
       return;
     }
     if (!mountedRef.current) {

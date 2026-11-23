@@ -116,6 +116,22 @@ describe('챗봇 마이크 음성 입력', () => {
     await expect.element(page.getByRole('button', { name: '말로 입력하기' })).toBeInTheDocument();
   });
 
+  it.each([
+    ['NotFoundError', '마이크를 찾지 못했어요. 글로 입력해 주세요.'],
+    ['NotReadableError', '다른 앱이 마이크를 쓰고 있어요. 글로 입력해 주세요.'],
+  ])('피보호자: 마이크 %s면 그 안내를 보이고(권한 안내 아님) [글자로 쓰기]로 입력창을 열 수 있다 (FE #335 점검 V-1)', async (name, text) => {
+    getUserMedia.mockRejectedValue(new DOMException('x', name));
+    renderChat(<ChatbotContent variant="ward" />);
+
+    await userEvent.click(page.getByRole('button', { name: MIC }));
+
+    await expect.element(page.getByText(text)).toBeInTheDocument();
+    expect(page.getByText('마이크 권한을 허용해 주세요.').elements()).toHaveLength(0);
+    expect(api.transcribe).not.toHaveBeenCalled();
+    await userEvent.click(page.getByRole('button', { name: '글자로 쓰기' }));
+    await expect.element(page.getByRole('textbox', { name: '궁금한 점 입력' })).toBeVisible();
+  });
+
   it('피보호자: 권한을 거부하면 안내하고 서버를 부르지 않으며, 그때만 [글자로 쓰기]로 입력창을 열 수 있다', async () => {
     getUserMedia.mockRejectedValue(new DOMException('denied', 'NotAllowedError'));
     renderChat(<ChatbotContent variant="ward" />);

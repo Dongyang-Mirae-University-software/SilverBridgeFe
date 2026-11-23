@@ -5,6 +5,9 @@ import { ChatRoleUnknownError } from './chatPolicy';
 // 음성 입력(POST .../chat/stt) 안내. 문구는 서버 ErrorCode와 맞춘다
 export const STT_MESSAGES = {
   permission: '마이크 권한을 허용해 주세요.',
+  // 마이크를 여는 오류를 이름으로 나눈다(2026-11-23 FE #335 점검 V-1) - 장치가 없거나 다른 앱이 쓰는 중이면 권한을 켜도 풀리지 않는다
+  micNotFound: '마이크를 찾지 못했어요. 글로 입력해 주세요.',
+  micInUse: '다른 앱이 마이크를 쓰고 있어요. 글로 입력해 주세요.',
   // 마이크 기능이 없는 브라우저·보안 연결(https)이 아닌 접속 - 권한을 줘도 쓸 수 없다
   unsupported: '이 브라우저에서는 음성 입력을 쓸 수 없어요. 글로 입력해 주세요.',
   empty: '잘 못 들었어요. 다시 말씀해 주세요.',
@@ -15,6 +18,14 @@ export const STT_MESSAGES = {
   disabled: '지금은 음성 입력을 쓸 수 없어요. 글로 입력해 주세요.',
   generic: '음성을 보내지 못했어요. 잠시 후 다시 눌러 주세요.',
 } as const;
+
+// 마이크 열기(getUserMedia) 실패 안내 - 오류 이름으로만 나눈다(문구·메시지는 브라우저마다 달라 보지 않는다)
+export function micOpenErrorMessage(error: unknown): string {
+  const name = typeof error === 'object' && error !== null && 'name' in error ? String((error as { name: unknown }).name) : '';
+  if (name === 'NotFoundError' || name === 'OverconstrainedError') return STT_MESSAGES.micNotFound;
+  if (name === 'NotReadableError' || name === 'AbortError') return STT_MESSAGES.micInUse;
+  return STT_MESSAGES.permission;
+}
 
 export function getSttErrorMessage(error: unknown): string {
   if (error instanceof ChatRoleUnknownError) return '로그인 정보를 확인하고 있어요. 잠시 후 다시 시도해 주세요.';
