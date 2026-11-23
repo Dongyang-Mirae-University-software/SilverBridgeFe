@@ -1235,3 +1235,70 @@ describe('테스트 시작 화면 - 오늘 안내 띠와 함께 (Chrome)', () =>
     }
   });
 });
+
+describe('마이크를 쓸 수 없을 때 (Chrome, FE 디자인 점검 D-1·D-3)', () => {
+  it('마이크 권한을 거부하면 말벗 문구와 [홈으로]가 보이고, 권한을 켠 뒤 다시 누를 수 있게 말하기 버튼은 남는다', async () => {
+    getUserMedia.mockRejectedValue(new DOMException('denied', 'NotAllowedError'));
+    await openTalk();
+    await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
+
+    await expect.element(page.getByRole('alert')).toMatchTextContent('마이크를 쓸 수 있게 허용해 주셔야 말벗과 이야기할 수 있어요.');
+    await expect.element(page.getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/ward');
+    await expect.element(page.getByRole('button', { name: '말로 대답하기' })).toBeVisible();
+    expect(page.getByText('글로 입력', { exact: false }).elements()).toHaveLength(0);
+    expect(api.replyAudio).not.toHaveBeenCalled();
+  });
+
+  it('이 기기에서 음성을 쓸 수 없으면(미지원) 말벗 문구와 [홈으로]만 보이고 말하기 버튼은 숨는다', async () => {
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {} });
+    await openTalk();
+    await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
+
+    await expect.element(page.getByRole('alert')).toMatchTextContent('이 기기에서는 말벗과 목소리로 이야기할 수 없어요.');
+    await expect.element(page.getByRole('link', { name: '홈으로' })).toBeVisible();
+    expect(page.getByRole('button', { name: '말로 대답하기' }).elements()).toHaveLength(0);
+    expect(page.getByText('글로 입력', { exact: false }).elements()).toHaveLength(0);
+  });
+
+  it('보내기 실패 안내에는 [홈으로]를 두지 않는다(다시 말하면 된다)', async () => {
+    mediaDevices({ camera: 'deny' });
+    api.replyAudio.mockRejectedValue(apiError(503, 'COMPANION_STT_UNAVAILABLE'));
+    await openTalk();
+    await recordOnce();
+
+    await expect.element(page.getByRole('alert')).toMatchTextContent('지금은 말을 알아듣기 어려워요.');
+    expect(page.getByRole('link', { name: '홈으로' }).elements()).toHaveLength(0);
+  });
+
+  it('태블릿(1280×800): 말하기 버튼이 화면 안에 있고 가로로 넘치지 않는다', async () => {
+    await page.viewport(1280, 800);
+    mediaDevices({ camera: 'deny' });
+    await openTalk();
+
+    const mic = page.getByRole('button', { name: '말로 대답하기' }).element() as HTMLElement;
+    const box = mic.getBoundingClientRect();
+    expect(box.bottom).toBeLessThanOrEqual(800);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(1280);
+  });
+
+  it('녹음 중에 화면을 떠나면 마이크·카메라가 꺼진다', async () => {
+    const tracks: MediaStreamTrack[] = [];
+    getUserMedia.mockImplementation(async (constraints: MediaStreamConstraints) => {
+      const stream = constraints.video ? fakeCameraStream() : fakeMicStream();
+      tracks.push(...stream.getTracks());
+      return stream;
+    });
+    const screen = await renderCompanion();
+    await page.getByRole('button', { name: '이야기 시작하기' }).click();
+    await expect.element(page.getByText('점심은 무엇을 드셨어요?')).toBeVisible();
+    await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
+    await expect.element(page.getByRole('button', { name: /다 했어요/ })).toBeInTheDocument();
+    await vi.waitFor(() => expect(tracks.length).toBeGreaterThanOrEqual(2));
+
+    screen.unmount();
+
+    await vi.waitFor(() => expect(tracks.every(track => track.readyState === 'ended')).toBe(true));
+    expect(api.replyAudio).not.toHaveBeenCalled();
+  });
+});

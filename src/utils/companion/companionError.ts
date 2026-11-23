@@ -28,8 +28,9 @@ const BY_CODE: Record<string, { message: string; action: CompanionErrorAction }>
   COMPANION_SESSION_LOST: { message: '대화가 끊겼어요. 다음 시간에 다시 이야기해요.', action: 'exit' },
   COMPANION_SESSION_NOT_FOUND: { message: '대화를 찾을 수 없어요.', action: 'exit' },
   COMPANION_SESSION_NOT_OWNED: { message: '본인의 안부 대화만 이어갈 수 있어요.', action: 'exit' },
-  COMPANION_ANSWER_EMPTY: { message: '대답을 적어 주세요.', action: 'stay' },
-  COMPANION_ANSWER_TOO_LONG: { message: '대답은 500자까지 보낼 수 있어요.', action: 'stay' },
+  // 글 대답 전용 코드(BE replyText)라 지금 화면에서는 오지 않는다 - 오더라도 목소리 기준으로 안내한다(2026-11-23 FE 디자인 점검 D-5)
+  COMPANION_ANSWER_EMPTY: { message: '말씀을 알아듣지 못했어요. 다시 말씀해 주세요.', action: 'stay' },
+  COMPANION_ANSWER_TOO_LONG: { message: '말씀이 너무 길어요. 조금 짧게 다시 말씀해 주세요.', action: 'stay' },
   COMPANION_AUDIO_INVALID: { message: '목소리를 알아듣지 못했어요. 다시 말씀해 주세요.', action: 'stay' },
   COMPANION_AUDIO_TOO_LARGE: { message: '말씀이 너무 길어요. 조금 짧게 다시 말씀해 주세요.', action: 'stay' },
   // 사진을 받지 못하면 화면이 사진을 끄고 목소리만 다시 보내게 한다(isCompanionFrameError)
