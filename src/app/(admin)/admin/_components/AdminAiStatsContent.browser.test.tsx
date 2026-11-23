@@ -93,6 +93,9 @@ describe('AI 안부 말벗 · 정서 분석 탭 (Chrome)', () => {
     expect(statValues()).toEqual(['오늘 안부 질문170번', '어르신 응답률82%', '오늘 대화 없는 어르신2명', '기분 변화 알림 보냄3건']);
     await expect.element(page.getByRole('img', { name: '기쁨 14명, 평온 12명, 걱정 5명, 우울 2명' })).toBeVisible();
     await expect.element(page.getByText('확인할 수 없음 1명')).toBeVisible();
+    // 하루 기분 규칙 안내는 BE와 같은 규칙(2026-11-23 BE #521 - 그날 턴 다수결)으로 적는다
+    await expect.element(page.getByText(/하루 기분은 그날 모든 대화에서 가장 많이 나온 기분이며/)).toBeVisible();
+    expect(document.body.textContent).not.toContain('마지막으로 판정된 대화의 기분');
     await expect.element(page.getByText('이순자')).toBeVisible();
     await expect.element(page.getByText('4일째')).toBeVisible();
     await expect.element(page.getByText('탈퇴한 회원')).toBeVisible();

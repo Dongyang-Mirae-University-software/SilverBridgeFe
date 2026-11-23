@@ -122,7 +122,7 @@ function CompanionStats({ data, isLoading, isError, onRetry }: { data: AdminComp
       <DataCard title="걱정·우울이 이어지는 어르신" note="3일 이상 이어짐">{data.continuingWards.length === 0 ? <div className={cx('listEmpty')}>이어지는 어르신이 없습니다.</div> : <div className={cx('dataRows', 'wardRows')}>{data.continuingWards.map(ward => <div key={ward.wardId}><span>{ward.name ?? '탈퇴한 회원'}</span><strong className={cx(ward.mood === 'WORRY' ? 'sun' : 'mute')}>{CONTINUING_MOOD_LABEL[ward.mood]}</strong><small>{ward.days}일째</small></div>)}</div>}</DataCard>
       <DataCard title="오늘 대화가 없는 어르신" note="안부 질문에 답 없음">{data.noDialogueWards.length === 0 ? <div className={cx('listEmpty')}>대화가 없는 어르신이 없습니다.</div> : <div className={cx('dataRows')}>{data.noDialogueWards.map(ward => <div key={ward.wardId}><span>{ward.name ?? '탈퇴한 회원'}</span><small>{formatLastDialogue(ward.lastDialogueAt)}</small></div>)}</div>}</DataCard>
     </div>
-    <section className={cx('chatNotice')}><p>하루 기분은 그날 마지막으로 판정된 대화의 기분입니다. 걱정·우울이 섞여도 이어진 것으로 세며, 대화가 없는 날은 이어짐이 끊깁니다. 시험 계정 대화도 포함됩니다.</p><p>기준 시각 {formatKstDateTime(data.generatedAt)}</p></section>
+    <section className={cx('chatNotice')}><p>하루 기분은 그날 모든 대화에서 가장 많이 나온 기분이며, 수가 같으면 걱정·우울 쪽으로 봅니다. 걱정·우울이 섞여도 이어진 것으로 세며, 대화가 없는 날은 이어짐이 끊깁니다. 시험 계정 대화도 포함됩니다.</p><p>기준 시각 {formatKstDateTime(data.generatedAt)}</p></section>
   </>;
 }
 function DataCard({ title, note, children }: { title: string; note: string; children: ReactNode }) { return <section className={cx('dataCard')}><header><b>{title}</b><small>{note}</small></header>{children}</section>; }
