@@ -571,7 +571,7 @@ describe('예약 화면 점검 반영(2026-11-04)', () => {
     await renderChat(<ChatbotContent />);
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
     await expect.element(page.getByText('병원을 찾았어요.')).toBeVisible();
-    expect(page.getByRole('button', { name: '예약하기', exact: true }).elements()).toHaveLength(1);
+    expect(page.getByRole('button', { name: /예약하기$/ }).elements()).toHaveLength(1);
 
     await userEvent.click(page.getByRole('button', { name: '혈압약을 같이 먹어도 되나요?' }));
     await expect.element(page.getByText('예약 목록이에요.')).toBeVisible();
@@ -625,7 +625,9 @@ describe('새 답 스크롤 - 실제 카드·예약 선택 (#299 점검 L-1·L-3
     await typeAndSend('무릎이 계속 아파요');
     await expect.element(page.getByText('1번째 설명입니다', { exact: false })).toBeVisible();
     await typeAndSend('근처 정형외과 찾아줘');
-    await vi.waitFor(() => expect(page.getByRole('button', { name: '예약하기' }).elements()).toHaveLength(8));
+    // 병원 8곳 중 처음 3곳만 보이고 나머지는 [병원 더 보기](2026-11-23 A안)
+    await vi.waitFor(() => expect(page.getByRole('button', { name: /예약하기$/ }).elements()).toHaveLength(3));
+    await expect.element(page.getByRole('button', { name: '병원 더 보기 (5곳)' })).toBeVisible();
 
     expect(lastQuestion().textContent).toContain('근처 정형외과 찾아줘');
     expectQuestionAtTop(await settledMessageList(), lastQuestion());
@@ -644,7 +646,9 @@ describe('새 답 스크롤 - 실제 카드·예약 선택 (#299 점검 L-1·L-3
     await expect.element(page.getByText('어느 지역에서 찾을까요?')).toBeVisible();
 
     await userEvent.click(page.getByRole('button', { name: '서울' }));
-    await vi.waitFor(() => expect(page.getByRole('button', { name: '예약하기' }).elements()).toHaveLength(8));
+    // 병원 8곳 중 처음 3곳만 보이고 나머지는 [병원 더 보기](2026-11-23 A안)
+    await vi.waitFor(() => expect(page.getByRole('button', { name: /예약하기$/ }).elements()).toHaveLength(3));
+    await expect.element(page.getByRole('button', { name: '병원 더 보기 (5곳)' })).toBeVisible();
 
     expect(lastQuestion().textContent).toContain('서울');
     expectQuestionAtTop(await settledMessageList(), lastQuestion());
