@@ -2,9 +2,9 @@ import { isAxiosError } from 'axios';
 
 // 안부 말벗 오류 안내 - 문구가 아니라 서버 code로 나눈다
 // stay: 대화를 그대로 두고 다시 보내게 한다
-// text: 음성을 못 알아들으니 글로 대답하게 바꾼다
 // exit: 이 대화는 더 이어갈 수 없다 - 오늘 현황으로 돌아가 다시 받는다
-export type CompanionErrorAction = 'stay' | 'text' | 'exit';
+// (글로 대답하기는 2026-11-23 사용자 결정으로 없앴다 - 말벗은 목소리로만 대답한다)
+export type CompanionErrorAction = 'stay' | 'exit';
 
 export const COMPANION_MESSAGES = {
   unavailable: '지금은 말벗과 이야기할 수 없어요. 잠시 후 다시 해 주세요.',
@@ -30,14 +30,14 @@ const BY_CODE: Record<string, { message: string; action: CompanionErrorAction }>
   COMPANION_SESSION_NOT_OWNED: { message: '본인의 안부 대화만 이어갈 수 있어요.', action: 'exit' },
   COMPANION_ANSWER_EMPTY: { message: '대답을 적어 주세요.', action: 'stay' },
   COMPANION_ANSWER_TOO_LONG: { message: '대답은 500자까지 보낼 수 있어요.', action: 'stay' },
-  COMPANION_AUDIO_INVALID: { message: '목소리를 알아듣지 못했어요. 다시 말씀하시거나 글로 대답해 주세요.', action: 'stay' },
+  COMPANION_AUDIO_INVALID: { message: '목소리를 알아듣지 못했어요. 다시 말씀해 주세요.', action: 'stay' },
   COMPANION_AUDIO_TOO_LARGE: { message: '말씀이 너무 길어요. 조금 짧게 다시 말씀해 주세요.', action: 'stay' },
   // 사진을 받지 못하면 화면이 사진을 끄고 목소리만 다시 보내게 한다(isCompanionFrameError)
   COMPANION_FRAME_INVALID: { message: COMPANION_MESSAGES.frame, action: 'stay' },
   COMPANION_FRAME_TOO_LARGE: { message: COMPANION_MESSAGES.frame, action: 'stay' },
   COMPANION_TEST_NOT_ALLOWED: { message: '테스트 계정만 쓸 수 있습니다.', action: 'stay' },
   COMPANION_UPLOAD_TOO_LARGE: { message: '말씀이 너무 길어요. 조금 짧게 다시 말씀해 주세요.', action: 'stay' },
-  COMPANION_STT_UNAVAILABLE: { message: '지금은 목소리를 알아듣지 못해요. 글로 대답해 주세요.', action: 'text' },
+  COMPANION_STT_UNAVAILABLE: { message: '지금은 말을 알아듣기 어려워요. 잠시 후 다시 말씀해 주세요.', action: 'stay' },
   COMPANION_DISABLED: { message: COMPANION_MESSAGES.unavailable, action: 'stay' },
   COMPANION_UNAVAILABLE: { message: COMPANION_MESSAGES.unavailable, action: 'stay' },
   COMPANION_BUSY: { message: COMPANION_MESSAGES.unavailable, action: 'stay' },

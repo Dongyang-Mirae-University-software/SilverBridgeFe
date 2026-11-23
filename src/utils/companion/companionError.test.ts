@@ -23,9 +23,20 @@ describe('안부 말벗 오류 안내', () => {
     [403, 'COMPANION_SESSION_NOT_OWNED', 'exit'],
     [409, 'COMPANION_TURN_IN_PROGRESS', 'stay'],
     [400, 'COMPANION_ANSWER_TOO_LONG', 'stay'],
-    [503, 'COMPANION_STT_UNAVAILABLE', 'text'],
+    [503, 'COMPANION_STT_UNAVAILABLE', 'stay'],
   ])('%i %s → %s', (status, code, action) => {
     expect(getCompanionError(axiosError(status, code)).action).toBe(action);
+  });
+
+  it('음성 인식이 안 되면(503 COMPANION_STT_UNAVAILABLE) 글로 대답하라고 하지 않고 다시 말씀해 달라고 안내한다', () => {
+    expect(getCompanionError(axiosError(503, 'COMPANION_STT_UNAVAILABLE'))).toEqual({
+      message: '지금은 말을 알아듣기 어려워요. 잠시 후 다시 말씀해 주세요.',
+      action: 'stay',
+    });
+  });
+
+  it('목소리 파일이 잘못되면(400 COMPANION_AUDIO_INVALID) 다시 말씀해 달라고 안내한다', () => {
+    expect(getCompanionError(axiosError(400, 'COMPANION_AUDIO_INVALID')).message).toBe('목소리를 알아듣지 못했어요. 다시 말씀해 주세요.');
   });
 
   it('말벗이 꺼졌거나 바쁘면(503) 잠시 후 다시 하라고 안내한다 - code가 없어도 같다', () => {

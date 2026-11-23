@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 import Link from 'next/link';
@@ -14,16 +14,13 @@ import { canSpeak } from '@/lib/audio/speech';
 import { useFaceFrames } from '@/lib/camera/useFaceFrames';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import {
-  finishWardCompanionSession,
   openWardCompanionSession,
   openWardCompanionTestSession,
   replyWardCompanionAudio,
-  replyWardCompanionText,
   sendWardCompanionTestPrompt,
   updateWardCompanionTranscriptConsent,
 } from '@/service/api/ward/companion';
 import type {
-  IWardCompanionFinish,
   IWardCompanionReply,
   IWardCompanionSession,
   IWardCompanionToday,
@@ -34,7 +31,6 @@ import {
   wardCompanionTodayQueryKey,
   wardCompanionTodayQueryOptions,
 } from '@/service/query/ward';
-import { type AnalysisSummary, summarizeResultAnalysis, summarizeTurnAnalysis } from '@/utils/companion/companionAnalysis';
 import { COMPANION_MESSAGES, getCompanionError, isCompanionFrameError } from '@/utils/companion/companionError';
 import { openCompanionSlot } from '@/utils/companion/companionOpen';
 import { markConsentAsked, readConsentAsked } from '@/utils/companion/consentAsked';
@@ -44,8 +40,6 @@ import styles from './WardCompanionContent.module.css';
 import { useCompanionVoice } from './useCompanionVoice';
 
 const cx = classNames.bind(styles);
-
-const MAX_ANSWER_LENGTH = 500;
 
 // 테스트 계정이 고를 수 있는 시간대 - 서버 시간대와 같다
 const TEST_SLOTS = ['09:00', '12:00', '15:00', '18:00', '21:00'];
@@ -61,7 +55,7 @@ export function privacySharedText(retentionDays: number) {
   return `대답한 말은 가족이 볼 수 있게 ${retentionDays}일 동안 보관해요. 목소리와 얼굴 사진은 AI 서버로 보내고 저장하지 않아요.`;
 }
 
-// 태블릿 이상은 왼쪽 대화 · 오른쪽 카메라·판정 두 칸
+// 태블릿 이상은 글자·얼굴을 더 크게 (대화는 한 칸 - 2026-11-23 오른쪽 카메라·판정 칸을 없앴다)
 const WIDE_QUERY = '(min-width: 1024px)';
 
 
@@ -85,9 +79,6 @@ function fitUploadBudget(audio: Blob, frames: Blob[]) {
   return kept;
 }
 
-// [테스트] 판정 결과 한 건 - 칸 요약 + 자세히 문구. 화면 메모리에만
-type TestResult = AnalysisSummary & { id: number };
-
 // audio: 말벗 목소리(있으면 받아서 틀고, 없거나 못 받으면 기기 음성으로 읽는다)
 type Line = { id: number; who: 'companion' | 'me'; text: string; heard?: boolean; audio?: { sessionId: number; index: number } | null };
 
@@ -107,7 +98,6 @@ type Talk = {
   lines: Line[];
   ended: boolean;
   test: boolean;
-  results: TestResult[];
 };
 
 type Pending = 'open' | 'reply' | 'finish' | 'prompt' | null;
@@ -117,8 +107,6 @@ export function WardCompanionContent() {
   const [talk, setTalk] = useState<Talk | null>(null);
   const [pending, setPending] = useState<Pending>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [mode, setMode] = useState<'voice' | 'text'>('voice');
-  const [draft, setDraft] = useState('');
   const lineId = useRef(0);
   const talkRef = useRef<Talk | null>(null);
   useEffect(() => {
@@ -228,8 +216,6 @@ export function WardCompanionContent() {
 
   const nextLine = (who: Line['who'], text: string, heard?: boolean): Line => ({ id: ++lineId.current, who, text, heard });
 
-  const nextResult = (summary: AnalysisSummary): TestResult => ({ ...summary, id: ++lineId.current });
-
   const refreshToday = useCallback(() => void queryClient.invalidateQueries({ queryKey: wardCompanionTodayQueryKey }), [queryClient]);
 
   // 이어갈 수 없는 대화는 닫고 오늘 현황을 다시 받는다
@@ -237,7 +223,6 @@ export function WardCompanionContent() {
     companionVoice.reset();
     camera.cancel();
     setTalk(null);
-    setDraft('');
     setNotice(message);
     refreshToday();
   }, [refreshToday, camera, companionVoice]);
@@ -248,16 +233,8 @@ export function WardCompanionContent() {
       leaveTalk(message);
       return;
     }
-    if (action === 'text') setMode('text');
     setNotice(message);
   }, [leaveTalk]);
-
-  // [테스트 계정만] 마친 대화의 판정을 결과 칸에 붙인다
-  const addFinishResult = useCallback((result: IWardCompanionFinish | null | undefined) => {
-    const analysis = result?.analysis;
-    if (!analysis) return;
-    setTalk(current => (current ? { ...current, results: [...current.results, nextResult(summarizeResultAnalysis(analysis))] } : current));
-  }, []);
 
   const applyReply = useCallback((result: IWardCompanionReply | null, answer: string, heard: boolean) => {
     if (!result) return;
@@ -268,19 +245,12 @@ export function WardCompanionContent() {
       if (!current) return current;
       const lines = [...current.lines, mine];
       if (reply) lines.push(reply);
-      const results = result.analysis ? [...current.results, nextResult(summarizeTurnAnalysis(result.turnNo, result.analysis))] : current.results;
-      return { ...current, turns: result.turnNo, lines, ended: result.ended, results };
+      return { ...current, turns: result.turnNo, lines, ended: result.ended };
     });
     if (reply) companionVoice.play(reply);
-    if (result.ended) {
-      refreshToday();
-      // 서버가 대화를 닫았으면 마치기는 부르지 않아도 되지만, 테스트 계정은 저장된 결과를 다시 받아 대화 판정을 보여 준다
-      const current = talkRef.current;
-      if (result.analysis && current) {
-        void finishWardCompanionSession(current.sessionId).then(addFinishResult).catch(() => undefined);
-      }
-    }
-  }, [refreshToday, addFinishResult, companionVoice]);
+    // 서버가 대화를 닫았으면 마치기는 부르지 않는다
+    if (result.ended) refreshToday();
+  }, [refreshToday, companionVoice]);
 
   const voiceOptions = useMemo(() => ({
     // 말이 3초 멈추면 저절로 끝내고 보낸다 - 어르신 AI 의료 챗봇과 같은 값(2026-11-23, 전에는 공용 기본 1.5초)
@@ -338,8 +308,6 @@ export function WardCompanionContent() {
 
   const startTalk = (session: IWardCompanionSession, test: boolean) => {
     const question = { ...nextLine('companion', session.question), audio: voiceAudio(session.sessionId, session.audio) };
-    setMode('voice');
-    setDraft('');
     setTalk({
       sessionId: session.sessionId,
       slot: session.slot,
@@ -350,7 +318,6 @@ export function WardCompanionContent() {
       lines: [question],
       ended: false,
       test,
-      results: [],
     });
     companionVoice.play(question);
   };
@@ -404,28 +371,6 @@ export function WardCompanionContent() {
     }
   };
 
-  const handleSendText = async () => {
-    const answer = draft.trim();
-    if (!talk || pending || voice.state !== 'idle') return;
-    if (!answer) {
-      setNotice('대답을 적어 주세요.');
-      return;
-    }
-    companionVoice.stop();
-    setPending('reply');
-    setNotice(null);
-    try {
-      const result = await replyWardCompanionText(talk.sessionId, answer);
-      setDraft('');
-      applyReply(result, answer, false);
-    } catch (error) {
-      // 적은 대답은 지우지 않는다 - 그대로 다시 보낼 수 있게
-      handleError(error);
-    } finally {
-      setPending(null);
-    }
-  };
-
   const handleVoice = () => {
     if (pending) return;
     companionVoice.stop();
@@ -434,24 +379,6 @@ export function WardCompanionContent() {
     voice.toggle();
   };
 
-  const handleFinish = async () => {
-    if (!talk || pending) return;
-    voice.cancel();
-    camera.cancel();
-    companionVoice.stop();
-    setPending('finish');
-    setNotice(null);
-    try {
-      const result = await finishWardCompanionSession(talk.sessionId);
-      setTalk(current => (current ? { ...current, ended: true } : current));
-      addFinishResult(result);
-      refreshToday();
-    } catch (error) {
-      handleError(error);
-    } finally {
-      setPending(null);
-    }
-  };
 
   const closeTalk = () => {
     companionVoice.reset();
@@ -467,17 +394,13 @@ export function WardCompanionContent() {
     const recording = voice.state === 'recording';
     // 녹음 중에는 안내 줄을 두지 않는다 - 버튼의 "듣고 있어요"로 충분하다(2026-11-23 사용자 요청으로 문구 삭제)
     const message = recording ? null : (notice ?? voice.notice);
-    const stopButton = !talk.ended && (
-      <button className={cx('stopButton')} type="button" disabled={busy} onClick={() => void handleFinish()}>
-        {pending === 'finish' ? '마치는 중…' : '대화 그만하기'}
-      </button>
-    );
 
+    // 2026-11-23 사용자 결정: 판정 결과 칸(테스트용)·글로 대답하기·대화 그만하기를 없애고, 얼굴은 말하기 버튼 바로 위 동그란 거울(E안)로.
+    // 대화는 서버가 정한 턴을 마치면 끝난다
     return (
-      <div className={cx('talkPage', { wide })}>
+      <div className={cx('talkPage')}>
         <div className={cx('talkMain')}>
           <header className={cx('talkHead')}>
-            {!wide && camera.stream && <CameraPreview stream={camera.stream} size="small" />}
             <div className={cx('talkHeadText')}>
               <span className={cx('talkSlot')}>{formatSlotTime(talk.slot)} 안부</span>
               {talk.test && <span className={cx('testBadge', 'small')}>테스트</span>}
@@ -550,8 +473,8 @@ export function WardCompanionContent() {
           ) : (
             <section className={cx('answer')} aria-label="대답하기">
               {message && <p className={cx('notice')} role="alert">{message}</p>}
-              {mode === 'voice' ? (
-                <button
+              <MirrorFace stream={camera.stream} listening={recording} />
+              <button
                   className={cx('micButton', { recording })}
                   type="button"
                   disabled={busy && !recording}
@@ -563,48 +486,11 @@ export function WardCompanionContent() {
                 >
                   {recording ? <span className={cx('listeningDot')} aria-hidden="true" /> : !thinking && <MicIcon />}
                   {recording ? '듣고 있어요' : thinking ? '보내는 중…' : '말로 대답하기'}
-                </button>
-              ) : (
-                <form className={cx('textForm')} onSubmit={event => { event.preventDefault(); void handleSendText(); }}>
-                  <label className={cx('srOnly')} htmlFor="companion-answer">대답 적기</label>
-                  <textarea
-                    id="companion-answer"
-                    value={draft}
-                    maxLength={MAX_ANSWER_LENGTH}
-                    rows={3}
-                    placeholder="여기에 대답을 적어 주세요"
-                    disabled={busy}
-                    onChange={event => setDraft(event.target.value)}
-                  />
-                  <button className={cx('primaryButton')} type="submit" disabled={busy}>
-                    {pending === 'reply' ? '보내는 중…' : '보내기'}
-                  </button>
-                </form>
-              )}
-              <div className={cx('answerBar')}>
-                <button
-                  className={cx('switchButton')}
-                  type="button"
-                  disabled={busy || recording}
-                  onClick={() => { setNotice(null); voice.clearNotice(); setMode(mode === 'voice' ? 'text' : 'voice'); }}
-                >
-                  {mode === 'voice' ? '글로 대답하기' : '말로 대답하기'}
-                </button>
-                {!wide && stopButton}
-              </div>
+              </button>
             </section>
           )}
-          {!wide && testMode && <TestResults results={talk.results} compact />}
           <div ref={bottomRef} />
         </div>
-
-        {wide && (
-          <aside className={cx('talkSide')} aria-label="카메라와 판정 결과">
-            <CameraPanel stream={camera.stream} />
-            {testMode && <TestResults results={talk.results} />}
-            {stopButton}
-          </aside>
-        )}
       </div>
     );
   }
@@ -768,12 +654,13 @@ function ProgressDots({ total, done }: { total: number; done: number }) {
   );
 }
 
-// 녹음하는 동안만 보이는 얼굴 미리보기 - 카메라가 켜져 있다는 것을 본인이 알 수 있게
-function CameraPreview({ stream, size }: { stream: MediaStream; size: 'small' | 'large' }) {
+// 말하기 버튼 바로 위 동그란 거울(2026-11-23 E안) - 녹음하는 동안 카메라가 켜지면 내 얼굴이 보이고,
+// 듣는 동안 테두리가 빨갛게 깜박여 지금 찍히고 듣고 있다는 것을 본인이 알 수 있다. 켜지기 전에는 카메라 그림만 둔다
+function MirrorFace({ stream, listening }: { stream: MediaStream | null; listening: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !stream) return;
     video.srcObject = stream;
     void video.play?.()?.catch?.(() => undefined);
     return () => {
@@ -781,151 +668,16 @@ function CameraPreview({ stream, size }: { stream: MediaStream; size: 'small' | 
     };
   }, [stream]);
   return (
-    <figure className={cx('cameraPreview', size)}>
-      <video ref={videoRef} muted playsInline aria-label="내 얼굴 미리보기" />
-      <figcaption>카메라 켜짐</figcaption>
+    <figure className={cx('mirror', { listening, live: Boolean(stream) })}>
+      {stream ? (
+        <video ref={videoRef} muted playsInline aria-label="내 얼굴 미리보기" />
+      ) : (
+        <span className={cx('mirrorIdle')} aria-hidden="true"><CameraIcon /></span>
+      )}
+      <figcaption className={cx('srOnly')}>{stream ? '카메라 켜짐' : '말하는 동안 여기에 얼굴이 보여요'}</figcaption>
     </figure>
   );
 }
-
-// [태블릿] 오른쪽 큰 카메라 칸 - 꺼져 있으면 언제 켜지는지만 알린다
-function CameraPanel({ stream }: { stream: MediaStream | null }) {
-  if (stream) return <CameraPreview stream={stream} size="large" />;
-  return (
-    <div className={cx('cameraPlaceholder')}>
-      <p>말로 대답하는 동안 여기에 얼굴이 보여요</p>
-    </div>
-  );
-}
-
-// [테스트] 턴마다·마치기 뒤 판정 결과 - 화면 메모리에만. 방금 턴은 칸으로(기분 글자 + 말·표정·위험),
-// 마침은 한 줄로("대화 마침 · 6턴 · 위험 없음 · 알림 안내 · 평온"), 지난 대답은 표(턴 | 말 | 표정 | 결과, 최근 것부터) - 기분은 한 번만.
-// 기존 한 줄 문구(확신·근거·신호)는 '자세히'에 남긴다 - 테스트하는 사람이 판정 근거를 확인할 수 있게.
-// 폰(compact)은 방금 결과 한 줄을 접기 줄로 보이고 눌러서 편다
-function EndSummaryLine({ result }: { result: TestResult }) {
-  return (
-    <>
-      대화 마침
-      {result.cells.map(cell => (
-        <Fragment key={cell.label}> · <span className={cx('moodText', cell.tone)}>{cell.value}</span></Fragment>
-      ))}
-      {' · '}<strong className={cx('moodText', result.tone)}>{result.mood}</strong>
-    </>
-  );
-}
-
-// 지난 대답 한 줄 - 턴 번호를 누르면 아래에 판정 근거(자세히)를 펼친다(마우스 올림 title은 터치 기기에서 볼 수 없다)
-function EarlierRow({ item }: { item: TestResult }) {
-  const [open, setOpen] = useState(false);
-  const [speech, face, risk] = item.cells;
-  const detailId = `companion-earlier-detail-${item.id}`;
-  return (
-    <>
-      <tr>
-        <th scope="row">
-          <button className={cx('earlierToggle')} type="button" aria-expanded={open} aria-controls={detailId} onClick={() => setOpen(value => !value)}>
-            {item.rowLabel}
-            <span className={cx('srOnly')}> 판정 근거 {open ? '접기' : '보기'}</span>
-          </button>
-        </th>
-        <td className={cx('moodText', speech?.tone)}>{speech?.value}</td>
-        <td className={cx('moodText', face?.tone)}>{face?.value}</td>
-        <td>
-          <strong className={cx('moodText', item.tone)}>{item.mood}</strong>
-          {risk?.value === '있음' && <span className={cx('moodText', 'danger')}> · 위험</span>}
-        </td>
-      </tr>
-      <tr id={detailId} className={cx('earlierDetail')} hidden={!open}>
-        <td colSpan={4}>{item.detail}</td>
-      </tr>
-    </>
-  );
-}
-
-function TestResults({ results, compact = false }: { results: TestResult[]; compact?: boolean }) {
-  const latest = results.at(-1);
-  const earlier = results.slice(0, -1).filter(item => item.kind === 'turn').reverse();
-  const detail = latest && (
-    <details className={cx('resultDetail')}>
-      <summary>자세히</summary>
-      <p>{latest.detail}</p>
-    </details>
-  );
-  const latestCard = latest && (latest.kind === 'end' ? (
-    <div className={cx('latestCard')}>
-      <p className={cx('endSummary')}><EndSummaryLine result={latest} /></p>
-      {detail}
-    </div>
-  ) : (
-    <div className={cx('latestCard')}>
-      <div className={cx('latestHead')}>
-        <span className={cx('latestLabel')}>방금 대답 · {latest.title}</span>
-        <strong className={cx('moodText', latest.tone)}>{latest.mood}</strong>
-      </div>
-      <dl className={cx('resultCells')}>
-        {latest.cells.map(cell => (
-          <div key={cell.label} className={cx('resultCell')}>
-            <dt>{cell.label}</dt>
-            <dd className={cx('moodText', cell.tone)}>{cell.value}</dd>
-          </div>
-        ))}
-      </dl>
-      {detail}
-    </div>
-  ));
-  const earlierTable = earlier.length > 0 && (
-    <div className={cx('earlierWrap')}>
-      <table className={cx('earlierResults')} aria-label="지난 대답 판정">
-        <thead>
-          <tr><th scope="col">턴</th><th scope="col">말</th><th scope="col">표정</th><th scope="col">결과</th></tr>
-        </thead>
-        <tbody>
-          {earlier.map(item => <EarlierRow key={item.id} item={item} />)}
-        </tbody>
-      </table>
-    </div>
-  );
-
-  if (compact) {
-    return (
-      // 제목은 접기 버튼(summary) 밖에 둔다 - summary 안의 제목은 버튼 이름에 묻혀 제목으로 읽히지 않는다(점검 L-4)
-      <section className={cx('testResults', 'compact')} aria-labelledby="companion-test-results-title">
-        <h2 id="companion-test-results-title" className={cx('srOnly')}>판정 결과</h2>
-        <details className={cx('resultsDetails')}>
-          <summary>
-            <span className={cx('compactLabel')}>
-              <span className={cx('testBadge', 'small')}>테스트</span>
-              {latest?.kind === 'end' ? `${latest.title} 판정` : '방금 대답 판정'}
-            </span>
-            <span className={cx('latestLine')} aria-live="polite">
-              {!latest ? '대답하면 판정 결과가 여기에 나와요.' : latest.kind === 'end' ? <EndSummaryLine result={latest} /> : (
-                <>
-                  {latest.line} · <strong className={cx('moodText', latest.tone)}>{latest.mood}</strong>
-                </>
-              )}
-            </span>
-          </summary>
-          <div className={cx('compactBody')}>
-            {latest?.kind === 'end' ? detail : latestCard}
-            {earlierTable}
-          </div>
-        </details>
-      </section>
-    );
-  }
-
-  return (
-    <section className={cx('testResults')} aria-labelledby="companion-test-results-title">
-      <div className={cx('resultsHead')}>
-        <h2 id="companion-test-results-title" className={cx('resultsTitle')}>판정 결과</h2>
-        <span className={cx('testBadge', 'small')}>테스트</span>
-      </div>
-      {latestCard ?? <p className={cx('resultsEmpty')}>대답하면 판정 결과가 여기에 나와요.</p>}
-      {earlierTable}
-    </section>
-  );
-}
-
 // 첫 대화 전 한 번 묻는 대화 내용 공유 동의 - 고지 항목은 서버 문구 그대로
 function ConsentCard({ notice, retentionDays, saving, error, onChoose }: {
   notice: string[];
@@ -972,6 +724,15 @@ function MicIcon() {
     <svg className={cx('micIcon')} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" />
       <path d="M6 11a6 6 0 0 0 12 0M12 17v4M8.5 21h7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg className={cx('cameraIcon')} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
 }
