@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Icon } from '@/components/Icon';
 import { MoodFace } from '@/components/MoodFace';
 import { useVoiceInput } from '@/components/chatbot/useVoiceInput';
+import { WARD_SILENCE_STOP_MS } from '@/lib/audio/recordingLimiter';
 import { canSpeak } from '@/lib/audio/speech';
 import { useFaceFrames } from '@/lib/camera/useFaceFrames';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -282,6 +283,8 @@ export function WardCompanionContent() {
   }, [refreshToday, addFinishResult, companionVoice]);
 
   const voiceOptions = useMemo(() => ({
+    // 말이 3초 멈추면 저절로 끝내고 보낸다 - 어르신 AI 의료 챗봇과 같은 값(2026-11-23, 전에는 공용 기본 1.5초)
+    silenceMs: WARD_SILENCE_STOP_MS,
     send: async (audio: Blob, signal: AbortSignal) => {
       const current = talkRef.current;
       // 녹음이 끝나는 순간 카메라를 끄고 찍은 사진을 받는다
@@ -462,8 +465,8 @@ export function WardCompanionContent() {
     const thinking = pending === 'reply' || voice.state === 'uploading';
     const busy = Boolean(pending) || voice.state === 'uploading';
     const recording = voice.state === 'recording';
-    // 녹음 중 안내는 상자 없이 한 줄로, 말하듯 - "말씀하세요. 다 하셨으면 다시 눌러 주세요."는 딱딱했다(2026-11-23)
-    const message = recording ? '다 말씀하셨으면 아래 버튼을 눌러 주세요.' : (notice ?? voice.notice);
+    // 녹음 중 안내는 상자 없이 한 줄로, 어르신 AI 의료 챗봇과 같은 문구(말이 3초 멈추면 저절로 보낸다 - 2026-11-23)
+    const message = recording ? '듣고 있어요. 말씀을 마치면 저절로 보내요.' : (notice ?? voice.notice);
     const stopButton = !talk.ended && (
       <button className={cx('stopButton')} type="button" disabled={busy} onClick={() => void handleFinish()}>
         {pending === 'finish' ? '마치는 중…' : '대화 그만하기'}
