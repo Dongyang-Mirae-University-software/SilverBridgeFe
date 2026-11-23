@@ -33,6 +33,7 @@ import {
 } from '@/service/query/ward';
 import { COMPANION_MESSAGES, getCompanionError, isCompanionFrameError } from '@/utils/companion/companionError';
 import { openCompanionSlot } from '@/utils/companion/companionOpen';
+import { companionVoiceNotice } from '@/utils/companion/companionVoiceNotice';
 import { markConsentAsked, readConsentAsked } from '@/utils/companion/consentAsked';
 import { splitSentences } from '@/utils/companion/splitSentences';
 import { formatSlotTime } from '@/utils/format/slotTime';
@@ -95,7 +96,7 @@ function voiceAudio(sessionId: number, audio: { index: number } | null | undefin
   return audio && Number.isInteger(audio.index) ? { sessionId, index: audio.index } : null;
 }
 
-// 대답·말벗 응답·테스트 판정 결과는 이 화면 메모리에만 둔다 - localStorage·로그에 남기지 않는다.
+// 대답·말벗 응답은 이 화면 메모리에만 둔다 - localStorage·로그에 남기지 않는다.
 // 서버는 동의한 경우에만 대답 글을 보관하고(30일 뒤 삭제, 철회하면 즉시 삭제) 음성·사진은 저장하지 않는다
 type Talk = {
   sessionId: number;
@@ -216,7 +217,7 @@ export function WardCompanionContent() {
   }, [outsideTalkTime, router]);
 
   // 새 말이 붙으면 대답 버튼까지 보이게 아래로 내린다 - 대화가 길어지면 버튼이 화면 밖으로 밀린다
-  // 대화를 마치면 마침 카드 위쪽에 맞춘다 - 맨 아래(판정 칸 밑)에 맞추면 폰에서 카드 윗부분이 화면 밖으로 밀린다
+  // 대화를 마치면 마침 카드 위쪽에 맞춘다 - 맨 아래에 맞추면 폰에서 카드 윗부분이 화면 밖으로 밀린다
   const bottomRef = useRef<HTMLDivElement>(null);
   const endCardRef = useRef<HTMLElement>(null);
   const lineCount = talk?.lines.length ?? 0;
@@ -422,7 +423,10 @@ export function WardCompanionContent() {
     const busy = Boolean(pending) || voice.state === 'uploading';
     const recording = voice.state === 'recording';
     // 녹음 중에는 안내 줄을 두지 않는다 - 버튼의 "듣고 있어요"로 충분하다(2026-11-23 사용자 요청으로 문구 삭제)
-    const message = recording ? null : (notice ?? voice.notice);
+    // 마이크를 쓸 수 없으면 말벗 문구로 바꾸고 [홈으로]를 둔다 - 글 칸이 없어 막다른 화면이 되던 것(FE 디자인 점검 D-1)
+    const voiceNotice = companionVoiceNotice(voice.notice);
+    const voiceBlock = notice ? null : voiceNotice.block;
+    const message = recording ? null : (notice ?? voiceNotice.message);
 
     // 2026-11-23 사용자 결정: 판정 결과 칸(테스트용)·글로 대답하기·대화 그만하기를 없앴다. 대화는 서버가 정한 턴을 마치면 끝난다.
     // 얼굴은 내 말풍선 옆(I안) - 말벗 얼굴(복숭아)이 왼쪽에 있듯 녹음 중에는 오른쪽 "말씀하시는 중" 줄에 실시간 얼굴,
@@ -520,6 +524,11 @@ export function WardCompanionContent() {
           ) : (
             <section className={cx('answer')} aria-label="대답하기">
               {message && <p className={cx('notice')} role="alert">{message}</p>}
+              {voiceBlock && (
+                <Link className={cx('primaryButton', 'secondary', 'voiceHome')} href="/ward">홈으로</Link>
+              )}
+              {/* 이 기기에서 목소리를 쓸 수 없으면(미지원) 다시 눌러도 소용없어 말하기 버튼을 숨긴다(2026-11-23 사용자 결정) */}
+              {voiceBlock !== 'unsupported' && (
               <button
                   className={cx('micButton', { recording })}
                   type="button"
@@ -533,6 +542,7 @@ export function WardCompanionContent() {
                   {recording ? <span className={cx('listeningDot')} aria-hidden="true" /> : !thinking && <MicIcon />}
                   {recording ? '듣고 있어요' : thinking ? '보내는 중…' : '말로 대답하기'}
               </button>
+              )}
             </section>
           )}
           <div ref={bottomRef} />
