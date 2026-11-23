@@ -57,10 +57,7 @@
 .primaryButton { min-height: 72px; font-size: calc(26px * var(--ward-font-scale, 1)); text-decoration: none; }
 .startButton:disabled,
 .primaryButton:disabled,
-.micButton:disabled,
-.switchButton:disabled,
-.stopButton:disabled { cursor: not-allowed; opacity: 0.6; }
-
+.micButton:disabled { cursor: not-allowed; opacity: 0.6; }
 
 .stateText {
   display: grid;
@@ -106,16 +103,9 @@
 
 /* 대화 - 폰은 한 칸, 태블릿(.wide)은 왼쪽 대화 · 오른쪽 카메라·판정 */
 .talkPage { display: grid; width: 100%; min-width: 0; align-content: start; gap: 18px; }
-.talkPage.wide { grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); align-items: start; gap: 24px; }
+
 .talkMain { display: grid; min-width: 0; align-content: start; gap: 18px; }
-.talkSide {
-  position: sticky;
-  top: 16px;
-  display: grid;
-  max-height: calc(100dvh - 120px);
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 14px;
-}
+
 .talkHead { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .talkHeadText { display: flex; min-width: 0; flex: 1; align-items: center; gap: 10px; }
 .talkHeadText .testBadge { margin: 0; }
@@ -128,19 +118,7 @@
 .progressDots i { width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: var(--sb-line-soft); }
 .progressDots i.filled { background: var(--sb-brand); }
 .progressDots i.current { border: 3px solid var(--sb-brand); background: #fff; }
-.stopButton {
-  min-height: 72px;
-  border: 2px solid var(--sb-line);
-  border-radius: 18px;
-  background: #fff;
-  color: var(--sb-ink);
-  cursor: pointer;
-  font: inherit;
-  font-size: calc(22px * var(--ward-font-scale, 1));
-  font-weight: calc(800 + var(--ward-weight-boost, 0));
-  padding: 0 24px;
-}
-.talkSide .stopButton { width: 100%; }
+
 .resumed { margin: 0; color: var(--sb-ink-soft); font-size: calc(20px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
 
 .lines { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
@@ -194,44 +172,37 @@
 @media (prefers-reduced-motion: reduce) { .dots i { animation: none; } }
 
 .answer { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 24px; padding-top: 8px; }
-.answer > .notice, .answer > .textForm { flex-basis: 100%; }
-.answerBar { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.answer > .notice { flex-basis: 100%; }
+
 .micButton { width: min(100%, 520px); min-height: 100px; border-radius: 999px; font-size: calc(32px * var(--ward-font-scale, 1)); }
 /* 녹음 중 = AI 의료 챗봇 마이크(VoiceInputButton wide.recording)와 같은 모양: 연한 빨강 바탕 + 빨간 테두리·글자 + 깜박이는 점 */
 .micButton.recording { border: 3px solid var(--sb-danger); background: var(--sb-danger-soft); color: var(--sb-danger); }
 .listeningDot { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: var(--sb-danger); animation: listeningPulse 1s ease-in-out infinite; }
 @keyframes listeningPulse { 50% { opacity: 0.3; } }
 @media (prefers-reduced-motion: reduce) { .listeningDot { animation: none; } }
-.micIcon { width: 40px; height: 40px; }
-.switchButton {
-  min-height: 60px;
-  border: 0;
-  background: transparent;
-  color: var(--sb-brand-text);
-  cursor: pointer;
-  font: inherit;
-  font-size: calc(26px * var(--ward-font-scale, 1));
-  font-weight: calc(800 + var(--ward-weight-boost, 0));
-  padding: 0 16px;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-.textForm { display: grid; width: min(100%, 760px); gap: 12px; }
-.textForm textarea {
+/* 동그란 거울(2026-11-23 E안) - 말하기 버튼 바로 위 가운데. 듣는 동안 테두리가 빨갛게 깜박인다. 거울처럼 좌우를 뒤집어 보인다 */
+.mirror { display: flex; flex-basis: 100%; justify-content: center; margin: 0; }
+.mirror > video,
+.mirrorIdle {
   box-sizing: border-box;
-  width: 100%;
-  border: 2px solid var(--sb-line);
-  border-radius: 18px;
-  background: #fff;
-  color: var(--sb-ink);
-  font: inherit;
-  font-size: calc(26px * var(--ward-font-scale, 1));
-  font-weight: calc(700 + var(--ward-weight-boost, 0));
-  line-height: 1.45;
-  padding: 16px 18px;
-  resize: vertical;
+  width: 168px;
+  height: 168px;
+  border: 5px solid var(--sb-line);
+  border-radius: 50%;
+  background: var(--sb-bg-soft);
 }
-.textForm textarea:focus { border-color: var(--sb-brand); outline: none; }
+.mirror > video { object-fit: cover; transform: scaleX(-1); }
+.mirrorIdle { display: grid; place-items: center; color: var(--sb-ink-mute-text); }
+.cameraIcon { width: 56px; height: 56px; }
+.mirror.listening > video,
+.mirror.listening .mirrorIdle { border-color: var(--sb-danger); animation: mirrorPulse 1.2s ease-in-out infinite; }
+@keyframes mirrorPulse { 50% { border-color: color-mix(in srgb, var(--sb-danger) 30%, var(--sb-bg-soft)); } }
+@media (prefers-reduced-motion: reduce) { .mirror.listening > video, .mirror.listening .mirrorIdle { animation: none; } }
+@media (max-width: 640px) {
+  .mirror > video, .mirrorIdle { width: 128px; height: 128px; border-width: 4px; }
+  .cameraIcon { width: 44px; height: 44px; }
+}
+.micIcon { width: 40px; height: 40px; }
 
 .endCard {
   display: grid;
@@ -267,38 +238,6 @@
   .endCard h2 { font-size: calc(26px * var(--ward-font-scale, 1)); }
   .primaryButton { width: 100%; }
 }
-
-/* 표정 사진 미리보기 */
-.cameraPreview { display: flex; align-items: center; gap: 10px; margin: 0; }
-.cameraPreview video {
-  border: 3px solid var(--sb-brand);
-  background: var(--sb-bg-soft);
-  object-fit: cover;
-  transform: scaleX(-1);
-}
-.cameraPreview.small { position: relative; flex-shrink: 0; }
-.cameraPreview.small video { width: 56px; height: 56px; border-radius: 50%; }
-.cameraPreview.small figcaption { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; overflow: hidden; border: 2px solid #fff; border-radius: 50%; background: var(--sb-danger); color: transparent; font-size: 1px; }
-.cameraPreview.large { position: relative; display: block; }
-.cameraPreview.large video { display: block; width: 100%; height: 240px; border: 0; border-radius: 24px; }
-.cameraPreview.large figcaption { position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 8px; border-radius: 999px; background: rgb(255 255 255 / 92%); color: var(--sb-ink); padding: 6px 12px; }
-.cameraPreview.large figcaption::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--sb-danger); }
-.cameraPreview figcaption {
-  color: var(--sb-brand-text);
-  font-size: calc(18px * var(--ward-font-scale, 1));
-  font-weight: calc(800 + var(--ward-weight-boost, 0));
-}
-.cameraPlaceholder {
-  display: grid;
-  height: 240px;
-  place-items: center;
-  border: 0;
-  border-radius: 24px;
-  background: var(--sb-bg-soft);
-  padding: 20px;
-  text-align: center;
-}
-.cameraPlaceholder p { margin: 0; color: var(--sb-ink-soft); font-size: calc(19px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); word-break: keep-all; }
 
 /* 테스트 계정 전용 - 일반 화면과 섞이지 않게 노란 점선 테두리 */
 .testPanel {
@@ -355,7 +294,6 @@
 }
 
 .testBadge.small { margin-left: 8px; padding: 1px 10px; font-size: calc(14px * var(--ward-font-scale, 1)); }
-.testResults .testBadge { border-color: transparent; background: var(--sb-warn-soft); }
 
 /* 테스트 시작(프로토타입) - 태블릿은 왼쪽 말벗 카드 · 오른쪽 시간대 칸, 폰은 위아래 */
 .testStart { display: grid; gap: 20px; }
@@ -436,55 +374,6 @@
   /* 세로 태블릿(768px)은 글 칸이 좁아 제목이 두 줄로 접히면 띠가 다시 커진다 */
   .page:has(> .testStart) > .hero.open h2 { font-size: calc(25px * var(--ward-font-scale, 1)); }
 }
-
-/* 판정 결과(프로토타입) - 방금 대답 카드(기분 글자 + 말·표정·위험 칸) + 지난 대답 줄, 칸 안에서만 스크롤 */
-.testResults { display: flex; min-width: 0; min-height: 0; flex-direction: column; gap: 10px; border: 1px solid var(--sb-line-soft); border-radius: 24px; background: #fff; padding: 16px; }
-.resultsHead { display: flex; align-items: center; justify-content: space-between; }
-.resultsTitle { margin: 0; color: var(--sb-ink); font-size: calc(20px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); }
-.resultsEmpty { margin: 0; color: var(--sb-ink-soft); font-size: calc(18px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); word-break: keep-all; }
-.latestCard { display: grid; gap: 8px; border-radius: 16px; background: var(--sb-brand-50); padding: 12px 14px; }
-.latestHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.latestLabel { color: var(--sb-ink-soft); font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
-.latestHead strong { font-size: calc(22px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); }
-.resultCells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
-.resultCell { border-radius: 10px; background: #fff; padding: 6px 4px; text-align: center; }
-.resultCell dt { color: var(--sb-ink-mute-text); font-size: calc(13px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
-.resultCell dd { margin: 0; font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(900 + var(--ward-weight-boost, 0)); word-break: keep-all; }
-.resultDetail summary { display: inline-flex; min-width: 44px; min-height: 44px; padding: 0 4px; align-items: center; color: var(--sb-ink-mute-text); cursor: pointer; font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
-.resultDetail p { margin: 0; color: var(--sb-ink-soft); font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(600 + var(--ward-weight-boost, 0)); line-height: 1.5; word-break: keep-all; }
-.endSummary { margin: 0; color: var(--sb-ink-soft); font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); line-height: 1.5; word-break: keep-all; }
-.endSummary strong { font-weight: calc(900 + var(--ward-weight-boost, 0)); }
-/* 지난 대답 표 - 턴 | 말 | 표정 | 결과. 칸이 많아지면 표만 안에서 내린다 */
-/* 태블릿 오른쪽 칸은 높이가 정해져 있고 카메라 안내 칸(240px)이 먼저 자리를 잡는다 - 표가 0까지 눌리지 않게
-   머리줄 + 한 줄 높이를 하한으로 두고, 모자라면 판정 칸 전체를 스크롤한다(글자 1.471배·800px 높이에서 표가 31px로 눌렸다) */
-.earlierWrap { min-height: calc(76px * var(--ward-font-scale, 1)); flex: 1 1 auto; overflow-y: auto; }
-.testResults:not(.compact) { overflow-y: auto; }
-.earlierResults { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
-.earlierResults thead th { position: sticky; top: 0; background: #fff; color: var(--sb-ink-mute-text); font-size: calc(13px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); padding: 4px 6px; text-align: left; }
-/* 칸은 줄바꿈을 허용한다(낱말 단위) - nowrap 이면 글자 크게(1.471배)에서 표가 칸보다 넓어져 태블릿은 페이지 전체가 가로로 밀렸다 */
-.earlierResults thead th:first-child { width: 4.2em; }
-.earlierResults tbody th, .earlierResults td { border-top: 1px solid var(--sb-line-soft); padding: 11px 6px; text-align: left; vertical-align: top; overflow-wrap: anywhere; word-break: keep-all; }
-.earlierToggle { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; border: 0; background: none; color: var(--sb-ink-mute-text); cursor: pointer; font: inherit; padding: 0; text-decoration: underline dotted; text-underline-offset: 3px; }
-.earlierToggle[aria-expanded='true'] { color: var(--sb-ink); }
-.earlierResults .earlierDetail td { border-top: 0; padding-top: 0; color: var(--sb-ink-soft); font-size: calc(14px * var(--ward-font-scale, 1)); font-weight: calc(600 + var(--ward-weight-boost, 0)); line-height: 1.5; }
-.earlierResults tbody th { padding-top: 0; padding-bottom: 0; color: var(--sb-ink-mute-text); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
-.earlierResults td strong { font-weight: calc(900 + var(--ward-weight-boost, 0)); }
-/* 기분·결과 글자 색 - 보호자 기분 칩과 같은 색 */
-.moodText.joy { color: var(--sb-joy-text); }
-.moodText.calm { color: var(--sb-brand-text); }
-.moodText.worry { color: #8a5f12; }
-.moodText.depressed { color: #3f6e8c; }
-.moodText.unknown { color: var(--sb-ink-mute-text); }
-.moodText.danger { color: var(--sb-danger); }
-.moodText.safe { color: var(--sb-safe); }
-.testResults.compact { display: block; border-radius: 18px; padding: 0; }
-.resultsDetails summary { display: flex; min-height: 56px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; cursor: pointer; list-style: none; padding: 8px 14px; }
-.resultsDetails summary::-webkit-details-marker { display: none; }
-.compactLabel { display: flex; align-items: center; gap: 8px; color: var(--sb-ink); font-size: calc(16px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
-.compactLabel .testBadge { margin: 0; }
-.latestLine { min-width: 0; color: var(--sb-ink-soft); font-size: calc(15px * var(--ward-font-scale, 1)); font-weight: calc(700 + var(--ward-weight-boost, 0)); }
-.compactBody { display: grid; gap: 8px; padding: 0 14px 14px; }
-.compactBody .earlierWrap { max-height: 240px; }
 
 /* 대화 내용 공유 동의 카드 - 카메라 묻기와 같은 모양 */
 .consentCard { display: grid; justify-items: center; gap: 14px; border: 2px solid var(--sb-brand); border-radius: 24px; background: var(--sb-brand-50); padding: 28px 24px; text-align: center; }
