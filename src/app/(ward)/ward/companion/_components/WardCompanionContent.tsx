@@ -462,7 +462,8 @@ export function WardCompanionContent() {
     const thinking = pending === 'reply' || voice.state === 'uploading';
     const busy = Boolean(pending) || voice.state === 'uploading';
     const recording = voice.state === 'recording';
-    const message = recording ? '말씀하세요. 다 하셨으면 다시 눌러 주세요.' : (notice ?? voice.notice);
+    // 녹음 중 안내는 상자 없이 한 줄로, 말하듯 - "말씀하세요. 다 하셨으면 다시 눌러 주세요."는 딱딱했다(2026-11-23)
+    const message = recording ? '다 말씀하셨으면 아래 버튼을 눌러 주세요.' : (notice ?? voice.notice);
     const stopButton = !talk.ended && (
       <button className={cx('stopButton')} type="button" disabled={busy} onClick={() => void handleFinish()}>
         {pending === 'finish' ? '마치는 중…' : '대화 그만하기'}
