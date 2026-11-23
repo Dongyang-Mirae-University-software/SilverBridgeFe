@@ -180,29 +180,36 @@
 .listeningDot { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: var(--sb-danger); animation: listeningPulse 1s ease-in-out infinite; }
 @keyframes listeningPulse { 50% { opacity: 0.3; } }
 @media (prefers-reduced-motion: reduce) { .listeningDot { animation: none; } }
-/* 동그란 거울(2026-11-23 E안) - 말하기 버튼 바로 위 가운데. 듣는 동안 테두리가 빨갛게 깜박인다. 거울처럼 좌우를 뒤집어 보인다 */
-.mirror { display: flex; flex-basis: 100%; justify-content: center; margin: 0; }
+/* 내 얼굴(2026-11-23 I안) - 말벗 얼굴(복숭아)이 말풍선 왼쪽에 있듯 내 말풍선 오른쪽에 둔다.
+   녹음 중 "말씀하시는 중" 줄에는 실시간 얼굴(테두리 빨간 깜박임), 보낸 대답 옆에는 그 대답의 마지막 사진. 거울처럼 좌우를 뒤집어 보인다 */
+.line.me { align-items: flex-end; }
+.line.speaking .bubble { border-style: dashed; }
+.line.speaking p { color: var(--sb-ink-soft); }
+.mirror { display: flex; flex-shrink: 0; margin: 0; }
 .mirror > video,
-.mirrorIdle {
+.mirrorIdle,
+.myFace img {
   box-sizing: border-box;
-  width: 168px;
-  height: 168px;
-  border: 5px solid var(--sb-line);
+  width: 112px;
+  height: 112px;
+  border: 4px solid var(--sb-line);
   border-radius: 50%;
   background: var(--sb-bg-soft);
 }
-.mirror > video { object-fit: cover; transform: scaleX(-1); }
+.mirror > video,
+.myFace img { object-fit: cover; transform: scaleX(-1); }
+.myFace img { width: 72px; height: 72px; border-width: 3px; }
 .mirrorIdle { display: grid; place-items: center; color: var(--sb-ink-mute-text); }
-.cameraIcon { width: 56px; height: 56px; }
+.cameraIcon { width: 40px; height: 40px; }
 .mirror.listening > video,
 .mirror.listening .mirrorIdle { border-color: var(--sb-danger); animation: mirrorPulse 1.2s ease-in-out infinite; }
 @keyframes mirrorPulse { 50% { border-color: color-mix(in srgb, var(--sb-danger) 30%, var(--sb-bg-soft)); } }
 @media (prefers-reduced-motion: reduce) { .mirror.listening > video, .mirror.listening .mirrorIdle { animation: none; } }
 @media (max-width: 640px) {
-  .mirror > video, .mirrorIdle { width: 128px; height: 128px; border-width: 4px; }
-  .cameraIcon { width: 44px; height: 44px; }
-}
-.micIcon { width: 40px; height: 40px; }
+  .mirror > video, .mirrorIdle { width: 84px; height: 84px; border-width: 3px; }
+  .myFace img { width: 52px; height: 52px; }
+  .cameraIcon { width: 32px; height: 32px; }
+}.micIcon { width: 40px; height: 40px; }
 
 .endCard {
   display: grid;
