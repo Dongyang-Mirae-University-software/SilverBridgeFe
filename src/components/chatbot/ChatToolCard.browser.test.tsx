@@ -22,7 +22,10 @@ describe('병원 검색 결과 줄이기 (Chrome, 2026-11-23 A안)', () => {
   it('고른 진료과 하나와 짧은 주소만, 처음엔 3곳 - [병원 더 보기]로 나머지를 편다', async () => {
     const onUiSelect = renderCard(HOSPITALS);
 
-    await expect.element(page.getByText('정형외과 병원 5곳')).toBeVisible();
+    // 제목은 개수만(D-4) - 공통 진료과는 병원별 칩으로만 보인다
+    await expect.element(page.getByText('병원 5곳', { exact: true })).toBeVisible();
+    expect(page.getByText('정형외과 병원', { exact: false }).elements()).toHaveLength(0);
+    await expect.element(page.getByText('정형외과', { exact: true }).first()).toBeVisible();
     expect(document.body.textContent).not.toContain('재활의학과');
     expect(document.body.textContent).not.toContain('445');
     await expect.element(page.getByText('구로구 경인로')).toBeVisible();
@@ -53,7 +56,7 @@ describe('병원 검색 결과 줄이기 (Chrome, 2026-11-23 A안)', () => {
     await page.viewport(375, 812);
     renderCard(HOSPITALS, 'ward');
 
-    await expect.element(page.getByText('정형외과 병원 5곳')).toBeVisible();
+    await expect.element(page.getByText('병원 5곳', { exact: true })).toBeVisible();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth + 1);
   });
 });

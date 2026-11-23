@@ -153,6 +153,8 @@ export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideL
 
 // 병원 검색 결과(2026-11-23 사용자 결정 A안) - 병원마다 진료과 전체와 긴 주소를 나열하던 것을 줄였다.
 // 고른 진료과 하나(모든 병원에 공통인 진료과)와 "구 + 길" 주소만, 처음엔 3곳만 보이고 [병원 더 보기]로 나머지를 편다
+// 제목은 "병원 N곳"만 - AI는 지역만으로도 검색하고(진료과 없이) 카드에 검색한 진료과를 싣지 않아, 공통 진료과를 제목에 넣으면
+// 우연히 모든 병원에 있는 과가 "고른 과"처럼 보일 수 있다(2026-11-23 FE 디자인 점검 D-4, 사용자 결정). 병원별 칩은 그 병원에 실제로 있는 과라 그대로 둔다
 function HospitalResults({ hospitals, sizeClass, onUiSelect }: {
   hospitals: HospitalItem[];
   sizeClass: string;
@@ -165,7 +167,7 @@ function HospitalResults({ hospitals, sizeClass, onUiSelect }: {
   return (
     <div className={`${styles.card} ${sizeClass}`}>
       <p className={styles.cardTitle}>
-        {hospitals.length === 0 ? '병원 검색 결과' : `${common ? `${common} ` : ''}병원 ${hospitals.length}곳`}
+        {hospitals.length === 0 ? '병원 검색 결과' : `병원 ${hospitals.length}곳`}
       </p>
       {hospitals.length === 0 ? (
         <p className={styles.empty}>병원을 찾지 못했습니다.</p>
