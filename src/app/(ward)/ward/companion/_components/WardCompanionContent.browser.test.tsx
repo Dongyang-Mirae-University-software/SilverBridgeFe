@@ -421,6 +421,8 @@ describe('표정 사진 (Chrome)', () => {
 
     const [, , , frames] = api.replyAudio.mock.calls[0] as [number, Blob, AbortSignal, Blob[]];
     expect(frames).toEqual([]);
+    // 사진이 없으면 내 대답 옆 얼굴도 없다
+    expect(document.querySelector('img[alt="대답할 때 찍힌 내 얼굴"]')).toBeNull();
 
     await recordOnce();
     await vi.waitFor(() => expect(api.replyAudio).toHaveBeenCalledTimes(2));
@@ -443,22 +445,39 @@ describe('표정 사진 (Chrome)', () => {
     expect(cameraCalls()).toBe(1);
   });
 
-  it('말하기 버튼 위 거울: 녹음 전에는 안내 문구, 녹음 중에는 얼굴 미리보기와 listening 표시', async () => {
+  it('내 말풍선 옆 얼굴(I안): 녹음 중에는 "말씀하시는 중" 줄 오른쪽에 실시간 얼굴, 보낸 뒤에는 그 대답 옆에 마지막 사진', async () => {
     mediaDevices({ camera: 'allow' });
     api.replyAudio.mockResolvedValue({ turnNo: 1, reply: '좋으셨겠어요.', ended: false, endReason: null, transcript: '좋아' });
     await openTalk();
-    const mirror = () => document.querySelector('figure') as HTMLElement;
-    expect(mirror().textContent).toContain('말하는 동안 여기에 얼굴이 보여요');
-    expect(mirror().className).not.toContain('listening');
-    expect(mirror().querySelector('video')).toBeNull();
+    // 녹음 전에는 얼굴 칸이 없다
+    expect(document.querySelector('figure')).toBeNull();
+    expect(document.body.textContent).not.toContain('말씀하시는 중');
 
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
-    await vi.waitFor(() => expect(mirror().querySelector('video[aria-label="내 얼굴 미리보기"]')).not.toBeNull());
-    expect(mirror().className).toContain('listening');
+    await expect.element(page.getByText('말씀하시는 중')).toBeVisible();
+    const speaking = page.getByText('말씀하시는 중').element().closest('li') as HTMLElement;
+    await vi.waitFor(() => expect(speaking.querySelector('figure video[aria-label="내 얼굴 미리보기"]')).not.toBeNull());
+    const figure = speaking.querySelector('figure') as HTMLElement;
+    expect(figure.className).toContain('listening');
+    expect(figure.getBoundingClientRect().left).toBeGreaterThanOrEqual((speaking.querySelector('div') as HTMLElement).getBoundingClientRect().right);
     await new Promise(resolve => setTimeout(resolve, 500));
     await userEvent.click(page.getByRole('button', { name: /다 했어요/ }));
     await expect.element(page.getByText('좋으셨겠어요.')).toBeVisible();
-    await vi.waitFor(() => expect(mirror().className).not.toContain('listening'));
+
+    // 실시간 얼굴은 사라지고, 내 대답 줄에 그 대답의 마지막 사진(메모리의 blob URL)이 남는다
+    expect(document.querySelector('figure')).toBeNull();
+    const myLine = page.getByText('좋아', { exact: true }).element().closest('li') as HTMLElement;
+    const photo = myLine.querySelector('img[alt="대답할 때 찍힌 내 얼굴"]') as HTMLImageElement;
+    expect(photo).not.toBeNull();
+    expect(photo.src.startsWith('blob:')).toBe(true);
+
+    // 대화를 닫으면 사진 URL을 해제한다(화면 메모리에만 두고 남기지 않는다)
+    const revoke = vi.spyOn(URL, 'revokeObjectURL');
+    api.replyAudio.mockResolvedValue({ turnNo: 2, reply: '고마워요.', ended: true, endReason: 'MAX_TURNS', transcript: '응' });
+    await recordOnce();
+    await page.getByRole('button', { name: '홈으로' }).click();
+    expect(revoke).toHaveBeenCalledWith(photo.src);
+    revoke.mockRestore();
   });
 });
 
@@ -768,13 +787,15 @@ function insideViewport(el: Element) {
 }
 
 describe('폰 배치 회귀 (Chrome, 점검 H-1·M-1·L-1)', () => {
-  it('폰에서 말하기 버튼과 거울이 화면 안에 있고 가로로 넘치지 않는다', async () => {
+  it('폰에서 말하기 버튼과 녹음 중 내 얼굴이 화면 안에 있고 가로로 넘치지 않는다', async () => {
     await page.viewport(390, 844);
-    mediaDevices({ camera: 'deny' });
+    mediaDevices({ camera: 'allow' });
     await openTalk();
     const answer = page.getByRole('region', { name: '대답하기' });
     expect(insideViewport(answer.getByRole('button', { name: '말로 대답하기' }).element())).toBe(true);
-    expect(insideViewport(answer.element().querySelector('figure') as Element)).toBe(true);
+    await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
+    await vi.waitFor(() => expect(document.querySelector('figure video')).not.toBeNull());
+    expect(insideViewport(document.querySelector('figure') as Element)).toBe(true);
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth + 1);
   });
 

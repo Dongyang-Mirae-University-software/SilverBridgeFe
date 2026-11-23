@@ -80,7 +80,15 @@ function fitUploadBudget(audio: Blob, frames: Blob[]) {
 }
 
 // audio: 말벗 목소리(있으면 받아서 틀고, 없거나 못 받으면 기기 음성으로 읽는다)
-type Line = { id: number; who: 'companion' | 'me'; text: string; heard?: boolean; audio?: { sessionId: number; index: number } | null };
+// photo: 내 대답 옆에 남기는 그 대답의 마지막 얼굴 사진(blob URL) - 화면 메모리에만, 대화를 닫으면 해제한다(2026-11-23 I안)
+type Line = {
+  id: number;
+  who: 'companion' | 'me';
+  text: string;
+  heard?: boolean;
+  audio?: { sessionId: number; index: number } | null;
+  photo?: string | null;
+};
 
 // 응답의 audio.index가 정수일 때만 목소리를 받는다 - 없거나 이상하면 기기 음성으로 읽는다
 function voiceAudio(sessionId: number, audio: { index: number } | null | undefined): Line['audio'] {
@@ -216,16 +224,28 @@ export function WardCompanionContent() {
 
   const nextLine = (who: Line['who'], text: string, heard?: boolean): Line => ({ id: ++lineId.current, who, text, heard });
 
+  // 내 대답 옆 얼굴 사진 - 보낸 사진 중 마지막 장을 blob URL로 들고 있다가 대답 줄에 붙인다. 서버·기기 저장소에 남기지 않고
+  // 대화를 닫거나 화면을 떠나면 모두 해제한다(안내 문구 "얼굴 사진은 저장하지 않아요"와 같은 기준)
+  const lastPhotoRef = useRef<string | null>(null);
+  const photoUrlsRef = useRef<Set<string>>(new Set());
+  const releasePhotos = useCallback(() => {
+    photoUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+    photoUrlsRef.current.clear();
+    lastPhotoRef.current = null;
+  }, []);
+  useEffect(() => releasePhotos, [releasePhotos]);
+
   const refreshToday = useCallback(() => void queryClient.invalidateQueries({ queryKey: wardCompanionTodayQueryKey }), [queryClient]);
 
   // 이어갈 수 없는 대화는 닫고 오늘 현황을 다시 받는다
   const leaveTalk = useCallback((message: string) => {
     companionVoice.reset();
     camera.cancel();
+    releasePhotos();
     setTalk(null);
     setNotice(message);
     refreshToday();
-  }, [refreshToday, camera, companionVoice]);
+  }, [refreshToday, camera, companionVoice, releasePhotos]);
 
   const handleError = useCallback((error: unknown) => {
     const { message, action } = getCompanionError(error);
@@ -239,7 +259,8 @@ export function WardCompanionContent() {
   const applyReply = useCallback((result: IWardCompanionReply | null, answer: string, heard: boolean) => {
     if (!result) return;
     const sessionId = talkRef.current?.sessionId;
-    const mine = nextLine('me', answer, heard);
+    const mine = { ...nextLine('me', answer, heard), photo: lastPhotoRef.current };
+    lastPhotoRef.current = null;
     const reply = result.reply && sessionId != null ? { ...nextLine('companion', result.reply), audio: voiceAudio(sessionId, result.audio) } : null;
     setTalk(current => {
       if (!current) return current;
@@ -260,6 +281,13 @@ export function WardCompanionContent() {
       // 녹음이 끝나는 순간 카메라를 끄고 찍은 사진을 받는다
       const frames = fitUploadBudget(audio, await camera.take());
       sentFramesRef.current = frames.length;
+      const lastFrame = frames.at(-1);
+      lastPhotoRef.current = null;
+      if (lastFrame) {
+        const url = URL.createObjectURL(lastFrame);
+        photoUrlsRef.current.add(url);
+        lastPhotoRef.current = url;
+      }
       if (!current) throw new Error('대화가 열려 있지 않다');
       return replyWardCompanionAudio(current.sessionId, audio, signal, frames);
     },
@@ -383,6 +411,7 @@ export function WardCompanionContent() {
   const closeTalk = () => {
     companionVoice.reset();
     camera.cancel();
+    releasePhotos();
     setTalk(null);
     setNotice(null);
     refreshToday();
@@ -395,8 +424,9 @@ export function WardCompanionContent() {
     // 녹음 중에는 안내 줄을 두지 않는다 - 버튼의 "듣고 있어요"로 충분하다(2026-11-23 사용자 요청으로 문구 삭제)
     const message = recording ? null : (notice ?? voice.notice);
 
-    // 2026-11-23 사용자 결정: 판정 결과 칸(테스트용)·글로 대답하기·대화 그만하기를 없애고, 얼굴은 말하기 버튼 바로 위 동그란 거울(E안)로.
-    // 대화는 서버가 정한 턴을 마치면 끝난다
+    // 2026-11-23 사용자 결정: 판정 결과 칸(테스트용)·글로 대답하기·대화 그만하기를 없앴다. 대화는 서버가 정한 턴을 마치면 끝난다.
+    // 얼굴은 내 말풍선 옆(I안) - 말벗 얼굴(복숭아)이 왼쪽에 있듯 녹음 중에는 오른쪽 "말씀하시는 중" 줄에 실시간 얼굴,
+    // 보낸 뒤에는 그 대답 옆에 마지막 사진을 남긴다
     return (
       <div className={cx('talkPage')}>
         <div className={cx('talkMain')}>
@@ -446,13 +476,30 @@ export function WardCompanionContent() {
                     </div>
                   </>
                 ) : (
-                  <div className={cx('bubble')}>
-                    <span className={cx('who')}>{line.heard ? '이렇게 들었어요' : '나'}</span>
-                    <p>{line.text}</p>
-                  </div>
+                  <>
+                    <div className={cx('bubble')}>
+                      <span className={cx('who')}>{line.heard ? '이렇게 들었어요' : '나'}</span>
+                      <p>{line.text}</p>
+                    </div>
+                    {line.photo && (
+                      <span className={cx('lineFace', 'myFace')}>
+                        {/* 화면 메모리의 blob URL이라 next/image 최적화(서버 경유)를 쓸 수 없고 써서도 안 된다 */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={line.photo} alt="대답할 때 찍힌 내 얼굴" />
+                      </span>
+                    )}
+                  </>
                 )}
               </li>
             ))}
+            {recording && (
+              <li className={cx('line', 'me', 'speaking')} role="status">
+                <div className={cx('bubble')}>
+                  <p>말씀하시는 중<span className={cx('dots')} aria-hidden="true"><i /><i /><i /></span></p>
+                </div>
+                <MirrorFace stream={camera.stream} listening />
+              </li>
+            )}
             {thinking && (
               <li className={cx('line', 'companion', 'thinking')} role="status">
                 <span className={cx('lineFace')}><MoodFace mood="calm" size={wide ? 56 : 40} /></span>
@@ -473,7 +520,6 @@ export function WardCompanionContent() {
           ) : (
             <section className={cx('answer')} aria-label="대답하기">
               {message && <p className={cx('notice')} role="alert">{message}</p>}
-              <MirrorFace stream={camera.stream} listening={recording} />
               <button
                   className={cx('micButton', { recording })}
                   type="button"
@@ -654,8 +700,8 @@ function ProgressDots({ total, done }: { total: number; done: number }) {
   );
 }
 
-// 말하기 버튼 바로 위 동그란 거울(2026-11-23 E안) - 녹음하는 동안 카메라가 켜지면 내 얼굴이 보이고,
-// 듣는 동안 테두리가 빨갛게 깜박여 지금 찍히고 듣고 있다는 것을 본인이 알 수 있다. 켜지기 전에는 카메라 그림만 둔다
+// 녹음 중 내 말풍선 옆 실시간 얼굴(2026-11-23 I안) - 듣는 동안 테두리가 빨갛게 깜박여 지금 찍히고 듣고 있다는 것을
+// 본인이 알 수 있다. 카메라가 켜지기 전(권한 묻는 중·거부)에는 카메라 그림만 둔다
 function MirrorFace({ stream, listening }: { stream: MediaStream | null; listening: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
