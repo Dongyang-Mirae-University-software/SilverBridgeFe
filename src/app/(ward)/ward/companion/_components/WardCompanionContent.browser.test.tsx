@@ -368,7 +368,7 @@ describe('대화 (Chrome)', () => {
     expect(recordingButton.textContent).toBe('듣고 있어요');
     // 어르신이 읽는 안내·글로 대답하기는 24px 이상(2026-11-23 - 20~22px은 작아 못 읽으셨다)
     const px = (el: Element) => parseFloat(getComputedStyle(el).fontSize);
-    expect(px(page.getByText('듣고 있어요. 말씀을 마치면 저절로 보내요.').element())).toBeGreaterThanOrEqual(24);
+    expect(document.body.textContent).not.toContain('말씀을 마치면'); // 녹음 중 안내 줄 없음(2026-11-23)
     expect(px(page.getByRole('button', { name: '글로 대답하기' }).element())).toBeGreaterThanOrEqual(24);
     await new Promise(resolve => setTimeout(resolve, 500));
     await userEvent.click(page.getByRole('button', { name: /다 했어요/ }));
@@ -1084,7 +1084,7 @@ describe('폰 배치 회귀 (Chrome, 점검 H-1·M-1·L-1)', () => {
     await page.getByRole('button', { name: '말로 대답하기' }).click();
     await page.getByRole('button', { name: '말로 대답하기' }).click();
 
-    await expect.element(page.getByText('듣고 있어요. 말씀을 마치면 저절로 보내요.')).toBeVisible();
+    expect(document.body.textContent).not.toContain('말씀을 마치면');
     expect(document.documentElement.scrollHeight).toBeGreaterThan(window.innerHeight); // 화면보다 길어 스크롤이 필요한 상황인지
     await vi.waitFor(() => expect(insideViewportHeight(page.getByRole('button', { name: /다 했어요/ }).element())).toBe(true));
   });

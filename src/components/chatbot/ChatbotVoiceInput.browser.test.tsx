@@ -173,7 +173,7 @@ describe('챗봇 마이크 음성 입력', () => {
     renderChat(<ChatbotContent variant="ward" />);
 
     await userEvent.click(page.getByRole('button', { name: MIC }));
-    await expect.element(page.getByText('듣고 있어요. 말씀을 마치면 저절로 보내요.')).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('말씀을 마치면'); // 녹음 중 안내 줄 없음(2026-11-23)
     await sleep(700);
     setToneLevel(0);
     // 2초 무음으로는 끝내지 않는다

@@ -658,9 +658,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const voiceNotice = (
     <p className={styles.voiceNotice} role="status" aria-live="polite">
       {voice.state === 'recording'
-        ? isWardChat && !typingOpen
-          ? '듣고 있어요. 말씀을 마치면 저절로 보내요.'
-          : '' // 옛 문구 "말씀하세요. 다 하셨으면 다시 눌러 주세요."는 지웠다 - 말이 멈추면 저절로 끝나 맞지 않았다(2026-11-23)
+        ? '' // 녹음 중 안내 줄은 두지 않는다 - 버튼의 "듣고 있어요"·"녹음 끝내기"로 알린다(2026-11-23 사용자 요청으로 문구 삭제)
         : voice.state === 'uploading' && isWardChat
           ? '말씀을 글로 바꾸는 중이에요.'
           : (voice.notice ?? '')}

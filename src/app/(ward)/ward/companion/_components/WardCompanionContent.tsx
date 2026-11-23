@@ -465,8 +465,8 @@ export function WardCompanionContent() {
     const thinking = pending === 'reply' || voice.state === 'uploading';
     const busy = Boolean(pending) || voice.state === 'uploading';
     const recording = voice.state === 'recording';
-    // 녹음 중 안내는 상자 없이 한 줄로, 어르신 AI 의료 챗봇과 같은 문구(말이 3초 멈추면 저절로 보낸다 - 2026-11-23)
-    const message = recording ? '듣고 있어요. 말씀을 마치면 저절로 보내요.' : (notice ?? voice.notice);
+    // 녹음 중에는 안내 줄을 두지 않는다 - 버튼의 "듣고 있어요"로 충분하다(2026-11-23 사용자 요청으로 문구 삭제)
+    const message = recording ? null : (notice ?? voice.notice);
     const stopButton = !talk.ended && (
       <button className={cx('stopButton')} type="button" disabled={busy} onClick={() => void handleFinish()}>
         {pending === 'finish' ? '마치는 중…' : '대화 그만하기'}
@@ -549,7 +549,7 @@ export function WardCompanionContent() {
             </section>
           ) : (
             <section className={cx('answer')} aria-label="대답하기">
-              {message && <p className={cx('notice', { recordingNotice: recording })} role={recording ? undefined : 'alert'}>{message}</p>}
+              {message && <p className={cx('notice')} role="alert">{message}</p>}
               {mode === 'voice' ? (
                 <button
                   className={cx('micButton', { recording })}
