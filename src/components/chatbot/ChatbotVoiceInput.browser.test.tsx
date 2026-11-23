@@ -269,9 +269,10 @@ describe('챗봇 마이크 음성 입력', () => {
     api.role.mockReturnValue('GUARDIAN');
     await renderChat(<ChatbotContent />);
     await userEvent.click(page.getByRole('button', { name: MIC }));
-    // 보호자는 입력 줄 안 둥근 아이콘 버튼(2026-11-12) - 끝내는 방법은 버튼 이름과 아래 안내 줄로 알린다
+    // 보호자는 입력 줄 안 둥근 아이콘 버튼(2026-11-12) - 끝내는 방법은 버튼 이름으로 알린다
     const stop = page.getByRole('button', { name: '녹음 끝내기' });
     await expect.element(stop).toBeInTheDocument();
-    await expect.element(page.getByText('말씀하세요. 다 하셨으면 다시 눌러 주세요.')).toBeInTheDocument();
+    // 옛 안내 "말씀하세요. 다 하셨으면 다시 눌러 주세요."는 지웠다(2026-11-23)
+    expect(document.body.textContent).not.toContain('다 하셨으면 다시 눌러');
   });
 });

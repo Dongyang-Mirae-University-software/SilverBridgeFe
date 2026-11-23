@@ -32,6 +32,7 @@ import { CalendarIcon, HistoryIcon, NewChatIcon, PhoneIcon, QuickPromptIcon, Sen
 import { isCrisisAnswer, isUrgentAnswer } from './chatUrgency';
 import { RESERVATION_STEPS, reservationStepIndex } from './reservationStep';
 import VoiceInputButton from './VoiceInputButton';
+import { WARD_SILENCE_STOP_MS } from '@/lib/audio/recordingLimiter';
 import { useVoiceInput } from './useVoiceInput';
 import { buttonWardId, isReservationStep, isShowList, isWardNotConnected, selectionText, textWardId } from './reservationFlow';
 import styles from './ChatbotContent.module.css';
@@ -152,7 +153,6 @@ function wardPrompts({ items: suggested, answer }: Suggestions, sent: ReadonlySe
 
 const COMPOSER_MAX_LINES = 2;
 // 피보호자 챗봇은 말한 뒤 3초 조용하면 녹음을 끝내고 바로 보낸다(2026-11-11 사용자 결정 - 말벗은 1.5초 그대로)
-const WARD_SILENCE_STOP_MS = 3_000;
 
 interface ChatbotContentProps {
   /**
@@ -660,7 +660,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       {voice.state === 'recording'
         ? isWardChat && !typingOpen
           ? '듣고 있어요. 말씀을 마치면 저절로 보내요.'
-          : '말씀하세요. 다 하셨으면 다시 눌러 주세요.'
+          : '' // 옛 문구 "말씀하세요. 다 하셨으면 다시 눌러 주세요."는 지웠다 - 말이 멈추면 저절로 끝나 맞지 않았다(2026-11-23)
         : voice.state === 'uploading' && isWardChat
           ? '말씀을 글로 바꾸는 중이에요.'
           : (voice.notice ?? '')}
