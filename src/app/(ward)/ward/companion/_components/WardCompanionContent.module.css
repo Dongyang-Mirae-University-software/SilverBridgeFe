@@ -95,8 +95,6 @@
   text-align: center;
   word-break: keep-all;
 }
-/* 녹음 중 안내는 경고 상자가 아니라 버튼 위 한 줄 - 상자에 담으니 오류처럼 보여 부자연스러웠다(2026-11-23) */
-.notice.recordingNotice { border: 0; background: transparent; color: var(--sb-brand-text); padding: 4px 0; }
 
 .privacy {
   margin: 0;
