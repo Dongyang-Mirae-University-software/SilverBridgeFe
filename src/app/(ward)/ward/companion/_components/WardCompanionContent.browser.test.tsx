@@ -363,8 +363,13 @@ describe('대화 (Chrome)', () => {
 
     await userEvent.click(page.getByRole('button', { name: '말로 대답하기' }));
     await expect.element(page.getByRole('button', { name: /다 했어요/ })).toBeInTheDocument();
-    // 녹음 중 버튼 글자는 초만 보인다(기호·"다 했어요"는 화면 읽기 이름에만)
-    await vi.waitFor(() => expect(page.getByRole('button', { name: /다 했어요/ }).element().textContent).toMatch(/^\d+초$/));
+    // 녹음 중 버튼 글자는 AI 의료 챗봇처럼 "듣고 있어요"(초 숫자 없음, "다 했어요"는 화면 읽기 이름에만) - 2026-11-23
+    const recordingButton = page.getByRole('button', { name: /다 했어요/ }).element();
+    expect(recordingButton.textContent).toBe('듣고 있어요');
+    // 어르신이 읽는 안내·글로 대답하기는 24px 이상(2026-11-23 - 20~22px은 작아 못 읽으셨다)
+    const px = (el: Element) => parseFloat(getComputedStyle(el).fontSize);
+    expect(px(page.getByText('말씀하세요. 다 하셨으면 다시 눌러 주세요.').element())).toBeGreaterThanOrEqual(24);
+    expect(px(page.getByRole('button', { name: '글로 대답하기' }).element())).toBeGreaterThanOrEqual(24);
     await new Promise(resolve => setTimeout(resolve, 500));
     await userEvent.click(page.getByRole('button', { name: /다 했어요/ }));
 

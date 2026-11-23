@@ -552,12 +552,13 @@ export function WardCompanionContent() {
                   type="button"
                   disabled={busy && !recording}
                   aria-pressed={recording}
-                  // 녹음 중 화면에는 초만 보인다(기호·문구는 어르신이 알기 어렵다) - 화면 읽기 프로그램에는 누르는 뜻을 함께 알린다
-                  aria-label={recording ? `다 했어요, ${voice.elapsedSec}초` : undefined}
+                  // 녹음 중에는 AI 의료 챗봇과 같이 깜박이는 점 + "듣고 있어요"를 보인다(2026-11-23 사용자 요청 - 초 숫자는 뜻이 안 와닿았다)
+                  // 화면 읽기 프로그램에는 누르는 뜻을 함께 알린다
+                  aria-label={recording ? '듣고 있어요. 다 했어요 누르기' : undefined}
                   onClick={handleVoice}
                 >
-                  {!recording && <MicIcon />}
-                  {recording ? `${voice.elapsedSec}초` : thinking ? '듣고 있어요…' : '말로 대답하기'}
+                  {recording ? <span className={cx('listeningDot')} aria-hidden="true" /> : !thinking && <MicIcon />}
+                  {recording ? '듣고 있어요' : thinking ? '보내는 중…' : '말로 대답하기'}
                 </button>
               ) : (
                 <form className={cx('textForm')} onSubmit={event => { event.preventDefault(); void handleSendText(); }}>
