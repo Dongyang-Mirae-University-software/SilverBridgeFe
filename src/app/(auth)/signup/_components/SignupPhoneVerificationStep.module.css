@@ -36,10 +36,33 @@
 }
 
 .codeGuide {
+  margin: 0;
   color: #5c4d3f;
   font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1.45;
+}
+
+/* 인증 완료 안내: <p> 기본 여백을 없애고(margin 0) 상자 색과 같은 초록 + 체크로 완료를 드러낸다 */
+.completeGuide {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2e7d32;
+}
+
+.completeIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #4caf50;
+  color: #ffffff;
+  font-size: 0.75rem;
+  line-height: 1;
 }
 
 .stepActions {
