@@ -8,6 +8,8 @@ export const STT_MESSAGES = {
   // 마이크를 여는 오류를 이름으로 나눈다(2026-11-23 FE #335 점검 V-1) - 장치가 없거나 다른 앱이 쓰는 중이면 권한을 켜도 풀리지 않는다
   micNotFound: '마이크를 찾지 못했어요. 글로 입력해 주세요.',
   micInUse: '다른 앱이 마이크를 쓰고 있어요. 글로 입력해 주세요.',
+  // 원인을 알 수 없는 장치 시작 실패(AbortError - Firefox 등) - 틀린 이유("다른 앱")를 대지 않는다(2026-11-24 #337 점검 K-2 사용자 결정)
+  micOpenFailed: '마이크를 켜지 못했어요. 글로 입력해 주세요.',
   // 마이크 기능이 없는 브라우저·보안 연결(https)이 아닌 접속 - 권한을 줘도 쓸 수 없다
   unsupported: '이 브라우저에서는 음성 입력을 쓸 수 없어요. 글로 입력해 주세요.',
   empty: '잘 못 들었어요. 다시 말씀해 주세요.',
@@ -20,10 +22,12 @@ export const STT_MESSAGES = {
 } as const;
 
 // 마이크 열기(getUserMedia) 실패 안내 - 오류 이름으로만 나눈다(문구·메시지는 브라우저마다 달라 보지 않는다)
+// DevicesNotFoundError·TrackStartError는 옛 Chrome·웹뷰가 쓰던 이름이다(2026-11-24 #337 점검 K-1)
 export function micOpenErrorMessage(error: unknown): string {
   const name = typeof error === 'object' && error !== null && 'name' in error ? String((error as { name: unknown }).name) : '';
-  if (name === 'NotFoundError' || name === 'OverconstrainedError') return STT_MESSAGES.micNotFound;
-  if (name === 'NotReadableError' || name === 'AbortError') return STT_MESSAGES.micInUse;
+  if (name === 'NotFoundError' || name === 'OverconstrainedError' || name === 'DevicesNotFoundError') return STT_MESSAGES.micNotFound;
+  if (name === 'NotReadableError' || name === 'TrackStartError') return STT_MESSAGES.micInUse;
+  if (name === 'AbortError') return STT_MESSAGES.micOpenFailed;
   return STT_MESSAGES.permission;
 }
 

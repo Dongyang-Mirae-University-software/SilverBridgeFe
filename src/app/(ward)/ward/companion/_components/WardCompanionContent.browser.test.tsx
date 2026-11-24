@@ -1306,6 +1306,7 @@ describe('마이크 오류 종류·초점·큰 글자 (Chrome, FE #335 점검 V-
   it.each([
     ['NotFoundError', '마이크를 찾지 못했어요.'],
     ['NotReadableError', '다른 앱이 마이크를 쓰고 있어요.'],
+    ['AbortError', '마이크를 켜지 못했어요.'],
   ])('%s면 말벗 짧은 문구와 [홈으로]가 보이고 말하기 버튼은 남는다(권한 안내가 아니다)', async (name, text) => {
     getUserMedia.mockRejectedValue(new DOMException('x', name));
     await openTalk();

@@ -34,7 +34,9 @@ describe('말벗 음성 안내 (FE 디자인 점검 D-1)', () => {
   it.each([
     [STT_MESSAGES.micNotFound, COMPANION_VOICE_NOTICE.micNotFound],
     [STT_MESSAGES.micInUse, COMPANION_VOICE_NOTICE.micInUse],
-  ])('마이크 장치 없음·사용 중은 말벗 짧은 문구 + 말하기 버튼 유지(device): %s', (notice, message) => {
+    // 2026-11-24 #337 점검 K-2 - 원인을 모르는 장치 시작 실패
+    [STT_MESSAGES.micOpenFailed, COMPANION_VOICE_NOTICE.micOpenFailed],
+  ])('마이크 장치 없음·사용 중·켜기 실패는 말벗 짧은 문구 + 말하기 버튼 유지(device): %s', (notice, message) => {
     expect(companionVoiceNotice(notice)).toEqual({ message, block: 'device' });
   });
 

@@ -9,6 +9,7 @@ export const COMPANION_VOICE_NOTICE = {
   // 장치 없음·다른 앱이 사용 중은 권한을 켜도 풀리지 않는다(V-1, 짧은 문구 - 사용자 결정)
   micNotFound: '마이크를 찾지 못했어요.',
   micInUse: '다른 앱이 마이크를 쓰고 있어요.',
+  micOpenFailed: '마이크를 켜지 못했어요.',
   unsupported: '이 기기에서는 말벗과 목소리로 이야기할 수 없어요.',
   unavailable: '지금은 말벗과 이야기할 수 없어요. 잠시 후 다시 해 주세요.',
 } as const;
@@ -23,6 +24,7 @@ export function companionVoiceNotice(notice: string | null | undefined): { messa
   if (notice === STT_MESSAGES.permission) return { message: COMPANION_VOICE_NOTICE.permission, block: 'permission' };
   if (notice === STT_MESSAGES.micNotFound) return { message: COMPANION_VOICE_NOTICE.micNotFound, block: 'device' };
   if (notice === STT_MESSAGES.micInUse) return { message: COMPANION_VOICE_NOTICE.micInUse, block: 'device' };
+  if (notice === STT_MESSAGES.micOpenFailed) return { message: COMPANION_VOICE_NOTICE.micOpenFailed, block: 'device' };
   if (notice === STT_MESSAGES.unsupported) return { message: COMPANION_VOICE_NOTICE.unsupported, block: 'unsupported' };
   // 그 밖에 글 칸을 가리키는 공용 문구가 오면(지금 말벗 경로에서는 오지 않는다) 글 칸 없는 말로 바꾼다
   // 공용 문구가 새로 늘어 "글로 입력"을 붙여도 말벗에 새지 않게 같은 말로 바꾼다(2026-11-23 #335 점검 V-3, 가드 테스트가 고정)

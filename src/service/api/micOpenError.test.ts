@@ -10,7 +10,11 @@ describe('마이크 열기 실패 안내', () => {
     ['NotFoundError', STT_MESSAGES.micNotFound],
     ['OverconstrainedError', STT_MESSAGES.micNotFound],
     ['NotReadableError', STT_MESSAGES.micInUse],
-    ['AbortError', STT_MESSAGES.micInUse],
+    // 옛 Chrome·웹뷰 이름(2026-11-24 #337 점검 K-1) / 원인을 모르는 장치 시작 실패(K-2)
+    ['DevicesNotFoundError', STT_MESSAGES.micNotFound],
+    ['TrackStartError', STT_MESSAGES.micInUse],
+    ['PermissionDeniedError', STT_MESSAGES.permission],
+    ['AbortError', STT_MESSAGES.micOpenFailed],
   ])('%s → %s', (name, message) => {
     expect(micOpenErrorMessage(new DOMException('x', name))).toBe(message);
   });
