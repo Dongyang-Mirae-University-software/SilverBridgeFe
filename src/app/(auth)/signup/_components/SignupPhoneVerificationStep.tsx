@@ -94,7 +94,10 @@ export default function SignupPhoneVerificationStep({
         {isCode && (
           <div className={cx('codePanel', { 'complete': isSmsCheck })}>
             {isSmsCheck ? (
-              <p className={cx('codeGuide')}>전화번호 인증이 완료되었습니다.</p>
+              <p className={cx('codeGuide', 'completeGuide')}>
+                <span className={cx('completeIcon')} aria-hidden="true">✓</span>
+                전화번호 인증이 완료되었습니다.
+              </p>
             ) : (
               <SignupSmsCodeFields
                 key={smsTimerKey}
