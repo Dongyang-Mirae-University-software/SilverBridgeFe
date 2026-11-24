@@ -220,7 +220,7 @@ export function GuardianHospitalContent() {
                   wardId: item.partnerUserId,
                   wardName: item.partnerName,
                   profileImage: item.partnerProfileImage,
-                  relation: item.relation,
+                  wardRelation: item.wardRelation,
                 }))}
                 selectedWardId={ward.partnerUserId}
                 disabled={inFlow}

@@ -30,7 +30,7 @@ export default function GuardianMonitorContent() {
       wardId: connection.partnerUserId,
       wardName: connection.partnerName,
       profileImage: connection.partnerProfileImage,
-      relation: connection.relation,
+      wardRelation: connection.wardRelation,
     }));
   const activeWardId = useSelectedWard(wards, ward => ward.wardId)?.wardId;
 

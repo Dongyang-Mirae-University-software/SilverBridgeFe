@@ -130,7 +130,7 @@ export function GuardianDashboardContent() {
             wardId: connection.partnerUserId,
             wardName: connection.partnerName || EMPTY_VALUE,
             profileImage: connection.partnerProfileImage,
-            relation: connection.relation,
+            wardRelation: connection.wardRelation,
             badgeCount: pendingByWard.get(connection.partnerUserId),
           }))}
           selectedWardId={selectedWard?.partnerUserId}

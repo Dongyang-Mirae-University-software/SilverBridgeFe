@@ -107,7 +107,7 @@ export default function GuardianSosHistoryContent() {
               wardId: ward.partnerUserId,
               wardName: ward.partnerName,
               profileImage: ward.partnerProfileImage,
-              relation: ward.relation,
+              wardRelation: ward.wardRelation,
             }))}
             selectedWardId={effectiveSelectedWardId ?? undefined}
             onSelect={handleSelectWard}

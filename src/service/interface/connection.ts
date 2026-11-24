@@ -14,6 +14,8 @@ export interface IConnectionItem {
   partnerBirthDate?: string | null;
   partnerEmail?: string | null;
   relation?: string | null;
+  /** 보호자가 부르는 어르신 호칭(예: 엄마) - 보호자 화면 응답에만 온다. 기존 연결은 null */
+  wardRelation?: string | null;
   status: ConnectionStatus;
   priority?: number;
   connectedAt: string | null;
@@ -24,6 +26,7 @@ export interface IConnectionItem {
 
 export interface IGuardianConnectionRequestReq {
   relation: string;
+  wardRelation: string;
   targetId: string;
 }
 

@@ -101,7 +101,7 @@ export function GuardianEmotionContent() {
             wardId: ward.partnerUserId,
             wardName: ward.partnerName,
             profileImage: ward.partnerProfileImage,
-            relation: ward.relation,
+            wardRelation: ward.wardRelation,
           }))}
           selectedWardId={wardId}
           onSelect={setSelectedWardId}

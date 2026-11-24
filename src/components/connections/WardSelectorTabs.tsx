@@ -3,6 +3,7 @@
 import classNames from 'classnames/bind';
 
 import { UserAvatar } from '@/components/UserAvatar';
+import { wardCallName } from '@/utils/connection/connectionView';
 import styles from './WardSelectorTabs.module.css';
 
 const cx = classNames.bind(styles);
@@ -11,7 +12,8 @@ export interface WardOption {
   wardId: string;
   wardName: string | null;
   profileImage?: string | null;
-  relation?: string | null;
+  /** 보호자가 부르는 어르신 호칭(예: 엄마). 비었거나 "기타"면 "어르신"으로 보인다. */
+  wardRelation?: string | null;
   badgeCount?: number | null;
 }
 
@@ -47,8 +49,8 @@ export function WardSelectorTabs({
           >
             <UserAvatar imageUrl={ward.profileImage} size="w-30" userName={wardDisplayName(ward.wardName)} />
             <span>{wardDisplayName(ward.wardName)}</span>
-            {/* relation은 "보호자가 어르신에게 누구인지"(예: 딸)라 이름 옆에 두면 "이윤아 = 내 딸"로 거꾸로 읽힌다 - 칩에는 호칭만 둔다 */}
-            <em>어르신</em>
+            {/* relation(보호자가 어르신에게 누구인지, 예: 딸)이 아니라 어르신 호칭을 둔다 - relation을 두면 "이윤아 = 내 딸"로 거꾸로 읽힌다 */}
+            <em>{wardCallName(ward.wardRelation)}</em>
             {!!ward.badgeCount && <i className={cx('wardTabBadge')}>{ward.badgeCount}</i>}
           </button>
         );

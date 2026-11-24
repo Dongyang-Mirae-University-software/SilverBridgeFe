@@ -16,6 +16,7 @@ import { EmptyState, getConnectionData } from '@/components/connections/Connecti
 import {
   getAgeFromBirthDate,
   getConnectionActionErrorMessage,
+  wardCallName,
 } from '@/utils/connection/connectionView';
 import { formatPhoneNumber } from '@/utils/format/phone';
 import { GuardianPendingRequestCard, useGuardianPendingRequests } from './GuardianConnectionRequestHistory';
@@ -34,7 +35,8 @@ function formatBirthDate(value?: string | null) {
 function getWardSubtitle(connection: IConnectionItem) {
   const age = getAgeFromBirthDate(connection.partnerBirthDate);
   const relation = connection.relation?.trim();
-  const parts = [age === null ? null : `만 ${age}세`, relation ? `${relation}로 연결됨` : null].filter(Boolean);
+  const showRelation = relation && relation !== '기타';
+  const parts = [age === null ? null : `만 ${age}세`, showRelation ? `${relation}로 연결됨` : null].filter(Boolean);
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 
@@ -169,7 +171,7 @@ export function GuardianWardsListPanel() {
                   <UserAvatar imageUrl={connection.partnerProfileImage} size="w-56" userName={connection.partnerName} />
                   <div className={cx('cardTitle')}>
                     <strong className={cx('cardName')}>
-                      {connection.partnerName} <span className={cx('roleTag')}>어르신</span>
+                      {connection.partnerName} <span className={cx('roleTag')}>{wardCallName(connection.wardRelation)}</span>
                     </strong>
                     {subtitle && <span className={cx('cardSub')}>{subtitle}</span>}
                   </div>

@@ -89,6 +89,14 @@ export function isValidMemberId(value: string) {
   return new RegExp(`^[A-Za-z0-9]{${MEMBER_ID_LENGTH}}$`).test(value);
 }
 
+// 보호자 화면에서 어르신을 부르는 말(2026-11-24). wardRelation은 "어르신이 보호자에게 누구인지"(예: 엄마)이고
+// 기존 연결·관리자 강제 연결은 비어 있다 - 비었거나 "기타"면 "어르신"으로 부른다
+export const WARD_CALL_NAME_FALLBACK = '어르신';
+export function wardCallName(wardRelation: string | null | undefined) {
+  const value = wardRelation?.trim();
+  return value && value !== '기타' ? value : WARD_CALL_NAME_FALLBACK;
+}
+
 // relation은 "보호자가 피보호자에게 누구인지" 한 방향뿐이다(예: 아들).
 // 보호자 화면에서 피보호자 이름 옆에 그대로 붙이면 피보호자가 아들로 읽히므로 "김영희의 아들"로 쓴다
 export function formatRelationToWard(wardName: string | null | undefined, relation: string | null | undefined) {
