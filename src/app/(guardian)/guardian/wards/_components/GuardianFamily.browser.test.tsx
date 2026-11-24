@@ -185,7 +185,8 @@ describe('연결된 가족 (Chrome)', () => {
     );
     const screen = await render(<GuardianWardsListPanel />, { wrapper });
 
-    await expect.element(screen.getByText(/^만 \d+세$/)).toBeInTheDocument();
+    // relation은 보호자가 어르신에게 누구인지라 "아들로 연결됨"으로 나이 뒤에 붙는다
+    await expect.element(screen.getByText(/^만 \d+세 · 아들로 연결됨$/)).toBeInTheDocument();
     await expect.element(screen.getByText('010-9876-5432')).toBeInTheDocument();
     await expect.element(screen.getByText('서울 송파구 올림픽로 456, 102동 1503호')).toBeInTheDocument();
     await expect.element(screen.getByText('1명')).toBeInTheDocument();
@@ -243,7 +244,7 @@ describe('연결된 가족 (Chrome)', () => {
     );
     const screen = await render(<GuardianWardsListPanel />, { wrapper });
     const card = screen.getByRole('listitem').first();
-    await expect.element(card).toMatchTextContent('김영희 님');
+    await expect.element(card).toMatchTextContent('김영희 어르신');
     expect(card.element().querySelector('img')).toBeNull();
     expect(card.element().textContent).toContain('김');
     expect(card.element().textContent).not.toContain('만 ');

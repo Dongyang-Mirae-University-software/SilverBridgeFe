@@ -87,6 +87,18 @@
   overflow-wrap: anywhere;
 }
 
+.roleTag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
 .cardSub {
   color: var(--sb-ink-soft);
   font-size: 14px;

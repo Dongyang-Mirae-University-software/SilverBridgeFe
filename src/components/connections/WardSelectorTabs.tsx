@@ -47,7 +47,8 @@ export function WardSelectorTabs({
           >
             <UserAvatar imageUrl={ward.profileImage} size="w-30" userName={wardDisplayName(ward.wardName)} />
             <span>{wardDisplayName(ward.wardName)}</span>
-            {ward.relation && <em>{ward.relation}</em>}
+            {/* relation은 "보호자가 어르신에게 누구인지"(예: 딸)라 이름 옆에 두면 "이윤아 = 내 딸"로 거꾸로 읽힌다 - 칩에는 호칭만 둔다 */}
+            <em>어르신</em>
             {!!ward.badgeCount && <i className={cx('wardTabBadge')}>{ward.badgeCount}</i>}
           </button>
         );

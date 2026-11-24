@@ -30,9 +30,12 @@ function formatBirthDate(value?: string | null) {
 */
 
 // Claude 디자인 시안: 카드 보조 정보는 만 나이만 보여 준다(성별은 연결 데이터에만 남긴다). 모르면 줄을 숨긴다
+// relation은 보호자(나)가 이 분에게 누구인지라 "딸로 연결됨"으로 읽는다(관리자 강제 연결은 비어 있다)
 function getWardSubtitle(connection: IConnectionItem) {
   const age = getAgeFromBirthDate(connection.partnerBirthDate);
-  return age === null ? null : `만 ${age}세`;
+  const relation = connection.relation?.trim();
+  const parts = [age === null ? null : `만 ${age}세`, relation ? `${relation}로 연결됨` : null].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : null;
 }
 
 // v13 이전의 표 형태 정보 행 보관. 현재는 전화·주소를 아이콘 패널로 보여 준다.
@@ -165,7 +168,9 @@ export function GuardianWardsListPanel() {
                 <div className={cx('cardHead')}>
                   <UserAvatar imageUrl={connection.partnerProfileImage} size="w-56" userName={connection.partnerName} />
                   <div className={cx('cardTitle')}>
-                    <strong className={cx('cardName')}>{connection.partnerName} 님</strong>
+                    <strong className={cx('cardName')}>
+                      {connection.partnerName} <span className={cx('roleTag')}>어르신</span>
+                    </strong>
                     {subtitle && <span className={cx('cardSub')}>{subtitle}</span>}
                   </div>
                 </div>
