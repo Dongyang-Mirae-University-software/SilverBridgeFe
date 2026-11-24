@@ -119,6 +119,7 @@ describe('챗봇 마이크 음성 입력', () => {
   it.each([
     ['NotFoundError', '마이크를 찾지 못했어요. 글로 입력해 주세요.'],
     ['NotReadableError', '다른 앱이 마이크를 쓰고 있어요. 글로 입력해 주세요.'],
+    ['AbortError', '마이크를 켜지 못했어요. 글로 입력해 주세요.'],
   ])('피보호자: 마이크 %s면 그 안내를 보이고(권한 안내 아님) [글자로 쓰기]로 입력창을 열 수 있다 (FE #335 점검 V-1)', async (name, text) => {
     getUserMedia.mockRejectedValue(new DOMException('x', name));
     renderChat(<ChatbotContent variant="ward" />);

@@ -131,7 +131,7 @@ export function useVoiceInput<T = string>(onText: (result: T) => void, options?:
       });
     } catch (error) {
       // 서버는 부르지 않는다. 오류 이름으로 안내를 나눈다(2026-11-23 FE #335 점검 V-1):
-      // 장치 없음(NotFoundError·OverconstrainedError) / 다른 앱이 사용 중·장치 오류(NotReadableError·AbortError) / 그 밖(거부 등) = 권한
+      // 장치 없음(NotFoundError 등) / 다른 앱이 사용 중(NotReadableError 등) / 켜기 실패(AbortError) / 그 밖(거부 등) = 권한 - 이름표는 micOpenErrorMessage
       busyRef.current = false;
       if (mountedRef.current) setNotice(micOpenErrorMessage(error));
       return;
