@@ -398,6 +398,15 @@ export default function PushNotificationListener() {
 
   const addToast = useCallback(
     (toast: PushToast) => {
+      // 안부 말벗 질문 도착은 소리(음성)로도 알린다 - 어르신 대상. 실패해도 토스트엔 영향 없음.
+      if (toast.data?.type === 'COMPANION_PROMPT') {
+        try {
+          const slot = (toast.data?.slot || '').replace(':', '');
+          const src = slot ? '/q-' + slot + '.wav' : '/question-arrived.wav';
+          const audio = new Audio(src + '?t=' + Date.now());
+          audio.play().catch(() => {});
+        } catch {}
+      }
       const dedupeKey = getNotificationDedupeKey(toast.data);
 
       if (dedupeKey) {
