@@ -55,7 +55,7 @@ export function GuardianMedicationContent() {
                     wardId: ward.wardId,
                     wardName: ward.wardName,
                     profileImage: connection?.partnerProfileImage,
-                    relation: connection?.relation,
+                    wardRelation: connection?.wardRelation,
                   };
                 })}
                 selectedWardId={selectedWard?.wardId}

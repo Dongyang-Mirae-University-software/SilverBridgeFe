@@ -5,6 +5,7 @@ import {
   formatMonthDay,
   formatRelationToWard,
   formatRequestedAs,
+  wardCallName,
   formatRetryAfter,
   getAgeFromBirthDate,
   getConnectionActionErrorMessage,
@@ -55,6 +56,14 @@ describe('표시 규칙', () => {
   it('회원 ID는 영문·숫자 6자리, 대소문자는 바꾸지 않는다', () => {
     expect(sanitizeMemberId('aB-3x 9Zq')).toBe('aB3x9Z');
     expect([isValidMemberId('aB3x9Z'), isValidMemberId('aB3x9'), isValidMemberId('가나다라마바')]).toEqual([true, false, false]);
+  });
+
+  it('어르신 호칭은 보호자가 고른 말, 없거나 "기타"면 "어르신"', () => {
+    expect(wardCallName('엄마')).toBe('엄마');
+    expect(wardCallName(' 외할아버지 ')).toBe('외할아버지');
+    expect([wardCallName(null), wardCallName(undefined), wardCallName(''), wardCallName('  '), wardCallName('기타')]).toEqual(
+      Array(5).fill('어르신'),
+    );
   });
 
   it('관계는 보호자 기준 문장으로 - 피보호자가 아들로 읽히지 않게', () => {

@@ -34,7 +34,8 @@ export interface WardOption {
   wardId: string;
   wardName: string;
   profileImage?: string | null;
-  relation?: string | null;
+  /** 보호자가 부르는 어르신 호칭(예: 엄마) - 칩에 보인다, 없으면 "어르신" */
+  wardRelation?: string | null;
 }
 
 // 건수는 불러온 목록을 세지 않고 요약 API 값을 쓴다(페이지·필터와 무관한 전체 기준).

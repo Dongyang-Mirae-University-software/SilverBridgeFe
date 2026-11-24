@@ -18,18 +18,25 @@ const cx = classNames.bind(styles);
 const RELATION_OPTIONS = ['아들', '딸', '며느리', '사위', '손자', '손녀', '배우자', '기타'] as const;
 type RelationOption = (typeof RELATION_OPTIONS)[number];
 
+// 어르신이 나(보호자)에게 누구인지 - 보호자 화면에서 어르신을 이렇게 부른다(2026-11-24 사용자 결정, "기타"는 "어르신")
+const WARD_RELATION_OPTIONS = [
+  '엄마', '아빠', '할머니', '할아버지', '외할머니', '외할아버지', '삼촌', '이모', '고모', '남편', '아내', '기타',
+] as const;
+type WardRelationOption = (typeof WARD_RELATION_OPTIONS)[number];
+
 export function GuardianConnectionRequestForm() {
   const searchParams = useSearchParams();
   const linkedTargetId = searchParams.get('targetId') ?? '';
   const isLinkedTargetId = isValidMemberId(linkedTargetId);
   const [memberId, setMemberId] = useState(() => (isLinkedTargetId ? linkedTargetId : ''));
   const [relation, setRelation] = useState<RelationOption | ''>('');
+  const [wardRelation, setWardRelation] = useState<WardRelationOption | ''>('');
   const [sent, setSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const { mutate, isPending } = useGuardianConnectionRequestMutation();
   const preview = useGuardianConnectionPreview(memberId, isValidMemberId(memberId));
 
-  const canSubmit = isValidMemberId(memberId) && Boolean(relation) && !isPending;
+  const canSubmit = isValidMemberId(memberId) && Boolean(relation) && Boolean(wardRelation) && !isPending;
 
   /* v12 보관: 성공 안내를 2.5초 뒤 자동으로 숨겼다.
   useEffect(() => {
@@ -41,16 +48,17 @@ export function GuardianConnectionRequestForm() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canSubmit || !relation) return;
+    if (!canSubmit || !relation || !wardRelation) return;
     setErrorMessage('');
     setSent(false);
     // 회원 ID는 대소문자를 구분하므로 입력값 그대로 보낸다
     mutate(
-      { relation, targetId: memberId },
+      { relation, wardRelation, targetId: memberId },
       {
         onSuccess: () => {
           setMemberId('');
           setRelation('');
+          setWardRelation('');
           setSent(true);
         },
         onError: error => setErrorMessage(getConnectionRequestErrorMessage(error)),
@@ -97,7 +105,7 @@ export function GuardianConnectionRequestForm() {
       <fieldset className={cx('field', 'relationField')}>
         <legend className={cx('label')}>
           <span className={cx('step')}>2</span>
-          어르신과의 관계
+          나는 어르신의…
         </legend>
         <div className={cx('chips')}>
           {RELATION_OPTIONS.map(option => (
@@ -115,6 +123,33 @@ export function GuardianConnectionRequestForm() {
             </button>
           ))}
         </div>
+      </fieldset>
+
+      {/* 2번과 방향이 반대다 - 내 화면에서 이 분을 부르는 말(예: 이윤아 엄마). 같은 칩 모양으로 이어 붙인다 */}
+      <fieldset className={cx('field', 'relationField')} aria-describedby="ward-relation-help">
+        <legend className={cx('label')}>
+          <span className={cx('step')}>3</span>
+          어르신은 나의…
+        </legend>
+        <div className={cx('chips')}>
+          {WARD_RELATION_OPTIONS.map(option => (
+            <button
+              key={option}
+              className={cx('chip', { selected: wardRelation === option })}
+              type="button"
+              aria-pressed={wardRelation === option}
+              onClick={() => {
+                setWardRelation(option);
+                setSent(false);
+              }}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+        <p id="ward-relation-help" className={cx('help')}>
+          내 화면에서 이 분을 이렇게 불러 드려요. 기타를 고르면 &lsquo;어르신&rsquo;으로 보여요
+        </p>
       </fieldset>
 
       <footer className={cx('footer')}>
