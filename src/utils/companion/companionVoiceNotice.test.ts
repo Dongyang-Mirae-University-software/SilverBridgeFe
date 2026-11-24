@@ -1,7 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
 import { STT_MESSAGES } from '@/service/api/chatSttPolicy';
-import { COMPANION_VOICE_NOTICE, companionVoiceNotice } from './companionVoiceNotice';
+import { COMPANION_VOICE_NOTICE, type CompanionVoiceBlock, companionVoiceNotice } from './companionVoiceNotice';
+
+// 공용 음성 안내마다 말벗 화면에서 기대하는 block(2026-11-24 #338 점검 K-1).
+// 공용 문구(STT_MESSAGES)에 키를 더하면 이 표가 타입 오류로 먼저 실패한다 - 여기에 block을 정하고,
+// 장치·권한 오류라면 companionVoiceNotice에도 매핑을 더할 것. 빠뜨리면 "글로" 일반 분기로 가 block이 null이 되어
+// [홈으로]·말하기 버튼 처리가 조용히 사라진다(#338이 micOpenFailed에 매핑을 손으로 더한 이유).
+const EXPECTED_BLOCK: Record<keyof typeof STT_MESSAGES, CompanionVoiceBlock> = {
+  permission: 'permission',
+  micNotFound: 'device',
+  micInUse: 'device',
+  micOpenFailed: 'device',
+  unsupported: 'unsupported',
+  empty: null,
+  invalid: null,
+  tooLarge: null,
+  busy: null,
+  unavailable: null,
+  disabled: null,
+  generic: null,
+};
 
 describe('말벗 음성 안내 (FE 디자인 점검 D-1)', () => {
   it('마이크 권한 거부는 말벗 문구 + 말하기 버튼 유지(permission)', () => {
@@ -54,4 +73,11 @@ describe('말벗 음성 안내 (FE 디자인 점검 D-1)', () => {
       expect(companionVoiceNotice(notice).message ?? '').not.toContain('글로');
     });
   });
+
+  it.each(Object.entries(EXPECTED_BLOCK) as [keyof typeof STT_MESSAGES, CompanionVoiceBlock][])(
+    '가드: 공용 음성 안내마다 말벗 block이 정해져 있다 - 장치 오류 문구를 새로 만들면 말벗 매핑도 더할 것(빠뜨리면 [홈으로]가 사라진다): %s → %s',
+    (key, block) => {
+      expect(companionVoiceNotice(STT_MESSAGES[key]).block).toBe(block);
+    },
+  );
 });
