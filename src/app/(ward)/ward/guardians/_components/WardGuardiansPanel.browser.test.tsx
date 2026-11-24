@@ -119,7 +119,7 @@ describe('피보호자 내 가족 (Chrome)', () => {
     const screen = await render(<WardGuardiansPanel />, { wrapper });
 
     const list = screen.getByRole('list', { name: '연결된 보호자' });
-    await expect.element(list).toMatchTextContent('박민수 님 (아들)');
+    await expect.element(list).toMatchTextContent('박민수 보호자 (아들)');
     await expect.element(list).toMatchTextContent('010-1234-5678');
     expect(list.element().textContent).not.toContain('2026년 1월 12일');
     expect(list.element().textContent).not.toContain('kP7mQ2');
@@ -184,7 +184,7 @@ describe('피보호자 내 가족 (Chrome)', () => {
     const screen = await render(<WardGuardiansPanel />, { wrapper });
 
     const list = screen.getByRole('list', { name: '연결된 보호자' });
-    await expect.element(list).toMatchTextContent('박민수 님 (아들)');
+    await expect.element(list).toMatchTextContent('박민수 보호자 (아들)');
     expect(list.element().textContent).not.toMatch(/\d/);
     await expect.element(list.getByRole('button', { name: '연결 끊기' })).toBeVisible();
   });

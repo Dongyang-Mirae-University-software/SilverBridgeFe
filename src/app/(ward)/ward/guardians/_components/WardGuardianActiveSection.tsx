@@ -102,7 +102,7 @@ export function WardGuardianActiveSection() {
               <UserAvatar imageUrl={guardian.partnerProfileImage} size="w-72" userName={guardian.partnerName} />
               <div className={cx('guardianInfo')}>
                 <strong className={cx('guardianName')}>
-                  {guardian.partnerName || '이름 확인 전'} 님
+                  {guardian.partnerName || '이름 확인 전'} <span className={cx('roleTag')}>보호자</span>
                   {guardian.relation && <span className={cx('relation')}> ({guardian.relation})</span>}
                 </strong>
                 {phone && <span className={cx('guardianPhone')}>{phone}</span>}

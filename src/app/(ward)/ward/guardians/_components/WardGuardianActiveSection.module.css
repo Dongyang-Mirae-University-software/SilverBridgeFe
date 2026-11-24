@@ -63,6 +63,18 @@
   overflow-wrap: anywhere;
 }
 
+.roleTag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--sb-brand-50);
+  color: var(--sb-ink-soft);
+  font-size: calc(17px * var(--ward-font-scale, 1));
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+  vertical-align: middle;
+}
+
 .relation {
   color: var(--sb-ink-soft);
   font-weight: calc(700 + var(--ward-weight-boost, 0));
