@@ -17,27 +17,52 @@
   padding: 0;
 }
 
-.label {
+.progress {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  padding: 0;
-  color: var(--sb-ink);
-  font-size: 16px;
-  font-weight: 800;
+  gap: 12px;
 }
 
-.step {
-  display: grid;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
+.progressBars {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--sb-line-soft);
+}
+
+.progressBar.done {
   background: var(--sb-brand);
-  color: #fff;
-  font-size: 13px;
+}
+
+.progressText {
+  color: var(--sb-ink-soft);
+  font-size: 14px;
   font-weight: 800;
-  place-items: center;
+  white-space: nowrap;
+}
+
+.title {
+  margin: 0 0 14px;
+  color: var(--sb-ink);
+  font-size: 20px;
+  font-weight: 800;
+  word-break: keep-all;
+}
+
+.title:focus {
+  outline: none;
+}
+
+.title:focus-visible {
+  outline: 2px solid var(--sb-brand);
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
 .idInput {
@@ -79,29 +104,89 @@
   padding: 10px 12px;
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
+/* 한 줄에 하나씩 - 넓은 화면에서는 두 칸으로 */
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
   gap: 8px;
 }
 
-.chip {
-  min-height: 46px;
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  min-width: 0;
+  box-sizing: border-box;
   border: 1px solid var(--sb-line);
   border-radius: 12px;
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
-  font-family: inherit;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
-  padding: 0 18px;
+  padding: 8px 16px;
+  word-break: keep-all;
 }
 
-.chip.selected {
+.choice.selected {
   border: 2px solid var(--sb-brand);
   background: var(--sb-brand-50);
-  color: var(--sb-brand);
+  color: var(--sb-brand-text);
+  padding: 7px 15px;
+}
+
+.choice:has(.choiceInput:focus-visible) {
+  outline: 2px solid var(--sb-brand);
+  outline-offset: 2px;
+}
+
+.choiceInput {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--sb-brand);
+}
+
+.preview {
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
+  padding: 14px 16px;
+}
+
+.previewTitle {
+  margin: 0 0 8px;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.previewList {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.previewList div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.previewList dt {
+  min-width: 80px;
+  color: var(--sb-ink-soft);
+  font-size: 14px;
+}
+
+.previewList dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 16px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .footer {
@@ -111,6 +196,26 @@
   gap: 14px;
   border-top: 1px solid var(--sb-line-soft);
   padding-top: 18px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.secondaryButton {
+  min-height: 52px;
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  padding: 0 22px;
 }
 
 .hint {
@@ -144,14 +249,22 @@
   opacity: 0.45;
 }
 
-.errorMessage {
-  margin: -6px 0 0;
+.errorBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   border-radius: 10px;
   background: var(--sb-danger-soft);
+  padding: 12px 14px;
+}
+
+.errorMessage {
+  flex: 1 1 200px;
+  margin: 0;
   color: var(--sb-danger);
   font-size: 15px;
   font-weight: 700;
-  padding: 12px 14px;
   word-break: keep-all;
 }
 
@@ -160,7 +273,15 @@
     padding: 20px 18px;
   }
 
-  .submitButton {
+  .actions {
     width: 100%;
+  }
+
+  .actions > * {
+    flex: 1;
+  }
+
+  .submitButton {
+    flex: 2;
   }
 }
