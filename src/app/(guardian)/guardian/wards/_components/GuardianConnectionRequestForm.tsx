@@ -58,14 +58,39 @@ const NOT_CHOSEN = '(고르면 보여요)';
 // 단계를 브라우저 기록에 남긴다(2026-11-25 R-1) - 휴대폰 뒤로 가기가 페이지를 떠나지 않고 이전 질문으로 가게.
 // 주소(?step=)에는 담지 않는다: 새로고침하면 고른 값 없이 3단계가 열린다. 기존 기록(Next 내부 값)은 그대로 둔다
 const HISTORY_STEP_KEY = 'connectionStep';
+// 깊이 = 처음(1단계) 기록에서 몇 칸 왔는지, 회차 = 화면을 열 때마다 새로 만드는 값(2026-11-25 H-1).
+// 화면이 새로 열리면(새로고침·다른 화면에서 돌아옴) 그 앞에 지난 회차의 단계 기록이 남는다 - 깊이만큼 되감아
+// 뒤로 가기가 헛돌지 않게 한다. 깊이는 1단계 0, 2단계 1, 3단계·완료 2(완료는 3단계 기록을 덮어쓴다)
+const HISTORY_DEPTH_KEY = 'connectionDepth';
+const HISTORY_MOUNT_KEY = 'connectionMount';
+const MAX_HISTORY_DEPTH = 2;
+const STEP_DEPTH: Record<Step, number> = { 1: 0, 2: 1, 3: 2, done: 2 };
 
-function readHistoryStep(): Step | null {
-  const value = (window.history.state as Record<string, unknown> | null)?.[HISTORY_STEP_KEY];
-  return value === 1 || value === 2 || value === 3 || value === 'done' ? value : null;
+interface HistoryEntry {
+  step: Step | null;
+  depth: number | null; // 믿을 수 없으면(없음·범위 밖) null - 그때는 되감지 않는다
+  mount: string | null;
 }
 
-function writeHistoryStep(step: Step, mode: 'push' | 'replace') {
-  const state = { ...((window.history.state as Record<string, unknown> | null) ?? {}), [HISTORY_STEP_KEY]: step };
+function readHistoryEntry(): HistoryEntry {
+  const state = window.history.state as Record<string, unknown> | null;
+  const step = state?.[HISTORY_STEP_KEY];
+  const depth = state?.[HISTORY_DEPTH_KEY];
+  const mount = state?.[HISTORY_MOUNT_KEY];
+  return {
+    step: step === 1 || step === 2 || step === 3 || step === 'done' ? step : null,
+    depth: typeof depth === 'number' && Number.isInteger(depth) && depth >= 0 && depth <= MAX_HISTORY_DEPTH ? depth : null,
+    mount: typeof mount === 'string' ? mount : null,
+  };
+}
+
+function writeHistoryStep(step: Step, mount: string, mode: 'push' | 'replace') {
+  const state = {
+    ...((window.history.state as Record<string, unknown> | null) ?? {}),
+    [HISTORY_STEP_KEY]: step,
+    [HISTORY_DEPTH_KEY]: STEP_DEPTH[step],
+    [HISTORY_MOUNT_KEY]: mount,
+  };
   if (mode === 'push') window.history.pushState(state, '');
   else window.history.replaceState(state, '');
 }
@@ -132,8 +157,14 @@ export function GuardianConnectionRequestForm() {
   const previewCheck = memberIdValid && preview.isError ? getPreviewCheck(preview.error) : null;
   const idBlocked = previewCheck?.kind === 'blocked';
 
+  // 확인 중에 [다음]을 눌렀는데 결과가 늦게 "요청할 수 없음"으로 온 경우(H-2) - 2·3단계에서 바로 알리고 보내기를 막는다
+  const lateBlocked = (step === 2 || step === 3) && idBlocked;
+
   const canGoNext = step === 1 ? memberIdValid && !idBlocked : step === 2 ? Boolean(wardRelation) : false;
-  const canSubmit = memberIdValid && Boolean(wardRelation) && Boolean(relation) && !isPending;
+  const canSubmit = memberIdValid && !idBlocked && Boolean(wardRelation) && Boolean(relation) && !isPending;
+
+  // 이 화면을 연 회차(기록에 남겨 지난 회차의 기록과 구분한다, H-1)
+  const [mountId] = useState(() => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`);
 
   // 화면만 옮긴다(기록은 부르는 쪽이 정한다)
   const showStep = (next: Step) => {
@@ -145,7 +176,7 @@ export function GuardianConnectionRequestForm() {
 
   // 앞으로 가기 = 기록을 하나 더한다
   const moveTo = (next: Step) => {
-    writeHistoryStep(next, 'push');
+    writeHistoryStep(next, mountId, 'push');
     showStep(next);
   };
 
@@ -155,39 +186,72 @@ export function GuardianConnectionRequestForm() {
     latest.current = { step, memberIdValid, idBlocked, wardRelation, sentTo };
   });
 
+  // 지금 기록이 이 회차가 남긴 그 단계인가 - 그래야 깊이를 믿고 기록 사이를 오갈 수 있다
+  const isOwnEntry = (expected: Step) => {
+    const entry = readHistoryEntry();
+    return entry.step === expected && entry.mount === mountId && entry.depth === STEP_DEPTH[expected];
+  };
+
   useEffect(() => {
-    // 처음 열 때 지금 기록을 1단계로 표시한다 - 2단계에서 뒤로 가면 여기로 온다
-    writeHistoryStep(1, 'replace');
+    // 처음 열 때: 지난 회차의 2단계 이상 기록 위라면(새로고침·다른 화면에서 돌아옴) 그 회차의 처음 기록까지 되감는다.
+    // 되감지 않으면 그 앞의 단계 기록이 남아 뒤로 가기가 헛돈다(H-1). 깊이를 믿을 수 없으면 지금 기록만 1단계로 표시한다
+    const start = readHistoryEntry();
+    if (start.step !== null && start.mount !== mountId && start.depth !== null && start.depth > 0) {
+      window.history.go(-start.depth);
+    } else {
+      writeHistoryStep(1, mountId, 'replace');
+    }
 
     const onPopState = () => {
-      const wanted = readHistoryStep();
-      if (wanted === null) return; // 이 화면이 남긴 기록이 아니다
+      const entry = readHistoryEntry();
+      if (entry.step === null) return; // 이 화면이 남긴 기록이 아니다
       const now = latest.current;
       // 완료 화면을 떠나면 보낸 요청은 끝난 일이다 - 새로 시작한다(값은 보낼 때 이미 비웠다)
-      const leavingDone = now.step === 'done' && wanted !== 'done';
+      const leavingDone = now.step === 'done' && entry.step !== 'done';
       if (leavingDone) setSentTo('');
-      // 필요한 값이 없는 단계로는 가지 않는다(앞으로 가기로 다시 들어온 경우 등) - 갈 수 있는 데까지만
-      let next: Step = wanted;
-      if (next === 'done') next = !leavingDone && now.sentTo ? 'done' : 1;
+
+      // 지난 회차의 기록: 2단계 이상이면 그 회차의 처음 기록까지 더 간다(되감기·앞으로 가기를 무름),
+      // 처음 기록(또는 깊이를 모르는 옛 기록)이면 이 회차의 1단계로 삼는다
+      if (entry.mount !== mountId) {
+        if (entry.depth !== null && entry.depth > 0) {
+          window.history.go(-entry.depth);
+          return;
+        }
+        writeHistoryStep(1, mountId, 'replace');
+        if (now.step !== 1) showStep(1);
+        return;
+      }
+
+      // 이 회차의 기록: 필요한 값이 없는 단계로는 가지 않는다 - 갈 수 있는 단계의 기록까지 실제로 옮겨 가서
+      // 화면이 그대로인 뒤로 가기가 남지 않게 한다(중간 기록에서는 화면을 바꾸지 않는다)
+      let next: Step = entry.step;
+      if (next === 'done' && (leavingDone || !now.sentTo)) next = 1;
       if ((next === 2 || next === 3) && (!now.memberIdValid || now.idBlocked)) next = 1;
       if (next === 3 && !now.wardRelation) next = 2;
-      if (next !== wanted) writeHistoryStep(next, 'replace');
-      showStep(next);
+      if (next !== entry.step) {
+        const move = STEP_DEPTH[next] - (entry.depth ?? STEP_DEPTH[entry.step]);
+        if (move < 0) {
+          window.history.go(move);
+          return;
+        }
+        writeHistoryStep(next, mountId, 'replace');
+      }
+      if (next !== now.step) showStep(next);
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, []);
+  }, [mountId]); // mountId는 바뀌지 않는다 - 처음 한 번만 돈다
 
   // [이전] = 브라우저 뒤로 가기와 똑같이(기록과 화면이 어긋나지 않게)
   const goBack = () => {
     if (step === 1 || step === 'done') return;
-    if (readHistoryStep() === step) window.history.back();
+    if (isOwnEntry(step)) window.history.back();
     else showStep((step - 1) as QuestionStep);
   };
 
   // [회원 ID 바꾸기] - 쌓인 단계만큼 되돌아가 1단계로(뒤로 가기를 또 누르면 페이지를 떠난다)
   const backToIdStep = () => {
-    if (step !== 1 && step !== 'done' && readHistoryStep() === step) window.history.go(1 - step);
+    if (step !== 1 && step !== 'done' && isOwnEntry(step)) window.history.go(1 - step);
     else moveTo(1);
   };
 
@@ -206,7 +270,7 @@ export function GuardianConnectionRequestForm() {
           setRelation('');
           setSentTo(requestedWard);
           // 3단계 기록을 완료로 바꾼다 - 뒤로 가기로 보낸 요청의 3단계가 다시 열리지 않게
-          writeHistoryStep('done', 'replace');
+          writeHistoryStep('done', mountId, 'replace');
           showStep('done');
         },
         onError: error => {
@@ -226,9 +290,14 @@ export function GuardianConnectionRequestForm() {
   };
 
   // 다른 어르신을 처음부터 - 값은 보내기 성공 때 이미 비웠다(?targetId= 링크의 ID도 다시 채우지 않는다)
+  // 완료 기록(깊이 2)에서 1단계 기록까지 되감는다 - 덮어쓰기만 하면 그 앞의 1·2단계 기록이 남아 뒤로 가기가 헛돈다(H-1)
   const startOver = () => {
     setSentTo('');
-    writeHistoryStep(1, 'replace');
+    if (isOwnEntry('done')) {
+      window.history.go(-STEP_DEPTH.done);
+      return;
+    }
+    writeHistoryStep(1, mountId, 'replace');
     showStep(1);
   };
 
@@ -363,10 +432,11 @@ export function GuardianConnectionRequestForm() {
         </section>
       )}
 
-      {errorMessage && (
+      {/* 보낸 뒤 서버 오류가 먼저, 없으면 늦게 온 확인 결과(H-2) */}
+      {(errorMessage || lateBlocked) && (
         <div className={cx('errorBox')} role="alert">
-          <p className={cx('errorMessage')}>{errorMessage}</p>
-          {isTargetError && (
+          <p className={cx('errorMessage')}>{errorMessage || previewCheck?.message}</p>
+          {(isTargetError || lateBlocked) && (
             <button className={cx('secondaryButton')} type="button" onClick={backToIdStep}>
               회원 ID 바꾸기
             </button>

@@ -93,6 +93,8 @@ function expectNoHorizontalScroll() {
 }
 
 beforeEach(() => {
+  // 테스트는 한 페이지에서 차례로 돈다 - 앞 테스트의 단계 기록 위에서 폼이 열리면 되감기(H-1)가 일어나므로 빈 기록에서 시작한다
+  window.history.pushState({ testBoundary: true }, '');
   nav.query = '';
   Object.values(api).forEach(mock => mock.mockReset());
   api.getGuardianConnectionRequests.mockResolvedValue(ok([]));
@@ -407,6 +409,132 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
       await expect.element(screen.getByRole('radio', { name: '손녀', exact: true })).toBeChecked();
     });
 
+    describe('화면이 새로 열려도 뒤로 가기가 헛돌지 않는다 (H-1)', () => {
+      const pageMark = () => (window.history.state as Record<string, unknown> | null)?.mark;
+
+      // 이전 페이지 → 이 화면(기록을 남긴 뒤) → 새로 열림(새로고침·다른 화면에서 돌아옴) → 뒤로 몇 번에 이전 페이지인가
+      async function backsToPreviousPage() {
+        for (let count = 1; count <= 5; count++) {
+          window.history.back();
+          await new Promise(resolve => setTimeout(resolve, 250));
+          if (pageMark() === 'previous') return count;
+        }
+        return -1;
+      }
+
+      async function openFresh() {
+        const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+        // 되감기가 끝나 지금 기록이 이 회차의 1단계가 될 때까지
+        await expect.poll(() => (window.history.state as Record<string, unknown>)?.connectionDepth).toBe(0);
+        await expect.poll(historyStep).toBe(1);
+        return screen;
+      }
+
+      it.each([
+        ['3단계', 3],
+        ['2단계', 2],
+      ])('%s에서 새로 열리면 1단계로 시작하고 뒤로 1번에 이전 페이지로 간다', async (_, leaveAt) => {
+        window.history.pushState({ mark: 'previous' }, '');
+        window.history.pushState({}, '');
+        const first = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await fillId(first, 'aB3x9Z');
+        await next(first).click();
+        if (leaveAt === 3) {
+          await first.getByRole('radio', { name: '엄마', exact: true }).click();
+          await next(first).click();
+        }
+        await expect.poll(historyStep).toBe(leaveAt);
+        await first.unmount();
+
+        const screen = await openFresh();
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+        await expect.element(title(screen)).not.toHaveFocus();
+        expect(await backsToPreviousPage()).toBe(1);
+      });
+
+      it('새로 열린 뒤 ID를 넣고 앞으로 가도 지난 회차의 단계 기록은 열리지 않는다', async () => {
+        window.history.pushState({ mark: 'previous' }, '');
+        window.history.pushState({}, '');
+        const first = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await goToLastStep(first);
+        await first.unmount();
+
+        const screen = await openFresh();
+        await fillId(screen, 'aB3x9Z');
+        await expect.element(next(screen)).toBeEnabled();
+        // 앞으로 가기에 남은 지난 회차의 2단계 기록 - 값이 있어도 열지 않고 되돌아온다
+        window.history.forward();
+        await new Promise(resolve => setTimeout(resolve, 400));
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+        expect(historyStep()).toBe(1);
+        // 이 회차의 2단계로는 [다음]으로 가고, [이전]·뒤로 가기는 기록과 맞게 움직인다
+        await next(screen).click();
+        await back(screen).click();
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+        expect(await backsToPreviousPage()).toBe(1);
+      });
+
+      it('완료 뒤 새로 열려도(연결된 가족 보기 → 뒤로) 뒤로 1번에 이전 페이지로 간다', async () => {
+        api.requestWardConnection.mockResolvedValue(ok(null));
+        window.history.pushState({ mark: 'previous' }, '');
+        window.history.pushState({}, '');
+        const first = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await goToLastStep(first);
+        await send(first).click();
+        await expect.element(title(first)).toHaveTextContent('연결 요청을 보냈어요');
+        await first.unmount();
+
+        await openFresh();
+        expect(await backsToPreviousPage()).toBe(1);
+      });
+
+      it('보통 경우는 그대로 3→2→1→이전 페이지다', async () => {
+        window.history.pushState({ mark: 'previous' }, '');
+        window.history.pushState({}, '');
+        const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await goToLastStep(screen);
+        expect(await backsToPreviousPage()).toBe(3);
+      });
+
+      it('[다른 어르신 등록하기] 뒤에도 뒤로 1번에 이전 페이지로 간다', async () => {
+        api.requestWardConnection.mockResolvedValue(ok(null));
+        window.history.pushState({ mark: 'previous' }, '');
+        window.history.pushState({}, '');
+        const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await goToLastStep(screen);
+        await send(screen).click();
+        await screen.getByRole('button', { name: '다른 어르신 등록하기' }).click();
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+        await expect.poll(historyStep).toBe(1);
+        expect(await backsToPreviousPage()).toBe(1);
+      });
+
+      it('ID를 지우고 앞으로 가면 1단계에 머물고, 뒤로 1번에 이전 페이지로 간다', async () => {
+        window.history.pushState({ mark: 'previous' }, '');
+        window.history.pushState({}, '');
+        const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await fillId(screen, 'aB3x9Z');
+        await next(screen).click();
+        window.history.back();
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+        await userEvent.clear(screen.getByLabelText('어르신의 회원 ID').element() as HTMLInputElement);
+        window.history.forward();
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+        expect(await backsToPreviousPage()).toBe(1);
+      });
+
+      it('깊이·회차가 없는 옛 기록 위에서 열려도 깨지지 않는다(되감지 않고 1단계)', async () => {
+        window.history.pushState({ mark: 'previous' }, '');
+        window.history.pushState({ connectionStep: 3 }, '');
+        const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+        await expect.poll(historyStep).toBe(1);
+        expect(pageMark()).toBeUndefined();
+        expect(await backsToPreviousPage()).toBe(1);
+      });
+    });
+
     it('[이전]은 브라우저 뒤로 가기와 같다 - 기록이 함께 줄어 다시 앞으로 갈 수 있다', async () => {
       const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
       await goToLastStep(screen, 'aB3x9Z', '엄마', '아들');
@@ -691,6 +819,37 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
       await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveValue('aB3x9Z');
       await expect.element(check(screen)).toHaveTextContent('어르신 계정의 회원 ID가 아니에요.');
       await expect.element(next(screen)).toBeDisabled();
+    });
+
+    it('확인 중에 [다음]을 누른 뒤 결과가 늦게 "요청할 수 없음"으로 오면 2·3단계에서 바로 알리고 보내기를 막는다 (H-2)', async () => {
+      let reject!: (error: unknown) => void;
+      api.previewWardConnection.mockReturnValue(new Promise((_, r) => (reject = r)));
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await fillId(screen, 'aB3x9Z');
+      await next(screen).click();
+      await expect.element(title(screen)).toHaveTextContent('어르신을 뭐라고 부르세요?');
+      expect(screen.getByRole('alert').query()).toBeNull();
+
+      reject(apiError(404, 'USER_NOT_FOUND'));
+      await expect.element(screen.getByRole('alert')).toMatchTextContent('이 회원 ID로 가입한 분이 없어요');
+      await expect.element(screen.getByRole('button', { name: '회원 ID 바꾸기' })).toBeInTheDocument();
+
+      await screen.getByRole('radio', { name: '엄마', exact: true }).click();
+      await next(screen).click();
+      await screen.getByRole('radio', { name: '아들', exact: true }).click();
+      await expect.element(screen.getByRole('alert')).toBeInTheDocument();
+      await expect.element(send(screen)).toBeDisabled();
+      expect(api.requestWardConnection).not.toHaveBeenCalled();
+
+      // [회원 ID 바꾸기] → 1단계, 다른 ID로 바꾸면 안내가 사라지고 고른 값은 남는다
+      api.previewWardConnection.mockResolvedValue({ targetId: 'Zz9Zz9', maskedName: '박*수' });
+      await screen.getByRole('button', { name: '회원 ID 바꾸기' }).click();
+      await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+      await fillId(screen, 'Zz9Zz9');
+      await expect.element(check(screen)).toHaveTextContent('이 분이 맞나요? 박*수');
+      await next(screen).click();
+      expect(screen.getByRole('alert').query()).toBeNull();
+      await expect.element(screen.getByRole('radio', { name: '엄마', exact: true })).toBeChecked();
     });
 
     it('링크로 들어온 맞는 ID는 바로 "이 분이 맞나요?"를 보인다', async () => {
