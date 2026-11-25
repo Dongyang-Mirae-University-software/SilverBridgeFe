@@ -36,8 +36,9 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-// 가족 등록 링크(?targetId=)를 읽는 폼이라 빈 쿼리를 준다
-vi.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams() }));
+// 가족 등록 링크(?targetId=)를 읽는 폼이라 쿼리를 준다(기본은 빈 쿼리, 링크로 들어온 경우만 채운다)
+const nav = vi.hoisted(() => ({ query: '' }));
+vi.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams(nav.query) }));
 
 vi.mock('@/service/api/guardian/connection', async importOriginal => ({
   ...(await importOriginal<object>()),
@@ -92,6 +93,7 @@ function expectNoHorizontalScroll() {
 }
 
 beforeEach(() => {
+  nav.query = '';
   Object.values(api).forEach(mock => mock.mockReset());
   api.getGuardianConnectionRequests.mockResolvedValue(ok([]));
   api.previewWardConnection.mockResolvedValue({ targetId: 'aB3x9Z', maskedName: '김*희' });
@@ -288,6 +290,90 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
     await expect.element(screen.getByRole('radio', { name: '손녀', exact: true })).toBeChecked();
   });
 
+  describe('브라우저 뒤로 가기 = 이전 질문 (R-1)', () => {
+    const historyStep = () => (window.history.state as Record<string, unknown> | null)?.connectionStep;
+
+    it('단계마다 기록을 남기고, 뒤로 가기는 이전 질문으로 가며 고른 값이 남는다', async () => {
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      expect(historyStep()).toBe(1);
+      await goToLastStep(screen, 'aB3x9Z', '외할머니', '손녀');
+      expect(historyStep()).toBe(3);
+
+      window.history.back();
+      await expect.element(title(screen)).toHaveTextContent('어르신을 뭐라고 부르세요?');
+      await expect.element(title(screen)).toHaveFocus();
+      await expect.element(screen.getByRole('radio', { name: '외할머니', exact: true })).toBeChecked();
+      window.history.back();
+      await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+      await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveValue('aB3x9Z');
+
+      // 앞으로 가기도 단계대로 - 값이 남아 있으니 3단계까지 간다
+      window.history.forward();
+      await expect.element(title(screen)).toHaveTextContent('어르신을 뭐라고 부르세요?');
+      window.history.forward();
+      await expect.element(title(screen)).toHaveTextContent('어르신께 나는 누구인가요?');
+      await expect.element(screen.getByRole('radio', { name: '손녀', exact: true })).toBeChecked();
+    });
+
+    it('[이전]은 브라우저 뒤로 가기와 같다 - 기록이 함께 줄어 다시 앞으로 갈 수 있다', async () => {
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await goToLastStep(screen, 'aB3x9Z', '엄마', '아들');
+
+      await back(screen).click();
+      await expect.element(title(screen)).toHaveTextContent('어르신을 뭐라고 부르세요?');
+      expect(historyStep()).toBe(2);
+      window.history.forward();
+      await expect.element(title(screen)).toHaveTextContent('어르신께 나는 누구인가요?');
+    });
+
+    it('필요한 값이 없는 단계로는 가지 않는다 - 그 기록을 갈 수 있는 단계로 고친다', async () => {
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await fillId(screen, 'aB3x9Z');
+      await next(screen).click();
+      await screen.getByRole('radio', { name: '엄마', exact: true }).click();
+      await next(screen).click();
+      window.history.go(-2);
+      await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+      await userEvent.clear(screen.getByLabelText('어르신의 회원 ID').element() as HTMLInputElement);
+
+      // ID를 지운 채 앞으로 가기 - 2단계 기록이지만 1단계에 머문다
+      window.history.forward();
+      await expect.poll(historyStep).toBe(1);
+      await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+    });
+
+    it('완료 화면에서 뒤로 가면 보낸 요청의 3단계가 아니라 빈 1단계다', async () => {
+      api.requestWardConnection.mockResolvedValue(ok(null));
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await goToLastStep(screen, 'aB3x9Z', '엄마', '아들');
+      await send(screen).click();
+      await expect.element(title(screen)).toHaveTextContent('연결 요청을 보냈어요');
+      expect(historyStep()).toBe('done');
+
+      window.history.back();
+      await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+      await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveValue('');
+      // 다시 앞으로 가도 완료 화면은 열리지 않는다(이미 끝난 일)
+      window.history.forward();
+      await expect.poll(historyStep).toBe(1);
+      await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+    });
+
+    it('[회원 ID 바꾸기]는 쌓인 단계만큼 되돌아가 1단계로 간다', async () => {
+      api.requestWardConnection.mockRejectedValue(apiError(404, 'USER_NOT_FOUND'));
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await goToLastStep(screen);
+      await send(screen).click();
+      await screen.getByRole('button', { name: '회원 ID 바꾸기' }).click();
+
+      await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+      expect(historyStep()).toBe(1);
+      // 새 기록을 쌓지 않고 되돌아갔다 - 앞으로 가기로 2단계 기록이 그대로 있다
+      window.history.forward();
+      await expect.element(title(screen)).toHaveTextContent('어르신을 뭐라고 부르세요?');
+    });
+  });
+
   it('방향이 뒤바뀌지 않는다 - 2단계(호칭) 엄마 + 3단계(나) 아들 → relation 아들·wardRelation 엄마', async () => {
     api.requestWardConnection.mockResolvedValue(ok(null));
     const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
@@ -445,6 +531,83 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
 
     await expect.element(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '회원 ID 바꾸기' }).query()).toBeNull();
+  });
+
+  describe('1단계에서 회원 ID 확인 결과를 보인다 (R-2)', () => {
+    const check = (screen: Screen) => screen.getByTestId('member-id-check');
+
+    it('직접 입력한 ID도 "이 분이 맞나요?"를 보이고 [다음]이 켜진다', async () => {
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await expect.element(check(screen)).toHaveAttribute('aria-live', 'polite');
+      await expect.element(check(screen)).toHaveTextContent('');
+      await fillId(screen, 'aB3x9Z');
+
+      await expect.element(check(screen)).toHaveTextContent('이 분이 맞나요? 김*희');
+      await expect.element(next(screen)).toBeEnabled();
+    });
+
+    it.each([
+      [404, 'USER_NOT_FOUND', '이 회원 ID로 가입한 분이 없어요'],
+      [409, 'CONNECTION_ALREADY_EXISTS', '이미 연결됐거나 수락을 기다리는 중이에요'],
+      [400, 'CANNOT_CONNECT_SELF', '내 회원 ID로는 요청할 수 없어요'],
+    ])('%s %s면 그 문구를 보이고 [다음]·Enter로 넘어가지 않는다', async (status, code, expected) => {
+      api.previewWardConnection.mockRejectedValue(apiError(status, code));
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await fillId(screen, 'aB3x9Z');
+
+      await expect.element(check(screen)).toMatchTextContent(expected);
+      await expect.element(next(screen)).toBeDisabled();
+      await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveAttribute('aria-invalid', 'true');
+      await userEvent.keyboard('{Enter}');
+      await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+
+      // 다른 ID로 바꾸면 다시 확인한다
+      api.previewWardConnection.mockResolvedValue({ targetId: 'Zz9Zz9', maskedName: '박*수' });
+      await fillId(screen, 'Zz9Zz9');
+      await expect.element(check(screen)).toHaveTextContent('이 분이 맞나요? 박*수');
+      await expect.element(next(screen)).toBeEnabled();
+    });
+
+    it('429(확인을 너무 자주 함)는 "연결할 수 없어요"로 안내하지 않고 [다음]을 그대로 둔다', async () => {
+      api.previewWardConnection.mockRejectedValue(apiError(429, 'TOO_MANY_REQUESTS', { retryAfterSeconds: 42 }));
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await fillId(screen, 'aB3x9Z');
+
+      await expect.element(check(screen)).toHaveTextContent(
+        '확인을 너무 여러 번 했어요. 1분 뒤에 다시 확인돼요. 그대로 [다음]을 눌러도 돼요.',
+      );
+      expect(check(screen).element().textContent).not.toContain('연결할 수 없');
+      await expect.element(next(screen)).toBeEnabled();
+      await next(screen).click();
+      await expect.element(title(screen)).toHaveTextContent('어르신을 뭐라고 부르세요?');
+    });
+
+    it('서버 오류는 확인하지 못했다고만 알리고 [다음]을 그대로 둔다', async () => {
+      api.previewWardConnection.mockRejectedValue(apiError(500, 'INTERNAL_SERVER_ERROR'));
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await fillId(screen, 'aB3x9Z');
+
+      await expect.element(check(screen)).toHaveTextContent('지금은 이름을 확인하지 못했어요. 그대로 [다음]을 눌러도 돼요.');
+      await expect.element(next(screen)).toBeEnabled();
+    });
+
+    it('링크(?targetId=)로 들어온 ID도 같게 보이고, 연결할 수 없으면 [다음]을 막는다', async () => {
+      nav.query = 'targetId=aB3x9Z';
+      api.previewWardConnection.mockRejectedValue(apiError(400, 'INVALID_CONNECTION_ROLE'));
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+
+      await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveValue('aB3x9Z');
+      await expect.element(check(screen)).toHaveTextContent('어르신 계정의 회원 ID가 아니에요.');
+      await expect.element(next(screen)).toBeDisabled();
+    });
+
+    it('링크로 들어온 맞는 ID는 바로 "이 분이 맞나요?"를 보인다', async () => {
+      nav.query = 'targetId=aB3x9Z';
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+
+      await expect.element(check(screen)).toHaveTextContent('이 분이 맞나요? 김*희');
+      await expect.element(next(screen)).toBeEnabled();
+    });
   });
 
   it('글자를 두 배로 키워도 가로로 넘치지 않는다', async () => {

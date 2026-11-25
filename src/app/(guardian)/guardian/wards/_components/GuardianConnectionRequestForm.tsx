@@ -12,6 +12,7 @@ import { getUserProfileData } from '@/utils/auth/userProfile';
 import {
   getConnectionErrorCode,
   getConnectionRequestErrorMessage,
+  getPreviewCheck,
   isValidMemberId,
   sanitizeMemberId,
   wardCallName,
@@ -53,6 +54,21 @@ const TARGET_ERROR_CODES = new Set([
 ]);
 
 const NOT_CHOSEN = '(고르면 보여요)';
+
+// 단계를 브라우저 기록에 남긴다(2026-11-25 R-1) - 휴대폰 뒤로 가기가 페이지를 떠나지 않고 이전 질문으로 가게.
+// 주소(?step=)에는 담지 않는다: 새로고침하면 고른 값 없이 3단계가 열린다. 기존 기록(Next 내부 값)은 그대로 둔다
+const HISTORY_STEP_KEY = 'connectionStep';
+
+function readHistoryStep(): Step | null {
+  const value = (window.history.state as Record<string, unknown> | null)?.[HISTORY_STEP_KEY];
+  return value === 1 || value === 2 || value === 3 || value === 'done' ? value : null;
+}
+
+function writeHistoryStep(step: Step, mode: 'push' | 'replace') {
+  const state = { ...((window.history.state as Record<string, unknown> | null) ?? {}), [HISTORY_STEP_KEY]: step };
+  if (mode === 'push') window.history.pushState(state, '');
+  else window.history.replaceState(state, '');
+}
 
 interface ChoiceListProps<T extends string> {
   name: string;
@@ -111,14 +127,67 @@ export function GuardianConnectionRequestForm() {
     titleRef.current?.focus();
   }, [step]);
 
-  const canGoNext = step === 1 ? memberIdValid : step === 2 ? Boolean(wardRelation) : false;
+  // 1단계 회원 ID 확인 결과(R-2) - 직접 입력한 ID도 링크로 받은 ID도 같게 보인다
+  const previewCheck = memberIdValid && preview.isError ? getPreviewCheck(preview.error) : null;
+  const idBlocked = previewCheck?.kind === 'blocked';
+
+  const canGoNext = step === 1 ? memberIdValid && !idBlocked : step === 2 ? Boolean(wardRelation) : false;
   const canSubmit = memberIdValid && Boolean(wardRelation) && Boolean(relation) && !isPending;
 
-  const moveTo = (next: Step) => {
+  // 화면만 옮긴다(기록은 부르는 쪽이 정한다)
+  const showStep = (next: Step) => {
     stepChanged.current = true;
     setErrorMessage('');
     setIsTargetError(false);
     setStep(next);
+  };
+
+  // 앞으로 가기 = 기록을 하나 더한다
+  const moveTo = (next: Step) => {
+    writeHistoryStep(next, 'push');
+    showStep(next);
+  };
+
+  // 뒤로 가기·앞으로 가기가 부를 때 쓸 최신 값(이벤트 처리기는 처음 한 번만 붙인다)
+  const latest = useRef({ step, memberIdValid, idBlocked, wardRelation, sentTo });
+  useEffect(() => {
+    latest.current = { step, memberIdValid, idBlocked, wardRelation, sentTo };
+  });
+
+  useEffect(() => {
+    // 처음 열 때 지금 기록을 1단계로 표시한다 - 2단계에서 뒤로 가면 여기로 온다
+    writeHistoryStep(1, 'replace');
+
+    const onPopState = () => {
+      const wanted = readHistoryStep();
+      if (wanted === null) return; // 이 화면이 남긴 기록이 아니다
+      const now = latest.current;
+      // 완료 화면을 떠나면 보낸 요청은 끝난 일이다 - 새로 시작한다(값은 보낼 때 이미 비웠다)
+      const leavingDone = now.step === 'done' && wanted !== 'done';
+      if (leavingDone) setSentTo('');
+      // 필요한 값이 없는 단계로는 가지 않는다(앞으로 가기로 다시 들어온 경우 등) - 갈 수 있는 데까지만
+      let next: Step = wanted;
+      if (next === 'done') next = !leavingDone && now.sentTo ? 'done' : 1;
+      if ((next === 2 || next === 3) && (!now.memberIdValid || now.idBlocked)) next = 1;
+      if (next === 3 && !now.wardRelation) next = 2;
+      if (next !== wanted) writeHistoryStep(next, 'replace');
+      showStep(next);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  // [이전] = 브라우저 뒤로 가기와 똑같이(기록과 화면이 어긋나지 않게)
+  const goBack = () => {
+    if (step === 1 || step === 'done') return;
+    if (readHistoryStep() === step) window.history.back();
+    else showStep((step - 1) as QuestionStep);
+  };
+
+  // [회원 ID 바꾸기] - 쌓인 단계만큼 되돌아가 1단계로(뒤로 가기를 또 누르면 페이지를 떠난다)
+  const backToIdStep = () => {
+    if (step !== 1 && step !== 'done' && readHistoryStep() === step) window.history.go(1 - step);
+    else moveTo(1);
   };
 
   const send = () => {
@@ -135,7 +204,9 @@ export function GuardianConnectionRequestForm() {
           setWardRelation('');
           setRelation('');
           setSentTo(requestedWard);
-          moveTo('done');
+          // 3단계 기록을 완료로 바꾼다 - 뒤로 가기로 보낸 요청의 3단계가 다시 열리지 않게
+          writeHistoryStep('done', 'replace');
+          showStep('done');
         },
         onError: error => {
           setErrorMessage(getConnectionRequestErrorMessage(error));
@@ -156,7 +227,8 @@ export function GuardianConnectionRequestForm() {
   // 다른 어르신을 처음부터 - 값은 보내기 성공 때 이미 비웠다(?targetId= 링크의 ID도 다시 채우지 않는다)
   const startOver = () => {
     setSentTo('');
-    moveTo(1);
+    writeHistoryStep(1, 'replace');
+    showStep(1);
   };
 
   const isDone = step === 'done';
@@ -226,18 +298,23 @@ export function GuardianConnectionRequestForm() {
               autoCapitalize="off"
               spellCheck={false}
               aria-label="어르신의 회원 ID"
-              aria-describedby="ward-member-id-help"
+              aria-describedby="ward-member-id-help ward-member-id-check"
+              aria-invalid={idBlocked || undefined}
             />
             <p id="ward-member-id-help" className={cx('help')}>
               어르신 화면 메뉴에서 이름(프로필)을 누르면 보이는 회원 ID예요. 휴대폰에서는 메뉴 버튼을 먼저 눌러 주세요 (영문·숫자 6자리, 대소문자 구분)
             </p>
-            {isLinkedTargetId && memberId === linkedTargetId && (
-              <p className={cx('linkNotice')} aria-live="polite">
-                {preview.isLoading && '가족 정보를 확인하고 있어요.'}
-                {preview.data?.maskedName && `이 분이 맞나요? ${preview.data.maskedName}`}
-                {preview.isError && '이 ID는 지금 연결할 수 없어요. 다른 ID를 확인해 주세요.'}
-              </p>
-            )}
+            {/* 확인 결과 - 알림 영역은 늘 그려 둔다(처음부터 있어야 바뀐 문구를 읽어 준다, R-7) */}
+            <p
+              id="ward-member-id-check"
+              className={cx('linkNotice', { noticeBlocked: idBlocked })}
+              aria-live="polite"
+              data-testid="member-id-check"
+            >
+              {memberIdValid && preview.isLoading && '가족 정보를 확인하고 있어요.'}
+              {memberIdValid && preview.data?.maskedName && `이 분이 맞나요? ${preview.data.maskedName}`}
+              {previewCheck?.message}
+            </p>
           </>
         )}
 
@@ -283,7 +360,7 @@ export function GuardianConnectionRequestForm() {
         <div className={cx('errorBox')} role="alert">
           <p className={cx('errorMessage')}>{errorMessage}</p>
           {isTargetError && (
-            <button className={cx('secondaryButton')} type="button" onClick={() => moveTo(1)}>
+            <button className={cx('secondaryButton')} type="button" onClick={backToIdStep}>
               회원 ID 바꾸기
             </button>
           )}
@@ -294,7 +371,7 @@ export function GuardianConnectionRequestForm() {
         {step === 1 && <p className={cx('hint')}>어르신이 수락하면 연결돼요</p>}
         <div className={cx('actions', { doneActions: isDone })}>
           {(step === 2 || step === 3) && (
-            <button className={cx('secondaryButton')} type="button" onClick={() => moveTo((step - 1) as QuestionStep)}>
+            <button className={cx('secondaryButton')} type="button" onClick={goBack}>
               이전
             </button>
           )}

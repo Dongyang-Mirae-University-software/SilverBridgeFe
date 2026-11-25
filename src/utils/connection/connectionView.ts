@@ -10,7 +10,7 @@ interface ConnectionErrorBody {
 
 interface ConnectionErrorLike {
   message?: string;
-  response?: { data?: ConnectionErrorBody; headers?: Record<string, unknown> };
+  response?: { status?: number; data?: ConnectionErrorBody; headers?: Record<string, unknown> };
 }
 
 // 서버 오류 코드별 안내. 분기는 문구가 아니라 code로 한다(BE 문구는 바뀔 수 있다)
@@ -63,6 +63,41 @@ export function getConnectionRequestErrorMessage(error: unknown) {
 
   if (code && REQUEST_ERROR_MESSAGES[code]) return REQUEST_ERROR_MESSAGES[code];
   return getErrorBody(error)?.message || (error as Error | null)?.message || '연결 요청에 실패했어요. 잠시 후 다시 시도해 주세요.';
+}
+
+// 1단계 회원 ID 확인(GET /api/guardian/connection/preview) 결과 - 2026-11-25 R-2
+// blocked: 상대 계정 때문에 이 ID로는 요청할 수 없다 → [다음]을 막는다(같은 검사를 실제 요청도 한다)
+// rateLimited·unknown: 확인만 못 했을 뿐이다 → [다음]은 그대로 둔다(실제 요청 때 서버가 다시 검사한다)
+export type PreviewCheck =
+  | { kind: 'blocked'; message: string }
+  | { kind: 'rateLimited'; message: string }
+  | { kind: 'unknown'; message: string };
+
+// 확인 조회가 내는 상대 계정 오류. 반복 요청 제한(COOLDOWN)은 실제 요청에서만 나와 넣지 않는다
+const PREVIEW_BLOCKING_CODES = new Set([
+  'USER_NOT_FOUND',
+  'INVALID_CONNECTION_ROLE',
+  'CANNOT_CONNECT_SELF',
+  'CONNECTION_TARGET_NOT_ACTIVE',
+  'CONNECTION_ALREADY_EXISTS',
+]);
+
+export function getPreviewCheck(error: unknown): PreviewCheck {
+  const code = getConnectionErrorCode(error);
+  const status = (error as ConnectionErrorLike | null)?.response?.status;
+
+  // 확인 조회는 1분에 10번까지다 - 넘었다고 "연결할 수 없어요"로 안내하면 거짓이 된다
+  if (status === 429 || code === 'TOO_MANY_REQUESTS') {
+    const seconds = getRetryAfterSeconds(error);
+    const wait = seconds ? `${formatRetryAfter(seconds)} 뒤에` : '잠시 뒤에';
+    return { kind: 'rateLimited', message: `확인을 너무 여러 번 했어요. ${wait} 다시 확인돼요. 그대로 [다음]을 눌러도 돼요.` };
+  }
+
+  if (code && PREVIEW_BLOCKING_CODES.has(code)) {
+    return { kind: 'blocked', message: REQUEST_ERROR_MESSAGES[code] };
+  }
+
+  return { kind: 'unknown', message: '지금은 이름을 확인하지 못했어요. 그대로 [다음]을 눌러도 돼요.' };
 }
 
 // 이미 처리된 연결에 대한 조작(취소·수락·거절·해제) - 상대가 먼저 처리한 경우가 대부분이라 사실대로 안내한다

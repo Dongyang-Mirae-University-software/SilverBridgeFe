@@ -10,6 +10,7 @@ import {
   getAgeFromBirthDate,
   getConnectionActionErrorMessage,
   getConnectionRequestErrorMessage,
+  getPreviewCheck,
   isValidMemberId,
   sanitizeMemberId,
 } from './connectionView';
@@ -17,6 +18,36 @@ import {
 function apiError(code: string, extra: Record<string, unknown> = {}, headers: Record<string, unknown> = {}) {
   return Object.assign(new Error('서버 문구'), { response: { data: { code, message: '서버 문구', ...extra }, headers } });
 }
+
+describe('1단계 회원 ID 확인 결과 (R-2)', () => {
+  it.each(['USER_NOT_FOUND', 'INVALID_CONNECTION_ROLE', 'CANNOT_CONNECT_SELF', 'CONNECTION_TARGET_NOT_ACTIVE', 'CONNECTION_ALREADY_EXISTS'])(
+    '%s는 이 ID로 요청할 수 없다(blocked) - 실제 요청과 같은 문구',
+    code => {
+      const result = getPreviewCheck(apiError(code));
+      expect(result.kind).toBe('blocked');
+      expect(result.message).toBe(getConnectionRequestErrorMessage(apiError(code)));
+    },
+  );
+
+  it('429는 확인만 못 한 것 - 남은 시간을 알리고 막지 않는다', () => {
+    const byStatus = Object.assign(new Error('x'), {
+      response: { status: 429, data: { code: 'TOO_MANY_REQUESTS', data: { retryAfterSeconds: 61 } } },
+    });
+    expect(getPreviewCheck(byStatus)).toEqual({
+      kind: 'rateLimited',
+      message: '확인을 너무 여러 번 했어요. 2분 뒤에 다시 확인돼요. 그대로 [다음]을 눌러도 돼요.',
+    });
+    // 상태 코드가 없어도 오류 코드로 알아본다, 남은 시간을 모르면 단정하지 않는다
+    expect(getPreviewCheck(apiError('TOO_MANY_REQUESTS')).message).toContain('잠시 뒤에 다시 확인돼요');
+    expect(getPreviewCheck(Object.assign(new Error('x'), { response: { status: 429 } })).kind).toBe('rateLimited');
+  });
+
+  it('반복 요청 제한·서버 오류·네트워크 오류는 확인하지 못했다고만 알린다', () => {
+    for (const error of [apiError('CONNECTION_REQUEST_COOLDOWN'), apiError('INTERNAL_SERVER_ERROR'), new Error('Network Error'), null]) {
+      expect(getPreviewCheck(error)).toEqual({ kind: 'unknown', message: '지금은 이름을 확인하지 못했어요. 그대로 [다음]을 눌러도 돼요.' });
+    }
+  });
+});
 
 describe('연결 요청 오류 문구 - code로 분기한다', () => {
   it('404·400·409는 코드별 안내', () => {
