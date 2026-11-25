@@ -149,6 +149,54 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
     expectNoHorizontalScroll();
   });
 
+  describe('선택 목록 배치', () => {
+    const rectOf = (screen: Screen, name: string) =>
+      screen.getByRole('radio', { name, exact: true }).element().closest('label')!.getBoundingClientRect();
+    const longestRow = (screen: Screen) =>
+      screen.getByRole('radio', { name: '외할아버지', exact: true }).element().closest('label')!;
+
+    async function openStep2(screen: Screen) {
+      await fillId(screen, 'aB3x9Z');
+      await next(screen).click();
+    }
+
+    it('2단계 보기는 짝이 한 줄에 오는 순서다', async () => {
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await openStep2(screen);
+
+      const names = screen.getByRole('radio').elements().map(el => (el as HTMLInputElement).value);
+      expect(names).toEqual(['엄마', '아빠', '할머니', '할아버지', '외할머니', '외할아버지', '남편', '아내', '삼촌', '이모', '고모', '기타']);
+    });
+
+    it('좁은 화면에서도 두 칸이고 가장 긴 보기(외할아버지)도 칸 안에 들어간다', async () => {
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await openStep2(screen);
+
+      const [mom, dad, grandma] = ['엄마', '아빠', '할머니'].map(name => rectOf(screen, name));
+      expect(dad.top).toBe(mom.top);
+      expect(dad.left).toBeGreaterThan(mom.left);
+      expect(grandma.top).toBeGreaterThan(mom.top);
+      expect(longestRow(screen).scrollWidth).toBeLessThanOrEqual(longestRow(screen).clientWidth);
+      expectNoHorizontalScroll();
+    });
+
+    it('글자를 두 배로 키우면 한 칸으로 돌아가고 넘치지 않는다', async () => {
+      document.documentElement.style.fontSize = '200%';
+      try {
+        const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await openStep2(screen);
+
+        const [mom, dad] = ['엄마', '아빠'].map(name => rectOf(screen, name));
+        expect(dad.top).toBeGreaterThan(mom.top);
+        expect(dad.left).toBe(mom.left);
+        expect(longestRow(screen).scrollWidth).toBeLessThanOrEqual(longestRow(screen).clientWidth);
+        expectNoHorizontalScroll();
+      } finally {
+        document.documentElement.style.fontSize = '';
+      }
+    });
+  });
+
   it('단계를 옮기면 새 질문 제목으로 초점이 간다', async () => {
     const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
     await fillId(screen, 'aB3x9Z');

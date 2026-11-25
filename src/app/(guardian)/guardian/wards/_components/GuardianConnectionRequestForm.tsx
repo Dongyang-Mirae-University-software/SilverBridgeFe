@@ -21,8 +21,9 @@ import styles from './GuardianConnectionRequestForm.module.css';
 const cx = classNames.bind(styles);
 
 // 어르신이 나(보호자)에게 누구인지 - 보호자 화면에서 어르신을 이렇게 부른다(2026-11-24 사용자 결정, "기타"는 "어르신")
+// 두 칸에 놓으므로 짝이 한 줄에 오게 둔다(2026-11-25): 엄마 아빠 / 할머니 할아버지 / 외할머니 외할아버지 / 남편 아내 / 삼촌 이모 / 고모 기타
 const WARD_RELATION_OPTIONS = [
-  '엄마', '아빠', '할머니', '할아버지', '외할머니', '외할아버지', '삼촌', '이모', '고모', '남편', '아내', '기타',
+  '엄마', '아빠', '할머니', '할아버지', '외할머니', '외할아버지', '남편', '아내', '삼촌', '이모', '고모', '기타',
 ] as const;
 type WardRelationOption = (typeof WARD_RELATION_OPTIONS)[number];
 
