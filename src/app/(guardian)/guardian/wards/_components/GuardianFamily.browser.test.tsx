@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
-import { userEvent } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 
 import type { IConnectionItem } from '@/service/interface/connection';
 import { GuardianConnectionRequestForm } from './GuardianConnectionRequestForm';
@@ -147,6 +147,76 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
     await screen.getByRole('radio', { name: '아들', exact: true }).click();
     await expect.element(send(screen)).toBeEnabled();
     expectNoHorizontalScroll();
+  });
+
+  describe('하단 버튼은 낮은 휴대폰 화면에서도 잘리지 않는다 (375×600)', () => {
+    beforeEach(async () => {
+      await page.viewport(375, 600);
+      window.scrollTo(0, 0);
+    });
+    afterEach(async () => {
+      document.documentElement.style.fontSize = '';
+      await page.viewport(375, 812);
+    });
+
+    const fullyVisible = (el: Element) => {
+      const rect = el.getBoundingClientRect();
+      return rect.top >= 0 && rect.bottom <= window.innerHeight;
+    };
+    const scrollToEnd = () => window.scrollTo(0, document.documentElement.scrollHeight);
+
+    async function openStep2(screen: Screen) {
+      await fillId(screen, 'aB3x9Z');
+      await next(screen).click();
+      window.scrollTo(0, 0);
+    }
+
+    it('2단계: 스크롤하지 않아도 [다음]이 다 보이고, 끝까지 내려도 마지막 보기가 버튼 줄에 가려지지 않는다', async () => {
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await openStep2(screen);
+
+      expect(fullyVisible(next(screen).element())).toBe(true);
+      scrollToEnd();
+      const footer = next(screen).element().closest('footer')!;
+      // 붙은 버튼 줄 뒤로 지나가는 목록이 비쳐 보이지 않게 배경이 있어야 한다
+      expect(getComputedStyle(footer).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+      for (const name of ['고모', '기타']) {
+        const row = screen.getByRole('radio', { name, exact: true }).element().closest('label')!;
+        expect(row.getBoundingClientRect().bottom).toBeLessThanOrEqual(footer.getBoundingClientRect().top);
+      }
+    });
+
+    it('2단계 도움말은 없다 - 기타는 미리보기가 "어르신"으로 보여 준다', async () => {
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await openStep2(screen);
+
+      expect(screen.getByText(/기타를 고르면/).query()).toBeNull();
+      await screen.getByRole('radio', { name: '기타', exact: true }).click();
+      await expect.element(screen.getByTestId('preview-my-screen')).toHaveTextContent('김*희 어르신');
+    });
+
+    it('3단계 [연결 요청 보내기]와 완료 화면 두 버튼도 다 보인다', async () => {
+      api.requestWardConnection.mockResolvedValue(ok(null));
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await goToLastStep(screen);
+      window.scrollTo(0, 0);
+
+      expect(fullyVisible(send(screen).element())).toBe(true);
+      await send(screen).click();
+      await expect.element(title(screen)).toHaveTextContent('연결 요청을 보냈어요');
+      window.scrollTo(0, 0);
+      expect(fullyVisible(screen.getByRole('link', { name: '연결된 가족 보기' }).element())).toBe(true);
+      expect(fullyVisible(screen.getByRole('button', { name: '다른 어르신 등록하기' }).element())).toBe(true);
+    });
+
+    it('글자를 두 배로 키워도 [다음]이 다 보인다', async () => {
+      document.documentElement.style.fontSize = '200%';
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await openStep2(screen);
+
+      expect(fullyVisible(next(screen).element())).toBe(true);
+      expectNoHorizontalScroll();
+    });
   });
 
   describe('선택 목록 배치', () => {

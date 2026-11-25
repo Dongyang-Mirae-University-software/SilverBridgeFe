@@ -7,7 +7,8 @@
   border-radius: var(--sb-radius);
   background: #fff;
   box-shadow: var(--sb-shadow-sm);
-  padding: 24px 26px;
+  /* 아래 여백은 버튼 줄(.footer)이 맡는다 - 붙었을 때도 같은 여백을 갖게 */
+  padding: 24px 26px 0;
 }
 
 .field {
@@ -192,13 +193,24 @@
   overflow-wrap: anywhere;
 }
 
+/*
+ * 버튼 줄을 화면 아래에 붙인다 - 휴대폰은 주소창 때문에 보이는 높이가 기기마다 달라 여백만 줄이면 다시 잘린다(2026-11-25).
+ * 화면을 넘치지 않으면(PC) 카드 맨 아래 제자리에 있다. 배경이 없으면 붙었을 때 뒤로 지나가는 목록이 비쳐 보인다.
+ * 양옆은 카드 안쪽 여백만큼 넓혀 붙은 줄이 카드 폭을 꽉 채우게 한다.
+ */
 .footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 14px;
+  margin: 0 -26px;
   border-top: 1px solid var(--sb-line-soft);
-  padding-top: 18px;
+  border-radius: 0 0 var(--sb-radius) var(--sb-radius);
+  background: #fff;
+  padding: 18px 26px calc(24px + env(safe-area-inset-bottom));
 }
 
 .actions {
@@ -323,7 +335,12 @@
 
 @media (max-width: 520px) {
   .card {
-    padding: 20px 18px;
+    padding: 20px 18px 0;
+  }
+
+  .footer {
+    margin: 0 -18px;
+    padding: 14px 18px calc(16px + env(safe-area-inset-bottom));
   }
 
   .actions {
