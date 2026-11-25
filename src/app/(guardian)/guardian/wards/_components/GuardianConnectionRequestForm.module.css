@@ -16,6 +16,8 @@
   margin: 0;
   border: none;
   padding: 0;
+  /* 보기 칸 수를 카드 안 폭으로 정한다(아래 .choices) */
+  container: connection-field / inline-size;
 }
 
 .progress {
@@ -119,13 +121,27 @@
 }
 
 /*
- * 휴대폰(390px, 카드 안쪽 약 318px)에서도 두 칸 - [다음]까지 스크롤하지 않게(2026-11-25).
- * 최소 폭은 rem이라 글자를 키우면(200%) 같이 커져 저절로 한 칸으로 돌아간다. px로 바꾸지 말 것
+ * 칸 수는 1·2·4칸만(2026-11-25 R-4) - 보기는 짝(엄마|아빠, 남편|아내, 아들|딸…)으로 놓여 홀수 칸이면 짝이 줄에서 갈린다.
+ * auto-fill로 되돌리지 말 것: PC(카드 안 1170px)에서 7칸, 작은 태블릿(448~599px)에서 3칸이 됐다.
+ * 한 칸 최소 9rem(외할아버지가 들어가는 폭) 기준. 휴대폰(375px, 안 301px)은 두 칸이라 [다음]까지 스크롤하지 않는다.
+ * 기준이 rem이라 글자를 키우면(200%) 같이 커져 저절로 한 칸으로 돌아간다. px로 바꾸지 말 것
  */
 .choices {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+}
+
+@container connection-field (min-width: calc(18rem + 8px)) {
+  .choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container connection-field (min-width: calc(36rem + 24px)) {
+  .choices {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .choice {
@@ -204,6 +220,12 @@
   font-size: 16px;
   font-weight: 800;
   overflow-wrap: anywhere;
+}
+
+/* 내 이름을 못 불러왔을 때의 자리 표시 "(내 이름)" - 실제 이름이 아님을 흐리게 */
+.namePlaceholder {
+  color: var(--sb-ink-mute);
+  font-weight: 700;
 }
 
 /*

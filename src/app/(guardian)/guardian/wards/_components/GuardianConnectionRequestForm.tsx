@@ -117,7 +117,8 @@ export function GuardianConnectionRequestForm() {
   const preview = useGuardianConnectionPreview(memberId, memberIdValid);
   // 보호자 화면 레이아웃이 이미 불러 둔 내 정보를 쓴다(새 호출 없음)
   const { data: profileResponse } = useQuery(myProfileQueryOptions);
-  const myName = getUserProfileData(profileResponse)?.name?.trim() || '나';
+  // 못 불러오면 비워 두고 미리보기에 "(내 이름)"을 흐리게 보인다(R-6 - "나 보호자 (아들)"는 어색했다)
+  const myName = getUserProfileData(profileResponse)?.name?.trim() ?? '';
 
   const titleRef = useRef<HTMLHeadingElement>(null);
   const stepChanged = useRef(false);
@@ -237,7 +238,7 @@ export function GuardianConnectionRequestForm() {
   const titleId = `connection-step-${step}-title`;
   const shownName = preview.data?.maskedName;
   const myScreen = wardRelation ? [shownName, wardCallName(wardRelation)].filter(Boolean).join(' ') : NOT_CHOSEN;
-  const wardScreen = `${myName} 보호자 ${relation ? `(${relation})` : NOT_CHOSEN}`;
+  const wardScreenRelation = relation ? `(${relation})` : NOT_CHOSEN;
 
   return (
     <form className={cx('card')} onSubmit={handleSubmit}>
@@ -294,6 +295,8 @@ export function GuardianConnectionRequestForm() {
               placeholder="예) aB3x9Z"
               // maxLength는 두지 않는다 - 붙여 넣은 "aB-3x 9Z"가 정리 전에 잘려 버린다. 길이는 sanitizeMemberId가 자른다
               inputMode="text"
+              // 휴대폰 키보드가 화면 아래 [다음]을 가리므로 키보드 Enter 자리에 "다음"을 띄운다(Enter = [다음], R-5)
+              enterKeyHint="next"
               autoComplete="off"
               autoCapitalize="off"
               spellCheck={false}
@@ -304,7 +307,7 @@ export function GuardianConnectionRequestForm() {
             <p id="ward-member-id-help" className={cx('help')}>
               어르신 화면 메뉴에서 이름(프로필)을 누르면 보이는 회원 ID예요. 휴대폰에서는 메뉴 버튼을 먼저 눌러 주세요 (영문·숫자 6자리, 대소문자 구분)
             </p>
-            {/* 확인 결과 - 알림 영역은 늘 그려 둔다(처음부터 있어야 바뀐 문구를 읽어 준다, R-7) */}
+            {/* 확인 결과 - 알림 영역은 늘 그려 둔다(처음부터 있어야 바뀐 문구를 읽어 준다, R-2) */}
             <p
               id="ward-member-id-check"
               className={cx('linkNotice', { noticeBlocked: idBlocked })}
@@ -343,14 +346,18 @@ export function GuardianConnectionRequestForm() {
       {(step === 2 || step === 3) && (
         <section className={cx('preview')} aria-label="이렇게 보여요">
           <p className={cx('previewTitle')}>이렇게 보여요</p>
-          <dl className={cx('previewList')}>
+          {/* 고를 때마다 바뀐 줄을 읽어 준다(R-7) - 2단계 "기타 = 어르신"은 이 미리보기가 유일한 단서다.
+              2·3단계가 같은 칸을 이어 쓰므로 단계를 옮길 때는 읽지 않는다 */}
+          <dl className={cx('previewList')} aria-live="polite">
             <div>
               <dt>내 화면</dt>
               <dd data-testid="preview-my-screen">{myScreen}</dd>
             </div>
             <div>
               <dt>어르신 화면</dt>
-              <dd data-testid="preview-ward-screen">{wardScreen}</dd>
+              <dd data-testid="preview-ward-screen">
+                {myName || <span className={cx('namePlaceholder')}>(내 이름)</span>} 보호자 {wardScreenRelation}
+              </dd>
             </div>
           </dl>
         </section>

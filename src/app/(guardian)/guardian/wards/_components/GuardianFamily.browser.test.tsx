@@ -252,6 +252,50 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
       expectNoHorizontalScroll();
     });
 
+    // R-4: 칸 수는 1·2·4칸만 - 홀수 칸이면 짝이 줄에서 갈린다
+    async function withViewport(width: number, run: () => Promise<void>) {
+      await page.viewport(width, 800);
+      try {
+        await run();
+      } finally {
+        await page.viewport(375, 812);
+      }
+    }
+
+    const fieldWidth = (screen: Screen) => screen.getByRole('radiogroup').element().parentElement!.clientWidth;
+
+    it('넓은 화면(PC)에서는 네 칸이고 짝이 같은 줄에 온다(7칸이 되지 않는다)', async () => {
+      await withViewport(1280, async () => {
+        const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await openStep2(screen);
+
+        const [mom, dad, grandma, grandpa, outerGrandma, husband, wife] = ['엄마', '아빠', '할머니', '할아버지', '외할머니', '남편', '아내'].map(
+          name => rectOf(screen, name),
+        );
+        expect([dad.top, grandma.top, grandpa.top]).toEqual([mom.top, mom.top, mom.top]);
+        expect(outerGrandma.top).toBeGreaterThan(mom.top);
+        expect(outerGrandma.left).toBe(mom.left);
+        expect(wife.top).toBe(husband.top);
+        expect(wife.left).toBeGreaterThan(husband.left);
+        expectNoHorizontalScroll();
+      });
+    });
+
+    it('중간 폭(작은 태블릿)에서는 세 칸이 아니라 두 칸이다', async () => {
+      await withViewport(560, async () => {
+        const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await openStep2(screen);
+        // 전에는 이 폭(카드 안 448~599px)에서 세 칸이 되어 "할머니"가 엄마·아빠 줄에 붙었다
+        expect(fieldWidth(screen)).toBeGreaterThanOrEqual(448);
+        expect(fieldWidth(screen)).toBeLessThan(600);
+
+        const [mom, dad, grandma] = ['엄마', '아빠', '할머니'].map(name => rectOf(screen, name));
+        expect(dad.top).toBe(mom.top);
+        expect(grandma.top).toBeGreaterThan(mom.top);
+        expect(grandma.left).toBe(mom.left);
+      });
+    });
+
     it('글자를 두 배로 키우면 한 칸으로 돌아가고 넘치지 않는다', async () => {
       document.documentElement.style.fontSize = '200%';
       try {
@@ -267,6 +311,54 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
         document.documentElement.style.fontSize = '';
       }
     });
+  });
+
+  it('회원 ID 입력칸은 휴대폰 키보드 Enter 자리에 "다음"을 띄운다 (R-5)', async () => {
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveAttribute('enterkeyhint', 'next');
+  });
+
+  it('내 이름을 못 불러오면 미리보기는 "나 보호자"가 아니라 "(내 이름) 보호자"다 (R-6)', async () => {
+    userApi.getMyProfile.mockRejectedValue(new Error('불러오기 실패'));
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await fillId(screen, 'aB3x9Z');
+    await next(screen).click();
+
+    const theirs = screen.getByTestId('preview-ward-screen');
+    await expect.element(theirs).toHaveTextContent('(내 이름) 보호자 (고르면 보여요)');
+    expect(theirs.element().textContent).not.toContain('나 보호자');
+  });
+
+  it('미리보기는 고를 때마다 바뀐 줄을 읽어 주는 알림 영역이다 (R-7)', async () => {
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await fillId(screen, 'aB3x9Z');
+    await next(screen).click();
+
+    const mine = screen.getByTestId('preview-my-screen');
+    expect(mine.element().closest('[aria-live]')?.getAttribute('aria-live')).toBe('polite');
+    await screen.getByRole('radio', { name: '기타', exact: true }).click();
+    await expect.element(mine).toHaveTextContent('김*희 어르신');
+    // 3단계도 같은 알림 영역을 이어 쓴다
+    await next(screen).click();
+    expect(screen.getByTestId('preview-ward-screen').element().closest('[aria-live]')?.getAttribute('aria-live')).toBe('polite');
+  });
+
+  it('링크(?targetId=)로 들어와 보낸 뒤 [다른 어르신 등록하기]를 누르면 링크의 ID를 다시 채우지 않는다 (R-8)', async () => {
+    nav.query = 'targetId=aB3x9Z';
+    api.requestWardConnection.mockResolvedValue(ok(null));
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveValue('aB3x9Z');
+    await next(screen).click();
+    await screen.getByRole('radio', { name: '엄마', exact: true }).click();
+    await next(screen).click();
+    await screen.getByRole('radio', { name: '아들', exact: true }).click();
+    await send(screen).click();
+    expect(api.requestWardConnection.mock.calls[0]?.[0]).toEqual({ relation: '아들', wardRelation: '엄마', targetId: 'aB3x9Z' });
+
+    await screen.getByRole('button', { name: '다른 어르신 등록하기' }).click();
+    await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+    await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveValue('');
+    await expect.element(next(screen)).toBeDisabled();
   });
 
   it('단계를 옮기면 새 질문 제목으로 초점이 간다', async () => {
