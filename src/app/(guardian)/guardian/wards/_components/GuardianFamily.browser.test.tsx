@@ -17,6 +17,13 @@ const api = vi.hoisted(() => ({
   getGuardianConnectionRequests: vi.fn(),
   cancelGuardianConnectionRequest: vi.fn(),
   disconnectGuardianConnection: vi.fn(),
+  previewWardConnection: vi.fn(),
+}));
+
+const userApi = vi.hoisted(() => ({ getMyProfile: vi.fn() }));
+vi.mock('@/service/api/user/user', async importOriginal => ({
+  ...(await importOriginal<object>()),
+  ...userApi,
 }));
 
 // next/link는 브라우저 테스트에서 process를 찾으므로 일반 a로 바꾼다(가족 등록 타일)
@@ -87,50 +94,136 @@ function expectNoHorizontalScroll() {
 beforeEach(() => {
   Object.values(api).forEach(mock => mock.mockReset());
   api.getGuardianConnectionRequests.mockResolvedValue(ok([]));
+  api.previewWardConnection.mockResolvedValue({ targetId: 'aB3x9Z', maskedName: '김*희' });
+  userApi.getMyProfile.mockReset();
+  userApi.getMyProfile.mockResolvedValue(ok({ name: '이보호' }));
 });
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('가족 등록 폼 (Chrome)', () => {
-  async function fillForm(screen: Awaited<ReturnType<typeof render>>, id: string, relation = '아들', wardRelation = '엄마') {
+describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
+  type Screen = Awaited<ReturnType<typeof render>>;
+  const next = (screen: Screen) => screen.getByRole('button', { name: '다음', exact: true });
+  const back = (screen: Screen) => screen.getByRole('button', { name: '이전', exact: true });
+  const send = (screen: Screen) => screen.getByRole('button', { name: '연결 요청 보내기' });
+  const title = (screen: Screen) => screen.getByRole('heading', { level: 2 });
+
+  async function fillId(screen: Screen, id: string) {
     await userEvent.fill(screen.getByLabelText('어르신의 회원 ID').element() as HTMLInputElement, id);
-    await screen.getByRole('group', { name: '2 나는 어르신의…' }).getByRole('button', { name: relation, exact: true }).click();
-    await screen.getByRole('group', { name: '3 어르신은 나의…' }).getByRole('button', { name: wardRelation, exact: true }).click();
   }
 
-  it('두 관계를 모두 골라야 보낼 수 있고, 어르신 호칭(wardRelation)을 함께 보낸다', async () => {
-    api.requestWardConnection.mockResolvedValue(ok(null));
+  async function goToLastStep(screen: Screen, id = 'aB3x9Z', wardRelation = '엄마', relation = '아들') {
+    await fillId(screen, id);
+    await next(screen).click();
+    await screen.getByRole('radio', { name: wardRelation, exact: true }).click();
+    await next(screen).click();
+    await screen.getByRole('radio', { name: relation, exact: true }).click();
+  }
+
+  it('세 단계를 차례로 묻고, 각 단계는 골라야 [다음]이 켜지며 1단계에는 [이전]이 없다', async () => {
     const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
-    const submit = screen.getByRole('button', { name: '연결 요청 보내기' });
 
-    await userEvent.fill(screen.getByLabelText('어르신의 회원 ID').element() as HTMLInputElement, 'aB3x9Z');
-    await screen.getByRole('group', { name: '2 나는 어르신의…' }).getByRole('button', { name: '딸', exact: true }).click();
-    await expect.element(submit).toBeDisabled();
-    await screen.getByRole('group', { name: '3 어르신은 나의…' }).getByRole('button', { name: '외할머니', exact: true }).click();
-    await expect.element(submit).toBeEnabled();
-    await submit.click();
+    await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+    await expect.element(screen.getByRole('img', { name: '3단계 중 1단계' })).toBeInTheDocument();
+    expect(back(screen).query()).toBeNull();
+    await expect.element(next(screen)).toBeDisabled();
+    await fillId(screen, 'aB3x9Z');
+    await expect.element(next(screen)).toBeEnabled();
+    await next(screen).click();
 
-    expect(api.requestWardConnection.mock.calls[0]?.[0]).toEqual({ relation: '딸', wardRelation: '외할머니', targetId: 'aB3x9Z' });
-    // 보낸 뒤에는 두 선택 모두 지운다
-    await expect.element(screen.getByRole('button', { name: '외할머니', exact: true })).toHaveAttribute('aria-pressed', 'false');
+    await expect.element(title(screen)).toHaveTextContent('어르신을 뭐라고 부르세요?');
+    await expect.element(screen.getByRole('img', { name: '3단계 중 2단계' })).toBeInTheDocument();
+    expect(screen.getByRole('radio').elements()).toHaveLength(12);
+    await expect.element(next(screen)).toBeDisabled();
+    await screen.getByRole('radio', { name: '엄마', exact: true }).click();
+    await next(screen).click();
+
+    await expect.element(title(screen)).toHaveTextContent('어르신께 나는 누구인가요?');
+    expect(screen.getByRole('radio').elements()).toHaveLength(9);
+    expect(next(screen).query()).toBeNull();
+    await expect.element(send(screen)).toBeDisabled();
+    await screen.getByRole('radio', { name: '아들', exact: true }).click();
+    await expect.element(send(screen)).toBeEnabled();
     expectNoHorizontalScroll();
   });
 
-  it('회원 ID는 영문·숫자 6자리만 받고 대소문자 그대로 요청한다', async () => {
+  it('단계를 옮기면 새 질문 제목으로 초점이 간다', async () => {
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await fillId(screen, 'aB3x9Z');
+    await next(screen).click();
+
+    await expect.element(title(screen)).toHaveFocus();
+  });
+
+  it('[이전]으로 돌아가도 고른 값과 회원 ID가 남는다', async () => {
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await goToLastStep(screen, 'aB3x9Z', '외할머니', '손녀');
+
+    await back(screen).click();
+    await expect.element(screen.getByRole('radio', { name: '외할머니', exact: true })).toBeChecked();
+    await back(screen).click();
+    await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveValue('aB3x9Z');
+    await next(screen).click();
+    await next(screen).click();
+    await expect.element(screen.getByRole('radio', { name: '손녀', exact: true })).toBeChecked();
+  });
+
+  it('방향이 뒤바뀌지 않는다 - 2단계(호칭) 엄마 + 3단계(나) 아들 → relation 아들·wardRelation 엄마', async () => {
     api.requestWardConnection.mockResolvedValue(ok(null));
     const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
-    const submit = screen.getByRole('button', { name: '연결 요청 보내기' });
+    await goToLastStep(screen, 'aB3x9Z', '엄마', '아들');
+    await send(screen).click();
 
-    await expect.element(submit).toBeDisabled();
-    await fillForm(screen, 'aB-3x 9Z');
-    await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveValue('aB3x9Z');
-    await expect.element(submit).toBeEnabled();
-    await submit.click();
+    expect(api.requestWardConnection.mock.calls[0]?.[0]).toEqual({ relation: '아들', wardRelation: '엄마', targetId: 'aB3x9Z' });
+  });
+
+  it('조카를 고를 수 있고 그대로 보낸다', async () => {
+    api.requestWardConnection.mockResolvedValue(ok(null));
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await goToLastStep(screen, 'aB3x9Z', '이모', '조카');
+    await send(screen).click();
+
+    expect(api.requestWardConnection.mock.calls[0]?.[0]).toEqual({ relation: '조카', wardRelation: '이모', targetId: 'aB3x9Z' });
+  });
+
+  it('미리보기는 양쪽 화면에 실제로 보일 모습을 보여 준다', async () => {
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    const mine = () => screen.getByTestId('preview-my-screen');
+    const theirs = () => screen.getByTestId('preview-ward-screen');
+    await fillId(screen, 'aB3x9Z');
+    await next(screen).click();
+
+    await expect.element(mine()).toHaveTextContent('(고르면 보여요)');
+    await screen.getByRole('radio', { name: '할머니', exact: true }).click();
+    await expect.element(mine()).toHaveTextContent('김*희 할머니');
+    // 기타는 보호자 화면에서 "어르신"으로 보인다
+    await screen.getByRole('radio', { name: '기타', exact: true }).click();
+    await expect.element(mine()).toHaveTextContent('김*희 어르신');
+    await expect.element(theirs()).toHaveTextContent('이보호 보호자 (고르면 보여요)');
+
+    await next(screen).click();
+    await screen.getByRole('radio', { name: '딸', exact: true }).click();
+    await expect.element(theirs()).toHaveTextContent('이보호 보호자 (딸)');
+    // 어르신 화면은 기타도 그대로 "(기타)"로 보인다
+    await screen.getByRole('radio', { name: '기타', exact: true }).click();
+    await expect.element(theirs()).toHaveTextContent('이보호 보호자 (기타)');
+  });
+
+  it('회원 ID는 영문·숫자 6자리만 받고 대소문자 그대로 요청하며, 보낸 뒤 비우고 1단계로 돌아간다', async () => {
+    api.requestWardConnection.mockResolvedValue(ok(null));
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await goToLastStep(screen, 'aB-3x 9Z');
+    await send(screen).click();
 
     expect(api.requestWardConnection.mock.calls[0]?.[0]).toEqual({ relation: '아들', wardRelation: '엄마', targetId: 'aB3x9Z' });
     await expect.element(screen.getByText('연결 요청을 보냈어요. 어르신이 수락하면 연결돼요')).toBeInTheDocument();
+    await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+    await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveValue('');
+    await fillId(screen, 'aB3x9Z');
+    await next(screen).click();
+    await expect.element(screen.getByRole('radio', { name: '엄마', exact: true })).not.toBeChecked();
     expectNoHorizontalScroll();
   });
 
@@ -139,14 +232,41 @@ describe('가족 등록 폼 (Chrome)', () => {
     [409, 'CONNECTION_ALREADY_EXISTS', undefined, '이미 연결됐거나 수락을 기다리는 중이에요'],
     [400, 'CONNECTION_TARGET_NOT_ACTIVE', undefined, '지금은 연결할 수 없는 계정이에요'],
     [429, 'CONNECTION_REQUEST_COOLDOWN', { retryAfterSeconds: 7260 }, '2시간 1분 뒤에 다시 요청할 수 있어요'],
-  ])('%s %s는 코드별 문구로 안내한다', async (status, code, data, expected) => {
+  ])('%s %s는 코드별 문구로 안내하고 [회원 ID 바꾸기]로 1단계에 가며 관계는 남긴다', async (status, code, data, expected) => {
     api.requestWardConnection.mockRejectedValue(apiError(status, code, data));
     const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
-
-    await fillForm(screen, 'aB3x9Z', '손녀');
-    await screen.getByRole('button', { name: '연결 요청 보내기' }).click();
+    await goToLastStep(screen, 'aB3x9Z', '엄마', '손녀');
+    await send(screen).click();
 
     await expect.element(screen.getByRole('alert')).toMatchTextContent(expected);
+    await screen.getByRole('button', { name: '회원 ID 바꾸기' }).click();
+    await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+    expect(screen.getByRole('alert').query()).toBeNull();
+    await next(screen).click();
+    await expect.element(screen.getByRole('radio', { name: '엄마', exact: true })).toBeChecked();
+    await next(screen).click();
+    await expect.element(screen.getByRole('radio', { name: '손녀', exact: true })).toBeChecked();
+  });
+
+  it('상대 계정과 무관한 실패는 문구만 보이고 [회원 ID 바꾸기]는 없다', async () => {
+    api.requestWardConnection.mockRejectedValue(apiError(500, 'INTERNAL_SERVER_ERROR'));
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await goToLastStep(screen);
+    await send(screen).click();
+
+    await expect.element(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '회원 ID 바꾸기' }).query()).toBeNull();
+  });
+
+  it('글자를 두 배로 키워도 가로로 넘치지 않는다', async () => {
+    document.documentElement.style.fontSize = '200%';
+    try {
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await goToLastStep(screen, 'aB3x9Z', '외할아버지', '배우자');
+      expectNoHorizontalScroll();
+    } finally {
+      document.documentElement.style.fontSize = '';
+    }
   });
 });
 

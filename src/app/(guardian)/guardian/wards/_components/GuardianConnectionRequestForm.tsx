@@ -1,22 +1,23 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { useGuardianConnectionPreview, useGuardianConnectionRequestMutation } from '@/service/query/guardian';
+import { myProfileQueryOptions } from '@/service/query/user';
+import { getUserProfileData } from '@/utils/auth/userProfile';
 import {
+  getConnectionErrorCode,
   getConnectionRequestErrorMessage,
   isValidMemberId,
   sanitizeMemberId,
+  wardCallName,
 } from '@/utils/connection/connectionView';
 import styles from './GuardianConnectionRequestForm.module.css';
 
 const cx = classNames.bind(styles);
-
-// 보호자(나)가 어르신에게 누구인지 - BE relation 예시와 같은 8개
-const RELATION_OPTIONS = ['아들', '딸', '며느리', '사위', '손자', '손녀', '배우자', '기타'] as const;
-type RelationOption = (typeof RELATION_OPTIONS)[number];
 
 // 어르신이 나(보호자)에게 누구인지 - 보호자 화면에서 어르신을 이렇게 부른다(2026-11-24 사용자 결정, "기타"는 "어르신")
 const WARD_RELATION_OPTIONS = [
@@ -24,32 +25,100 @@ const WARD_RELATION_OPTIONS = [
 ] as const;
 type WardRelationOption = (typeof WARD_RELATION_OPTIONS)[number];
 
+// 보호자(나)가 어르신에게 누구인지 - 어르신 화면에 "OOO 보호자 (아들)"로 보인다. 조카는 삼촌·이모·고모 호칭의 짝(2026-11-25)
+const RELATION_OPTIONS = ['아들', '딸', '며느리', '사위', '손자', '손녀', '조카', '배우자', '기타'] as const;
+type RelationOption = (typeof RELATION_OPTIONS)[number];
+
+type Step = 1 | 2 | 3;
+const STEP_COUNT = 3;
+const STEP_TITLES: Record<Step, string> = {
+  1: '어르신의 회원 ID를 알려 주세요',
+  2: '어르신을 뭐라고 부르세요?',
+  3: '어르신께 나는 누구인가요?',
+};
+
+// 상대 계정 때문에 안 되는 경우 - 관계는 두고 회원 ID만 다시 고르게 한다
+const TARGET_ERROR_CODES = new Set([
+  'USER_NOT_FOUND',
+  'INVALID_CONNECTION_ROLE',
+  'CANNOT_CONNECT_SELF',
+  'CONNECTION_TARGET_NOT_ACTIVE',
+  'CONNECTION_ALREADY_EXISTS',
+  'CONNECTION_REQUEST_COOLDOWN',
+]);
+
+const NOT_CHOSEN = '(고르면 보여요)';
+
+interface ChoiceListProps<T extends string> {
+  name: string;
+  labelledBy: string;
+  describedBy?: string;
+  options: readonly T[];
+  value: T | '';
+  onChange: (value: T) => void;
+}
+
+// 한 줄에 하나씩 고르는 목록 - 고르기만 하고 넘어가지 않는다([다음]을 눌러야 넘어간다)
+function ChoiceList<T extends string>({ name, labelledBy, describedBy, options, value, onChange }: ChoiceListProps<T>) {
+  return (
+    <div className={cx('choices')} role="radiogroup" aria-labelledby={labelledBy} aria-describedby={describedBy}>
+      {options.map(option => (
+        <label key={option} className={cx('choice', { selected: value === option })}>
+          <input
+            className={cx('choiceInput')}
+            type="radio"
+            name={name}
+            value={option}
+            checked={value === option}
+            onChange={() => onChange(option)}
+          />
+          <span>{option}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
 export function GuardianConnectionRequestForm() {
   const searchParams = useSearchParams();
   const linkedTargetId = searchParams.get('targetId') ?? '';
   const isLinkedTargetId = isValidMemberId(linkedTargetId);
+  const [step, setStep] = useState<Step>(1);
   const [memberId, setMemberId] = useState(() => (isLinkedTargetId ? linkedTargetId : ''));
-  const [relation, setRelation] = useState<RelationOption | ''>('');
   const [wardRelation, setWardRelation] = useState<WardRelationOption | ''>('');
+  const [relation, setRelation] = useState<RelationOption | ''>('');
   const [sent, setSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isTargetError, setIsTargetError] = useState(false);
   const { mutate, isPending } = useGuardianConnectionRequestMutation();
-  const preview = useGuardianConnectionPreview(memberId, isValidMemberId(memberId));
+  const memberIdValid = isValidMemberId(memberId);
+  const preview = useGuardianConnectionPreview(memberId, memberIdValid);
+  // 보호자 화면 레이아웃이 이미 불러 둔 내 정보를 쓴다(새 호출 없음)
+  const { data: profileResponse } = useQuery(myProfileQueryOptions);
+  const myName = getUserProfileData(profileResponse)?.name?.trim() || '나';
 
-  const canSubmit = isValidMemberId(memberId) && Boolean(relation) && Boolean(wardRelation) && !isPending;
-
-  /* v12 보관: 성공 안내를 2.5초 뒤 자동으로 숨겼다.
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const stepChanged = useRef(false);
   useEffect(() => {
-    if (!sent) return;
-    const timer = setTimeout(() => setSent(false), SENT_MESSAGE_MS);
-    return () => clearTimeout(timer);
-  }, [sent]);
-  */
+    // 처음 열 때는 두고, 단계를 옮길 때만 제목으로 초점을 옮긴다(화면 읽기 프로그램이 새 질문을 읽게)
+    if (!stepChanged.current) return;
+    titleRef.current?.focus();
+  }, [step]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const canGoNext = step === 1 ? memberIdValid : step === 2 ? Boolean(wardRelation) : false;
+  const canSubmit = memberIdValid && Boolean(wardRelation) && Boolean(relation) && !isPending;
+
+  const moveTo = (next: Step) => {
+    stepChanged.current = true;
+    setErrorMessage('');
+    setIsTargetError(false);
+    setStep(next);
+  };
+
+  const send = () => {
     if (!canSubmit || !relation || !wardRelation) return;
     setErrorMessage('');
+    setIsTargetError(false);
     setSent(false);
     // 회원 ID는 대소문자를 구분하므로 입력값 그대로 보낸다
     mutate(
@@ -57,115 +126,166 @@ export function GuardianConnectionRequestForm() {
       {
         onSuccess: () => {
           setMemberId('');
-          setRelation('');
           setWardRelation('');
+          setRelation('');
           setSent(true);
+          moveTo(1);
         },
-        onError: error => setErrorMessage(getConnectionRequestErrorMessage(error)),
+        onError: error => {
+          setErrorMessage(getConnectionRequestErrorMessage(error));
+          setIsTargetError(TARGET_ERROR_CODES.has(getConnectionErrorCode(error) ?? ''));
+        },
       },
     );
   };
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    // 1·2단계에서 Enter는 [다음]과 같다
+    if (step === 3) send();
+    else if (canGoNext) moveTo((step + 1) as Step);
+  };
+
+  const titleId = `connection-step-${step}-title`;
+  const shownName = preview.data?.maskedName;
+  const myScreen = wardRelation ? [shownName, wardCallName(wardRelation)].filter(Boolean).join(' ') : NOT_CHOSEN;
+  const wardScreen = `${myName} 보호자 ${relation ? `(${relation})` : NOT_CHOSEN}`;
+
   return (
     <form className={cx('card')} onSubmit={handleSubmit}>
+      <div className={cx('progress')}>
+        <div className={cx('progressBars')} role="img" aria-label={`${STEP_COUNT}단계 중 ${step}단계`}>
+          {[1, 2, 3].map(index => (
+            <span key={index} className={cx('progressBar', { done: index <= step })} />
+          ))}
+        </div>
+        <span className={cx('progressText')} aria-hidden="true">
+          {step} / {STEP_COUNT}
+        </span>
+      </div>
+
       <div className={cx('field')}>
-        <label className={cx('label')} htmlFor="ward-member-id">
-          <span className={cx('step')}>1</span>
-          어르신의 회원 ID
-        </label>
-        <input
-          id="ward-member-id"
-          className={cx('idInput')}
-          value={memberId}
-          onChange={event => {
-            setMemberId(sanitizeMemberId(event.target.value));
-            setErrorMessage('');
-            setSent(false);
-          }}
-          placeholder="예) aB3x9Z"
-          // maxLength는 두지 않는다 - 붙여 넣은 "aB-3x 9Z"가 정리 전에 잘려 버린다. 길이는 sanitizeMemberId가 자른다
-          inputMode="text"
-          autoComplete="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          aria-describedby="ward-member-id-help"
-        />
-        <p id="ward-member-id-help" className={cx('help')}>
-          어르신 화면 메뉴에서 이름(프로필)을 누르면 보이는 회원 ID예요. 휴대폰에서는 메뉴 버튼을 먼저 눌러 주세요 (영문·숫자 6자리, 대소문자 구분)
-        </p>
-        {isLinkedTargetId && memberId === linkedTargetId && (
-          <p className={cx('linkNotice')} aria-live="polite">
-            {preview.isLoading && '가족 정보를 확인하고 있어요.'}
-            {preview.data?.maskedName && `이 분이 맞나요? ${preview.data.maskedName}`}
-            {preview.isError && '이 ID는 지금 연결할 수 없어요. 다른 ID를 확인해 주세요.'}
-          </p>
+        <h2 id={titleId} ref={titleRef} tabIndex={-1} className={cx('title')}>
+          {STEP_TITLES[step]}
+        </h2>
+
+        {step === 1 && (
+          <>
+            <input
+              id="ward-member-id"
+              className={cx('idInput')}
+              value={memberId}
+              onChange={event => {
+                setMemberId(sanitizeMemberId(event.target.value));
+                setErrorMessage('');
+                setIsTargetError(false);
+                setSent(false);
+              }}
+              placeholder="예) aB3x9Z"
+              // maxLength는 두지 않는다 - 붙여 넣은 "aB-3x 9Z"가 정리 전에 잘려 버린다. 길이는 sanitizeMemberId가 자른다
+              inputMode="text"
+              autoComplete="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              aria-label="어르신의 회원 ID"
+              aria-describedby="ward-member-id-help"
+            />
+            <p id="ward-member-id-help" className={cx('help')}>
+              어르신 화면 메뉴에서 이름(프로필)을 누르면 보이는 회원 ID예요. 휴대폰에서는 메뉴 버튼을 먼저 눌러 주세요 (영문·숫자 6자리, 대소문자 구분)
+            </p>
+            {isLinkedTargetId && memberId === linkedTargetId && (
+              <p className={cx('linkNotice')} aria-live="polite">
+                {preview.isLoading && '가족 정보를 확인하고 있어요.'}
+                {preview.data?.maskedName && `이 분이 맞나요? ${preview.data.maskedName}`}
+                {preview.isError && '이 ID는 지금 연결할 수 없어요. 다른 ID를 확인해 주세요.'}
+              </p>
+            )}
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <ChoiceList
+              name="wardRelation"
+              labelledBy={titleId}
+              describedBy="ward-relation-help"
+              options={WARD_RELATION_OPTIONS}
+              value={wardRelation}
+              onChange={value => {
+                setWardRelation(value);
+                setSent(false);
+              }}
+            />
+            <p id="ward-relation-help" className={cx('help')}>
+              기타를 고르면 &lsquo;어르신&rsquo;으로 보여요
+            </p>
+          </>
+        )}
+
+        {step === 3 && (
+          <ChoiceList
+            name="relation"
+            labelledBy={titleId}
+            options={RELATION_OPTIONS}
+            value={relation}
+            onChange={value => {
+              setRelation(value);
+              setSent(false);
+            }}
+          />
         )}
       </div>
 
-      <fieldset className={cx('field', 'relationField')}>
-        <legend className={cx('label')}>
-          <span className={cx('step')}>2</span>
-          나는 어르신의…
-        </legend>
-        <div className={cx('chips')}>
-          {RELATION_OPTIONS.map(option => (
-            <button
-              key={option}
-              className={cx('chip', { selected: relation === option })}
-              type="button"
-              aria-pressed={relation === option}
-              onClick={() => {
-                setRelation(option);
-                setSent(false);
-              }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      {/* 2번과 방향이 반대다 - 내 화면에서 이 분을 부르는 말(예: 이윤아 엄마). 같은 칩 모양으로 이어 붙인다 */}
-      <fieldset className={cx('field', 'relationField')} aria-describedby="ward-relation-help">
-        <legend className={cx('label')}>
-          <span className={cx('step')}>3</span>
-          어르신은 나의…
-        </legend>
-        <div className={cx('chips')}>
-          {WARD_RELATION_OPTIONS.map(option => (
-            <button
-              key={option}
-              className={cx('chip', { selected: wardRelation === option })}
-              type="button"
-              aria-pressed={wardRelation === option}
-              onClick={() => {
-                setWardRelation(option);
-                setSent(false);
-              }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-        <p id="ward-relation-help" className={cx('help')}>
-          내 화면에서 이 분을 이렇게 불러 드려요. 기타를 고르면 &lsquo;어르신&rsquo;으로 보여요
-        </p>
-      </fieldset>
-
-      <footer className={cx('footer')}>
-        <p className={cx('hint')} aria-live="polite">
-          {sent ? <span className={cx('sentText')}>연결 요청을 보냈어요. 어르신이 수락하면 연결돼요</span> : '어르신이 수락하면 연결돼요'}
-        </p>
-        <button className={cx('submitButton')} type="submit" disabled={!canSubmit}>
-          {isPending ? '요청 보내는 중…' : '연결 요청 보내기'}
-        </button>
-      </footer>
+      {step !== 1 && (
+        <section className={cx('preview')} aria-label="이렇게 보여요">
+          <p className={cx('previewTitle')}>이렇게 보여요</p>
+          <dl className={cx('previewList')}>
+            <div>
+              <dt>내 화면</dt>
+              <dd data-testid="preview-my-screen">{myScreen}</dd>
+            </div>
+            <div>
+              <dt>어르신 화면</dt>
+              <dd data-testid="preview-ward-screen">{wardScreen}</dd>
+            </div>
+          </dl>
+        </section>
+      )}
 
       {errorMessage && (
-        <p className={cx('errorMessage')} role="alert">
-          {errorMessage}
-        </p>
+        <div className={cx('errorBox')} role="alert">
+          <p className={cx('errorMessage')}>{errorMessage}</p>
+          {isTargetError && (
+            <button className={cx('secondaryButton')} type="button" onClick={() => moveTo(1)}>
+              회원 ID 바꾸기
+            </button>
+          )}
+        </div>
       )}
+
+      <footer className={cx('footer')}>
+        {step === 1 && (
+          <p className={cx('hint')} aria-live="polite">
+            {sent ? <span className={cx('sentText')}>연결 요청을 보냈어요. 어르신이 수락하면 연결돼요</span> : '어르신이 수락하면 연결돼요'}
+          </p>
+        )}
+        <div className={cx('actions')}>
+          {step !== 1 && (
+            <button className={cx('secondaryButton')} type="button" onClick={() => moveTo((step - 1) as Step)}>
+              이전
+            </button>
+          )}
+          {step === 3 ? (
+            <button className={cx('submitButton')} type="submit" disabled={!canSubmit}>
+              {isPending ? '요청 보내는 중…' : '연결 요청 보내기'}
+            </button>
+          ) : (
+            <button className={cx('submitButton')} type="submit" disabled={!canGoNext}>
+              다음
+            </button>
+          )}
+        </div>
+      </footer>
     </form>
   );
 }
