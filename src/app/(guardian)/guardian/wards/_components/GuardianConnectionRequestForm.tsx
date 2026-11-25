@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
@@ -29,12 +30,15 @@ type WardRelationOption = (typeof WARD_RELATION_OPTIONS)[number];
 const RELATION_OPTIONS = ['아들', '딸', '며느리', '사위', '손자', '손녀', '조카', '배우자', '기타'] as const;
 type RelationOption = (typeof RELATION_OPTIONS)[number];
 
-type Step = 1 | 2 | 3;
+// 'done' = 보낸 뒤 완료 화면(2026-11-25 - 1단계로 돌아가면 처음부터 다시 하라는 것처럼 보였다)
+type QuestionStep = 1 | 2 | 3;
+type Step = QuestionStep | 'done';
 const STEP_COUNT = 3;
 const STEP_TITLES: Record<Step, string> = {
   1: '어르신의 회원 ID를 알려 주세요',
   2: '어르신을 뭐라고 부르세요?',
   3: '어르신께 나는 누구인가요?',
+  done: '연결 요청을 보냈어요',
 };
 
 // 상대 계정 때문에 안 되는 경우 - 관계는 두고 회원 ID만 다시 고르게 한다
@@ -87,7 +91,8 @@ export function GuardianConnectionRequestForm() {
   const [memberId, setMemberId] = useState(() => (isLinkedTargetId ? linkedTargetId : ''));
   const [wardRelation, setWardRelation] = useState<WardRelationOption | ''>('');
   const [relation, setRelation] = useState<RelationOption | ''>('');
-  const [sent, setSent] = useState(false);
+  // 완료 화면에 보일 "김*희 엄마" - 값을 비운 뒤에도 보여 주려고 보낸 순간에 남겨 둔다
+  const [sentTo, setSentTo] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isTargetError, setIsTargetError] = useState(false);
   const { mutate, isPending } = useGuardianConnectionRequestMutation();
@@ -119,7 +124,7 @@ export function GuardianConnectionRequestForm() {
     if (!canSubmit || !relation || !wardRelation) return;
     setErrorMessage('');
     setIsTargetError(false);
-    setSent(false);
+    const requestedWard = [preview.data?.maskedName, wardCallName(wardRelation)].filter(Boolean).join(' ');
     // 회원 ID는 대소문자를 구분하므로 입력값 그대로 보낸다
     mutate(
       { relation, wardRelation, targetId: memberId },
@@ -128,8 +133,8 @@ export function GuardianConnectionRequestForm() {
           setMemberId('');
           setWardRelation('');
           setRelation('');
-          setSent(true);
-          moveTo(1);
+          setSentTo(requestedWard);
+          moveTo('done');
         },
         onError: error => {
           setErrorMessage(getConnectionRequestErrorMessage(error));
@@ -142,9 +147,19 @@ export function GuardianConnectionRequestForm() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // 1·2단계에서 Enter는 [다음]과 같다
+    if (step === 'done') return;
     if (step === 3) send();
-    else if (canGoNext) moveTo((step + 1) as Step);
+    else if (canGoNext) moveTo((step + 1) as QuestionStep);
   };
+
+  // 다른 어르신을 처음부터 - 값은 보내기 성공 때 이미 비웠다(?targetId= 링크의 ID도 다시 채우지 않는다)
+  const startOver = () => {
+    setSentTo('');
+    moveTo(1);
+  };
+
+  const isDone = step === 'done';
+  const filledBars = isDone ? STEP_COUNT : step;
 
   const titleId = `connection-step-${step}-title`;
   const shownName = preview.data?.maskedName;
@@ -154,20 +169,39 @@ export function GuardianConnectionRequestForm() {
   return (
     <form className={cx('card')} onSubmit={handleSubmit}>
       <div className={cx('progress')}>
-        <div className={cx('progressBars')} role="img" aria-label={`${STEP_COUNT}단계 중 ${step}단계`}>
+        <div
+          className={cx('progressBars')}
+          role="img"
+          aria-label={isDone ? `${STEP_COUNT}단계를 모두 마쳤어요` : `${STEP_COUNT}단계 중 ${step}단계`}
+        >
           {[1, 2, 3].map(index => (
-            <span key={index} className={cx('progressBar', { done: index <= step })} />
+            <span key={index} className={cx('progressBar', { done: index <= filledBars })} />
           ))}
         </div>
         <span className={cx('progressText')} aria-hidden="true">
-          {step} / {STEP_COUNT}
+          {isDone ? '완료' : `${step} / ${STEP_COUNT}`}
         </span>
       </div>
 
       <div className={cx('field')}>
-        <h2 id={titleId} ref={titleRef} tabIndex={-1} className={cx('title')}>
-          {STEP_TITLES[step]}
-        </h2>
+        <div className={cx({ doneTitle: isDone })}>
+          {isDone && (
+            <span className={cx('doneMark')} aria-hidden="true">
+              ✓
+            </span>
+          )}
+          <h2 id={titleId} ref={titleRef} tabIndex={-1} className={cx('title')}>
+            {STEP_TITLES[step]}
+          </h2>
+        </div>
+
+        {isDone && (
+          <div className={cx('doneBody')}>
+            {sentTo && <p className={cx('doneWard')}>{sentTo}</p>}
+            {/* 수락 알림은 보호자 알림 설정에 따라 안 갈 수 있어(CONNECTION_ACCEPTED = SETTINGS_ONLY) 약속하지 않는다 */}
+            <p className={cx('help')}>어르신이 수락하면 연결돼요. 연결된 가족 화면에서 확인할 수 있어요.</p>
+          </div>
+        )}
 
         {step === 1 && (
           <>
@@ -179,7 +213,6 @@ export function GuardianConnectionRequestForm() {
                 setMemberId(sanitizeMemberId(event.target.value));
                 setErrorMessage('');
                 setIsTargetError(false);
-                setSent(false);
               }}
               placeholder="예) aB3x9Z"
               // maxLength는 두지 않는다 - 붙여 넣은 "aB-3x 9Z"가 정리 전에 잘려 버린다. 길이는 sanitizeMemberId가 자른다
@@ -211,10 +244,7 @@ export function GuardianConnectionRequestForm() {
               describedBy="ward-relation-help"
               options={WARD_RELATION_OPTIONS}
               value={wardRelation}
-              onChange={value => {
-                setWardRelation(value);
-                setSent(false);
-              }}
+              onChange={setWardRelation}
             />
             <p id="ward-relation-help" className={cx('help')}>
               기타를 고르면 &lsquo;어르신&rsquo;으로 보여요
@@ -228,15 +258,12 @@ export function GuardianConnectionRequestForm() {
             labelledBy={titleId}
             options={RELATION_OPTIONS}
             value={relation}
-            onChange={value => {
-              setRelation(value);
-              setSent(false);
-            }}
+            onChange={setRelation}
           />
         )}
       </div>
 
-      {step !== 1 && (
+      {(step === 2 || step === 3) && (
         <section className={cx('preview')} aria-label="이렇게 보여요">
           <p className={cx('previewTitle')}>이렇게 보여요</p>
           <dl className={cx('previewList')}>
@@ -264,18 +291,23 @@ export function GuardianConnectionRequestForm() {
       )}
 
       <footer className={cx('footer')}>
-        {step === 1 && (
-          <p className={cx('hint')} aria-live="polite">
-            {sent ? <span className={cx('sentText')}>연결 요청을 보냈어요. 어르신이 수락하면 연결돼요</span> : '어르신이 수락하면 연결돼요'}
-          </p>
-        )}
+        {step === 1 && <p className={cx('hint')}>어르신이 수락하면 연결돼요</p>}
         <div className={cx('actions')}>
-          {step !== 1 && (
-            <button className={cx('secondaryButton')} type="button" onClick={() => moveTo((step - 1) as Step)}>
+          {(step === 2 || step === 3) && (
+            <button className={cx('secondaryButton')} type="button" onClick={() => moveTo((step - 1) as QuestionStep)}>
               이전
             </button>
           )}
-          {step === 3 ? (
+          {isDone ? (
+            <>
+              <button className={cx('secondaryButton')} type="button" onClick={startOver}>
+                다른 어르신 등록하기
+              </button>
+              <Link className={cx('submitButton', 'linkButton')} href="/guardian/wards">
+                연결된 가족 보기
+              </Link>
+            </>
+          ) : step === 3 ? (
             <button className={cx('submitButton')} type="submit" disabled={!canSubmit}>
               {isPending ? '요청 보내는 중…' : '연결 요청 보내기'}
             </button>

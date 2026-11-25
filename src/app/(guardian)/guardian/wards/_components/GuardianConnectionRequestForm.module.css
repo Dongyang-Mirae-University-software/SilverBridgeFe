@@ -226,9 +226,49 @@
   font-size: 14px;
 }
 
-.sentText {
-  color: var(--sb-safe);
+.doneTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.doneTitle .title {
+  margin: 0;
+}
+
+.doneMark {
+  display: grid;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--sb-safe);
+  color: #fff;
+  font-size: 18px;
+  place-items: center;
+}
+
+.doneBody {
+  display: grid;
+  gap: 6px;
+}
+
+.doneWard {
+  margin: 0;
+  color: var(--sb-ink);
+  font-size: 18px;
   font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  text-align: center;
+  text-decoration: none;
 }
 
 .submitButton {
