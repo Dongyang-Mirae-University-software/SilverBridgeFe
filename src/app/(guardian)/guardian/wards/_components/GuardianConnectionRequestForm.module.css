@@ -104,17 +104,20 @@
   padding: 10px 12px;
 }
 
-/* 한 줄에 하나씩 - 넓은 화면에서는 두 칸으로 */
+/*
+ * 휴대폰(390px, 카드 안쪽 약 318px)에서도 두 칸 - [다음]까지 스크롤하지 않게(2026-11-25).
+ * 최소 폭은 rem이라 글자를 키우면(200%) 같이 커져 저절로 한 칸으로 돌아간다. px로 바꾸지 말 것
+ */
 .choices {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
   gap: 8px;
 }
 
 .choice {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-height: 52px;
   min-width: 0;
   box-sizing: border-box;
@@ -125,7 +128,7 @@
   cursor: pointer;
   font-size: 17px;
   font-weight: 700;
-  padding: 8px 16px;
+  padding: 8px 12px;
   word-break: keep-all;
 }
 
@@ -133,7 +136,7 @@
   border: 2px solid var(--sb-brand);
   background: var(--sb-brand-50);
   color: var(--sb-brand-text);
-  padding: 7px 15px;
+  padding: 7px 11px;
 }
 
 .choice:has(.choiceInput:focus-visible) {
