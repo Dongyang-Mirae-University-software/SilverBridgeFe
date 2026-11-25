@@ -84,11 +84,12 @@ function readHistoryEntry(): HistoryEntry {
   };
 }
 
-function writeHistoryStep(step: Step, mount: string, mode: 'push' | 'replace') {
+// depth는 보통 단계로 정해지지만, 완료는 보내는 중에 뒤로 간 경우 3단계가 아닌 기록을 덮어쓰므로 그 기록의 실제 깊이를 넘긴다
+function writeHistoryStep(step: Step, mount: string, mode: 'push' | 'replace', depth: number = STEP_DEPTH[step]) {
   const state = {
     ...((window.history.state as Record<string, unknown> | null) ?? {}),
     [HISTORY_STEP_KEY]: step,
-    [HISTORY_DEPTH_KEY]: STEP_DEPTH[step],
+    [HISTORY_DEPTH_KEY]: depth,
     [HISTORY_MOUNT_KEY]: mount,
   };
   if (mode === 'push') window.history.pushState(state, '');
@@ -192,6 +193,12 @@ export function GuardianConnectionRequestForm() {
     return entry.step === expected && entry.mount === mountId && entry.depth === STEP_DEPTH[expected];
   };
 
+  // 지금 기록의 깊이(이 회차가 남긴 것일 때만) - 완료 기록에 실제 깊이를 남기고 되감는 데 쓴다
+  const ownDepth = () => {
+    const entry = readHistoryEntry();
+    return entry.mount === mountId ? entry.depth : null;
+  };
+
   useEffect(() => {
     // 처음 열 때: 지난 회차의 2단계 이상 기록 위라면(새로고침·다른 화면에서 돌아옴) 그 회차의 처음 기록까지 되감는다.
     // 되감지 않으면 그 앞의 단계 기록이 남아 뒤로 가기가 헛돈다(H-1). 깊이를 믿을 수 없으면 지금 기록만 1단계로 표시한다
@@ -269,8 +276,9 @@ export function GuardianConnectionRequestForm() {
           setWardRelation('');
           setRelation('');
           setSentTo(requestedWard);
-          // 3단계 기록을 완료로 바꾼다 - 뒤로 가기로 보낸 요청의 3단계가 다시 열리지 않게
-          writeHistoryStep('done', mountId, 'replace');
+          // 3단계 기록을 완료로 바꾼다 - 뒤로 가기로 보낸 요청의 3단계가 다시 열리지 않게.
+          // 보내는 중에 뒤로 가서 2단계 기록 위라면 그 깊이(1)를 그대로 둔다 - 2로 적으면 되감을 때 페이지를 떠난다
+          writeHistoryStep('done', mountId, 'replace', ownDepth() ?? STEP_DEPTH.done);
           showStep('done');
         },
         onError: error => {
@@ -293,8 +301,9 @@ export function GuardianConnectionRequestForm() {
   // 완료 기록(깊이 2)에서 1단계 기록까지 되감는다 - 덮어쓰기만 하면 그 앞의 1·2단계 기록이 남아 뒤로 가기가 헛돈다(H-1)
   const startOver = () => {
     setSentTo('');
-    if (isOwnEntry('done')) {
-      window.history.go(-STEP_DEPTH.done);
+    const depth = readHistoryEntry().step === 'done' ? ownDepth() : null;
+    if (depth !== null && depth > 0) {
+      window.history.go(-depth);
       return;
     }
     writeHistoryStep(1, mountId, 'replace');

@@ -488,6 +488,28 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
         expect(await backsToPreviousPage()).toBe(1);
       });
 
+      it('보내는 중에 뒤로 가서 2단계가 된 뒤 성공해도 [다른 어르신 등록하기]는 페이지를 떠나지 않는다', async () => {
+        let resolve!: (value: unknown) => void;
+        api.requestWardConnection.mockReturnValue(new Promise(r => (resolve = r)));
+        window.history.pushState({ mark: 'previous' }, '');
+        window.history.pushState({}, '');
+        const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await goToLastStep(screen);
+        await send(screen).click();
+        window.history.back();
+        await expect.element(title(screen)).toHaveTextContent('어르신을 뭐라고 부르세요?');
+        resolve(ok(null));
+        await expect.element(title(screen)).toHaveTextContent('연결 요청을 보냈어요');
+        // 완료로 덮인 기록은 2단계 자리(깊이 1)다
+        expect((window.history.state as Record<string, unknown>).connectionDepth).toBe(1);
+
+        await screen.getByRole('button', { name: '다른 어르신 등록하기' }).click();
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+        await expect.poll(historyStep).toBe(1);
+        expect(pageMark()).toBeUndefined();
+        expect(await backsToPreviousPage()).toBe(1);
+      });
+
       it('보통 경우는 그대로 3→2→1→이전 페이지다', async () => {
         window.history.pushState({ mark: 'previous' }, '');
         window.history.pushState({}, '');
