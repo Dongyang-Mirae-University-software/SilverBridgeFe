@@ -211,20 +211,81 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
     await expect.element(theirs()).toHaveTextContent('이보호 보호자 (기타)');
   });
 
-  it('회원 ID는 영문·숫자 6자리만 받고 대소문자 그대로 요청하며, 보낸 뒤 비우고 1단계로 돌아간다', async () => {
+  it('회원 ID는 영문·숫자 6자리만 받고 대소문자 그대로 요청한다', async () => {
     api.requestWardConnection.mockResolvedValue(ok(null));
     const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
     await goToLastStep(screen, 'aB-3x 9Z');
     await send(screen).click();
 
     expect(api.requestWardConnection.mock.calls[0]?.[0]).toEqual({ relation: '아들', wardRelation: '엄마', targetId: 'aB3x9Z' });
-    await expect.element(screen.getByText('연결 요청을 보냈어요. 어르신이 수락하면 연결돼요')).toBeInTheDocument();
+  });
+
+  it('보내면 완료 화면을 보여 준다 - 요청한 어르신, 진행 완료, [이전]·미리보기 없음', async () => {
+    api.requestWardConnection.mockResolvedValue(ok(null));
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await goToLastStep(screen, 'aB3x9Z', '엄마', '아들');
+    await send(screen).click();
+
+    await expect.element(title(screen)).toHaveTextContent('연결 요청을 보냈어요');
+    await expect.element(title(screen)).toHaveFocus();
+    await expect.element(screen.getByText('김*희 엄마', { exact: true })).toBeInTheDocument();
+    await expect.element(screen.getByRole('img', { name: '3단계를 모두 마쳤어요' })).toBeInTheDocument();
+    await expect.element(screen.getByText('어르신이 수락하면 연결돼요. 연결된 가족 화면에서 확인할 수 있어요.')).toBeInTheDocument();
+    expect(back(screen).query()).toBeNull();
+    expect(screen.getByTestId('preview-my-screen').query()).toBeNull();
+    expect(screen.getByLabelText('어르신의 회원 ID').query()).toBeNull();
+    await expect.element(screen.getByRole('link', { name: '연결된 가족 보기' })).toHaveAttribute('href', '/guardian/wards');
+    expectNoHorizontalScroll();
+  });
+
+  it('완료 화면의 호칭도 기타면 "어르신", 이름 확인이 안 됐으면 호칭만 보인다', async () => {
+    api.requestWardConnection.mockResolvedValue(ok(null));
+    api.previewWardConnection.mockRejectedValue(new Error('확인 실패'));
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await goToLastStep(screen, 'aB3x9Z', '기타', '아들');
+    await send(screen).click();
+
+    await expect.element(screen.getByText('어르신', { exact: true })).toBeInTheDocument();
+  });
+
+  it('[다른 어르신 등록하기]는 모든 값을 비우고 1단계로 돌아간다', async () => {
+    api.requestWardConnection.mockResolvedValue(ok(null));
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await goToLastStep(screen, 'aB3x9Z', '엄마', '아들');
+    await send(screen).click();
+    await screen.getByRole('button', { name: '다른 어르신 등록하기' }).click();
+
     await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
     await expect.element(screen.getByLabelText('어르신의 회원 ID')).toHaveValue('');
+    await expect.element(screen.getByRole('img', { name: '3단계 중 1단계' })).toBeInTheDocument();
     await fillId(screen, 'aB3x9Z');
     await next(screen).click();
     await expect.element(screen.getByRole('radio', { name: '엄마', exact: true })).not.toBeChecked();
-    expectNoHorizontalScroll();
+  });
+
+  it('실패하면 완료 화면으로 가지 않는다', async () => {
+    api.requestWardConnection.mockRejectedValue(apiError(404, 'USER_NOT_FOUND'));
+    const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+    await goToLastStep(screen);
+    await send(screen).click();
+
+    await expect.element(screen.getByRole('alert')).toBeInTheDocument();
+    await expect.element(title(screen)).toHaveTextContent('어르신께 나는 누구인가요?');
+    expect(screen.getByRole('link', { name: '연결된 가족 보기' }).query()).toBeNull();
+  });
+
+  it('완료 화면도 글자를 두 배로 키워 좁은 화면에서 가로로 넘치지 않는다', async () => {
+    api.requestWardConnection.mockResolvedValue(ok(null));
+    document.documentElement.style.fontSize = '200%';
+    try {
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await goToLastStep(screen, 'aB3x9Z', '외할아버지', '배우자');
+      await send(screen).click();
+      await expect.element(title(screen)).toHaveTextContent('연결 요청을 보냈어요');
+      expectNoHorizontalScroll();
+    } finally {
+      document.documentElement.style.fontSize = '';
+    }
   });
 
   it.each([
