@@ -103,6 +103,19 @@
   font-size: 14px;
   font-weight: 800;
   padding: 10px 12px;
+  word-break: keep-all;
+}
+
+/* 알림 영역(aria-live)은 늘 그려 둬야 바뀐 문구를 읽어 준다 - 비었을 때는 자리만 없앤다 */
+.linkNotice:empty {
+  margin: 0;
+  padding: 0;
+}
+
+/* 이 ID로는 요청할 수 없을 때 - 오류 상자와 같은 색 */
+.linkNotice.noticeBlocked {
+  background: var(--sb-danger-soft);
+  color: var(--sb-danger);
 }
 
 /*
