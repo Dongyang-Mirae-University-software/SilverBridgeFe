@@ -241,20 +241,15 @@ export function GuardianConnectionRequestForm() {
           </>
         )}
 
+        {/* "기타를 고르면 '어르신'으로 보여요" 도움말은 뺐다 - 기타를 고르면 아래 미리보기가 바로 "어르신"을 보여 준다(2026-11-25) */}
         {step === 2 && (
-          <>
-            <ChoiceList
-              name="wardRelation"
-              labelledBy={titleId}
-              describedBy="ward-relation-help"
-              options={WARD_RELATION_OPTIONS}
-              value={wardRelation}
-              onChange={setWardRelation}
-            />
-            <p id="ward-relation-help" className={cx('help')}>
-              기타를 고르면 &lsquo;어르신&rsquo;으로 보여요
-            </p>
-          </>
+          <ChoiceList
+            name="wardRelation"
+            labelledBy={titleId}
+            options={WARD_RELATION_OPTIONS}
+            value={wardRelation}
+            onChange={setWardRelation}
+          />
         )}
 
         {step === 3 && (
