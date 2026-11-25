@@ -199,7 +199,11 @@ export function GuardianConnectionRequestForm() {
           <div className={cx('doneBody')}>
             {sentTo && <p className={cx('doneWard')}>{sentTo}</p>}
             {/* 수락 알림은 보호자 알림 설정에 따라 안 갈 수 있어(CONNECTION_ACCEPTED = SETTINGS_ONLY) 약속하지 않는다 */}
-            <p className={cx('help')}>어르신이 수락하면 연결돼요. 연결된 가족 화면에서 확인할 수 있어요.</p>
+            {/* 두 문장이 한 줄에 이어지면 어중간하게 접혀 읽기 어렵다 - 한 문장씩 줄을 나눈다 */}
+            <p className={cx('doneNote')}>
+              <span>어르신이 수락하면 연결돼요.</span>
+              <span>연결된 가족 화면에서 확인할 수 있어요.</span>
+            </p>
           </div>
         )}
 
@@ -292,7 +296,7 @@ export function GuardianConnectionRequestForm() {
 
       <footer className={cx('footer')}>
         {step === 1 && <p className={cx('hint')}>어르신이 수락하면 연결돼요</p>}
-        <div className={cx('actions')}>
+        <div className={cx('actions', { doneActions: isDone })}>
           {(step === 2 || step === 3) && (
             <button className={cx('secondaryButton')} type="button" onClick={() => moveTo((step - 1) as QuestionStep)}>
               이전

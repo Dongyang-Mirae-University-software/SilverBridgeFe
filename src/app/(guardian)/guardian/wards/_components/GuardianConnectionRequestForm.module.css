@@ -262,6 +262,16 @@
   overflow-wrap: anywhere;
 }
 
+.doneNote {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  color: var(--sb-ink-soft);
+  font-size: 15px;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
 .linkButton {
   display: inline-flex;
   align-items: center;
@@ -323,5 +333,15 @@
 
   .submitButton {
     flex: 2;
+  }
+
+  /* 완료 화면 버튼은 글자가 길어 나란히 두면 세 줄로 접힌다 - 세로로 쌓고 주 버튼을 위에 */
+  .doneActions {
+    flex-direction: column-reverse;
+  }
+
+  .doneActions > * {
+    flex: none;
+    width: 100%;
   }
 }

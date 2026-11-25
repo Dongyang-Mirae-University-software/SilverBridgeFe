@@ -230,7 +230,13 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
     await expect.element(title(screen)).toHaveFocus();
     await expect.element(screen.getByText('김*희 엄마', { exact: true })).toBeInTheDocument();
     await expect.element(screen.getByRole('img', { name: '3단계를 모두 마쳤어요' })).toBeInTheDocument();
-    await expect.element(screen.getByText('어르신이 수락하면 연결돼요. 연결된 가족 화면에서 확인할 수 있어요.')).toBeInTheDocument();
+    // 두 문장은 한 줄씩 따로 보인다
+    await expect.element(screen.getByText('어르신이 수락하면 연결돼요.', { exact: true })).toBeInTheDocument();
+    await expect.element(screen.getByText('연결된 가족 화면에서 확인할 수 있어요.', { exact: true })).toBeInTheDocument();
+    const [first, second] = ['어르신이 수락하면 연결돼요.', '연결된 가족 화면에서 확인할 수 있어요.'].map(text =>
+      screen.getByText(text, { exact: true }).element().getBoundingClientRect(),
+    );
+    expect(first.bottom).toBeLessThanOrEqual(second.top);
     expect(back(screen).query()).toBeNull();
     expect(screen.getByTestId('preview-my-screen').query()).toBeNull();
     expect(screen.getByLabelText('어르신의 회원 ID').query()).toBeNull();
@@ -283,6 +289,10 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
       await send(screen).click();
       await expect.element(title(screen)).toHaveTextContent('연결 요청을 보냈어요');
       expectNoHorizontalScroll();
+      // 좁은 화면에서 두 버튼은 세로로 쌓이고 주 버튼(연결된 가족 보기)이 위에 온다
+      const primary = screen.getByRole('link', { name: '연결된 가족 보기' }).element().getBoundingClientRect();
+      const secondary = screen.getByRole('button', { name: '다른 어르신 등록하기' }).element().getBoundingClientRect();
+      expect(primary.bottom).toBeLessThanOrEqual(secondary.top);
     } finally {
       document.documentElement.style.fontSize = '';
     }
