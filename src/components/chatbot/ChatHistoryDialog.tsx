@@ -89,15 +89,24 @@ export default function ChatHistoryDialog({
   // 보호자이고 서버가 상담 대상을 알려 줄 때만 나눈다(칸이 없는 옛 서버면 지금처럼 한 목록)
   const byTarget = Boolean(wards) && sessions.some(session => session.wardId !== undefined);
   const targetWards = wards ?? [];
-  const filters: { key: Filter; label: string }[] = byTarget
-    ? [
-        { key: 'all', label: '전체' },
-        ...targetWards
-          .filter(ward => sessions.some(session => wardsOf(session).includes(ward.id)))
-          .map(ward => ({ key: `ward:${ward.id}` as Filter, label: ward.name })),
-        ...(sessions.some(session => matches('self', session)) ? [{ key: 'self' as Filter, label: '내 상담' }] : []),
-      ]
+  // 연결된 어르신은 상담이 없어도 모두 보이고(0건) 건수를 함께 둔다 - 전에는 상담이 있는 어르신만 나와 한 명이 빠진 것처럼 보였다(2026-11-26)
+  const filters: { key: Filter; label: string; count: number }[] = byTarget
+    ? (
+        [
+          { key: 'all', label: '전체' },
+          ...targetWards.map(ward => ({ key: `ward:${ward.id}` as Filter, label: `${ward.name} 님` })),
+          { key: 'self', label: '내 상담' },
+        ] as { key: Filter; label: string }[]
+      ).map(item => ({ ...item, count: sessions.filter(session => matches(item.key, session)).length }))
     : [];
+  const current = filters.find(item => item.key === filter) ?? filters[0];
+  // "누구의 상담" 고르기 목록(2026-11-26 E안) - 사람이 많아도 한 줄 버튼으로 둔다
+  const [whoOpen, setWhoOpen] = useState(false);
+  const whoOpenRef = useRef(false);
+  useEffect(() => {
+    whoOpenRef.current = whoOpen;
+  }, [whoOpen]);
+  const whoRef = useRef<HTMLDivElement>(null);
   const shown = byTarget ? sessions.filter(session => matches(filter, session)) : sessions;
   const opened = openKey ? sessions.find(session => session.key === openKey) : undefined;
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -114,6 +123,11 @@ export default function ChatHistoryDialog({
     closeRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        // "누구의 상담" 목록이 열려 있으면 목록만 닫는다
+        if (whoOpenRef.current) {
+          setWhoOpen(false);
+          return;
+        }
         onCloseRef.current();
         return;
       }
@@ -187,19 +201,55 @@ export default function ChatHistoryDialog({
           <SessionDetail session={opened} variant={variant} />
         ) : (
           <div className={styles.list}>
-            {!loading && !error && filters.length > 2 && (
-              <div className={styles.filters} role="group" aria-label="누구의 상담인지 고르기">
-                {filters.map(item => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    className={styles.filterChip}
-                    aria-pressed={filter === item.key}
-                    onClick={() => setFilter(item.key)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+            {!loading && !error && current && (
+              <div
+                ref={whoRef}
+                className={styles.whoFilter}
+                onBlur={event => {
+                  if (!whoRef.current?.contains(event.relatedTarget as Node | null)) setWhoOpen(false);
+                }}
+              >
+                <span className={styles.whoLabel} aria-hidden="true">
+                  누구의 상담
+                </span>
+                <button
+                  type="button"
+                  className={`${styles.whoButton} ${whoOpen ? styles.whoButtonOpen : ''}`}
+                  aria-haspopup="listbox"
+                  aria-expanded={whoOpen}
+                  aria-controls="chat-history-who"
+                  aria-label={`누구의 상담: ${current.label} ${current.count}건`}
+                  onClick={() => setWhoOpen(open => !open)}
+                >
+                  {current.label} {current.count}건
+                  <span className={`${styles.whoChevron} ${whoOpen ? styles.whoChevronOpen : ''}`} aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+                {whoOpen && (
+                  <ul id="chat-history-who" className={styles.whoMenu} role="listbox" aria-label="누구의 상담">
+                    {filters.map(item => {
+                      const selected = item.key === filter;
+                      return (
+                        <li key={item.key} role="option" aria-selected={selected}>
+                          <button
+                            type="button"
+                            className={`${styles.whoOption} ${selected ? styles.whoOptionSelected : ''}`}
+                            onClick={() => {
+                              setFilter(item.key);
+                              setWhoOpen(false);
+                            }}
+                          >
+                            <span>{item.label}</span>
+                            <span className={styles.whoCount}>
+                              {item.count}건{selected ? ' ✓' : ''}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
             )}
             {loading ? (

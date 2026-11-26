@@ -178,7 +178,24 @@ describe('보호자 AI 의료 챗봇', () => {
     await expect.element(items.first()).toBeVisible();
   });
 
-  it('보호자 상담 기록은 누구의 상담인지 나눠 보인다 - 피보호자·내 상담 칩, 대화마다 대상 표시 (2026-11-11)', async () => {
+  // "누구의 상담" 고르기(2026-11-26 E안) - 버튼으로 목록을 열어 고른다
+  type Dialog = ReturnType<typeof page.getByRole>;
+  const whoOptions = async (dialog: Dialog) => {
+    await dialog.getByRole('button', { name: /^누구의 상담:/ }).click();
+    const labels = dialog
+      .getByRole('listbox', { name: '누구의 상담' })
+      .getByRole('option')
+      .elements()
+      .map(el => el.querySelector('span')?.textContent);
+    await dialog.getByRole('button', { name: /^누구의 상담:/ }).click();
+    return labels;
+  };
+  const pickWho = async (dialog: Dialog, label: string) => {
+    await dialog.getByRole('button', { name: /^누구의 상담:/ }).click();
+    await dialog.getByRole('listbox', { name: '누구의 상담' }).getByRole('button', { name: new RegExp(`^${label}`) }).click();
+  };
+
+  it('보호자 상담 기록은 누구의 상담인지 나눠 보인다 - 연결된 어르신 모두(0건 포함)·내 상담, 대화마다 대상 표시 (2026-11-11, 2026-11-26)', async () => {
     api.wards.mockReturnValue([WARD, WARD_2]);
     api.getChatLogs.mockResolvedValue([
       { id: 3, sessionId: 's-3', wardId: null, message: '내 허리가 아파요', reply: 'a', createdAt: '2026-11-11T03:00:00Z' },
@@ -189,16 +206,15 @@ describe('보호자 AI 의료 챗봇', () => {
     await page.getByRole('button', { name: '상담 기록' }).click();
 
     const dialog = page.getByRole('dialog');
-    const group = dialog.getByRole('group', { name: '누구의 상담인지 고르기' });
-    await expect.element(group).toBeVisible();
-    expect(group.getByRole('button').elements().map(el => el.textContent)).toEqual(['전체', '김영희', '이철수', '내 상담']);
+    await expect.element(dialog.getByRole('button', { name: '누구의 상담: 전체 3건' })).toBeVisible();
+    expect(await whoOptions(dialog)).toEqual(['전체', '김영희 님', '이철수 님', '내 상담']);
     const items = dialog.getByRole('button', { name: /대화 보기/ });
     expect(items.elements()).toHaveLength(3);
     expect(items.elements()[1].textContent).toContain('이철수 님 상담');
     expect(items.elements()[0].textContent).toContain('내 상담');
 
-    await group.getByRole('button', { name: '이철수' }).click();
-    await expect.element(group.getByRole('button', { name: '이철수' })).toHaveAttribute('aria-pressed', 'true');
+    await pickWho(dialog, '이철수 님');
+    await expect.element(dialog.getByRole('button', { name: '누구의 상담: 이철수 님 1건' })).toBeVisible();
     expect(items.elements()).toHaveLength(1);
     expect(items.elements()[0].textContent).toContain('아버지 기침');
   });
@@ -213,15 +229,16 @@ describe('보호자 AI 의료 챗봇', () => {
     await page.getByRole('button', { name: '상담 기록' }).click();
 
     const dialog = page.getByRole('dialog');
-    const group = dialog.getByRole('group', { name: '누구의 상담인지 고르기' });
-    await expect.element(group).toBeVisible();
-    expect(group.getByRole('button').elements().map(el => el.textContent)).toEqual(['전체', '이철수', '내 상담']);
+    // 상담이 없는 김영희 님도 0건으로 보인다(2026-11-26)
+    expect(await whoOptions(dialog)).toEqual(['전체', '김영희 님', '이철수 님', '내 상담']);
     const items = dialog.getByRole('button', { name: /대화 보기/ });
     expect(items.elements()[0].textContent).toContain('이철수 님 예약');
-    await group.getByRole('button', { name: '내 상담' }).click();
+    await pickWho(dialog, '내 상담');
     expect(items.elements()).toHaveLength(1);
-    await group.getByRole('button', { name: '이철수' }).click();
+    await pickWho(dialog, '이철수 님');
     expect(items.elements()).toHaveLength(1);
+    await pickWho(dialog, '김영희 님');
+    await expect.element(dialog.getByText('아직 상담 기록이 없습니다.')).toBeVisible();
   });
 
   it('한 대화창에서 두 피보호자를 예약하면 "○○ 님 외 1명 예약"으로, 두 피보호자 칩 모두에 보인다 (점검 M-2)', async () => {
@@ -235,14 +252,12 @@ describe('보호자 AI 의료 챗봇', () => {
     await page.getByRole('button', { name: '상담 기록' }).click();
 
     const dialog = page.getByRole('dialog');
-    const group = dialog.getByRole('group', { name: '누구의 상담인지 고르기' });
-    await expect.element(group).toBeVisible();
-    expect(group.getByRole('button').elements().map(el => el.textContent)).toEqual(['전체', '김영희', '이철수', '내 상담']);
+    expect(await whoOptions(dialog)).toEqual(['전체', '김영희 님', '이철수 님', '내 상담']);
     const items = dialog.getByRole('button', { name: /대화 보기/ });
     expect(items.elements()[0].textContent).toContain('김영희 님 외 1명 예약');
-    await group.getByRole('button', { name: '이철수' }).click();
+    await pickWho(dialog, '이철수 님');
     expect(items.elements()).toHaveLength(1);
-    await group.getByRole('button', { name: '김영희' }).click();
+    await pickWho(dialog, '김영희 님');
     expect(items.elements()).toHaveLength(1);
   });
 
