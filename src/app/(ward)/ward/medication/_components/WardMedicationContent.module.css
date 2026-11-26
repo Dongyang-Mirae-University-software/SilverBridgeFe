@@ -109,6 +109,11 @@
 .leadTime { font-size: calc(26px * var(--ward-font-scale, 1)); font-weight: calc(800 + var(--ward-weight-boost, 0)); }
 
 .body { display: flex; min-width: 0; flex-direction: column; gap: 20px; padding: 26px 30px; }
+/* 왼쪽 시간대 칸이 더 높으면 오른쪽 칸이 늘어나 버튼 아래 빈 칸이 시간대마다 달라졌다 - 버튼(·되돌리기·안내)을 아래 끝에 붙여
+   카드 아래 여백을 늘 body 아래 패딩과 같게 한다(2026-11-26) */
+.body > .takeButton,
+.body > .undoButton,
+.body > .beforeText { margin-top: auto; }
 
 .medGrid {
   display: grid;
