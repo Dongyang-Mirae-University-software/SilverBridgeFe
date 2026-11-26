@@ -324,6 +324,12 @@
   text-align: center;
 }
 
+/* 선택지가 하나뿐이면(예: [다른 지역으로 찾기]) 가로 전체 폭 버튼이라 글자를 가운데에 둔다(2026-11-26) */
+.ward.panel.single .chip,
+.ward.panel .single .chip {
+  text-align: center;
+}
+
 .ward.panel .label {
   font-size: calc(22px * var(--ward-font-scale, 1));
 }
