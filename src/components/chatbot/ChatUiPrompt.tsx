@@ -18,6 +18,15 @@ interface Props {
   panel?: boolean;
 }
 
+/** 피보호자 날짜 버튼은 "오늘 11월 26일(목)"·"내일 11월 27일(금)"을 "오늘"·"내일"로만 보인다(2026-11-26). 말풍선은 원래 문구 그대로. */
+const RELATIVE_DAY_LABEL = /^(오늘|내일) \d{1,2}월 \d{1,2}일\(.\)$/;
+
+function wardButtonLabel(label: string, variant: 'guardian' | 'ward', field: string): string {
+  if (variant !== 'ward' || field !== 'date') return label;
+  const match = RELATIVE_DAY_LABEL.exec(label);
+  return match ? match[1] : label;
+}
+
 export default function ChatUiPrompt({ ui, active, onSelect, variant = 'guardian', onRestart, panel = false }: Props) {
   const [textVal, setTextVal] = useState('');
   const [dateVal, setDateVal] = useState('');
@@ -76,7 +85,8 @@ export default function ChatUiPrompt({ ui, active, onSelect, variant = 'guardian
           options.length === 1 ? styles.single : ''
         }`}
       >
-        {ui.label && <p className={styles.label}>{ui.label}</p>}
+        {/* 피보호자 선택지는 위 문구("예약 목록을 보여드릴까요?" 등)를 빼고 버튼만 둔다 - 말풍선이 이미 묻고 있다(2026-11-26) */}
+        {ui.label && variant !== 'ward' && <p className={styles.label}>{ui.label}</p>}
         <div className={styles.chips}>
           {options.map(opt => {
             const isDateChangeOption = opt.value === '__change_date__';
@@ -93,7 +103,7 @@ export default function ChatUiPrompt({ ui, active, onSelect, variant = 'guardian
                   apply(opt.value, opt.label);
                 }}
               >
-                {opt.label}
+                {wardButtonLabel(opt.label, variant, ui.field)}
               </button>
             );
           })}

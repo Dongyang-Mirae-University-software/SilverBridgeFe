@@ -234,7 +234,7 @@ describe('피보호자 챗봇 예약', () => {
     await expect.element(page.getByText('__type__')).not.toBeInTheDocument();
   });
 
-  it('날짜는 AI 선택지를 큰 버튼으로 고르고, 말풍선엔 값이 아니라 "내일 11월 5일(목)"이 보인다', async () => {
+  it('날짜는 AI 선택지를 큰 버튼으로 고르고(오늘·내일은 "오늘"·"내일"만), 말풍선엔 값이 아니라 "내일 11월 5일(목)"이 보인다', async () => {
     await startWardReservation();
     api.sendChatMessage.mockResolvedValueOnce(ASK_DATE);
     await userEvent.click(page.getByRole('button', { name: '서울' }));
@@ -244,12 +244,14 @@ describe('피보호자 챗봇 예약', () => {
     const panelButtons = page.getByRole('region', { name: '예약 진행' }).getByRole('button').elements();
     expect(panelButtons).toHaveLength(5);
     expect(panelButtons.at(-1)?.textContent).toBe('예약 그만하기');
+    // 오늘·내일 버튼은 날짜 없이, 그 밖의 날은 날짜 그대로(2026-11-26)
+    expect(panelButtons.slice(0, 3).map(b => b.textContent)).toEqual(['오늘', '내일', '11월 6일(금)']);
     // 단계 표시: 진료과·병원 마침, 지금은 날짜(2026-11-12 - 묻는 칸으로 정한다)
     const steps = page.getByRole('list', { name: '예약 단계' });
     await expect.element(steps).toBeVisible();
     expect(steps.element().querySelector('[aria-current="step"]')?.textContent).toBe('3날짜');
     api.sendChatMessage.mockResolvedValueOnce(ASK_SIDO);
-    await userEvent.click(page.getByRole('button', { name: '내일 11월 5일(목)' }));
+    await userEvent.click(page.getByRole('button', { name: '내일', exact: true }));
 
     expect(api.sendChatMessage.mock.calls[3][0].uiSelection).toEqual({ field: 'date', value: '2026-11-05' });
     await expect.element(page.getByText('내일 11월 5일(목)', { exact: true })).toBeVisible();
