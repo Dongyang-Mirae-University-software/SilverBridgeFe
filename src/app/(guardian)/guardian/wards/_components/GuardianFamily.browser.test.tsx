@@ -557,6 +557,107 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
       });
     });
 
+    describe('Next가 기록을 덮어써도 단계 기록이 남는다 (I-1)', () => {
+      const pageMark = () => (window.history.state as Record<string, unknown> | null)?.mark;
+      // router.refresh()·같은 주소 이동 때 Next가 하는 일 - 지금 기록을 자기 값으로만 다시 쓴다(app-router HistoryUpdater)
+      const nextRewrites = (url: string = window.location.href) =>
+        window.history.replaceState({ __NA: true, __PRIVATE_NEXTJS_INTERNALS_TREE: { tree: [] } }, '', url);
+
+      async function backsToPreviousPage() {
+        for (let count = 1; count <= 5; count++) {
+          window.history.back();
+          await new Promise(resolve => setTimeout(resolve, 250));
+          if (pageMark() === 'previous') return count;
+        }
+        return -1;
+      }
+
+      async function openOnPreviousPage() {
+        window.history.pushState({ mark: 'previous' }, '');
+        window.history.pushState({}, '');
+        const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+        await expect.poll(historyStep).toBe(1);
+        return screen;
+      }
+
+      it('1단계에서 덮어써도 2단계의 [이전]·뒤로 가기가 1단계로 돌아온다', async () => {
+        const screen = await openOnPreviousPage();
+        nextRewrites();
+        expect(historyStep()).toBe(1);
+        expect((window.history.state as Record<string, unknown>).__NA).toBe(true); // Next 값도 그대로
+        await fillId(screen, 'aB3x9Z');
+        await next(screen).click();
+        await back(screen).click();
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+
+        await next(screen).click();
+        window.history.back();
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+        expect(await backsToPreviousPage()).toBe(1);
+      });
+
+      it('2단계에서 덮어써도 3단계의 뒤로 1번에 2단계로 간다', async () => {
+        const screen = await openOnPreviousPage();
+        await fillId(screen, 'aB3x9Z');
+        await next(screen).click();
+        nextRewrites();
+        expect(historyStep()).toBe(2);
+        await screen.getByRole('radio', { name: '엄마', exact: true }).click();
+        await next(screen).click();
+        window.history.back();
+        await expect.element(title(screen)).toHaveTextContent('어르신을 뭐라고 부르세요?');
+      });
+
+      it('완료 화면에서 덮어써도 [다른 어르신 등록하기]가 페이지를 떠나지 않는다', async () => {
+        api.requestWardConnection.mockResolvedValue(ok(null));
+        const screen = await openOnPreviousPage();
+        await goToLastStep(screen);
+        await send(screen).click();
+        await expect.element(title(screen)).toHaveTextContent('연결 요청을 보냈어요');
+        nextRewrites();
+        expect(historyStep()).toBe('done');
+        await screen.getByRole('button', { name: '다른 어르신 등록하기' }).click();
+        await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+        await expect.poll(historyStep).toBe(1);
+        expect(pageMark()).toBeUndefined();
+        expect(await backsToPreviousPage()).toBe(1);
+      });
+
+      it('다른 주소로 덮어쓰면 이어 붙이지 않는다', async () => {
+        await openOnPreviousPage();
+        const here = window.location.href;
+        nextRewrites(`${window.location.pathname}?other=1`);
+        expect(historyStep()).toBeUndefined();
+        window.history.replaceState({}, '', here);
+      });
+
+      it('다른 회차의 기록은 이어 붙이지 않고, 화면을 닫으면 원래 함수로 돌아온다', async () => {
+        const original = window.history.replaceState;
+        const screen = await openOnPreviousPage();
+        expect(window.history.replaceState).not.toBe(original);
+        window.history.pushState({ connectionStep: 2, connectionDepth: 1, connectionMount: 'other' }, '');
+        nextRewrites();
+        expect(historyStep()).toBeUndefined();
+        await screen.unmount();
+        expect(window.history.replaceState).toBe(original);
+      });
+
+      it('닫기 전에 다른 코드가 위에서 감쌌으면 그 함수는 두고, 닫힌 뒤에는 이어 붙이지 않는다', async () => {
+        const original = window.history.replaceState;
+        const screen = await openOnPreviousPage();
+        const inner = window.history.replaceState;
+        const outer = function (this: History, ...args: Parameters<History['replaceState']>) {
+          return inner.apply(this, args);
+        };
+        window.history.replaceState = outer;
+        await screen.unmount();
+        expect(window.history.replaceState).toBe(outer);
+        nextRewrites();
+        expect(historyStep()).toBeUndefined();
+        window.history.replaceState = original;
+      });
+    });
+
     it('[이전]은 브라우저 뒤로 가기와 같다 - 기록이 함께 줄어 다시 앞으로 갈 수 있다', async () => {
       const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
       await goToLastStep(screen, 'aB3x9Z', '엄마', '아들');
