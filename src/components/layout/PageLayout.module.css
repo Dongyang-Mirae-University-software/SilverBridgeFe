@@ -11,10 +11,13 @@
   height: auto;
 }
 
+/* 제목 줄은 오른쪽 버튼(문의 작성 등)이 있든 없든 같은 높이·같은 자리 - 전에는 버튼 아래 끝에 맞춰 버튼 있는 화면만
+   제목이 내려가 화면마다 줄이 어긋났다(2026-11-26) */
 .header {
   display: flex;
+  min-height: 48px;
   flex-shrink: 0;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
 }

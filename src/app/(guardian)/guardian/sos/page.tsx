@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: 'SOS 이력' };
 
 export default function GuardianSosPage() {
   return (
-    <PageLayout title="SOS 이력" description="어르신이 직접 누른 긴급 호출 기록">
+    <PageLayout title="SOS 이력">
       <GuardianSosHistoryContent />
     </PageLayout>
   );

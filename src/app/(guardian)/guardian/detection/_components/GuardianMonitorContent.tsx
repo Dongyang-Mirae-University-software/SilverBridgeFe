@@ -49,7 +49,7 @@ export default function GuardianMonitorContent() {
   );
 
   return (
-    <PageLayout title="이상감지" description="어르신의 실시간 영상과 AI 화재·낙상·흉기 감지 기록을 확인합니다." actions={liveButton}>
+    <PageLayout title="이상감지" actions={liveButton}>
       <AnomalyHistoryContent
         wards={wards}
         selectedWardId={activeWardId}
