@@ -10,6 +10,8 @@ import { useGuardianActiveWards, useWardActiveGuardians } from '@/hooks/useActiv
 import { useSoftKeyboardOpen } from '@/hooks/useSoftKeyboardOpen';
 import { getAccessTokenSubject, getAuthRole } from '@/lib/auth/tokenStore';
 import { getChatErrorMessage, getChatLogs, sendChatMessage } from '@/service/api/chat';
+// 테스트가 '@/service/api/chat'을 통째로 목으로 바꾸므로 정책 모듈에서 직접 가져온다
+import { getChatRetryAfterSeconds } from '@/service/api/chatPolicy';
 import { useWardSosMutation } from '@/service/query/ward';
 import { myProfileQueryOptions } from '@/service/query/user/profile';
 import { getUserProfileData } from '@/utils/auth/userProfile';
@@ -30,6 +32,7 @@ import ChatPeach from './ChatPeach';
 import ChatUiPrompt from './ChatUiPrompt';
 import { CalendarIcon, HistoryIcon, NewChatIcon, PhoneIcon, QuickPromptIcon, SendIcon } from './chatIcons';
 import { isCrisisAnswer, isUrgentAnswer } from './chatUrgency';
+import { HOSPITAL_PREVIEW_COUNT } from './hospitalListView';
 import { RESERVATION_STEPS, reservationStepIndex } from './reservationStep';
 import VoiceInputButton from './VoiceInputButton';
 import { WARD_SILENCE_STOP_MS } from '@/lib/audio/recordingLimiter';
@@ -336,6 +339,15 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
   const wardCarryEnded = Boolean(lastAssistant?.endsWardCarry);
   const reserving = isReservationStep(stepSource) && !wardCarryEnded;
   const reservationUi = reserving ? stepSource?.ui : undefined;
+  // 피보호자 예약 패널: 병원 검색 결과와 함께 온 단계면(예: [다른 지역으로 찾기]) 처음 몇 곳을 패널에서도 바로 고르게 한다(2026-11-26).
+  // 보내는 값은 말풍선 카드의 [이 병원 예약하기]와 같다(hospital_confirm + 병원 이름).
+  const panelHospitals =
+    isWardChat && reserving && stepSource?.tool === 'search_hospital' && Array.isArray(stepSource.toolData)
+      ? (stepSource.toolData as Array<{ name?: unknown }>)
+          .map(hospital => (typeof hospital?.name === 'string' ? hospital.name.trim() : ''))
+          .filter(Boolean)
+          .slice(0, HOSPITAL_PREVIEW_COUNT)
+      : [];
   const showComposer = !isWardChat || typingOpen;
   // 피보호자는 받아쓴 글을 바로 보낸다 - 녹음·변환 중에 칩·선택지를 누르면 두 질문이 나가거나(칩 → 받아쓴 글)
   // 답을 기다리는 사이 받아쓴 글이 버려진다. 그동안은 칩·예약 선택지를 잠근다(2026-11-11 기능 점검 F-1)
@@ -495,6 +507,8 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
       } catch (error) {
         if (sessionRef.current !== sessionId) return;
         const carryEnded = Boolean(requestWardId) && isWardNotConnected(error);
+        // 요청이 많아 거절됐으면(429) 기다린 뒤 같은 내용을 다시 보낼 수 있게 값을 남긴다(2026-11-26)
+        const retryAfter = carryEnded ? null : getChatRetryAfterSeconds(error);
         setMessages(prev => [
           ...prev,
           {
@@ -504,6 +518,17 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             timestamp: new Date().toISOString(),
             failed: true,
             ...(carryEnded ? { endsWardCarry: true } : {}),
+            ...(retryAfter
+              ? {
+                  retry: {
+                    text: trimmed,
+                    uiSelection,
+                    uiSelectionLabel,
+                    wardId,
+                    availableAt: Date.now() + retryAfter * 1000,
+                  },
+                }
+              : {}),
           },
         ]);
       } finally {
@@ -515,6 +540,14 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
     },
     [isGuardian, sessionId],
   );
+
+  // [다시 시도하기] - 버튼을 지운 뒤 거절됐던 내용을 그대로 다시 보낸다(선택지면 같은 선택, 대리 상담이면 같은 피보호자)
+  function retrySend(failed: ChatMessage) {
+    const retry = failed.retry;
+    if (!retry || sendingRef.current) return;
+    setMessages(prev => prev.map(message => (message.id === failed.id ? { ...message, retry: undefined } : message)));
+    void send(retry.text, retry.uiSelection, retry.uiSelectionLabel, false, retry.wardId);
+  }
 
   useEffect(() => {
     sendVoiceRef.current = text => void send(text);
@@ -637,6 +670,7 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
             onUiSelect={(field, value, label) => handleUiSelect(field, value, label, message)}
             onShowList={() => openVisitList(undefined, message.requestWardId)}
             onRestart={restartConversation}
+            onRetry={message.retry ? () => retrySend(message) : undefined}
             // 예약 단계 선택지는 지금 단계면 아래 패널에, 지난 단계면 내 말풍선(고른 답)으로 이미 보이므로 말풍선에 그리지 않는다
             hidePrompt={isReservationStep(message)}
             variant={isWardChat ? 'ward' : 'guardian'}
@@ -754,6 +788,20 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
           </ol>
         )}
         <div className={styles.wardReserveOptions}>
+          {panelHospitals.length > 0 && (
+            <ChatUiPrompt
+              key={`${stepSource?.id}-hospitals`}
+              ui={{
+                kind: 'select',
+                field: 'hospital_confirm',
+                options: panelHospitals.map(name => ({ value: name, label: `${name} 예약하기` })),
+              }}
+              active={!wardVoiceBusy}
+              onSelect={(field, value, label) => handleUiSelect(field, value, label, stepSource)}
+              variant="ward"
+              panel
+            />
+          )}
           <ChatUiPrompt
             key={stepSource?.id}
             ui={reservationUi}
