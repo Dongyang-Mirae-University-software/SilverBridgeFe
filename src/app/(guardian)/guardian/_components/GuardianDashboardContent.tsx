@@ -1,11 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
 import { Icon } from '@/components/Icon';
+import type {
+  GuardianDashboardMedicationSection,
+  GuardianDashboardPendingActions,
+} from '@/service/interface/guardian/dashboard';
+import { medicationDisplayName } from '@/utils/medication/displayName';
 import { MoodFace } from '@/components/MoodFace';
 import { WardSelectorTabs } from '@/components/connections/WardSelectorTabs';
 import { guardianConnectionsQueryOptions, guardianDashboardQueryOptions } from '@/service/query/guardian';
@@ -24,6 +29,94 @@ const QUICK_LINKS = [
   { href: '/guardian/wards', icon: 'users' as const, label: '연결된 가족' },
   { href: '/guardian/wards/register', icon: 'plus' as const, label: '가족 등록' },
 ];
+
+// "확인이 필요한 일 N건"을 누르면 무엇을 확인할지 목록을 열고, 줄마다 그 화면으로 간다(2026-11-26 초안).
+// 건수는 대시보드 응답 pendingActions(이상감지 판정·체크 안 된 약) 그대로 - 0건인 줄은 그리지 않는다
+function AttentionMenu({
+  total,
+  pending,
+  medication,
+}: {
+  total: number;
+  pending: GuardianDashboardPendingActions | undefined;
+  medication: GuardianDashboardMedicationSection | null | undefined;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const anomalyCount = pending?.anomaly ?? 0;
+  const medicationCount = pending?.medication ?? 0;
+  const urgent = medication?.mostUrgent;
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    const handlePointer = (event: PointerEvent) => {
+      if (!wrapRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    document.addEventListener('pointerdown', handlePointer);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.removeEventListener('pointerdown', handlePointer);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className={cx('attentionWrap')}>
+      <button
+        type="button"
+        className={cx('attentionBadge', 'attention', 'attentionButton')}
+        aria-expanded={open}
+        aria-controls="attention-menu"
+        onClick={() => setOpen(value => !value)}
+      >
+        <Icon name="bell" size={18} />
+        <span>{`확인이 필요한 일 ${total}건`}</span>
+        <span className={cx('attentionChevron', { open })} aria-hidden="true">
+          <Icon name="chevronRight" size={16} decorative />
+        </span>
+      </button>
+      {open && (
+        <ul id="attention-menu" className={cx('attentionMenu')} aria-label="확인이 필요한 일">
+          {anomalyCount > 0 && (
+            <li>
+              <Link className={cx('attentionItem')} href="/guardian/detection" onClick={() => setOpen(false)}>
+                <span className={cx('attentionItemIcon', 'detectTone')} aria-hidden="true">
+                  <Icon name="flame" size={18} decorative />
+                </span>
+                <span className={cx('attentionItemText')}>
+                  <strong>이상 감지 판정 {anomalyCount}건</strong>
+                  <span>실제 위험이었는지 알려 주세요</span>
+                </span>
+                <span className={cx('attentionItemGo')}>확인 ›</span>
+              </Link>
+            </li>
+          )}
+          {medicationCount > 0 && (
+            <li>
+              <Link className={cx('attentionItem')} href="/guardian/medication" onClick={() => setOpen(false)}>
+                <span className={cx('attentionItemIcon', 'medTone')} aria-hidden="true">
+                  <Icon name="pill" size={18} decorative />
+                </span>
+                <span className={cx('attentionItemText')}>
+                  <strong>체크 안 된 약 {medicationCount}건</strong>
+                  <span>
+                    {urgent
+                      ? `${urgent.wardName ? `${urgent.wardName} 님 · ` : ''}${medicationDisplayName(urgent)} · ${urgent.doseTime.slice(0, 5)}`
+                      : '약 관리에서 확인해 주세요'}
+                  </span>
+                </span>
+                <span className={cx('attentionItemGo')}>보기 ›</span>
+              </Link>
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export function GuardianDashboardContent() {
   const {
@@ -136,16 +229,14 @@ export function GuardianDashboardContent() {
           selectedWardId={selectedWard?.partnerUserId}
           onSelect={setSelectedWardId}
         />
-        <span className={cx('attentionBadge', { attention: !!pendingTotal })}>
-          <Icon name={isDashboardUnknown ? 'warning' : pendingTotal ? 'bell' : 'check'} size={18} />
-          {isDashboardUnknown
-            ? '확인 불가'
-            : pendingTotal == null
-              ? '확인 중'
-              : pendingTotal > 0
-                ? `확인이 필요한 일 ${pendingTotal}건`
-                : '지금 확인할 일이 없어요'}
-        </span>
+        {!isDashboardUnknown && pendingTotal != null && pendingTotal > 0 ? (
+          <AttentionMenu total={pendingTotal} pending={dashboard?.pendingActions} medication={dashboard?.medication} />
+        ) : (
+          <span className={cx('attentionBadge', { attention: !!pendingTotal })}>
+            <Icon name={isDashboardUnknown ? 'warning' : pendingTotal ? 'bell' : 'check'} size={18} />
+            {isDashboardUnknown ? '확인 불가' : pendingTotal == null ? '확인 중' : '지금 확인할 일이 없어요'}
+          </span>
+        )}
       </div>
       <section className={cx('featureGrid')} aria-label="주요 기능">
         <Link
