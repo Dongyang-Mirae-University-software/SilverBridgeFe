@@ -5,6 +5,7 @@ import classNames from 'classnames/bind';
 
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
 import useModalStore from '@/store/modalStore';
 import { MedicationItem, WardMedicationSummary } from '@/service/interface/medication';
@@ -217,13 +218,31 @@ export function WardMedicationCard({ summary }: WardMedicationCardProps) {
     });
   };
 
-  // 여러 개 삭제 - 화면에 보이는 약만 보낸다(2026-10-23). 한 번에 여러 개가 지워지므로 확인 창은 그대로 둔다
+  // 여러 개 삭제 - 화면에 보이는 약만 보낸다(2026-10-23). 한 번에 여러 개가 지워지므로 확인 창은 그대로 두되,
+  // 브라우저 기본 창 대신 앱 안 확인 창으로 묻는다(2026-11-26)
   const handleDeleteMany = (targets: MedicationItem[], question: string) => {
-    if (targets.length === 0 || !window.confirm(`${question} 지난 복용 이력은 남습니다.`)) return;
-    setDeleteError(null);
-    deleteBatchMutation.mutate(
-      { wardId: summary.wardId, medicationIds: targets.map(medication => medication.medicationId) },
-      { onError: error => setDeleteError(getServerMessage(error) ?? DELETE_FAILED_MESSAGE) },
+    if (targets.length === 0) return;
+    const medicationIds = targets.map(medication => medication.medicationId);
+    openModal(
+      <CommonModal
+        type="warning"
+        tone="guardian"
+        title="약 삭제"
+        message={`${question} 지난 복용 이력은 남습니다.`}
+        primaryButton={{
+          text: '삭제',
+          onClick: () => {
+            onCloseModal();
+            setDeleteError(null);
+            deleteBatchMutation.mutate(
+              { wardId: summary.wardId, medicationIds },
+              { onError: error => setDeleteError(getServerMessage(error) ?? DELETE_FAILED_MESSAGE) },
+            );
+          },
+        }}
+        secondaryButton={{ text: '취소', onClick: onCloseModal }}
+        onClose={onCloseModal}
+      />,
     );
   };
 

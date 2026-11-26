@@ -64,6 +64,8 @@ export default function SignupForm({ step, onNext, onPrev, kakaoData, returnTo }
   const [isSmsCheck, setIsSmsCheck] = useState(false);
   const [verifiedPhone, setVerifiedPhone] = useState('');
   const [smsTimerKey, setSmsTimerKey] = useState(0);
+  // 주소 검색을 열지 못했을 때의 안내 - 브라우저 기본 창(window.alert) 대신 앱 안 창(2026-11-26)
+  const [addressSearchError, setAddressSearchError] = useState('');
   const currentEmail = allValues.email.trim();
   const currentPhone = getPhoneDigits(allValues.phone);
   const isEmailVerified = isKakaoSignup || (isEmailCheck && checkedEmail === currentEmail);
@@ -221,7 +223,7 @@ export default function SignupForm({ step, onNext, onPrev, kakaoData, returnTo }
       setValue('postcode', postcode, { shouldDirty: true, shouldValidate: true });
       setValue('address', address, { shouldDirty: true, shouldValidate: true });
     } catch (error) {
-      window.alert((error as Error).message || '주소 검색을 불러오지 못했습니다.');
+      setAddressSearchError((error as Error).message || '주소 검색을 불러오지 못했습니다.');
     }
   };
 
@@ -291,6 +293,14 @@ export default function SignupForm({ step, onNext, onPrev, kakaoData, returnTo }
 
       {signupError && (
         <CommonModal type="error" title="회원가입 실패" message={signupError} onClose={clearSignupError} />
+      )}
+      {addressSearchError && (
+        <CommonModal
+          type="error"
+          title="주소 검색"
+          message={addressSearchError}
+          onClose={() => setAddressSearchError('')}
+        />
       )}
       {isSignupCompleted && (
         <CommonModal

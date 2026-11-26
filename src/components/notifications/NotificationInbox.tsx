@@ -69,6 +69,14 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
   // 알림 종류 고르기(2026-11-26) - 기본 전체, 고르면 그 종류만 서버에서 다시 받는다
   const typeOptions = notificationTypeOptions(role);
   const [typeFilter, setTypeFilter] = useState<string>(ALL_NOTIFICATION_TYPES);
+  // 제목 옆 작은 버튼으로 여는 앱 모양 목록(2026-11-26 초안) - 브라우저 기본 select 모양을 쓰지 않는다
+  const [typeMenuOpen, setTypeMenuOpen] = useState(false);
+  const typeMenuOpenRef = useRef(false);
+  useEffect(() => {
+    typeMenuOpenRef.current = typeMenuOpen;
+  }, [typeMenuOpen]);
+  const typeFilterRef = useRef<HTMLDivElement>(null);
+  const typeLabel = typeOptions.find(option => option.value === typeFilter)?.label ?? '전체';
   const panelRef = useRef<HTMLElement>(null);
   const { data: unread = 0 } = useQuery(unreadNotificationCountQueryOptions);
   const list = useInfiniteQuery(
@@ -85,10 +93,18 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
   useEffect(() => {
     panelRef.current?.focus();
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Escape') return;
+      // 종류 목록이 열려 있으면 목록만 닫는다
+      if (typeMenuOpenRef.current) {
+        setTypeMenuOpen(false);
+        return;
+      }
+      onClose();
     };
     const handlePointer = (event: PointerEvent) => {
       const target = event.target as Element | null;
+      // 종류 목록 바깥을 누르면 목록을 닫는다
+      if (typeMenuOpenRef.current && !typeFilterRef.current?.contains(target)) setTypeMenuOpen(false);
       if (panelRef.current?.contains(target) || target?.closest('[aria-controls="notification-inbox"]')) return;
       onClose();
     };
@@ -143,6 +159,44 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
     >
       <header className={cx('head')}>
         <h2 id="notification-inbox-title">알림</h2>
+        <div ref={typeFilterRef} className={cx('typeFilter')}>
+          <button
+            className={cx('typeButton', { typeButtonOpen: typeMenuOpen })}
+            type="button"
+            aria-haspopup="listbox"
+            aria-expanded={typeMenuOpen}
+            aria-controls="notification-type-menu"
+            aria-label={`알림 종류: ${typeLabel}`}
+            onClick={() => setTypeMenuOpen(open => !open)}
+          >
+            <span className={cx('typeButtonText')}>{typeLabel}</span>
+            <span className={cx('typeChevron')} aria-hidden="true">
+              {typeMenuOpen ? '▴' : '▾'}
+            </span>
+          </button>
+          {typeMenuOpen && (
+            <ul id="notification-type-menu" className={cx('typeMenu')} role="listbox" aria-label="알림 종류">
+              {typeOptions.map(option => {
+                const selected = option.value === typeFilter;
+                return (
+                  <li key={option.value} role="option" aria-selected={selected}>
+                    <button
+                      className={cx('typeOption', { typeOptionSelected: selected })}
+                      type="button"
+                      onClick={() => {
+                        setTypeFilter(option.value);
+                        setTypeMenuOpen(false);
+                      }}
+                    >
+                      {option.label}
+                      {selected && <Icon name="check" size={15} decorative />}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
         <button className={cx('readAll')} type="button" disabled={unread === 0 || readAll.isPending} onClick={() => readAll.mutate()}>
           모두 읽음
         </button>
@@ -150,24 +204,6 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
           <Icon name="close" size={18} decorative />
         </button>
       </header>
-
-      <div className={cx('filter')}>
-        <label className={cx('filterLabel')} htmlFor="notification-type-filter">
-          알림 종류
-        </label>
-        <select
-          id="notification-type-filter"
-          className={cx('filterSelect')}
-          value={typeFilter}
-          onChange={event => setTypeFilter(event.target.value)}
-        >
-          {typeOptions.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
 
       <div className={cx('body')}>
         {list.isLoading ? (

@@ -117,24 +117,42 @@ describe('종 알림함 (Chrome)', () => {
     expect(page.getByRole('heading', { name: '오늘' }).elements()).toHaveLength(0);
   });
 
-  it('알림 종류는 고르는 칸(기본 전체)이고, 고르면 그 종류(type)로 다시 부른다 (2026-11-26)', async () => {
+  it('알림 종류는 제목 옆 작은 버튼(기본 전체)으로 목록을 열어 고르고, 고르면 그 종류(type)로 다시 부른다 (2026-11-26)', async () => {
     await renderInbox();
     await page.getByRole('button', { name: /^알림/ }).click();
-    const select = page.getByLabelText('알림 종류');
-    await expect.element(select).toHaveValue('ALL');
-    expect(page.getByRole('tab').elements()).toHaveLength(0);
+    const typeButton = page.getByRole('button', { name: '알림 종류: 전체' });
+    await expect.element(typeButton).toHaveAttribute('aria-expanded', 'false');
+    expect(page.getByRole('combobox').elements()).toHaveLength(0); // 브라우저 기본 select 를 쓰지 않는다
+
+    await typeButton.click();
+    const menu = page.getByRole('listbox', { name: '알림 종류' });
+    await expect.element(menu.getByRole('option', { name: '전체' })).toHaveAttribute('aria-selected', 'true');
 
     api.list.mockResolvedValue(pageOf([]));
-    await userEvent.selectOptions(select, 'MEDICATION_MISSED');
+    await menu.getByRole('button', { name: '복약 확인 요약' }).click();
 
     await expect.element(page.getByText('복약 확인 요약 알림이 없어요.')).toBeVisible();
+    expect(page.getByRole('listbox').elements()).toHaveLength(0);
+    await expect.element(page.getByRole('button', { name: '알림 종류: 복약 확인 요약' })).toBeVisible();
     expect(api.list).toHaveBeenLastCalledWith({ type: 'MEDICATION_MISSED', page: 0, size: 20 });
+  });
+
+  it('종류 목록이 열려 있으면 Esc 는 목록만 닫고 알림 창은 남는다', async () => {
+    await renderInbox();
+    await page.getByRole('button', { name: /^알림/ }).click();
+    await page.getByRole('button', { name: '알림 종류: 전체' }).click();
+    await expect.element(page.getByRole('listbox')).toBeVisible();
+
+    await userEvent.keyboard('{Escape}');
+    await vi.waitFor(() => expect(page.getByRole('listbox').elements()).toHaveLength(0));
+    await expect.element(page.getByRole('dialog', { name: '알림' })).toBeVisible();
   });
 
   it('고를 수 있는 종류는 역할마다 받는 것만 - 피보호자는 약 드실 시간·안부 말벗 시간 등', async () => {
     await renderInbox('WARD');
     await page.getByRole('button', { name: /^알림/ }).click();
-    const labels = Array.from((page.getByLabelText('알림 종류').element() as HTMLSelectElement).options).map(o => o.textContent);
+    await page.getByRole('button', { name: '알림 종류: 전체' }).click();
+    const labels = page.getByRole('option').elements().map(o => o.textContent);
     expect(labels[0]).toBe('전체');
     expect(labels).toContain('약 드실 시간');
     expect(labels).toContain('안부 말벗 시간');
