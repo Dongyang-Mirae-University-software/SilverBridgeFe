@@ -56,7 +56,27 @@ describe('병원 검색 결과 줄이기 (Chrome, 2026-11-23 A안)', () => {
     await page.viewport(375, 812);
     renderCard(HOSPITALS, 'ward');
 
-    await expect.element(page.getByText('병원 5곳', { exact: true })).toBeVisible();
+    await expect.element(page.getByText('튼튼정형외과의원')).toBeVisible();
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth + 1);
+  });
+
+  it('어르신 화면은 "병원 N곳" 제목 없이 병원마다 [이 병원 예약하기] 버튼 (2026-11-26)', async () => {
+    const onUiSelect = renderCard(HOSPITALS, 'ward');
+
+    await expect.element(page.getByText('튼튼정형외과의원')).toBeVisible();
+    expect(page.getByText('병원 5곳', { exact: true }).elements()).toHaveLength(0);
+    const buttons = page.getByRole('button', { name: /예약하기$/ }).elements();
+    expect(buttons).toHaveLength(3);
+    expect(buttons.map(b => b.textContent)).toEqual(['이 병원 예약하기', '이 병원 예약하기', '이 병원 예약하기']);
+    // 더 보기는 그대로
+    await expect.element(page.getByRole('button', { name: '병원 더 보기 (2곳)' })).toBeVisible();
+
+    await userEvent.click(page.getByRole('button', { name: '구로연세병원 예약하기' }));
+    expect(onUiSelect).toHaveBeenCalledWith('hospital_confirm', '구로연세병원', '구로연세병원 예약하기');
+  });
+
+  it('어르신 화면도 병원이 0곳이면 기존 안내 그대로', async () => {
+    renderCard([], 'ward');
+    await expect.element(page.getByText('병원을 찾지 못했습니다.')).toBeVisible();
   });
 });

@@ -40,6 +40,14 @@ export default function ChatBubble({
   const singleQuestion = layout && layout.questions.length === 1 ? layout.questions[0] : null;
   // 피보호자 화면만 본문 문장을 문장마다 줄을 바꿔 보여 준다(표시용 - 원문은 그대로). 카드·응급 상자·선택지는 제외.
   const prose = (text: string) => (isWardChat ? breakSentences(text) : text);
+  // 피보호자 병원 검색 결과는 안내 문장 없이 병원 카드만 보인다(2026-11-26 사용자 결정). 0곳·응급 답은 문장을 그대로 둔다.
+  const hospitalCardsOnly =
+    isWardChat &&
+    !urgent &&
+    message.type === 'tool_result' &&
+    message.tool === 'search_hospital' &&
+    Array.isArray(message.toolData) &&
+    message.toolData.length > 0;
 
   if (isUser) {
     return (
@@ -66,7 +74,11 @@ export default function ChatBubble({
         {/* 메시지 본문 */}
         <div className={styles.assistantMessageRow}>
           <div className={styles.messageColumnAssistant}>
-            <div className={`${styles.bubbleAssistant} ${urgent ? styles.bubbleUrgent : ''}`}>
+            <div
+              className={`${styles.bubbleAssistant} ${urgent ? styles.bubbleUrgent : ''} ${
+                hospitalCardsOnly ? styles.bubbleCardsOnly : ''
+              }`}
+            >
             {/* 응급 경고 상자 - 맨 위. "긴급" 글자 라벨 + 굵은 빨간 테두리(색만으로 구분하지 않는다) → 핵심 줄 → 경고 문장 */}
             {(urgentHeadline || warnings.length > 0) && (
               <div className={styles.emergencyBox} role="alert">
@@ -93,7 +105,7 @@ export default function ChatBubble({
               </div>
             )}
 
-            {layout ? (
+            {hospitalCardsOnly ? null : layout ? (
               <>
                 {layout.headline && !urgentHeadline && (
                   <p className={styles.headline}>

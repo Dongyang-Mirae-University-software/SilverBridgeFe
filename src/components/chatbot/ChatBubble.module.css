@@ -363,6 +363,15 @@
   border-radius: 24px 24px 24px 6px;
 }
 
+/* 피보호자 병원 검색 결과(2026-11-26): 흰 말풍선 없이 병원 카드만 - 카드가 각자 흰 바탕·테두리를 가진다.
+   휴대폰 규칙(.wardBubble .bubbleAssistant padding)보다 앞서도록 선택자를 하나 더 붙였다 */
+.wardBubble .bubbleAssistant.bubbleCardsOnly {
+  width: min(100%, 560px);
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
 .wardBubble .bubbleUrgent {
   border-width: 3px;
 }
