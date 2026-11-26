@@ -45,7 +45,7 @@
 .panel.ward { top: 86px; right: 24px; width: min(520px, calc(100vw - 24px)); max-height: calc(100dvh - 102px); }
 
 .head { display: flex; flex-shrink: 0; align-items: center; gap: 8px; border-bottom: 1px solid var(--sb-line-soft); padding: 14px 14px 12px 20px; }
-.head h2 { flex: 1; margin: 0; color: var(--sb-ink); font-size: 18px; font-weight: 800; }
+.head h2 { flex: none; margin: 0; color: var(--sb-ink); font-size: 18px; font-weight: 800; }
 .readAll {
   min-height: 36px;
   border: 0;
@@ -72,24 +72,67 @@
 }
 
 /* 창 높이가 모자라도 줄어들지 않게(줄면 글자가 잘리고 위아래로 스크롤된다) - 넘치면 옆으로만 민다 */
-/* 알림 종류 고르기(2026-11-26) - 탭 다섯 개 대신 고르는 칸 하나. 기본 전체 */
-.filter { display: flex; flex-shrink: 0; align-items: center; gap: 10px; border-bottom: 1px solid var(--sb-line-soft); padding: 10px 14px; }
-.filterLabel { flex-shrink: 0; color: var(--sb-ink-soft); font-size: 13px; font-weight: 700; }
-.filterSelect {
-  min-width: 0;
-  min-height: 38px;
-  flex: 1;
+/* 알림 종류 고르기(2026-11-26 초안) - 제목 옆 작은 버튼 + 그 아래 앱 모양 목록. 따로 한 줄을 차지하지 않는다 */
+.typeFilter { position: relative; min-width: 0; margin-right: auto; }
+.typeButton {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 32px;
+  align-items: center;
+  gap: 4px;
   border: 1px solid var(--sb-line);
-  border-radius: 10px;
+  border-radius: 999px;
   background: #fff;
   color: var(--sb-ink);
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 0 10px;
+  padding: 0 10px 0 12px;
 }
-.filterSelect:focus-visible { outline: 2px solid var(--sb-brand); outline-offset: 1px; }
+.typeButtonText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.typeChevron { flex: none; font-size: 11px; }
+.typeButtonOpen { border-color: var(--sb-brand); background: var(--sb-brand-50); color: var(--sb-brand); }
+.typeButton:focus-visible { outline: 2px solid var(--sb-brand); outline-offset: 2px; }
+.typeMenu {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 6px);
+  left: 0;
+  width: max-content;
+  min-width: 170px;
+  max-height: min(300px, 55vh);
+  overflow-y: auto;
+  margin: 0;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(37, 32, 24, 0.12);
+  list-style: none;
+  padding: 6px;
+}
+.typeOption {
+  display: flex;
+  width: 100%;
+  min-height: 36px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+.typeOption:hover { background: var(--sb-bg-soft); }
+.typeOptionSelected,
+.typeOptionSelected:hover { background: var(--sb-brand-50); color: var(--sb-brand-text, var(--sb-brand)); font-weight: 800; }
 
 .body { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
 .list { margin: 0; padding: 0; list-style: none; }
@@ -165,8 +208,8 @@
 .panel.ward .head h2 { font-size: calc(22px * var(--ward-font-scale, 1)); }
 .panel.ward .readAll { font-size: calc(17px * var(--ward-font-scale, 1)); min-height: 44px; }
 .panel.ward .close { width: 44px; height: 44px; }
-.panel.ward .filterLabel { font-size: calc(17px * var(--ward-font-scale, 1)); }
-.panel.ward .filterSelect { min-height: 48px; font-size: calc(18px * var(--ward-font-scale, 1)); padding: 0 12px; }
+.panel.ward .typeButton { min-height: 44px; font-size: calc(17px * var(--ward-font-scale, 1)); padding: 0 14px 0 16px; }
+.panel.ward .typeOption { min-height: 48px; font-size: calc(18px * var(--ward-font-scale, 1)); }
 .panel.ward .icon { width: 46px; height: 46px; flex-basis: 46px; }
 .panel.ward .titleRow strong { font-size: calc(19px * var(--ward-font-scale, 1)); }
 .panel.ward .message { font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: 600; }
