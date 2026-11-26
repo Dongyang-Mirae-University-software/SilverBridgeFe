@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type InfiniteData, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { breakSentences } from '@/components/chatbot/breakSentences';
+import { Icon } from '@/components/Icon';
 import { RefreshButton } from '@/components/RefreshButton';
 import { formatDate } from '@/utils/format/date';
 import {
@@ -91,32 +93,58 @@ export function NoticesPage({ variant = 'default' }: { variant?: 'default' | 'wa
   );
 }
 
-// 목록 카드는 높이가 바뀌지 않게 본문 두 줄 미리보기만 두고, 누르면 상세 창으로 전체 본문을 연다
+// 목록 카드(2026-11-26 시안): 왼쪽 공지 표시, 날짜, 제목, 두 줄 미리보기, 아래 조회수·자세히 보기. 누르면 상세 창
 function NoticeCard({ announcement, ward, onOpen }: { announcement: IAnnouncement; ward: boolean; onOpen: () => void }) {
   const preview = isTruncatedPreview(announcement.content) ? `${announcement.content}…` : announcement.content;
 
   return (
     <article className={cx('card')}>
       <button className={cx('cardButton')} type="button" aria-haspopup="dialog" onClick={onOpen}>
-        <span className={cx('metaRow')}>
-          {isNewNotice(announcement.createdAt) && <span className={cx('newBadge')}>NEW</span>}
-          <time className={cx('date')} dateTime={announcement.createdAt}>
-            {formatDate(announcement.createdAt)}
-          </time>
+        <span className={cx('cardIcon')} aria-hidden="true">
+          <Icon name="bell" size={ward ? 26 : 22} decorative />
         </span>
-        <span className={cx('title')} role="heading" aria-level={2}>
-          {announcement.title}
+        <span className={cx('cardText')}>
+          <span className={cx('metaRow')}>
+            {isNewNotice(announcement.createdAt) && <span className={cx('newBadge')}>NEW</span>}
+            <time className={cx('date')} dateTime={announcement.createdAt}>
+              {formatDate(announcement.createdAt)}
+            </time>
+          </span>
+          <span className={cx('title')} role="heading" aria-level={2}>
+            {announcement.title}
+          </span>
+          <span className={cx('content', 'collapsed', { wardContent: ward })}>{preview}</span>
+          <span className={cx('cardFoot')}>
+            <span className={cx('views')}>
+              <Icon name="eye" size={16} decorative />
+              <span className={cx('srOnly')}>조회</span> {announcement.viewCount.toLocaleString('ko-KR')}
+            </span>
+            <span className={cx('readMore')} aria-hidden="true">
+              자세히 보기 ›
+            </span>
+          </span>
         </span>
-        <span className={cx('content', 'collapsed', { wardContent: ward })}>{preview}</span>
       </button>
     </article>
   );
 }
 
 function NoticeDetailModal({ announcement, onClose }: { announcement: IAnnouncement; onClose: () => void }) {
-  // 상세는 부를 때마다 조회수가 오른다 - 창을 열 때만 부르고 10분 동안은 캐시를 쓴다
+  // 상세는 열 때마다 불러 조회수를 올린다(2026-11-26 사용자 결정 - 전에는 10분 캐시)
+  const queryClient = useQueryClient();
   const detail = useQuery(announcementDetailQueryOptions(announcement.id));
   const titleId = `notice-modal-title-${announcement.id}`;
+
+  // 오른 조회수를 목록 카드에도 바로 보인다(목록을 다시 받지 않는다)
+  const viewCount = detail.data?.viewCount;
+  useEffect(() => {
+    if (viewCount === undefined) return;
+    queryClient.setQueryData<InfiniteData<IAnnouncement[]>>(announcementsQueryKey, data =>
+      data
+        ? { ...data, pages: data.pages.map(page => page.map(item => (item.id === announcement.id ? { ...item, viewCount } : item))) }
+        : data,
+    );
+  }, [announcement.id, queryClient, viewCount]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -135,26 +163,38 @@ function NoticeDetailModal({ announcement, onClose }: { announcement: IAnnouncem
         aria-labelledby={titleId}
         onClick={event => event.stopPropagation()}
       >
-        <header className={cx('modalHead')}>
-          <div>
-            <p className={cx('date')}>
-              <time dateTime={announcement.createdAt}>{formatDate(announcement.createdAt)}</time>
-              {/* 상세를 연 뒤의 조회수(이번 열람 포함) - 상세 응답이 오기 전에는 숨긴다(QA ADM-N09) */}
-              {detail.data && <span> · 조회 {detail.data.viewCount.toLocaleString('ko-KR')}</span>}
-            </p>
-            <h2 className={cx('modalTitle')} id={titleId}>
-              {announcement.title}
-            </h2>
-          </div>
+        <header className={cx('modalBand')}>
+          <Icon name="bell" size={20} decorative />
+          <span className={cx('modalBandLabel')}>공지사항</span>
           {/* 창을 열면 닫기에 초점을 둬 Esc·Enter로 바로 닫을 수 있게 한다 */}
           <button className={cx('closeButton')} type="button" aria-label="닫기" autoFocus onClick={onClose}>
-            ✕
+            <Icon name="close" size={16} decorative />
           </button>
         </header>
         <div className={cx('modalBody')}>
+          <h2 className={cx('modalTitle')} id={titleId}>
+            {announcement.title}
+          </h2>
+          <p className={cx('modalMeta')}>
+            <span className={cx('metaItem')}>
+              <Icon name="calendar" size={15} decorative />
+              <time dateTime={announcement.createdAt}>{formatDate(announcement.createdAt)}</time>
+            </span>
+            {/* 이번 열람을 포함한 조회수 - 상세 응답이 오기 전에는 숨긴다(QA ADM-N09) */}
+            {detail.data && (
+              <span className={cx('metaItem')}>
+                <Icon name="eye" size={15} decorative />
+                조회 {detail.data.viewCount.toLocaleString('ko-KR')}
+              </span>
+            )}
+          </p>
           {detail.isLoading && <p className={cx('detailState')}>내용을 불러오는 중…</p>}
           {detail.isError && <p className={cx('detailState', 'detailError')}>내용을 불러오지 못했습니다.</p>}
-          {detail.data && <p className={cx('modalContent')}>{detail.data.content}</p>}
+          {/* 문장이 끝나면 다음 줄로(표시만 - 원문은 그대로, 챗봇 말풍선과 같은 규칙) */}
+          {detail.data && <p className={cx('modalContent')}>{breakSentences(detail.data.content)}</p>}
+          <button className={cx('confirmButton')} type="button" onClick={onClose}>
+            확인
+          </button>
         </div>
       </section>
     </div>
