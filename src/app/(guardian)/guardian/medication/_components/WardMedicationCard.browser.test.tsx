@@ -273,17 +273,27 @@ describe('WardMedicationCard (Chrome)', () => {
     await expect.element(screen.getByRole('heading', { name: /아침 약/ })).toHaveFocus();
   });
 
-  it('약이 둘 이상이면 전체 삭제 기능을 유지한다', async () => {
+  it('약이 둘 이상이면 전체 삭제 기능을 유지한다 - 앱 안 확인 창에서 [삭제]를 눌러야 지운다 (2026-11-26)', async () => {
     api.deleteWardMedicationBatch.mockResolvedValue(2);
     api.getGuardianMedications.mockResolvedValue([]);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const confirm = vi.spyOn(window, 'confirm');
     const screen = await renderCard([medication(1), medication(2)]);
 
     // 고른 시간대 카드 밖에 두고 모든 시간대라고 밝힌다 (점검 M-2)
     const deleteAll = screen.getByRole('button', { name: '모든 시간대 약 전부 삭제' });
     expect(deleteAll.element().closest('section')).toBeNull();
+
+    // [취소]면 지우지 않는다
     await deleteAll.click();
+    await screen.getByRole('alertdialog').getByRole('button', { name: '취소' }).click();
+    expect(api.deleteWardMedicationBatch).not.toHaveBeenCalled();
+
+    await deleteAll.click();
+    await expect.element(screen.getByRole('alertdialog')).toHaveTextContent('지난 복용 이력은 남습니다.');
+    await screen.getByRole('alertdialog').getByRole('button', { name: '삭제' }).click();
     await vi.waitFor(() => expect(api.deleteWardMedicationBatch).toHaveBeenCalledWith('W1', [1, 2]));
+    expect(confirm).not.toHaveBeenCalled();
+    confirm.mockRestore();
   });
 
   it('알림 시각을 정할 수 있고, 어르신 기기 알림용 가짜 스위치는 없다', async () => {

@@ -605,11 +605,31 @@ export default function ChatbotContent({ variant = 'guardian' }: ChatbotContentP
    * [새 대화] - 주고받은 대화가 있으면 한 번 묻는다(지난 대화는 서버 상담 기록에 남는다).
    * 피보호자 예약 패널의 [예약 그만하기]도 같은 길이다 - 예약 초안은 대화창마다 AI가 들고 있어 새 대화창이면 비워진다.
    */
+  // 확인은 앱 안 창으로 묻는다(2026-11-26) - 브라우저 기본 창(window.confirm)은 주소·기기 모양이 붙어 앱과 어울리지 않는다
   function handleNewConversation(question = '지금 대화를 닫고 새로 시작할까요?') {
     if (sendingRef.current) return;
     const hasConversation = messages.some(message => message.id !== 'welcome');
-    if (hasConversation && !window.confirm(question)) return;
-    restartConversation();
+    if (!hasConversation) {
+      restartConversation();
+      return;
+    }
+    openModal(
+      <CommonModal
+        type="warning"
+        tone="guardian"
+        title="새 대화"
+        message={question}
+        primaryButton={{
+          text: '새로 시작',
+          onClick: () => {
+            onCloseModal();
+            restartConversation();
+          },
+        }}
+        secondaryButton={{ text: '취소', onClick: onCloseModal }}
+        onClose={onCloseModal}
+      />,
+    );
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {

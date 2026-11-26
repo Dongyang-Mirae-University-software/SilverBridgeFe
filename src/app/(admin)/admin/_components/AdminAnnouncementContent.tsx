@@ -4,8 +4,10 @@ import { useState, type ReactNode } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames/bind';
 
+import { CommonModal } from '@/components/CommonModal';
 import { Icon } from '@/components/Icon';
 import { Pagination } from '@/components/Pagination';
+import useModalStore from '@/store/modalStore';
 import * as announcementApi from '@/service/api/admin/announcement';
 import { AdminAnnouncementItem, AdminAnnouncementWriteRequest } from '@/service/interface/admin/announcement';
 import { adminAnnouncementDetailQueryOptions, adminAnnouncementListQueryOptions, adminAnnouncementQueryKey, adminAnnouncementSummaryQueryOptions } from '@/service/query/admin';
@@ -34,6 +36,18 @@ export function AdminAnnouncementContent() {
   const invalidate = () => client.invalidateQueries({ queryKey: adminAnnouncementQueryKey });
   const remove = useMutation({ mutationFn: ({ id, isDraft }: { id: number; isDraft: boolean }) => isDraft ? announcementApi.deleteAdminAnnouncementDraft(id) : announcementApi.deleteAdminAnnouncement(id), onSuccess: invalidate });
   const changeTab = (next: Tab) => { setTab(next); setPage(0); setViewing(null); };
+  // 삭제 확인은 앱 안 창으로 묻는다(2026-11-26) - 브라우저 기본 창(window.confirm)을 쓰지 않는다
+  const { openModal, onCloseModal } = useModalStore(state => ({ openModal: state.openModal, onCloseModal: state.onCloseModal }));
+  const confirmDelete = (item: AdminAnnouncementItem, isDraft: boolean) => openModal(
+    <CommonModal
+      type="warning"
+      title="공지 삭제"
+      message={`'${item.title || '(제목 없음)'}' 공지를 영구 삭제할까요? 되돌릴 수 없습니다.`}
+      primaryButton={{ text: '삭제', onClick: () => { onCloseModal(); remove.mutate({ id: item.id, isDraft }); } }}
+      secondaryButton={{ text: '취소', onClick: onCloseModal }}
+      onClose={onCloseModal}
+    />,
+  );
   const counts = { ALL: (summary.data?.publishedCount ?? 0) + (summary.data?.draftCount ?? 0), PUBLISHED: summary.data?.publishedCount ?? 0, DRAFT: summary.data?.draftCount ?? 0 };
 
   return <section className={cx('page')}>
@@ -43,7 +57,7 @@ export function AdminAnnouncementContent() {
     <section className={cx('card')}><div className={cx('search')}><Icon name="search" size={16} decorative /><span className={cx('srOnly')}>공지 제목 검색</span><input autoComplete="off" value={keyword} maxLength={50} placeholder="공지 제목 검색" onChange={event => { setKeyword(event.target.value); setPage(0); }} />{keyword && <button type="button" aria-label="검색어 지우기" onClick={() => { setKeyword(''); setPage(0); }}><Icon name="close" size={14} decorative /></button>}</div>
       <div className={cx('tableScroll')}><table className={cx('table')}><thead><tr><th>제목</th><th>작성자</th><th>등록일</th><th>조회수</th><th><span className={cx('srOnly')}>관리</span></th></tr></thead><tbody>
         {list.isLoading && <StateRow>공지사항을 불러오는 중입니다.</StateRow>}{list.isError && <StateRow>공지사항을 불러오지 못했습니다. <button type="button" onClick={() => void list.refetch()}>다시 시도</button></StateRow>}{!list.isLoading && !list.isError && list.data?.content.length === 0 && <StateRow>{keyword ? '검색 결과가 없습니다.' : '등록된 공지사항이 없습니다.'}</StateRow>}
-        {list.data?.content.map(item => <AnnouncementRow key={item.id} item={item} draft={draft} onView={() => setViewing({ id: item.id, draft })} onEdit={() => setEditor({ item, draft })} onDelete={() => { if (window.confirm('이 공지를 영구 삭제할까요?')) remove.mutate({ id: item.id, isDraft: draft }); }} />)}
+        {list.data?.content.map(item => <AnnouncementRow key={item.id} item={item} draft={draft} onView={() => setViewing({ id: item.id, draft })} onEdit={() => setEditor({ item, draft })} onDelete={() => confirmDelete(item, draft)} />)}
       </tbody></table></div>
       {list.data && <footer className={cx('pager')}><span>{list.data.totalElements === 0 ? '0건' : `${list.data.page * list.data.size + 1}–${Math.min((list.data.page + 1) * list.data.size, list.data.totalElements)} / 전체 ${list.data.totalElements}건`}</span><Pagination page={list.data.page} totalPages={list.data.totalPages} variant="numbered" disabled={list.isFetching} hasPrevPage={list.data.page > 0} hasNextPage={!list.data.last} onChange={setPage} /></footer>}
     </section>

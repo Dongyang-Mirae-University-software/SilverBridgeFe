@@ -3,13 +3,14 @@
 // 보호자 예약 대상 선택(2026-11-11 - AI가 묻고, 고른 피보호자를 예약이 끝날 때까지 context.wardId 로 싣는다).
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode } from 'react';
+import { Fragment, ReactNode, useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import ChatbotContent from './ChatbotContent';
 import { expectQuestionAtTop, settledMessageList } from './chatScrollTestUtils';
+import useModalStore from '@/store/modalStore';
 import { clearSelectedWardId } from '@/store/selectedWardStore';
 
 // 마이크 버튼 이름 - 보호자 "말로 입력하기", 피보호자는 보이는 글자와 같다(처음 "말로 물어보기"·답 뒤 "말로 답하기"·응급 뒤 "말로 더 묻기", 2026-11-12)
@@ -166,9 +167,28 @@ async function typeAndSend(text: string) {
   await userEvent.click(page.getByRole('button', { name: '보내기' }));
 }
 
+// ModalHost 는 next/navigation 에 묶여 있어 테스트에서는 모달 저장소만 그린다([새 대화] 확인 창이 여기에 뜬다, 2026-11-26)
+function TestModalHost() {
+  const modals = useModalStore(state => state.modals);
+  const resetModal = useModalStore(state => state.resetModal);
+  useEffect(() => resetModal(), [resetModal]);
+  return (
+    <>
+      {modals.map(modal => (
+        <Fragment key={modal.id}>{modal.Component}</Fragment>
+      ))}
+    </>
+  );
+}
+
 function renderChat(node: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={client}>
+      {node}
+      <TestModalHost />
+    </QueryClientProvider>,
+  );
 }
 
 /** 피보호자: 증상 → 진료과 버튼 → 예약 시작(시·도 선택)까지 */
@@ -417,9 +437,9 @@ describe('보호자 챗봇 예약', () => {
   });
 
   it('[새 대화]를 열면 고른 예약 대상이 풀린다 (2026-11-11)', async () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     await startGuardianReservationFor();
     await userEvent.click(page.getByRole('button', { name: '새 대화' }));
+    await userEvent.click(page.getByRole('alertdialog').getByRole('button', { name: '새로 시작' }));
     await expect.element(page.getByText('어느 지역에서 찾을까요?')).not.toBeInTheDocument();
 
     api.sendChatMessage.mockResolvedValueOnce(GENERAL);
@@ -427,7 +447,6 @@ describe('보호자 챗봇 예약', () => {
     await vi.waitFor(() => expect(api.sendChatMessage).toHaveBeenCalledTimes(3));
     expect(contextOf(2)).toEqual({ role: 'GUARDIAN' });
     expect(api.sendChatMessage.mock.calls[2][0].sessionId).not.toBe(api.sendChatMessage.mock.calls[1][0].sessionId);
-    confirm.mockRestore();
   });
 
   it('화면을 옮겼다 돌아와도 예약 중이면 고른 대상을 이어 싣는다 (2026-11-11)', async () => {

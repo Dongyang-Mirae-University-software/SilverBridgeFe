@@ -304,16 +304,22 @@ describe('보호자 AI 의료 챗봇', () => {
     expect(Object.keys(localStorage).some(key => key.startsWith('careai_chat_conv:'))).toBe(false);
   });
 
-  it('[새 대화]는 확인 뒤 저장한 대화를 지우고 새 sessionId 로 시작한다 (2026-11-11)', async () => {
+  it('[새 대화]는 앱 안 확인 창에서 [새로 시작]을 누른 뒤 저장한 대화를 지우고 새 sessionId 로 시작한다 (2026-11-11, 확인 창 2026-11-26)', async () => {
     api.sendChatMessage.mockResolvedValue(REPLY);
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const confirm = vi.spyOn(window, 'confirm');
     const first = await renderChat(<ChatbotContent />);
     await userEvent.fill(page.getByRole('textbox', { name: '궁금한 점 입력' }), '무릎이 아파요');
     await userEvent.click(page.getByRole('button', { name: '보내기' }));
     await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
 
+    // [취소]면 대화가 그대로 남는다
     await page.getByRole('button', { name: '새 대화' }).click();
-    expect(confirm).toHaveBeenCalledTimes(1);
+    await page.getByRole('alertdialog').getByRole('button', { name: '취소' }).click();
+    await expect.element(page.getByText('정형외과 진료를 권해요.')).toBeVisible();
+
+    await page.getByRole('button', { name: '새 대화' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: '새로 시작' }).click();
+    expect(confirm).not.toHaveBeenCalled();
     await expect.element(page.getByText('정형외과 진료를 권해요.')).not.toBeInTheDocument();
     expect(Object.keys(sessionStorage).some(key => key.startsWith('careai_chat_conv:'))).toBe(false);
 
@@ -1262,7 +1268,6 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
   it('[새 대화]를 열면 보낸 문장이 다시 보인다', async () => {
     api.role.mockReturnValue('GUARDIAN');
     api.sendChatMessage.mockResolvedValue({ ...REPLY, suggestedQuestions: [] });
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     await renderChat(<ChatbotContent />);
 
     await userEvent.click(page.getByRole('button', { name: '무릎이 아프다고 하세요' }));
@@ -1270,8 +1275,8 @@ describe('이미 보낸 질문은 빠른 질문에서 뺀다', () => {
     expect(page.getByRole('button', { name: '무릎이 아프다고 하세요' }).elements()).toHaveLength(0);
 
     await userEvent.click(page.getByRole('button', { name: '새 대화' }));
+    await userEvent.click(page.getByRole('alertdialog').getByRole('button', { name: '새로 시작' }));
     await expect.element(page.getByRole('button', { name: '무릎이 아프다고 하세요' })).toBeVisible();
-    confirm.mockRestore();
   });
 });
 
