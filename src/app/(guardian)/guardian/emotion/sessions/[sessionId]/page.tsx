@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: '대화 보기' };
 
 export default function GuardianCompanionSessionPage() {
   return (
-    <PageLayout title="대화 보기" description="안부 대화의 기분과 나눈 이야기를 살펴요">
+    <PageLayout title="대화 보기">
       <GuardianCompanionSessionContent />
     </PageLayout>
   );

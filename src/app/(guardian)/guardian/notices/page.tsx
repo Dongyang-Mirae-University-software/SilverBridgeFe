@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: '공지사항' };
 
 export default function GuardianNoticesPage() {
   return (
-    <PageLayout title="공지사항" description="SilverBridge에서 알려드려요">
+    <PageLayout title="공지사항">
       <NoticesPage />
     </PageLayout>
   );

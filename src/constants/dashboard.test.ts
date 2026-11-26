@@ -13,7 +13,7 @@ describe('wardNavItems - 안부 말벗 메뉴는 테스트 계정만', () => {
     expect(wardNavItems(false).some(item => item.badge)).toBe(false);
   });
 
-  it('보호자 메뉴는 v13 시안의 4개에 AI 기분 체크를 더한 5개', () => {
-    expect(GUARDIAN_NAV.map(item => item.label)).toEqual(['홈', 'AI 기분 체크', '공지사항', '문의하기', '환경설정']);
+  it('보호자 메뉴는 v13 시안의 4개 - AI 기분 체크는 홈 카드로만 들어간다(2026-11-26)', () => {
+    expect(GUARDIAN_NAV.map(item => item.label)).toEqual(['홈', '공지사항', '문의하기', '환경설정']);
   });
 });
