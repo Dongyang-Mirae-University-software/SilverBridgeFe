@@ -160,8 +160,12 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
       <header className={cx('head')}>
         <h2 id="notification-inbox-title">알림</h2>
         <div ref={typeFilterRef} className={cx('typeFilter')}>
+          {/* 고른 종류가 있으면(전체 아님) 버튼을 강조해 걸러 보고 있다는 것을 알린다(2026-11-26 다듬기) */}
           <button
-            className={cx('typeButton', { typeButtonOpen: typeMenuOpen })}
+            className={cx('typeButton', {
+              typeButtonOpen: typeMenuOpen,
+              typeButtonActive: typeFilter !== ALL_NOTIFICATION_TYPES,
+            })}
             type="button"
             aria-haspopup="listbox"
             aria-expanded={typeMenuOpen}
@@ -169,13 +173,20 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
             aria-label={`알림 종류: ${typeLabel}`}
             onClick={() => setTypeMenuOpen(open => !open)}
           >
+            <Icon name="tag" size={14} decorative />
+            <span className={cx('typeButtonKey')} aria-hidden="true">
+              종류
+            </span>
             <span className={cx('typeButtonText')}>{typeLabel}</span>
-            <span className={cx('typeChevron')} aria-hidden="true">
-              {typeMenuOpen ? '▴' : '▾'}
+            <span className={cx('typeChevron', { typeChevronOpen: typeMenuOpen })} aria-hidden="true">
+              <Icon name="chevronRight" size={14} decorative />
             </span>
           </button>
           {typeMenuOpen && (
             <ul id="notification-type-menu" className={cx('typeMenu')} role="listbox" aria-label="알림 종류">
+              <li className={cx('typeMenuCaption')} role="presentation" aria-hidden="true">
+                알림 종류
+              </li>
               {typeOptions.map(option => {
                 const selected = option.value === typeFilter;
                 return (

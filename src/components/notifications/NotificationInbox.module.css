@@ -74,26 +74,53 @@
 /* 창 높이가 모자라도 줄어들지 않게(줄면 글자가 잘리고 위아래로 스크롤된다) - 넘치면 옆으로만 민다 */
 /* 알림 종류 고르기(2026-11-26 초안) - 제목 옆 작은 버튼 + 그 아래 앱 모양 목록. 따로 한 줄을 차지하지 않는다 */
 .typeFilter { position: relative; min-width: 0; margin-right: auto; }
+/* 버튼(2026-11-26 다듬기): [표시 아이콘] 종류 | 고른 값 [꺾쇠]. 연한 바탕의 알약 모양, 고른 종류가 있으면 갈색으로 강조 */
 .typeButton {
   display: inline-flex;
   max-width: 100%;
   min-height: 32px;
   align-items: center;
-  gap: 4px;
-  border: 1px solid var(--sb-line);
+  gap: 6px;
+  border: 1px solid var(--sb-line-soft);
   border-radius: 999px;
-  background: #fff;
-  color: var(--sb-ink);
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
   cursor: pointer;
   font: inherit;
   font-size: 13px;
   font-weight: 700;
-  padding: 0 10px 0 12px;
+  padding: 0 10px 0 11px;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
-.typeButtonText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.typeChevron { flex: none; font-size: 11px; }
-.typeButtonOpen { border-color: var(--sb-brand); background: var(--sb-brand-50); color: var(--sb-brand); }
+.typeButton:hover { border-color: var(--sb-line); background: #fff; }
+.typeButtonKey { flex: none; color: var(--sb-ink-mute); font-weight: 600; }
+/* "종류"와 고른 값 사이 가는 세로줄 */
+.typeButtonKey::after {
+  display: inline-block;
+  width: 1px;
+  height: 11px;
+  margin-left: 6px;
+  background: var(--sb-line);
+  content: '';
+  vertical-align: -1px;
+}
+.typeButtonText { overflow: hidden; color: var(--sb-ink); font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.typeChevron { display: inline-flex; flex: none; transform: rotate(90deg); transition: transform 0.15s ease; }
+.typeChevronOpen { transform: rotate(-90deg); }
+.typeButtonActive,
+.typeButtonActive:hover { border-color: var(--sb-brand-soft, var(--sb-brand)); background: var(--sb-brand-50); color: var(--sb-brand); }
+.typeButtonActive .typeButtonText,
+.typeButtonOpen .typeButtonText { color: var(--sb-brand); }
+.typeButtonOpen,
+.typeButtonOpen:hover { border-color: var(--sb-brand); background: var(--sb-brand-50); color: var(--sb-brand); }
 .typeButton:focus-visible { outline: 2px solid var(--sb-brand); outline-offset: 2px; }
+.typeMenuCaption {
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 6px 10px 4px;
+}
 .typeMenu {
   position: absolute;
   z-index: 5;
@@ -105,11 +132,11 @@
   overflow-y: auto;
   margin: 0;
   border: 1px solid var(--sb-line-soft);
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
-  box-shadow: 0 10px 24px rgba(37, 32, 24, 0.12);
+  box-shadow: 0 12px 28px rgba(37, 32, 24, 0.14);
   list-style: none;
-  padding: 6px;
+  padding: 4px 6px 6px;
 }
 .typeOption {
   display: flex;
@@ -210,6 +237,7 @@
 .panel.ward .close { width: 44px; height: 44px; }
 .panel.ward .typeButton { min-height: 44px; font-size: calc(17px * var(--ward-font-scale, 1)); padding: 0 14px 0 16px; }
 .panel.ward .typeOption { min-height: 48px; font-size: calc(18px * var(--ward-font-scale, 1)); }
+.panel.ward .typeMenuCaption { font-size: calc(15px * var(--ward-font-scale, 1)); }
 .panel.ward .icon { width: 46px; height: 46px; flex-basis: 46px; }
 .panel.ward .titleRow strong { font-size: calc(19px * var(--ward-font-scale, 1)); }
 .panel.ward .message { font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: 600; }
