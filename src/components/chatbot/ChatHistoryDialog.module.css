@@ -299,8 +299,8 @@
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  /* 한 줄 제목도 두 줄 칸을 차지해 카드 높이·오른쪽 열 위치가 카드마다 같다(line-height 1.35 × 2) */
-  min-height: 2.7em;
+  /* 넓은 화면은 두 줄 칸을 따로 잡지 않는다 - 한 줄 제목이 칸 위쪽에 붙어 가운데 정렬된 날짜·꼬리표보다 떠 보였다(2026-11-26).
+     카드 min-height 104px 가 두 줄 제목(28px × 1.35 × 2 + 위아래 여백)을 이미 담아 카드 높이는 그대로다. */
 }
 
 .wardItemTag {
@@ -381,8 +381,10 @@
     display: none;
   }
 
+  /* 휴대폰은 제목 줄에 보기가 함께 서므로 한 줄 제목도 두 줄 칸을 차지해 카드 높이가 같다(line-height 1.35 × 2) */
   .wardItemTitle {
     grid-area: title;
+    min-height: 2.7em;
     font-size: calc(22px * var(--ward-font-scale, 1));
   }
 
