@@ -8,11 +8,7 @@ import classNames from 'classnames/bind';
 import { Icon } from '@/components/Icon';
 import { getPushIconSrc, getPushRoute } from '@/components/PushNotificationListener.kind';
 import { readAllMyNotifications, readMyNotification } from '@/service/api/user/notificationInbox';
-import type {
-  INotificationInboxItem,
-  INotificationInboxPage,
-  NotificationInboxCategory,
-} from '@/service/interface/user/notificationInbox';
+import type { INotificationInboxItem, INotificationInboxPage } from '@/service/interface/user/notificationInbox';
 import {
   notificationInboxListQueryOptions,
   notificationInboxQueryKey,
@@ -21,20 +17,11 @@ import {
 import { setSelectedWardId } from '@/store/selectedWardStore';
 import { formatNotificationTime, isNotificationToday } from '@/utils/format/notificationTime';
 import styles from './NotificationInbox.module.css';
+import { ALL_NOTIFICATION_TYPES, notificationTypeOptions } from './notificationTypeOptions';
 
 const cx = classNames.bind(styles);
 
 type InboxRole = 'GUARDIAN' | 'WARD';
-type CategoryTab = 'ALL' | NotificationInboxCategory;
-
-// 필터는 서버가 정한 category로만 나눈다 - 새 알림 종류가 생겨도 탭을 고칠 필요가 없다
-const CATEGORY_TABS: Array<{ value: CategoryTab; label: string }> = [
-  { value: 'ALL', label: '전체' },
-  { value: 'URGENT', label: '긴급' },
-  { value: 'MEDICATION', label: '복약' },
-  { value: 'CONNECTION', label: '연결' },
-  { value: 'OTHER', label: '그 밖' },
-];
 
 const listKey = [...notificationInboxQueryKey, 'list'] as const;
 const unreadKey = unreadNotificationCountQueryOptions.queryKey;
@@ -79,10 +66,14 @@ export function NotificationBellButton({ variant, open, onToggle }: { variant: '
 export function NotificationPanel({ role, variant, onClose }: { role: InboxRole; variant: 'guardian' | 'ward'; onClose: () => void }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<CategoryTab>('ALL');
+  // 알림 종류 고르기(2026-11-26) - 기본 전체, 고르면 그 종류만 서버에서 다시 받는다
+  const typeOptions = notificationTypeOptions(role);
+  const [typeFilter, setTypeFilter] = useState<string>(ALL_NOTIFICATION_TYPES);
   const panelRef = useRef<HTMLElement>(null);
   const { data: unread = 0 } = useQuery(unreadNotificationCountQueryOptions);
-  const list = useInfiniteQuery(notificationInboxListQueryOptions(tab === 'ALL' ? undefined : tab));
+  const list = useInfiniteQuery(
+    notificationInboxListQueryOptions(typeFilter === ALL_NOTIFICATION_TYPES ? undefined : typeFilter),
+  );
   const items = list.data?.pages.flatMap(page => page?.content ?? []) ?? [];
   // 최신순이라 오늘 알림이 앞에 모인다 - 오늘 / 이전 두 묶음으로 나눠 보인다
   const groups = [
@@ -136,7 +127,10 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
     router.push(getPushRoute({ type: item.type }, role));
   };
 
-  const emptyText = tab === 'ALL' ? '받은 알림이 없어요.' : `${CATEGORY_TABS.find(t => t.value === tab)?.label} 알림이 없어요.`;
+  const emptyText =
+    typeFilter === ALL_NOTIFICATION_TYPES
+      ? '받은 알림이 없어요.'
+      : `${typeOptions.find(option => option.value === typeFilter)?.label ?? '이 종류의'} 알림이 없어요.`;
 
   return (
     <section
@@ -157,19 +151,22 @@ export function NotificationPanel({ role, variant, onClose }: { role: InboxRole;
         </button>
       </header>
 
-      <div className={cx('tabs')} role="tablist" aria-label="알림 종류">
-        {CATEGORY_TABS.map(item => (
-          <button
-            key={item.value}
-            className={cx('tab', { active: tab === item.value })}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.value}
-            onClick={() => setTab(item.value)}
-          >
-            {item.label}
-          </button>
-        ))}
+      <div className={cx('filter')}>
+        <label className={cx('filterLabel')} htmlFor="notification-type-filter">
+          알림 종류
+        </label>
+        <select
+          id="notification-type-filter"
+          className={cx('filterSelect')}
+          value={typeFilter}
+          onChange={event => setTypeFilter(event.target.value)}
+        >
+          {typeOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className={cx('body')}>

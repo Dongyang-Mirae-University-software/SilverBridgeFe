@@ -72,21 +72,24 @@
 }
 
 /* 창 높이가 모자라도 줄어들지 않게(줄면 글자가 잘리고 위아래로 스크롤된다) - 넘치면 옆으로만 민다 */
-.tabs { display: flex; flex-shrink: 0; gap: 6px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; border-bottom: 1px solid var(--sb-line-soft); padding: 10px 14px; }
-.tab {
-  min-height: 34px;
-  flex-shrink: 0;
+/* 알림 종류 고르기(2026-11-26) - 탭 다섯 개 대신 고르는 칸 하나. 기본 전체 */
+.filter { display: flex; flex-shrink: 0; align-items: center; gap: 10px; border-bottom: 1px solid var(--sb-line-soft); padding: 10px 14px; }
+.filterLabel { flex-shrink: 0; color: var(--sb-ink-soft); font-size: 13px; font-weight: 700; }
+.filterSelect {
+  min-width: 0;
+  min-height: 38px;
+  flex: 1;
   border: 1px solid var(--sb-line);
-  border-radius: 999px;
+  border-radius: 10px;
   background: #fff;
-  color: var(--sb-ink-soft);
+  color: var(--sb-ink);
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  padding: 0 13px;
+  padding: 0 10px;
 }
-.tab.active { border: 1.5px solid var(--sb-brand); background: var(--sb-brand-50); color: var(--sb-brand); }
+.filterSelect:focus-visible { outline: 2px solid var(--sb-brand); outline-offset: 1px; }
 
 .body { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
 .list { margin: 0; padding: 0; list-style: none; }
@@ -162,7 +165,8 @@
 .panel.ward .head h2 { font-size: calc(22px * var(--ward-font-scale, 1)); }
 .panel.ward .readAll { font-size: calc(17px * var(--ward-font-scale, 1)); min-height: 44px; }
 .panel.ward .close { width: 44px; height: 44px; }
-.panel.ward .tab { min-height: 44px; font-size: calc(17px * var(--ward-font-scale, 1)); padding: 0 16px; }
+.panel.ward .filterLabel { font-size: calc(17px * var(--ward-font-scale, 1)); }
+.panel.ward .filterSelect { min-height: 48px; font-size: calc(18px * var(--ward-font-scale, 1)); padding: 0 12px; }
 .panel.ward .icon { width: 46px; height: 46px; flex-basis: 46px; }
 .panel.ward .titleRow strong { font-size: calc(19px * var(--ward-font-scale, 1)); }
 .panel.ward .message { font-size: calc(17px * var(--ward-font-scale, 1)); font-weight: 600; }
