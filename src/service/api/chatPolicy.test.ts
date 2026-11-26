@@ -1,7 +1,13 @@
 import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it } from 'vitest';
 
-import { ChatRoleUnknownError, getChatErrorMessage, getHistoryWarning, resolveChatBasePath } from './chatPolicy';
+import {
+  ChatRoleUnknownError,
+  getChatErrorMessage,
+  getChatRetryAfterSeconds,
+  getHistoryWarning,
+  resolveChatBasePath,
+} from './chatPolicy';
 
 describe('getHistoryWarning', () => {
   it('경고 문구가 있으면 한 줄로 합쳐 돌려준다', () => {
@@ -36,6 +42,21 @@ describe('resolveChatBasePath', () => {
     for (const role of [null, undefined, '', 'ADMIN']) {
       expect(() => resolveChatBasePath(role)).toThrow(ChatRoleUnknownError);
     }
+  });
+});
+
+describe('getChatRetryAfterSeconds (2026-11-26 다시 시도 버튼)', () => {
+  it('요청이 많아 거절됐고 기다릴 초가 오면 그 초(올림)를 돌려준다', () => {
+    expect(getChatRetryAfterSeconds(axiosError(429, 'TOO_MANY_REQUESTS', { 'retry-after': '45' }))).toBe(45);
+    expect(getChatRetryAfterSeconds(axiosError(429, 'TOO_MANY_REQUESTS', { 'retry-after': '2.2' }))).toBe(3);
+  });
+
+  it('다른 오류·기다릴 초가 없거나 이상하면 null', () => {
+    expect(getChatRetryAfterSeconds(axiosError(429, 'TOO_MANY_REQUESTS'))).toBeNull();
+    expect(getChatRetryAfterSeconds(axiosError(429, 'TOO_MANY_REQUESTS', { 'retry-after': 'abc' }))).toBeNull();
+    expect(getChatRetryAfterSeconds(axiosError(429, 'CHAT_LIMIT_EXCEEDED', { 'retry-after': '45' }))).toBeNull();
+    expect(getChatRetryAfterSeconds(axiosError(503, 'CHAT_UNAVAILABLE'))).toBeNull();
+    expect(getChatRetryAfterSeconds(new Error('x'))).toBeNull();
   });
 });
 

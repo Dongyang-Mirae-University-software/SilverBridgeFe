@@ -499,3 +499,34 @@
 .user .bubble {
   box-shadow: 0 10px 22px rgba(32, 104, 79, 0.12);
 }
+
+/* 요청이 많아 거절된 답의 [다시 시도하기](2026-11-26) - 보호자 48px·16px, 피보호자 64px·22px(다른 큰 버튼과 같은 급) */
+.retryButton {
+  align-self: flex-start;
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(16px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+  padding: 0 20px;
+}
+
+.retryButton:hover {
+  filter: brightness(0.94);
+}
+
+.retryButton:focus-visible {
+  outline: 3px solid var(--sb-ink);
+  outline-offset: 2px;
+}
+
+.wardBubble .retryButton {
+  min-height: 64px;
+  border-radius: 16px;
+  font-size: calc(22px * var(--ward-font-scale, 1));
+  padding: 0 24px;
+}

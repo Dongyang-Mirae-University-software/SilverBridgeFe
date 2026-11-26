@@ -28,7 +28,7 @@ vi.mock('@/service/api/chat', () => ({
   getChatLogs: vi.fn(),
   getChatErrorMessage: () => '잠시 후 다시 시도해 주세요.',
 }));
-vi.mock('@/service/api/chatPolicy', () => ({ getHistoryWarning: () => null }));
+vi.mock('@/service/api/chatPolicy', () => ({ getHistoryWarning: () => null, getChatRetryAfterSeconds: () => null }));
 vi.mock('@/service/query/user/profile', () => ({
   myProfileQueryOptions: { queryKey: ['test-profile'], queryFn: () => ({ name: '박순자', profileImage: null }) },
 }));
@@ -192,6 +192,35 @@ beforeEach(() => {
 describe('피보호자 챗봇 예약', () => {
   beforeEach(() => {
     api.role.mockReturnValue('WARD');
+  });
+
+  it('병원 검색 결과와 함께 온 단계면 예약 진행 패널에서도 병원을 바로 고를 수 있다 - 카드와 같은 값 (2026-11-26)', async () => {
+    await startWardReservation();
+    api.sendChatMessage.mockResolvedValueOnce({
+      reply: '연수구 근처 내과를 찾았어요.',
+      engine: 'ai',
+      type: 'tool_result',
+      intent: 'hospital_reservation',
+      tool: 'search_hospital',
+      toolData: [
+        { id: 1, name: '인천송도내과', department: '내과', address: '인천광역시 연수구 송도과학로 1' },
+        { id: 2, name: '  ' },
+      ],
+      ui: { kind: 'select', field: 'location_sido', options: [{ value: '__other__', label: '다른 지역으로 찾기' }] },
+    });
+    await userEvent.click(page.getByRole('button', { name: '서울' }));
+
+    const panel = page.getByRole('region', { name: '예약 진행' });
+    await expect.element(panel.getByRole('button', { name: '인천송도내과 예약하기' })).toBeVisible();
+    await expect.element(panel.getByRole('button', { name: '다른 지역으로 찾기' })).toBeVisible();
+    // 이름이 빈 병원은 패널에도 버튼을 두지 않는다
+    expect(panel.getByRole('button', { name: /예약하기$/ }).elements()).toHaveLength(1);
+
+    api.sendChatMessage.mockResolvedValueOnce(GENERAL);
+    await userEvent.click(panel.getByRole('button', { name: '인천송도내과 예약하기' }));
+    await vi.waitFor(() =>
+      expect(api.sendChatMessage.mock.calls.at(-1)?.[0].uiSelection).toEqual({ field: 'hospital_confirm', value: '인천송도내과' }),
+    );
   });
 
   it('진료과 버튼(예약 전)까지는 칩이 남고, 예약이 시작되면 칩 대신 예약 진행 패널과 큰 선택지를 보인다', async () => {

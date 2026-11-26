@@ -31,6 +31,17 @@ export interface ChatMessage {
   requestWardId?: string;
   /** 대리 예약 중 그 피보호자와 연결이 끊겨 거절됐다(403 CHAT_WARD_NOT_CONNECTED) - 이 뒤로는 wardId 를 이어 싣지 않는다. */
   endsWardCarry?: boolean;
+  /**
+   * 요청이 많아 거절된 보내기(429)를 다시 보낼 값과 그 시각(ms). 이 시각이 지나면 말풍선에 [다시 시도하기]가 보인다(2026-11-26).
+   * 화면에서만 쓰고 서버에 보내지 않는다.
+   */
+  retry?: {
+    text: string;
+    uiSelection?: { field: string; value: string };
+    uiSelectionLabel?: string;
+    wardId?: string;
+    availableAt: number;
+  };
   engine?: string;
   modelName?: string;
   riskLevel?: ChatRiskLevel;

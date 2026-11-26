@@ -26,6 +26,35 @@ function textOrder(): string[] {
   return Array.from(root.querySelectorAll('p, li')).map(el => el.textContent ?? '');
 }
 
+describe('요청이 많아 거절된 답의 [다시 시도하기] (2026-11-26)', () => {
+  const failed = (availableAt: number): Partial<ChatMessage> => ({
+    content: '요청이 많아요.\n45초 후 다시 시도해 주세요.',
+    failed: true,
+    retry: { text: '머리가 아파요', availableAt },
+  });
+
+  it('기다릴 시간이 지나기 전에는 버튼이 없고, 지나면 나타나 누르면 onRetry', async () => {
+    const onRetry = vi.fn();
+    render(
+      <ChatBubble message={{ ...base, ...failed(Date.now() + 300) }} isLastAssistant onUiSelect={vi.fn()}
+        onShowList={vi.fn()} onRetry={onRetry} variant="ward" />,
+    );
+    expect(page.getByRole('button', { name: '다시 시도하기' }).elements()).toHaveLength(0);
+    await expect.element(page.getByRole('button', { name: '다시 시도하기' })).toBeVisible();
+    await page.getByRole('button', { name: '다시 시도하기' }).click();
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('마지막 답이 아니면 버튼을 그리지 않는다', async () => {
+    render(
+      <ChatBubble message={{ ...base, ...failed(Date.now() - 1) }} isLastAssistant={false} onUiSelect={vi.fn()}
+        onShowList={vi.fn()} onRetry={vi.fn()} />,
+    );
+    await expect.element(page.getByText('요청이 많아요.', { exact: false })).toBeVisible();
+    expect(page.getByRole('button', { name: '다시 시도하기' }).elements()).toHaveLength(0);
+  });
+});
+
 describe('피보호자 병원 검색 결과 (2026-11-26)', () => {
   const hospitalResult: Partial<ChatMessage> = {
     content: '부산 남구 근처 정형외과는 부산응급의료원 한 곳이에요.\n여기로 예약하시려면 예약하기를 눌러 주세요.',

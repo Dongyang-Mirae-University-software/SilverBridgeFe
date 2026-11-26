@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import type { ChatLayout, ChatMessage } from '@/service/interface/chat';
 import ChatPeach from './ChatPeach';
 import ChatToolCard from './ChatToolCard';
@@ -19,6 +21,8 @@ interface Props {
   /** 예약 단계 선택지는 아래 "예약 진행" 패널에 크게 보이므로(지난 단계는 고른 답이 내 말풍선에 있다) 말풍선에서는 뺀다. */
   hidePrompt?: boolean;
   variant?: 'guardian' | 'ward';
+  /** 요청이 많아 거절된 답(429)의 [다시 시도하기] - 기다릴 시간이 지나야 버튼이 보인다(2026-11-26). */
+  onRetry?: () => void;
 }
 
 export default function ChatBubble({
@@ -29,6 +33,7 @@ export default function ChatBubble({
   onRestart,
   hidePrompt = false,
   variant = 'guardian',
+  onRetry,
 }: Props) {
   const isUser = message.role === 'user';
   const isWardChat = variant === 'ward';
@@ -166,6 +171,11 @@ export default function ChatBubble({
               />
             )}
 
+            {/* 요청이 많아 거절된 답: 기다릴 시간이 지나면 [다시 시도하기] (마지막 답일 때만) */}
+            {message.retry && onRetry && isLastAssistant && (
+              <RetryButton availableAt={message.retry.availableAt} onRetry={onRetry} />
+            )}
+
             {/* 응답 type과 무관하게 ui가 있으면 선택지를 표시한다.
                 예약 시간 응답은 type이 tool_result/message여도 ui.select를 함께 내려줄 수 있다. */}
             {message.ui && !hidePrompt && (
@@ -185,6 +195,22 @@ export default function ChatBubble({
   );
 }
 
+
+/** availableAt(ms)이 지나면 나타나는 [다시 시도하기]. 그 전에는 아무것도 그리지 않는다(말풍선 문구가 기다릴 시간을 이미 말한다). */
+function RetryButton({ availableAt, onRetry }: { availableAt: number; onRetry: () => void }) {
+  const [ready, setReady] = useState(() => Date.now() >= availableAt);
+  useEffect(() => {
+    if (ready) return;
+    const timer = setTimeout(() => setReady(true), Math.max(0, availableAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [availableAt, ready]);
+  if (!ready) return null;
+  return (
+    <button type="button" className={styles.retryButton} onClick={onRetry}>
+      다시 시도하기
+    </button>
+  );
+}
 
 interface NormalizedLayout {
   headline: string | null;

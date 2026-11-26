@@ -29,6 +29,14 @@ const BUSY = '이전 상담의 답변을 기다리고 있어요. 잠시 후 다�
 const TIMEOUT = '답변이 오래 걸리고 있어요. 다시 시도해 주세요.';
 const UNAVAILABLE = '지금은 상담을 이용할 수 없어요. 잠시 후 다시 시도해 주세요.';
 
+/** 요청이 많아 거절됐을 때(429 TOO_MANY_REQUESTS) 기다릴 초. 다시 시도 버튼을 이 시간 뒤에 보인다(2026-11-26). */
+export function getChatRetryAfterSeconds(error: unknown): number | null {
+  if (!axios.isAxiosError<{ code?: string }>(error)) return null;
+  if (error.response?.data?.code !== 'TOO_MANY_REQUESTS') return null;
+  const seconds = Number(error.response?.headers?.['retry-after']);
+  return Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : null;
+}
+
 export function getChatErrorMessage(error: unknown): string {
   if (error instanceof ChatRoleUnknownError) return '로그인 정보를 확인하고 있어요. 잠시 후 다시 시도해 주세요.';
   if (!axios.isAxiosError<{ code?: string }>(error)) return GENERIC;
