@@ -6,7 +6,7 @@ export const WARD_NAV: NavItem[] = [
   // 테스트 계정만 WardLayout이 아래 WARD_COMPANION_NAV를 '홈' 다음에 끼운다.
   // { href: '/ward/sos', icon: 'phone', label: '긴급 전화', key: 'sos' },
   { href: '/ward/guardians', icon: 'users', label: '내 가족', key: 'guardians' },
-  { href: '/ward/game', icon: 'game', label: '치매 예방 게임', key: 'game' },
+  // 치매 예방 게임은 사이드 메뉴에서 뺐다(2026-11-26 사용자 결정) - 홈 카드 등 다른 입구와 /ward/game 화면은 그대로
   { href: '/ward/notices', icon: 'bell', label: '공지사항', key: 'notices' },
   { href: '/ward/settings', icon: 'settings', label: '환경설정', key: 'settings' },
 ];
