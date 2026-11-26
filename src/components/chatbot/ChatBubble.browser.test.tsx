@@ -26,6 +26,32 @@ function textOrder(): string[] {
   return Array.from(root.querySelectorAll('p, li')).map(el => el.textContent ?? '');
 }
 
+describe('피보호자 병원 검색 결과 (2026-11-26)', () => {
+  const hospitalResult: Partial<ChatMessage> = {
+    content: '부산 남구 근처 정형외과는 부산응급의료원 한 곳이에요.\n여기로 예약하시려면 예약하기를 눌러 주세요.',
+    type: 'tool_result',
+    tool: 'search_hospital',
+    toolData: [{ id: 1, name: '부산응급의료원', department: '응급의학과', address: '부산광역시 남구 수영로 1' }],
+  };
+
+  it('어르신 화면은 안내 문장 없이 병원 카드와 [이 병원 예약하기]만 보인다', async () => {
+    await show(hospitalResult, 'ward');
+    await expect.element(page.getByText('부산응급의료원', { exact: true })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: '부산응급의료원 예약하기' })).toHaveTextContent('이 병원 예약하기');
+    expect(page.getByText('예약하기를 눌러 주세요', { exact: false }).elements()).toHaveLength(0);
+  });
+
+  it('보호자 화면은 안내 문장을 그대로 보인다', async () => {
+    await show(hospitalResult, 'guardian');
+    await expect.element(page.getByText('예약하기를 눌러 주세요', { exact: false })).toBeVisible();
+  });
+
+  it('어르신 화면도 병원이 0곳이면 안내 문장을 그대로 보인다', async () => {
+    await show({ ...hospitalResult, content: '근처에서 병원을 찾지 못했어요.', toolData: [] }, 'ward');
+    await expect.element(page.getByText('근처에서 병원을 찾지 못했어요.', { exact: false })).toBeVisible();
+  });
+});
+
 describe('ChatBubble 답 모양', () => {
   it('핵심 한 줄·본문·카드를 칸별로 그리고 빈 칸은 그리지 않는다', async () => {
     await show({

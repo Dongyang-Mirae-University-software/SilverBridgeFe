@@ -52,7 +52,7 @@ export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideL
 
   if (tool === 'search_hospital') {
     const hospitals = Array.isArray(data) ? (data as HospitalItem[]) : [];
-    return <HospitalResults hospitals={hospitals} sizeClass={sizeClass} onUiSelect={onUiSelect} />;
+    return <HospitalResults hospitals={hospitals} sizeClass={sizeClass} ward={variant === 'ward'} onUiSelect={onUiSelect} />;
   }
 
   if (tool === 'make_appointment') {
@@ -156,20 +156,25 @@ export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideL
 // 고른 진료과 하나(모든 병원에 공통인 진료과)와 "구 + 길" 주소만, 처음엔 3곳만 보이고 [병원 더 보기]로 나머지를 편다
 // 제목은 "병원 N곳"만 - AI는 지역만으로도 검색하고(진료과 없이) 카드에 검색한 진료과를 싣지 않아, 공통 진료과를 제목에 넣으면
 // 우연히 모든 병원에 있는 과가 "고른 과"처럼 보일 수 있다(2026-11-23 FE 디자인 점검 D-4, 사용자 결정). 병원별 칩은 그 병원에 실제로 있는 과라 그대로 둔다
-function HospitalResults({ hospitals, sizeClass, onUiSelect }: {
+// 피보호자(2026-11-26 사용자 결정): 제목 "병원 N곳" 없이 병원마다 큰 카드 + 가로 전체 폭 [이 병원 예약하기]. 말풍선 안내 문장은 ChatBubble 이 숨긴다
+function HospitalResults({ hospitals, sizeClass, ward, onUiSelect }: {
   hospitals: HospitalItem[];
   sizeClass: string;
+  ward: boolean;
   onUiSelect: Props['onUiSelect'];
 }) {
   const [showAll, setShowAll] = useState(false);
   const common = commonDepartment(hospitals.map(h => h.department));
   const visible = showAll ? hospitals : hospitals.slice(0, HOSPITAL_PREVIEW_COUNT);
   const hidden = hospitals.length - visible.length;
+  const cardsOnly = ward && hospitals.length > 0;
   return (
-    <div className={`${styles.card} ${sizeClass}`}>
-      <p className={styles.cardTitle}>
-        {hospitals.length === 0 ? '병원 검색 결과' : `병원 ${hospitals.length}곳`}
-      </p>
+    <div className={`${cardsOnly ? styles.wardHospitals : styles.card} ${sizeClass}`}>
+      {!cardsOnly && (
+        <p className={styles.cardTitle}>
+          {hospitals.length === 0 ? '병원 검색 결과' : `병원 ${hospitals.length}곳`}
+        </p>
+      )}
       {hospitals.length === 0 ? (
         <p className={styles.empty}>병원을 찾지 못했습니다.</p>
       ) : (
@@ -181,7 +186,7 @@ function HospitalResults({ hospitals, sizeClass, onUiSelect }: {
               const tag = common ?? (count > 0 ? `진료과 ${count}개` : null);
               const place = shortAddress(h.address);
               return (
-                <li key={h.id ?? i} className={styles.hospitalItem}>
+                <li key={h.id ?? i} className={`${styles.hospitalItem} ${cardsOnly ? styles.wardHospitalCard : ''}`}>
                   <div className={styles.hospitalInfo}>
                     <strong>{h.name}</strong>
                     {(tag || place) && (
@@ -195,11 +200,11 @@ function HospitalResults({ hospitals, sizeClass, onUiSelect }: {
                   {name && (
                     <button
                       type="button"
-                      className={styles.reserveBtn}
+                      className={`${styles.reserveBtn} ${cardsOnly ? styles.wardReserveBtn : ''}`}
                       aria-label={`${name} 예약하기`}
                       onClick={() => onUiSelect('hospital_confirm', name, `${name} 예약하기`)}
                     >
-                      예약
+                      {cardsOnly ? '이 병원 예약하기' : '예약'}
                     </button>
                   )}
                 </li>
