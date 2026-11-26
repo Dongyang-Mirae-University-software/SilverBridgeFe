@@ -51,9 +51,9 @@
 
 .newBadge {
   flex-shrink: 0;
-  border-radius: 999px;
-  background: var(--sb-brand-50);
-  color: var(--sb-brand);
+  border-radius: 6px;
+  background: var(--sb-brand);
+  color: #fff;
   font-size: calc(12px * var(--ward-font-scale, 1));
   font-weight: calc(800 + var(--ward-weight-boost, 0));
   padding: 4px 10px;
@@ -94,9 +94,11 @@
   border-color: var(--sb-line);
 }
 
-/* 카드 전체가 버튼이다 - 안쪽 칸은 블록으로 쌓는다 */
+/* 카드 전체가 버튼이다 - 왼쪽 공지 표시 + 오른쪽 글 칸(2026-11-26 시안) */
 .cardButton {
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
   width: 100%;
   border: none;
   background: none;
@@ -110,6 +112,54 @@
 .cardButton .title,
 .cardButton .content {
   display: block;
+}
+
+.cardIcon {
+  display: grid;
+  width: calc(42px * var(--ward-font-scale, 1));
+  height: calc(42px * var(--ward-font-scale, 1));
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+}
+
+.cardText {
+  display: block;
+  min-width: 0;
+  flex: 1;
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  color: var(--sb-ink-mute);
+  font-size: calc(13px * var(--ward-font-scale, 1));
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
+}
+
+.views {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.readMore {
+  margin-left: auto;
+  color: var(--sb-brand);
+  font-weight: calc(700 + var(--ward-weight-boost, 0));
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .cardButton:focus-visible {
@@ -179,37 +229,59 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
 
-.modalHead {
+/* 상세 창 머리 띠(2026-11-26 시안) - 공지 표시 + "공지사항" + 닫기 */
+.modalBand {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--sb-line-soft);
-  padding: 20px 22px 16px;
+  align-items: center;
+  gap: 10px;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand);
+  padding: 14px 18px;
+}
+
+.modalBandLabel {
+  font-size: calc(15px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
 }
 
 .modalTitle {
-  margin: 6px 0 0;
+  margin: 0;
   color: var(--sb-ink);
-  font-size: calc(20px * var(--ward-font-scale, 1));
+  font-size: calc(22px * var(--ward-font-scale, 1));
   font-weight: calc(800 + var(--ward-weight-boost, 0));
-  line-height: 1.4;
+  line-height: 1.35;
   word-break: keep-all;
+}
+
+.modalMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 8px 0 0;
+  color: var(--sb-ink-mute);
+  font-size: calc(13px * var(--ward-font-scale, 1));
+  font-weight: calc(600 + var(--ward-weight-boost, 0));
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .closeButton {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   flex: 0 0 auto;
   place-items: center;
-  border: 1px solid var(--sb-line);
-  border-radius: 12px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 10px;
   background: #fff;
   color: var(--sb-ink-soft);
   cursor: pointer;
   font-family: inherit;
-  font-size: 16px;
 }
 
 .closeButton:hover {
@@ -219,17 +291,44 @@
 .modalBody {
   min-height: 0;
   overflow-y: auto;
-  padding: 18px 22px 24px;
+  padding: 18px 22px 22px;
 }
 
+/* 본문은 바탕색 칸에, 문장마다 줄을 바꿔(breakSentences) 넉넉한 줄 간격으로 */
 .modalContent {
-  margin: 0;
+  margin: 16px 0 0;
+  border-radius: 12px;
+  background: var(--sb-bg-soft);
   color: var(--sb-ink-soft);
   font-size: calc(16px * var(--ward-font-scale, 1));
-  line-height: 1.7;
+  line-height: 1.8;
+  padding: 16px 18px;
   white-space: pre-wrap;
   word-break: keep-all;
   overflow-wrap: anywhere;
+}
+
+.confirmButton {
+  width: 100%;
+  min-height: calc(52px * var(--ward-font-scale, 1));
+  margin-top: 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--sb-brand);
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: calc(17px * var(--ward-font-scale, 1));
+  font-weight: calc(800 + var(--ward-weight-boost, 0));
+}
+
+.confirmButton:hover {
+  filter: brightness(0.94);
+}
+
+.confirmButton:focus-visible {
+  outline: 3px solid var(--sb-ink);
+  outline-offset: 2px;
 }
 
 @media (max-width: 520px) {
@@ -237,11 +336,11 @@
     padding: 10px;
   }
 
-  .modalHead {
-    padding: 16px 16px 14px;
+  .modalBand {
+    padding: 12px 14px;
   }
 
   .modalBody {
-    padding: 16px 16px 20px;
+    padding: 16px 16px 18px;
   }
 }

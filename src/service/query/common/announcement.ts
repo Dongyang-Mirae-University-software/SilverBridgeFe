@@ -17,12 +17,14 @@ export const announcementsQueryOptions = infiniteQueryOptions({
   staleTime: 5 * 60 * 1000,
 });
 
-// 상세는 부를 때마다 조회수가 오른다 - 펼칠 때 한 번만 부르고 10분 동안 다시 부르지 않는다
+// 상세는 부를 때마다 조회수가 오른다 - 창을 열 때마다 다시 불러 조회수를 올린다(2026-11-26 사용자 결정, 전에는 10분 캐시).
+// 창을 닫으면 캐시를 바로 버려(gcTime 0) 다시 열 때 이전 값이 잠깐 보이지 않게 한다.
 export const announcementDetailQueryOptions = (id: number) =>
   queryOptions({
     queryKey: announcementDetailQueryKey(id),
     queryFn: () => getAnnouncementDetail(id),
-    staleTime: 10 * 60 * 1000,
-    // 접어서 쓰는 곳이 없어져도 10분 안에 다시 펼치면 캐시를 쓴다(기본 gcTime 5분)
-    gcTime: 10 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
   });

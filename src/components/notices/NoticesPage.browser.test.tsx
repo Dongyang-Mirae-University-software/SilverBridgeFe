@@ -69,7 +69,7 @@ describe('NoticesPage', () => {
 });
 
 describe('NoticesPage 전체 본문·더 보기', () => {
-  it('100자로 잘린 미리보기는 …을 붙이고, 카드를 누르면 상세 창에 전체 본문을 보이며 10분 안에 다시 열어도 상세를 다시 부르지 않는다', async () => {
+  it('100자로 잘린 미리보기는 …을 붙이고, 카드를 누르면 상세 창에 전체 본문을 보이며 다시 열면 상세를 다시 불러 조회수를 올린다(2026-11-26)', async () => {
     const full = `${'가'.repeat(99)}😀 그리고 이어지는 뒷부분 본문`;
     const preview = Array.from(full).slice(0, 100).join('');
     api.getAnnouncements.mockResolvedValue([notice(7, preview)]);
@@ -89,7 +89,25 @@ describe('NoticesPage 전체 본문·더 보기', () => {
     expect(page.getByRole('dialog').query()).toBeNull();
     await page.getByRole('button', { name: /공지 7/ }).click();
     await expect.element(page.getByRole('dialog').getByText(full)).toBeVisible();
-    expect(api.getAnnouncementDetail).toHaveBeenCalledTimes(1);
+    expect(api.getAnnouncementDetail).toHaveBeenCalledTimes(2);
+  });
+
+  it('상세 본문은 문장이 끝나면 다음 줄로 보이고, 아래 [확인]으로 닫는다 (2026-11-26)', async () => {
+    api.getAnnouncementDetail.mockResolvedValue({
+      ...notice(1),
+      title: '서비스 점검 안내',
+      content: '서버 점검이 예정되어 있습니다. 고객 여러분들의 양해 부탁드립니다!',
+    });
+    await renderPage();
+
+    await page.getByRole('button', { name: /서비스 점검 안내/ }).click();
+    const dialog = page.getByRole('dialog', { name: '서비스 점검 안내' });
+    await expect.element(dialog.getByText(/서버 점검이 예정되어/)).toBeVisible();
+    expect(dialog.getByText(/서버 점검이 예정되어/).element().textContent).toBe(
+      '서버 점검이 예정되어 있습니다.\n고객 여러분들의 양해 부탁드립니다!',
+    );
+    await dialog.getByRole('button', { name: '확인' }).click();
+    expect(page.getByRole('dialog').query()).toBeNull();
   });
 
   it('짧은 공지도 …없이 보이다가, 누르면 상세를 불러 창으로 열고 Esc로 닫는다(목록을 그릴 때는 부르지 않는다)', async () => {
@@ -113,7 +131,7 @@ describe('NoticesPage 전체 본문·더 보기', () => {
     await renderPage();
 
     await page.getByRole('button', { name: /서비스 점검 안내/ }).click();
-    await expect.element(page.getByRole('dialog', { name: '서비스 점검 안내' }).getByText('· 조회 1,234')).toBeVisible();
+    await expect.element(page.getByRole('dialog', { name: '서비스 점검 안내' }).getByText('조회 1,234')).toBeVisible();
   });
 
   it('20건을 받으면 더 보기로 다음 페이지를 이어 붙이고, 20건보다 적게 오면 버튼을 숨긴다', async () => {
