@@ -814,58 +814,138 @@
 }
 
 /* 진료받으실 분·연락처 한 줄(좁으면 바꾸기 버튼만 아래로) */
+/* 예약하는 분 카드(2026-11-26 초안) - 머리글자 동그라미 + 이름(크게)·연락처 + [바꾸기], 아래 연락 안내 */
 .confirmWho {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 10px;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 18px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px 16px;
   color: var(--sb-ink);
+}
+
+.confirmWhoCaption {
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.confirmWhoMain {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.confirmWhoAvatar {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sb-brand-50);
+  color: var(--sb-brand-text, var(--sb-brand));
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.confirmWhoText {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.confirmWhoName {
   font-size: 19px;
   font-weight: 800;
 }
 
 .confirmWhoPhone {
   color: var(--sb-ink-soft);
+  font-size: 16px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .confirmWho .smallButton {
-  margin-left: auto;
+  flex: none;
+}
+
+.confirmWhoHint {
+  border-radius: 8px;
+  background: var(--sb-bg-soft);
+  color: var(--sb-ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 10px;
 }
 
 .confirmPhoneField {
   margin-top: 12px;
 }
 
+/* 불편한 곳 적기(2026-11-26 초안) - 점선 카드: 아이콘 + 제목·"안 적어도 예약돼요" + 펼치기(+/−) */
 .symptomToggle {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   width: 100%;
-  min-height: 52px;
-  margin-top: 18px;
-  padding: 0;
-  border: 0;
-  border-top: 1px solid var(--sb-line-soft);
-  background: none;
+  min-height: 64px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 1.5px dashed var(--sb-line);
+  border-radius: 14px;
+  background: #fff;
   color: var(--sb-ink);
   font: inherit;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
   text-align: left;
   cursor: pointer;
 }
 
-.symptomToggleMark {
-  color: var(--sb-ink-mute);
-  font-size: 24px;
-  transition: transform 0.15s;
+.symptomToggle:hover {
+  border-color: var(--sb-brand-soft, var(--sb-brand));
 }
 
-.symptomToggleMark.open {
-  transform: rotate(90deg);
+.symptomToggleIcon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  background: #fdebd8;
+  color: #a85712;
+  font-size: 18px;
+}
+
+.symptomToggleText {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.symptomToggleSub {
+  color: var(--sb-ink-mute);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.symptomToggleMark {
+  flex: none;
+  color: var(--sb-brand);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .phoneField {
