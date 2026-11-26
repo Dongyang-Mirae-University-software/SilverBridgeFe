@@ -117,6 +117,12 @@ describe('보호자 대시보드 확인 필요 테두리 (Chrome)', () => {
     await renderDashboard();
 
     await expect.element(page.getByText('확인이 필요한 일 2건')).toBeVisible();
+    // 누르면 무엇을 확인할지 목록이 열린다 - 0건인 이상감지 줄은 없고 약 줄은 약 관리로 간다(2026-11-26)
+    await page.getByRole('button', { name: /확인이 필요한 일 2건/ }).click();
+    const menu = page.getByRole('list', { name: '확인이 필요한 일' });
+    await expect.element(menu.getByRole('link', { name: /체크 안 된 약 2건/ })).toHaveAttribute('href', '/guardian/medication');
+    expect(menu.getByRole('link', { name: /이상 감지 판정/ }).elements()).toHaveLength(0);
+    await page.getByRole('button', { name: /확인이 필요한 일 2건/ }).click();
     expect(borderOf(page.getByRole('link', { name: '약 관리, 확인 안 한 복약 2건' }).element())).toMatchObject({ color: 'rgb(226, 164, 154)', background: 'rgb(255, 241, 238)' });
     expect(borderOf(page.getByRole('link', { name: 'SOS 내역' }).element()).background).toBe('rgb(243, 236, 227)');
     expect(borderOf(page.getByRole('link', { name: 'AI 이상감지' }).element()).width).not.toBe('3px');

@@ -52,43 +52,49 @@ export function AlertTypeSettingsSection() {
       ) : isError && !data ? (
         <SettingsLoadError isRetrying={isFetching} onRetry={() => void refetch()} />
       ) : (
+        // 2026-11-26 화면 개편: 꼭 받는 알림은 위에 칸 3개(끌 수 없음), 골라서 받는 알림은 아이콘이 있는 큰 목록
         <div className={cx('list')}>
-          <LockedToggleRow label="SOS 알림" desc="가족이 SOS를 누르면 알려 드려요." />
+          <h3 className={cx('groupTitle')}>
+            <Icon name="lock" size={15} decorative />꼭 받는 알림
+          </h3>
+          <div className={cx('requiredGrid')}>
+            <LockedToggleTile icon="alert" tone="sos" label="SOS 알림" desc="가족이 SOS를 누르면 알려 드려요." />
+            <LockedToggleTile icon="flame" tone="detect" label="이상 감지 알림" desc="화재·흉기·낙상이 감지되면 바로 알려 드려요." />
+            <LockedToggleTile icon="heart" tone="mood" label="AI 기분 체크 알림" desc="안부 대화에서 위험 신호가 보이면 바로 알려 드려요." />
+          </div>
 
-          <LockedToggleRow groupHead label="이상 감지 알림" desc="화재·흉기·낙상이 감지되면 바로 알려 드려요." />
-
-          <div className={cx('subGroup')}>
+          <h3 className={cx('groupTitle', 'optionalTitle')}>골라서 받는 알림</h3>
+          <div className={cx('optionalList')}>
             <ToggleRow
-              sub
+              icon="eye"
+              tone="detect"
               label="이상 감지 확인 요청"
-              desc="실제 위험이었는지 응답하지 않으면 다시 확인을 요청해요. 감지 알림은 이 설정과 상관없이 항상 와요"
+              desc="실제 위험이었는지 응답하지 않으면 다시 알려 드려요. 감지 알림은 늘 와요"
               checked={setting.anomalyReviewReminder.enabled}
               disabled={updateMutation.isPending}
               onChange={enabled => handleToggle('anomalyReviewReminder', enabled)}
             />
             <ToggleRow
-              sub
+              icon="camera"
+              tone="detect"
               label="카메라 연결 끊김 안내"
               desc="카메라가 2분 넘게 연결되지 않으면 알려 드려요"
               checked={setting.cameraLinkLost?.enabled ?? true}
               disabled={updateMutation.isPending}
               onChange={enabled => handleToggle('cameraLinkLost', enabled)}
             />
-          </div>
-
-          <ToggleRow
-            label="복약 알림"
-            desc="어르신의 약 먹을 시간 알림과, 체크가 안 된 날 보호자 알림을 함께 켜고 꺼요 · 알려 드릴 시간은 '복약 관리' 화면에서 정해요 · 다른 보호자가 켜 두었다면 어르신의 약 먹을 시간 알림은 계속 나가요"
-            checked={setting.medication.enabled}
-            disabled={updateMutation.isPending}
-            onChange={enabled => handleToggle('medication', enabled)}
-          />
-
-          <LockedToggleRow groupHead label="AI 기분 체크 알림" desc="안부 대화에서 위험 신호가 보이면 바로 알려 드려요." />
-
-          <div className={cx('subGroup')}>
             <ToggleRow
-              sub
+              icon="pill"
+              tone="med"
+              label="복약 알림"
+              desc="어르신 약 먹을 시간 알림과 체크 안 된 날 보호자 알림을 함께 켜고 꺼요 · 시간은 '복약 관리'에서 정해요 · 다른 보호자가 켜 두었다면 약 시간 알림은 계속 나가요"
+              checked={setting.medication.enabled}
+              disabled={updateMutation.isPending}
+              onChange={enabled => handleToggle('medication', enabled)}
+            />
+            <ToggleRow
+              icon="heart"
+              tone="mood"
               label="기분 변화 안내"
               desc="걱정·우울한 기분이 3일 이상 이어지면 하루 한 번 알려 드려요"
               checked={setting.companionNotice?.enabled ?? true}
@@ -104,7 +110,11 @@ export function AlertTypeSettingsSection() {
 
 // 끌 수 없는 필수 알림 - 다른 줄과 같은 스위치를 켜진 채 잠가 둔다(checked + disabled, onChange 없음 = 저장 요청 없음).
 // disabled input은 클릭 이벤트가 나지 않아 눌러도 반응이 없으면 고장처럼 보이므로, 자물쇠·스위치를 감싼 칸에서 받아 이유를 안내한다
-function LockedToggleRow({ desc, groupHead = false, label }: { desc: string; groupHead?: boolean; label: string }) {
+type Tone = 'sos' | 'detect' | 'med' | 'mood';
+type TileIcon = 'alert' | 'flame' | 'heart' | 'eye' | 'camera' | 'pill';
+
+// 꼭 받는 알림 칸 - 아이콘·이름·짧은 설명 + 켜진 채 잠긴 스위치(눌러도 이유만 안내)
+function LockedToggleTile({ desc, icon, label, tone }: { desc: string; icon: TileIcon; label: string; tone: Tone }) {
   const reasonId = useId();
   const lastToastAt = useRef(0);
 
@@ -116,19 +126,18 @@ function LockedToggleRow({ desc, groupHead = false, label }: { desc: string; gro
   };
 
   return (
-    <div className={cx('row', { groupHead })}>
-      <div className={cx('meta')}>
-        <div className={cx('titleRow')}>
-          <span className={cx('label')}>{label}</span>
-          <span className={cx('badge')}>필수</span>
-        </div>
-        <span className={cx('desc')}>
-          {desc} <span id={reasonId} className={cx('lockedReason')}>{LOCKED_REASON}</span>
-        </span>
-      </div>
+    <div className={cx('tile')}>
+      <span className={cx('tileIcon', tone)} aria-hidden="true">
+        <Icon name={icon} size={24} decorative />
+      </span>
+      <span className={cx('tileLabel')}>{label}</span>
+      <span className={cx('tileDesc')}>{desc}</span>
       <div className={cx('lockedControl')} onClick={showLockedReason}>
-        <Icon name="lock" size={14} className={cx('lockIcon')} />
-        <label className={cx('toggle', 'locked')}>
+        <Icon name="lock" size={13} className={cx('lockIcon')} />
+        <span id={reasonId} className={cx('lockedReason')}>
+          {LOCKED_REASON}
+        </span>
+        <label className={cx('toggle', 'locked', 'tileToggle')}>
           <input type="checkbox" role="switch" aria-label={label} aria-describedby={reasonId} checked disabled readOnly />
           <span className={cx('toggleThumb')} aria-hidden="true" />
         </label>
@@ -137,23 +146,29 @@ function LockedToggleRow({ desc, groupHead = false, label }: { desc: string; gro
   );
 }
 
+// 골라서 받는 알림 줄 - 왼쪽 아이콘 칸, 큰 이름, 설명, 오른쪽 스위치
 function ToggleRow({
   checked,
   desc,
   disabled,
+  icon,
   label,
   onChange,
-  sub = false,
+  tone,
 }: {
   checked: boolean;
   desc: string;
   disabled: boolean;
+  icon: TileIcon;
   label: string;
   onChange: (enabled: boolean) => void;
-  sub?: boolean;
+  tone: Tone;
 }) {
   return (
-    <div className={cx('row', { subRow: sub })}>
+    <div className={cx('row')}>
+      <span className={cx('rowIcon', tone)} aria-hidden="true">
+        <Icon name={icon} size={22} decorative />
+      </span>
       <div className={cx('meta')}>
         <div className={cx('titleRow')}>
           <span className={cx('label')}>{label}</span>

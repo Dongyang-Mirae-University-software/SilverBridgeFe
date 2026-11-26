@@ -18,11 +18,127 @@
   flex-direction: column;
 }
 
+/* ── 2026-11-26 화면 개편: 꼭 받는 알림 칸 3개 + 골라서 받는 알림 큰 목록 ── */
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 18px 0 10px;
+  color: var(--sb-brand-text, var(--sb-brand));
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.optionalTitle {
+  margin-top: 26px;
+  color: var(--sb-ink-soft);
+}
+
+.requiredGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tile {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  background: var(--sb-bg-soft);
+  padding: 14px;
+}
+
+.tileIcon,
+.rowIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+}
+
+.tileIcon {
+  width: 42px;
+  height: 42px;
+}
+
+.rowIcon {
+  width: 44px;
+  height: 44px;
+}
+
+.sos { background: #fbe4df; color: #b23b2b; }
+.detect { background: #fdebd8; color: #a85712; }
+.med { background: #e3f1e6; color: #2e7a45; }
+.mood { background: #eee9fa; color: #6a4cae; }
+
+.tileLabel {
+  color: var(--sb-ink);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.tileDesc {
+  color: var(--sb-ink-mute);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 칸 아래쪽: 자물쇠 + "안전을 위해 끌 수 없어요" + 켜진 채 잠긴 작은 스위치 */
+.tile .lockedControl {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 6px;
+  color: var(--sb-ink-mute);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tile .lockedReason {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.optionalList {
+  border: 1px solid var(--sb-line-soft);
+  border-radius: 14px;
+  padding: 0 16px;
+}
+
+.optionalList .row:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 720px) {
+  .requiredGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tile {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 2px;
+  }
+
+  .tileIcon {
+    grid-row: span 2;
+  }
+
+  .tile .lockedControl {
+    grid-column: 1 / -1;
+  }
+}
+
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 14px;
   padding: 16px 0;
   border-bottom: 1px solid var(--sb-line-soft);
 }
@@ -42,8 +158,8 @@
 
 .label {
   color: var(--sb-ink);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
 }
 
 .badge {
@@ -59,7 +175,8 @@
 .desc {
   margin-top: 3px;
   color: var(--sb-ink-mute);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 /* ── 토글 ── */

@@ -49,13 +49,23 @@ export function HospitalConfirmStep(props: Props) {
           <div className={cx('confirmAddress')}>{pick.hospital.address}</div>
         </div>
 
-        {/* 진료받으실 분·연락처를 한 줄로 */}
+        {/* 진료받으실 분 카드(2026-11-26 초안): 이름 머리글자·이름·연락처 + 병원이 이 번호로 연락한다는 안내 */}
         <div className={cx('confirmWho')} aria-label="진료받으실 분과 연락처" role="group">
-          <span className={cx('confirmWhoName')}>{wardName} 님</span>
-          {!showPhoneInput && (
-            <>
-              {/* 계정 번호가 줄표 없이 저장돼 있어도 읽기 쉽게 줄표를 넣어 보인다(보내는 값은 그대로) */}
-              <span className={cx('confirmWhoPhone')}>{formatPhoneInput(wardPhone)}</span>
+          <span className={cx('confirmWhoCaption')} aria-hidden="true">
+            예약하는 분
+          </span>
+          <div className={cx('confirmWhoMain')}>
+            <span className={cx('confirmWhoAvatar')} aria-hidden="true">
+              {Array.from(wardName).slice(0, 2).join('')}
+            </span>
+            <div className={cx('confirmWhoText')}>
+              <span className={cx('confirmWhoName')}>{wardName} 님</span>
+              {!showPhoneInput && (
+                // 계정 번호가 줄표 없이 저장돼 있어도 읽기 쉽게 줄표를 넣어 보인다(보내는 값은 그대로)
+                <span className={cx('confirmWhoPhone')}>{formatPhoneInput(wardPhone)}</span>
+              )}
+            </div>
+            {!showPhoneInput && (
               <button
                 type="button"
                 className={cx('btn', 'ghost', 'smallButton')}
@@ -64,8 +74,9 @@ export function HospitalConfirmStep(props: Props) {
               >
                 바꾸기
               </button>
-            </>
-          )}
+            )}
+          </div>
+          {!showPhoneInput && <span className={cx('confirmWhoHint')}>병원에서 이 번호로 연락해요</span>}
         </div>
         {showPhoneInput && (
           <div className={cx('phoneField', 'confirmPhoneField')}>
@@ -105,11 +116,17 @@ export function HospitalConfirmStep(props: Props) {
           aria-controls="hospital-symptom"
           onClick={() => setSymptomOpen(open => !open)}
         >
-          <span>
-            불편한 곳 적기 <span className={cx('optional')}>{props.symptom.trim() ? '(적음)' : '(선택)'}</span>
+          <span className={cx('symptomToggleIcon')} aria-hidden="true">
+            ✎
+          </span>
+          <span className={cx('symptomToggleText')}>
+            <span>
+              불편한 곳 적기 <span className={cx('optional')}>{props.symptom.trim() ? '(적음)' : '(선택)'}</span>
+            </span>
+            <span className={cx('symptomToggleSub')}>안 적어도 예약돼요 · 병원에 미리 전해요</span>
           </span>
           <span className={cx('symptomToggleMark', { open: symptomOpen })} aria-hidden="true">
-            ›
+            {symptomOpen ? '−' : '+'}
           </span>
         </button>
         {/* 접어도 지우지 않고 숨긴다 - aria-controls가 가리킬 대상이 남고, 적은 글은 그대로 함께 보낸다(F-3·F-4) */}
