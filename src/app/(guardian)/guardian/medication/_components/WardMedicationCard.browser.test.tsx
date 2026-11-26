@@ -289,7 +289,8 @@ describe('WardMedicationCard (Chrome)', () => {
     expect(api.deleteWardMedicationBatch).not.toHaveBeenCalled();
 
     await deleteAll.click();
-    await expect.element(screen.getByRole('alertdialog')).toHaveTextContent('지난 복용 이력은 남습니다.');
+    await expect.element(screen.getByRole('alertdialog')).toBeVisible();
+    expect(screen.getByRole('alertdialog').element().textContent).toContain('지난 복용 이력은 남습니다.');
     await screen.getByRole('alertdialog').getByRole('button', { name: '삭제' }).click();
     await vi.waitFor(() => expect(api.deleteWardMedicationBatch).toHaveBeenCalledWith('W1', [1, 2]));
     expect(confirm).not.toHaveBeenCalled();
