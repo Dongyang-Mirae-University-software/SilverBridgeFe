@@ -96,6 +96,46 @@ function writeHistoryStep(step: Step, mount: string, mode: 'push' | 'replace', d
   else window.history.replaceState(state, '');
 }
 
+// Next는 router.refresh()·같은 주소 이동 때 지금 기록을 자기 값으로만 다시 쓴다(preserveCustomHistoryState=false).
+// 그러면 단계 기록이 지워져 [이전]·뒤로 가기가 헛돈다(2026-11-26 I-1 - 알림을 받으면 어느 화면에서든 refresh가 불린다).
+// 이 화면이 열려 있는 동안, 같은 주소에 우리 값 없이 덮어쓰면 지금 기록(이 회차 것일 때만)의 우리 값을 이어 붙인다.
+// Next는 덮어쓸 때마다 window.history.replaceState를 그 자리에서 불러 쓰므로 여기서 감싸면 거친다
+function keepStepOnSameUrlReplace(mount: string): () => void {
+  const previous = window.history.replaceState;
+  let active = true;
+  const withoutHash = (href: string) => href.split('#')[0];
+  const isSameUrl = (url?: string | URL | null) =>
+    url === undefined || url === null || url === '' || withoutHash(new URL(url, window.location.href).href) === withoutHash(window.location.href);
+
+  const wrapped = function replaceState(this: History, data: unknown, unused: string, url?: string | URL | null) {
+    const current = window.history.state as Record<string, unknown> | null;
+    const incoming = data as Record<string, unknown> | null;
+    const wipesOurEntry =
+      active &&
+      current?.[HISTORY_MOUNT_KEY] === mount &&
+      incoming !== null &&
+      typeof incoming === 'object' &&
+      incoming[HISTORY_STEP_KEY] === undefined &&
+      isSameUrl(url);
+    const next = wipesOurEntry
+      ? {
+          ...incoming,
+          [HISTORY_STEP_KEY]: current[HISTORY_STEP_KEY],
+          [HISTORY_DEPTH_KEY]: current[HISTORY_DEPTH_KEY],
+          [HISTORY_MOUNT_KEY]: mount,
+        }
+      : data;
+    return previous.call(this, next, unused, url);
+  };
+  window.history.replaceState = wrapped;
+
+  return () => {
+    // 뒤에 다른 코드가 또 감쌌으면 되돌리지 않고 끄기만 한다(그 코드가 감싼 함수를 잃지 않게)
+    active = false;
+    if (window.history.replaceState === wrapped) window.history.replaceState = previous;
+  };
+}
+
 interface ChoiceListProps<T extends string> {
   name: string;
   labelledBy: string;
@@ -166,6 +206,9 @@ export function GuardianConnectionRequestForm() {
 
   // 이 화면을 연 회차(기록에 남겨 지난 회차의 기록과 구분한다, H-1)
   const [mountId] = useState(() => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`);
+
+  // Next의 refresh가 단계 기록을 지우지 않게(I-1) - 화면을 닫으면 되돌린다
+  useEffect(() => keepStepOnSameUrlReplace(mountId), [mountId]);
 
   // 화면만 옮긴다(기록은 부르는 쪽이 정한다)
   const showStep = (next: Step) => {
