@@ -349,7 +349,9 @@
   align-items: center;
   gap: 18px;
   width: 100%;
-  min-height: 104px;
+  /* 카드 높이는 늘 제목 두 줄 기준(28px × 글자 배율 × 1.35 × 2 + 위아래 여백 24 + 테두리 3) - 한 줄·두 줄 제목 카드가 같은 높이.
+     제목 칸에 두 줄 높이를 잡던 방식(min-height 2.7em)은 한 줄 제목을 위로 붙였다 - 카드 높이로 잡고 제목은 가운데에 둔다(2026-11-26 점검) */
+  min-height: max(104px, calc(28px * var(--ward-font-scale, 1) * 2.7 + 27px));
   flex-shrink: 0;
   border: 1.5px solid var(--sb-line-soft);
   border-radius: 22px;
@@ -389,8 +391,8 @@
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  /* 넓은 화면은 두 줄 칸을 따로 잡지 않는다 - 한 줄 제목이 칸 위쪽에 붙어 가운데 정렬된 날짜·꼬리표보다 떠 보였다(2026-11-26).
-     카드 min-height 104px 가 두 줄 제목(28px × 1.35 × 2 + 위아래 여백)을 이미 담아 카드 높이는 그대로다. */
+  /* 넓은 화면은 제목 칸에 두 줄 높이를 따로 잡지 않는다 - 한 줄 제목이 칸 위쪽에 붙어 날짜·꼬리표보다 떠 보였다(2026-11-26).
+     카드 높이는 .wardItem 의 min-height(제목 두 줄 기준, 글자 배율 반영)가 맞춘다. */
 }
 
 .wardItemTag {
