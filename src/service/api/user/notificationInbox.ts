@@ -5,8 +5,13 @@ import { INotificationInboxPage, NotificationInboxCategory } from '../../interfa
 
 const BASE = '/user/me/notifications';
 
-// 최신순. size 기본 20·최대 50, category 생략 = 전체
-export async function getMyNotifications(params: { category?: NotificationInboxCategory; page: number; size: number }) {
+// 최신순. size 기본 20·최대 50, category·type 생략 = 전체. type = 알림 종류 하나(서버 NotificationType 이름, BE #528)
+export async function getMyNotifications(params: {
+  category?: NotificationInboxCategory;
+  type?: string;
+  page: number;
+  size: number;
+}) {
   const response = await apiClient.get<CommonResponse<INotificationInboxPage>>(BASE, { params });
   return getResponseData<INotificationInboxPage>(response);
 }

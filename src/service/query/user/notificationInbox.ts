@@ -3,7 +3,6 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 
 import { getMyNotifications, getMyUnreadNotificationCount } from '@/service/api/user/notificationInbox';
-import type { NotificationInboxCategory } from '@/service/interface/user/notificationInbox';
 
 export const notificationInboxQueryKey = ['notification-inbox'] as const;
 export const NOTIFICATION_INBOX_PAGE_SIZE = 20;
@@ -17,10 +16,11 @@ export const unreadNotificationCountQueryOptions = queryOptions({
   retry: false,
 });
 
-export const notificationInboxListQueryOptions = (category?: NotificationInboxCategory) =>
+// 알림 창은 종류 하나(type, 서버 NotificationType 이름)로 거른다 - 생략 = 전체(2026-11-26, 이전엔 묶음 category 탭)
+export const notificationInboxListQueryOptions = (type?: string) =>
   infiniteQueryOptions({
-    queryKey: [...notificationInboxQueryKey, 'list', category ?? 'ALL'] as const,
-    queryFn: ({ pageParam }) => getMyNotifications({ category, page: pageParam, size: NOTIFICATION_INBOX_PAGE_SIZE }),
+    queryKey: [...notificationInboxQueryKey, 'list', type ?? 'ALL'] as const,
+    queryFn: ({ pageParam }) => getMyNotifications({ type, page: pageParam, size: NOTIFICATION_INBOX_PAGE_SIZE }),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage && !lastPage.last ? lastPage.page + 1 : undefined),
     staleTime: 0,

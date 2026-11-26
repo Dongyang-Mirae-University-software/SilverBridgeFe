@@ -95,7 +95,7 @@ describe('종 알림함 (Chrome)', () => {
     await expect.element(page.getByText('[화재 감지] 김영자님 댁 거실')).toBeVisible();
     expect(page.getByText('거실 카메라에서', { exact: false }).element().textContent).toBe('거실 카메라에서 화재가 감지되었습니다.\n지금 확인해 주세요.');
     expect(page.getByText('김영자', { exact: true }).elements()).toHaveLength(0);
-    expect(api.list).toHaveBeenLastCalledWith({ category: undefined, page: 0, size: 20 });
+    expect(api.list).toHaveBeenLastCalledWith({ type: undefined, page: 0, size: 20 });
   });
 
   it('오늘 받은 알림과 그 전 알림을 오늘 / 이전으로 나눠 보인다', async () => {
@@ -117,14 +117,28 @@ describe('종 알림함 (Chrome)', () => {
     expect(page.getByRole('heading', { name: '오늘' }).elements()).toHaveLength(0);
   });
 
-  it('묶음 탭은 category로 다시 부른다', async () => {
+  it('알림 종류는 고르는 칸(기본 전체)이고, 고르면 그 종류(type)로 다시 부른다 (2026-11-26)', async () => {
     await renderInbox();
     await page.getByRole('button', { name: /^알림/ }).click();
-    api.list.mockResolvedValue(pageOf([]));
-    await page.getByRole('tab', { name: '복약' }).click();
+    const select = page.getByLabelText('알림 종류');
+    await expect.element(select).toHaveValue('ALL');
+    expect(page.getByRole('tab').elements()).toHaveLength(0);
 
-    await expect.element(page.getByText('복약 알림이 없어요.')).toBeVisible();
-    expect(api.list).toHaveBeenLastCalledWith({ category: 'MEDICATION', page: 0, size: 20 });
+    api.list.mockResolvedValue(pageOf([]));
+    await userEvent.selectOptions(select, 'MEDICATION_MISSED');
+
+    await expect.element(page.getByText('복약 확인 요약 알림이 없어요.')).toBeVisible();
+    expect(api.list).toHaveBeenLastCalledWith({ type: 'MEDICATION_MISSED', page: 0, size: 20 });
+  });
+
+  it('고를 수 있는 종류는 역할마다 받는 것만 - 피보호자는 약 드실 시간·안부 말벗 시간 등', async () => {
+    await renderInbox('WARD');
+    await page.getByRole('button', { name: /^알림/ }).click();
+    const labels = Array.from((page.getByLabelText('알림 종류').element() as HTMLSelectElement).options).map(o => o.textContent);
+    expect(labels[0]).toBe('전체');
+    expect(labels).toContain('약 드실 시간');
+    expect(labels).toContain('안부 말벗 시간');
+    expect(labels).not.toContain('긴급 SOS');
   });
 
   it('안 읽은 알림을 누르면 읽음 처리하고 그 피보호자를 골라 해당 화면으로 간다', async () => {
