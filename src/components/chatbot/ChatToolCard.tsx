@@ -71,7 +71,8 @@ export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideL
             time={appt.time ?? ''}
             today={kstToday()}
           />
-          {appt.patient_name && <p className={styles.donePatient}>예약하신 분 {appt.patient_name}</p>}
+          {/* 피보호자 화면은 본인 예약이라 "예약하신 분" 줄을 빼 카드만 크게 본다(2026-11-26) */}
+          {appt.patient_name && variant !== 'ward' && <p className={styles.donePatient}>예약하신 분 {appt.patient_name}</p>}
           {listButton}
         </div>
       );
