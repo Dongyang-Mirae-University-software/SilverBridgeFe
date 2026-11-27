@@ -70,6 +70,16 @@ describe('피보호자 병원 검색 결과 (2026-11-26)', () => {
     expect(page.getByText('예약하기를 눌러 주세요', { exact: false }).elements()).toHaveLength(0);
   });
 
+  // 2026-11-27 실화면 점검: 패널에서 병원을 고른 뒤에도 지난 카드의 버튼이 계속 눌렸다
+  it('어르신 화면의 지난 답 카드는 병원 정보만 남기고 [이 병원 예약하기]를 숨긴다', async () => {
+    render(
+      <ChatBubble message={{ ...base, ...hospitalResult }} isLastAssistant={false} onUiSelect={vi.fn()}
+        onShowList={vi.fn()} variant="ward" />,
+    );
+    await expect.element(page.getByText('부산응급의료원', { exact: true })).toBeVisible();
+    expect(page.getByRole('button', { name: '부산응급의료원 예약하기' }).elements()).toHaveLength(0);
+  });
+
   it('보호자 화면은 안내 문장을 그대로 보인다', async () => {
     await show(hospitalResult, 'guardian');
     await expect.element(page.getByText('예약하기를 눌러 주세요', { exact: false })).toBeVisible();

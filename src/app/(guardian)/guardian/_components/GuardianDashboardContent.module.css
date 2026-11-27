@@ -20,6 +20,8 @@
 .attentionChevron { display: inline-flex; transform: rotate(90deg); transition: transform .15s ease; }
 .attentionChevron.open { transform: rotate(-90deg); }
 .attentionMenu { position: absolute; z-index: 20; top: calc(100% + 8px); right: 0; width: min(340px, calc(100vw - 32px)); margin: 0; border: 1px solid var(--sb-line-soft); border-radius: 16px; background: #fff; box-shadow: 0 14px 30px rgba(40, 28, 20, .14); list-style: none; overflow: hidden; padding: 0; }
+/* 버튼이 줄바꿈되어 왼쪽에 놓이면(휴대폰) 목록을 버튼 왼쪽 끝에 맞춘다 - 오른쪽 기준이면 화면 왼쪽 밖으로 나간다(2026-11-27 실화면 점검) */
+.attentionMenu.alignLeft { right: auto; left: 0; }
 .attentionMenu li + li { border-top: 1px solid var(--sb-line-soft); }
 .attentionItem { display: flex; align-items: center; gap: 12px; color: var(--sb-ink); padding: 14px 16px; text-decoration: none; }
 .attentionItem:hover { background: var(--sb-bg-soft); }

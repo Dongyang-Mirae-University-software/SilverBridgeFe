@@ -343,6 +343,14 @@
   padding: 0 22px;
 }
 
+/* 피보호자 카드 묶음(2026-11-27): 줄마다 1fr 이라 모든 카드가 가장 큰 카드 높이와 같다(제목 줄 수·날짜 줄바꿈과 무관).
+   높이가 정해지지 않은 안쪽 칸이라 1fr 이 목록 높이를 나눠 갖지 않고 내용 기준으로 정해진다 */
+.wardCards {
+  display: grid;
+  grid-auto-rows: 1fr;
+  gap: 12px;
+}
+
 /* 목록(flex column, 스크롤)이 넘칠 때 카드가 min-height 까지 줄어들어 두 줄 제목이 잘리던 것 - 줄어들지 않고 내용만큼 늘어난다(2026-11-17) */
 .wardItem {
   display: flex;
@@ -452,6 +460,9 @@
       'title more';
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
+    /* 한 줄 제목이면 제목 아래 한 줄이 비어 위아래 여백이 달라 보였다(2026-11-27 사용자 지적) - 내용을 카드 가운데에 모은다.
+       카드 높이는 .wardCards(grid 1fr)가 가장 큰 카드에 맞춘다 */
+    align-content: center;
     gap: 6px 12px;
     min-height: 96px;
     padding: 12px 16px;
@@ -473,10 +484,9 @@
     display: none;
   }
 
-  /* 휴대폰은 제목 줄에 보기가 함께 서므로 한 줄 제목도 두 줄 칸을 차지해 카드 높이가 같다(line-height 1.35 × 2) */
+  /* 휴대폰은 제목 줄에 보기가 함께 선다. 카드 높이는 .wardItem 의 min-height 가 맞춘다(제목 칸에 두 줄을 잡으면 한 줄 제목 아래가 빈다) */
   .wardItemTitle {
     grid-area: title;
-    min-height: 2.7em;
     font-size: calc(22px * var(--ward-font-scale, 1));
   }
 

@@ -1,4 +1,4 @@
-import type { ChatLogItem, ChatMessage, ChatRiskLevel } from '@/service/interface/chat';
+import type { ChatLogItem, ChatMessage, ChatRiskLevel, ChatUiPromptData } from '@/service/interface/chat';
 import { parseServerTime } from '@/utils/format/serverTime';
 
 import { RESERVATION_INTENT, isReservationField, selectionText } from './reservationFlow';
@@ -68,16 +68,49 @@ function compareLogs(a: ChatLogItem, b: ChatLogItem) {
   return 0;
 }
 
-/** 선택지 턴("[선택] field: value")은 고른 값만, 날짜는 읽기 좋게, ID 값은 "선택했어요"로 보인다. */
-export function userTextOf(message?: string) {
+// 예약 확인·고치기 버튼 값("confirm:<예약 임시 ID>")은 버튼 이름으로(직전 선택지에 이름이 없을 때 - 옛 기록)
+const ACTION_VALUE = /^(confirm|edit|hospital|department|date|time):[0-9a-z]+$/i;
+const ACTION_LABELS: Record<string, string> = {
+  confirm: '예약하기',
+  edit: '고치기',
+  hospital: '병원',
+  department: '진료과',
+  date: '날짜',
+  time: '시간',
+};
+// 시간 선택 값("2026-11-27 15:00")은 시각만 - 날짜는 바로 앞 턴에 이미 보인다
+const DATE_TIME = /^\d{4}-\d{2}-\d{2}[ T](\d{2}:\d{2})$/;
+
+/**
+ * 선택지 턴("[선택] field: value")은 고른 값만 보인다. 직전 답이 낸 선택지(prevUi)에 같은 값이 있으면 그 버튼 이름을 그대로 쓴다
+ * - 실시간 대화에서 누른 버튼과 같은 글자. 이름을 못 찾으면 날짜는 읽기 좋게, 확인·고치기 값은 버튼 이름, ID 값은 "선택했어요".
+ * (2026-11-27 실화면 점검: 상담 기록에 "edit:712d…", "2026-11-27 15:00" 같은 내부 값이 보였다)
+ */
+export function userTextOf(message?: string, prevUi?: ChatUiPromptData | null) {
   const text = message ?? '';
   if (!isSelectionLog(text)) return text;
   const rest = text.replace(SELECTION, '');
   const at = rest.indexOf(':');
   const field = at >= 0 ? rest.slice(0, at).trim() : '';
   const value = (at >= 0 ? rest.slice(at + 1) : rest).trim();
+  const label = optionLabel(prevUi, field, value);
+  if (label) return label;
   if (!value || ID_FIELDS.has(field)) return '선택했어요';
+  const action = ACTION_VALUE.exec(value);
+  if (action) return ACTION_LABELS[action[1].toLowerCase()];
+  const dateTime = DATE_TIME.exec(value);
+  if (dateTime) return dateTime[1];
   return selectionText(value);
+}
+
+function optionLabel(ui: ChatUiPromptData | null | undefined, field: string, value: string) {
+  if (!ui || !Array.isArray(ui.options) || (ui.field && field && ui.field !== field)) return undefined;
+  for (const option of ui.options) {
+    if (option && typeof option === 'object' && option.value === value && typeof option.label === 'string' && option.label.trim()) {
+      return option.label.trim();
+    }
+  }
+  return undefined;
 }
 
 export function groupChatSessions(logs: unknown): ChatHistorySession[] {
@@ -131,11 +164,11 @@ function targetOf(logs: ChatLogItem[]): { wardId?: string | null; withSelf?: boo
 const RISK_LEVELS = new Set(['low', 'medium', 'high']);
 
 /** 기록 1건을 말풍선 둘(내 질문, 답)로. 선택지·도구 카드는 다시 누를 수 없으니 그리지 않는다. */
-export function logToMessages(log: ChatLogItem, index: number): ChatMessage[] {
+export function logToMessages(log: ChatLogItem, index: number, prevUi?: ChatUiPromptData | null): ChatMessage[] {
   const id = String(log.id ?? `log-${index}`);
   const timestamp = log.createdAt ?? '';
   const out: ChatMessage[] = [];
-  const question = userTextOf(log.message);
+  const question = userTextOf(log.message, prevUi);
   if (question.trim()) out.push({ id: `${id}-q`, role: 'user', content: question, timestamp });
   if (typeof log.reply === 'string' && log.reply.trim()) {
     out.push({

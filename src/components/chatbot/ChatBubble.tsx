@@ -168,6 +168,7 @@ export default function ChatBubble({
                 onShowList={onShowList}
                 hideListButton={message.ui?.field === 'reservation_followup'}
                 variant={variant}
+                stale={!isLastAssistant}
               />
             )}
 

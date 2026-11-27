@@ -16,6 +16,8 @@ interface Props {
   /** 같은 답에 [예약 목록 보기] 선택지가 따로 오면 카드의 버튼을 겹쳐 두지 않는다. */
   hideListButton?: boolean;
   variant?: 'guardian' | 'ward';
+  /** 지난 답의 카드 - 피보호자 병원 카드의 [이 병원 예약하기]를 숨긴다(이미 다음 단계로 넘어가 다시 누르면 흐름이 꼬인다, 2026-11-27 실화면 점검) */
+  stale?: boolean;
 }
 
 type HospitalItem = {
@@ -42,7 +44,7 @@ function shortDate(date?: string) {
   return date && ISO_DATE.test(date) ? formatDateShort(date) : (date ?? '');
 }
 
-export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideListButton, variant = 'guardian' }: Props) {
+export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideListButton, variant = 'guardian', stale = false }: Props) {
   const sizeClass = variant === 'ward' ? styles.ward : styles.guardian;
   const listButton = hideListButton ? null : (
     <button type="button" className={styles.listBtn} onClick={onShowList}>
@@ -52,7 +54,7 @@ export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideL
 
   if (tool === 'search_hospital') {
     const hospitals = Array.isArray(data) ? (data as HospitalItem[]) : [];
-    return <HospitalResults hospitals={hospitals} sizeClass={sizeClass} ward={variant === 'ward'} onUiSelect={onUiSelect} />;
+    return <HospitalResults hospitals={hospitals} sizeClass={sizeClass} ward={variant === 'ward'} stale={stale} onUiSelect={onUiSelect} />;
   }
 
   if (tool === 'make_appointment') {
@@ -157,10 +159,11 @@ export default function ChatToolCard({ tool, data, onUiSelect, onShowList, hideL
 // 제목은 "병원 N곳"만 - AI는 지역만으로도 검색하고(진료과 없이) 카드에 검색한 진료과를 싣지 않아, 공통 진료과를 제목에 넣으면
 // 우연히 모든 병원에 있는 과가 "고른 과"처럼 보일 수 있다(2026-11-23 FE 디자인 점검 D-4, 사용자 결정). 병원별 칩은 그 병원에 실제로 있는 과라 그대로 둔다
 // 피보호자(2026-11-26 사용자 결정): 제목 "병원 N곳" 없이 병원마다 큰 카드 + 가로 전체 폭 [이 병원 예약하기]. 말풍선 안내 문장은 ChatBubble 이 숨긴다
-function HospitalResults({ hospitals, sizeClass, ward, onUiSelect }: {
+function HospitalResults({ hospitals, sizeClass, ward, stale, onUiSelect }: {
   hospitals: HospitalItem[];
   sizeClass: string;
   ward: boolean;
+  stale: boolean;
   onUiSelect: Props['onUiSelect'];
 }) {
   const [showAll, setShowAll] = useState(false);
@@ -197,7 +200,8 @@ function HospitalResults({ hospitals, sizeClass, ward, onUiSelect }: {
                     )}
                   </div>
                   {/* 병원 이름이 없으면 고를 값이 없다 - 빈 값으로 보내지 않게 버튼을 두지 않는다(점검 🟡) */}
-                  {name && (
+                  {/* 피보호자: 지난 답의 카드는 버튼 없이 병원 정보만 남긴다(지금 단계 선택지는 오른쪽 패널에 있다) */}
+                  {name && !(cardsOnly && stale) && (
                     <button
                       type="button"
                       className={`${styles.reserveBtn} ${cardsOnly ? styles.wardReserveBtn : ''}`}
