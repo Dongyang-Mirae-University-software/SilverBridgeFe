@@ -230,6 +230,13 @@
   display: grid;
 }
 
+/* 보호자 서랍은 상단바 로고 자리에 겹쳐 열리므로 로고를 상단바와 같은 자리(왼쪽 14px·위 18px)에 둔다.
+   위 여백 2px 를 아래로 옮겨 메뉴 목록 위치는 그대로다(2026-11-27). */
+.sidebarGuardian .brand {
+  padding: 0 0 18px;
+  margin-bottom: 8px;
+}
+
 .sidebarWard.open {
   pointer-events: auto;
   transform: translateX(0);
