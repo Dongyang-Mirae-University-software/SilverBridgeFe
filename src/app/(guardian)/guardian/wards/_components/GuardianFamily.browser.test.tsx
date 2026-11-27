@@ -944,7 +944,7 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
       await expect.element(next(screen)).toBeDisabled();
     });
 
-    it('확인 중에 [다음]을 누른 뒤 결과가 늦게 "요청할 수 없음"으로 오면 2·3단계에서 바로 알리고 보내기를 막는다 (H-2)', async () => {
+    it('확인 중에 [다음]을 누른 뒤 결과가 늦게 "요청할 수 없음"으로 오면 2단계에서 바로 알리고 [다음]·Enter를 막는다 (H-2·I-2)', async () => {
       let reject!: (error: unknown) => void;
       api.previewWardConnection.mockReturnValue(new Promise((_, r) => (reject = r)));
       const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
@@ -957,22 +957,49 @@ describe('가족 등록 폼 - 한 장씩 묻기 (Chrome)', () => {
       await expect.element(screen.getByRole('alert')).toMatchTextContent('이 회원 ID로 가입한 분이 없어요');
       await expect.element(screen.getByRole('button', { name: '회원 ID 바꾸기' })).toBeInTheDocument();
 
+      // 호칭을 골라도 [다음]은 막혀 있고, Enter(폼 제출)로도 3단계에 가지 않는다
       await screen.getByRole('radio', { name: '엄마', exact: true }).click();
-      await next(screen).click();
-      await screen.getByRole('radio', { name: '아들', exact: true }).click();
-      await expect.element(screen.getByRole('alert')).toBeInTheDocument();
-      await expect.element(send(screen)).toBeDisabled();
+      await expect.element(next(screen)).toBeDisabled();
+      document.querySelector('form')!.requestSubmit();
+      await new Promise(resolve => setTimeout(resolve, 50));
+      await expect.element(title(screen)).toHaveTextContent('어르신을 뭐라고 부르세요?');
+      expect(window.history.state?.connectionStep).toBe(2);
       expect(api.requestWardConnection).not.toHaveBeenCalled();
 
-      // [회원 ID 바꾸기] → 1단계, 다른 ID로 바꾸면 안내가 사라지고 고른 값은 남는다
+      // [회원 ID 바꾸기] → 1단계(깊이 0), 다른 ID로 바꾸면 안내가 사라지고 고른 값은 남고 [다음]이 다시 열린다
       api.previewWardConnection.mockResolvedValue({ targetId: 'Zz9Zz9', maskedName: '박*수' });
       await screen.getByRole('button', { name: '회원 ID 바꾸기' }).click();
       await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+      await expect.poll(() => window.history.state?.connectionDepth).toBe(0);
       await fillId(screen, 'Zz9Zz9');
       await expect.element(check(screen)).toHaveTextContent('이 분이 맞나요? 박*수');
       await next(screen).click();
       expect(screen.getByRole('alert').query()).toBeNull();
       await expect.element(screen.getByRole('radio', { name: '엄마', exact: true })).toBeChecked();
+      await expect.element(next(screen)).toBeEnabled();
+    });
+
+    it('3단계까지 간 뒤 결과가 늦게 "요청할 수 없음"으로 오면 3단계에서 알리고 보내기를 막는다 (H-2)', async () => {
+      let reject!: (error: unknown) => void;
+      api.previewWardConnection.mockReturnValue(new Promise((_, r) => (reject = r)));
+      const screen = await render(<GuardianConnectionRequestForm />, { wrapper });
+      await fillId(screen, 'aB3x9Z');
+      await next(screen).click();
+      await screen.getByRole('radio', { name: '엄마', exact: true }).click();
+      await next(screen).click();
+      await screen.getByRole('radio', { name: '아들', exact: true }).click();
+      await expect.element(send(screen)).toBeEnabled();
+
+      reject(apiError(404, 'USER_NOT_FOUND'));
+      await expect.element(screen.getByRole('alert')).toMatchTextContent('이 회원 ID로 가입한 분이 없어요');
+      await expect.element(send(screen)).toBeDisabled();
+      document.querySelector('form')!.requestSubmit();
+      await new Promise(resolve => setTimeout(resolve, 50));
+      expect(api.requestWardConnection).not.toHaveBeenCalled();
+
+      await screen.getByRole('button', { name: '회원 ID 바꾸기' }).click();
+      await expect.element(title(screen)).toHaveTextContent('어르신의 회원 ID를 알려 주세요');
+      await expect.poll(() => window.history.state?.connectionDepth).toBe(0);
     });
 
     it('링크로 들어온 맞는 ID는 바로 "이 분이 맞나요?"를 보인다', async () => {

@@ -201,7 +201,8 @@ export function GuardianConnectionRequestForm() {
   // 확인 중에 [다음]을 눌렀는데 결과가 늦게 "요청할 수 없음"으로 온 경우(H-2) - 2·3단계에서 바로 알리고 보내기를 막는다
   const lateBlocked = (step === 2 || step === 3) && idBlocked;
 
-  const canGoNext = step === 1 ? memberIdValid && !idBlocked : step === 2 ? Boolean(wardRelation) : false;
+  // 2단계도 늦게 온 막힘이면 [다음]·Enter를 막는다 - 3단계로 가 봐야 보낼 수 없다(I-2)
+  const canGoNext = step === 1 ? memberIdValid && !idBlocked : step === 2 ? Boolean(wardRelation) && !idBlocked : false;
   const canSubmit = memberIdValid && !idBlocked && Boolean(wardRelation) && Boolean(relation) && !isPending;
 
   // 이 화면을 연 회차(기록에 남겨 지난 회차의 기록과 구분한다, H-1)
