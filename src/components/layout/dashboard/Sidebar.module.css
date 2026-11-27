@@ -296,6 +296,13 @@
     display: grid;
   }
 
+  /* 관리자 서랍은 상단바 로고 자리(왼쪽 14px·위 10px)에 겹쳐 연다(2026-11-27). 로고 크기는 SilverBridgeLogo .sidebar 가 24px 로 줄이고,
+     아래 여백을 늘려 메뉴 목록 위치는 그대로 둔다. 보호자·피보호자 서랍은 위의 전용 규칙을 쓴다. */
+  .sidebar:not(.sidebarWard):not(.sidebarGuardian) .brand {
+    padding: 0 0 18px;
+    margin: -8px 0 24px;
+  }
+
   .nav {
     display: flex;
     overflow-y: auto;
