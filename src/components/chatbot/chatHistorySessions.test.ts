@@ -76,6 +76,34 @@ describe('상담 기록 대화창 묶기 (2026-11-11)', () => {
     expect(userTextOf('무릎이 아파요')).toBe('무릎이 아파요');
   });
 
+  // 2026-11-27 실화면 점검: 상담 기록에 "edit:712d…", "2026-11-27 15:00" 같은 내부 값이 보였다
+  it('선택지 턴은 직전 선택지의 버튼 이름으로 보인다', () => {
+    const confirmUi = {
+      kind: 'select' as const,
+      field: 'reservation_confirm',
+      options: [
+        { value: 'confirm:712d70f377ae', label: '예약하기' },
+        { value: 'edit:712d70f377ae', label: '고치기' },
+      ],
+    };
+    expect(userTextOf('[선택] reservation_confirm: edit:712d70f377ae', confirmUi)).toBe('고치기');
+    const timeUi = { kind: 'select' as const, field: 'time', options: [{ value: '2026-11-27 15:00', label: '15:00' }] };
+    expect(userTextOf('[선택] time: 2026-11-27 15:00', timeUi)).toBe('15:00');
+    const dateUi = { kind: 'select' as const, field: 'date', options: [{ value: '2026-11-27', label: '내일 11월 27일(금)' }] };
+    expect(userTextOf('[선택] date: 2026-11-27', dateUi)).toBe('내일 11월 27일(금)');
+    // 다른 칸의 선택지는 쓰지 않는다(병원 이름 값은 그대로)
+    const locationUi = { kind: 'select' as const, field: 'location_confirm', options: [{ value: '__other__', label: '다른 지역으로 찾기' }] };
+    expect(userTextOf('[선택] hospital_confirm: 부산응급의료원', locationUi)).toBe('부산응급의료원');
+  });
+
+  it('직전 선택지가 없어도 내부 값을 그대로 보이지 않는다', () => {
+    expect(userTextOf('[선택] reservation_confirm: confirm:e5ae231b527d')).toBe('예약하기');
+    expect(userTextOf('[선택] reservation_confirm: edit:e5ae231b527d')).toBe('고치기');
+    expect(userTextOf('[선택] reservation_edit: hospital:712d70f377ae')).toBe('병원');
+    expect(userTextOf('[선택] time: 2026-11-27 15:00')).toBe('15:00');
+    expect(userTextOf('[선택] location_confirm: __other__')).toBe('선택했어요');
+  });
+
   it('기록 1건 = 내 질문 + 답. 옛 기록은 layout 없이 reply, 선택지·도구 카드는 싣지 않는다', () => {
     const [q, a] = logToMessages(
       {

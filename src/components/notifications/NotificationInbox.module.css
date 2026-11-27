@@ -253,4 +253,9 @@
 @media (max-width: 560px) {
   .panel.guardian,
   .panel.ward { right: 12px; left: 12px; width: auto; }
+  /* 피보호자는 글자가 커서 한 줄에 다 들어가지 않는다 - 고른 종류가 잘리고 "모두 읽음"이 두 줄로 꺾였다(2026-11-27 실화면 점검).
+     좁은 화면에서는 종류 버튼을 제목 줄 아래로 내려 한 줄을 다 쓰게 한다 */
+  .panel.ward .head { flex-wrap: wrap; row-gap: 10px; }
+  .panel.ward .typeFilter { order: 3; flex: 1 0 100%; margin-right: 0; }
+  .panel.ward .readAll { margin-left: auto; white-space: nowrap; }
 }

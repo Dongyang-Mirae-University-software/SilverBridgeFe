@@ -318,7 +318,8 @@ function SessionDetail({
   session: ChatHistorySession;
   variant: 'guardian' | 'ward';
 }) {
-  const messages = session.logs.flatMap((log, index) => logToMessages(log, index));
+  // 선택지 턴은 바로 앞 기록이 낸 선택지에서 버튼 이름을 찾는다
+  const messages = session.logs.flatMap((log, index) => logToMessages(log, index, session.logs[index - 1]?.ui));
   return (
     <div className={styles.detail} aria-label="상담 대화">
       {messages.map(message => (

@@ -42,6 +42,7 @@ function AttentionMenu({
   medication: GuardianDashboardMedicationSection | null | undefined;
 }) {
   const [open, setOpen] = useState(false);
+  const [alignLeft, setAlignLeft] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const anomalyCount = pending?.anomaly ?? 0;
   const medicationCount = pending?.medication ?? 0;
@@ -70,7 +71,12 @@ function AttentionMenu({
         className={cx('attentionBadge', 'attention', 'attentionButton')}
         aria-expanded={open}
         aria-controls="attention-menu"
-        onClick={() => setOpen(value => !value)}
+        onClick={() => {
+          // 버튼 오른쪽 끝을 기준으로 펼칠 자리가 없으면(버튼이 줄바꿈되어 왼쪽에 있을 때) 왼쪽 끝 기준으로 펼친다
+          const rect = wrapRef.current?.getBoundingClientRect();
+          if (rect) setAlignLeft(rect.right < Math.min(340, window.innerWidth - 32) + 16);
+          setOpen(value => !value);
+        }}
       >
         <Icon name="bell" size={18} />
         <span>{`확인이 필요한 일 ${total}건`}</span>
@@ -79,7 +85,7 @@ function AttentionMenu({
         </span>
       </button>
       {open && (
-        <ul id="attention-menu" className={cx('attentionMenu')} aria-label="확인이 필요한 일">
+        <ul id="attention-menu" className={cx('attentionMenu', { alignLeft })} aria-label="확인이 필요한 일">
           {anomalyCount > 0 && (
             <li>
               <Link className={cx('attentionItem')} href="/guardian/detection" onClick={() => setOpen(false)}>
