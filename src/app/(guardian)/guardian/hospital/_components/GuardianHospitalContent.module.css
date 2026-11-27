@@ -113,8 +113,12 @@
 }
 
 /* 진료받으실 분: 다른 보호자 화면과 같은 피보호자 버튼(WardSelectorTabs). 사람이 많으면 버튼 줄만 가로로 넘긴다 */
+/* 버튼 줄의 원래 폭이 화면 폭(PageLayout 영역)까지 밀어 휴대폰에서 28px 가로로 넘쳤다(2026-11-27 실화면 점검).
+   contain: inline-size 로 원래 폭을 바깥에 알리지 않고, 남은 칸을 채운 뒤 버튼 줄만 옆으로 넘긴다 */
 .wardPicker {
   display: flex;
+  flex: 1 1 0;
+  contain: inline-size;
   align-items: center;
   gap: 10px;
   min-width: 0;

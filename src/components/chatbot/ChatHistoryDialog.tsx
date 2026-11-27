@@ -258,9 +258,10 @@ export default function ChatHistoryDialog({
               <p className={styles.state}>{error}</p>
             ) : shown.length === 0 ? (
               <p className={styles.state}>아직 상담 기록이 없습니다.</p>
-            ) : (
-              shown.map(session => {
-                if (variant === 'ward') {
+            ) : variant === 'ward' ? (
+              // 피보호자 카드는 한 칸에 모아 가장 큰 카드 높이에 맞춘다(grid 1fr) - 한 줄·두 줄 제목, 두 줄 날짜도 높이가 같다(2026-11-27)
+              <div className={styles.wardCards}>
+                {shown.map(session => {
                   const when = wardLogDate(session.startedAt);
                   const reservation = isReservationSession(session.logs);
                   return (
@@ -288,7 +289,10 @@ export default function ChatHistoryDialog({
                       <span className={styles.wardItemMore}>보기 ›</span>
                     </button>
                   );
-                }
+                })}
+              </div>
+            ) : (
+              shown.map(session => {
                 return (
                 <button key={session.key} type="button" className={styles.item} onClick={() => setOpenKey(session.key)}>
                   <span className={styles.itemMeta}>

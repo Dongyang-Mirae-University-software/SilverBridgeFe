@@ -68,6 +68,11 @@ describe('ChatHistoryDialog 피보호자 목록 카드', () => {
             clientH: card.clientHeight,
             titleBottomOver: Math.round(titleBox.bottom - (box.bottom - 1.5)),
             titleLines: Math.round(titleBox.height / lineHeight),
+            // 내용 위·아래 여백(날짜 줄 위 끝 ~ 카드 위, 제목·보기 아래 끝 ~ 카드 아래)
+            topGap:
+              Math.min(...[card.querySelector('time')!, ...card.querySelectorAll('span')].map(el => el.getBoundingClientRect().top)) -
+              box.top,
+            bottomGap: box.bottom - Math.max(titleBox.bottom, moreBox.bottom),
           };
         });
         for (const row of rows) {
@@ -82,6 +87,8 @@ describe('ChatHistoryDialog 피보호자 목록 카드', () => {
         // 휴대폰 배치: 보기는 제목 첫 줄에 맞춘다(제목 줄 수와 무관)
         if (width <= 760) {
           for (const row of rows) expect(row.moreOffset, `${row.text} 보기 위치`).toBeLessThanOrEqual(2);
+          // 한 줄 제목도 내용이 카드 가운데 - 제목 아래만 한 줄 비지 않는다(2026-11-27 사용자 지적)
+          for (const row of rows) expect(Math.abs(row.topGap - row.bottomGap), `${row.text} 위아래 여백`).toBeLessThanOrEqual(3);
         }
       });
     }
