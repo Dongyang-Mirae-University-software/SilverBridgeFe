@@ -247,6 +247,18 @@
   display: grid;
 }
 
+/* 피보호자 서랍도 머리줄 로고와 같은 자리에 둔다(2026-11-27). 머리줄(높이 76px)의 로고 위치는 약 19px,
+   왼쪽은 24px(480px 이하 14px - SidebarLayout .wardHead 와 같은 기준). 위에서 뺀 1px 은 아래로 옮겨 메뉴 목록 위치는 그대로다. */
+.sidebarWard .brand {
+  padding: 1px 10px 19px;
+}
+
+@media (max-width: 480px) {
+  .sidebarWard .brand {
+    padding-left: 0;
+  }
+}
+
 .sidebarWard .navItem {
   font-size: 15px;
   padding: 14px 14px;
