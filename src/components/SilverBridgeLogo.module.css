@@ -26,6 +26,13 @@
   font-size: 34px;
 }
 
+/* 관리자 사이드바(기본 variant)는 1260px 이하에서 상단바 위에 겹쳐 열리는 서랍이 되므로 상단바 로고와 같은 24px 로 맞춘다(2026-11-27). */
+@media (max-width: 1260px) {
+  .sidebar {
+    font-size: 24px;
+  }
+}
+
 .subtitle {
   display: block;
   overflow: hidden;
